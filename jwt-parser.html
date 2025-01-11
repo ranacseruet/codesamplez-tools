@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWT Parser & Validator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 350px;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        pre {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;       /* Since CSS3 */
+            white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+            white-space: -pre-wrap;      /* Opera 4-6 */
+            white-space: -o-pre-wrap;    /* Opera 7 */
+            word-wrap: break-word;       /* Internet Explorer 5.5+ */
+        }
+
+        #validationResult {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>JWT Parser &amp; Validator</h1>
+
+        <div class="form-group">
+            <label for="jwt">Enter JWT Token:</label>
+            <textarea id="jwt" rows="4" placeholder="Paste your JWT here..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="secret">Enter Secret:</label>
+            <input type="text" id="secret" placeholder="Secret used to sign the token...">
+        </div>
+
+        <button onclick="parseJWT()">Parse &amp; Validate JWT</button>
+
+        <h2>Decoded Token:</h2>
+        <pre id="decodedToken"></pre>
+
+        <h2>Validation Result:</h2>
+        <p id="validationResult"></p>
+    </div>
+
+    <script>
+        async function parseJWT() {
+            const jwt = document.getElementById('jwt').value;
+            const secret = document.getElementById('secret').value;
+
+            if (!jwt) {
+                alert("Please enter a JWT token.");
+                return;
+            }
+
+            try {
+                // Decode the JWT
+                const parts = jwt.split('.');
+                const header = JSON.parse(atob(parts[0]));
+                const payload = JSON.parse(atob(parts[1]));
+
+                document.getElementById('decodedToken').textContent = `Header: ${JSON.stringify(header, null, 2)}\nPayload: ${JSON.stringify(payload, null, 2)}`;
+
+                // Validate the signature
+                const isValidSignature = await validateJWT(jwt, secret);
+                document.getElementById('validationResult').textContent = `Signature is ${isValidSignature ? 'valid' : 'invalid'}!`;
+
+            } catch (e) {
+                document.getElementById('decodedToken').textContent = "Invalid JWT format.";
+                document.getElementById('validationResult').textContent = "Error validating signature";
+                console.error(e);
+            }
+        }
+
+        async function validateJWT(token, secret) {
+            const base64UrlDecode = (str) => {
+                str = str.replace(/-/g, '+').replace(/_/g, '/');
+                while (str.length % 4) str += '=';
+                return atob(str);
+            };
+
+            const base64UrlEncode = (str) => {
+                return btoa(str)
+                    .replace(/\+/g, '-')
+                    .replace(/\//g, '_')
+                    .replace(/=+$/, '');
+            };
+            try {
+                const parts = token.split('.');
+                const header = base64UrlDecode(parts[0]);
+                const payload = base64UrlDecode(parts[1]);
+                const providedSignature = parts[2];
+
+                const signatureInput = parts[0] + '.' + parts[1];
+                const signature = await hmacSha256(signatureInput, secret);
+                const recreatedSignature = base64UrlEncode(String.fromCharCode(...new Uint8Array(signature)));
+                
+                return recreatedSignature === providedSignature;
+            } catch (e) {
+                console.error('Error validating JWT:', e);
+                return false;
+            }
+        }
+
+        // Implementation of HMAC-SHA256
+        async function hmacSha256(message, key) {
+            const encoder = new TextEncoder();
+            const messageBuffer = encoder.encode(message);
+            const keyBuffer = encoder.encode(key);
+
+            const cryptoKey = await crypto.subtle.importKey(
+                "raw",
+                keyBuffer,
+                { name: "HMAC", hash: { name: "SHA-256" } },
+                false,
+                ["sign"]
+            );
+
+            const signature = await crypto.subtle.sign(
+                "HMAC",
+                cryptoKey,
+                messageBuffer
+            );
+
+            return new Uint8Array(signature);
+        }
+
+    </script>
+</body>
+</html>
