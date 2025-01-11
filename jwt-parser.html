@@ -70,7 +70,7 @@
             word-wrap: break-word;       /* Internet Explorer 5.5+ */
         }
 
-        #validationResult {
+        #jwtSignatureStatus {
             font-weight: bold;
         }
     </style>
@@ -80,28 +80,28 @@
         <h1>JWT Parser &amp; Validator</h1>
 
         <div class="form-group">
-            <label for="jwt">Enter JWT Token:</label>
-            <textarea id="jwt" rows="4" placeholder="Paste your JWT here..."></textarea>
+            <label for="jwtInputToken">Enter JWT Token:</label>
+            <textarea id="jwtInputToken" rows="4" placeholder="Paste your JWT here..."></textarea>
         </div>
 
         <div class="form-group">
-            <label for="secret">Enter Secret:</label>
-            <input type="text" id="secret" placeholder="Secret used to sign the token...">
+            <label for="jwtSecretKey">Enter Secret:</label>
+            <input type="text" id="jwtSecretKey" placeholder="Secret used to sign the token...">
         </div>
 
         <button onclick="parseJWT()">Parse &amp; Validate JWT</button>
 
         <h2>Decoded Token:</h2>
-        <pre id="decodedToken"></pre>
+        <pre id="jwtDecodedOutput"></pre>
 
         <h2>Validation Result:</h2>
-        <p id="validationResult"></p>
+        <p id="jwtSignatureStatus"></p>
     </div>
 
     <script>
         async function parseJWT() {
-            const jwt = document.getElementById('jwt').value;
-            const secret = document.getElementById('secret').value;
+            const jwt = document.getElementById('jwtInputToken').value;
+            const secret = document.getElementById('jwtSecretKey').value;
 
             if (!jwt) {
                 alert("Please enter a JWT token.");
@@ -114,15 +114,15 @@
                 const header = JSON.parse(atob(parts[0]));
                 const payload = JSON.parse(atob(parts[1]));
 
-                document.getElementById('decodedToken').textContent = `Header: ${JSON.stringify(header, null, 2)}\nPayload: ${JSON.stringify(payload, null, 2)}`;
+                document.getElementById('jwtDecodedOutput').textContent = `Header: ${JSON.stringify(header, null, 2)}\nPayload: ${JSON.stringify(payload, null, 2)}`;
 
                 // Validate the signature
                 const isValidSignature = await validateJWT(jwt, secret);
-                document.getElementById('validationResult').textContent = `Signature is ${isValidSignature ? 'valid' : 'invalid'}!`;
+                document.getElementById('jwtSignatureStatus').textContent = `Signature is ${isValidSignature ? 'valid' : 'invalid'}!`;
 
             } catch (e) {
-                document.getElementById('decodedToken').textContent = "Invalid JWT format.";
-                document.getElementById('validationResult').textContent = "Error validating signature";
+                document.getElementById('jwtDecodedOutput').textContent = "Invalid JWT format.";
+                document.getElementById('jwtSignatureStatus').textContent = "Error validating signature";
                 console.error(e);
             }
         }
