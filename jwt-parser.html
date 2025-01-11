@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JWT Parser & Validator</title>
     <style>
-        body {
+        .jwt-wrapper {
             font-family: Arial, sans-serif;
             background-color: #f4f4f9;
             display: flex;
@@ -15,29 +15,32 @@
             margin: 0;
         }
 
-        .container {
+        .jwt-parser {
             background-color: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             width: 350px;
+            font-family: Arial, sans-serif;
         }
 
-        h1, h2 {
+        .jwt-parser h1,
+        .jwt-parser h2 {
             color: #333;
         }
 
-        .form-group {
+        .jwt-parser .form-group {
             margin-bottom: 15px;
         }
 
-        label {
+        .jwt-parser label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
         }
 
-        textarea, input[type="text"] {
+        .jwt-parser textarea,
+        .jwt-parser input[type="text"] {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
@@ -45,7 +48,7 @@
             border: 1px solid #ccc;
         }
 
-        button {
+        .jwt-parser button {
             background-color: #28a745;
             color: white;
             padding: 10px 15px;
@@ -55,11 +58,11 @@
             width: 100%;
         }
 
-        button:hover {
+        .jwt-parser button:hover {
             background-color: #218838;
         }
 
-        pre {
+        .jwt-parser pre {
             background-color: #f9f9f9;
             padding: 10px;
             border-radius: 4px;
@@ -70,13 +73,13 @@
             word-wrap: break-word;       /* Internet Explorer 5.5+ */
         }
 
-        #jwtSignatureStatus {
+        .jwt-parser #jwtSignatureStatus {
             font-weight: bold;
         }
     </style>
 </head>
-<body>
-    <div class="container">
+<body class="jwt-wrapper">
+    <div class="jwt-parser">
         <h1>JWT Parser &amp; Validator</h1>
 
         <div class="form-group">
