@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="base64converter-container">
+        <div class="base64converter-wrapper">
+            <h1 class="base64converter-title">Enhanced Base64 Converter</h1>
+            
+            <div class="base64converter-controls">
+                <div class="base64converter-control-group">
+                    <select id="base64converter-mode" class="base64converter-select">
+                        <option value="auto">Auto Detect</option>
+                        <option value="encode">Encode</option>
+                        <option value="decode">Decode</option>
+                    </select>
+
+                    <select id="base64converter-encoding" class="base64converter-select base64converter-encoding-select">
+                        <option value="utf8">UTF-8</option>
+                        <option value="ascii">ASCII</option>
+                        <option value="iso88591">ISO-8859-1</option>
+                        <option value="ucs2">UCS-2</option>
+                    </select>
+                </div>
+
+                <div class="base64converter-control-group">
+                    <label class="base64converter-file-label" for="base64converter-file">
+                        Upload File
+                    </label>
+                    <input type="file" id="base64converter-file" class="base64converter-file-input">
+                    
+                    <button id="base64converter-copy" class="base64converter-button" disabled>
+                        Copy Result
+                    </button>
+                </div>
+            </div>
+
+            <div class="base64converter-input-group">
+                <textarea id="base64converter-input" class="base64converter-textarea" 
+                    placeholder="Enter text to encode or decode..."></textarea>
+            </div>
+            
+            <p id="base64converter-result" class="base64converter-result"></p>
+            <p class="base64converter-status">
+                <span id="base64converter-status"></span>
+                <span id="base64converter-copy-status"></span>
+            </p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

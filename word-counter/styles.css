@@ -1,0 +1,31 @@
+#text-analyzer-container {
+    width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    font-family: sans-serif;
+}
+
+#text-input {
+    width: calc(100% - 22px);
+    height: 200px;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    resize: vertical;
+    font-size: 16px;
+}
+
+.results {
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+#text-analyzer-container h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
