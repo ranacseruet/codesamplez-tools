@@ -26,7 +26,20 @@ async function parseJWT() {
     }
 }
 
+function isBase64(str) {
+    try {
+        return btoa(atob(str)) === str;
+    } catch (e) {
+        return false;
+    }
+}
+
 async function validateJWT(token, secret) {
+    // Decode secret if it's base64 encoded
+    if (isBase64(secret)) {
+        secret = atob(secret);
+    }
+
     const base64UrlDecode = (str) => {
         str = str.replace(/-/g, '+').replace(/_/g, '/');
         while (str.length % 4) str += '=';
