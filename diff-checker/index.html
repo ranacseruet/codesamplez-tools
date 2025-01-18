@@ -21,7 +21,16 @@
       <button class="btn" id="diff-button">Compare Texts</button>
       <button class="btn btn-secondary" id="clear-button">Clear</button>
     </div>
-    <div id="diff-result" class="output"></div>
+    <div class="diff-results-container">
+      <div class="diff-column">
+        <h3>Original Text</h3>
+        <div id="diff-original" class="output"></div>
+      </div>
+      <div class="diff-column">
+        <h3>Modified Text</h3>
+        <div id="diff-modified" class="output"></div>
+      </div>
+    </div>
   </div>
 
   <script src="script.js"></script>

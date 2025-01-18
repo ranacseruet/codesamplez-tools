@@ -2,7 +2,8 @@ const diffButton = document.getElementById('diff-button');
 const clearButton = document.getElementById('clear-button');
 const text1Input = document.getElementById('diff-text1');
 const text2Input = document.getElementById('diff-text2');
-const diffResult = document.getElementById('diff-result');
+const diffOriginal = document.getElementById('diff-original');
+const diffModified = document.getElementById('diff-modified');
 
 diffButton.addEventListener('click', async function () {
   diffButton.classList.add('loading');
@@ -13,7 +14,9 @@ diffButton.addEventListener('click', async function () {
   
   const text1 = text1Input.value;
   const text2 = text2Input.value;
-  diffResult.innerHTML = diff(text1, text2);
+  const { original, modified } = diff(text1, text2);
+  diffOriginal.innerHTML = original;
+  diffModified.innerHTML = modified;
   
   diffButton.classList.remove('loading');
   diffButton.textContent = 'Compare Texts';
@@ -22,7 +25,8 @@ diffButton.addEventListener('click', async function () {
 clearButton.addEventListener('click', function() {
   text1Input.value = '';
   text2Input.value = '';
-  diffResult.innerHTML = '';
+  diffOriginal.innerHTML = '';
+  diffModified.innerHTML = '';
   text1Input.dispatchEvent(new Event('input'));
   text2Input.dispatchEvent(new Event('input'));
 });
@@ -42,29 +46,28 @@ clearButton.addEventListener('click', function() {
 function diff(text1, text2) {
   const lines1 = text1.split('\n');
   const lines2 = text2.split('\n');
-  let result = '';
-  let i = 0, j = 0;
+  let original = '';
+  let modified = '';
+  let lineNum1 = 1;
+  let lineNum2 = 1;
+  let i = 0;
+  let j = 0;
 
   while (i < lines1.length || j < lines2.length) {
     if (i < lines1.length && j < lines2.length && lines1[i] === lines2[j]) {
-      result += lines1[i] + '\n';
+      original += `<span class="line-num">${lineNum1++}</span>${lines1[i]}\n`;
+      modified += `<span class="line-num">${lineNum2++}</span>${lines2[j]}\n`;
       i++;
       j++;
+    } else if (i < lines1.length) {
+      original += `<span class="line-num">${lineNum1++}</span><del>${lines1[i]}</del>\n`;
+      modified += `<span class="line-num">${lineNum2++}</span>\n`; // Increment lineNum2 here
+      i++;
     } else {
-      if (j < lines2.length && (i >= lines1.length || lines1.indexOf(lines2[j], i) === -1)) {
-        result += `<ins>${lines2[j]}</ins>\n`;
-        j++;
-      } else if (i < lines1.length && (j >= lines2.length || lines2.indexOf(lines1[i], j) === -1)) {
-        result += `<del>${lines1[i]}</del>\n`;
-        i++;
-      } else {
-        result += `<del>${lines1[i]}</del>\n`;
-        result += `<ins>${lines2[j]}</ins>\n`;
-        i++;
-        j++;
-      }
+      original += `<span class="line-num">${lineNum1++}</span>\n`; // Increment lineNum1 here
+      modified += `<span class="line-num">${lineNum2++}</span><ins>${lines2[j]}</ins>\n`;
+      j++;
     }
   }
-
-  return result;
+  return { original, modified };
 }

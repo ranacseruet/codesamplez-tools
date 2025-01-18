@@ -187,6 +187,46 @@ body {
   border-radius: 0.25rem;
 }
 
+.diff-results-container {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.diff-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.diff-column h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.diff-column .output {
+  flex: 1;
+  margin: 0;
+}
+
+/* Line number styles */
+.diff-column .output {
+  counter-reset: line-number;
+}
+
+.diff-column .output span.line-num {
+  display: inline-block;
+  width: 2.5rem;
+  padding-right: 0.5rem;
+  margin-right: 0.5rem;
+  text-align: right;
+  color: #9ca3af;
+  border-right: 1px solid var(--border-color);
+  user-select: none;
+}
+
 @media (max-width: 768px) {
   body {
     padding: 1rem;
@@ -199,5 +239,10 @@ body {
   h1 {
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
+  }
+
+  .diff-results-container {
+    flex-direction: column;
+    gap: 1rem;
   }
 }
