@@ -6,6 +6,7 @@
   --border-color: #e5e7eb;
   --success-bg: #dcfce7;
   --error-bg: #fee2e2;
+  --mod-bg: #fef9c3;
   --container-width: 900px;
   --transition-speed: 0.2s;
 }
@@ -182,6 +183,13 @@ body {
 
 .diff-container .output del {
   background-color: var(--error-bg);
+  text-decoration: none;
+  padding: 0.125rem 0;
+  border-radius: 0.25rem;
+}
+
+.diff-container .output .mod {
+  background-color: var(--mod-bg);
   text-decoration: none;
   padding: 0.125rem 0;
   border-radius: 0.25rem;

@@ -53,18 +53,79 @@ function diff(text1, text2) {
   let i = 0;
   let j = 0;
 
+  function compareLines(line1, line2) {
+    let result1 = '';
+    let result2 = '';
+    let k = 0;
+    let l = 0;
+    let inMod = false;
+    let modStart1 = 0;
+    let modStart2 = 0;
+    
+    while (k < line1.length || l < line2.length) {
+      if (k < line1.length && l < line2.length && line1[k] === line2[l]) {
+        if (inMod) {
+          result1 += `</span>${line1[k]}`;
+          result2 += `</span>${line2[l]}`;
+          inMod = false;
+        } else {
+          result1 += line1[k];
+          result2 += line2[l];
+        }
+        k++;
+        l++;
+      } else {
+        // Only mark as modification if both lines have content at current position
+        if (k < line1.length && l < line2.length) {
+          if (!inMod) {
+            result1 += '<span class="mod">';
+            result2 += '<span class="mod">';
+            inMod = true;
+          }
+          result1 += line1[k];
+          result2 += line2[l];
+          k++;
+          l++;
+        } else {
+          // Handle pure insertions/deletions
+          if (k < line1.length) {
+            result1 += `<del>${line1[k]}</del>`;
+            k++;
+          }
+          if (l < line2.length) {
+            result2 += `<ins>${line2[l]}</ins>`;
+            l++;
+          }
+        }
+      }
+    }
+    
+    if (inMod) {
+      result1 += '</span>';
+      result2 += '</span>';
+    }
+    
+    return { result1, result2 };
+  }
+
   while (i < lines1.length || j < lines2.length) {
     if (i < lines1.length && j < lines2.length && lines1[i] === lines2[j]) {
       original += `<span class="line-num">${lineNum1++}</span>${lines1[i]}\n`;
       modified += `<span class="line-num">${lineNum2++}</span>${lines2[j]}\n`;
       i++;
       j++;
+    } else if (i < lines1.length && j < lines2.length) {
+      const { result1, result2 } = compareLines(lines1[i], lines2[j]);
+      original += `<span class="line-num">${lineNum1++}</span>${result1}\n`;
+      modified += `<span class="line-num">${lineNum2++}</span>${result2}\n`;
+      i++;
+      j++;
     } else if (i < lines1.length) {
       original += `<span class="line-num">${lineNum1++}</span><del>${lines1[i]}</del>\n`;
-      modified += `<span class="line-num">${lineNum2++}</span>\n`; // Increment lineNum2 here
+      modified += `<span class="line-num">${lineNum2++}</span>\n`;
       i++;
     } else {
-      original += `<span class="line-num">${lineNum1++}</span>\n`; // Increment lineNum1 here
+      original += `<span class="line-num">${lineNum1++}</span>\n`;
       modified += `<span class="line-num">${lineNum2++}</span><ins>${lines2[j]}</ins>\n`;
       j++;
     }
