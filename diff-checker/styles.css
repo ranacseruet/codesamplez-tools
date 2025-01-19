@@ -7,8 +7,12 @@
   --success-bg: #dcfce7;
   --error-bg: #fee2e2;
   --mod-bg: #fef9c3;
+  --empty-line-bg: #f9fafb;
+  --line-ending-color: #9ca3af;
+  --trailing-space-color: #e5e7eb;
   --container-width: 900px;
   --transition-speed: 0.2s;
+  --line-number-width: 3.5rem;
 }
 
 .diff-container {
@@ -221,13 +225,56 @@
 
 .diff-column .output span.line-num {
   display: inline-block;
-  width: 2.5rem;
+  width: var(--line-number-width);
   padding-right: 0.5rem;
   margin-right: 0.5rem;
   text-align: right;
   color: #9ca3af;
   border-right: 1px solid var(--border-color);
   user-select: none;
+  font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.diff-column .output .empty-line {
+  display: inline-block;
+  width: calc(100% - var(--line-number-width) - 1rem);
+  background-color: var(--empty-line-bg);
+  border-radius: 0.25rem;
+  height: 1.2em;
+  vertical-align: middle;
+}
+
+/* Ensure consistent spacing for diff markers */
+.diff-column .output ins,
+.diff-column .output del,
+.diff-column .output .mod {
+  display: inline-block;
+  min-height: 1.2em;
+  vertical-align: middle;
+}
+
+/* Line ending visualization */
+.diff-column .output .line-ending {
+  color: var(--line-ending-color);
+  font-size: 0.8em;
+  margin-left: 0.3em;
+  user-select: none;
+  opacity: 0.5;
+}
+
+/* Make trailing spaces visible */
+.diff-column .output {
+  font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.diff-column .output::selection,
+.diff-column .output *::selection {
+  background-color: rgba(99, 102, 241, 0.2);
+}
+
+/* Improve readability of special characters */
+.diff-column .output {
+  letter-spacing: 0.02em;
 }
 
 @media (max-width: 768px) {
