@@ -49,7 +49,7 @@ function escapeHtml(text) {
     .replace(/</g, '<')
     .replace(/>/g, '>')
     .replace(/"/g, '"')
-    .replace(/'/g, '&#039;')
+    .replace(/'/g, "'")
     .replace(/ /g, function(match, offset, string) {
       // Mark trailing spaces
       return offset === string.length - 1 || string[offset + 1] === '\n'
