@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>JWT Builder</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="jwt-builder-container">
+    <h1 class="jwt-builder-header">JWT Builder</h1>
+    <form id="jwtForm">
+      <div id="standardClaims">
+        <div class="claim-row">
+          <label for="iss">Issuer (iss):</label>
+          <input type="text" id="iss" class="jwt-builder-input" placeholder="e.g., my-app">
+        </div>
+        <div class="claim-row">
+          <label for="exp">Expiration Time (exp):</label>
+          <input type="text" id="exp" class="jwt-builder-input" placeholder="e.g., 1678886400">
+        </div>
+        <div class="claim-row">
+          <label for="sub">Subject (sub):</label>
+          <input type="text" id="sub" class="jwt-builder-input" placeholder="e.g., user123">
+        </div>
+        <div class="claim-row">
+          <label for="aud">Audience (aud):</label>
+          <input type="text" id="aud" class="jwt-builder-input" placeholder="e.g., my-api">
+        </div>
+        <div class="claim-row">
+          <label for="iat">Issued At (iat):</label>
+          <input type="text" id="iat" class="jwt-builder-input" placeholder="e.g., 1678886400">
+        </div>
+        <div class="claim-row">
+          <label for="nbf">Not Before (nbf):</label>
+          <input type="text" id="nbf" class="jwt-builder-input" placeholder="e.g., 1678886400">
+        </div>
+        <div class="claim-row">
+          <label for="jti">JWT ID (jti):</label>
+          <input type="text" id="jti" class="jwt-builder-input" placeholder="e.g., unique-id">
+        </div>
+      </div>
+      <div id="customClaims"></div>
+      <button type="button" class="jwt-builder-button add-claim" onclick="addClaim()">Add Claim</button>
+      <label for="key">Signature Key:</label>
+      <input type="text" id="key" class="jwt-builder-input" placeholder="Your secret key">
+      <button type="button" class="jwt-builder-button" onclick="buildJWT()">Build JWT</button>
+    </form>
+    <div id="result" class="jwt-builder-output"></div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

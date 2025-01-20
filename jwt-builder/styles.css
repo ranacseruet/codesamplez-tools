@@ -1,0 +1,105 @@
+/* jwt-builder Styles */
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f4f4f4;
+  margin: 20px;
+}
+
+.jwt-builder-container {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.jwt-builder-header {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+
+#jwtForm {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.claim-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.claim-row label {
+  flex: 0 0 150px;
+  text-align: right;
+  margin-right: 10px;
+  font-weight: bold;
+  color: #555;
+}
+
+.claim-row input,.jwt-builder-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.jwt-builder-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 10px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.jwt-builder-button:hover {
+  background-color: #45a049;
+}
+
+.jwt-builder-button.add-claim {
+  margin-bottom: 20px;
+}
+
+#customClaims {
+  margin-bottom: 20px;
+}
+
+#result {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  white-space: pre-wrap;
+  font-family: monospace;
+  overflow-x: auto; /* Add horizontal scroll if needed */
+}
+
+@media (max-width: 768px) {
+  .claim-row {
+    flex-direction: column;
+  }
+  .claim-row label {
+    text-align: left;
+    margin-right: 0;
+    margin-bottom: 5px;
+  }
+}
