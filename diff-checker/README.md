@@ -43,3 +43,11 @@ Modified: The fast brown fox
 - HTML
 - CSS
 - JavaScript
+
+## Test
+
+Requires node installed in the system.
+
+```
+node script.test.js
+```
