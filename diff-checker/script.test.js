@@ -1,4 +1,13 @@
-import { diff, visualizeSpaces, escapeHtml } from './script.js';
+import { 
+  diff, 
+  visualizeSpaces, 
+  escapeHtml, 
+  checkSimilarity,
+  getPhraseMatcher,
+  visualizeLineEnding,
+  addLineEnding,
+  compareLines 
+} from './script.js';
 
 // Simple test runner
 function describe(name, testSuite) {
@@ -40,11 +49,112 @@ function expect(actual) {
       if (actual !== expected) {
         throw new Error(`Expected "${actual}" to be "${expected}"`);
       }
+    },
+    toBeFalsy: () => {
+      if (actual) {
+        throw new Error(`Expected "${actual}" to be falsy`);
+      }
+    },
+    toBeTruthy: () => {
+      if (!actual) {
+        throw new Error(`Expected "${actual}" to be truthy`);
+      }
     }
   };
 }
 
-// Tests
+// Internal Helper Function Tests
+describe('checkSimilarity Tests', () => {
+  test('should handle short words requiring exact match', () => {
+    expect(checkSimilarity('a', 'a')).toBeTruthy();
+    expect(checkSimilarity('a', 'b')).toBeFalsy();
+    expect(checkSimilarity('hi', 'hi')).toBeTruthy();
+    expect(checkSimilarity('hi', 'ho')).toBeFalsy();
+  });
+
+  test('should detect similar long words', () => {
+    expect(checkSimilarity('testing', 'tasting')).toBeTruthy();
+    expect(checkSimilarity('function', 'functions')).toBeTruthy();
+    expect(checkSimilarity('analyze', 'analysis')).toBeTruthy();
+  });
+
+  test('should reject dissimilar words', () => {
+    expect(checkSimilarity('completely', 'different')).toBeFalsy();
+    expect(checkSimilarity('short', 'longerword')).toBeFalsy();
+    expect(checkSimilarity('', 'something')).toBeFalsy();
+  });
+
+  test('should handle mixed case and whitespace', () => {
+    expect(checkSimilarity('Testing', 'testing')).toBeTruthy();
+    expect(checkSimilarity('no space', 'nospace')).toBeTruthy();
+    expect(checkSimilarity('multi  space', 'multi space')).toBeTruthy();
+  });
+});
+
+describe('getPhraseMatcher Tests', () => {
+  test('should match line numbers', () => {
+    const result = getPhraseMatcher('Line 1 and Line 2');
+    expect(result).toContain('Line 1');
+    expect(result).toContain('Line 2');
+  });
+
+  test('should handle overlapping patterns', () => {
+    const result = getPhraseMatcher('<div>Line 1</div>');
+    const expected = ['<div>', 'Line 1', '</div>'];
+    expected.forEach(exp => expect(result).toContain(exp));
+  });
+
+  test('should handle mixed whitespace', () => {
+    const result = getPhraseMatcher('Word1  Word2\tWord3');
+    expect(result).toContain('Word1');
+    expect(result).toContain('  ');
+    expect(result).toContain('\t');
+    expect(result).toContain('Word2');
+    expect(result).toContain('Word3');
+  });
+});
+
+describe('Line Ending Helper Tests', () => {
+  test('visualizeLineEnding should handle edge cases', () => {
+    expect(visualizeLineEnding(undefined)).toBe('<span class="empty-line">&nbsp;</span>');
+    expect(visualizeLineEnding(null)).toBe('<span class="empty-line">&nbsp;</span>');
+    expect(visualizeLineEnding('')).toBe('<span class="empty-line">&nbsp;</span>');
+    expect(visualizeLineEnding('content')).toBe('content');
+  });
+
+  test('addLineEnding should add HTML markup', () => {
+    expect(addLineEnding('test')).toBe('test<span class="line-ending">¬</span>');
+  });
+});
+
+describe('compareLines Tests', () => {
+  test('should handle identical lines', () => {
+    const { result1, result2 } = compareLines('same line', 'same line', { showAllSpaces: false });
+    expect(result1).toBe(result2);
+    expect(result1).toContain('same line<span class="line-ending">¬</span>');
+  });
+
+  test('should handle empty lines in compareLines', () => {
+    const { result1, result2 } = compareLines('', '', { showAllSpaces: false });
+    expect(result1).toBe('<span class="empty-line">&nbsp;</span>');
+    expect(result2).toBe('<span class="empty-line">&nbsp;</span>');
+  });
+
+
+  test('should handle one empty line', () => {
+    const { result1, result2 } = compareLines('content', '', { showAllSpaces: false });
+    expect(result1).toContain('<del>content');
+    expect(result2).toBe('<span class="empty-line">&nbsp;</span>');
+  });
+
+  test('should mark similar words with mod class', () => {
+    const { result1, result2 } = compareLines('testing', 'tasting', { showAllSpaces: false });
+    expect(result1).toContain('<span class="mod">testing</span>');
+    expect(result2).toContain('<span class="mod">tasting</span>');
+  });
+});
+
+// Original Integration Tests
 describe('Diff Checker Tests', () => {
   test('identical texts should return same content without highlights', () => {
     const text1 = 'Hello World';

@@ -139,6 +139,10 @@ function getPhraseMatcher(text) {
 
 function compareLines(line1, line2, config) {
   if (line1 === line2) {
+    if (line1 === '') {
+      const emptyLine = '<span class="empty-line">&nbsp;</span>';
+      return { result1: emptyLine, result2: emptyLine };
+    }
     return {
       result1: addLineEnding(escapeHtml(line1, config)),
       result2: addLineEnding(escapeHtml(line2, config))
@@ -324,4 +328,14 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 // Exports for testing
 // ===================================
 
-export { diff, visualizeSpaces, escapeHtml };
+export { 
+  diff, 
+  visualizeSpaces, 
+  escapeHtml,
+  // Internal helpers exposed for testing
+  checkSimilarity,
+  getPhraseMatcher,
+  visualizeLineEnding,
+  addLineEnding,
+  compareLines
+};
