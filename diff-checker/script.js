@@ -1,26 +1,56 @@
 // Core diff functionality
-function escapeHtml(text) {
-  return text
+function visualizeSpaces(text, config = {
+  showAllSpaces: true,
+  showTabs: true,
+  showNonBreaking: true
+}) {
+  let result = text;
+
+  // Handle tabs first
+  if (config.showTabs) {
+    result = result.replace(/\t/g, '→');
+  }
+
+  // Handle spaces based on configuration
+  if (config.showAllSpaces) {
+    // Show all spaces as dots
+    result = result.replace(/ /g, '·');
+  } else {
+    // Only show trailing spaces as dots (including consecutive spaces)
+    result = result.replace(/ +(?=\n|$)/g, match => '·'.repeat(match.length));
+    // Keep other spaces as they are
+    result = result.replace(/ +(?!\n|$)/g, match => ' '.repeat(match.length));
+  }
+  
+  return result;
+}
+
+function escapeHtml(text, config = {
+  showAllSpaces: true,
+  showTabs: true,
+  showNonBreaking: true
+}) {
+  const escaped = text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-    .replace(/ /g, (match, offset, string) => {
-      return offset === string.length - 1 || string[offset + 1] === '\n'
-        ? '·'
-        : ' ';
-    });
+    .replace(/'/g, '&#39;');
+  return visualizeSpaces(escaped, config);
 }
 
 function visualizeLineEnding(line) {
-  if (line === undefined || line === null) {
+  if (line === undefined || line === null || line === '') {
     return '<span class="empty-line">&nbsp;</span>';
   }
-  return `${line}<span class="line-ending">¬</span>`;
+  return line;  // Line endings are handled in compareLines
 }
 
-function diff(text1, text2) {
+function diff(text1, text2, config = {
+  showAllSpaces: true,
+  showTabs: true,
+  showNonBreaking: true
+}) {
   // Split and ensure empty lines are preserved
   const lines1 = text1.split('\n');
   const lines2 = text2.split('\n');
@@ -113,31 +143,33 @@ function diff(text1, text2) {
     return filtered.map(m => m.text);
   }
 
-  function compareLines(line1, line2) {
+  function addLineEnding(text) {
+    return `${text}<span class="line-ending">¬</span>`;
+  }
+
+  function compareLines(line1, line2, config) {
     if (line1 === line2) {
       return {
-        result1: escapeHtml(line1),
-        result2: escapeHtml(line2)
+        result1: addLineEnding(escapeHtml(line1, config)),
+        result2: addLineEnding(escapeHtml(line2, config))
       };
     }
 
     if (line1 === '' && line2 === '') {
-      return {
-        result1: '<span class="empty-line">&nbsp;</span>',
-        result2: '<span class="empty-line">&nbsp;</span>'
-      };
+      const emptyLine = '<span class="empty-line">&nbsp;</span>';
+      return { result1: emptyLine, result2: emptyLine };
     }
 
     // Handle empty line cases
     if (line1 === '') {
       return {
         result1: '<span class="empty-line">&nbsp;</span>',
-        result2: `<ins>${escapeHtml(line2)}</ins>`
+        result2: `<ins>${addLineEnding(escapeHtml(line2, config))}</ins>`
       };
     }
     if (line2 === '') {
       return {
-        result1: `<del>${escapeHtml(line1)}</del>`,
+        result1: `<del>${addLineEnding(escapeHtml(line1, config))}</del>`,
         result2: '<span class="empty-line">&nbsp;</span>'
       };
     }
@@ -154,9 +186,9 @@ function diff(text1, text2) {
       // Handle remaining words in text1
       if (i < words1.length && j >= words2.length) {
         if (/\S/.test(words1[i])) {
-          result1 += `<del>${escapeHtml(words1[i])}</del>`;
+          result1 += `<del>${escapeHtml(words1[i], config)}</del>`;
         } else {
-          result1 += escapeHtml(words1[i]);
+          result1 += escapeHtml(words1[i], config);
         }
         i++;
         continue;
@@ -165,9 +197,9 @@ function diff(text1, text2) {
       // Handle remaining words in text2
       if (j < words2.length && i >= words1.length) {
         if (/\S/.test(words2[j])) {
-          result2 += `<ins>${escapeHtml(words2[j])}</ins>`;
+          result2 += `<ins>${escapeHtml(words2[j], config)}</ins>`;
         } else {
-          result2 += escapeHtml(words2[j]);
+          result2 += escapeHtml(words2[j], config);
         }
         j++;
         continue;
@@ -178,23 +210,33 @@ function diff(text1, text2) {
       const word2 = words2[j];
       
       if (word1 === word2) {
-        result1 += escapeHtml(word1);
-        result2 += escapeHtml(word2);
+        result1 += escapeHtml(word1, config);
+        result2 += escapeHtml(word2, config);
       } else if (/^\s+$/.test(word1) && /^\s+$/.test(word2)) {
-        result1 += escapeHtml(word1);
-        result2 += escapeHtml(word2);
+        // Handle whitespace differences more precisely
+        if (word1 === word2) {
+          result1 += escapeHtml(word1, config);
+          result2 += escapeHtml(word2, config);
+        } else {
+          result1 += `<del>${escapeHtml(word1, config)}</del>`;
+          result2 += `<ins>${escapeHtml(word2, config)}</ins>`;
+        }
       } else if (checkSimilarity(word1, word2)) {
-        result1 += `<span class="mod">${escapeHtml(word1)}</span>`;
-        result2 += `<span class="mod">${escapeHtml(word2)}</span>`;
+        result1 += `<span class="mod">${escapeHtml(word1, config)}</span>`;
+        result2 += `<span class="mod">${escapeHtml(word2, config)}</span>`;
       } else {
-        result1 += `<del>${escapeHtml(word1)}</del>`;
-        result2 += `<ins>${escapeHtml(word2)}</ins>`;
+        result1 += `<del>${escapeHtml(word1, config)}</del>`;
+        result2 += `<ins>${escapeHtml(word2, config)}</ins>`;
       }
       i++;
       j++;
     }
     
-    return { result1, result2 };
+    // Always apply line endings after all the comparison logic
+    return {
+      result1: addLineEnding(result1),
+      result2: addLineEnding(result2)
+    };
   }
 
   while (i < lines1.length || j < lines2.length) {
@@ -203,25 +245,26 @@ function diff(text1, text2) {
 
     if (i < lines1.length && j < lines2.length) {
       if (lines1[i] === lines2[j]) {
-        original += `<span class="line-num">${paddedNum1}</span>${visualizeLineEnding(escapeHtml(lines1[i]))}\n`;
-        modified += `<span class="line-num">${paddedNum2}</span>${visualizeLineEnding(escapeHtml(lines2[j]))}\n`;
+        const visualized = addLineEnding(escapeHtml(lines1[i], config));
+        original += `<span class="line-num">${paddedNum1}</span>${visualized}\n`;
+        modified += `<span class="line-num">${paddedNum2}</span>${visualized}\n`;
       } else {
-        const { result1, result2 } = compareLines(lines1[i], lines2[j]);
-        original += `<span class="line-num">${paddedNum1}</span>${visualizeLineEnding(result1)}\n`;
-        modified += `<span class="line-num">${paddedNum2}</span>${visualizeLineEnding(result2)}\n`;
+        const { result1, result2 } = compareLines(lines1[i], lines2[j], config);
+        original += `<span class="line-num">${paddedNum1}</span>${result1}\n`;
+        modified += `<span class="line-num">${paddedNum2}</span>${result2}\n`;
       }
       lineNum1++;
       lineNum2++;
       i++;
       j++;
     } else if (i < lines1.length) {
-      original += `<span class="line-num">${paddedNum1}</span><del>${visualizeLineEnding(escapeHtml(lines1[i]))}</del>\n`;
+      original += `<span class="line-num">${paddedNum1}</span><del>${addLineEnding(escapeHtml(lines1[i], config))}</del>\n`;
       modified += `<span class="line-num">${paddedNum2}</span><span class="empty-line">&nbsp;</span>\n`;
       lineNum1++;
       i++;
     } else {
       original += `<span class="line-num">${paddedNum1}</span><span class="empty-line">&nbsp;</span>\n`;
-      modified += `<span class="line-num">${paddedNum2}</span><ins>${visualizeLineEnding(escapeHtml(lines2[j]))}</ins>\n`;
+      modified += `<span class="line-num">${paddedNum2}</span><ins>${addLineEnding(escapeHtml(lines2[j], config))}</ins>\n`;
       lineNum2++;
       j++;
     }
@@ -230,7 +273,31 @@ function diff(text1, text2) {
   return { original, modified };
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+  const diffButton = document.getElementById('diff-button');
+  const clearButton = document.getElementById('clear-button');
+  const diffText1 = document.getElementById('diff-text1');
+  const diffText2 = document.getElementById('diff-text2');
+  const diffOriginal = document.getElementById('diff-original');
+  const diffModified = document.getElementById('diff-modified');
+
+  diffButton.addEventListener('click', () => {
+    const text1 = diffText1.value;
+    const text2 = diffText2.value;
+    const { original, modified } = diff(text1, text2);
+    diffOriginal.innerHTML = original;
+    diffModified.innerHTML = modified;
+  });
+
+  clearButton.addEventListener('click', () => {
+    diffText1.value = '';
+    diffText2.value = '';
+    diffOriginal.innerHTML = '';
+    diffModified.innerHTML = '';
+  });
+});
+
 // Export for testing
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { diff };
+  module.exports = { diff, visualizeSpaces, escapeHtml };
 }
