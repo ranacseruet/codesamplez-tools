@@ -1,5 +1,4 @@
-// Import functions
-const { diff, visualizeSpaces, escapeHtml } = require('./script.js');
+import { diff, visualizeSpaces, escapeHtml } from './script.js';
 
 // Simple test runner
 function describe(name, testSuite) {
