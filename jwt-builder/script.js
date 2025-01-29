@@ -101,6 +101,7 @@ function addClaim() {
     <input type="text" name="claimName">
     <label for="claimValue">Claim Value:</label>
     <input type="text" name="claimValue">
+    <button type="button" class="delete-claim" onclick="this.parentElement.remove()">X</button>
   `;
   customClaimsDiv.appendChild(newClaimRow);
 }
