@@ -20,12 +20,76 @@ document.addEventListener('DOMContentLoaded', function() {
   // ... rest of the code ...
 });
 
-async function generateSignature(header, payload, key) {
-  const message = `${header}.${payload}`;
-  const hmac = new TextEncoder().encode(message);
-  const keyBytes = new TextEncoder().encode(key);
-  const signature = await crypto.subtle.sign('HS256', keyBytes, hmac);
-  return btoa(String.fromCharCode(...new Uint8Array(signature)));
+function uint8ArrayToString(array) {
+  const CHUNK_SIZE = 8192; // Process in chunks to avoid call stack limits
+  let result = '';
+  for (let i = 0; i < array.length; i += CHUNK_SIZE) {
+    const chunk = array.subarray(i, i + CHUNK_SIZE);
+    result += String.fromCharCode.apply(null, chunk);
+  }
+  return result;
+}
+
+function base64UrlEncode(input) {
+  let data;
+  if (input instanceof ArrayBuffer) {
+    data = new Uint8Array(input);
+  } else if (input instanceof Uint8Array) {
+    data = input;
+  } else {
+    // For strings, convert to UTF-8 bytes first
+    data = new TextEncoder().encode(input);
+  }
+  
+  // Convert Uint8Array to string in chunks
+  const binary = uint8ArrayToString(data);
+  
+  // Convert to base64 and then to base64url
+  return btoa(binary)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+async function generateSignature(signingInput, key) {
+  try {
+    console.log('Generating signature for input:', signingInput);
+    console.log('Using key:', key);
+    
+    // Import the key for HMAC-SHA256
+    const keyBytes = new TextEncoder().encode(key);
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyBytes,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    // Sign the input
+    const messageBytes = new TextEncoder().encode(signingInput);
+    const signatureBytes = await crypto.subtle.sign(
+      'HMAC',
+      cryptoKey,
+      messageBytes
+    );
+    
+    // Convert the signature bytes to base64url
+    const signature = base64UrlEncode(signatureBytes);
+    console.log('Generated signature:', signature);
+    return signature;
+    
+  } catch (error) {
+    console.error('Error generating signature:', error);
+    console.error('Error details:', {
+      signingInput,
+      keyLength: key.length,
+      errorName: error.name,
+      errorMessage: error.message,
+      errorStack: error.stack
+    });
+    throw error;
+  }
 }
 
 function addClaim() {
@@ -41,7 +105,7 @@ function addClaim() {
   customClaimsDiv.appendChild(newClaimRow);
 }
 
-function buildJWT() {
+async function buildJWT() {
   const payload = {
     iat: now,
     exp: exp,
@@ -73,11 +137,21 @@ function buildJWT() {
   const resultDiv = document.getElementById('result');
 
   try {
+    // Create and encode the header
     const header = { alg: 'HS256', typ: 'JWT' };
-    const encodedHeader = btoa(JSON.stringify(header));
-    const encodedPayload = btoa(JSON.stringify(payload));
-    const signature = generateSignature(encodedHeader, encodedPayload, key);
-    const jwt = `${encodedHeader}.${encodedPayload}.${signature}`;
+    const headerB64 = base64UrlEncode(JSON.stringify(header));
+    
+    // Encode the payload
+    const payloadB64 = base64UrlEncode(JSON.stringify(payload));
+    
+    // Create the signing input (encoded header + "." + encoded payload)
+    const signingInput = `${headerB64}.${payloadB64}`;
+    
+    // Generate the signature
+    const signature = await generateSignature(signingInput, key);
+    
+    // Combine all parts to create the final JWT
+    const jwt = `${headerB64}.${payloadB64}.${signature}`;
     resultDiv.textContent = jwt;
   } catch (error) {
     if (error instanceof SyntaxError) {
