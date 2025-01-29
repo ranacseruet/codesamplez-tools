@@ -44,7 +44,12 @@
       <input type="text" id="key" class="jwt-builder-input" placeholder="Your secret key">
       <button type="button" id="buildJwtBtn" class="jwt-builder-button" onclick="buildJWT()">Build JWT</button>
     </form>
-    <div id="result" class="jwt-builder-output"></div>
+    <div class="result-container">
+      <div id="result" class="jwt-builder-output"></div>
+      <button type="button" id="copyJwtBtn" class="jwt-builder-button copy-button" onclick="copyJWT()">
+        Copy JWT
+      </button>
+    </div>
   </div>
   <script src="script.js"></script>
 </body>

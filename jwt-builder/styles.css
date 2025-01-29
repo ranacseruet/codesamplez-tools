@@ -82,8 +82,15 @@ body {
   margin-bottom: 20px;
 }
 
-#result {
+.result-container {
   margin-top: 20px;
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+#result {
   padding: 15px;
   border: 1px solid #ccc;
   border-radius: 5px;
@@ -91,6 +98,17 @@ body {
   white-space: pre-wrap;
   font-family: monospace;
   overflow-x: auto; /* Add horizontal scroll if needed */
+  flex: 1;
+  box-sizing: border-box;
+}
+
+.copy-button {
+  flex-shrink: 0;
+  background-color: #2196F3;
+}
+
+.copy-button:hover {
+  background-color: #1976D2;
 }
 
 @media (max-width: 768px) {

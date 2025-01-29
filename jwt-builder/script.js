@@ -116,8 +116,16 @@ async function buildJWT() {
     jti: "your-jti"
   };
 
-  const standardClaims = ['iss', 'exp', 'sub', 'aud', 'iat', 'nbf', 'jti'];
-  standardClaims.forEach(claim => {
+  // Handle numeric claims (exp, iat, nbf)
+  ['exp', 'iat', 'nbf'].forEach(claim => {
+    const value = document.getElementById(claim).value;
+    if (value.trim() !== "") {
+      payload[claim] = parseInt(value, 10);
+    }
+  });
+  
+  // Handle string claims
+  ['iss', 'sub', 'aud', 'jti'].forEach(claim => {
     const value = document.getElementById(claim).value;
     if (value.trim() !== "") {
       payload[claim] = value;
@@ -159,5 +167,28 @@ async function buildJWT() {
     } else {
       resultDiv.textContent = 'Error building JWT: ' + error.message;
     }
+  }
+}
+
+async function copyJWT() {
+  const resultDiv = document.getElementById('result');
+  const jwt = resultDiv.textContent;
+  
+  if (!jwt || jwt.includes('Error')) {
+    return; // Don't copy if there's no JWT or if there's an error message
+  }
+
+  try {
+    await navigator.clipboard.writeText(jwt);
+    const copyButton = document.getElementById('copyJwtBtn');
+    const originalText = copyButton.textContent;
+    copyButton.textContent = 'Copied!';
+    
+    // Reset button text after 2 seconds
+    setTimeout(() => {
+      copyButton.textContent = originalText;
+    }, 2000);
+  } catch (err) {
+    console.error('Failed to copy JWT:', err);
   }
 }
