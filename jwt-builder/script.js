@@ -1,15 +1,39 @@
-const now = Math.floor(Date.now() / 1000);
-const exp = now + 6 * 30 * 24 * 60 * 60; // 6 months from now
+function getFormattedDate(date) {
+  return date.toISOString().slice(0, 19) + 'Z';
+}
+
+function parseDateTime(value) {
+  // If it's already a numeric timestamp, return it
+  if (!isNaN(value) && value.trim() !== '') {
+    return parseInt(value, 10);
+  }
+  
+  try {
+    // Try to parse as a datetime string
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      return Math.floor(date.getTime() / 1000);
+    }
+  } catch (e) {
+    console.error('Error parsing date:', e);
+  }
+  
+  return null;
+}
 
 document.addEventListener('DOMContentLoaded', function() {
+  const now = new Date();
+  const sixMonthsFromNow = new Date(now);
+  sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+
   const payload = {
-    iat: now,
-    exp: exp,
-    iss: "your-issuer",
+    iat: getFormattedDate(now),
+    exp: getFormattedDate(sixMonthsFromNow),
+    iss: "codesamplez.com",
     sub: "your-subject",
     aud: "your-audience",
-    nbf: now,
-    jti: "your-jti"
+    nbf: getFormattedDate(now),
+    jti: "your-indentifier"
   };
 
   const standardClaims = ['iss', 'exp', 'sub', 'aud', 'iat', 'nbf', 'jti'];
@@ -107,21 +131,26 @@ function addClaim() {
 }
 
 async function buildJWT() {
+  const now = new Date();
+  const sixMonthsFromNow = new Date(now);
+  sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+
   const payload = {
-    iat: now,
-    exp: exp,
+    iat: Math.floor(now.getTime() / 1000),
+    exp: Math.floor(sixMonthsFromNow.getTime() / 1000),
     iss: "your-issuer",
     sub: "your-subject",
     aud: "your-audience",
-    nbf: now,
+    nbf: Math.floor(now.getTime() / 1000),
     jti: "your-jti"
   };
 
-  // Handle numeric claims (exp, iat, nbf)
+  // Handle datetime claims (exp, iat, nbf)
   ['exp', 'iat', 'nbf'].forEach(claim => {
     const value = document.getElementById(claim).value;
-    if (value.trim() !== "") {
-      payload[claim] = parseInt(value, 10);
+    const timestamp = parseDateTime(value);
+    if (timestamp !== null) {
+      payload[claim] = timestamp;
     }
   });
   
