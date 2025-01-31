@@ -55,6 +55,26 @@ body {
   border-radius: 4px;
 }
 
+.delete-claim {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 30px;
+  height: 30px;
+  margin-left: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: background-color 0.3s ease;
+}
+
+.delete-claim:hover {
+  background-color: #c82333;
+}
+
 .jwt-builder-button {
   background-color: #4CAF50;
   color: white;
@@ -76,14 +96,29 @@ body {
 
 .jwt-builder-button.add-claim {
   margin-bottom: 20px;
+  background-color: #2196F3;
+  padding: 8px 16px;
+  font-size: 14px;
+  align-self: flex-start;
+}
+
+.jwt-builder-button.add-claim:hover {
+  background-color: #1976D2;
 }
 
 #customClaims {
   margin-bottom: 20px;
 }
 
-#result {
+.result-container {
   margin-top: 20px;
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+#result {
   padding: 15px;
   border: 1px solid #ccc;
   border-radius: 5px;
@@ -91,6 +126,17 @@ body {
   white-space: pre-wrap;
   font-family: monospace;
   overflow-x: auto; /* Add horizontal scroll if needed */
+  flex: 1;
+  box-sizing: border-box;
+}
+
+.copy-button {
+  flex-shrink: 0;
+  background-color: #2196F3;
+}
+
+.copy-button:hover {
+  background-color: #1976D2;
 }
 
 @media (max-width: 768px) {
