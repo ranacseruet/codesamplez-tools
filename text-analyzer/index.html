@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Analyzer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="text-analyzer-root">
+        <h1 class="text-analyzer-title">Text Analyzer</h1>
+        <div class="text-analyzer-input-section">
+            <textarea id="textInput" class="text-analyzer-input" placeholder="Enter your text here..."></textarea>
+        </div>
+        <div class="text-analyzer-stats-section">
+            <h2 class="text-analyzer-section-title">Text Statistics</h2>
+            <div class="text-analyzer-stats-grid">
+                <div class="text-analyzer-stat-item">
+                    <label class="text-analyzer-stat-label">Word Count:</label>
+                    <span id="wordCount" class="text-analyzer-stat-value">0</span>
+                </div>
+                <div class="text-analyzer-stat-item">
+                    <label class="text-analyzer-stat-label">Character Count:</label>
+                    <span id="charCount" class="text-analyzer-stat-value">0</span>
+                </div>
+                <div class="text-analyzer-stat-item">
+                    <label class="text-analyzer-stat-label">Paragraph Count:</label>
+                    <span id="paragraphCount" class="text-analyzer-stat-value">0</span>
+                </div>
+                <div class="text-analyzer-stat-item">
+                    <label class="text-analyzer-stat-label">Average Word Length:</label>
+                    <span id="avgWordLength" class="text-analyzer-stat-value">0</span>
+                </div>
+                <div class="text-analyzer-stat-item">
+                    <label class="text-analyzer-stat-label">Average Sentence Length:</label>
+                    <span id="avgSentenceLength" class="text-analyzer-stat-value">0</span>
+                </div>
+                <div class="text-analyzer-stat-item text-analyzer-punctuation-stats">
+                    <label class="text-analyzer-stat-label">Punctuation Statistics:</label>
+                    <div id="punctuationStats" class="text-analyzer-punct-details">
+                        <div class="text-analyzer-punct-item">Periods: <span id="periodCount" class="text-analyzer-stat-value">0</span></div>
+                        <div class="text-analyzer-punct-item">Commas: <span id="commaCount" class="text-analyzer-stat-value">0</span></div>
+                        <div class="text-analyzer-punct-item">Question Marks: <span id="questionCount" class="text-analyzer-stat-value">0</span></div>
+                        <div class="text-analyzer-punct-item">Exclamation Marks: <span id="exclamationCount" class="text-analyzer-stat-value">0</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
