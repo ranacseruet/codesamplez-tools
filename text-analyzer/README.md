@@ -8,6 +8,10 @@ A lightweight, browser-based text analysis tool that provides real-time statisti
 - **Word Count**: Calculates the number of words by splitting text on whitespace
 - **Sentence Count**: Estimates the number of sentences by identifying common sentence endings (., !, ?)
 - **Line Count**: Tracks the number of lines in the text based on line breaks
+- **Paragraph Count**: Counts paragraphs by identifying text blocks separated by blank lines
+- **Average Word Length**: Calculates the mean length of words (excluding punctuation)
+- **Average Sentence Length**: Computes the average number of words per sentence
+- **Punctuation Statistics**: Tracks usage frequency of common punctuation marks (periods, commas, question marks, exclamation marks)
 
 ## Usage
 
@@ -28,30 +32,44 @@ The tool uses vanilla JavaScript with event listeners to provide real-time text 
 
 The application is built using:
 - HTML5 for structure
-- CSS for styling
+- CSS for modular, namespaced styling
 - Vanilla JavaScript for functionality
 
 Key components:
 ```javascript
-// Real-time updating through input event listener
-textInput.addEventListener('input', () => {
-    const text = textInput.value;
-    
-    // Character count
-    charCount.textContent = text.length;
-
-    // Word count
-    const words = text.trim().split(/\s+/);
-    wordCount.textContent = words.length === 1 && words[0] === "" ? 0 : words.length;
-
-    // Sentence count
-    const sentences = text.trim().split(/[.!?]+/);
-    sentenceCount.textContent = sentences.length === 1 && sentences[0] === "" ? 0 : sentences.length;
-
-    // Line count
-    const lines = text.trim().split('\n');
-    lineCount.textContent = lines.length;
+// Real-time text analysis with modular update functions
+document.addEventListener('DOMContentLoaded', () => {
+    const textInput = document.querySelector('.text-analyzer-input');
+    textInput.addEventListener('input', analyzeText);
 });
+
+function analyzeText() {
+    const text = document.querySelector('.text-analyzer-input').value;
+    
+    // Update all statistics
+    updateWordCount(text);
+    updateCharCount(text);
+    updateParagraphCount(text);
+    updateAverageWordLength(text);
+    updateAverageSentenceLength(text);
+    updatePunctuationStats(text);
+}
+
+// Example of new analysis functions
+function updateParagraphCount(text) {
+    const paragraphs = text.trim().split(/\n\s*\n/).filter(para => para.length > 0);
+    document.querySelector('#paragraphCount').textContent = paragraphs.length;
+}
+
+function updatePunctuationStats(text) {
+    const stats = {
+        periods: (text.match(/\./g) || []).length,
+        commas: (text.match(/,/g) || []).length,
+        questions: (text.match(/\?/g) || []).length,
+        exclamations: (text.match(/!/g) || []).length
+    };
+    // Update UI with punctuation counts
+}
 ```
 
 ## Limitations
@@ -66,11 +84,6 @@ textInput.addEventListener('input', () => {
   - Reading time estimation
   - Readability scoring (Flesch-Kincaid, etc.)
   - Keyword density analysis
-  
-- **Enhanced Text Statistics**:
-  - Paragraph count
-  - Average sentence/word length
-  - Punctuation usage statistics
   
 - **Export Capabilities**:
   - Export analysis results as CSV/PDF
