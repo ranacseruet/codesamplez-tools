@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Diff Checker</title>
-  <link rel="stylesheet" href="#diff-checker-style">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="diff-checker-container">
@@ -19,138 +19,6 @@
       <pre id="diff-result"></pre>
     </div>
   </div>
-
-  <style id="diff-checker-style">
-    /* Modern Styling */
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f9;
-      margin: 0;
-      padding: 20px;
-    }
-
-    #diff-checker-container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-
-    .text-area-container {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 20px;
-    }
-
-    textarea {
-      flex: 1;
-      min-height: 150px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-family: monospace;
-      font-size: 14px;
-      resize: vertical;
-    }
-
-    #compare-button {
-      display: block;
-      width: 100%;
-      padding: 10px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    #compare-button:hover {
-      background-color: #0056b3;
-    }
-
-    #diff-result-container {
-      margin-top: 20px;
-    }
-
-    #diff-result {
-      background: #f9f9f9;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      white-space: pre-wrap;
-      font-family: monospace;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .diff-added {
-      background-color: #e6ffed;
-      color: #2e7d32;
-    }
-
-    .diff-removed {
-      background-color: #ffebee;
-      color: #c62828;
-    }
-  </style>
-
-  <script>
-    // Plain JavaScript Diff Algorithm
-    document.getElementById('compare-button').addEventListener('click', function () {
-      const text1 = document.getElementById('text1').value.split('\n');
-      const text2 = document.getElementById('text2').value.split('\n');
-      const diffResult = document.getElementById('diff-result');
-      diffResult.innerHTML = '';
-
-      const diffs = computeDiff(text1, text2);
-
-      diffs.forEach(([type, line]) => {
-        const span = document.createElement('span');
-        span.textContent = line + '\n';
-        if (type === 'added') {
-          span.classList.add('diff-added');
-        } else if (type === 'removed') {
-          span.classList.add('diff-removed');
-        }
-        diffResult.appendChild(span);
-      });
-    });
-
-    function computeDiff(oldLines, newLines) {
-      const diffs = [];
-      let oldIndex = 0;
-      let newIndex = 0;
-
-      while (oldIndex < oldLines.length || newIndex < newLines.length) {
-        if (oldIndex < oldLines.length && newIndex < newLines.length && oldLines[oldIndex] === newLines[newIndex]) {
-          diffs.push(['unchanged', oldLines[oldIndex]]);
-          oldIndex++;
-          newIndex++;
-        } else {
-          if (newIndex < newLines.length && (oldIndex >= oldLines.length || !oldLines.includes(newLines[newIndex]))) {
-            diffs.push(['added', newLines[newIndex]]);
-            newIndex++;
-          } else if (oldIndex < oldLines.length && (newIndex >= newLines.length || !newLines.includes(oldLines[oldIndex]))) {
-            diffs.push(['removed', oldLines[oldIndex]]);
-            oldIndex++;
-          } else {
-            oldIndex++;
-            newIndex++;
-          }
-        }
-      }
-
-      return diffs;
-    }
-  </script>
+  <script src="script.js" defer></script>
 </body>
 </html>
