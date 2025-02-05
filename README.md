@@ -3,7 +3,8 @@
 
 ## Tools
 
-- **base64-converter**: Converts text to/from Base64 encoding
-- **diff-checker**: Compares text files and shows differences  
-- **jwt-parser**: Parses and validates JSON Web Tokens
-- **word-counter**: Counts words and characters in text
+- **Base64 Converter**: Converts text to/from Base64 encoding
+- **Diff Checker**: Compares text files and shows differences  
+- **JWT Parser**: Parses and validates JSON Web Tokens
+- **Text Analyzer**: Counts words and characters in text
+- **JWT Builder**: Creates and signs JSON Web Tokens with custom claims
