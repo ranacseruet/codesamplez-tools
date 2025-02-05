@@ -103,8 +103,8 @@ function computeDiff(oldLines, newLines) {
 }
 
 document.getElementById('compare-button').addEventListener('click', function () {
-  const text1 = document.getElementById('text1').value.split('\n');
-  const text2 = document.getElementById('text2').value.split('\n');
+  const text1 = document.getElementById('text1').value;
+  const text2 = document.getElementById('text2').value;
 
   const diffResult = document.getElementById('diff-result');
   diffResult.innerHTML = '';
@@ -118,8 +118,6 @@ document.getElementById('compare-button').addEventListener('click', function () 
 
   // Compute diff on plain text lines
   const diffs = computeDiff(text1Lines, text2Lines);
-
-  diffResult.innerHTML = ''; // Clear previous result
 
   diffs.forEach(([type, line]) => {
     const lineSpan = document.createElement('span');
@@ -156,33 +154,6 @@ function detectCode(text) {
   });
 
   return keywordCount > 2 || charCount > 5; // Simple heuristic: more than 2 keywords or 5 code chars
-}
-
-function computeDiff(oldLines, newLines) {
-  const diffs = [];
-  let oldIndex = 0;
-  let newIndex = 0;
-
-  while (oldIndex < oldLines.length || newIndex < newLines.length) {
-    if (oldIndex < oldLines.length && newIndex < newLines.length && oldLines[oldIndex] === newLines[newIndex]) {
-      diffs.push(['unchanged', oldLines[oldIndex]]);
-      oldIndex++;
-      newIndex++;
-    } else {
-      if (newIndex < newLines.length && (oldIndex >= oldLines.length || !oldLines.includes(newLines[newIndex]))) {
-        diffs.push(['added', newLines[newIndex]]);
-        newIndex++;
-      } else if (oldIndex < oldLines.length && (newIndex >= newLines.length || !newLines.includes(oldLines[oldIndex]))) {
-        diffs.push(['removed', oldLines[oldIndex]]);
-        oldIndex++;
-      } else {
-        oldIndex++;
-        newIndex++;
-      }
-    }
-  }
-
-  return diffs;
 }
 
 // Expose for testing
