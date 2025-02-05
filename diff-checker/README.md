@@ -18,17 +18,8 @@ The **Diff Checker Tool** is a lightweight, web-based utility designed to compar
    - Removed lines are highlighted in red.
    - Unchanged lines are displayed as-is.
 
-4. **Modern UI**
-   - Clean, responsive design with rounded corners, shadows, and a professional look.
-
-5. **No External Dependencies**
-   - Built using plain JavaScript, CSS, and HTML, ensuring portability and ease of integration.
-
-6. **Cross-Browser Compatibility**
+4. **Cross-Browser Compatibility**
    - Works in all modern browsers without requiring additional plugins or configurations.
-
-7. **Embeddable**
-   - Designed to be easily embedded into other web pages or applications.
 
 ---
 
@@ -125,11 +116,3 @@ To integrate this tool into another webpage:
 ### Issue: Tool does not load or function as expected
 - **Cause**: Conflicts with existing scripts or styles on the host page.
 - **Solution**: Verify that the tool's unique element IDs and styles do not clash with other elements on the page.
-
-## Test
-
-Requires node installed in the system.
-
-```
-node script.test.js
-```
