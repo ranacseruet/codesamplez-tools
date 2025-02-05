@@ -181,9 +181,9 @@ describe('Limitations', () => {
         
         expect(result).toEqual([
             ['removed', 'A'],
-            ['added', 'C'],
-            ['unchanged', 'B'],
-            ['removed', 'C'],
+            ['removed', 'B'],
+            ['unchanged', 'C'],
+            ['added', 'B'],
             ['added', 'A'],
         ]);
     });

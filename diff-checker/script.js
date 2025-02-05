@@ -45,7 +45,14 @@ function computeDiff(oldLines, newLines) {
     const path = [];
     let d = trace.length - 1;
     
-    while (d > 0) {
+    // Process any unchanged lines at the end
+    while (x > 0 && y > 0 && a[x - 1] === b[y - 1]) {
+      path.unshift(['unchanged', a[x - 1]]);
+      x--;
+      y--;
+    }
+    
+    while (d >= 0) {
       const v = trace[d];
       const k = x - y;
       let prevk;
