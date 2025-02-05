@@ -2,7 +2,7 @@ function expect(actual) {
     return {
         toBe(expected) {
             if (actual !== expected) {
-                throw new Error(`Expected ${expected}, but received ${actual}`);
+                throw new Error(`Expected  ${expected}, but received ${actual}`);
             }
         },
         toContain(item) {

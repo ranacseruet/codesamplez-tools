@@ -34,10 +34,10 @@ describe('Basic Functionality', () => {
             ['new1', 'new2']
         );
         expect(result).toEqual([
-            ['removed', 'old1'],
-            ['removed', 'old2'],
             ['added', 'new1'],
-            ['added', 'new2']
+            ['added', 'new2'],
+            ['removed', 'old1'],
+            ['removed', 'old2']
         ]);
     });
 });
@@ -76,11 +76,11 @@ describe('Complex Scenarios', () => {
         );
         expect(result).toEqual([
             ['unchanged', 'keep1'],
-            ['removed', 'old1'],
             ['added', 'new1'],
+            ['removed', 'old1'],
             ['unchanged', 'keep2'],
-            ['removed', 'old2'],
             ['added', 'new2'],
+            ['removed', 'old2'],
             ['unchanged', 'keep3']
         ]);
     });
@@ -92,12 +92,12 @@ describe('Complex Scenarios', () => {
         );
         expect(result).toEqual([
             ['unchanged', 'no spaces'],
-            ['removed', ' leading space'],
             ['added', 'leading space'],
-            ['removed', 'trailing space '],
             ['added', 'trailing space'],
-            ['removed', '  multiple  spaces  '],
-            ['added', ' multiple spaces ']
+            ['added', ' multiple spaces '],
+            ['removed', ' leading space'],
+            ['removed', 'trailing space '],
+            ['removed', '  multiple  spaces  ']
         ]);
     });
 });
@@ -114,8 +114,8 @@ describe('Edge Cases', () => {
         const longLine = 'a'.repeat(10000);
         const result = computeDiff([longLine], [longLine + 'b']);
         expect(result).toEqual([
-            ['removed', longLine],
-            ['added', longLine + 'b']
+            ['added', longLine + 'b'],
+            ['removed', longLine]
         ]);
     });
 
@@ -126,8 +126,8 @@ describe('Edge Cases', () => {
         );
         expect(result).toEqual([
             ['unchanged', 'Hello 👋'],
-            ['removed', '🌍 Earth'],
             ['added', '🌎 World'],
+            ['removed', '🌍 Earth'],
             ['unchanged', 'Goodbye 👋']
         ]);
     });
@@ -139,8 +139,8 @@ describe('Edge Cases', () => {
         );
         expect(result).toEqual([
             ['unchanged', 'A'],
-            ['removed', 'B'],
             ['added', 'D'],
+            ['removed', 'B'],
             ['unchanged', 'A'],
             ['unchanged', 'C']
         ]);
@@ -153,8 +153,8 @@ describe('Edge Cases', () => {
         );
         expect(result).toEqual([
             ['unchanged', '<div>'],
-            ['removed', '<p>Old text</p>'],
             ['added', '<p>New text</p>'],
+            ['removed', '<p>Old text</p>'],
             ['unchanged', '</div>']
         ]);
     });
