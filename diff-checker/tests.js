@@ -171,3 +171,29 @@ describe('Edge Cases', () => {
         expect(result.filter(([type]) => type === 'added').length).toBe(500);
     });
 });
+
+describe('Limitations', () => {
+    test('should handle moved lines correctly', () => {
+        const result = computeDiff(
+            ['A', 'B', 'C'],
+            ['C', 'B', 'A']
+        );
+        
+        // What the current algorithm will output (incorrectly):
+        // It will mark everything as added/removed because it doesn't recognize moved lines
+        expect(result).toEqual([
+            ['added', 'C'],
+            ['added', 'B'],
+            ['added', 'A'],
+            ['removed', 'A'],
+            ['removed', 'B'],
+            ['removed', 'C']
+        ]);
+    
+        // What a proper diff algorithm should output:
+        // It should recognize that the lines were just reordered
+        // The test will fail because the current algorithm can't handle this case
+    });
+});
+
+
