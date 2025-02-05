@@ -125,11 +125,3 @@ To integrate this tool into another webpage:
 ### Issue: Tool does not load or function as expected
 - **Cause**: Conflicts with existing scripts or styles on the host page.
 - **Solution**: Verify that the tool's unique element IDs and styles do not clash with other elements on the page.
-
-## Test
-
-Requires node installed in the system.
-
-```
-node script.test.js
-```
