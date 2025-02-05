@@ -1,24 +1,4 @@
- // Plain JavaScript Diff Algorithm
- document.getElementById('compare-button').addEventListener('click', function () {
-  const text1 = document.getElementById('text1').value.split('\n');
-  const text2 = document.getElementById('text2').value.split('\n');
-  const diffResult = document.getElementById('diff-result');
-  diffResult.innerHTML = '';
-
-  const diffs = computeDiff(text1, text2);
-
-  diffs.forEach(([type, line]) => {
-    const span = document.createElement('span');
-    span.textContent = line + '\n';
-    if (type === 'added') {
-      span.classList.add('diff-added');
-    } else if (type === 'removed') {
-      span.classList.add('diff-removed');
-    }
-    diffResult.appendChild(span);
-  });
-});
-
+// Plain JavaScript Diff Algorithm
 function computeDiff(oldLines, newLines) {
   const diffs = [];
   let oldIndex = 0;
@@ -45,3 +25,26 @@ function computeDiff(oldLines, newLines) {
 
   return diffs;
 }
+
+document.getElementById('compare-button').addEventListener('click', function () {
+  const text1 = document.getElementById('text1').value.split('\n');
+  const text2 = document.getElementById('text2').value.split('\n');
+  const diffResult = document.getElementById('diff-result');
+  diffResult.innerHTML = '';
+
+  const diffs = computeDiff(text1, text2);
+
+  diffs.forEach(([type, line]) => {
+    const span = document.createElement('span');
+    span.textContent = line + '\n';
+    if (type === 'added') {
+      span.classList.add('diff-added');
+    } else if (type === 'removed') {
+      span.classList.add('diff-removed');
+    }
+    diffResult.appendChild(span);
+  });
+});
+
+// Expose for testing
+window.computeDiff = computeDiff;
