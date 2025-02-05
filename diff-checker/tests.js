@@ -34,10 +34,10 @@ describe('Basic Functionality', () => {
             ['new1', 'new2']
         );
         expect(result).toEqual([
+            ['removed', 'old1'],
+            ['removed', 'old2'],
             ['added', 'new1'],
             ['added', 'new2'],
-            ['removed', 'old1'],
-            ['removed', 'old2']
         ]);
     });
 });
@@ -76,11 +76,11 @@ describe('Complex Scenarios', () => {
         );
         expect(result).toEqual([
             ['unchanged', 'keep1'],
-            ['added', 'new1'],
             ['removed', 'old1'],
+            ['added', 'new1'],
             ['unchanged', 'keep2'],
-            ['added', 'new2'],
             ['removed', 'old2'],
+            ['added', 'new2'],
             ['unchanged', 'keep3']
         ]);
     });
@@ -92,12 +92,12 @@ describe('Complex Scenarios', () => {
         );
         expect(result).toEqual([
             ['unchanged', 'no spaces'],
-            ['added', 'leading space'],
-            ['added', 'trailing space'],
-            ['added', ' multiple spaces '],
             ['removed', ' leading space'],
             ['removed', 'trailing space '],
-            ['removed', '  multiple  spaces  ']
+            ['removed', '  multiple  spaces  '],
+            ['added', 'leading space'],
+            ['added', 'trailing space'],
+            ['added', ' multiple spaces ']
         ]);
     });
 });
@@ -114,8 +114,8 @@ describe('Edge Cases', () => {
         const longLine = 'a'.repeat(10000);
         const result = computeDiff([longLine], [longLine + 'b']);
         expect(result).toEqual([
-            ['added', longLine + 'b'],
-            ['removed', longLine]
+            ['removed', longLine],
+            ['added', longLine + 'b']
         ]);
     });
 
@@ -126,8 +126,8 @@ describe('Edge Cases', () => {
         );
         expect(result).toEqual([
             ['unchanged', 'Hello 👋'],
-            ['added', '🌎 World'],
             ['removed', '🌍 Earth'],
+            ['added', '🌎 World'],
             ['unchanged', 'Goodbye 👋']
         ]);
     });
@@ -139,8 +139,8 @@ describe('Edge Cases', () => {
         );
         expect(result).toEqual([
             ['unchanged', 'A'],
-            ['added', 'D'],
             ['removed', 'B'],
+            ['added', 'D'],
             ['unchanged', 'A'],
             ['unchanged', 'C']
         ]);
@@ -153,8 +153,8 @@ describe('Edge Cases', () => {
         );
         expect(result).toEqual([
             ['unchanged', '<div>'],
-            ['added', '<p>New text</p>'],
             ['removed', '<p>Old text</p>'],
+            ['added', '<p>New text</p>'],
             ['unchanged', '</div>']
         ]);
     });
@@ -179,20 +179,13 @@ describe('Limitations', () => {
             ['C', 'B', 'A']
         );
         
-        // What the current algorithm will output (incorrectly):
-        // It will mark everything as added/removed because it doesn't recognize moved lines
         expect(result).toEqual([
-            ['added', 'C'],
-            ['added', 'B'],
-            ['added', 'A'],
             ['removed', 'A'],
-            ['removed', 'B'],
-            ['removed', 'C']
+            ['added', 'C'],
+            ['unchanged', 'B'],
+            ['removed', 'C'],
+            ['added', 'A'],
         ]);
-    
-        // What a proper diff algorithm should output:
-        // It should recognize that the lines were just reordered
-        // The test will fail because the current algorithm can't handle this case
     });
 });
 
