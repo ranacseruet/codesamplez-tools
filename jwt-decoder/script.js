@@ -1,9 +1,19 @@
+// Initialize event listeners when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    const jwtInput = document.getElementById('jwtInputToken');
+    const secretInput = document.getElementById('jwtSecretKey');
+
+    jwtInput.addEventListener('input', () => decodeJWT());
+    secretInput.addEventListener('input', () => decodeJWT());
+});
+
 async function decodeJWT() {
     const jwt = document.getElementById('jwtInputToken').value;
     const secret = document.getElementById('jwtSecretKey').value;
 
     if (!jwt) {
-        alert("Please enter a JWT token.");
+        document.getElementById('jwtDecodedOutput').textContent = "Waiting for JWT input...";
+        document.getElementById('jwtSignatureStatus').textContent = "";
         return;
     }
 
