@@ -118,16 +118,42 @@ async function generateSignature(signingInput, key) {
 
 function addClaim() {
   const customClaimsDiv = document.getElementById('customClaims');
+  
+  // Remove empty state message if it exists
+  const emptyMessage = customClaimsDiv.querySelector('.empty-claims-message');
+  if (emptyMessage) {
+    emptyMessage.remove();
+  }
+  
   const newClaimRow = document.createElement('div');
   newClaimRow.classList.add('claim-row');
   newClaimRow.innerHTML = `
-    <label for="claimName">Claim Name:</label>
-    <input type="text" name="claimName">
-    <label for="claimValue">Claim Value:</label>
-    <input type="text" name="claimValue">
-    <button type="button" class="delete-claim" onclick="this.parentElement.remove()">X</button>
+    <label for="claimName" title="Name of your custom claim">
+      Claim Name:
+      <span class="tooltip">Enter a unique identifier for your custom claim</span>
+    </label>
+    <input type="text" name="claimName" class="jwt-builder-input" placeholder="e.g., role, permissions">
+    <label for="claimValue" title="Value of your custom claim">
+      Claim Value:
+      <span class="tooltip">Enter the value for your custom claim</span>
+    </label>
+    <input type="text" name="claimValue" class="jwt-builder-input" placeholder="e.g., admin, ['read', 'write']">
+    <button type="button" class="delete-claim" onclick="removeClaim(this)" title="Remove this claim">x</button>
   `;
   customClaimsDiv.appendChild(newClaimRow);
+}
+
+function removeClaim(button) {
+  const customClaimsDiv = document.getElementById('customClaims');
+  button.parentElement.remove();
+  
+  // Show empty state message if no claims exist
+  if (customClaimsDiv.children.length === 0) {
+    const emptyMessage = document.createElement('div');
+    emptyMessage.className = 'empty-claims-message';
+    emptyMessage.textContent = 'No custom claims added yet';
+    customClaimsDiv.appendChild(emptyMessage);
+  }
 }
 
 async function buildJWT() {
@@ -175,6 +201,11 @@ async function buildJWT() {
   const resultDiv = document.getElementById('result');
 
   try {
+    if (!key.trim()) {
+      resultDiv.textContent = 'Error: Secret key is required for JWT signing';
+      return;
+    }
+
     // Create and encode the header
     const header = { alg: 'HS256', typ: 'JWT' };
     const headerB64 = base64UrlEncode(JSON.stringify(header));
