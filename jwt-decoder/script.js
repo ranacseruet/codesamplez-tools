@@ -1,4 +1,4 @@
-async function parseJWT() {
+async function decodeJWT() {
     const jwt = document.getElementById('jwtInputToken').value;
     const secret = document.getElementById('jwtSecretKey').value;
 
