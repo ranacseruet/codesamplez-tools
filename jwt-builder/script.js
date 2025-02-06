@@ -175,6 +175,11 @@ async function buildJWT() {
   const resultDiv = document.getElementById('result');
 
   try {
+    if (!key.trim()) {
+      resultDiv.textContent = 'Error: Secret key is required for JWT signing';
+      return;
+    }
+
     // Create and encode the header
     const header = { alg: 'HS256', typ: 'JWT' };
     const headerB64 = base64UrlEncode(JSON.stringify(header));
