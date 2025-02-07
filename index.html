@@ -5,52 +5,166 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CodeSamplez Tools</title>
   <style>
+    :root {
+      --primary-color: #007bff;
+      --background-color: #f5f5f5;
+      --card-background: #ffffff;
+      --text-color: #333333;
+      --shadow-color: rgba(0, 0, 0, 0.1);
+    }
+
     body {
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 20px;
-      max-width: 800px;
-      margin: 0 auto;
+      background-color: var(--background-color);
+      color: var(--text-color);
     }
+
     h1 {
       text-align: center;
-      color: #333;
+      color: var(--text-color);
+      margin-bottom: 2rem;
     }
-    .tools-list {
-      list-style: none;
-      padding: 0;
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
     }
-    .tool-item {
-      margin: 20px 0;
-      padding: 20px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    .tool-link {
+
+    .tool-card {
+      background: var(--card-background);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px var(--shadow-color);
+      transition: transform 0.2s ease-in-out;
       text-decoration: none;
-      color: #007bff;
-      font-size: 18px;
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
     }
-    .tool-link:hover {
-      text-decoration: underline;
+
+    .tool-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .tool-thumbnail {
+      width: 100%;
+      height: 200px;
+      background-color: #f8f9fa;
+      overflow: hidden;
+      position: relative;
+    }
+
+      .tool-thumbnail {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #f8f9fa 25%, #e9ecef 25%, #e9ecef 50%, #f8f9fa 50%, #f8f9fa 75%, #e9ecef 75%);
+        background-size: 20px 20px;
+        color: #555;
+        font-size: 1.25rem;
+        font-weight: 500;
+        text-align: center;
+        padding: 2rem;
+        position: relative;
+      }
+
+      .tool-thumbnail::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(1px);
+      }
+
+      .tool-thumbnail::after {
+        content: attr(data-tool);
+        position: relative;
+        z-index: 1;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+
+    .tool-content {
+      padding: 1.5rem;
+    }
+
+    .tool-name {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.5rem;
+      color: var(--primary-color);
+    }
+
+    .tool-description {
+      margin: 0;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+      .tools-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      }
     }
   </style>
 </head>
 <body>
   <h1>CodeSamplez Tools</h1>
-  <ul class="tools-list">
-    <li class="tool-item">
-      <a href="base64-converter/index.html" class="tool-link">Base64 Converter</a>
-    </li>
-    <li class="tool-item">
-      <a href="diff-checker/index.html" class="tool-link">Diff Checker</a>
-    </li>
-    <li class="tool-item">
-      <a href="jwt-decoder/index.html" class="tool-link">JWT decoder</a>
-    </li>
-    <li class="tool-item">
-      <a href="word-counter/index.html" class="tool-link">Word Counter</a>
-    </li>
-  </ul>
+  <div class="tools-grid">
+    <a href="base64-converter/index.html" class="tool-card">
+      <div class="tool-thumbnail" data-tool="Base64 Converter">
+      </div>
+      <div class="tool-content">
+        <h2 class="tool-name">Base64 Converter</h2>
+        <p class="tool-description">Convert text and files to Base64 encoding and decode Base64 strings back to their original format. Supports multiple encodings and file uploads.</p>
+      </div>
+    </a>
+
+    <a href="diff-checker/index.html" class="tool-card">
+      <div class="tool-thumbnail" data-tool="Diff Checker">
+      </div>
+      <div class="tool-content">
+        <h2 class="tool-name">Diff Checker</h2>
+        <p class="tool-description">Compare two texts side by side and highlight the differences. Perfect for comparing code snippets, configurations, or any text-based content.</p>
+      </div>
+    </a>
+
+    <a href="jwt-decoder/index.html" class="tool-card">
+      <div class="tool-thumbnail" data-tool="JWT Decoder">
+      </div>
+      <div class="tool-content">
+        <h2 class="tool-name">JWT Decoder</h2>
+        <p class="tool-description">Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.</p>
+      </div>
+    </a>
+
+    <a href="jwt-builder/index.html" class="tool-card">
+      <div class="tool-thumbnail" data-tool="JWT Builder">
+      </div>
+      <div class="tool-content">
+        <h2 class="tool-name">JWT Builder</h2>
+        <p class="tool-description">Create and sign JSON Web Tokens (JWT) with custom headers and payloads. Generate secure tokens with various signing algorithms and secret keys.</p>
+      </div>
+    </a>
+
+    <a href="text-analyzer/index.html" class="tool-card">
+      <div class="tool-thumbnail" data-tool="Text Analyzer">
+      </div>
+      <div class="tool-content">
+        <h2 class="tool-name">Text Analyzer</h2>
+        <p class="tool-description">Analyze text to get insights like character count, word count, line count, and other useful text statistics. Perfect for content writers and developers.</p>
+      </div>
+    </a>
+  </div>
 </body>
 </html>
