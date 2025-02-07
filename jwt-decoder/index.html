@@ -6,8 +6,8 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="jwt-builder-container">
-    <h1 class="jwt-builder-header">JWT Decoder & Validator</h1>
+  <div class="jwt-decoder-container">
+    <h1 class="jwt-decoder-header">JWT Decoder & Validator</h1>
     <form id="jwtForm">
       <div class="claims-group">
         <h3 class="group-header">JWT Token</h3>
@@ -16,7 +16,7 @@
             Token:
             <span class="tooltip">Required - Paste your JWT token here for decoding and validation</span>
           </label>
-          <textarea id="jwtInputToken" class="jwt-builder-input" rows="4" placeholder="Paste your JWT here..."></textarea>
+          <textarea id="jwtInputToken" class="jwt-decoder-input" rows="4" placeholder="Paste your JWT here..."></textarea>
         </div>
       </div>
 
@@ -27,15 +27,15 @@
             Secret Key:
             <span class="tooltip">Optional - Enter the secret key to verify the JWT signature</span>
           </label>
-          <input type="text" id="jwtSecretKey" class="jwt-builder-input" placeholder="Secret used to sign the token...">
+          <input type="text" id="jwtSecretKey" class="jwt-decoder-input" placeholder="Secret used to sign the token...">
         </div>
       </div>
 
       <div class="claims-group result-section">
         <h3 class="group-header">Decoded Token</h3>
         <div class="result-container">
-          <div id="jwtDecodedOutput" class="jwt-builder-output"></div>
-          <button type="button" id="copyDecodedBtn" class="jwt-builder-button copy-button" onclick="copyDecoded()" title="Copy decoded token">
+          <div id="jwtDecodedOutput" class="jwt-decoder-output"></div>
+          <button type="button" id="copyDecodedBtn" class="jwt-decoder-button copy-button" onclick="copyDecoded()" title="Copy decoded token">
             Copy Decoded
           </button>
         </div>
@@ -43,7 +43,7 @@
 
       <div class="claims-group result-section">
         <h3 class="group-header">Validation Result</h3>
-        <div id="jwtSignatureStatus" class="jwt-builder-output"></div>
+        <div id="jwtSignatureStatus" class="jwt-decoder-output"></div>
       </div>
     </form>
   </div>
