@@ -9,7 +9,7 @@
 }
 
 body {
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: Arial, sans-serif;
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
@@ -122,10 +122,9 @@ button:active {
     transform: translateY(0);
 }
 
-.diff-added {
-    background-color: rgba(46, 204, 113, 0.1);
-    color: #27ae60;
-    border-left: 4px solid var(--success-color);
+/* Diff styles */
+.diff-added,
+.diff-removed {
     margin: 4px 0;
     padding: 4px 12px;
     border-radius: 0 4px 4px 0;
@@ -133,28 +132,32 @@ button:active {
     transition: all 0.3s ease;
 }
 
-.diff-added:hover {
-    background-color: rgba(46, 204, 113, 0.15);
-    transform: translateX(2px);
+.diff-added {
+    background-color: rgba(46, 204, 113, 0.1);
+    color: #27ae60;
+    border-left: 4px solid var(--success-color);
 }
 
 .diff-removed {
     background-color: rgba(231, 76, 60, 0.1);
     color: #c0392b;
     border-left: 4px solid var(--danger-color);
-    margin: 4px 0;
-    padding: 4px 12px;
-    border-radius: 0 4px 4px 0;
-    position: relative;
-    transition: all 0.3s ease;
+}
+
+.diff-added:hover,
+.diff-removed:hover {
+    transform: translateX(2px);
+}
+
+.diff-added:hover {
+    background-color: rgba(46, 204, 113, 0.15);
 }
 
 .diff-removed:hover {
     background-color: rgba(231, 76, 60, 0.15);
-    transform: translateX(2px);
 }
 
-/* Add icons to diff lines */
+/* Diff icons */
 .diff-added::before,
 .diff-removed::before {
     position: absolute;
@@ -173,37 +176,30 @@ button:active {
     content: '\f068'; /* minus icon */
 }
 
-/* Tooltip styles */
-[title] {
-    position: relative;
-    cursor: help;
-}
-
-/* Test results styles */
+/* Test results */
 #testResults {
     margin-top: 40px;
     padding: 20px;
-    border-top: 2px solid #eee;
-}  
+    border-top: 2px solid var(--border-color);
+}
 
 .test-result {
     padding: 8px;
     margin: 4px 0;
-    font-family: monospace;
 }
 
 .test-result.pass {
-    color: #006400;
+    color: var(--success-color);
 }
 
 .test-result.fail {
-    color: #640000;
-    background-color: #fff0f0;
+    color: var(--danger-color);
+    background-color: rgba(231, 76, 60, 0.1);
 }
 
 #testResults > div:last-child {
     margin-top: 20px;
     font-weight: bold;
     padding: 10px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--border-color);
 }

@@ -6,26 +6,23 @@
   <title>Diff Checker</title>
   <link rel="stylesheet" href="styles.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
   <div id="diff-checker-container">
-    <h1>Diff Checker Tool <i class="fas fa-code-compare" title="Compare text or code snippets"></i></h1>
+    <h1>Diff Checker Tool</h1>
     <div class="text-area-container">
       <div class="textarea-wrapper">
         <textarea id="text1" placeholder="Paste your first text here..." title="Enter your original text or code here"></textarea>
-        <i class="fas fa-file-alt input-icon" title="Original text"></i>
       </div>
       <div class="textarea-wrapper">
         <textarea id="text2" placeholder="Paste your second text here..." title="Enter your modified text or code here"></textarea>
-        <i class="fas fa-file-alt input-icon" title="Modified text"></i>
       </div>
     </div>
     <button id="compare-button" title="Click to compare the two texts">
-      <i class="fas fa-magnifying-glass-plus"></i> Compare
+      Compare
     </button>
     <div id="diff-result-container">
-      <h2>Differences <i class="fas fa-list-check" title="View the differences between the texts"></i></h2>
+      <h2>Differences</h2>
       <pre id="diff-result"></pre>
     </div>
   </div>
