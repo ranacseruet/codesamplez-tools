@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Pretty Printer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="jsonpp-container">
+        <h1 class="jsonpp-title">JSON Pretty Printer</h1>
+        
+        <div class="jsonpp-input-container">
+            <textarea class="jsonpp-input" placeholder="Paste your JSON here..."></textarea>
+        </div>
+        
+        <div class="jsonpp-controls">
+            <button class="jsonpp-button jsonpp-format-btn">Format JSON</button>
+            <button class="jsonpp-button jsonpp-copy-btn" disabled>Copy Output</button>
+        </div>
+        
+        <div class="jsonpp-output-container">
+            <pre class="jsonpp-output"></pre>
+        </div>
+        
+        <div class="jsonpp-error"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
