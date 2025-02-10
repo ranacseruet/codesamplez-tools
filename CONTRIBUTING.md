@@ -18,7 +18,7 @@ The project consists of individual tools, each in their own directory:
    - README.md
    - images/ (if needed)
 3. Follow existing patterns for code organization
-4. Add your tool to the main index.html
+4. Add your tool's HTML implementation to the main index.html with a unique meanifugl identifier for the container div. 
 5. Avoid adding any external libraries/framework as much as possible.
     - Implementation should be in plain HTML, CSS and Javacript.
     - If need external dependency for some reason, ask/get approval before implementing.
