@@ -81,13 +81,6 @@ We welcome contributions! If you'd like to improve these tools:
 4. Push to the branch
 5. Create a Pull Request
 
-
-## Writing tests
-Currently the tests are a bit un-usual than traditional. Tests are not run from node/npm cli command, instead are imported into the webpage itself. This is to keep this project entirely free of any tooling setup need etc.
-To help with test runner helper functions, testHelper.js is created.
-Write tests in a js file and reference it directly from the webpage(with `<script>` tag and the tests will run when its loaded on the UI)
-
-
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
