@@ -21,7 +21,7 @@ class JSONPrettyPrinter {
       const sorted = this.sortKeysAlphabetically(parsed);
       const formatted = JSON.stringify(sorted, null, 2);
       
-      this.output.textContent = formatted;
+      this.output.innerHTML = Prism.highlight(formatted, Prism.languages.javascript, 'javascript');
       this.copyBtn.disabled = false;
       this.errorContainer.textContent = '';
     } catch (error) {
