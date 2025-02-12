@@ -36,10 +36,14 @@ The project consists of individual tools, each in their own directory:
 - Comment complex logic
 - Keep files modular and focused
 
-## Testing
-- Include test cases in `tests.js`
-- Use the provided `testHelper.js` for assertions
-- tests will be run on webpage, so avoid any node/npm type dependency.
+## Testing / Writing Unit Tests
+Currently the tests are a bit un-usual than traditional. Tests are not run from node/npm cli command, instead are imported into the webpage itself. This is to keep this project entirely free of any tooling setup need etc.
+
+- Include test cases in a `tests.js`(one per tool/subdirectory)
+- Use the provided top level `testHelper.js` for assertions
+- tests will be run on webpage, so avoid any node/npm type dependency. 
+    - Reference it directly from the webpage with `<script>` tag.
+    - Load the webpage on the browsers, test results should appear with pass/fail status.
 - Ensure all edge cases are covered
 - Test in multiple browsers
 
