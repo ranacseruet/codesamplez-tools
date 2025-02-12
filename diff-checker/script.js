@@ -129,14 +129,19 @@ document.getElementById('compare-button').addEventListener('click', function () 
     } else {
       outputLine = line + '\n';
     }
-    lineSpan.innerHTML = lineNumberHTML + outputLine;
+    
     if (type === 'added') {
+      lineSpan.innerHTML = lineNumberHTML + outputLine;
       lineSpan.classList.add('diff-added');
+      lineNumber++;
     } else if (type === 'removed') {
+      lineSpan.innerHTML = outputLine;
       lineSpan.classList.add('diff-removed');
+    } else {
+      lineSpan.innerHTML = lineNumberHTML + outputLine;
+      lineNumber++;
     }
     diffResult.appendChild(lineSpan);
-    lineNumber++;
   });
 });
 
