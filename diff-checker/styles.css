@@ -1,13 +1,3 @@
-:root {
-    --primary-color: #4a90e2;
-    --success-color: #2ecc71;
-    --danger-color: #e74c3c;
-    --background-color: #f8f9fa;
-    --border-color: #e1e4e8;
-    --text-color: #2c3e50;
-    --shadow-color: rgba(0, 0, 0, 0.1);
-}
-
 #diff-checker-container {
     width: 100%;
     max-width: 1200px;
@@ -19,6 +9,14 @@
     font-family: Arial, sans-serif;
     color: var(--text-color);
     line-height: 1.6;
+
+    --primary-color: #4a90e2;
+    --success-color: #2ecc71;
+    --danger-color: #e74c3c;
+    --background-color: #f8f9fa;
+    --border-color: #e1e4e8;
+    --text-color: #2c3e50;
+    --shadow-color: rgba(0, 0, 0, 0.1);
 }
 
 #diff-checker-container h1,
@@ -165,11 +163,15 @@
 }
 
 #diff-checker-container .diff-added::before {
-    content: '\f067'; /* plus icon */
+    content: '+'; /* plus icon */
 }
 
 #diff-checker-container .diff-removed::before {
-    content: '\f068'; /* minus icon */
+    content: '-'; /* minus icon */
+}
+
+#diff-checker-container .diff-line-number {
+    opacity: 0.5;
 }
 
 /* Test results */
