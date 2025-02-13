@@ -43,6 +43,7 @@ Currently the tests are a bit un-usual than traditional. Tests are not run from 
 - Use the provided top level `testHelper.js` for assertions
 - tests will be run on webpage, so avoid any node/npm type dependency. 
     - Reference it directly from the webpage with `<script>` tag.
+    - Also add a `<div>` html element at the bottom of web page with id `testResults`, where test results will appear.
     - Load the webpage on the browsers, test results should appear with pass/fail status.
 - Ensure all edge cases are covered
 - Test in multiple browsers

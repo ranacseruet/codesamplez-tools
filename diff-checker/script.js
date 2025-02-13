@@ -119,22 +119,27 @@ document.getElementById('compare-button').addEventListener('click', function () 
   // Compute diff on plain text lines
   const diffs = computeDiff(text1Lines, text2Lines);
 
+  let lineNumber = 1;
   diffs.forEach(([type, line]) => {
     const lineSpan = document.createElement('span');
-    let highlightedLine = line;
+    const lineNumberHTML = `<span class="diff-line-number">${lineNumber}</span> `;
     let outputLine;
     if (isCode1 || isCode2) {
       outputLine = Prism.highlight(line, Prism.languages.javascript, 'javascript') + '\n';
-      lineSpan.innerHTML = outputLine; // Use innerHTML for highlighted code
     } else {
       outputLine = line + '\n';
-      lineSpan.textContent = outputLine; // Use textContent for plain text
     }
-
+    
     if (type === 'added') {
+      lineSpan.innerHTML = lineNumberHTML + outputLine;
       lineSpan.classList.add('diff-added');
+      lineNumber++;
     } else if (type === 'removed') {
+      lineSpan.innerHTML = outputLine;
       lineSpan.classList.add('diff-removed');
+    } else {
+      lineSpan.innerHTML = lineNumberHTML + outputLine;
+      lineNumber++;
     }
     diffResult.appendChild(lineSpan);
   });
