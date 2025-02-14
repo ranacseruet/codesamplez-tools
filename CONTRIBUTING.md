@@ -57,19 +57,10 @@ Currently the tests are a bit un-usual than traditional. Tests are not run from 
 - Keep documentation up-to-date with changes
 
 ## Contribution Workflow
-1. Fork the repository
-2. Create a feature branch
+1. Pull latest changes while on "main" branch ("git pull")
+2. Create a feature branch ("git checkout -b <branch-name>" )
 3. Make your changes
 4. Add/update tests
-5. Update documentation
-6. Submit a pull request
+5. Update documentation to reflect any changes if applicable
+6. Create a new pull request ("gh pr create --base main --head <branch-name>")
 7. Address any review feedback
-
-## Code Review
-- All contributions require review
-- Reviewers will check for:
-  - Code quality
-  - Test coverage
-  - Documentation
-  - Style consistency
-  - Browser compatibility
