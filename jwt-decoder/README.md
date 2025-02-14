@@ -83,5 +83,4 @@ The tool is built using vanilla JavaScript and modern web APIs, requiring no ext
 
 - `index.html`: Structure and layout
 - `script.js`: Core functionality and token processing
-- `styles.css`: Responsive styling and visual design, including updated font family and size for improved readability.
-- `tests.js`: Unit tests to ensure core functionality and styling are working as expected.
+- `styles.css`: Responsive styling and visual design
