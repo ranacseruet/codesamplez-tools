@@ -107,7 +107,8 @@ body {
   border: 1px solid #ccc;
   border-radius: 4px;
   margin-top: 8px;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Roboto', sans-serif;
+  font-size: 18px;
 }
 
 textarea.jwt-decoder-input {
