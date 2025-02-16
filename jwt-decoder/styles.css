@@ -107,7 +107,8 @@ body {
   border: 1px solid #ccc;
   border-radius: 4px;
   margin-top: 8px;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Roboto', sans-serif;
+  font-size: 18px;
 }
 
 textarea.jwt-decoder-input {
@@ -153,12 +154,12 @@ textarea.jwt-decoder-input {
 
 .jwt-decoder-output {
   padding: 20px;
-  background-color: #fff;
+  background-color: #f0f0f0;
   border: 1px solid #e9ecef;
   border-radius: 4px;
   white-space: pre-wrap;
-  font-family: 'Courier New', monospace;
-  font-size: 14px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 16px;
   overflow-x: auto;
   flex: 1;
   box-sizing: border-box;
@@ -167,6 +168,7 @@ textarea.jwt-decoder-input {
   transition: all 0.3s ease;
   line-height: 1.5;
   word-break: break-all;
+  color: #333;
 }
 
 .jwt-decoder-output:not(:empty) {
