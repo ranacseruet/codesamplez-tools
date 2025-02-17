@@ -172,6 +172,16 @@
 
 #diff-checker-container .diff-line-number {
     opacity: 0.5;
+    display: inline-block;
+    min-width: 100px;
+    padding-right: 10px;
+    text-align: right;
+    font-family: 'Courier New', Courier, monospace;
+    user-select: none;
+    white-space: pre;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-right: 1px solid var(--border-color);
+    margin-right: 10px;
 }
 
 /* Test results */

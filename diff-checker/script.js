@@ -119,10 +119,10 @@ document.getElementById('compare-button').addEventListener('click', function () 
   // Compute diff on plain text lines
   const diffs = computeDiff(text1Lines, text2Lines);
 
-  let lineNumber = 1;
+  let oldLineNumber = 1;
+  let newLineNumber = 1;
   diffs.forEach(([type, line]) => {
     const lineSpan = document.createElement('span');
-    const lineNumberHTML = `<span class="diff-line-number">${lineNumber}</span> `;
     let outputLine;
     if (isCode1 || isCode2) {
       outputLine = Prism.highlight(line, Prism.languages.javascript, 'javascript') + '\n';
@@ -130,17 +130,31 @@ document.getElementById('compare-button').addEventListener('click', function () 
       outputLine = line + '\n';
     }
     
+    // Create line number display with proper padding
+    let lineNumberHTML = '';
+    const maxLineNumberLength = Math.max(
+      oldLineNumber.toString().length,
+      newLineNumber.toString().length
+    );
+    
     if (type === 'added') {
-      lineSpan.innerHTML = lineNumberHTML + outputLine;
-      lineSpan.classList.add('diff-added');
-      lineNumber++;
+      const paddedNew = newLineNumber.toString().padStart(maxLineNumberLength, ' ');
+      lineNumberHTML = `<span class="diff-line-number">${' '.repeat(maxLineNumberLength)} | ${paddedNew}</span> `;
+      newLineNumber++;
     } else if (type === 'removed') {
-      lineSpan.innerHTML = outputLine;
-      lineSpan.classList.add('diff-removed');
+      const paddedOld = oldLineNumber.toString().padStart(maxLineNumberLength, ' ');
+      lineNumberHTML = `<span class="diff-line-number">${paddedOld} | ${' '.repeat(maxLineNumberLength)}</span> `;
+      oldLineNumber++;
     } else {
-      lineSpan.innerHTML = lineNumberHTML + outputLine;
-      lineNumber++;
+      const paddedOld = oldLineNumber.toString().padStart(maxLineNumberLength, ' ');
+      const paddedNew = newLineNumber.toString().padStart(maxLineNumberLength, ' ');
+      lineNumberHTML = `<span class="diff-line-number">${paddedOld} | ${paddedNew}</span> `;
+      oldLineNumber++;
+      newLineNumber++;
     }
+    
+    lineSpan.innerHTML = lineNumberHTML + outputLine;
+    lineSpan.classList.add(`diff-${type}`);
     diffResult.appendChild(lineSpan);
   });
 });
