@@ -130,7 +130,7 @@ document.getElementById('compare-button').addEventListener('click', function () 
       outputLine = line + '\n';
     }
     
-    // Create line number display with proper padding
+    // Create line number display with consistent spacing
     let lineNumberHTML = '';
     const maxLineNumberLength = Math.max(
       oldLineNumber.toString().length,
@@ -139,16 +139,16 @@ document.getElementById('compare-button').addEventListener('click', function () 
     
     if (type === 'added') {
       const paddedNew = newLineNumber.toString().padStart(maxLineNumberLength, ' ');
-      lineNumberHTML = `<span class="diff-line-number">${' '.repeat(maxLineNumberLength)} | ${paddedNew}</span> `;
+      lineNumberHTML = `<span class="diff-line-number">${''.padStart(maxLineNumberLength, ' ')}│${paddedNew}</span>`;
       newLineNumber++;
     } else if (type === 'removed') {
       const paddedOld = oldLineNumber.toString().padStart(maxLineNumberLength, ' ');
-      lineNumberHTML = `<span class="diff-line-number">${paddedOld} | ${' '.repeat(maxLineNumberLength)}</span> `;
+      lineNumberHTML = `<span class="diff-line-number">${paddedOld}│${''.padStart(maxLineNumberLength, ' ')}</span>`;
       oldLineNumber++;
     } else {
       const paddedOld = oldLineNumber.toString().padStart(maxLineNumberLength, ' ');
       const paddedNew = newLineNumber.toString().padStart(maxLineNumberLength, ' ');
-      lineNumberHTML = `<span class="diff-line-number">${paddedOld} | ${paddedNew}</span> `;
+      lineNumberHTML = `<span class="diff-line-number">${paddedOld}│${paddedNew}</span>`;
       oldLineNumber++;
       newLineNumber++;
     }
