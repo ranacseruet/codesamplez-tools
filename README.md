@@ -43,6 +43,14 @@ Comprehensive text analysis tool.
 - Keyword density analysis
 - Support for multiple text formats
 
+### JSON Formatter
+A tool for formatting and validating JSON data.
+- Pretty-print JSON with proper indentation
+- Sort object keys alphabetically
+- Validate JSON syntax
+- Copy formatted output to clipboard
+- Error highlighting for invalid JSON
+
 ### JWT Builder
 Create and sign custom JSON Web Tokens.
 - Add custom claims

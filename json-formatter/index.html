@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Formatter</title>
+    <link rel="stylesheet" href="styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="jsonf-container">
+        <h1 class="jsonf-title">JSON Formatter</h1>
+        
+        <div class="jsonf-input-container">
+            <textarea class="jsonf-input" placeholder="Paste your JSON here..."></textarea>
+        </div>
+        
+        <div class="jsonf-controls">
+            <button class="jsonf-button jsonf-format-btn">Format JSON</button>
+            <button class="jsonf-button jsonf-copy-btn" disabled>Copy Output</button>
+        </div>
+        
+        <div class="jsonf-output-container">
+            <pre class="jsonf-output"><code class="language-json"></code></pre>
+        </div>
+        
+        <div class="jsonf-error"></div>
+    </div>
+
+    <script src="script.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+</body>
+</html>

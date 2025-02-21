@@ -1,10 +1,10 @@
-class JSONPrettyPrinter {
+class JSONFormatter {
   constructor() {
-    this.input = document.querySelector('.jsonpp-input');
-    this.output = document.querySelector('.jsonpp-output');
-    this.copyBtn = document.querySelector('.jsonpp-copy-btn');
-    this.formatBtn = document.querySelector('.jsonpp-format-btn');
-    this.errorContainer = document.querySelector('.jsonpp-error');
+    this.input = document.querySelector('.jsonf-input');
+    this.output = document.querySelector('.jsonf-output');
+    this.copyBtn = document.querySelector('.jsonf-copy-btn');
+    this.formatBtn = document.querySelector('.jsonf-format-btn');
+    this.errorContainer = document.querySelector('.jsonf-error');
 
     this.initializeEvents();
   }
@@ -61,7 +61,7 @@ class JSONPrettyPrinter {
   showTemporaryMessage(message) {
     const msg = document.createElement('div');
     msg.textContent = message;
-    msg.className = 'jsonpp-temp-message';
+    msg.className = 'jsonf-temp-message';
     document.body.appendChild(msg);
     
     setTimeout(() => msg.remove(), 2000);
@@ -69,4 +69,4 @@ class JSONPrettyPrinter {
 }
 
 // Initialize tool when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => new JSONPrettyPrinter());
+document.addEventListener('DOMContentLoaded', () => new JSONFormatter());
