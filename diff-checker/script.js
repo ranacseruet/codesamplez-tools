@@ -35,8 +35,8 @@ class DiffComputer {
     return String(line)
       .normalize()
       .replace(/>\s+</g, '><')  // Normalize HTML tags
-      .replace(/\s+/g, ' ')     // Normalize multiple spaces
-      .trim();
+      //.replace(/\s+/g, ' ')   // TODO: Normalize multiple spaces??
+      //.trim();                // TODO: Trim trailing spaces??
   }
 
   static areArraysEqual(arr1, arr2) {
