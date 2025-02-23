@@ -100,6 +100,17 @@ describe('Complex Scenarios', () => {
             ['added', ' multiple spaces ']
         ]);
     });
+
+    test('should handle tab vs space whitespace differences', () => {
+        const result = computeDiff(
+            ['\tTabbed line'],
+            [' Space-indented line']
+        );
+        expect(result).toEqual([
+            ['removed', '\tTabbed line'],
+            ['added', ' Space-indented line']
+        ]);
+    });
 });
 
 describe('Edge Cases', () => {
