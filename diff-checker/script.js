@@ -112,11 +112,15 @@ class DiffComputer {
           horizontalPos--;
           verticalPos--;
         } else if (verticalPos > previousVertical) {
-          changes.unshift(['added', modifiedLines[verticalPos - 1]]);
+          if (verticalPos > 0) {
+            changes.unshift(['added', modifiedLines[verticalPos - 1]]);
+          }
           verticalPos--;
         } else {
-          changes.unshift(['removed', originalLines[horizontalPos - 1]]);
-          horizontalPos--;
+          if (horizontalPos > 0) {
+            changes.unshift(['removed', originalLines[horizontalPos - 1]]);
+            horizontalPos--;
+          }
         }
       }
 
