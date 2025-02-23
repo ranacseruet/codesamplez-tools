@@ -199,3 +199,38 @@ describe('Limitations', () => {
         ]);
     });
 });
+
+describe('CSS Diff', () => {
+    //TODO: See if we can improve the code to get this test to pass
+    test('Improvement: Should handle CSS diff correctly', () => {
+        const result = computeDiff(
+            [
+                '.{',
+                '}',
+                '.pass {',
+                '}',
+                '.fail {',
+                '}'
+            ],
+            [
+                '.pass {',
+                '}',
+                '.fail {',
+                '}',
+                '.{',
+                '}'
+            ]
+        );
+
+        expect(result).toEqual([
+            ['removed', '.{'],
+            ['removed', '}'],
+            ['unchanged', '.pass {'],
+            ['unchanged', '}'],
+            ['unchanged', '.fail {'],
+            ['unchanged', '}'],
+            ['added', '.{'],
+            ['added', '}']
+        ]);
+    });
+});
