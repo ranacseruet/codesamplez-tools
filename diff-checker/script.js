@@ -1,179 +1,207 @@
-function computeDiff(oldLines, newLines) {
-  // Implementation of Myers Diff Algorithm
-  function buildGraph(a, b) {
-    const n = a.length;
-    const m = b.length;
-    const max = n + m;
-    const v = new Array(2 * max + 1).fill(0);
-    const trace = [];
+// Class to handle the diff computation using Myers Diff Algorithm
+class DiffComputer {
+  static compute(originalLines, modifiedLines) {
+    // Handle empty input cases
+    if (originalLines.length === 0) {
+      return modifiedLines.map(line => ['added', line]);
+    }
+    if (modifiedLines.length === 0) {
+      return originalLines.map(line => ['removed', line]);
+    }
 
-    for (let d = 0; d <= max; d++) {
-      trace.push([...v]);
-      for (let k = -d; k <= d; k += 2) {
-        let x;
-        if (k === -d || (k !== d && v[k - 1 + max] < v[k + 1 + max])) {
-          x = v[k + 1 + max];
+    const diffTrace = this.buildGraph(originalLines, modifiedLines);
+    return this.backtrack(originalLines, modifiedLines, diffTrace);
+  }
+
+  static buildGraph(originalText, modifiedText) {
+    const originalLength = originalText.length;
+    const modifiedLength = modifiedText.length;
+    const maxLength = originalLength + modifiedLength;
+    const distances = new Array(2 * maxLength + 1).fill(0);
+    const diffTrace = [];
+
+    for (let editDistance = 0; editDistance <= maxLength; editDistance++) {
+      diffTrace.push([...distances]);
+      for (let diagonal = -editDistance; diagonal <= editDistance; diagonal += 2) {
+        let currentPosition = this.getNextPosition(diagonal, editDistance, distances, maxLength);
+        let verticalPosition = currentPosition - diagonal;
+        
+        while (currentPosition < originalLength && 
+               verticalPosition < modifiedLength && 
+               originalText[currentPosition] === modifiedText[verticalPosition]) {
+          currentPosition++;
+          verticalPosition++;
+        }
+        
+        distances[diagonal + maxLength] = currentPosition;
+        
+        if (currentPosition >= originalLength && verticalPosition >= modifiedLength) {
+          return diffTrace;
+        }
+      }
+    }
+    return diffTrace;
+  }
+
+  static getNextPosition(diagonal, editDistance, distances, maxLength) {
+    if (diagonal === -editDistance || 
+        (diagonal !== editDistance && 
+         distances[diagonal - 1 + maxLength] < distances[diagonal + 1 + maxLength])) {
+      return distances[diagonal + 1 + maxLength];
+    }
+    return distances[diagonal - 1 + maxLength] + 1;
+  }
+
+  static backtrack(originalText, modifiedText, diffTrace) {
+    const originalLength = originalText.length;
+    const modifiedLength = modifiedText.length;
+    const maxLength = originalLength + modifiedLength;
+    let horizontalPos = originalLength;
+    let verticalPos = modifiedLength;
+    
+    const diffPath = [];
+    let traceIndex = diffTrace.length - 1;
+    
+    // Process unchanged lines at the end
+    while (horizontalPos > 0 && verticalPos > 0 && 
+           originalText[horizontalPos - 1] === modifiedText[verticalPos - 1]) {
+      diffPath.unshift(['unchanged', originalText[horizontalPos - 1]]);
+      horizontalPos--;
+      verticalPos--;
+    }
+    
+    while (traceIndex >= 0) {
+      const currentTrace = diffTrace[traceIndex];
+      const diagonal = horizontalPos - verticalPos;
+      const previousDiagonal = this.getPreviousDiagonal(diagonal, traceIndex, currentTrace, maxLength);
+      
+      const previousHorizontal = currentTrace[previousDiagonal + maxLength];
+      const previousVertical = previousHorizontal - previousDiagonal;
+      
+      while (horizontalPos > previousHorizontal && verticalPos > previousVertical) {
+        diffPath.unshift(['unchanged', originalText[horizontalPos - 1]]);
+        horizontalPos--;
+        verticalPos--;
+      }
+      
+      if (traceIndex > 0) {
+        if (horizontalPos === previousHorizontal) {
+          diffPath.unshift(['added', modifiedText[verticalPos - 1]]);
+          verticalPos--;
         } else {
-          x = v[k - 1 + max] + 1;
-        }
-        
-        let y = x - k;
-        
-        while (x < n && y < m && a[x] === b[y]) {
-          x++;
-          y++;
-        }
-        
-        v[k + max] = x;
-        
-        if (x >= n && y >= m) {
-          return trace;
+          diffPath.unshift(['removed', originalText[horizontalPos - 1]]);
+          horizontalPos--;
         }
       }
-    }
-    return trace;
-  }
-
-  function backtrack(a, b, trace) {
-    const n = a.length;
-    const m = b.length;
-    const max = n + m;
-    let x = n;
-    let y = m;
-    
-    const path = [];
-    let d = trace.length - 1;
-    
-    // Process any unchanged lines at the end
-    while (x > 0 && y > 0 && a[x - 1] === b[y - 1]) {
-      path.unshift(['unchanged', a[x - 1]]);
-      x--;
-      y--;
+      
+      traceIndex--;
     }
     
-    while (d >= 0) {
-      const v = trace[d];
-      const k = x - y;
-      let prevk;
-      
-      if (k === -d || (k !== d && v[k - 1 + max] < v[k + 1 + max])) {
-        prevk = k + 1;
-      } else {
-        prevk = k - 1;
-      }
-      
-      const prevx = v[prevk + max];
-      const prevy = prevx - prevk;
-      
-      while (x > prevx && y > prevy) {
-        path.unshift(['unchanged', a[x - 1]]);
-        x--;
-        y--;
-      }
-      
-      if (d > 0) {
-        if (x === prevx) {
-          path.unshift(['added', b[y - 1]]);
-          y--;
-        } else {
-          path.unshift(['removed', a[x - 1]]);
-          x--;
-        }
-      }
-      
-      d--;
-    }
-    
-    return path;
+    return diffPath;
   }
 
-  // Handle empty input cases
-  if (oldLines.length === 0) {
-    return newLines.map(line => ['added', line]);
+  static getPreviousDiagonal(diagonal, traceIndex, currentTrace, maxLength) {
+    return diagonal === -traceIndex || 
+           (diagonal !== traceIndex && 
+            currentTrace[diagonal - 1 + maxLength] < currentTrace[diagonal + 1 + maxLength]) 
+           ? diagonal + 1 : diagonal - 1;
   }
-  if (newLines.length === 0) {
-    return oldLines.map(line => ['removed', line]);
-  }
-
-  // Main diff computation
-  const trace = buildGraph(oldLines, newLines);
-  const diffs = backtrack(oldLines, newLines, trace);
-  
-  return diffs;
 }
 
-document.getElementById('compare-button').addEventListener('click', function () {
-  const text1 = document.getElementById('text1').value;
-  const text2 = document.getElementById('text2').value;
+// Class to handle code detection
+class CodeDetector {
+  static KEYWORDS = ['function', 'const', 'let', 'var', 'import', 'export', 'class', 'return'];
+  static CODE_CHARACTERS = ['{', '}', '(', ')', ';', '=', '=>', '.'];
+  
+  static isCode(textContent) {
+    const keywordCount = this.countOccurrences(textContent, this.KEYWORDS);
+    const syntaxCharCount = this.countOccurrences(textContent, this.CODE_CHARACTERS);
+    return keywordCount > 2 || syntaxCharCount > 5;
+  }
 
-  const diffResult = document.getElementById('diff-result');
-  diffResult.innerHTML = '';
+  static countOccurrences(textContent, searchPatterns) {
+    return searchPatterns.reduce((totalCount, pattern) => 
+      totalCount + (textContent.split(pattern).length - 1), 0);
+  }
+}
 
-  const text1Lines = text1.split('\n');
-  const text2Lines = text2.split('\n');
+// Class to handle the diff display
+class DiffDisplay {
+  constructor(diffResultElement) {
+    this.diffResultElement = diffResultElement;
+    this.originalLineNumber = 1;
+    this.modifiedLineNumber = 1;
+  }
 
-  // Detect if text is code (simple heuristic)
-  const isCode1 = detectCode(text1);
-  const isCode2 = detectCode(text2);
+  displayDiff(diffResults, isCodeContent) {
+    this.diffResultElement.innerHTML = '';
+    diffResults.forEach(([changeType, lineContent]) => {
+      const lineElement = this.createLineElement(changeType, lineContent, isCodeContent);
+      this.diffResultElement.appendChild(lineElement);
+    });
+  }
 
-  // Compute diff on plain text lines
-  const diffs = computeDiff(text1Lines, text2Lines);
-
-  let oldLineNumber = 1;
-  let newLineNumber = 1;
-  diffs.forEach(([type, line]) => {
-    const lineSpan = document.createElement('span');
-    let outputLine;
-    if (isCode1 || isCode2) {
-      outputLine = Prism.highlight(line, Prism.languages.javascript, 'javascript') + '\n';
-    } else {
-      outputLine = line + '\n';
-    }
+  createLineElement(changeType, lineContent, isCodeContent) {
+    const lineElement = document.createElement('span');
+    const formattedLine = this.formatLine(lineContent, isCodeContent);
+    const lineNumbers = this.createLineNumberHTML(changeType);
     
-    // Create line number display with consistent spacing
-    let lineNumberHTML = '';
-    const maxLineNumberLength = Math.max(
-      oldLineNumber.toString().length,
-      newLineNumber.toString().length
+    lineElement.innerHTML = lineNumbers + formattedLine;
+    lineElement.classList.add(`diff-${changeType}`);
+    return lineElement;
+  }
+
+  formatLine(lineContent, isCodeContent) {
+    return isCodeContent 
+      ? Prism.highlight(lineContent, Prism.languages.javascript, 'javascript') + '\n'
+      : lineContent + '\n';
+  }
+
+  createLineNumberHTML(changeType) {
+    const maxDigits = Math.max(
+      this.originalLineNumber.toString().length,
+      this.modifiedLineNumber.toString().length
     );
     
-    if (type === 'added') {
-      const paddedNew = newLineNumber.toString().padStart(maxLineNumberLength, ' ');
-      lineNumberHTML = `<span class="diff-line-number">${''.padStart(maxLineNumberLength, ' ')}│${paddedNew}</span>`;
-      newLineNumber++;
-    } else if (type === 'removed') {
-      const paddedOld = oldLineNumber.toString().padStart(maxLineNumberLength, ' ');
-      lineNumberHTML = `<span class="diff-line-number">${paddedOld}│${''.padStart(maxLineNumberLength, ' ')}</span>`;
-      oldLineNumber++;
-    } else {
-      const paddedOld = oldLineNumber.toString().padStart(maxLineNumberLength, ' ');
-      const paddedNew = newLineNumber.toString().padStart(maxLineNumberLength, ' ');
-      lineNumberHTML = `<span class="diff-line-number">${paddedOld}│${paddedNew}</span>`;
-      oldLineNumber++;
-      newLineNumber++;
+    let lineNumbers = '';
+    switch (changeType) {
+      case 'added':
+        lineNumbers = this.formatLineNumbers('', this.modifiedLineNumber++, maxDigits);
+        break;
+      case 'removed':
+        lineNumbers = this.formatLineNumbers(this.originalLineNumber++, '', maxDigits);
+        break;
+      default:
+        lineNumbers = this.formatLineNumbers(this.originalLineNumber++, this.modifiedLineNumber++, maxDigits);
     }
-    
-    lineSpan.innerHTML = lineNumberHTML + outputLine;
-    lineSpan.classList.add(`diff-${type}`);
-    diffResult.appendChild(lineSpan);
-  });
-});
+    return lineNumbers;
+  }
 
-function detectCode(text) {
-  const codeKeywords = ['function', 'const', 'let', 'var', 'import', 'export', 'class', 'return', '{', '}'];
-  const codeChars = ['{', '}', '(', ')', ';', '=', '=>', '.'];
-  let keywordCount = 0;
-  let charCount = 0;
-
-  codeKeywords.forEach(keyword => {
-    keywordCount += (text.split(keyword).length - 1);
-  });
-  codeChars.forEach(char => {
-    charCount += (text.split(char).length - 1);
-  });
-
-  return keywordCount > 2 || charCount > 5; // Simple heuristic: more than 2 keywords or 5 code chars
+  formatLineNumbers(originalNum, modifiedNum, maxDigits) {
+    const originalStr = originalNum 
+      ? originalNum.toString().padStart(maxDigits, ' ') 
+      : ''.padStart(maxDigits, ' ');
+    const modifiedStr = modifiedNum 
+      ? modifiedNum.toString().padStart(maxDigits, ' ') 
+      : ''.padStart(maxDigits, ' ');
+    return `<span class="diff-line-number">${originalStr}│${modifiedStr}</span>`;
+  }
 }
 
+// Main event handler
+document.getElementById('compare-button').addEventListener('click', function () {
+  const originalText = document.getElementById('text1').value;
+  const modifiedText = document.getElementById('text2').value;
+
+  const originalLines = originalText.split('\n');
+  const modifiedLines = modifiedText.split('\n');
+
+  const isCodeContent = CodeDetector.isCode(originalText) || CodeDetector.isCode(modifiedText);
+  const diffResults = DiffComputer.compute(originalLines, modifiedLines);
+  
+  const diffDisplay = new DiffDisplay(document.getElementById('diff-result'));
+  diffDisplay.displayDiff(diffResults, isCodeContent);
+});
+
 // Expose for testing
-window.computeDiff = computeDiff;
+window.computeDiff = DiffComputer.compute.bind(DiffComputer);
