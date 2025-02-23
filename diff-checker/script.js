@@ -1,7 +1,14 @@
 // Class to handle the diff computation using Myers Diff Algorithm
 class DiffComputer {
   static compute(originalLines, modifiedLines) {
-    // Handle empty input cases
+    // Ensure arrays and convert non-strings to empty strings
+    originalLines = (originalLines || []).map(line => String(line || ''));
+    modifiedLines = (modifiedLines || []).map(line => String(line || ''));
+
+    // Handle empty cases
+    if (originalLines.length === 0 && modifiedLines.length === 0) {
+      return [];
+    }
     if (originalLines.length === 0) {
       return modifiedLines.map(line => ['added', line]);
     }
@@ -9,26 +16,51 @@ class DiffComputer {
       return originalLines.map(line => ['removed', line]);
     }
 
-    const diffTrace = this.buildGraph(originalLines, modifiedLines);
-    return this.backtrack(originalLines, modifiedLines, diffTrace);
+    // Normalize all lines upfront
+    const normalizedOriginal = originalLines.map(line => this.normalizeLine(line));
+    const normalizedModified = modifiedLines.map(line => this.normalizeLine(line));
+
+    if (this.areArraysEqual(normalizedOriginal, normalizedModified)) {
+      return originalLines.map(line => ['unchanged', line]);
+    }
+
+    const diffTrace = this.buildGraph(normalizedOriginal, normalizedModified);
+    const changes = this.backtrack(originalLines, normalizedOriginal, modifiedLines, normalizedModified, diffTrace);
+    
+    // Post-process changes to handle consecutive operations better
+    return this.postProcessChanges(changes);
   }
 
-  static buildGraph(originalText, modifiedText) {
-    const originalLength = originalText.length;
-    const modifiedLength = modifiedText.length;
+  static normalizeLine(line) {
+    return String(line)
+      .normalize()
+      .replace(/>\s+</g, '><')  // Normalize HTML tags
+      .replace(/\s+/g, ' ')     // Normalize multiple spaces
+      .trim();
+  }
+
+  static areArraysEqual(arr1, arr2) {
+    if (arr1.length !== arr2.length) return false;
+    return arr1.every((item, index) => item === arr2[index]);
+  }
+
+  static buildGraph(originalLines, modifiedLines) {
+    const originalLength = originalLines.length;
+    const modifiedLength = modifiedLines.length;
     const maxLength = originalLength + modifiedLength;
     const distances = new Array(2 * maxLength + 1).fill(0);
     const diffTrace = [];
 
     for (let editDistance = 0; editDistance <= maxLength; editDistance++) {
       diffTrace.push([...distances]);
+      
       for (let diagonal = -editDistance; diagonal <= editDistance; diagonal += 2) {
         let currentPosition = this.getNextPosition(diagonal, editDistance, distances, maxLength);
         let verticalPosition = currentPosition - diagonal;
         
         while (currentPosition < originalLength && 
                verticalPosition < modifiedLength && 
-               originalText[currentPosition] === modifiedText[verticalPosition]) {
+               originalLines[currentPosition] === modifiedLines[verticalPosition]) {
           currentPosition++;
           verticalPosition++;
         }
@@ -52,52 +84,85 @@ class DiffComputer {
     return distances[diagonal - 1 + maxLength] + 1;
   }
 
-  static backtrack(originalText, modifiedText, diffTrace) {
-    const originalLength = originalText.length;
-    const modifiedLength = modifiedText.length;
-    const maxLength = originalLength + modifiedLength;
-    let horizontalPos = originalLength;
-    let verticalPos = modifiedLength;
-    
-    const diffPath = [];
+  static backtrack(originalLines, normalizedOriginal, modifiedLines, normalizedModified, diffTrace) {
+    const changes = [];
+    let horizontalPos = originalLines.length;
+    let verticalPos = modifiedLines.length;
     let traceIndex = diffTrace.length - 1;
-    
-    // Process unchanged lines at the end
-    while (horizontalPos > 0 && verticalPos > 0 && 
-           originalText[horizontalPos - 1] === modifiedText[verticalPos - 1]) {
-      diffPath.unshift(['unchanged', originalText[horizontalPos - 1]]);
-      horizontalPos--;
-      verticalPos--;
-    }
-    
-    while (traceIndex >= 0) {
+
+    while (horizontalPos > 0 || verticalPos > 0) {
+      if (traceIndex < 0) {
+        while (horizontalPos > 0) changes.unshift(['removed', originalLines[--horizontalPos]]);
+        while (verticalPos > 0) changes.unshift(['added', modifiedLines[--verticalPos]]);
+        break;
+      }
+
       const currentTrace = diffTrace[traceIndex];
       const diagonal = horizontalPos - verticalPos;
+      const maxLength = originalLines.length + modifiedLines.length;
       const previousDiagonal = this.getPreviousDiagonal(diagonal, traceIndex, currentTrace, maxLength);
       
       const previousHorizontal = currentTrace[previousDiagonal + maxLength];
       const previousVertical = previousHorizontal - previousDiagonal;
-      
-      while (horizontalPos > previousHorizontal && verticalPos > previousVertical) {
-        diffPath.unshift(['unchanged', originalText[horizontalPos - 1]]);
-        horizontalPos--;
-        verticalPos--;
-      }
-      
-      if (traceIndex > 0) {
-        if (horizontalPos === previousHorizontal) {
-          diffPath.unshift(['added', modifiedText[verticalPos - 1]]);
+
+      while (horizontalPos > previousHorizontal || verticalPos > previousVertical) {
+        if (horizontalPos > 0 && verticalPos > 0 && 
+            normalizedOriginal[horizontalPos - 1] === normalizedModified[verticalPos - 1]) {
+          changes.unshift(['unchanged', originalLines[horizontalPos - 1]]);
+          horizontalPos--;
+          verticalPos--;
+        } else if (verticalPos > previousVertical) {
+          changes.unshift(['added', modifiedLines[verticalPos - 1]]);
           verticalPos--;
         } else {
-          diffPath.unshift(['removed', originalText[horizontalPos - 1]]);
+          changes.unshift(['removed', originalLines[horizontalPos - 1]]);
           horizontalPos--;
         }
       }
-      
+
       traceIndex--;
     }
-    
-    return diffPath;
+
+    return changes;
+  }
+
+  static postProcessChanges(changes) {
+    const result = [];
+    let i = 0;
+
+    while (i < changes.length) {
+      const current = changes[i];
+      
+      // Look ahead for patterns
+      if (i + 2 < changes.length) {
+        const next = changes[i + 1];
+        const afterNext = changes[i + 2];
+
+        // Pattern: unchanged-added-unchanged -> keep all unchanged
+        if (current[0] === 'unchanged' && next[0] === 'added' && afterNext[0] === 'unchanged') {
+          result.push(current);
+          result.push(next);
+          result.push(afterNext);
+          i += 3;
+          continue;
+        }
+
+        // Pattern: unchanged-removed-unchanged -> keep all unchanged
+        if (current[0] === 'unchanged' && next[0] === 'removed' && afterNext[0] === 'unchanged') {
+          result.push(current);
+          result.push(next);
+          result.push(afterNext);
+          i += 3;
+          continue;
+        }
+      }
+
+      // No pattern matched, add current change
+      result.push(current);
+      i++;
+    }
+
+    return result;
   }
 
   static getPreviousDiagonal(diagonal, traceIndex, currentTrace, maxLength) {
@@ -152,9 +217,14 @@ class DiffDisplay {
   }
 
   formatLine(lineContent, isCodeContent) {
-    return isCodeContent 
-      ? Prism.highlight(lineContent, Prism.languages.javascript, 'javascript') + '\n'
-      : lineContent + '\n';
+    if (!isCodeContent) return lineContent + '\n';
+    
+    try {
+      return Prism.highlight(lineContent, Prism.languages.javascript, 'javascript') + '\n';
+    } catch (error) {
+      console.warn('Syntax highlighting failed:', error);
+      return lineContent + '\n';
+    }
   }
 
   createLineNumberHTML(changeType) {
