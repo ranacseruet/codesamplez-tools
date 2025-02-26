@@ -2,6 +2,13 @@
 
 A lightweight, browser-based text analysis tool that provides real-time statistics about your text.
 
+## Privacy & Security
+- 🔒 **100% Client-Side Processing**: All text analysis happens locally in your browser
+- 🚫 **No Data Storage**: Your text is never saved or transmitted to any server
+- 💻 **Offline Support**: Works without internet connection after initial page load
+- 🔐 **Zero Data Collection**: No cookies, tracking, or data persistence
+- 🧹 **Session Privacy**: All text is cleared when you close the browser tab
+
 ## Features
 
 - **Character Count**: Counts every character in the text, including spaces and punctuation
