@@ -3,6 +3,12 @@
 ## Summary
 The **Diff Checker Tool** is a lightweight, web-based utility designed to compare two blocks of text and highlight their differences. It provides an intuitive interface for users to paste texts, compare them, and view the changes in a clear, color-coded format. The tool is particularly useful for comparing multiline texts, programming code, HTML, or any other textual content. Built entirely with plain JavaScript, CSS, and HTML, it ensures compatibility and performance without relying on external libraries or frameworks.
 
+## Privacy & Security
+- 🔒 **100% Client-Side Processing**: All text comparisons are performed locally in your browser
+- 🚫 **No Data Storage**: Your text content is never saved or transmitted to any server
+- 💻 **Offline Capability**: Works without an internet connection once loaded
+- 🔐 **Data Privacy**: No cookies, tracking, or data collection of any kind
+
 ---
 
 ## Supported Features

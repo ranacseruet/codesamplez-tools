@@ -2,6 +2,14 @@
 
 A powerful, browser-based tool for decoding and validating JSON Web Tokens (JWT). This tool provides a secure, client-side solution for developers to inspect and verify JWT tokens without sending sensitive data to any server.
 
+## Privacy & Security
+- 🔒 **100% Client-Side Processing**: All token decoding and validation happens in your browser
+- 🚫 **Zero Data Storage**: Your tokens and secret keys are never saved or transmitted anywhere
+- 💻 **Offline Capability**: Works completely offline after initial page load
+- 🔐 **Secure Key Handling**: Secret keys are only used in memory and never persisted
+- 🛡️ **No External Dependencies**: Uses only native browser crypto APIs for secure operations
+- 🧹 **No Data Persistence**: All data is cleared when you close the browser tab
+
 ## Features
 
 - **Real-time Decoding**: Instantly decode JWT tokens as you type

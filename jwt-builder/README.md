@@ -6,6 +6,13 @@ A powerful and user-friendly web tool for building JSON Web Tokens (JWTs) with s
 
 JWT Builder is a browser-based tool that allows users to create JWTs by specifying standard claims, adding custom claims, and signing tokens using HMAC-SHA256 (HS256) algorithm. The tool provides an intuitive interface for JWT generation with real-time validation and error handling.
 
+## Privacy & Security
+- 🔒 **100% Client-Side Processing**: All JWT operations including signing are performed locally in your browser
+- 🚫 **Zero Data Storage**: Your claims and signature keys are never saved or transmitted anywhere
+- 💻 **Offline Capability**: Works completely offline after initial page load
+- 🔐 **Secure Key Handling**: Secret keys are only used in memory and never stored or transmitted
+- 🛡️ **No External Dependencies**: Uses only native browser crypto APIs for secure operations
+
 ## Features
 
 - Support for all standard JWT claims:

@@ -2,6 +2,12 @@
 
 A tool for formatting and validating JSON data with alphabetical key sorting.
 
+## Privacy & Security
+- 🔒 **100% Client-Side Processing**: All JSON formatting and validation happens in your browser
+- 🚫 **No Server Storage**: Your JSON data is never saved or transmitted to any server
+- 💻 **Offline Support**: Fully functional without internet connection once loaded
+- 🔐 **Zero Data Collection**: No cookies, tracking, or data persistence of any kind
+
 ## Features
 - Pretty-print JSON with proper indentation
 - Sort object keys alphabetically for consistent output

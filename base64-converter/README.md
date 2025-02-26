@@ -2,6 +2,12 @@
 
 A powerful and user-friendly web tool for encoding and decoding Base64 strings with support for multiple character encodings.
 
+## Privacy & Security
+
+- 🔒 100% client-side processing - all conversions happen in your browser
+- 🚫 No data storage - your data is never saved or transmitted anywhere
+- 💻 Works offline - can be used without an internet connection
+
 ## Features
 
 - 🔄 Auto-detection of Base64 strings
