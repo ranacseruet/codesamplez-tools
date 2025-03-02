@@ -66,6 +66,27 @@
     box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
 }
 
+#diff-checker-container .options-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+#diff-checker-container .option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+#diff-checker-container .option input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
 #diff-checker-container button {
     padding: 12px 24px;
     font-size: 16px;

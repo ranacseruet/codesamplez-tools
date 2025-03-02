@@ -42,6 +42,51 @@ describe('Basic Functionality', () => {
     });
 });
 
+describe('Whitespace Handling', () => {
+    test('should respect whitespace sensitivity setting', () => {
+        // With whitespace ignored (default)
+        const resultIgnored = computeDiff(
+            ['  spaced  ', '\ttabbed\t', 'no-space'],
+            ['spaced', 'tabbed', 'no-space'],
+            true
+        );
+        expect(resultIgnored).toEqual([
+            ['unchanged', '  spaced  '],
+            ['unchanged', '\ttabbed\t'],
+            ['unchanged', 'no-space']
+        ]);
+
+        // With whitespace sensitive
+        const resultSensitive = computeDiff(
+            ['  spaced  ', '\ttabbed\t', 'no-space'],
+            ['spaced', 'tabbed', 'no-space'],
+            false
+        );
+        expect(resultSensitive).toEqual([
+            ['removed', '  spaced  '],
+            ['removed', '\ttabbed\t'],
+            ['added', 'spaced'],
+            ['added', 'tabbed'],
+            ['unchanged', 'no-space']
+        ]);
+    });
+
+    test('should handle mixed whitespace with sensitivity', () => {
+        const result = computeDiff(
+            ['function() {', '  return true;', '}'],
+            ['function(){', 'return true;', '}'],
+            false
+        );
+        expect(result).toEqual([
+            ['removed', 'function() {'],
+            ['removed', '  return true;'],
+            ['added', 'function(){'],
+            ['added', 'return true;'],
+            ['unchanged', '}'],
+        ]);
+    });
+});
+
 describe('Complex Scenarios', () => {
     test('should handle multiple line additions', () => {
         const result = computeDiff(
@@ -88,7 +133,8 @@ describe('Complex Scenarios', () => {
     test('should handle whitespace differences', () => {
         const result = computeDiff(
             ['no spaces', ' leading space', 'trailing space ', '  multiple  spaces  '],
-            ['no spaces', 'leading space', 'trailing space', ' multiple spaces ']
+            ['no spaces', 'leading space', 'trailing space', ' multiple spaces '],
+            false
         );
         expect(result).toEqual([
             ['unchanged', 'no spaces'],
