@@ -18,9 +18,15 @@
         <textarea id="text2" placeholder="Paste your second text here..." title="Enter your modified text or code here"></textarea>
       </div>
     </div>
-    <button id="compare-button" title="Click to compare the two texts">
-      Compare
-    </button>
+    <div class="options-container">
+      <label class="option">
+        <input type="checkbox" id="ignore-whitespace" checked>
+        Ignore whitespace differences
+      </label>
+      <button id="compare-button" title="Click to compare the two texts">
+        Compare
+      </button>
+    </div>
     <div id="diff-result-container">
       <h2>Differences</h2>
       <pre id="diff-result"></pre>

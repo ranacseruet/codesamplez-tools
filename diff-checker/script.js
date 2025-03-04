@@ -1,6 +1,6 @@
 // Class to handle the diff computation using Myers Diff Algorithm
 class DiffComputer {
-  static compute(originalLines, modifiedLines) {
+  static compute(originalLines, modifiedLines, ignoreWhitespace = true) {
     // Ensure arrays and convert non-strings to empty strings
     originalLines = (originalLines || []).map(line => String(line || ''));
     modifiedLines = (modifiedLines || []).map(line => String(line || ''));
@@ -16,9 +16,9 @@ class DiffComputer {
       return originalLines.map(line => ['removed', line]);
     }
 
-    // Normalize all lines upfront
-    const normalizedOriginal = originalLines.map(line => this.normalizeLine(line));
-    const normalizedModified = modifiedLines.map(line => this.normalizeLine(line));
+    // Normalize all lines upfront with whitespace setting
+    const normalizedOriginal = originalLines.map(line => this.normalizeLine(line, ignoreWhitespace));
+    const normalizedModified = modifiedLines.map(line => this.normalizeLine(line, ignoreWhitespace));
 
     if (this.areArraysEqual(normalizedOriginal, normalizedModified)) {
       return originalLines.map(line => ['unchanged', line]);
@@ -31,12 +31,17 @@ class DiffComputer {
     return this.postProcessChanges(changes);
   }
 
-  static normalizeLine(line) {
-    return String(line)
-      .normalize()
-      .replace(/>\s+</g, '><')  // Normalize HTML tags
-      //.replace(/\s+/g, ' ')   // TODO: Normalize multiple spaces??
-      //.trim();                // TODO: Trim trailing spaces??
+  static normalizeLine(line, ignoreWhitespace = true) {
+    let normalized = String(line).normalize();
+    
+    if (ignoreWhitespace) {
+      normalized = normalized
+        .replace(/>\s+</g, '><')  // Normalize HTML tags
+        .replace(/\s+/g, ' ')     // Normalize multiple spaces
+        .trim();                  // Trim trailing spaces
+    }
+    
+    return normalized;
   }
 
   static areArraysEqual(arr1, arr2) {
@@ -271,7 +276,8 @@ document.getElementById('compare-button').addEventListener('click', function () 
   const modifiedLines = modifiedText.split('\n');
 
   const isCodeContent = CodeDetector.isCode(originalText) || CodeDetector.isCode(modifiedText);
-  const diffResults = DiffComputer.compute(originalLines, modifiedLines);
+  const ignoreWhitespace = document.getElementById('ignore-whitespace').checked;
+  const diffResults = DiffComputer.compute(originalLines, modifiedLines, ignoreWhitespace);
   
   const diffDisplay = new DiffDisplay(document.getElementById('diff-result'));
   diffDisplay.displayDiff(diffResults, isCodeContent);
