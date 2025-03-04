@@ -34,6 +34,13 @@
     margin-bottom: 20px;
 }
 
+/* Mobile view adjustments */
+@media screen and (max-width: 768px) {
+    #diff-checker-container .text-area-container {
+        flex-direction: column;
+    }
+}
+
 #diff-checker-container .textarea-wrapper {
     position: relative;
     width: 100%;
