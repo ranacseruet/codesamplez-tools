@@ -1,3 +1,6 @@
+const { describe, test, expect } = require('../testHelper.js');
+const { computeDiff } = require('./script.js');
+
 describe('Basic Functionality', () => {
     test('empty inputs should return empty array', () => {
         const result = computeDiff([], []);

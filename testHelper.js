@@ -49,30 +49,6 @@ function describe(suiteName, callback) {
     console.groupEnd();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const resultsDiv = document.getElementById('testResults');
-    let passed = 0;
-    let failed = 0;
-
-    tests.forEach(({ description, callback }) => {
-        try {
-            callback();
-            const resultDiv = document.createElement('div');
-            resultDiv.className = 'test-result pass';
-            resultDiv.textContent = `✅ PASS: ${description}`;
-            resultsDiv.appendChild(resultDiv);
-            passed++;
-        } catch (error) {
-            const resultDiv = document.createElement('div');
-            resultDiv.className = 'test-result fail';
-            resultDiv.textContent = `❌ FAIL: ${description} - ${error.message}`;
-            resultsDiv.appendChild(resultDiv);
-            failed++;
-        }
-    });
-
-    // Display summary
-    const summaryDiv = document.createElement('div');
-    summaryDiv.textContent = `Summary: Passed: ${passed}, Failed: ${failed}`;
-    resultsDiv.appendChild(summaryDiv);
-});
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {describe, test, expect};
+}

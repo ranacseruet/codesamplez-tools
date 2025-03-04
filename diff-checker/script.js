@@ -267,21 +267,24 @@ class DiffDisplay {
   }
 }
 
-// Main event handler
-document.getElementById('compare-button').addEventListener('click', function () {
-  const originalText = document.getElementById('text1').value;
-  const modifiedText = document.getElementById('text2').value;
 
-  const originalLines = originalText.split('\n');
-  const modifiedLines = modifiedText.split('\n');
+// For Node.js, conditionally export
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { computeDiff: DiffComputer.compute.bind(DiffComputer) };
+} else {
+  // Main event handler
+  document.getElementById('compare-button').addEventListener('click', function () {
+    const originalText = document.getElementById('text1').value;
+    const modifiedText = document.getElementById('text2').value;
 
-  const isCodeContent = CodeDetector.isCode(originalText) || CodeDetector.isCode(modifiedText);
-  const ignoreWhitespace = document.getElementById('ignore-whitespace').checked;
-  const diffResults = DiffComputer.compute(originalLines, modifiedLines, ignoreWhitespace);
-  
-  const diffDisplay = new DiffDisplay(document.getElementById('diff-result'));
-  diffDisplay.displayDiff(diffResults, isCodeContent);
-});
+    const originalLines = originalText.split('\n');
+    const modifiedLines = modifiedText.split('\n');
 
-// Expose for testing
-window.computeDiff = DiffComputer.compute.bind(DiffComputer);
+    const isCodeContent = CodeDetector.isCode(originalText) || CodeDetector.isCode(modifiedText);
+    const ignoreWhitespace = document.getElementById('ignore-whitespace').checked;
+    const diffResults = DiffComputer.compute(originalLines, modifiedLines, ignoreWhitespace);
+    
+    const diffDisplay = new DiffDisplay(document.getElementById('diff-result'));
+    diffDisplay.displayDiff(diffResults, isCodeContent);
+  });
+}
