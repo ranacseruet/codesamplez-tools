@@ -37,10 +37,19 @@ function expect(actual) {
     };
 }
 
-const tests = [];
-
 function test(description, callback) {
-    tests.push({ description, callback });
+    //tests.push({ description, callback });
+    let passed = 0;
+    let failed = 0;
+    try {
+        callback();
+        console.log(`✅ PASS: ${description}`);
+        passed++;
+    } catch (error) {
+        console.log(`❌ FAIL: ${description} - ${error.message}`);
+        failed++;
+    }
+    console.log(`Tests passed: ${passed}, Tests failed: ${failed}`);
 }
 
 function describe(suiteName, callback) {
