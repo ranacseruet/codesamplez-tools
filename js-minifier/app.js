@@ -1,19 +1,19 @@
 // UI Functionality
 document.addEventListener('DOMContentLoaded', () => {
-  const input = document.getElementById('input');
-  const output = document.getElementById('output');
-  const minifyBtn = document.getElementById('minify');
-  const copyBtn = document.getElementById('copy');
-  const clearBtn = document.getElementById('clear');
-  const originalSizeEl = document.getElementById('originalSize');
-  const minifiedSizeEl = document.getElementById('minifiedSize');
-  const compressionRatioEl = document.getElementById('compressionRatio');
+  const input = document.getElementById('js-minifier-input');
+  const output = document.getElementById('js-minifier-output');
+  const minifyBtn = document.getElementById('js-minifier-minify-btn');
+  const copyBtn = document.getElementById('js-minifier-copy-btn');
+  const clearBtn = document.getElementById('js-minifier-clear-btn');
+  const originalSizeEl = document.getElementById('js-minifier-original-size');
+  const minifiedSizeEl = document.getElementById('js-minifier-minified-size');
+  const compressionRatioEl = document.getElementById('js-minifier-compression-ratio');
   
   // Option checkboxes
-  const removeCommentsCheckbox = document.getElementById('removeComments');
-  const removeWhitespaceCheckbox = document.getElementById('removeWhitespace');
-  const shortenVariablesCheckbox = document.getElementById('shortenVariables');
-  const manglePropertiesCheckbox = document.getElementById('mangleProperties');
+  const removeCommentsCheckbox = document.getElementById('js-minifier-remove-comments');
+  const removeWhitespaceCheckbox = document.getElementById('js-minifier-remove-whitespace');
+  const shortenVariablesCheckbox = document.getElementById('js-minifier-shorten-variables');
+  const manglePropertiesCheckbox = document.getElementById('js-minifier-mangle-properties');
 
   // Update statistics
   function updateStats(original, minified) {

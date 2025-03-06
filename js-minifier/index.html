@@ -7,44 +7,44 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <header>
+  <div class="js-minifier-container">
+    <header class="js-minifier-header">
       <h1>JavaScript Minifier</h1>
-      <p class="description">Minify your JavaScript code to reduce file size and improve load times</p>
+      <p class="js-minifier-description">Minify your JavaScript code to reduce file size and improve load times</p>
     </header>
     
-    <div class="options">
+    <div class="js-minifier-options">
       <h2>Minification Options</h2>
-      <div class="checkbox-group">
-        <div class="checkbox-item">
-          <input type="checkbox" id="removeComments" checked>
-          <label for="removeComments">Remove comments</label>
+      <div class="js-minifier-checkbox-group">
+        <div class="js-minifier-checkbox-item">
+          <input type="checkbox" id="js-minifier-remove-comments" checked>
+          <label for="js-minifier-remove-comments">Remove comments</label>
         </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="removeWhitespace" checked>
-          <label for="removeWhitespace">Remove whitespace</label>
+        <div class="js-minifier-checkbox-item">
+          <input type="checkbox" id="js-minifier-remove-whitespace" checked>
+          <label for="js-minifier-remove-whitespace">Remove whitespace</label>
         </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="shortenVariables">
-          <label for="shortenVariables">Shorten variable names</label>
-          <div class="tooltip">ⓘ
-            <span class="tooltiptext">This is experimental and may break your code</span>
+        <div class="js-minifier-checkbox-item">
+          <input type="checkbox" id="js-minifier-shorten-variables">
+          <label for="js-minifier-shorten-variables">Shorten variable names</label>
+          <div class="js-minifier-tooltip">ⓘ
+            <span class="js-minifier-tooltiptext">This is experimental and may break your code</span>
           </div>
         </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="mangleProperties">
-          <label for="mangleProperties">Mangle properties</label>
-          <div class="tooltip">ⓘ
-            <span class="tooltiptext">This is experimental and may break your code</span>
+        <div class="js-minifier-checkbox-item">
+          <input type="checkbox" id="js-minifier-mangle-properties">
+          <label for="js-minifier-mangle-properties">Mangle properties</label>
+          <div class="js-minifier-tooltip">ⓘ
+            <span class="js-minifier-tooltiptext">This is experimental and may break your code</span>
           </div>
         </div>
       </div>
     </div>
     
-    <div class="editor-container">
-      <div class="panel">
+    <div class="js-minifier-editor-container">
+      <div class="js-minifier-panel">
         <h2>Original JavaScript</h2>
-        <textarea id="input" placeholder="Paste your JavaScript code here...">// Example JavaScript function
+        <textarea id="js-minifier-input" placeholder="Paste your JavaScript code here...">// Example JavaScript function
 function calculateSum(numbers) {
   // This function calculates the sum of all numbers in an array
   let sum = 0;
@@ -64,35 +64,35 @@ const result = calculateSum(myNumbers);
 console.log("The sum is: " + result);</textarea>
       </div>
       
-      <div class="panel">
+      <div class="js-minifier-panel">
         <h2>Minified JavaScript</h2>
-        <textarea id="output" readonly placeholder="Minified code will appear here..."></textarea>
+        <textarea id="js-minifier-output" readonly placeholder="Minified code will appear here..."></textarea>
       </div>
     </div>
     
-    <div class="toolbar">
-      <button id="minify">Minify JavaScript</button>
-      <button id="copy" class="secondary">Copy Minified Code</button>
-      <button id="clear" class="secondary">Clear All</button>
+    <div class="js-minifier-toolbar">
+      <button id="js-minifier-minify-btn">Minify JavaScript</button>
+      <button id="js-minifier-copy-btn" class="js-minifier-secondary">Copy Minified Code</button>
+      <button id="js-minifier-clear-btn" class="js-minifier-secondary">Clear All</button>
     </div>
     
-    <div class="stats">
+    <div class="js-minifier-stats">
       <h2>Statistics</h2>
-      <div class="stat-row">
+      <div class="js-minifier-stat-row">
         <span>Original Size:</span>
-        <span id="originalSize">0 bytes</span>
+        <span id="js-minifier-original-size">0 bytes</span>
       </div>
-      <div class="stat-row">
+      <div class="js-minifier-stat-row">
         <span>Minified Size:</span>
-        <span id="minifiedSize">0 bytes</span>
+        <span id="js-minifier-minified-size">0 bytes</span>
       </div>
-      <div class="stat-row">
+      <div class="js-minifier-stat-row">
         <span>Compression Ratio:</span>
-        <span id="compressionRatio">0%</span>
+        <span id="js-minifier-compression-ratio">0%</span>
       </div>
     </div>
     
-    <footer>
+    <footer class="js-minifier-footer">
       <p>JavaScript Minifier - Use at your own risk. Always test minified code before deployment.</p>
     </footer>
   </div>

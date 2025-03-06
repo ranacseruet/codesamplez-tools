@@ -46,11 +46,13 @@ The project consists of individual tools, each in their own directory:
 - Cross-browser Test: Test in different browsers manually.
 
 ## Documentation
-- Each tool must have a README.md with:
+- Each tool directory must have a README.md with:
   - Description
   - Usage instructions
   - Example inputs/outputs
+  - Any notable limitations
   - Screenshots
+  - Security/Privacy considerations
 - Keep documentation up-to-date with changes
 
 ## Contribution Workflow
