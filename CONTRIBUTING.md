@@ -37,23 +37,22 @@ The project consists of individual tools, each in their own directory:
 - Keep files modular and focused
 
 ## Testing / Writing Unit Tests
-Currently the tests are a bit un-usual than traditional. Tests are not run from node/npm cli command, instead are imported into the webpage itself. This is to keep this project entirely free of any tooling setup need etc.
+`node` command need to be available to run tests.
 
-- Include test cases in a `tests.js`(one per tool/subdirectory)
-- Use the provided top level `testHelper.js` for assertions
-- tests will be run on webpage, so avoid any node/npm type dependency. 
-    - Reference it directly from the webpage with `<script>` tag.
-    - Also add a `<div>` html element at the bottom of web page with id `testResults`, where test results will appear.
-    - Load the webpage on the browsers, test results should appear with pass/fail status.
-- Ensure all edge cases are covered
-- Test in multiple browsers
+- Add/update test cases in a `<tool-name>/tests.js` file
+- Use the provided top level `testHelper.js` helper for test assertions
+- Run command `node <tool-name>/tests.js` to run tests.
+- Ensure all edge cases are covered.
+- Cross-browser Test: Test in different browsers manually.
 
 ## Documentation
-- Each tool must have a README.md with:
+- Each tool directory must have a README.md with:
   - Description
   - Usage instructions
   - Example inputs/outputs
+  - Any notable limitations
   - Screenshots
+  - Security/Privacy considerations
 - Keep documentation up-to-date with changes
 
 ## Contribution Workflow
