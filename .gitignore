@@ -50,3 +50,6 @@ yarn.lock
 **/*.tmp
 **/*.temp
 **/.cache/
+
+# Memory Bank
+**/memory-bank/
