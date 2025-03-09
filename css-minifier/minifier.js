@@ -116,3 +116,7 @@
     
     return result;
   }
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { removeCommentsFromCss, removeWhitespaceFromCss, shortenColorsInCss, removeUnnecessaryUnits, removeLastSemicolonsFromCss, combineSelectorsInCss };
+  } 
