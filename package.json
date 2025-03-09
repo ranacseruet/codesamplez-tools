@@ -1,0 +1,26 @@
+{
+  "name": "codesamplez-tools",
+  "version": "1.0.0",
+  "description": "A collection of utility tools",
+  "type": "module",
+  "scripts": {
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.3",
+    "@babel/preset-env": "^7.23.3",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "jest": {
+    "transform": {},
+    "testEnvironment": "jsdom",
+    "moduleNameMapper": {
+      "^testHelper.js$": "<rootDir>/testHelper.js"
+    },
+    "testMatch": [
+      "**/__tests__/**/*.[jt]s?(x)",
+      "**/?(*.)+(spec|test).[jt]s?(x)"
+    ]
+  }
+}
