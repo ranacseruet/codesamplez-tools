@@ -79,15 +79,40 @@ Create and sign custom JSON Web Tokens.
 - Vanilla JavaScript
 - No external dependencies
 
+## Development
+
+### Setup
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Build the project: `npm run build`
+4. Run tests: `npm test`
+
+### Build Process
+The build process creates a production-ready version in the `build/` directory:
+- Minifies JavaScript files
+- Optimizes CSS files
+- Updates HTML to reference minified assets
+- Copies static assets (images)
+
+### Testing
+Tests are written using Jest and run in a JSDOM environment:
+- Run all tests: `npm test`
+- Test files are located alongside their respective tools
+- Uses testHelper.js for common test utilities
+
 ## Contributing
 
 We welcome contributions! If you'd like to improve these tools:
 
 1. Fork the repository
 2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+3. Install dependencies: `npm install`
+4. Make your changes
+5. Run tests: `npm test`
+6. Build the project: `npm run build`
+7. Commit your changes
+8. Push to the branch
+9. Create a Pull Request
 
 ## License
 

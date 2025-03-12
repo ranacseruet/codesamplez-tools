@@ -96,7 +96,8 @@ class JSMinifier {
       processedCode = processedCode.replace(`__PATTERN_${i}__`, pattern);
     });
 
-    return processedCode;
+    // Trim leading/trailing whitespace
+    return processedCode.trim();
   }
 
   // Experimental: Shorten variable names
@@ -220,6 +221,4 @@ class JSMinifier {
   }
 }
 
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { JSMinifier };
-} 
+export { JSMinifier };

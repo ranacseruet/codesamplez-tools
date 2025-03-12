@@ -9,10 +9,22 @@ A lightweight web-based tool for minifying CSS code by removing comments and unn
 
 ## Usage Instructions
 
+### Production Use
 1. Open `index.html` in a modern browser (Chrome/Firefox/Edge).
 2. Paste your CSS code into the input field.
 3. Click the "Minify" button to process and see optimized output.
 4. Copy the minified CSS from the result section for deployment.
+
+### Development Setup
+1. Install dependencies: `npm install`
+2. Build the project: `npm run build`
+3. Run tests: `npm test`
+
+### Testing
+Tests are written using Jest and run in a JSDOM environment:
+- Test file: `minifier.test.js`
+- Run with: `npm test`
+- Uses project's testHelper.js utilities
 
 ---
 

@@ -268,14 +268,19 @@ class DiffDisplay {
 }
 
 
-// For Node.js, conditionally export
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { computeDiff: DiffComputer.compute.bind(DiffComputer) };
-} else {
-  // Main event handler
-  document.getElementById('compare-button').addEventListener('click', function () {
-    const originalText = document.getElementById('text1').value;
-    const modifiedText = document.getElementById('text2').value;
+// For Node.js, export
+export const computeDiff = DiffComputer.compute.bind(DiffComputer);
+
+// Main event handler
+if (typeof document !== 'undefined') {
+  const compareButton = document.getElementById('compare-button');
+  const text1 = document.getElementById('text1');
+  const text2 = document.getElementById('text2');
+  
+  if (compareButton && text1 && text2) {
+    compareButton.addEventListener('click', function () {
+      const originalText = text1.value;
+      const modifiedText = text2.value;
 
     const originalLines = originalText.split('\n');
     const modifiedLines = modifiedText.split('\n');
@@ -287,4 +292,5 @@ if (typeof module !== 'undefined' && module.exports) {
     const diffDisplay = new DiffDisplay(document.getElementById('diff-result'));
     diffDisplay.displayDiff(diffResults, isCodeContent);
   });
+  }
 }

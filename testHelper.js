@@ -1,8 +1,9 @@
-function expect(actual) {
+// Test helper utilities
+export function expect(actual) {
     return {
         toBe(expected) {
             if (actual !== expected) {
-                throw new Error(`Expected  ${expected}, but received ${actual}`);
+                throw new Error(`Expected ${expected}, but received ${actual}`);
             }
         },
         toContain(item) {
@@ -37,8 +38,7 @@ function expect(actual) {
     };
 }
 
-function test(description, callback) {
-    //tests.push({ description, callback });
+export function test(description, callback) {
     let passed = 0;
     let failed = 0;
     try {
@@ -52,12 +52,8 @@ function test(description, callback) {
     console.log(`Tests passed: ${passed}, Tests failed: ${failed}`);
 }
 
-function describe(suiteName, callback) {
+export function describe(suiteName, callback) {
     console.group(suiteName);
     callback();
     console.groupEnd();
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {describe, test, expect};
 }
