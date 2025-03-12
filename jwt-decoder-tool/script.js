@@ -1,34 +1,50 @@
-// Initialize event listeners when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     const jwtInput = document.getElementById('jwtInputToken');
     const secretInput = document.getElementById('jwtSecretKey');
-    const copyBtn = document.getElementById('copyDecodedBtn');
+    const decodedOutput = document.getElementById('jwtDecodedOutput');
+    const statusOutput = document.getElementById('jwtSignatureStatus');
+    const decodeBtn = document.getElementById('jwt-decoder-decode-btn');
+    const verifyBtn = document.getElementById('jwt-decoder-verify-btn');
+    const copyBtn = document.getElementById('jwt-decoder-copy-btn');
+    const clearBtn = document.getElementById('jwt-decoder-clear-btn');
 
-    // Add event listeners with debouncing
+    // Add event listeners with debouncing for auto-decode
     let decodeTimeout;
     const debounceDecode = () => {
         clearTimeout(decodeTimeout);
-        decodeTimeout = setTimeout(decodeJWT, 300);
+        decodeTimeout = setTimeout(() => decodeJWT(false), 300);
     };
 
     jwtInput.addEventListener('input', debounceDecode);
-    secretInput.addEventListener('input', debounceDecode);
     
-    // Initialize tooltips for copy button
-    copyBtn.addEventListener('mouseenter', () => {
-        copyBtn.setAttribute('title', 'Copy decoded token to clipboard');
-    });
+    // Button event listeners
+    decodeBtn.addEventListener('click', () => decodeJWT(false));
+    verifyBtn.addEventListener('click', () => decodeJWT(true));
+    copyBtn.addEventListener('click', copyDecoded);
+    clearBtn.addEventListener('click', clearAll);
+
+    // Initialize tooltips
+    copyBtn.setAttribute('title', 'Copy decoded token to clipboard');
 });
 
-async function decodeJWT() {
+function clearAll() {
+    document.getElementById('jwtInputToken').value = '';
+    document.getElementById('jwtSecretKey').value = '';
+    document.getElementById('jwtDecodedOutput').value = '';
+    document.getElementById('jwtSignatureStatus').textContent = 'Not verified';
+    document.getElementById('jwtSignatureStatus').style.color = '#666';
+}
+
+async function decodeJWT(verifySignature = false) {
     const jwt = document.getElementById('jwtInputToken').value.trim();
     const secret = document.getElementById('jwtSecretKey').value.trim();
     const decodedOutput = document.getElementById('jwtDecodedOutput');
     const statusOutput = document.getElementById('jwtSignatureStatus');
 
     if (!jwt) {
-        decodedOutput.textContent = '';
-        statusOutput.textContent = '';
+        decodedOutput.value = '';
+        statusOutput.textContent = 'Not verified';
+        statusOutput.style.color = '#666';
         return;
     }
 
@@ -40,7 +56,6 @@ async function decodeJWT() {
         // Base64Url decode function
         const base64UrlDecode = (str) => {
             try {
-                // Add padding if needed
                 str = str.replace(/-/g, '+').replace(/_/g, '/');
                 switch (str.length % 4) {
                     case 0:
@@ -72,32 +87,33 @@ async function decodeJWT() {
             JSON.stringify(payload, null, 2)
         ].join('\n');
 
-        decodedOutput.textContent = formattedOutput;
+        decodedOutput.value = formattedOutput;
 
-        // Validate the signature if secret is provided
-        if (secret) {
-            const isValidSignature = await validateJWT(jwt, secret);
-            statusOutput.textContent = isValidSignature 
-                ? '✓ Signature is valid'
-                : '✗ Signature is invalid';
-            statusOutput.style.color = isValidSignature ? '#28a745' : '#dc3545';
-        } else {
-            statusOutput.textContent = 'ℹ Enter a secret key to verify signature';
-            statusOutput.style.color = '#6c757d';
+        // Validate the signature if requested and secret is provided
+        if (verifySignature) {
+            if (secret) {
+                const isValidSignature = await validateJWT(jwt, secret);
+                statusOutput.textContent = isValidSignature 
+                    ? '✓ Signature is valid'
+                    : '✗ Signature is invalid';
+                statusOutput.style.color = isValidSignature ? '#28a745' : '#dc3545';
+            } else {
+                statusOutput.textContent = 'ℹ Enter a secret key to verify signature';
+                statusOutput.style.color = '#6c757d';
+            }
         }
 
     } catch (e) {
-        decodedOutput.textContent = 'Error: Invalid JWT format';
+        decodedOutput.value = 'Error: Invalid JWT format';
         statusOutput.textContent = 'Unable to validate signature';
         statusOutput.style.color = '#dc3545';
         console.error('JWT Decoding Error:', e);
     }
 }
 
-// Function to copy decoded token
 async function copyDecoded() {
-    const decodedContent = document.getElementById('jwtDecodedOutput').textContent;
-    const copyBtn = document.getElementById('copyDecodedBtn');
+    const decodedContent = document.getElementById('jwtDecodedOutput').value;
+    const copyBtn = document.getElementById('jwt-decoder-copy-btn');
     
     if (!decodedContent || decodedContent.includes('Error:')) {
         copyBtn.setAttribute('title', 'No valid content to copy');
@@ -111,8 +127,8 @@ async function copyDecoded() {
         copyBtn.style.backgroundColor = '#28a745';
         
         setTimeout(() => {
-            copyBtn.textContent = originalText;
-            copyBtn.style.backgroundColor = '#2196F3';
+            copyBtn.textContent = 'Copy Decoded';
+            copyBtn.style.backgroundColor = '';
         }, 2000);
     } catch (err) {
         console.error('Failed to copy:', err);
@@ -146,6 +162,7 @@ async function validateJWT(token, secret) {
             .replace(/\//g, '_')
             .replace(/=+$/, '');
     };
+
     try {
         const parts = token.split('.');
         const header = base64UrlDecode(parts[0]);
@@ -163,7 +180,6 @@ async function validateJWT(token, secret) {
     }
 }
 
-// Implementation of HMAC-SHA256
 async function hmacSha256(message, key) {
     const encoder = new TextEncoder();
     const messageBuffer = encoder.encode(message);
