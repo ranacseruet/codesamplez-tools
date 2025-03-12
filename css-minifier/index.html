@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CSS Minifier</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="css-minifier-container">
+    <div class="css-minifier-header">
+      <h1>CSS Minifier</h1>
+      <p class="css-minifier-description">Optimize your CSS files by removing unnecessary characters without changing functionality.</p>
+    </div>
+    
+    <div class="css-minifier-editor-container">
+      <div class="css-minifier-panel">
+        <div class="css-minifier-panel-header">
+          <h2>Input CSS</h2>
+          <div class="css-minifier-toolbar">
+            <button class="css-minifier-secondary" id="clear-input">Clear</button>
+            <button class="css-minifier-secondary" id="load-sample">Load Sample</button>
+          </div>
+        </div>
+        <textarea id="input-css" placeholder="Paste your CSS code here..."></textarea>
+      </div>
+      
+      <div class="css-minifier-panel">
+        <div class="css-minifier-panel-header">
+          <h2>Minified Output</h2>
+          <div class="css-minifier-toolbar">
+            <button class="css-minifier-secondary" id="copy-output">Copy</button>
+          </div>
+        </div>
+        <textarea id="output-css" readonly placeholder="Minified CSS will appear here..."></textarea>
+      </div>
+    </div>
+    
+    <div class="css-minifier-options">
+      <div class="css-minifier-option-group">
+        <div class="css-minifier-checkbox-group">
+          <div class="css-minifier-checkbox-item">
+            <input type="checkbox" id="remove-comments" checked>
+            <label for="remove-comments">Remove comments</label>
+          </div>
+          <div class="css-minifier-checkbox-item">
+            <input type="checkbox" id="remove-whitespace" checked>
+            <label for="remove-whitespace">Remove whitespace</label>
+          </div>
+          <div class="css-minifier-checkbox-item">
+            <input type="checkbox" id="combine-selectors" checked>
+            <label for="combine-selectors">Combine duplicate selectors</label>
+          </div>
+          <div class="css-minifier-checkbox-item">
+            <input type="checkbox" id="shorten-colors" checked>
+            <label for="shorten-colors">Shorten color values</label>
+          </div>
+          <div class="css-minifier-checkbox-item">
+            <input type="checkbox" id="remove-units" checked>
+            <label for="remove-units">Remove unnecessary units</label>
+          </div>
+          <div class="css-minifier-checkbox-item">
+            <input type="checkbox" id="remove-last-semicolons" checked>
+            <label for="remove-last-semicolons">Remove last semicolons</label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="css-minifier-toolbar">
+        <button id="reset-options" class="css-minifier-secondary">Reset Options</button>
+        <button id="minify-btn">Minify CSS</button>
+      </div>
+    </div>
+
+    <div class="css-minifier-stats">
+      <div class="css-minifier-stat-item">
+        <span class="css-minifier-stat-label">Original Size</span>
+        <span id="original-size" class="css-minifier-stat-value">0 bytes</span>
+      </div>
+      <div class="css-minifier-stat-item">
+        <span class="css-minifier-stat-label">Minified Size</span>
+        <span id="minified-size" class="css-minifier-stat-value">0 bytes</span>
+      </div>
+      <div class="css-minifier-stat-item">
+        <span class="css-minifier-stat-label">Savings</span>
+        <span id="saving" class="css-minifier-stat-value css-minifier-saving-percentage">0%</span>
+      </div>
+    </div>
+  </div>
+  
+  <div id="notification" class="css-minifier-notification">Copied to clipboard!</div>
+  <script src="minifier.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
