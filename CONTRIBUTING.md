@@ -36,14 +36,23 @@ The project consists of individual tools, each in their own directory:
 - Comment complex logic
 - Keep files modular and focused
 
-## Testing / Writing Unit Tests
-`node` command need to be available to run tests.
+## Testing
+Tests are written using Jest and run in a JSDOM environment:
 
-- Add/update test cases in a `<tool-name>/tests.js` file
-- Use the provided top level `testHelper.js` helper for test assertions
-- Run command `node <tool-name>/tests.js` to run tests.
-- Ensure all edge cases are covered.
-- Cross-browser Test: Test in different browsers manually.
+- Add test cases in `<tool-name>/*.test.js` files
+- Use the provided `testHelper.js` helper for test assertions
+- Run all tests with `npm test`
+- Ensure edge cases are covered
+- Tests run in JSDOM environment for DOM manipulation
+- Cross-browser testing still needed manually
+
+## Building
+Production builds are created using `npm run build`:
+
+- Creates minified versions of JS and CSS files
+- Updates HTML to reference minified assets
+- Copies static assets (images)
+- Build output goes to `build/` directory
 
 ## Documentation
 - Each tool directory must have a README.md with:
@@ -55,11 +64,14 @@ The project consists of individual tools, each in their own directory:
   - Security/Privacy considerations
 - Keep documentation up-to-date with changes
 
-## Contribution Workflow
-1. Pull latest changes while on "main" branch ("git pull")
-2. Create a feature branch ("git checkout -b <branch-name>" )
-3. Make your changes
-4. Add/update tests
-5. Update documentation to reflect any changes if applicable
-6. Create a new pull request ("gh pr create --base main --head <branch-name>")
-7. Address any review feedback
+## Development Workflow
+1. Pull latest changes while on "main" branch (`git pull`)
+2. Create a feature branch (`git checkout -b <branch-name>`)
+3. Install dependencies (`npm install`)
+4. Make your changes
+5. Add/update tests
+6. Run tests (`npm test`)
+7. Build the project (`npm run build`)
+8. Update documentation if needed
+9. Create a pull request (`gh pr create --base main --head <branch-name>`)
+10. Address any review feedback

@@ -4,13 +4,17 @@
   "description": "A collection of utility tools",
   "type": "module",
   "scripts": {
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "build": "mkdir -p build && find . -maxdepth 1 -name '*-tool' | while read tool; do echo \"Building $tool...\"; mkdir -p \"build/$tool\"; npx uglify-js \"$tool/script.js\" -m -c -o \"build/$tool/script.min.js\" 2>/dev/null; npx postcss \"$tool/styles.css\" -o \"build/$tool/styles.min.css\" --use cssnano --no-map 2>/dev/null; cp \"$tool/index.html\" \"build/$tool/index.html\"; cp -r \"$tool/images\" \"build/$tool/images\" 2>/dev/null; sed -i '' -e 's/script.js/script.min.js/g' -e 's/styles.css/styles.min.css/g' \"build/$tool/index.html\"; done && cp index.html build/"
   },
   "devDependencies": {
     "@babel/core": "^7.23.3",
     "@babel/preset-env": "^7.23.3",
+    "cssnano": "^7.0.6",
     "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0"
+    "jest-environment-jsdom": "^29.7.0",
+    "postcss-cli": "^11.0.0",
+    "uglify-js": "^3.19.3"
   },
   "jest": {
     "transform": {},
