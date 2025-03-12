@@ -35,6 +35,20 @@ body {
 
 ---
 
+## Security Concerns
+- **Input Validation**: The tool processes user-provided CSS without executing it, minimizing injection risks.
+- **No External Dependencies**: Self-contained processing reduces potential security vulnerabilities.
+- **Client-Side Only**: All processing happens locally in the browser without sending data to remote servers.
+- **Output Sanitization**: The minified output preserves valid CSS syntax without introducing unsafe modifications.
+
+## Browser Compatibility
+- **Modern Browsers**: Fully supported in recent versions of Chrome, Firefox, Safari, and Edge.
+- **Legacy Support**: Basic functionality works in Internet Explorer 11+.
+- **Mobile Browsers**: Compatible with mobile Chrome, Safari, and Firefox.
+- **Performance**: Efficient processing even with large CSS files across all supported browsers.
+
+---
+
 ## Limitations
 - Does not optimize property names (e.g., `margin-left` → `ml`)
 - Maintains CSS syntax validity during minification
