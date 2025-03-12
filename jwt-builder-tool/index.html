@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>JWT Builder</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="jwt-builder-container">
+    <h1 class="jwt-builder-header">JWT Builder</h1>
+    <form id="jwtForm">
+      <div id="standardClaims">
+        <!-- Identity Claims -->
+        <div class="claims-group">
+          <h3 class="group-header">Identity Claims</h3>
+          <div class="claim-row">
+            <label for="iss" class="required" title="Who issued the token">
+              Issuer (iss):
+              <span class="tooltip">Required - Identifies the principal that issued the JWT</span>
+            </label>
+            <input type="text" id="iss" class="jwt-builder-input" placeholder="e.g., my-app">
+          </div>
+          <div class="claim-row">
+            <label for="sub" title="Who the token refers to">
+              Subject (sub):
+              <span class="tooltip">Optional - Identifies the principal that is the subject of the JWT</span>
+            </label>
+            <input type="text" id="sub" class="jwt-builder-input" placeholder="e.g., user123">
+          </div>
+          <div class="claim-row">
+            <label for="aud" title="Who the token is intended for">
+              Audience (aud):
+              <span class="tooltip">Optional - Identifies the recipients that the JWT is intended for</span>
+            </label>
+            <input type="text" id="aud" class="jwt-builder-input" placeholder="e.g., my-api">
+          </div>
+        </div>
+
+        <!-- Timing Claims -->
+        <div class="claims-group">
+          <h3 class="group-header">Timing Claims</h3>
+          <div class="claim-row">
+            <label for="exp" class="required" title="When the token expires">
+              Expiration Time (exp):
+              <span class="tooltip">Required - Identifies the expiration time on or after which the JWT must not be accepted</span>
+            </label>
+            <input type="text" id="exp" class="jwt-builder-input" placeholder="e.g., 2025-12-31T23:59:59Z or 1678886400">
+          </div>
+          <div class="claim-row">
+            <label for="iat" title="When the token was issued">
+              Issued At (iat):
+              <span class="tooltip">Optional - Identifies the time at which the JWT was issued</span>
+            </label>
+            <input type="text" id="iat" class="jwt-builder-input" placeholder="e.g., 2025-01-30T11:24:00Z or 1678886400">
+          </div>
+          <div class="claim-row">
+            <label for="nbf" title="When the token starts being valid">
+              Not Before (nbf):
+              <span class="tooltip">Optional - Identifies the time before which the JWT must not be accepted</span>
+            </label>
+            <input type="text" id="nbf" class="jwt-builder-input" placeholder="e.g., 2025-01-30T00:00:00Z or 1678886400">
+          </div>
+        </div>
+
+        <!-- Metadata Claims -->
+        <div class="claims-group">
+          <h3 class="group-header">Metadata Claims</h3>
+          <div class="claim-row">
+            <label for="jti" title="Unique identifier for this token">
+              JWT ID (jti):
+              <span class="tooltip">Optional - Provides a unique identifier for the JWT</span>
+            </label>
+            <input type="text" id="jti" class="jwt-builder-input" placeholder="e.g., unique-id">
+          </div>
+        </div>
+      </div>
+      <div class="claims-group">
+        <h3 class="group-header">
+          Custom Claims
+          <button type="button" class="jwt-builder-button add-claim" onclick="addClaim()" title="Add a custom claim">
+            + Add Claim
+          </button>
+        </h3>
+        <div id="customClaims">
+          <div class="empty-claims-message">No custom claims added yet</div>
+        </div>
+      </div>
+      <div class="claims-group">
+        <h3 class="group-header">Signature</h3>
+        <div class="claim-row">
+          <label for="key" class="required" title="Secret key for signing the JWT">
+            Signature Key:
+            <span class="tooltip">Required - The secret key used to sign the JWT. Keep this secure and never share it.</span>
+          </label>
+          <input type="text" id="key" class="jwt-builder-input" value="jwt-secret" placeholder="Your secret key">
+        </div>
+      </div>
+      <button type="button" id="buildJwtBtn" class="jwt-builder-button" onclick="buildJWT()">Build JWT</button>
+    </form>
+    <div class="claims-group result-section">
+      <h3 class="group-header">Generated JWT</h3>
+      <div class="result-container">
+        <div id="result" class="jwt-builder-output" title="Generated JWT token">
+          <span class="tooltip">The generated JWT will appear here after you click 'Build JWT'</span>
+        </div>
+        <button type="button" id="copyJwtBtn" class="jwt-builder-button copy-button" onclick="copyJWT()" title="Copy token to clipboard">
+          Copy JWT
+        </button>
+      </div>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
