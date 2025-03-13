@@ -13,18 +13,18 @@
     "cssnano": "^7.0.6",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "jsdom": "^26.0.0",
     "postcss-cli": "^11.0.0",
     "uglify-js": "^3.19.3"
   },
   "jest": {
-    "transform": {},
     "testEnvironment": "jsdom",
-    "moduleNameMapper": {
-      "^testHelper.js$": "<rootDir>/testHelper.js"
-    },
+    "setupFilesAfterEnv": [],
     "testMatch": [
-      "**/__tests__/**/*.[jt]s?(x)",
-      "**/?(*.)+(spec|test).[jt]s?(x)"
+      "**/jwt-decoder-tool/**/*.test.js",
+      "**/js-minifier-tool/**/*.test.js",
+      "**/css-minifier-tool/**/*.test.js",
+      "**/diff-checker-tool/**/*.test.js"
     ]
   }
 }
