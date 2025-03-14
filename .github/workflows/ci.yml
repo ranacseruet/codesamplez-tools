@@ -26,7 +26,7 @@ jobs:
       run: npm test
 
     - name: Build
-      run: npm run build
+      run: mkdir build && npm run build
 
     - name: Cache build artifacts
       uses: actions/cache@v4
