@@ -12,11 +12,17 @@ A powerful, browser-based tool for decoding and validating JSON Web Tokens (JWT)
 
 ## Features
 
-- **Real-time Decoding**: Instantly decode JWT tokens as you type
+- **Real-time Decoding**: 
+  - Instantly decode JWT tokens as you type
+  - Debounced input handling for optimal performance
+  - Clear error messages for invalid tokens
 - **Signature Verification**: Validate JWT signatures using HMAC-SHA256
 - **Base64 Support**: Automatic handling of both standard and URL-safe Base64 encoding
 - **Secure Processing**: All operations performed client-side for maximum security
-- **Copy Functionality**: One-click copying of decoded token information
+- **Copy Functionality**: 
+  - One-click copying of decoded token information
+  - Visual feedback for successful copy operations
+  - Error handling for clipboard operations
 - **Responsive Design**: Works seamlessly on both desktop and mobile devices
 
 ## How to Use
@@ -34,7 +40,9 @@ A powerful, browser-based tool for decoding and validating JSON Web Tokens (JWT)
 
 3. **Copy Results**:
    - Click the "Copy Decoded" button to copy the decoded token information to your clipboard
-   - Visual feedback confirms successful copying
+   - Button changes color and text to confirm successful copying
+   - Automatic reset after 2 seconds
+   - Error handling with tooltip feedback if copying fails
 
 ## Technical Details
 
