@@ -164,10 +164,6 @@ export async function validateJWT(token, secret) {
             .replace(/\//g, '_')
             .replace(/=+$/, '');
         
-        console.log('Recreated Signature:', recreatedSignature);
-        console.log('Provided Signature:', providedSignature);
-        console.log('Match:', recreatedSignature === providedSignature);
-        
         return recreatedSignature === providedSignature;
     } catch (e) {
         console.error('Error validating JWT:', e);
@@ -183,11 +179,8 @@ export async function hmacSha256(message, key) {
     try {
         const encoder = new TextEncoder();
         const messageBuffer = encoder.encode(message);
-        // Convert base64url secret to Uint8Array
-        const base64Key = atob(key.replace(/-/g, '+').replace(/_/g, '/'));
-        const keyBuffer = new Uint8Array(
-            Array.from(base64Key, c => c.charCodeAt(0))
-        );
+        // Convert raw string secret to Uint8Array
+        const keyBuffer = encoder.encode(key);
 
         const cryptoKey = await crypto.subtle.importKey(
             'raw',
