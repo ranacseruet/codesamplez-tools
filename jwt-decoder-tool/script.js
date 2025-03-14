@@ -1,34 +1,72 @@
-// Initialize event listeners when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    const jwtInput = document.getElementById('jwtInputToken');
-    const secretInput = document.getElementById('jwtSecretKey');
-    const copyBtn = document.getElementById('copyDecodedBtn');
+// Export functions for testing
+export function clearAll() {
+    document.getElementById('jwtInputToken').value = '';
+    document.getElementById('jwtSecretKey').value = '';
+    document.getElementById('jwtDecodedOutput').value = '';
+    document.getElementById('jwtSignatureStatus').textContent = 'Not verified';
+    document.getElementById('jwtSignatureStatus').style.color = 'rgb(102, 102, 102)';
+}
 
-    // Add event listeners with debouncing
-    let decodeTimeout;
-    const debounceDecode = () => {
-        clearTimeout(decodeTimeout);
-        decodeTimeout = setTimeout(decodeJWT, 300);
-    };
+// Pure function for decoding JWT without UI dependencies
+export function decodeJWTToken(jwt) {
+    if (!jwt) {
+        return { error: 'No token provided' };
+    }
 
-    jwtInput.addEventListener('input', debounceDecode);
-    secretInput.addEventListener('input', debounceDecode);
-    
-    // Initialize tooltips for copy button
-    copyBtn.addEventListener('mouseenter', () => {
-        copyBtn.setAttribute('title', 'Copy decoded token to clipboard');
-    });
-});
+    const parts = jwt.split('.');
+    if (parts.length !== 3) {
+        return { error: 'Invalid token format' };
+    }
 
-async function decodeJWT() {
+    try {
+        const base64UrlDecode = (str) => {
+            str = str.trim();
+            if (!/^[A-Za-z0-9\-_]+$/.test(str)) {
+                return { error: 'Invalid base64url characters' };
+            }
+            str = str.replace(/-/g, '+').replace(/_/g, '/');
+            switch (str.length % 4) {
+                case 0: break;
+                case 2: str += '=='; break;
+                case 3: str += '='; break;
+                default: throw new Error('Invalid base64url length');
+            }
+            return atob(str);
+        };
+
+        let header, payload;
+        try {
+            const headerStr = base64UrlDecode(parts[0]);
+            if (headerStr.error) return headerStr;
+            header = JSON.parse(headerStr);
+        } catch (e) {
+            throw new Error('Invalid header JSON: ' + e.message);
+        }
+        
+        try {
+            const payloadStr = base64UrlDecode(parts[1]);
+            if (payloadStr.error) return payloadStr;
+            payload = JSON.parse(payloadStr);
+        } catch (e) {
+            throw new Error('Invalid payload JSON: ' + e.message);
+        }
+
+        return { header, payload };
+    } catch (error) {
+        return { error: error.message };
+    }
+}
+
+export async function decodeJWT(verifySignature = false) {
     const jwt = document.getElementById('jwtInputToken').value.trim();
     const secret = document.getElementById('jwtSecretKey').value.trim();
     const decodedOutput = document.getElementById('jwtDecodedOutput');
     const statusOutput = document.getElementById('jwtSignatureStatus');
 
     if (!jwt) {
-        decodedOutput.textContent = '';
-        statusOutput.textContent = '';
+        decodedOutput.value = '';
+        statusOutput.textContent = 'Not verified';
+        statusOutput.style.color = 'rgb(102, 102, 102)';
         return;
     }
 
@@ -40,7 +78,14 @@ async function decodeJWT() {
         // Base64Url decode function
         const base64UrlDecode = (str) => {
             try {
-                // Add padding if needed
+                // Remove any whitespace
+                str = str.trim();
+                
+                // Validate base64url format
+                if (!/^[A-Za-z0-9\-_]+$/.test(str)) {
+                    throw new Error('Invalid base64url characters');
+                }
+
                 str = str.replace(/-/g, '+').replace(/_/g, '/');
                 switch (str.length % 4) {
                     case 0:
@@ -52,109 +97,76 @@ async function decodeJWT() {
                         str += '=';
                         break;
                     default:
-                        throw new Error('Invalid base64url string');
+                        throw new Error('Invalid base64url length');
                 }
-                const decoded = atob(str);
-                return decoded;
+                return atob(str);
             } catch (e) {
                 throw new Error('Failed to decode base64url: ' + e.message);
             }
         };
 
-        const header = JSON.parse(base64UrlDecode(parts[0]));
-        const payload = JSON.parse(base64UrlDecode(parts[1]));
+        // Parse header and payload
+        let header, payload;
+        try {
+            header = JSON.parse(base64UrlDecode(parts[0]));
+        } catch (e) {
+            throw new Error('Invalid header JSON: ' + e.message);
+        }
+        
+        try {
+            payload = JSON.parse(base64UrlDecode(parts[1]));
+        } catch (e) {
+            throw new Error('Invalid payload JSON: ' + e.message);
+        }
 
-        // Format the output with proper indentation and sections
-        const formattedOutput = [
+        // Format output
+        decodedOutput.value = [
             'Header:',
             JSON.stringify(header, null, 2),
             '\nPayload:',
             JSON.stringify(payload, null, 2)
         ].join('\n');
 
-        decodedOutput.textContent = formattedOutput;
-
-        // Validate the signature if secret is provided
-        if (secret) {
-            const isValidSignature = await validateJWT(jwt, secret);
-            statusOutput.textContent = isValidSignature 
-                ? '✓ Signature is valid'
-                : '✗ Signature is invalid';
-            statusOutput.style.color = isValidSignature ? '#28a745' : '#dc3545';
-        } else {
-            statusOutput.textContent = 'ℹ Enter a secret key to verify signature';
-            statusOutput.style.color = '#6c757d';
+        // Verify signature if requested and secret provided
+        if (verifySignature && secret) {
+            const isValid = await validateJWT(jwt, secret);
+            statusOutput.textContent = isValid ? '✓ Signature is valid' : '✗ Signature is invalid';
+            statusOutput.style.color = isValid ? 'rgb(40, 167, 69)' : 'rgb(220, 53, 69)';
         }
 
     } catch (e) {
-        decodedOutput.textContent = 'Error: Invalid JWT format';
+        decodedOutput.value = `Error: ${e.message}`;
         statusOutput.textContent = 'Unable to validate signature';
-        statusOutput.style.color = '#dc3545';
+        statusOutput.style.color = 'rgb(220, 53, 69)';
         console.error('JWT Decoding Error:', e);
     }
 }
 
-// Function to copy decoded token
-async function copyDecoded() {
-    const decodedContent = document.getElementById('jwtDecodedOutput').textContent;
-    const copyBtn = document.getElementById('copyDecodedBtn');
-    
-    if (!decodedContent || decodedContent.includes('Error:')) {
-        copyBtn.setAttribute('title', 'No valid content to copy');
-        return;
-    }
-
+export async function validateJWT(token, secret) {
     try {
-        await navigator.clipboard.writeText(decodedContent);
-        const originalText = copyBtn.textContent;
-        copyBtn.textContent = 'Copied!';
-        copyBtn.style.backgroundColor = '#28a745';
+        const parts = token.split('.');
+        if (parts.length !== 3) {
+            throw new Error('Invalid JWT format');
+        }
+
+        const signatureInput = parts[0] + '.' + parts[1];
+        const providedSignature = parts[2];
         
-        setTimeout(() => {
-            copyBtn.textContent = originalText;
-            copyBtn.style.backgroundColor = '#2196F3';
-        }, 2000);
-    } catch (err) {
-        console.error('Failed to copy:', err);
-        copyBtn.setAttribute('title', 'Failed to copy to clipboard');
-    }
-}
-
-function isBase64(str) {
-    try {
-        return btoa(atob(str)) === str;
-    } catch (e) {
-        return false;
-    }
-}
-
-async function validateJWT(token, secret) {
-    // Decode secret if it's base64 encoded
-    if (isBase64(secret)) {
-        secret = atob(secret);
-    }
-
-    const base64UrlDecode = (str) => {
-        str = str.replace(/-/g, '+').replace(/_/g, '/');
-        while (str.length % 4) str += '=';
-        return atob(str);
-    };
-
-    const base64UrlEncode = (str) => {
-        return btoa(str)
+        if (!providedSignature) {
+            throw new Error('Missing JWT signature');
+        }
+        const signatureBytes = await hmacSha256(signatureInput, secret);
+        // Convert ArrayBuffer to base64url
+        const byteArray = new Uint8Array(signatureBytes);
+        const base64 = btoa(String.fromCharCode.apply(null, byteArray));
+        const recreatedSignature = base64
             .replace(/\+/g, '-')
             .replace(/\//g, '_')
             .replace(/=+$/, '');
-    };
-    try {
-        const parts = token.split('.');
-        const header = base64UrlDecode(parts[0]);
-        const payload = base64UrlDecode(parts[1]);
-        const providedSignature = parts[2];
-
-        const signatureInput = parts[0] + '.' + parts[1];
-        const signature = await hmacSha256(signatureInput, secret);
-        const recreatedSignature = base64UrlEncode(String.fromCharCode(...new Uint8Array(signature)));
+        
+        console.log('Recreated Signature:', recreatedSignature);
+        console.log('Provided Signature:', providedSignature);
+        console.log('Match:', recreatedSignature === providedSignature);
         
         return recreatedSignature === providedSignature;
     } catch (e) {
@@ -163,25 +175,97 @@ async function validateJWT(token, secret) {
     }
 }
 
-// Implementation of HMAC-SHA256
-async function hmacSha256(message, key) {
-    const encoder = new TextEncoder();
-    const messageBuffer = encoder.encode(message);
-    const keyBuffer = encoder.encode(key);
+export async function hmacSha256(message, key) {
+    if (!message || !key) {
+        throw new Error('Invalid input: message and key are required');
+    }
 
-    const cryptoKey = await crypto.subtle.importKey(
-        "raw",
-        keyBuffer,
-        { name: "HMAC", hash: { name: "SHA-256" } },
-        false,
-        ["sign"]
-    );
+    try {
+        const encoder = new TextEncoder();
+        const messageBuffer = encoder.encode(message);
+        // Convert base64url secret to Uint8Array
+        const base64Key = atob(key.replace(/-/g, '+').replace(/_/g, '/'));
+        const keyBuffer = new Uint8Array(
+            Array.from(base64Key, c => c.charCodeAt(0))
+        );
 
-    const signature = await crypto.subtle.sign(
-        "HMAC",
-        cryptoKey,
-        messageBuffer
-    );
+        const cryptoKey = await crypto.subtle.importKey(
+            'raw',
+            keyBuffer,
+            { name: 'HMAC', hash: { name: 'SHA-256' } },
+            false,
+            ['sign']
+        );
 
-    return new Uint8Array(signature);
+        return await crypto.subtle.sign('HMAC', cryptoKey, messageBuffer);
+    } catch (e) {
+        console.error('HMAC-SHA256 Error:', e);
+        throw new Error('Failed to compute HMAC-SHA256: ' + e.message);
+    }
+}
+
+export async function copyDecoded() {
+    const decodedContent = document.getElementById('jwtDecodedOutput').value;
+    const copyBtn = document.getElementById('jwt-decoder-copy-btn');
+    
+    if (!decodedContent) {
+        copyBtn.setAttribute('title', 'No content to copy');
+        return;
+    }
+    
+    if (decodedContent.startsWith('Error:')) {
+        copyBtn.setAttribute('title', 'Cannot copy error content');
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(decodedContent);
+        copyBtn.textContent = 'Copied!';
+        copyBtn.style.backgroundColor = 'rgb(40, 167, 69)';
+        
+        setTimeout(() => {
+            copyBtn.textContent = 'Copy Decoded';
+            copyBtn.style.backgroundColor = '';
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy:', err);
+        copyBtn.setAttribute('title', 'Failed to copy to clipboard');
+    }
+}
+
+export function isBase64(str) {
+    try {
+        return btoa(atob(str)) === str;
+    } catch (e) {
+        return false;
+    }
+}
+
+// Initialize the UI when the DOM is loaded
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        const jwtInput = document.getElementById('jwtInputToken');
+        const decodeBtn = document.getElementById('jwt-decoder-decode-btn');
+        const verifyBtn = document.getElementById('jwt-decoder-verify-btn');
+        const copyBtn = document.getElementById('jwt-decoder-copy-btn');
+        const clearBtn = document.getElementById('jwt-decoder-clear-btn');
+
+        // Add event listeners with debouncing for auto-decode
+        let decodeTimeout;
+        const debounceDecode = () => {
+            clearTimeout(decodeTimeout);
+            decodeTimeout = setTimeout(() => decodeJWT(false), 300);
+        };
+
+        jwtInput.addEventListener('input', debounceDecode);
+        
+        // Button event listeners
+        decodeBtn.addEventListener('click', () => decodeJWT(false));
+        verifyBtn.addEventListener('click', () => decodeJWT(true));
+        copyBtn.addEventListener('click', copyDecoded);
+        clearBtn.addEventListener('click', clearAll);
+
+        // Initialize tooltips
+        copyBtn.setAttribute('title', 'Copy decoded token to clipboard');
+    });
 }
