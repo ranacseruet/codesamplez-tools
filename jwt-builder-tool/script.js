@@ -1,8 +1,10 @@
-function getFormattedDate(date) {
+import { base64ToBase64Url, encodeBase64 } from './base64.js';
+
+export function getFormattedDate(date) {
   return date.toISOString().slice(0, 19) + 'Z';
 }
 
-function parseDateTime(value) {
+export function parseDateTime(value) {
   // If it's already a numeric timestamp, return it
   if (!isNaN(value) && value.trim() !== '') {
     return parseInt(value, 10);
@@ -20,6 +22,7 @@ function parseDateTime(value) {
   
   return null;
 }
+
 
 document.addEventListener('DOMContentLoaded', function() {
   const now = new Date();
@@ -42,17 +45,43 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-function uint8ArrayToString(array) {
+export function uint8ArrayToString(array) {
   const CHUNK_SIZE = 8192; // Process in chunks to avoid call stack limits
   let result = '';
-  for (let i = 0; i < array.length; i += CHUNK_SIZE) {
-    const chunk = array.subarray(i, i + CHUNK_SIZE);
-    result += String.fromCharCode.apply(null, chunk);
+  for (let i = 0; i < array.length; i++) {
+    const byte = array[i];
+    if ((byte & 0x80) === 0) {
+      // ASCII character
+      result += String.fromCharCode(byte);
+    } else if ((byte & 0xe0) === 0xc0) {
+      // 2-byte UTF-8 sequence
+      const byte2 = array[++i];
+      const codePoint = ((byte & 0x1f) << 6) | (byte2 & 0x3f);
+      result += String.fromCharCode(codePoint);
+    } else if ((byte & 0xf0) === 0xe0) {
+      // 3-byte UTF-8 sequence
+      const byte2 = array[++i];
+      const byte3 = array[++i];
+      const codePoint = ((byte & 0x0f) << 12) | ((byte2 & 0x3f) << 6) | (byte3 & 0x3f);
+      result += String.fromCharCode(codePoint);
+    } else if ((byte & 0xf8) === 0xf0) {
+      // 4-byte UTF-8 sequence
+      const byte2 = array[++i];
+      const byte3 = array[++i];
+      const byte4 = array[++i];
+      let codePoint = ((byte & 0x07) << 18) | ((byte2 & 0x3f) << 12) | ((byte3 & 0x3f) << 6) | (byte4 & 0x3f);
+      // Convert to UTF-16 surrogate pairs
+      codePoint -= 0x10000;
+      result += String.fromCharCode(
+        (codePoint >> 10) + 0xd800,
+        (codePoint & 0x3ff) + 0xdc00
+      );
+    }
   }
   return result;
 }
 
-function base64UrlEncode(input) {
+export function base64UrlEncode(input) {
   let data;
   if (input instanceof ArrayBuffer) {
     data = new Uint8Array(input);
@@ -63,24 +92,19 @@ function base64UrlEncode(input) {
     data = new TextEncoder().encode(input);
   }
   
-  // Convert Uint8Array to string in chunks
-  const binary = uint8ArrayToString(data);
-  
-  // Convert to base64 and then to base64url
-  return btoa(binary)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+  const base64 = encodeBase64(data);
+  return base64ToBase64Url(base64);
 }
 
-async function generateSignature(signingInput, key) {
+export async function generateSignature(signingInput, key) {
+  if (!signingInput || !key) {
+    throw new Error('Both signing input and key are required');
+  }
+
   try {
-    console.log('Generating signature for input:', signingInput);
-    console.log('Using key:', key);
-    
     // Import the key for HMAC-SHA256
     const keyBytes = new TextEncoder().encode(key);
-    const cryptoKey = await crypto.subtle.importKey(
+    const cryptoKey = await global.crypto.subtle.importKey(
       'raw',
       keyBytes,
       { name: 'HMAC', hash: 'SHA-256' },
@@ -90,26 +114,114 @@ async function generateSignature(signingInput, key) {
     
     // Sign the input
     const messageBytes = new TextEncoder().encode(signingInput);
-    const signatureBytes = await crypto.subtle.sign(
+    const signatureBytes = await global.crypto.subtle.sign(
       'HMAC',
       cryptoKey,
       messageBytes
     );
     
     // Convert the signature bytes to base64url
-    const signature = base64UrlEncode(signatureBytes);
-    console.log('Generated signature:', signature);
-    return signature;
-    
+    return base64UrlEncode(signatureBytes);
   } catch (error) {
     console.error('Error generating signature:', error);
-    console.error('Error details:', {
-      signingInput,
-      keyLength: key.length,
-      errorName: error.name,
-      errorMessage: error.message,
-      errorStack: error.stack
-    });
+    throw error;
+  }
+}
+
+export async function buildJWT(customPayload = null, secretKey = '') {
+  try {
+    if (!secretKey?.trim()) {
+      throw new Error('Secret key is required for JWT signing');
+    }
+
+    let payload;
+    if (customPayload) {
+      payload = { ...customPayload };
+    } else {
+      const now = new Date();
+      const sixMonthsFromNow = new Date(now);
+      sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+
+      payload = {
+        iat: Math.floor(now.getTime() / 1000),
+        exp: Math.floor(sixMonthsFromNow.getTime() / 1000),
+        iss: "your-issuer",
+        sub: "your-subject",
+        aud: "your-audience",
+        nbf: Math.floor(now.getTime() / 1000),
+        jti: "your-jti"
+      };
+
+      // Only process DOM elements if they exist
+      if (typeof document !== 'undefined') {
+        // Handle datetime claims (exp, iat, nbf)
+        ['exp', 'iat', 'nbf'].forEach(claim => {
+          const element = document.getElementById(claim);
+          if (element) {
+            const timestamp = parseDateTime(element.value);
+            if (timestamp !== null) {
+              payload[claim] = timestamp;
+            }
+          }
+        });
+        
+        // Handle string claims
+        ['iss', 'sub', 'aud', 'jti'].forEach(claim => {
+          const element = document.getElementById(claim);
+          if (element && element.value.trim() !== "") {
+            payload[claim] = element.value;
+          }
+        });
+
+        const customClaims = document.querySelectorAll('#customClaims .claim-row');
+        customClaims.forEach(claimRow => {
+          const name = claimRow.querySelector('input[type="text"][name="claimName"]')?.value;
+          const value = claimRow.querySelector('input[type="text"][name="claimValue"]')?.value;
+          if (name?.trim() && value?.trim()) {
+            try {
+              // Try to parse as JSON if it looks like an array or object
+              if (value.startsWith('[') || value.startsWith('{')) {
+                payload[name] = JSON.parse(value);
+              } else {
+                payload[name] = value;
+              }
+            } catch {
+              payload[name] = value;
+            }
+          }
+        });
+      }
+    }
+
+    // Create and encode the header
+    const header = { alg: 'HS256', typ: 'JWT' };
+    const headerB64 = base64UrlEncode(JSON.stringify(header));
+    
+    // Encode the payload
+    const payloadB64 = base64UrlEncode(JSON.stringify(payload));
+    
+    // Create the signing input (encoded header + "." + encoded payload)
+    const signingInput = `${headerB64}.${payloadB64}`;
+    
+    // Generate the signature
+    const signature = await generateSignature(signingInput, secretKey);
+    
+    // Combine all parts to create the final JWT
+    const jwt = `${headerB64}.${payloadB64}.${signature}`;
+    
+    if (typeof document !== 'undefined' && document.getElementById('result')) {
+      document.getElementById('result').textContent = jwt;
+    }
+    
+    return jwt;
+  } catch (error) {
+    const errorMessage = error instanceof SyntaxError ? 
+      'Invalid JSON payload.' : 
+      error.message;
+    
+    if (typeof document !== 'undefined' && document.getElementById('result')) {
+      document.getElementById('result').textContent = errorMessage;
+    }
     throw error;
   }
 }

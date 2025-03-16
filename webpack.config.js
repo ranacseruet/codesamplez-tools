@@ -1,5 +1,8 @@
 const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const tools = [
   'base64-converter-tool',
   'css-minifier-tool',
@@ -13,6 +16,13 @@ const tools = [
 
 const baseConfig = {
   mode: process.env.NODE_ENV || 'development',
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin(),
+      new CssMinimizerPlugin()
+    ]
+  },
   resolve: {
     fallback: { "crypto": false }
   },
@@ -27,102 +37,83 @@ const baseConfig = {
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader']
+        use: [MiniCssExtractPlugin.loader, 'css-loader']
       },
       {
         test: /\.(png|svg|jpg|jpeg|gif)$/i,
         type: 'asset/resource'
       }
     ]
-  },
-  devServer: {
-    static: [{
-      directory: path.join(__dirname, 'build'),
-      publicPath: '/'
-    }],
-    compress: true,
-    port: 8080,
-    hot: true,
-    open: false,
-    historyApiFallback: {
-      rewrites: [
-        { from: /^\/$/, to: '/index.html' }
-      ]
-    }
   }
 };
 
+const getToolConfig = (toolName, entry) => ({
+  ...baseConfig,
+  name: toolName,
+  entry: {
+    main: [
+      `./${toolName}/${entry || 'script.js'}`,
+      `./${toolName}/styles.css`
+    ]
+  },
+  output: {
+    path: path.resolve(__dirname, 'build', toolName),
+    filename: 'bundle.js',
+    publicPath: `/${toolName}/`
+  },
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: 'styles.css'
+    }),
+    new CopyPlugin({
+      patterns: [
+        {
+          from: path.join(__dirname, toolName, 'index.html'),
+          to: path.join(__dirname, 'build', toolName, 'index.html')
+        },
+        {
+          from: path.join(__dirname, toolName, 'images'),
+          to: path.join(__dirname, 'build', toolName, 'images')
+        },
+        ...(toolName === 'base64-converter-tool' ? [{
+          from: path.join(__dirname, 'index.html'),
+          to: path.join(__dirname, 'build', 'index.html')
+        }] : [])
+      ]
+    })
+  ]
+});
+
 const configs = tools.map((tool) => {
   const toolName = tool.name || tool;
-  const config = {
-    ...baseConfig,
-    name: toolName,
-    entry: `./${toolName}/${tool.entry || 'script.js'}`,
-    output: {
-      path: path.resolve(__dirname, 'build', toolName),
-      filename: 'bundle.js',
-      publicPath: `/${toolName}/`
-    },
-    plugins: [
-      new CopyPlugin({
-        patterns: [
-          {
-            from: path.join(__dirname, toolName, 'index.html'),
-            to: path.join(__dirname, 'build', toolName, 'index.html')
-          },
-          {
-            from: path.join(__dirname, toolName, 'styles.css'),
-            to: path.join(__dirname, 'build', toolName, 'styles.css')
-          },
-          {
-            from: path.join(__dirname, toolName, 'images'),
-            to: path.join(__dirname, 'build', toolName, 'images')
-          },
-          ...(toolName === 'base64-converter-tool' ? [{
-            from: path.join(__dirname, 'index.html'),
-            to: path.join(__dirname, 'build', 'index.html')
-          }] : [])
-        ]
-      })
-    ],
-    devServer: {
-      ...baseConfig.devServer,
-      devMiddleware: {
-        publicPath: `/${toolName}`
-      },
-      historyApiFallback: {
-        rewrites: [
-          { from: /^\/$/, to: '/index.html' },
-          { from: new RegExp(`^/${toolName}`), to: `/${toolName}/index.html` }
-        ]
-      }
-    }
-  };
-  return config;
+  return getToolConfig(toolName, tool.entry);
 });
 
 const developmentConfig = {
   ...baseConfig,
   name: 'development',
-  entry: {
-    root: './base64-converter-tool/script.js',
-    ...tools.reduce((entries, tool) => {
-      const toolName = tool.name || tool;
-      entries[toolName] = `./${toolName}/${tool.entry || 'script.js'}`;
-      return entries;
-    }, {})
-  },
+  entry: tools.reduce((entries, tool) => {
+    const toolName = tool.name || tool;
+    entries[toolName] = [
+      `./${toolName}/${tool.entry || 'script.js'}`,
+      `./${toolName}/styles.css`
+    ];
+    return entries;
+  }, {}),
   output: {
     path: path.resolve(__dirname, 'build'),
     filename: '[name]/bundle.js',
     publicPath: '/'
   },
   plugins: [
+    new MiniCssExtractPlugin({
+      filename: '[name]/styles.css'
+    }),
     new CopyPlugin({
       patterns: [
         {
-          from: path.join(__dirname, 'index.html'),
-          to: path.join(__dirname, 'build', 'index.html')
+          from: 'index.html',
+          to: 'index.html'
         },
         ...tools.reduce((patterns, tool) => {
           const toolName = tool.name || tool;
@@ -132,10 +123,6 @@ const developmentConfig = {
               to: path.join(__dirname, 'build', toolName, 'index.html')
             },
             {
-              from: path.join(__dirname, toolName, 'styles.css'),
-              to: path.join(__dirname, 'build', toolName, 'styles.css')
-            },
-            {
               from: path.join(__dirname, toolName, 'images'),
               to: path.join(__dirname, 'build', toolName, 'images')
             }
@@ -143,7 +130,18 @@ const developmentConfig = {
         }, [])
       ]
     })
-  ]
+  ],
+  devServer: {
+    static: {
+      directory: path.join(__dirname, 'build'),
+      publicPath: '/'
+    },
+    compress: true,
+    port: 8080,
+    hot: true,
+    open: false,
+    historyApiFallback: true
+  }
 };
 
 // Export based on environment
