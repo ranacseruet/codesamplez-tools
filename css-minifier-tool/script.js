@@ -1,3 +1,13 @@
+import { removeCommentsFromCss, removeWhitespaceFromCss, shortenColorsInCss, removeUnnecessaryUnits, removeLastSemicolonsFromCss, combineSelectorsInCss } from './minifier.js';
+
+// Make functions available globally for webpack bundling
+window.removeCommentsFromCss = removeCommentsFromCss;
+window.removeWhitespaceFromCss = removeWhitespaceFromCss;
+window.shortenColorsInCss = shortenColorsInCss;
+window.removeUnnecessaryUnits = removeUnnecessaryUnits;
+window.removeLastSemicolonsFromCss = removeLastSemicolonsFromCss;
+window.combineSelectorsInCss = combineSelectorsInCss;
+
 document.addEventListener('DOMContentLoaded', function() {
     // Elements
     const inputCss = document.getElementById('input-css');

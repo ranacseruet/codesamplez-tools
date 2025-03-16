@@ -40,8 +40,6 @@ document.addEventListener('DOMContentLoaded', function() {
   standardClaims.forEach(claim => {
     document.getElementById(claim).value = payload[claim];
   });
-
-  // ... rest of the code ...
 });
 
 function uint8ArrayToString(array) {
@@ -116,7 +114,8 @@ async function generateSignature(signingInput, key) {
   }
 }
 
-function addClaim() {
+// Expose functions to global scope for webpack bundling
+window.addClaim = function() {
   const customClaimsDiv = document.getElementById('customClaims');
   
   // Remove empty state message if it exists
@@ -141,9 +140,9 @@ function addClaim() {
     <button type="button" class="delete-claim" onclick="removeClaim(this)" title="Remove this claim">x</button>
   `;
   customClaimsDiv.appendChild(newClaimRow);
-}
+};
 
-function removeClaim(button) {
+window.removeClaim = function(button) {
   const customClaimsDiv = document.getElementById('customClaims');
   button.parentElement.remove();
   
@@ -154,9 +153,9 @@ function removeClaim(button) {
     emptyMessage.textContent = 'No custom claims added yet';
     customClaimsDiv.appendChild(emptyMessage);
   }
-}
+};
 
-async function buildJWT() {
+window.buildJWT = async function() {
   const now = new Date();
   const sixMonthsFromNow = new Date(now);
   sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
@@ -229,9 +228,9 @@ async function buildJWT() {
       resultDiv.textContent = 'Error building JWT: ' + error.message;
     }
   }
-}
+};
 
-async function copyJWT() {
+window.copyJWT = async function() {
   const resultDiv = document.getElementById('result');
   const jwt = resultDiv.textContent;
   
@@ -252,4 +251,4 @@ async function copyJWT() {
   } catch (err) {
     console.error('Failed to copy JWT:', err);
   }
-}
+};

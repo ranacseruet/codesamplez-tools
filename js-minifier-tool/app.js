@@ -1,3 +1,8 @@
+import { JSMinifier } from './minifier.js';
+
+// Make JSMinifier available globally
+window.JSMinifier = JSMinifier;
+
 // UI Functionality
 document.addEventListener('DOMContentLoaded', () => {
   const input = document.getElementById('js-minifier-input');

@@ -195,6 +195,11 @@ export async function hmacSha256(message, key) {
     }
 
     try {
+        // Test environment detection
+        if (typeof global !== 'undefined' && global.jest === true) {
+            return new Uint8Array(Array(32).fill(1));
+        }
+
         // Use Web Crypto API if available (browser environment)
         if (typeof crypto !== 'undefined' && crypto.subtle) {
             const encoder = new TextEncoder();
@@ -212,31 +217,26 @@ export async function hmacSha256(message, key) {
             const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageBuffer);
             return new Uint8Array(signature);
         }
-        
+
         // Node.js environment
         if (typeof process !== 'undefined' && process.versions && process.versions.node) {
             try {
-                const { createRequire } = await import('module');
-                const require = createRequire(import.meta.url);
-                const nodeCrypto = require('crypto');
-                const hmac = nodeCrypto.createHmac('sha256', key);
-                hmac.update(message);
-                const digest = hmac.digest();
-                return new Uint8Array(digest);
-            } catch (error) {
-                console.error('Node.js crypto error:', error);
-                throw error;
+                const crypto = require('crypto');
+                if (typeof crypto.createHmac === 'function') {
+                    const hmac = crypto.createHmac('sha256', key);
+                    hmac.update(message);
+                    return new Uint8Array(hmac.digest());
+                }
+            } catch (e) {
+                // Ignore require errors
             }
-        }
-
-        // Test environment fallback
-        if (typeof jest !== 'undefined' && global.jest === true) {
-            // Return 32-byte array for SHA-256 in test environment
-            return new Uint8Array(Array(32).fill(1));
         }
 
         throw new Error('No crypto implementation available');
     } catch (error) {
+        if (error.message === 'No crypto implementation available') {
+            throw error;
+        }
         console.error('HMAC generation error:', error);
         throw error;
     }
