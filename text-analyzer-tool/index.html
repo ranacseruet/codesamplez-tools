@@ -7,46 +7,78 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="text-analyzer-root">
-        <h1 class="text-analyzer-title">Text Analyzer</h1>
-        <div class="text-analyzer-input-section">
-            <textarea id="textInput" class="text-analyzer-input" placeholder="Enter your text here..."></textarea>
+    <div class="text-analyzer-container">
+        <div class="text-analyzer-header">
+            <h1>Text Analyzer</h1>
+            <p class="text-analyzer-description">Analyze your text to get word count, character statistics, and more.</p>
         </div>
-        <div class="text-analyzer-stats-section">
-            <h2 class="text-analyzer-section-title">Text Statistics</h2>
-            <div class="text-analyzer-stats-grid">
-                <div class="text-analyzer-stat-item">
-                    <label class="text-analyzer-stat-label">Word Count:</label>
-                    <span id="wordCount" class="text-analyzer-stat-value">0</span>
-                </div>
-                <div class="text-analyzer-stat-item">
-                    <label class="text-analyzer-stat-label">Character Count:</label>
-                    <span id="charCount" class="text-analyzer-stat-value">0</span>
-                </div>
-                <div class="text-analyzer-stat-item">
-                    <label class="text-analyzer-stat-label">Paragraph Count:</label>
-                    <span id="paragraphCount" class="text-analyzer-stat-value">0</span>
-                </div>
-                <div class="text-analyzer-stat-item">
-                    <label class="text-analyzer-stat-label">Average Word Length:</label>
-                    <span id="avgWordLength" class="text-analyzer-stat-value">0</span>
-                </div>
-                <div class="text-analyzer-stat-item">
-                    <label class="text-analyzer-stat-label">Average Sentence Length:</label>
-                    <span id="avgSentenceLength" class="text-analyzer-stat-value">0</span>
-                </div>
-                <div class="text-analyzer-stat-item text-analyzer-punctuation-stats">
-                    <label class="text-analyzer-stat-label">Punctuation Statistics:</label>
-                    <div id="punctuationStats" class="text-analyzer-punct-details">
-                        <div class="text-analyzer-punct-item">Periods: <span id="periodCount" class="text-analyzer-stat-value">0</span></div>
-                        <div class="text-analyzer-punct-item">Commas: <span id="commaCount" class="text-analyzer-stat-value">0</span></div>
-                        <div class="text-analyzer-punct-item">Question Marks: <span id="questionCount" class="text-analyzer-stat-value">0</span></div>
-                        <div class="text-analyzer-punct-item">Exclamation Marks: <span id="exclamationCount" class="text-analyzer-stat-value">0</span></div>
+        
+        <div class="text-analyzer-editor-container">
+            <div class="text-analyzer-panel">
+                <div class="text-analyzer-panel-header">
+                    <h2>Input Text</h2>
+                    <div class="text-analyzer-toolbar">
+                        <button class="text-analyzer-secondary" id="clear-input">Clear</button>
+                        <button class="text-analyzer-secondary" id="load-sample">Load Sample</button>
                     </div>
+                </div>
+                <textarea id="textInput" placeholder="Enter your text here..."></textarea>
+            </div>
+        </div>
+        
+        <div class="text-analyzer-options">
+            <div class="text-analyzer-toolbar">
+                <button id="analyze-btn">Analyze Text</button>
+            </div>
+        </div>
+        
+        <div class="text-analyzer-stats">
+            <div class="text-analyzer-stat-item">
+                <span class="text-analyzer-stat-label">Word Count</span>
+                <span id="wordCount" class="text-analyzer-stat-value">0</span>
+            </div>
+            <div class="text-analyzer-stat-item">
+                <span class="text-analyzer-stat-label">Character Count</span>
+                <span id="charCount" class="text-analyzer-stat-value">0</span>
+            </div>
+            <div class="text-analyzer-stat-item">
+                <span class="text-analyzer-stat-label">Paragraph Count</span>
+                <span id="paragraphCount" class="text-analyzer-stat-value">0</span>
+            </div>
+            <div class="text-analyzer-stat-item">
+                <span class="text-analyzer-stat-label">Average Word Length</span>
+                <span id="avgWordLength" class="text-analyzer-stat-value">0</span>
+            </div>
+            <div class="text-analyzer-stat-item">
+                <span class="text-analyzer-stat-label">Average Sentence Length</span>
+                <span id="avgSentenceLength" class="text-analyzer-stat-value">0</span>
+            </div>
+        </div>
+        
+        <div class="text-analyzer-punctuation">
+            <h3>Punctuation Statistics</h3>
+            <div class="text-analyzer-checkbox-group">
+                <div class="text-analyzer-stat-item">
+                    <span class="text-analyzer-stat-label">Periods</span>
+                    <span id="periodCount" class="text-analyzer-stat-value">0</span>
+                </div>
+                <div class="text-analyzer-stat-item">
+                    <span class="text-analyzer-stat-label">Commas</span>
+                    <span id="commaCount" class="text-analyzer-stat-value">0</span>
+                </div>
+                <div class="text-analyzer-stat-item">
+                    <span class="text-analyzer-stat-label">Question Marks</span>
+                    <span id="questionCount" class="text-analyzer-stat-value">0</span>
+                </div>
+                <div class="text-analyzer-stat-item">
+                    <span class="text-analyzer-stat-label">Exclamation Marks</span>
+                    <span id="exclamationCount" class="text-analyzer-stat-value">0</span>
                 </div>
             </div>
         </div>
     </div>
+    
+    <div id="notification" class="text-analyzer-notification">Text analyzed successfully!</div>
     <script src="bundle.js"></script>
 </body>
 </html>
