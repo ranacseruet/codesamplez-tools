@@ -51,7 +51,11 @@ const getToolConfig = (toolName, entry) => ({
   ...baseConfig,
   name: toolName,
   entry: {
-    main: [
+    main: toolName === 'base64-converter-tool' ? [
+      `./${toolName}/Base64Codec.js`,
+      `./${toolName}/script.js`,
+      `./${toolName}/styles.css`
+    ] : [
       `./${toolName}/${entry || 'script.js'}`,
       `./${toolName}/styles.css`
     ]
@@ -94,7 +98,11 @@ const developmentConfig = {
   name: 'development',
   entry: tools.reduce((entries, tool) => {
     const toolName = tool.name || tool;
-    entries[toolName] = [
+    entries[toolName] = toolName === 'base64-converter-tool' ? [
+      `./${toolName}/Base64Codec.js`,
+      `./${toolName}/script.js`,
+      `./${toolName}/styles.css`
+    ] : [
       `./${toolName}/${tool.entry || 'script.js'}`,
       `./${toolName}/styles.css`
     ];
