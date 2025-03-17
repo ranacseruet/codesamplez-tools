@@ -1,73 +1,119 @@
 .jsonf-container {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   padding: 20px;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+.jsonf-container * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 .jsonf-title {
   text-align: center;
-  color: #2c3e50;
-  margin-bottom: 30px;
+  color: #2563eb;
+  margin-bottom: 10px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
 }
 
-.jsonf-input-container {
+.jsonf-description {
+  color: #666;
   margin-bottom: 20px;
+  text-align: center;
+}
+
+.jsonf-editor-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .jsonf-editor-container {
+    flex-direction: row;
+  }
+}
+
+.jsonf-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.jsonf-panel h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #333;
 }
 
 .jsonf-input {
   width: 100%;
-  height: 200px;
+  height: 300px;
   padding: 15px;
-  border: 2px solid #3498db;
-  border-radius: 4px;
   font-family: monospace;
-  resize: vertical;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: none;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .jsonf-input::placeholder {
-  color: #bdc3c7;
+  color: #999;
 }
 
 .jsonf-controls {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
+  margin: 15px 0;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .jsonf-button {
-  padding: 10px 20px;
+  background-color: #2563eb;
+  color: white;
   border: none;
+  padding: 10px 20px;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: 600;
-  transition: opacity 0.2s;
+  font-size: 14px;
+  transition: background-color 0.2s;
 }
 
 .jsonf-button:hover {
-  opacity: 0.9;
+  background-color: #1d4ed8;
 }
 
-.jsonf-format-btn {
-  background-color: #3498db;
-  color: white;
+.jsonf-button.jsonf-secondary {
+  background-color: #6b7280;
 }
 
-.jsonf-copy-btn {
-  background-color: #2ecc71;
-  color: white;
+.jsonf-button.jsonf-secondary:hover {
+  background-color: #4b5563;
 }
 
-.jsonf-copy-btn:disabled {
-  background-color: #95a5a6;
-  cursor: not-allowed;
+.jsonf-button.jsonf-sample {
+  background-color: #059669;
+}
+
+.jsonf-button.jsonf-sample:hover {
+  background-color: #047857;
 }
 
 .jsonf-output-container {
-  border: 2px solid #ecf0f1;
+  flex: 1;
+  background-color: #f8f9fa;
   border-radius: 4px;
   padding: 15px;
-  background-color: #f9f9f9;
 }
 
 .jsonf-output {
@@ -76,17 +122,18 @@
   font-family: monospace;
   font-size: 14px;
   line-height: 1.5;
-  max-height: 400px;
+  max-height: 300px;
   overflow: auto;
 }
 
 .jsonf-error {
-  color: #e74c3c;
+  color: #dc2626;
   margin-top: 15px;
   padding: 10px;
-  background-color: #fdeded;
+  background-color: #fef2f2;
   border-radius: 4px;
   display: none;
+  font-size: 14px;
 }
 
 .jsonf-error.active {
@@ -97,27 +144,45 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background-color: #27ae60;
+  background-color: #2563eb;
   color: white;
   padding: 10px 20px;
   border-radius: 4px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  font-size: 14px;
+}
+
+.jsonf-stats {
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.jsonf-stat-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.jsonf-footer {
+  text-align: center;
+  margin-top: 30px;
+  color: #666;
+  font-size: 14px;
 }
 
 @media (max-width: 768px) {
-  .jsonf-container {
-    padding: 15px;
-  }
-  
-  .jsonf-input {
-    height: 150px;
-  }
-  
-  .jsonf-controls {
+  .jsonf-editor-container {
     flex-direction: column;
   }
   
-  .jsonf-button {
-    width: 100%;
+  .jsonf-controls {
+    flex-direction: row;
+  }
+  
+  .jsonf-input, .jsonf-output {
+    height: 250px;
   }
 }
