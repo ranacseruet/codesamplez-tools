@@ -271,26 +271,63 @@ class DiffDisplay {
 // For Node.js, export
 export const computeDiff = DiffComputer.compute.bind(DiffComputer);
 
+// Notification handler
+class NotificationManager {
+  static show(message, duration = 2000) {
+    const notification = document.getElementById('notification');
+    if (!notification) return;
+    
+    notification.textContent = message;
+    notification.classList.add('show');
+    
+    setTimeout(() => {
+      notification.classList.remove('show');
+    }, duration);
+  }
+}
+
 // Main event handler
 if (typeof document !== 'undefined') {
   const compareButton = document.getElementById('compare-button');
   const text1 = document.getElementById('text1');
   const text2 = document.getElementById('text2');
+  const clearText1Button = document.getElementById('clear-text1');
+  const clearText2Button = document.getElementById('clear-text2');
+  
+  // Clear buttons functionality
+  if (clearText1Button && text1) {
+    clearText1Button.addEventListener('click', function() {
+      text1.value = '';
+      text1.focus();
+    });
+  }
+  
+  if (clearText2Button && text2) {
+    clearText2Button.addEventListener('click', function() {
+      text2.value = '';
+      text2.focus();
+    });
+  }
   
   if (compareButton && text1 && text2) {
     compareButton.addEventListener('click', function () {
       const originalText = text1.value;
       const modifiedText = text2.value;
+      
+      if (!originalText && !modifiedText) {
+        NotificationManager.show('Please enter text in at least one of the fields');
+        return;
+      }
 
-    const originalLines = originalText.split('\n');
-    const modifiedLines = modifiedText.split('\n');
+      const originalLines = originalText.split('\n');
+      const modifiedLines = modifiedText.split('\n');
 
-    const isCodeContent = CodeDetector.isCode(originalText) || CodeDetector.isCode(modifiedText);
-    const ignoreWhitespace = document.getElementById('ignore-whitespace').checked;
-    const diffResults = DiffComputer.compute(originalLines, modifiedLines, ignoreWhitespace);
-    
-    const diffDisplay = new DiffDisplay(document.getElementById('diff-result'));
-    diffDisplay.displayDiff(diffResults, isCodeContent);
-  });
+      const isCodeContent = CodeDetector.isCode(originalText) || CodeDetector.isCode(modifiedText);
+      const ignoreWhitespace = document.getElementById('ignore-whitespace').checked;
+      const diffResults = DiffComputer.compute(originalLines, modifiedLines, ignoreWhitespace);
+      
+      const diffDisplay = new DiffDisplay(document.getElementById('diff-result'));
+      diffDisplay.displayDiff(diffResults, isCodeContent);
+    });
   }
 }

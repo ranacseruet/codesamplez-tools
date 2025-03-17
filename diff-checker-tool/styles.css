@@ -1,244 +1,249 @@
-#diff-checker-container {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px var(--shadow-color);
-    font-family: Arial, sans-serif;
-    color: var(--text-color);
-    line-height: 1.6;
-
-    --primary-color: #4a90e2;
-    --success-color: #2ecc71;
-    --danger-color: #e74c3c;
-    --background-color: #f8f9fa;
-    --border-color: #e1e4e8;
-    --text-color: #2c3e50;
-    --shadow-color: rgba(0, 0, 0, 0.1);
+.diff-checker-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.6;
+  color: #333;
 }
 
-#diff-checker-container h1,
-#diff-checker-container h2 {
-    color: var(--text-color);
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+.diff-checker-container * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-#diff-checker-container .text-area-container {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 20px;
+.diff-checker-header {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
 }
 
-/* Mobile view adjustments */
-@media screen and (max-width: 768px) {
-    #diff-checker-container .text-area-container {
-        flex-direction: column;
-    }
+.diff-checker-container h1 {
+  color: #2563eb;
+  margin-bottom: 10px;
 }
 
-#diff-checker-container .textarea-wrapper {
-    position: relative;
-    width: 100%;
+.diff-checker-description {
+  color: #666;
+  margin-bottom: 20px;
 }
 
-#diff-checker-container .input-icon {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    color: var(--text-color);
-    opacity: 0.5;
+.diff-checker-editor-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-#diff-checker-container textarea {
-    width: 100%;
-    height: 300px;
-    padding: 5px;
-    font-family: monospace;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-    resize: vertical;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    font-size: 14px;
-    line-height: 1.6;
+@media (min-width: 768px) {
+  .diff-checker-editor-container {
+    flex-direction: row;
+  }
 }
 
-#diff-checker-container textarea:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+.diff-checker-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-#diff-checker-container .options-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    margin-bottom: 20px;
+.diff-checker-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
-#diff-checker-container .option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
+.diff-checker-container h2 {
+  font-size: 18px;
+  color: #333;
+  margin: 0;
 }
 
-#diff-checker-container .option input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
+.diff-checker-container textarea {
+  width: 100%;
+  height: 300px;
+  padding: 15px;
+  font-family: monospace;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: none;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-#diff-checker-container button {
-    padding: 12px 24px;
-    font-size: 16px;
-    cursor: pointer;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: transform 0.2s ease, background-color 0.3s ease;
-    margin: 0 auto;
+.diff-checker-toolbar {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+  justify-content: flex-end;
 }
 
-#diff-checker-container button:hover {
-    background-color: #357abd;
-    transform: translateY(-1px);
+.diff-checker-container button {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
 }
 
-#diff-checker-container button:active {
-    transform: translateY(1px);
+.diff-checker-container button:hover {
+  background-color: #1d4ed8;
 }
 
-#diff-checker-container #diff-result-container {
-    margin-top: 2rem;
-    padding: 1rem;
-    border-radius: 8px;
-    background: #fcfcfc;
-    box-shadow: inset 0 2px 4px var(--shadow-color);
+.diff-checker-container button.diff-checker-secondary {
+  background-color: #6b7280;
 }
 
-#diff-checker-container #diff-result {
-    white-space: pre-wrap;
-    padding: 15px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    margin-top: 10px;
-    font-family: monospace;
-    font-size: 14px;
-    line-height: 1.6;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
+.diff-checker-container button.diff-checker-secondary:hover {
+  background-color: #4b5563;
 }
 
-#diff-checker-container #diff-result:not(:empty) {
-    opacity: 1;
-    transform: translateY(0);
+.diff-checker-options {
+  margin: 20px 0;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.diff-checker-option-group {
+  margin-bottom: 15px;
+}
+
+.diff-checker-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.diff-checker-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.diff-checker-container input[type="checkbox"] {
+  margin-right: 5px;
+}
+
+.diff-checker-container label {
+  font-size: 14px;
+}
+
+.diff-checker-result {
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.diff-checker-result h2 {
+  margin-bottom: 15px !important;
+}
+
+#diff-result {
+  white-space: pre-wrap;
+  padding: 15px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  background-color: white;
 }
 
 /* Diff styles */
-#diff-checker-container .diff-added,
-#diff-checker-container .diff-removed {
-    margin: 4px 0;
-    padding: 4px 12px;
-    border-radius: 0 4px 4px 0;
-    position: relative;
-    transition: all 0.3s ease;
+.diff-checker-container .diff-added,
+.diff-checker-container .diff-removed {
+  margin: 4px 0;
+  padding: 4px 12px;
+  border-radius: 0 4px 4px 0;
+  position: relative;
+  transition: all 0.3s ease;
 }
 
-#diff-checker-container .diff-added {
-    background-color: rgba(46, 204, 113, 0.1);
-    color: #27ae60;
-    border-left: 4px solid var(--success-color);
+.diff-checker-container .diff-added {
+  background-color: rgba(46, 204, 113, 0.1);
+  color: #27ae60;
+  border-left: 4px solid #2ecc71;
 }
 
-#diff-checker-container .diff-removed {
-    background-color: rgba(231, 76, 60, 0.1);
-    color: #c0392b;
-    border-left: 4px solid var(--danger-color);
+.diff-checker-container .diff-removed {
+  background-color: rgba(231, 76, 60, 0.1);
+  color: #c0392b;
+  border-left: 4px solid #e74c3c;
 }
 
-#diff-checker-container .diff-added:hover,
-#diff-checker-container .diff-removed:hover {
-    transform: translateX(2px);
+.diff-checker-container .diff-added:hover,
+.diff-checker-container .diff-removed:hover {
+  transform: translateX(2px);
 }
 
-#diff-checker-container .diff-added:hover {
-    background-color: rgba(46, 204, 113, 0.15);
+.diff-checker-container .diff-added:hover {
+  background-color: rgba(46, 204, 113, 0.15);
 }
 
-#diff-checker-container .diff-removed:hover {
-    background-color: rgba(231, 76, 60, 0.15);
+.diff-checker-container .diff-removed:hover {
+  background-color: rgba(231, 76, 60, 0.15);
 }
 
 /* Diff icons */
-#diff-checker-container .diff-added::before,
-#diff-checker-container .diff-removed::before {
-    position: absolute;
-    left: -24px;
-    color: var(--text-color);
-    opacity: 0.5;
-    font-weight: 900;
+.diff-checker-container .diff-added::before,
+.diff-checker-container .diff-removed::before {
+  position: absolute;
+  left: -24px;
+  color: #333;
+  opacity: 0.5;
+  font-weight: 900;
 }
 
-#diff-checker-container .diff-added::before {
-    content: '+'; /* plus icon */
+.diff-checker-container .diff-added::before {
+  content: '+'; /* plus icon */
 }
 
-#diff-checker-container .diff-removed::before {
-    content: '-'; /* minus icon */
+.diff-checker-container .diff-removed::before {
+  content: '-'; /* minus icon */
 }
 
-#diff-checker-container .diff-line-number {
-    opacity: 0.6;
-    display: inline-block;
-    min-width: 40px;
-    padding: 0 6px;
-    text-align: right;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 12px;
-    user-select: none;
-    white-space: pre;
-    background-color: rgba(0, 0, 0, 0.04);
-    border-right: 1px solid var(--border-color);
-    margin-right: 8px;
-    vertical-align: text-top;
-    line-height: 1.6;
+.diff-checker-container .diff-line-number {
+  opacity: 0.6;
+  display: inline-block;
+  min-width: 40px;
+  padding: 0 6px;
+  text-align: right;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  user-select: none;
+  white-space: pre;
+  background-color: rgba(0, 0, 0, 0.04);
+  border-right: 1px solid #ddd;
+  margin-right: 8px;
+  vertical-align: text-top;
+  line-height: 1.6;
 }
 
-/* Test results */
-#diff-checker-container #testResults {
-    margin-top: 40px;
-    padding: 20px;
-    border-top: 2px solid var(--border-color);
+.diff-checker-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #28a745;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transform: translateY(100px);
+  opacity: 0;
+  transition: transform 0.3s, opacity 0.3s;
 }
 
-#diff-checker-container .test-result {
-    padding: 8px;
-    margin: 4px 0;
-}
-
-#diff-checker-container .test-result.pass {
-    color: var(--success-color);
-}
-
-#diff-checker-container .test-result.fail {
-    color: var(--danger-color);
-    background-color: rgba(231, 76, 60, 0.1);
-}
-
-#diff-checker-container #testResults > div:last-child {
-    margin-top: 20px;
-    font-weight: bold;
-    padding: 10px;
-    border-top: 1px solid var(--border-color);
+.diff-checker-notification.show {
+  transform: translateY(0);
+  opacity: 1;
 }

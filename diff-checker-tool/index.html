@@ -8,30 +8,55 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
 </head>
 <body>
-  <div id="diff-checker-container">
-    <h1>Diff Checker Tool</h1>
-    <div class="text-area-container">
-      <div class="textarea-wrapper">
+  <div class="diff-checker-container">
+    <div class="diff-checker-header">
+      <h1>Diff Checker Tool</h1>
+      <p class="diff-checker-description">Compare two texts or code snippets and highlight the differences between them.</p>
+    </div>
+    
+    <div class="diff-checker-editor-container">
+      <div class="diff-checker-panel">
+        <div class="diff-checker-panel-header">
+          <h2>Original Text</h2>
+          <div class="diff-checker-toolbar">
+            <button class="diff-checker-secondary" id="clear-text1">Clear</button>
+          </div>
+        </div>
         <textarea id="text1" placeholder="Paste your first text here..." title="Enter your original text or code here"></textarea>
       </div>
-      <div class="textarea-wrapper">
+      
+      <div class="diff-checker-panel">
+        <div class="diff-checker-panel-header">
+          <h2>Modified Text</h2>
+          <div class="diff-checker-toolbar">
+            <button class="diff-checker-secondary" id="clear-text2">Clear</button>
+          </div>
+        </div>
         <textarea id="text2" placeholder="Paste your second text here..." title="Enter your modified text or code here"></textarea>
       </div>
     </div>
-    <div class="options-container">
-      <label class="option">
-        <input type="checkbox" id="ignore-whitespace" checked>
-        Ignore whitespace differences
-      </label>
-      <button id="compare-button" title="Click to compare the two texts">
-        Compare
-      </button>
+    
+    <div class="diff-checker-options">
+      <div class="diff-checker-option-group">
+        <div class="diff-checker-checkbox-group">
+          <div class="diff-checker-checkbox-item">
+            <input type="checkbox" id="ignore-whitespace" checked>
+            <label for="ignore-whitespace">Ignore whitespace differences</label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="diff-checker-toolbar">
+        <button id="compare-button">Compare</button>
+      </div>
     </div>
-    <div id="diff-result-container">
+
+    <div id="diff-result-container" class="diff-checker-result">
       <h2>Differences</h2>
       <pre id="diff-result"></pre>
     </div>
   </div>
+  <div id="notification" class="diff-checker-notification">Copied to clipboard!</div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="bundle.js"></script>
 </body>
