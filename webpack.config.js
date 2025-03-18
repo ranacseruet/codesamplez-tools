@@ -62,12 +62,12 @@ const getToolConfig = (toolName, entry) => ({
   },
   output: {
     path: path.resolve(__dirname, 'build', toolName),
-    filename: 'bundle.js',
+    filename: 'scripts.min.js',
     publicPath: `/${toolName}/`
   },
   plugins: [
     new MiniCssExtractPlugin({
-      filename: 'styles.css'
+      filename: 'styles.min.css'
     }),
     new CopyPlugin({
       patterns: [
@@ -110,12 +110,12 @@ const developmentConfig = {
   }, {}),
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: '[name]/bundle.js',
+    filename: '[name]/scripts.min.js',
     publicPath: '/'
   },
   plugins: [
     new MiniCssExtractPlugin({
-      filename: '[name]/styles.css'
+      filename: '[name]/styles.min.css'
     }),
     new CopyPlugin({
       patterns: [
