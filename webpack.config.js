@@ -3,11 +3,12 @@ const CopyPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const tools = [
   'base64-converter-tool',
   'css-minifier-tool',
   'diff-checker-tool',
-  { name: 'js-minifier-tool', entry: 'app.js' },
+  'js-minifier-tool',
   'json-formatter-tool',
   'jwt-builder-tool',
   'jwt-decoder-tool',
@@ -41,33 +42,35 @@ const baseConfig = {
       },
       {
         test: /\.(png|svg|jpg|jpeg|gif)$/i,
-        type: 'asset/resource'
+        type: 'asset/resource',
+        generator: {
+          filename: 'assets/[hash][ext][query]'
+        }
       }
     ]
   }
 };
 
-const getToolConfig = (toolName, entry) => ({
+const getToolConfig = (toolName) => ({
   ...baseConfig,
   name: toolName,
   entry: {
-    main: toolName === 'base64-converter-tool' ? [
-      `./${toolName}/Base64Codec.js`,
+    main: [
       `./${toolName}/script.js`,
-      `./${toolName}/styles.css`
-    ] : [
-      `./${toolName}/${entry || 'script.js'}`,
       `./${toolName}/styles.css`
     ]
   },
   output: {
     path: path.resolve(__dirname, 'build', toolName),
-    filename: 'scripts.min.js',
+    filename: 'bundle.main.js',
     publicPath: `/${toolName}/`
   },
   plugins: [
+    new CleanWebpackPlugin({
+      cleanOnceBeforeBuildPatterns: ['**/*', '!*.html']
+    }),
     new MiniCssExtractPlugin({
-      filename: 'styles.min.css'
+      filename: 'styles.main.css'
     }),
     new CopyPlugin({
       patterns: [
@@ -77,20 +80,15 @@ const getToolConfig = (toolName, entry) => ({
         },
         {
           from: path.join(__dirname, toolName, 'images'),
-          to: path.join(__dirname, 'build', toolName, 'images')
-        },
-        ...(toolName === 'base64-converter-tool' ? [{
-          from: path.join(__dirname, 'index.html'),
-          to: path.join(__dirname, 'build', 'index.html')
-        }] : [])
+          to: path.join(__dirname, toolName, 'images')
+        }
       ]
     })
   ]
 });
 
 const configs = tools.map((tool) => {
-  const toolName = tool.name || tool;
-  return getToolConfig(toolName, tool.entry);
+  return getToolConfig(tool);
 });
 
 const developmentConfig = {
@@ -98,24 +96,23 @@ const developmentConfig = {
   name: 'development',
   entry: tools.reduce((entries, tool) => {
     const toolName = tool.name || tool;
-    entries[toolName] = toolName === 'base64-converter-tool' ? [
-      `./${toolName}/Base64Codec.js`,
+    entries[toolName] = [
       `./${toolName}/script.js`,
-      `./${toolName}/styles.css`
-    ] : [
-      `./${toolName}/${tool.entry || 'script.js'}`,
       `./${toolName}/styles.css`
     ];
     return entries;
   }, {}),
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: '[name]/scripts.min.js',
+    filename: '[name]/bundle.main.js',
     publicPath: '/'
   },
   plugins: [
+    new CleanWebpackPlugin({
+      cleanOnceBeforeBuildPatterns: ['**/*', '!*.html']
+    }),
     new MiniCssExtractPlugin({
-      filename: '[name]/styles.min.css'
+      filename: '[name]/styles.main.css'
     }),
     new CopyPlugin({
       patterns: [
