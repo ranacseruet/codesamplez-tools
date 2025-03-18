@@ -26,7 +26,9 @@ const initConverter = () => {
                 let action;
 
                 if (mode === 'auto') {
-                    if (codec.isBase64(input)) {
+                    // In auto mode, first validate if it's a valid base64 string
+                    const isBase64Input = codec.isBase64(input);
+                    if (isBase64Input) {
                         result = codec.decodeText(input, encoding);
                         action = 'Decoded';
                     } else {
@@ -37,17 +39,38 @@ const initConverter = () => {
                     result = codec.encodeText(input, encoding);
                     action = 'Encoded';
                 } else {
+                    // In decode mode, explicitly validate base64 input
+                    if (!codec.isBase64(input)) {
+                        throw new Error('Invalid base64 input string');
+                    }
                     result = codec.decodeText(input, encoding);
                     action = 'Decoded';
                 }
 
                 this.elements.result.textContent = result;
                 this.elements.status.textContent = `✓ ${action} using ${encoding}`;
+                this.elements.status.className = 'success';
                 this.elements.copyButton.disabled = false;
             } catch (error) {
                 console.error('Processing error:', error);
-                this.elements.result.textContent = 'Error processing input';
-                this.elements.status.textContent = '⚠ Invalid input or encoding combination';
+                this.elements.result.textContent = '';
+                
+                // Provide more specific error messages
+                let errorMessage = '⚠ ';
+                if (error.message.includes('base64')) {
+                    errorMessage += 'Invalid base64 input - Please check your input string';
+                } else if (error.message.includes('UCS-2')) {
+                    errorMessage += 'Invalid UCS-2 sequence - The input may be corrupted';
+                } else if (error.message.includes('empty')) {
+                    errorMessage += 'Input cannot be empty';
+                } else if (error.message.includes('undefined')) {
+                    errorMessage += 'Invalid input format';
+                } else {
+                    errorMessage += `Error: ${error.message}`;
+                }
+                
+                this.elements.status.textContent = errorMessage;
+                this.elements.status.className = 'error';
                 this.elements.copyButton.disabled = true;
             }
         },
@@ -61,7 +84,9 @@ const initConverter = () => {
                 this.elements.input.value = text;
                 this.processInput();
             } catch (error) {
-                this.elements.status.textContent = '⚠ Error reading file';
+                console.error('File reading error:', error);
+                this.elements.status.textContent = '⚠ Error reading file: ' + error.message;
+                this.elements.status.className = 'error';
             }
         },
 
@@ -69,11 +94,14 @@ const initConverter = () => {
             try {
                 await navigator.clipboard.writeText(this.elements.result.textContent);
                 this.elements.copyStatus.textContent = 'Copied!';
+                this.elements.copyStatus.className = 'success';
                 setTimeout(() => {
                     this.elements.copyStatus.textContent = '';
                 }, 2000);
             } catch (error) {
-                this.elements.copyStatus.textContent = 'Copy failed';
+                console.error('Copy error:', error);
+                this.elements.copyStatus.textContent = 'Copy failed: ' + error.message;
+                this.elements.copyStatus.className = 'error';
             }
         }
     };
@@ -116,6 +144,8 @@ if (typeof window !== 'undefined') {
             elements.input.value = '';
             elements.result.textContent = '';
             elements.status.textContent = '';
+            elements.status.className = '';
+            elements.copyButton.disabled = true;
         });
 
         elements.mode.addEventListener('change', () => converter.processInput());
