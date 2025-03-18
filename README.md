@@ -1,4 +1,6 @@
 # codesamplez-tools
+![Build](https://github.com/ranacseruet/codesamplez-tools/actions/workflows/ci.yml/badge.svg)
+
 
 A collection of browser-based developer utilities and tools built with AI technology. These tools are designed to streamline common development tasks and text manipulation operations, all accessible directly through your web browser at Codesamplez.com.
 
