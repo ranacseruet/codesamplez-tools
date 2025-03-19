@@ -73,12 +73,19 @@
   .base64converter-editor-container {
     flex-direction: row;
   }
+  
+  .base64converter-panel {
+    width: 50%;
+    min-width: 0; /* Allows flex items to shrink below content size */
+    max-width: 50%;
+  }
 }
 
 .base64converter-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* Prevents content from overflowing */
 }
 
 .base64converter-panel-header {
@@ -155,11 +162,15 @@
   resize: none;
   font-size: 14px;
   line-height: 1.5;
+  overflow-x: auto; /* Horizontal scrollbar if needed */
+  word-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .base64converter-result {
   width: 100%;
   min-height: 300px;
+  max-height: 300px;
   padding: 15px;
   font-family: monospace;
   border: 1px solid #ddd;
@@ -169,6 +180,8 @@
   background-color: #f8f9fa;
   word-wrap: break-word;
   white-space: pre-wrap;
+  overflow-y: auto; /* Vertical scrollbar for overflow */
+  overflow-x: hidden; /* Hide horizontal overflow */
 }
 
 .base64converter-status {
