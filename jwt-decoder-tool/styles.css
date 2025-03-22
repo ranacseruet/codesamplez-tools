@@ -80,7 +80,7 @@
 .jwt-decoder-container button {
   background-color: #2563eb;
   color: white;
-  border: none;
+  border: 1px solid #2563eb;
   padding: 10px 20px;
   border-radius: 4px;
   cursor: pointer;
@@ -90,6 +90,7 @@
 
 .jwt-decoder-container button:hover {
   background-color: #1d4ed8;
+  color: white;
 }
 
 .jwt-decoder-container button.jwt-decoder-secondary {
@@ -178,6 +179,132 @@
   outline: none;
   border-color: #2563eb;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+/* Tab Navigation */
+.jwt-decoder-tabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 10px;
+  gap: 4px;
+}
+
+.jwt-decoder-tab {
+  padding: 8px 16px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: -1px;
+  transition: all 0.2s ease;
+}
+
+.jwt-decoder-tab:hover {
+  background: #e9e9e9;
+  color: #2563eb;
+}
+
+.jwt-decoder-tab.active {
+  background: #fff;
+  color: #2563eb;
+  border-bottom: 1px solid #fff;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 -2px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Tab Content */
+.jwt-decoder-tab-pane {
+  display: none;
+  height: 100%;
+}
+
+.jwt-decoder-tab-pane.active {
+  display: block;
+}
+
+.jwt-decoder-tab-content {
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  background: #fff;
+  padding: 0;
+  position: relative;
+  z-index: 0;
+}
+
+/* Raw tab textarea */
+#rawTab textarea {
+  height: 100%;
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 15px;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+}
+
+/* JSON Viewer */
+.jwt-decoder-json-container {
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.jwt-decoder-tab-content {
+  flex: 1;
+  overflow: auto;
+}
+
+.jwt-decoder-json-viewer {
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 15px;
+  height: 100%;
+  overflow: auto;
+  background-color: #fff;
+  border-radius: 0 0 4px 4px;
+}
+
+/* Remove border from raw textarea since we have a border on the tab content */
+#rawTab textarea {
+  border: none;
+}
+
+/* JSON Styling */
+.jwt-decoder-json-key {
+  color: #0550ae;
+  font-weight: bold;
+}
+
+.jwt-decoder-json-string {
+  color: #42862a;
+}
+
+.jwt-decoder-json-number,
+.jwt-decoder-json-boolean {
+  color: #b83814;
+}
+
+.jwt-decoder-json-null {
+  color: #999;
+  font-style: italic;
+}
+
+/* No collapsible elements styles needed */
+
+/* JSON key-value styling */
+.jwt-decoder-json-key-value {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .jwt-decoder-footer {

@@ -33,7 +33,28 @@
       
       <div class="jwt-decoder-panel">
         <h2>Decoded Token</h2>
-        <textarea id="jwtDecodedOutput" readonly placeholder="Decoded token will appear here..."></textarea>
+        <div id="jwtDecodedContainer" class="jwt-decoder-json-container">
+          <!-- Tab navigation -->
+          <div class="jwt-decoder-tabs">
+            <button class="jwt-decoder-tab active" data-tab="header">Header</button>
+            <button class="jwt-decoder-tab" data-tab="payload">Payload</button>
+            <button class="jwt-decoder-tab" data-tab="raw">Raw</button>
+          </div>
+          
+          <!-- Tab content -->
+          <div class="jwt-decoder-tab-content">
+            <div id="headerTab" class="jwt-decoder-tab-pane active">
+              <div id="headerJson" class="jwt-decoder-json-viewer"></div>
+            </div>
+            <div id="payloadTab" class="jwt-decoder-tab-pane">
+              <div id="payloadJson" class="jwt-decoder-json-viewer"></div>
+            </div>
+            <div id="rawTab" class="jwt-decoder-tab-pane">
+              <div id="rawJsonViewer" class="jwt-decoder-json-viewer"></div>
+              <textarea id="jwtDecodedOutput" readonly placeholder="Decoded token will appear here..." style="display: none;"></textarea>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     
