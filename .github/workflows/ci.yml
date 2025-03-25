@@ -34,7 +34,7 @@ jobs:
         path: build
         key: ${{ runner.os }}-build-${{ github.sha }}
         restore-keys: |
-          ${{ runner.os }}-build-${{ github.sha }}
+          ${{ runner.os }}-build-
 
   deploy:
     needs: test-and-build
@@ -48,7 +48,7 @@ jobs:
         path: build
         key: ${{ runner.os }}-build-${{ github.sha }}
         restore-keys: |
-          ${{ runner.os }}-build-${{ github.sha }}
+          ${{ runner.os }}-build-
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
@@ -63,8 +63,8 @@ jobs:
           --exclude "*" \
           --include "*.js" \
           --include "*.css" \
+          --include "robots.txt" \
           --delete
     - name: Invalidate CloudFront cache
       run: |    
         aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
-
