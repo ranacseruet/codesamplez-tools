@@ -7,8 +7,7 @@
     "start": "http-server build -c-1 -p 8080",
     "dev": "NODE_ENV=development webpack serve --mode development",
     "build": "webpack --mode production",
-    "build:dev": "webpack --mode development",
-    "serve": "http-server build -c-1 -p 8080"
+    "build:dev": "webpack --mode development"
   },
   "devDependencies": {
     "@babel/core": "^7.23.3",
