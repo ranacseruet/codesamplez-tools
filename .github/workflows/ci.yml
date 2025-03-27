@@ -34,7 +34,7 @@ jobs:
         path: build
         key: ${{ runner.os }}-build-${{ github.sha }}
         restore-keys: |
-          ${{ runner.os }}-build-
+          ${{ runner.os }}-build-${{ github.sha }}
 
   deploy:
     needs: test-and-build
@@ -48,7 +48,7 @@ jobs:
         path: build
         key: ${{ runner.os }}-build-${{ github.sha }}
         restore-keys: |
-          ${{ runner.os }}-build-
+          ${{ runner.os }}-build-${{ github.sha }}
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
