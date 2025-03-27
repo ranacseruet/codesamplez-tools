@@ -160,63 +160,84 @@
 }
 
 /* Diff styles */
-.diff-checker-container .diff-added,
-.diff-checker-container .diff-removed {
-  margin: 4px 0;
-  padding: 4px 12px;
+.diff-checker-container .diff-line {
+  display: flex; /* Align line number and content horizontally */
+  margin: 2px 0; /* Reduced margin slightly */
+  position: relative; /* For positioning icons */
+  border-left: 4px solid transparent; /* Add transparent border to reserve space on ALL lines */
+}
+
+/* Style for the content span */
+.diff-checker-container .diff-content {
+  flex-grow: 1; /* Allow content to take remaining space */
+  padding: 2px 12px 2px 12px; /* Add padding back, especially left */
   border-radius: 0 4px 4px 0;
-  position: relative;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease;
+  display: inline-block; /* Ensure it behaves like a block for padding/border */
+  width: 100%; /* Take full width within flex container */
 }
 
-.diff-checker-container .diff-added {
+/* Apply background and override border color for added/removed lines */
+.diff-checker-container .diff-line:has(.diff-content.diff-added) {
   background-color: rgba(46, 204, 113, 0.1);
-  color: #27ae60;
-  border-left: 4px solid #2ecc71;
+  border-left-color: #2ecc71; /* Override border color */
 }
-
-.diff-checker-container .diff-removed {
+.diff-checker-container .diff-line:has(.diff-content.diff-removed) {
   background-color: rgba(231, 76, 60, 0.1);
+  border-left-color: #e74c3c; /* Override border color */
+}
+
+/* Keep only text color on the content span */
+.diff-checker-container .diff-content.diff-added {
+  color: #27ae60;
+  /* border-left removed */
+  /* background-color removed */
+}
+
+.diff-checker-container .diff-content.diff-removed {
   color: #c0392b;
-  border-left: 4px solid #e74c3c;
+  /* border-left removed */
+  /* background-color removed */
 }
 
-.diff-checker-container .diff-added:hover,
-.diff-checker-container .diff-removed:hover {
-  transform: translateX(2px);
-}
-
-.diff-checker-container .diff-added:hover {
+/* Apply hover effects to the line container */
+.diff-checker-container .diff-line:has(.diff-content.diff-added):hover {
   background-color: rgba(46, 204, 113, 0.15);
 }
 
-.diff-checker-container .diff-removed:hover {
+.diff-checker-container .diff-line:has(.diff-content.diff-removed):hover {
   background-color: rgba(231, 76, 60, 0.15);
 }
 
-/* Diff icons */
-.diff-checker-container .diff-added::before,
-.diff-checker-container .diff-removed::before {
+/* Diff icons positioned relative to the line container */
+.diff-checker-container .diff-line::before {
   position: absolute;
-  left: -24px;
+  /* Adjust left position to be outside the line number */
+  left: -18px; /* May need fine-tuning */
+  top: 2px; /* Align vertically */
   color: #333;
   opacity: 0.5;
   font-weight: 900;
+  font-size: 14px; /* Match content font size */
 }
 
-.diff-checker-container .diff-added::before {
-  content: '+'; /* plus icon */
+/* Add '+' icon if the line contains added content */
+.diff-checker-container .diff-line:has(.diff-content.diff-added)::before {
+  content: '+';
 }
 
-.diff-checker-container .diff-removed::before {
-  content: '-'; /* minus icon */
+/* Add '-' icon if the line contains removed content */
+.diff-checker-container .diff-line:has(.diff-content.diff-removed)::before {
+  content: '-';
 }
 
 .diff-checker-container .diff-line-number {
   opacity: 0.6;
-  display: inline-block;
-  min-width: 40px;
-  padding: 0 6px;
+  display: inline-block; /* Keep as inline-block */
+  flex-shrink: 0; /* Prevent shrinking in flex layout */
+  /* Adjust min-width if needed based on getLineNumberText logic */
+  min-width: 50px; /* Slightly increased min-width */
+  padding: 2px 6px; /* Match content padding vertically */
   text-align: right;
   font-family: 'Courier New', Courier, monospace;
   font-size: 12px;
@@ -224,9 +245,9 @@
   white-space: pre;
   background-color: rgba(0, 0, 0, 0.04);
   border-right: 1px solid #ddd;
-  margin-right: 8px;
-  vertical-align: text-top;
-  line-height: 1.6;
+  margin-right: 0; /* Remove margin, padding on content handles spacing */
+  /* vertical-align is not needed with flexbox */
+  line-height: 1.6; /* Keep line-height consistent */
 }
 
 .diff-checker-notification {

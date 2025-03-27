@@ -34,14 +34,31 @@ class DiffDisplay {
     });
   }
 
+  // Updated createLineElement to separate line number and content spans
   createLineElement(changeType, lineContent, isCodeContent) {
-    const lineElement = document.createElement('span');
+    const lineContainer = document.createElement('div'); // Use div for block display per line
+    const lineNumberElement = document.createElement('span');
+    const contentElement = document.createElement('span');
+
     const formattedLine = this.formatLine(lineContent, isCodeContent);
-    const lineNumbers = this.createLineNumberHTML(changeType);
-    
-    lineElement.innerHTML = lineNumbers + formattedLine;
-    lineElement.classList.add(`diff-${changeType}`);
-    return lineElement;
+    // Get the raw text content for the line number span
+    const lineNumbersContent = this.getLineNumberText(changeType); 
+
+    lineNumberElement.className = 'diff-line-number'; // Apply class directly
+    lineNumberElement.textContent = lineNumbersContent; // Set text content
+
+    contentElement.innerHTML = formattedLine; // Use innerHTML for potentially highlighted code
+    contentElement.classList.add('diff-content'); // Add class for content span
+    // Apply specific diff class only to the content span
+    if (changeType !== 'unchanged') {
+      contentElement.classList.add(`diff-${changeType}`);
+    }
+
+    lineContainer.appendChild(lineNumberElement); // Add line number span to container
+    lineContainer.appendChild(contentElement); // Add content span to container
+    lineContainer.classList.add('diff-line'); // Add class for the container div
+
+    return lineContainer;
   }
 
   formatLine(lineContent, isCodeContent) {
@@ -82,7 +99,32 @@ class DiffDisplay {
     const modifiedStr = modifiedNum 
       ? modifiedNum.toString().padStart(maxDigits, ' ') 
       : ''.padStart(maxDigits, ' ');
-    return `<span class="diff-line-number">${originalStr}│${modifiedStr}</span>`;
+    // Return only the text content, not the span tag
+    return `${originalStr}│${modifiedStr}`; 
+  }
+
+  // Renamed from createLineNumberHTML to getLineNumberText to reflect it returns text
+  getLineNumberText(changeType) {
+    // Ensure minimum width for alignment, calculate max digits needed
+    // This calculation might need refinement based on total lines, but is a start
+    const maxDigits = Math.max(
+      this.originalLineNumber.toString().length,
+      this.modifiedLineNumber.toString().length,
+      3 // Ensure a minimum width visually
+    );
+
+    let lineNumbersContent = '';
+    switch (changeType) {
+      case 'added':
+        lineNumbersContent = this.formatLineNumbers('', this.modifiedLineNumber++, maxDigits);
+        break;
+      case 'removed':
+        lineNumbersContent = this.formatLineNumbers(this.originalLineNumber++, '', maxDigits);
+        break;
+      default: // unchanged
+        lineNumbersContent = this.formatLineNumbers(this.originalLineNumber++, this.modifiedLineNumber++, maxDigits);
+    }
+    return lineNumbersContent;
   }
 }
 
