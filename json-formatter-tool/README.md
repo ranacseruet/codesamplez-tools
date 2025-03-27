@@ -1,6 +1,6 @@
 # JSON Formatter
 
-A tool for formatting and validating JSON data with alphabetical key sorting.
+A tool for formatting and validating JSON data with optional alphabetical key sorting.
 
 ## Privacy & Security
 - 🔒 **100% Client-Side Processing**: All JSON formatting and validation happens in your browser
@@ -10,22 +10,25 @@ A tool for formatting and validating JSON data with alphabetical key sorting.
 
 ## Features
 - Pretty-print JSON with proper indentation
-- Sort object keys alphabetically for consistent output
+- Optional alphabetical sorting of object keys (enabled by default)
 - Validate JSON syntax with detailed error messages
-- Copy formatted output to clipboard with confirmation
-- Error highlighting for invalid JSON with specific error details
+- Copy formatted output to clipboard with success confirmation
+- Collapsible/expandable JSON nodes for better navigation
+- Size comparison between original and formatted JSON
+- Load sample data for quick testing
 - Mobile-responsive design
-- Syntax highlighting for better readability
 
 ## Usage
 1. Paste your JSON into the input area
-2. Click "Format JSON" to validate and format
+2. Toggle "Sort Keys" checkbox to enable/disable alphabetical sorting
+3. Click "Format JSON" to validate and format
    - The tool will automatically validate the JSON syntax
    - If valid, it will format with proper indentation
-   - Object keys will be sorted alphabetically at all levels
-3. Use "Copy Output" button to copy formatted JSON
-   - A confirmation message will appear when copied successfully
-4. Invalid JSON will show specific error messages
+   - Object keys will be sorted alphabetically if enabled
+4. Use "Copy Output" button to copy formatted JSON
+   - A temporary success message will appear when copied
+5. Click "Sample Data" to load example JSON for testing
+6. Invalid JSON will show specific error messages below input
    - The error message will indicate the exact issue
    - The input area will be preserved for corrections
 
@@ -34,7 +37,7 @@ A tool for formatting and validating JSON data with alphabetical key sorting.
 {"z":1,"a":{"d":2,"c":3},"b":[4,3,2]}
 ```
 
-## Example Output
+## Example Output (with sorting enabled)
 ```json
 {
   "a": {
@@ -50,24 +53,30 @@ A tool for formatting and validating JSON data with alphabetical key sorting.
 }
 ```
 
+## Size Comparison
+The tool shows:
+- Original size (bytes/KB/MB)
+- Formatted size (bytes/KB/MB)
+
 ## Current Limitations
 - Large JSON files (>10MB) may impact performance
-- Array elements are not sorted (only object keys are sorted)
+- Array elements are never sorted (only object keys when enabled)
 - Clipboard operations require secure context (HTTPS or localhost)
 - Comments in JSON are not supported (as per JSON specification)
 - Does not preserve trailing commas
 - Unicode characters in strings are not escaped/unescaped
 - No support for JSON5 or JSON with comments (JSONC)
+- No syntax highlighting (basic text rendering only)
 
 ## Error Handling
-- Provides specific error messages for common JSON syntax errors:
+- Provides specific text error messages for common JSON syntax errors:
   - Missing or extra commas
   - Unclosed brackets or braces
   - Invalid property names
   - Missing colons
   - Invalid values
 - Errors are displayed below the input area
-- The error message includes the position where the error was detected
+- The error message includes details about the parsing failure
 
 ## Browser Support
 Works in all modern browsers (Chrome, Firefox, Safari, Edge). Requires JavaScript enabled and clipboard API support for copy functionality.

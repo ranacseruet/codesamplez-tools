@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JSON Formatter</title>
     <link rel="stylesheet" href="styles.main.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
 </head>
 <body>
     <div class="jsonf-container">
@@ -19,19 +18,23 @@
                 <h2>Input JSON</h2>
                 <textarea class="jsonf-input" placeholder="Paste your JSON here..."></textarea>
             </div>
-
-            <div class="jsonf-panel">
-                <h2>Formatted Output</h2>
-                <div class="jsonf-output-container">
-                    <pre class="jsonf-output"><code class="language-json"></code></pre>
-                </div>
-            </div>
         </div>
 
         <div class="jsonf-controls">
             <button class="jsonf-button">Format JSON</button>
             <button class="jsonf-button jsonf-secondary" disabled>Copy Output</button>
             <button class="jsonf-button jsonf-sample">Load Sample</button>
+            <div class="jsonf-checkbox-container">
+                <input type="checkbox" id="sortKeys" class="jsonf-checkbox" checked>
+                <label for="sortKeys" class="jsonf-checkbox-label">Sort keys</label>
+            </div>
+        </div>
+
+        <div class="jsonf-panel">
+            <h2>Formatted Output</h2>
+            <div class="jsonf-output-container">
+                <pre class="jsonf-output"><code></code></pre>
+            </div>
         </div>
 
         <div class="jsonf-stats">
@@ -52,8 +55,5 @@
         </div>
     </div>
     <script src="bundle.main.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 </body>
 </html>

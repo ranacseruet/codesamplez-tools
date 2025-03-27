@@ -31,21 +31,18 @@
 }
 
 .jsonf-editor-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  /* Removed display: flex and flex-direction */
+  gap: 20px; /* Keep gap if needed, though likely irrelevant now */
+  margin-bottom: 20px; /* Add some space before controls */
 }
 
-@media (min-width: 768px) {
-  .jsonf-editor-container {
-    flex-direction: row;
-  }
-}
+/* Removed @media (min-width: 768px) block for editor-container */
 
 .jsonf-panel {
-  width: 50%;
+  /* Removed width: 50% */
   display: flex;
   flex-direction: column;
+  margin-bottom: 20px; /* Add space between panels */
 }
 
 .jsonf-panel h2 {
@@ -110,6 +107,30 @@
   background-color: #047857;
 }
 
+.jsonf-checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 15px;
+}
+
+.jsonf-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.jsonf-checkbox-label {
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  user-select: none;
+}
+
+.jsonf-checkbox:checked {
+  accent-color: #2563eb;
+}
+
 .jsonf-output-container {
   flex: 1;
   background-color: #f8f9fa;
@@ -124,8 +145,41 @@
   font-family: monospace;
   font-size: 14px;
   line-height: 1.5;
-  max-height: 300px;
+  max-height: 400px;
   overflow: auto;
+}
+
+.json-node {
+  position: relative;
+  margin: 2px 0;
+}
+
+.json-toggle {
+  cursor: pointer;
+  margin-right: 5px;
+  color: #666;
+  user-select: none;
+}
+
+.json-toggle:hover {
+  color: #2563eb;
+}
+
+.json-children {
+  margin-left: 15px;
+}
+
+.json-node.collapsed .json-children {
+  display: none;
+}
+
+.json-key {
+  color: #9d174d;
+}
+
+.json-bracket {
+  color: #2563eb;
+  font-weight: bold;
 }
 
 .jsonf-error {
@@ -176,15 +230,13 @@
 }
 
 @media (max-width: 768px) {
-  .jsonf-editor-container {
-    flex-direction: column;
-  }
+  /* Removed flex-direction: column for editor-container */
   
   .jsonf-controls {
     flex-direction: row;
   }
   
   .jsonf-input, .jsonf-output {
-    height: 250px;
+    height: 350px; /* Increased from 250px */
   }
 }
