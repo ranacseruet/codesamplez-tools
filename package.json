@@ -48,5 +48,8 @@
     "testEnvironmentOptions": {
       "url": "http://localhost"
     }
+  },
+  "dependencies": {
+    "diff": "^7.0.0"
   }
 }

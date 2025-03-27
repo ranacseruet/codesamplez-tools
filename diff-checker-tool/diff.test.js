@@ -1,4 +1,4 @@
-import { computeDiff } from './script.js';
+import { computeDiff } from './diff.js';
 
 describe('Base Functionality', () => {
   test('empty inputs should return empty array', () => {
@@ -119,6 +119,20 @@ describe('Whitespace Handling', () => {
       ['unchanged', 'Hello   world']
     ]);
   });
+
+  test('should return all lines as added/removed when no matches and ignoreWhitespace=false', () => {
+    const result = computeDiff(
+      ['line1', 'line2'],
+      ['line3', 'line4'],
+      false
+    );
+    expect(result).toEqual([
+      ['removed', 'line1'],
+      ['removed', 'line2'],
+      ['added', 'line3'],
+      ['added', 'line4']
+    ]);
+  });
 });
 
 describe('Edge Cases', () => {
@@ -197,4 +211,20 @@ describe('Edge Cases', () => {
           ['added', 'A'],
       ]);
   });
+  test('Should handle moved block with braces correctly', () => {
+    const result = computeDiff(
+        ['A{','}', 'B', 'C{','}'],
+        ['B','C{','}',  'A{','}']
+    );
+    
+    expect(result).toEqual([
+        ['removed', 'A{'],
+        ['removed', '}'],
+        ['unchanged', 'B'],
+        ['unchanged', 'C{'],
+        ['unchanged', '}'],
+        ['added', 'A{'],
+        ['added', '}']
+    ]);
+});
 });
