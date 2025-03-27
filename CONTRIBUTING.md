@@ -45,6 +45,7 @@ Tests are written using Jest and run in a JSDOM environment:
 - Ensure edge cases are covered
 - Tests run in JSDOM environment for DOM manipulation
 - Cross-browser testing still needed manually
+- Run development server with `npm run dev` command
 
 ## Building
 Production builds are created using `npm run build`:

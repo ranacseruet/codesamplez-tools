@@ -112,9 +112,10 @@ We welcome contributions! If you'd like to improve these tools:
 4. Make your changes
 5. Run tests: `npm test`
 6. Build the project: `npm run build`
-7. Commit your changes
-8. Push to the branch
-9. Create a Pull Request
+7. Test locally by running the dev server: `npm run dev`
+8. Commit your changes
+9. Push to the branch
+10. Create a Pull Request
 
 ## License
 
