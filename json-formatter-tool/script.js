@@ -142,15 +142,40 @@ export class JSONFormatter {
 
   async copyOutput() {
     try {
-      if (!this.navigator?.clipboard) {
-        throw new Error('Clipboard API not available');
+      // Clone the output to avoid modifying the original
+      const outputClone = this.output.cloneNode(true);
+      
+      // Remove all toggle markers (▼/▶)
+      const toggles = outputClone.querySelectorAll('.json-toggle');
+      toggles.forEach(toggle => toggle.remove());
+      
+      const textToCopy = outputClone.textContent;
+      
+      // Try modern Clipboard API first
+      if (globalThis.navigator?.clipboard) {
+        await globalThis.navigator.clipboard.writeText(textToCopy);
+        this.showTemporaryMessage('Copied to clipboard!');
+        return;
       }
 
-      const textToCopy = this.output.textContent;
-      await this.navigator.clipboard.writeText(textToCopy);
-      this.showTemporaryMessage('Copied to clipboard!');
+      // Fallback to execCommand for older browsers/HTTP contexts
+      const textarea = document.createElement('textarea');
+      textarea.value = textToCopy;
+      textarea.style.position = 'fixed';  // Prevent scrolling to bottom
+      document.body.appendChild(textarea);
+      textarea.select();
+      
+      try {
+        const successful = document.execCommand('copy');
+        if (!successful) {
+          throw new Error('Copy command failed');
+        }
+        this.showTemporaryMessage('Copied to clipboard!');
+      } finally {
+        document.body.removeChild(textarea);
+      }
     } catch (err) {
-      this.showError(`Failed to copy: ${err.message}`);
+      this.showError(`Failed to copy. ${err.message}. Note: Clipboard access requires HTTPS in modern browsers.`);
     }
   }
 
