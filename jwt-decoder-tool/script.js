@@ -1,3 +1,5 @@
+import { JWTDecoder, hmacSha256 } from './JWTDecoder.js'; // Updated import
+
 // Export functions for testing
 export function clearAll() {
     document.getElementById('jwtInputToken').value = '';
@@ -8,6 +10,11 @@ export function clearAll() {
     document.getElementById('rawJsonViewer').innerHTML = '';
     document.getElementById('jwtSignatureStatus').textContent = 'Not verified';
     document.getElementById('jwtSignatureStatus').style.color = 'rgb(102, 102, 102)';
+    // Reset tab to header view
+    const headerTab = document.querySelector('.jwt-decoder-tab[data-tab="header"]');
+    if (headerTab) {
+        headerTab.click(); // Simulate click to activate header tab
+    }
 }
 
 // Function to create interactive JSON display
@@ -163,54 +170,6 @@ function createJsonViewer(jsonData, containerId) {
     container.appendChild(createJsonElement(null, jsonData, true));
 }
 
-// Pure function for decoding JWT without UI dependencies
-export function decodeJWTToken(jwt) {
-    if (!jwt) {
-        return { error: 'No token provided' };
-    }
-
-    const parts = jwt.split('.');
-    if (parts.length !== 3) {
-        return { error: 'Invalid token format' };
-    }
-
-    try {
-        const base64UrlDecode = (str) => {
-            str = str.trim();
-            if (!/^[A-Za-z0-9\-_]+$/.test(str)) {
-                throw new Error('Invalid base64url characters');
-            }
-            str = str.replace(/-/g, '+').replace(/_/g, '/');
-            switch (str.length % 4) {
-                case 0: break;
-                case 2: str += '=='; break;
-                case 3: str += '='; break;
-                default: throw new Error('Invalid base64url length');
-            }
-            return atob(str);
-        };
-
-        let header, payload;
-        try {
-            const headerStr = base64UrlDecode(parts[0]);
-            header = JSON.parse(headerStr);
-        } catch (e) {
-            return { error: 'Invalid header JSON: ' + e.message };
-        }
-        
-        try {
-            const payloadStr = base64UrlDecode(parts[1]);
-            payload = JSON.parse(payloadStr);
-        } catch (e) {
-            throw new Error('Invalid payload JSON: ' + e.message);
-        }
-
-        return { header, payload };
-    } catch (error) {
-        return { error: error.message };
-    }
-}
-
 // Function to setup tab functionality
 function setupTabs() {
     const tabs = document.querySelectorAll('.jwt-decoder-tab');
@@ -249,53 +208,16 @@ export async function decodeJWT(verifySignature = false) {
     }
 
     try {
-        // Decode the JWT
-        const parts = jwt.split('.');
-        if (parts.length !== 3) throw new Error('Invalid JWT format');
+        // Instantiate the decoder
+        const decoder = new JWTDecoder(jwt);
 
-        // Base64Url decode function
-        const base64UrlDecode = (str) => {
-            try {
-                // Remove any whitespace
-                str = str.trim();
-                
-                // Validate base64url format
-                if (!/^[A-Za-z0-9\-_]+$/.test(str)) {
-                    throw new Error('Invalid base64url characters');
-                }
-
-                str = str.replace(/-/g, '+').replace(/_/g, '/');
-                switch (str.length % 4) {
-                    case 0:
-                        break;
-                    case 2:
-                        str += '==';
-                        break;
-                    case 3:
-                        str += '=';
-                        break;
-                    default:
-                        throw new Error('Invalid base64url length');
-                }
-                return atob(str);
-            } catch (e) {
-                throw new Error('Failed to decode base64url: ' + e.message);
-            }
-        };
-
-        // Parse header and payload
-        let header, payload;
-        try {
-            header = JSON.parse(base64UrlDecode(parts[0]));
-        } catch (e) {
-            throw new Error('Invalid header JSON: ' + e.message);
+        // Check if the token format is valid before proceeding
+        if (!decoder.isValidFormat) {
+            throw new Error(decoder.getParsingError() || 'Invalid JWT format');
         }
-        
-        try {
-            payload = JSON.parse(base64UrlDecode(parts[1]));
-        } catch (e) {
-            throw new Error('Invalid payload JSON: ' + e.message);
-        }
+
+        const header = decoder.getHeader();
+        const payload = decoder.getPayload();
 
         // Create interactive JSON viewers for header and payload
         createJsonViewer(header, 'headerJson');
@@ -307,15 +229,21 @@ export async function decodeJWT(verifySignature = false) {
             payload: payload
         };
         decodedOutput.value = JSON.stringify(combinedData, null, 2);
-        
+
         // Create interactive JSON viewer for raw data
         createJsonViewer(combinedData, 'rawJsonViewer');
 
         // Verify signature if requested and secret provided
         if (verifySignature && secret) {
-            const isValid = await validateJWT(jwt, secret);
+            const isValid = await decoder.verifySignature(secret); // Use class method
             statusOutput.textContent = isValid ? '✓ Signature is valid' : '✗ Signature is invalid';
             statusOutput.style.color = isValid ? 'rgb(40, 167, 69)' : 'rgb(220, 53, 69)';
+        } else if (verifySignature && !secret) {
+            statusOutput.textContent = 'Secret key required for verification';
+            statusOutput.style.color = 'rgb(255, 193, 7)'; // Warning color
+        } else {
+             statusOutput.textContent = 'Not verified';
+             statusOutput.style.color = 'rgb(102, 102, 102)';
         }
 
     } catch (e) {
@@ -323,111 +251,9 @@ export async function decodeJWT(verifySignature = false) {
         document.getElementById('headerJson').innerHTML = '';
         document.getElementById('payloadJson').innerHTML = '';
         document.getElementById('rawJsonViewer').innerHTML = '';
-        statusOutput.textContent = 'Unable to validate signature';
+        statusOutput.textContent = 'Error processing token'; // More generic error
         statusOutput.style.color = 'rgb(220, 53, 69)';
-        console.error('JWT Decoding Error:', e);
-    }
-}
-
-export async function validateJWT(token, secret) {
-    if (!token || !secret) {
-        return false;
-    }
-
-    try {
-        const parts = token.split('.');
-        if (parts.length !== 3) {
-            return false;
-        }
-
-        const [header, payload, providedSignature] = parts;
-        
-        if (!providedSignature) {
-            return false;
-        }
-
-        // Create the signature input
-        const signatureInput = `${header}.${payload}`;
-        
-        // Generate the HMAC signature
-        const signatureBytes = await hmacSha256(signatureInput, secret);
-        
-        // Convert ArrayBuffer to base64url
-        const byteArray = new Uint8Array(signatureBytes);
-        const base64 = btoa(String.fromCharCode(...byteArray))
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=+$/, '');
-        
-        // Compare signatures using constant-time comparison
-        const a = base64;
-        const b = providedSignature;
-        
-        if (a.length !== b.length) {
-            return false;
-        }
-        
-        let result = 0;
-        for (let i = 0; i < a.length; i++) {
-            result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-        }
-        return result === 0;
-    } catch (e) {
-        console.error('Error validating JWT:', e);
-        return false;
-    }
-}
-
-export async function hmacSha256(message, key) {
-    if (!message || !key) {
-        throw new Error('Invalid input: message and key are required');
-    }
-
-    try {
-        // Test environment detection
-        if (typeof global !== 'undefined' && global.jest === true) {
-            return new Uint8Array(Array(32).fill(1));
-        }
-
-        // Use Web Crypto API if available (browser environment)
-        if (typeof crypto !== 'undefined' && crypto.subtle) {
-            const encoder = new TextEncoder();
-            const messageBuffer = encoder.encode(message);
-            const keyBuffer = encoder.encode(key);
-
-            const cryptoKey = await crypto.subtle.importKey(
-                'raw',
-                keyBuffer,
-                { name: 'HMAC', hash: { name: 'SHA-256' } },
-                false,
-                ['sign']
-            );
-
-            const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageBuffer);
-            return new Uint8Array(signature);
-        }
-
-        // Node.js environment
-        if (typeof process !== 'undefined' && process.versions && process.versions.node) {
-            try {
-                const crypto = require('crypto');
-                if (typeof crypto.createHmac === 'function') {
-                    const hmac = crypto.createHmac('sha256', key);
-                    hmac.update(message);
-                    return new Uint8Array(hmac.digest());
-                }
-            } catch (e) {
-                // Ignore require errors
-            }
-        }
-
-        throw new Error('No crypto implementation available');
-    } catch (error) {
-        if (error.message === 'No crypto implementation available') {
-            throw error;
-        }
-        console.error('HMAC generation error:', error);
-        throw error;
+        console.error('JWT Processing Error:', e);
     }
 }
 
@@ -460,23 +286,15 @@ export async function copyDecoded() {
     }
 }
 
-export function isBase64(str) {
-    try {
-        return btoa(atob(str)) === str;
-    } catch (e) {
-        return false;
-    }
-}
-
 // Initialize the UI when the DOM is loaded
 if (typeof document !== 'undefined') {
-    // Export functions for browser environment
+    // Export functions for browser environment (adjust as needed)
     window.clearAll = clearAll;
-    window.decodeJWT = decodeJWT;
-    window.validateJWT = validateJWT;
-    window.hmacSha256 = hmacSha256;
+    window.decodeJWT = decodeJWT; // Main function using the class
     window.copyDecoded = copyDecoded;
-    window.isBase64 = isBase64;
+    // No longer exporting validateJWT, hmacSha256, isBase64 directly from here
+    // They are encapsulated or handled within JWTDecoder.js
+
     document.addEventListener('DOMContentLoaded', () => {
         const jwtInput = document.getElementById('jwtInputToken');
         const secretInput = document.getElementById('jwtSecretKey');

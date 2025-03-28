@@ -95,8 +95,10 @@ Required browser features:
 
 ## Development
 
-The tool is built using vanilla JavaScript and modern web APIs, requiring no external dependencies. The codebase is organized into three main components:
+The tool is built using vanilla JavaScript and modern web APIs, requiring no external dependencies. The codebase is organized into the following main components:
 
 - `index.html`: Structure and layout
-- `script.js`: Core functionality and token processing
+- `JWTDecoder.js`: Class responsible for parsing, decoding, and validating JWTs
+- `script.js`: Handles UI interactions, event listeners, and uses `JWTDecoder` for processing
 - `styles.css`: Responsive styling and visual design
+- `JWTDecoder.test.js`: Unit tests for the `JWTDecoder` class
