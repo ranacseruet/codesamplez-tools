@@ -107,10 +107,16 @@
 }
 
 .diff-checker-options {
+  display: flex; /* Add flex display */
+  justify-content: space-between; /* Push items to opposite ends */
+  align-items: center; /* Vertically align items */
   margin: 20px 0;
   padding: 20px;
   background-color: #f8f9fa;
   border-radius: 4px;
+  position: sticky;
+  top: 0;
+  z-index: 10; /* Ensure it stays on top */
 }
 
 .diff-checker-option-group {
@@ -131,6 +137,13 @@
 
 .diff-checker-container input[type="checkbox"] {
   margin-right: 5px;
+  vertical-align: middle; /* Ensure consistent vertical alignment */
+}
+
+/* Increase size specifically for the ignore-whitespace checkbox */
+.diff-checker-container input[type="checkbox"] {
+  width: 16px; /* Adjust size as needed */
+  height: 16px; /* Adjust size as needed */
 }
 
 .diff-checker-container label {
@@ -157,6 +170,9 @@
   font-size: 14px;
   line-height: 1.5;
   background-color: white;
+  overflow-y: auto; /* Make this area scrollable */
+  /* Adjust max-height based on the sticky header's height + margins/padding */
+  max-height: calc(100vh - 280px); /* Estimate height of elements above */
 }
 
 /* Diff styles */
