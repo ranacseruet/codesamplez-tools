@@ -24,8 +24,10 @@ A tool for encoding and decoding Base64 strings.
 ### Diff Checker
 Compare text files and identify differences quickly.
 - Side-by-side comparison view
-- Character-level difference highlighting
+- Line-level difference highlighting (added/removed lines)
 - Line numbering
+- Difference navigation (jump between changes)
+- Option to ignore whitespace
 - Copy differences to clipboard
 - Support for large text files
 

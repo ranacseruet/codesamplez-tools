@@ -143,6 +143,102 @@ class NotificationManager {
   }
 }
 
+// Class to handle diff navigation
+class DiffNavigator {
+  constructor(resultElement, prevButton, nextButton, counterElement) {
+    this.resultElement = resultElement;
+    this.prevButton = prevButton;
+    this.nextButton = nextButton;
+    this.counterElement = counterElement;
+    this.diffElements = [];
+    this.currentDiffIndex = -1;
+
+    this._bindEvents();
+  }
+
+  _bindEvents() {
+    if (this.prevButton) {
+      this.prevButton.addEventListener('click', () => this.navigateToPrevious());
+    }
+    if (this.nextButton) {
+      this.nextButton.addEventListener('click', () => this.navigateToNext());
+    }
+  }
+
+  updateDiffElements() {
+    // Find all diff lines after rendering
+    this.diffElements = Array.from(
+      this.resultElement.querySelectorAll('.diff-line:has(.diff-added), .diff-line:has(.diff-removed)')
+    );
+    this.reset();
+  }
+
+  reset() {
+     // Remove any existing highlight
+    this.resultElement.querySelectorAll('.current-diff').forEach(el => el.classList.remove('current-diff'));
+    this.currentDiffIndex = -1;
+    this.updateNavigationState();
+  }
+
+  updateNavigationState() {
+    const totalDiffs = this.diffElements.length;
+
+    if (!this.counterElement || !this.prevButton || !this.nextButton) return;
+
+    if (totalDiffs === 0) {
+      this.counterElement.textContent = '0 of 0';
+      this.prevButton.disabled = true;
+      this.nextButton.disabled = true;
+      return;
+    }
+
+    // Display 1-based index for user
+    this.counterElement.textContent = `${this.currentDiffIndex + 1} of ${totalDiffs}`;
+    this.prevButton.disabled = this.currentDiffIndex <= 0;
+    this.nextButton.disabled = this.currentDiffIndex >= totalDiffs - 1;
+  }
+
+  navigateToIndex(index) {
+    if (index < 0 || index >= this.diffElements.length) {
+      return; // Invalid index
+    }
+
+    // Remove highlight from the previous diff
+    if (this.currentDiffIndex !== -1 && this.diffElements[this.currentDiffIndex]) {
+      this.diffElements[this.currentDiffIndex].classList.remove('current-diff');
+    }
+
+    this.currentDiffIndex = index;
+
+    // Add highlight to the current diff
+    const currentElement = this.diffElements[this.currentDiffIndex];
+    if (currentElement) {
+      currentElement.classList.add('current-diff');
+      // Scroll into view
+      currentElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest'
+      });
+    }
+
+    this.updateNavigationState();
+  }
+
+  navigateToPrevious() {
+    if (this.currentDiffIndex > 0) {
+      this.navigateToIndex(this.currentDiffIndex - 1);
+    }
+  }
+
+  navigateToNext() {
+    if (this.currentDiffIndex < this.diffElements.length - 1) {
+      this.navigateToIndex(this.currentDiffIndex + 1);
+    }
+  }
+}
+
+
 // Main event handler
 if (typeof document !== 'undefined') {
   const compareButton = document.getElementById('compare-button');
@@ -150,7 +246,16 @@ if (typeof document !== 'undefined') {
   const text2 = document.getElementById('text2');
   const clearText1Button = document.getElementById('clear-text1');
   const clearText2Button = document.getElementById('clear-text2');
-  
+  const diffResultElement = document.getElementById('diff-result');
+
+  // Instantiate the navigator
+  const diffNavigator = new DiffNavigator(
+    diffResultElement,
+    document.getElementById('prev-diff-button'),
+    document.getElementById('next-diff-button'),
+    document.getElementById('diff-counter')
+  );
+
   // Clear buttons functionality
   if (clearText1Button && text1) {
     clearText1Button.addEventListener('click', function() {
@@ -182,11 +287,16 @@ if (typeof document !== 'undefined') {
       const isCodeContent = CodeDetector.isCode(originalText) || CodeDetector.isCode(modifiedText);
       const ignoreWhitespace = document.getElementById('ignore-whitespace').checked;
       const diffResults = computeDiff(originalLines, modifiedLines, ignoreWhitespace);
-      
-      const diffDisplay = new DiffDisplay(document.getElementById('diff-result'));
+
+      const diffDisplay = new DiffDisplay(diffResultElement);
       diffDisplay.displayDiff(diffResults, isCodeContent);
+
+      // Update the navigator with the new diff elements
+      diffNavigator.updateDiffElements();
+
     });
   }
 }
 
-export { computeDiff, DiffDisplay };
+// Export classes/functions needed for testing or potentially other modules
+export { computeDiff, DiffDisplay, DiffNavigator };

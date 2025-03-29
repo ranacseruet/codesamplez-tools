@@ -115,7 +115,7 @@
   background-color: #f8f9fa;
   border-radius: 4px;
   position: sticky;
-  top: 0;
+  top: 90px; /* Adjust as needed based on any fixed header above */
   z-index: 10; /* Ensure it stays on top */
 }
 
@@ -161,6 +161,26 @@
   margin-bottom: 15px !important;
 }
 
+/* Styles for the diff result header containing title and navigation */
+.diff-result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* margin-bottom: 15px; /* Removed margin, handled by padding */
+  position: sticky;
+  /* Position below the .diff-checker-options bar (top: 80px + estimated height ~90px) */
+  top: 190px; /* Increased offset to prevent overlap */
+  background-color: #f8f9fa; /* Match result container background */
+  padding: 10px 15px; /* Add some padding */
+  margin: 0 -15px 15px -15px; /* Adjust margin to align with container padding */
+  border-bottom: 1px solid #ddd; /* Add separator */
+  z-index: 9; /* Below options bar (z-index: 10) */
+}
+
+.diff-result-header h2 {
+  margin-bottom: 0 !important; /* Override default margin */
+}
+
 #diff-result {
   white-space: pre-wrap;
   padding: 15px;
@@ -171,8 +191,9 @@
   line-height: 1.5;
   background-color: white;
   overflow-y: auto; /* Make this area scrollable */
-  /* Adjust max-height based on the sticky header's height + margins/padding */
-  max-height: calc(100vh - 280px); /* Estimate height of elements above */
+  /* Adjust max-height based on the height of BOTH sticky elements */
+  /* Original options bar ~90px + new nav header ~60px + margins/padding */
+  max-height: calc(100vh - 340px); /* Adjusted height estimate */
 }
 
 /* Diff styles */
@@ -283,4 +304,42 @@
 .diff-checker-notification.show {
   transform: translateY(0);
   opacity: 1;
+}
+
+/* Styles for the navigation controls container */
+.diff-navigation {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Style for the diff counter */
+#diff-counter {
+  font-size: 14px;
+  color: #555;
+  min-width: 50px; /* Ensure some space */
+  text-align: center;
+}
+
+/* Style for navigation buttons */
+.diff-navigation button {
+  padding: 5px 10px; /* Smaller padding */
+  font-size: 12px; /* Smaller font size */
+}
+
+/* Style for disabled navigation buttons */
+.diff-navigation button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.diff-navigation button:disabled:hover {
+  background-color: #ccc; /* Prevent hover effect */
+}
+
+/* Style for highlighting the current diff */
+.diff-checker-container .diff-line.current-diff {
+  outline: 2px solid #2563eb; /* Blue outline */
+  outline-offset: -1px; /* Offset slightly inwards */
+  background-color: rgba(37, 99, 235, 0.1); /* Light blue background */
 }

@@ -52,7 +52,14 @@
     </div>
 
     <div id="diff-result-container" class="diff-checker-result">
-      <h2>Differences</h2>
+      <div class="diff-result-header">
+        <h2>Differences</h2>
+        <div class="diff-navigation">
+          <button id="prev-diff-button" class="diff-checker-secondary" disabled>< Prev</button>
+          <span id="diff-counter">0 of 0</span>
+          <button id="next-diff-button" class="diff-checker-secondary" disabled>Next ></button>
+        </div>
+      </div>
       <pre id="diff-result"></pre>
     </div>
   </div>
