@@ -1,6 +1,9 @@
 // Import the diff library
 import * as Diff from 'diff';
 
+// NOTE: escapeHtml function removed due to tool limitations causing file corruption.
+// Relying on innerHTML assignment in script.js for necessary escaping during rendering.
+
 // Class to handle the diff computation
 export class DiffComputer {
   static compute(originalLines, modifiedLines, ignoreWhitespace = true) {
@@ -13,9 +16,11 @@ export class DiffComputer {
       return [];
     }
     if (originalLines.length === 0) {
+      // Return raw lines
       return modifiedLines.map(line => ['added', line]);
     }
     if (modifiedLines.length === 0) {
+      // Return raw lines
       return originalLines.map(line => ['removed', line]);
     }
 
@@ -27,104 +32,132 @@ export class DiffComputer {
       ? modifiedLines.map(line => normalizeLine(line))
       : modifiedLines;
 
-    // Handle identical content
+    // Handle identical content AFTER normalization
     if (areArraysEqual(compareOriginal, compareModified)) {
-      return originalLines.map(line => ['unchanged', line]);
+      // If ignoreWhitespace is true, BUT original lines are different, proceed to diff
+      if (ignoreWhitespace && !areArraysEqual(originalLines, modifiedLines)) {
+         // Don't return early, let the main diff logic handle it (will do word diff)
+      } else {
+        // If truly identical (or ignoreWhitespace is false and they match), return raw unchanged lines
+        return originalLines.map(line => ['unchanged', line]);
+      }
     }
 
     // Handle completely different content when not ignoring whitespace
     if (!ignoreWhitespace && !DiffComputer.hasAnyMatch(originalLines, modifiedLines)) {
       return [
-        ...originalLines.map(line => ['removed', line]),
-        ...modifiedLines.map(line => ['added', line])
+        ...originalLines.map(line => ['removed', line]), // Return raw lines
+        ...modifiedLines.map(line => ['added', line])   // Return raw lines
       ];
     }
 
-    // Get diff chunks using the library
-    const diffResult = Diff.diffLines(
+    // Get line-level diff chunks using the library
+    const lineDiffResult = Diff.diffLines(
       originalLines.join('\n'),
       modifiedLines.join('\n'),
       { ignoreWhitespace }
     );
 
-    // Convert chunks to our format and track positions
-    const changes = [];
-    let origLine = 0;
-    let modLine = 0;
-
-    diffResult.forEach(chunk => {
-      const lines = chunk.value.split('\n');
-      // Remove trailing empty line from split
-      if (lines[lines.length - 1] === '') lines.pop();
-
-      if (chunk.removed) {
-        lines.forEach(line => {
-          changes.push({
-            type: 'removed',
-            line: originalLines[origLine],
-            origPos: origLine++
-          });
-        });
-      } else if (chunk.added) {
-        lines.forEach(line => {
-          changes.push({
-            type: 'added',
-            line: modifiedLines[modLine],
-            modPos: modLine++
-          });
-        });
-      } else {
-        lines.forEach(line => {
-          changes.push({
-            type: 'unchanged',
-            line: originalLines[origLine]
-          });
-          origLine++;
-          modLine++;
-        });
-      }
-    });
-
-    // Group changes by context
-    const groups = [];
-    let currentGroup = [];
-    let lastType = null;
-
-    changes.forEach(change => {
-      if (change.type === 'unchanged') {
-        if (currentGroup.length > 0) {
-          groups.push([...currentGroup]);
-          currentGroup = [];
-        }
-        groups.push([change]);
-        lastType = 'unchanged';
-      } else {
-        if (lastType === 'unchanged') {
-          currentGroup = [];
-        }
-        currentGroup.push(change);
-        lastType = change.type;
-      }
-    });
-
-    if (currentGroup.length > 0) {
-      groups.push(currentGroup);
-    }
-
-    // Process groups in order
     const result = [];
-    groups.forEach(group => {
-      if (group.length === 1 && group[0].type === 'unchanged') {
-        result.push(['unchanged', group[0].line]);
-      } else {
-        // First add removals, then all additions
-        group.filter(c => c.type === 'removed')
-          .forEach(c => result.push(['removed', c.line]));
-        group.filter(c => c.type === 'added')
-          .forEach(c => result.push(['added', c.line]));
-      }
-    });
+    let originalLineIndex = 0;
+    let modifiedLineIndex = 0;
 
+    for (let i = 0; i < lineDiffResult.length; i++) {
+      const chunk = lineDiffResult[i];
+      const lines = chunk.value.split('\n');
+      // Remove trailing empty line from split if present
+      if (lines[lines.length - 1] === '') {
+        lines.pop();
+      }
+
+      if (chunk.added) {
+        // Check if the previous chunk was 'removed' to attempt word-level diff
+        if (i > 0 && lineDiffResult[i - 1].removed) {
+          const prevChunk = lineDiffResult[i - 1];
+          const prevLines = prevChunk.value.split('\n');
+          if (prevLines[prevLines.length - 1] === '') {
+            prevLines.pop();
+          }
+
+          // Perform word diff only if the number of added/removed lines match
+          if (prevLines.length === lines.length) {
+            // Remove the previously added 'removed' lines from result
+            result.splice(-prevLines.length);
+            originalLineIndex -= prevLines.length; // Adjust index back
+
+            for (let j = 0; j < lines.length; j++) {
+              // Use the *actual* lines being compared for word diff
+              const originalLineForWordDiff = originalLines[originalLineIndex];
+              const modifiedLineForWordDiff = modifiedLines[modifiedLineIndex];
+              const wordDiff = Diff.diffWordsWithSpace(originalLineForWordDiff, modifiedLineForWordDiff);
+
+              let removedHtml = '';
+              let addedHtml = '';
+
+              // Check if the word diff resulted in only unchanged parts
+              const isEffectivelyUnchanged = wordDiff.every(part => !part.added && !part.removed);
+
+              // If effectively unchanged after word diff, treat as unchanged line
+              if (isEffectivelyUnchanged) {
+                 result.push(['unchanged', originalLineForWordDiff]);
+                 originalLineIndex++;
+                 modifiedLineIndex++;
+                 // Skip the rest of the loop for this line pair
+                 continue;
+              }
+
+              wordDiff.forEach(part => {
+                // No escaping here - rely on innerHTML
+                const value = part.value;
+                if (part.added) {
+                  addedHtml += `<span class="word-added">${value}</span>`;
+                } else if (part.removed) {
+                  removedHtml += `<span class="word-removed">${value}</span>`;
+                } else {
+                  removedHtml += value;
+                  addedHtml += value;
+                }
+              });
+
+              result.push(['removed', removedHtml]); // Raw HTML string
+              result.push(['added', addedHtml]);     // Raw HTML string
+              originalLineIndex++;
+              modifiedLineIndex++;
+            }
+            // Skip the normal processing for this 'added' chunk as it's handled
+            continue;
+          }
+        }
+
+        // If not part of a modification pair, treat as simple addition
+        lines.forEach(() => { // Iterate based on count, but use index
+          result.push(['added', modifiedLines[modifiedLineIndex]]); // Raw line
+          modifiedLineIndex++;
+        });
+
+      } else if (chunk.removed) {
+        // Check if the next chunk is 'added' - if so, defer processing to the 'added' block
+        if (i + 1 < lineDiffResult.length && lineDiffResult[i + 1].added) {
+           // Add the raw removed lines for now.
+           lines.forEach(() => { // Iterate based on count, but use index
+             result.push(['removed', originalLines[originalLineIndex]]); // Raw line
+             originalLineIndex++;
+           });
+        } else {
+          // If no following 'added' chunk, treat as simple removal
+          lines.forEach(() => { // Iterate based on count, but use index
+            result.push(['removed', originalLines[originalLineIndex]]); // Raw line
+            originalLineIndex++;
+          });
+        }
+      } else { // unchanged
+        lines.forEach(() => { // Iterate based on count, but use index
+          result.push(['unchanged', originalLines[originalLineIndex]]); // Raw line
+          originalLineIndex++;
+          modifiedLineIndex++;
+        });
+      }
+    }
     return result;
   }
 

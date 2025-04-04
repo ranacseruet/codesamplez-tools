@@ -237,6 +237,23 @@
   /* background-color removed */
 }
 
+/* Word-level diff highlighting */
+.diff-checker-container .word-added {
+  background-color: rgba(46, 204, 113, 0.3); /* Darker green */
+  padding: 1px 2px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(46, 204, 113, 0.5); /* Subtle outline */
+}
+
+.diff-checker-container .word-removed {
+  background-color: rgba(231, 76, 60, 0.3); /* Darker red */
+  text-decoration: line-through; /* Add strike-through for removed words */
+  padding: 1px 2px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(231, 76, 60, 0.5); /* Subtle outline */
+}
+
+
 /* Apply hover effects to the line container */
 .diff-checker-container .diff-line:has(.diff-content.diff-added):hover {
   background-color: rgba(46, 204, 113, 0.15);

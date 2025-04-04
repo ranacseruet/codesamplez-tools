@@ -41,8 +41,48 @@ describe('DiffDisplay', () => {
     });
   });
 
+  describe('escapeHtml', () => {
+    it('should escape HTML special characters', () => {
+      const html = '<div class="test">Hello & goodbye</div>';
+      const expected = '&lt;div class=&quot;test&quot;&gt;Hello &amp; goodbye&lt;/div&gt;';
+      expect(diffDisplay.escapeHtml(html)).toBe(expected);
+    });
+
+    it('should handle empty string', () => {
+      expect(diffDisplay.escapeHtml('')).toBe('');
+    });
+
+    it('should handle string with no HTML', () => {
+      const text = 'Hello world';
+      expect(diffDisplay.escapeHtml(text)).toBe(text);
+    });
+  });
+
+  describe('escapeHtmlPreserveDiff', () => {
+    it('should preserve word-level diff spans while escaping other HTML', () => {
+      const html = '<div>Hello <span class="word-removed">world</span> & <span class="word-added">earth</span></div>';
+      const expected = '&lt;div&gt;Hello <span class="word-removed">world</span> &amp; <span class="word-added">earth</span>&lt;/div&gt;';
+      expect(diffDisplay.escapeHtmlPreserveDiff(html)).toBe(expected);
+    });
+
+    it('should escape all HTML if no word-level diff spans present', () => {
+      const html = '<div>Hello world</div>';
+      const expected = '&lt;div&gt;Hello world&lt;/div&gt;';
+      expect(diffDisplay.escapeHtmlPreserveDiff(html)).toBe(expected);
+    });
+
+    it('should handle empty string', () => {
+      expect(diffDisplay.escapeHtmlPreserveDiff('')).toBe('');
+    });
+
+    it('should handle string with only word-level diff spans', () => {
+      const html = '<span class="word-removed">Hello</span><span class="word-added">world</span>';
+      expect(diffDisplay.escapeHtmlPreserveDiff(html)).toBe(html);
+    });
+  });
+
   describe('createLineElement', () => {
-    // No beforeEach needed here anymore as we use real elements
+    // Test HTML escaping in createLineElement
 
     it('should create a div container with correct class', () => {
       const lineContainer = diffDisplay.createLineElement('unchanged', 'test', false);
@@ -84,6 +124,19 @@ describe('DiffDisplay', () => {
       expect(contentSpan.classList.contains('diff-added')).toBe(false);
       expect(contentSpan.classList.contains('diff-removed')).toBe(false);
       expect(contentSpan.innerHTML).toContain('test line');
+    });
+
+    it('should display HTML as text for regular lines', () => {
+      const lineContainer = diffDisplay.createLineElement('unchanged', '<h1>Hello</h1>', false);
+      const contentSpan = lineContainer.children[1];
+      expect(contentSpan.textContent).toBe('<h1>Hello</h1>\n');
+    });
+
+    it('should preserve word-level diff spans while escaping other HTML', () => {
+      const htmlWithDiff = '<div>Hello <span class="word-removed">world</span></div>';
+      const lineContainer = diffDisplay.createLineElement('removed', htmlWithDiff, false);
+      const contentSpan = lineContainer.children[1];
+      expect(contentSpan.innerHTML).toBe('&lt;div&gt;Hello <span class="word-removed">world</span>&lt;/div&gt;\n');
     });
 
     it('should include correct line numbers text in the line number span', () => {

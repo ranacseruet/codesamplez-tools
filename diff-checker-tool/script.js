@@ -34,20 +34,77 @@ class DiffDisplay {
     });
   }
 
+  // Helper function to escape HTML but preserve word-level diff spans
+  escapeHtmlPreserveDiff(html) {
+    // If the content already has word-level diff spans, we need to handle them specially
+    if (html.includes('class="word-added"') || html.includes('class="word-removed"')) {
+      // Split the string by the opening and closing tags of word-level diff spans
+      const parts = [];
+      let currentIndex = 0;
+      
+      // Regular expression to match word-level diff spans
+      const spanRegex = /(<span class="word-(added|removed)">(.*?)<\/span>)/g;
+      let match;
+      
+      while ((match = spanRegex.exec(html)) !== null) {
+        // Add the text before the span (escaped)
+        if (match.index > currentIndex) {
+          const textBefore = html.substring(currentIndex, match.index);
+          parts.push(this.escapeHtml(textBefore));
+        }
+        
+        // Add the span itself (unescaped)
+        parts.push(match[0]);
+        
+        // Update the current index
+        currentIndex = match.index + match[0].length;
+      }
+      
+      // Add any remaining text after the last span (escaped)
+      if (currentIndex < html.length) {
+        const textAfter = html.substring(currentIndex);
+        parts.push(this.escapeHtml(textAfter));
+      }
+      
+      return parts.join('');
+    }
+    
+    // If no word-level diff spans, escape all HTML
+    return this.escapeHtml(html);
+  }
+  
+  // Basic HTML escaping function
+  escapeHtml(html) {
+    return html
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   // Updated createLineElement to separate line number and content spans
   createLineElement(changeType, lineContent, isCodeContent) {
     const lineContainer = document.createElement('div'); // Use div for block display per line
     const lineNumberElement = document.createElement('span');
     const contentElement = document.createElement('span');
 
-    const formattedLine = this.formatLine(lineContent, isCodeContent);
     // Get the raw text content for the line number span
     const lineNumbersContent = this.getLineNumberText(changeType); 
 
     lineNumberElement.className = 'diff-line-number'; // Apply class directly
     lineNumberElement.textContent = lineNumbersContent; // Set text content
 
-    contentElement.innerHTML = formattedLine; // Use innerHTML for potentially highlighted code
+    // Check if the line already contains word-level diff HTML
+    if (lineContent.includes('class="word-added"') || lineContent.includes('class="word-removed"')) {
+      // For lines with word-level diffs, preserve the spans but escape other HTML
+      const safeContent = this.escapeHtmlPreserveDiff(lineContent);
+      contentElement.innerHTML = safeContent + '\n'; // Use innerHTML for word-level diff spans
+    } else {
+      // For regular lines, just set the text content directly
+      contentElement.textContent = lineContent + '\n';
+    }
+
     contentElement.classList.add('diff-content'); // Add class for content span
     // Apply specific diff class only to the content span
     if (changeType !== 'unchanged') {
@@ -62,8 +119,10 @@ class DiffDisplay {
   }
 
   formatLine(lineContent, isCodeContent) {
+    // For non-code content, just return the line as is
     if (!isCodeContent) return lineContent + '\n';
     
+    // For code content, apply syntax highlighting without escaping
     try {
       return Prism.highlight(lineContent, Prism.languages.javascript, 'javascript') + '\n';
     } catch (error) {
