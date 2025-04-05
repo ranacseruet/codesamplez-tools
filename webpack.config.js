@@ -56,6 +56,7 @@ const getToolConfig = (toolName) => ({
   name: toolName,
   entry: {
     main: [
+      './common/shared-styles.css',
       `./${toolName}/script.js`,
       `./${toolName}/styles.css`
     ]
@@ -97,6 +98,7 @@ const developmentConfig = {
   entry: tools.reduce((entries, tool) => {
     const toolName = tool.name || tool;
     entries[toolName] = [
+      './common/shared-styles.css',
       `./${toolName}/script.js`,
       `./${toolName}/styles.css`
     ];
