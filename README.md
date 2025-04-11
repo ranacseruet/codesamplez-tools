@@ -15,11 +15,15 @@ A collection of browser-based developer utilities and tools built with AI techno
 ## Tools
 
 ### Base64 Converter
-A tool for encoding and decoding Base64 strings.
-- Convert plain text to Base64 encoding
-- Decode Base64 strings back to plain text
-- Support for UTF-8 character encoding
+A powerful tool for encoding and decoding Base64 strings with support for multiple character encodings.
+- Convert plain text to Base64 encoding and vice versa
+- Support for multiple character encodings (UTF-8, ASCII, ISO-8859-1, UCS-2)
+- Auto-detection of Base64 strings
+- File upload support for processing text files
 - Real-time conversion as you type
+- Copy results with one click
+- 100% client-side processing for data privacy
+- Works offline - no internet connection required
 
 ### Diff Checker
 Compare text files and identify differences quickly.
@@ -40,12 +44,23 @@ Analyze and validate JSON Web Tokens.
 - No server-side processing - tokens stay in your browser
 
 ### Text Analyzer
-Comprehensive text analysis tool.
-- Word and character counting
-- Line counting
-- Reading time estimation
-- Keyword density analysis
-- Support for multiple text formats
+A comprehensive text analysis tool with real-time statistics.
+- Word, character, sentence, and paragraph counting
+- Average word and sentence length calculations
+- Detailed punctuation statistics (periods, commas, question marks, exclamation marks)
+- 100% client-side processing for privacy
+- Real-time analysis as you type
+- Clear, intuitive statistics display
+- Works offline after initial page load
+
+### JavaScript Minifier
+Advanced JavaScript code minification tool.
+- Remove comments and unnecessary whitespace
+- Preserve string literals and regular expressions
+- Experimental variable name shortening
+- Optional property name mangling
+- Real-time size and compression statistics
+- Local processing - no server-side dependencies
 
 ### JSON Formatter
 A tool for formatting and validating JSON data.

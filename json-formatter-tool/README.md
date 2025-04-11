@@ -1,6 +1,6 @@
 # JSON Formatter
 
-A tool for formatting and validating JSON data with optional alphabetical key sorting.
+A tool for formatting and validating JSON data with optional alphabetical key sorting and interactive node collapsing.
 
 ## Privacy & Security
 - 🔒 **100% Client-Side Processing**: All JSON formatting and validation happens in your browser
@@ -79,6 +79,51 @@ The tool shows:
 - The error message includes details about the parsing failure
 
 ## Browser Support
-Works in all modern browsers (Chrome, Firefox, Safari, Edge). Requires JavaScript enabled and clipboard API support for copy functionality.
+- **Modern Browsers**: Chrome, Firefox, Safari, Edge
+- **Requirements**:
+  - JavaScript enabled
+  - For copy functionality:
+    - Primary: Modern Clipboard API (secure context - HTTPS or localhost)
+    - Fallback: execCommand (older browsers/HTTP contexts)
+- **Mobile Support**: Fully responsive design with touch-friendly controls
+
+## Technical Implementation
+- **Architecture**: Object-oriented design using ES6+ classes
+- **Code Organization**:
+  - `JSONFormatter` class handles core functionality
+  - Modular methods for formatting, rendering, and utilities
+- **Test Coverage**: Comprehensive Jest test suite covering:
+  - Core JSON formatting and validation
+  - Key sorting functionality
+  - Byte size calculations
+  - Error handling
+  - Edge cases (empty objects/arrays, special characters)
+  - UI interactions
+
+## Accessibility
+- **Keyboard Navigation**:
+  - Tab navigation through interactive elements
+  - Space/Enter to trigger buttons and toggles
+  - Focus management for error messages
+- **ARIA Support**:
+  - Expandable/collapsible sections use proper ARIA attributes
+  - Error messages are properly announced
+  - Copy success notifications are screen-reader friendly
+- **Visual Indicators**:
+  - Clear focus states
+  - High contrast toggle indicators (▼/▶)
+  - Error messages with distinct styling
+
+## Interactive Features
+- **Node Collapsing**:
+  - Click toggle buttons (▼/▶) to expand/collapse JSON nodes
+  - Nested objects and arrays are collapsible
+  - State is preserved during formatting
+  - Parent nodes can be collapsed to hide all children
+- **Size Comparison**:
+  - Real-time size updates on input changes
+  - Supports multiple units (bytes, KB, MB, GB, TB)
+  - Accurate to 2 decimal places
+  - Updates automatically when formatting or editing
 
 ![JSON Formatter Screenshot](images/json-formatter.png)

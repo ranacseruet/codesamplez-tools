@@ -60,19 +60,51 @@ The converter is built using pure JavaScript with the following key components:
 
 ### Base64 Detection
 
-The tool uses a multi-step validation process to detect Base64 strings:
+The tool uses a sophisticated multi-step validation process to detect Base64 strings:
 1. Length validation (must be multiple of 4)
-2. Character set validation (A-Z, a-z, 0-9, +, /, =)
-3. Padding validation
-4. Decode/encode round-trip verification
+2. Character set validation using regex pattern `^[A-Za-z0-9+/]*={0,2}$`
+3. Advanced padding validation:
+   - Padding (`=`) can only appear at the end
+   - Maximum of 2 padding characters allowed
+   - Validates padding position relative to string length
+4. Decode/encode round-trip verification using `btoa(atob(str)) === str`
 
 ### Error Handling
 
 The converter includes comprehensive error handling for:
-- Invalid Base64 strings
-- Unsupported characters in selected encoding
-- File reading errors
-- Clipboard operation failures
+- Invalid Base64 strings with detailed validation feedback
+- Character encoding issues:
+  - ASCII: Replaces non-ASCII characters with '?'
+  - ISO-8859-1: Handles overflow by masking to 8 bits
+  - UCS-2: Validates byte sequences and handles surrogate pairs
+  - UTF-8: Detects invalid sequences using TextDecoder
+- Memory-efficient processing of large files using streaming approach
+- Input validation:
+  - Null/undefined input detection
+  - Empty string handling
+  - Invalid character encoding selection
+- File operations:
+  - File reading errors
+  - File size limits
+  - Unsupported file types
+- Clipboard operations:
+  - Copy operation failures
+  - Permissions handling
+  - Unsupported browser detection
+
+### Special Features
+
+#### UCS-2 Encoding
+- Special handling for surrogate pairs and emoji characters
+- 4-byte sequence detection for extended Unicode characters
+- Fallback handling for basic BMP (Basic Multilingual Plane) characters
+- Maintains character integrity during encode/decode operations
+
+#### Memory Management
+- Efficient byte array allocation
+- Streaming processing for large files
+- Automatic garbage collection optimization
+- Browser memory limit considerations
 
 ## Browser Compatibility
 

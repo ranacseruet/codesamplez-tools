@@ -2,6 +2,8 @@
 
 A lightweight, browser-based text analysis tool that provides real-time statistics about your text.
 
+![Text Analyzer Tool](images/text-analyzer.png)
+
 ## Privacy & Security
 - 🔒 **100% Client-Side Processing**: All text analysis happens locally in your browser
 - 🚫 **No Data Storage**: Your text is never saved or transmitted to any server
@@ -22,27 +24,58 @@ A lightweight, browser-based text analysis tool that provides real-time statisti
 
 ## Usage
 
-1. Open `index.html` in your web browser
+### Online
+1. Visit [Codesamplez.com/tools/text-analyzer](https://codesamplez.com/tools/text-analyzer)
 2. Enter or paste your text in the textarea
 3. View real-time statistics updating automatically as you type or modify the text
+
+### Local Development
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Start the development server: `npm run dev`
+4. Visit `http://localhost:8080` in your browser
+5. Navigate to the Text Analyzer tool
+
+## Development
+
+### Prerequisites
+- Node.js (v14 or higher)
+- npm (v6 or higher)
+
+### Setup
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Build the project: `npm run build`
+4. Run tests: `npm test`
+
+### Testing
+Tests are written using Jest:
+- Run all tests: `npm test`
+- Run text analyzer tests specifically: `npm test text-analyzer`
+- View test coverage: `npm run test:coverage`
+
+All test files are located in the same directory as their implementation files.
 
 ## How It Works
 
 The tool uses vanilla JavaScript with event listeners to provide real-time text analysis:
 
-- **Character Counting**: Direct string length measurement
+- **Character Counting**: Direct string length measurement with support for Unicode characters
 - **Word Counting**: Splits text on whitespace and filters empty entries
-- **Sentence Detection**: Uses regex pattern `[.!?]+` to identify sentence boundaries
+- **Sentence Detection**: Uses regex pattern `[.!?]+` to identify sentence boundaries, with special handling for abbreviations
 - **Line Counting**: Splits text on newline characters (`\n`)
+- **Paragraph Analysis**: Identifies text blocks separated by blank lines
 
-## Technical Implementation
+## Architecture
 
-The application is built using:
-- HTML5 for structure
-- CSS for modular, namespaced styling
-- Vanilla JavaScript for functionality
+The application follows a modular architecture:
 
-Key components:
+- **HTML5**: Semantic markup for accessibility and SEO
+- **CSS**: Modular, BEM-based styling with shared components
+- **JavaScript**: Vanilla JS with modular class-based design
+
+### Key Components
+
 ```javascript
 // Real-time text analysis with modular update functions
 document.addEventListener('DOMContentLoaded', () => {

@@ -1,11 +1,13 @@
 # JavaScript Minifier
 
-A tool to minify JavaScript code by removing comments, whitespace, and optionally shortening variable names and mangling properties.
+A tool to minify JavaScript code by removing comments, whitespace, and optionally shortening variable names and mangling properties. This tool maintains code functionality while reducing file size through various optimization techniques.
 
 ## Features
 
-- Remove comments
-- Remove unnecessary whitespace
+- Remove comments (both single-line and multi-line)
+- Preserve string literals and regular expressions while minifying surrounding code
+- Remove unnecessary whitespace while maintaining syntax validity
+- Intelligent handling of operators and keywords to prevent syntax errors
 - Shorten variable names (experimental)
 - Mangle object properties (experimental)
 - Real-time size and compression statistics
@@ -49,22 +51,82 @@ function calculateSum(numbers) {
 function a(b){let c=0;for(let d=0;d<b.length;d++)c=c+b[d];return c}
 ```
 
+## Advanced Features
+
+### String and RegExp Handling
+- Preserves string literals (single quotes, double quotes, and template literals)
+- Maintains regular expressions including their flags
+- Prevents comment removal within string contents
+
+### Whitespace Optimization
+- Intelligent space preservation around operators
+- Maintains spaces for keywords (if, else, for, etc.)
+- Preserves spaces necessary for valid syntax (e.g., around 'in' operator)
+
+### Property Mangling (Experimental)
+```javascript
+// Original code
+const user = {
+    firstName: "John",
+    lastName: "Doe",
+    getFullName: function() {
+        return this.firstName + " " + this.lastName;
+    }
+};
+
+// Minified with property mangling
+const user={a:"John",b:"Doe",c:function(){return this.a+" "+this.b}};
+```
+
 ## Limitations
 
+### General Limitations
 - Variable name shortening and property mangling are experimental features
   - May break code in some cases
   - Always test minified code before deployment
-- Does not handle complex JavaScript features like:
-  - ES6+ syntax (arrow functions, classes, etc.)
+  - Can conflict with external dependencies
+
+### ES6+ Support Limitations
+- Limited support for:
+  - Arrow functions
+  - Destructuring assignments
+  - Spread/rest operators
+  - Template literals with expressions
+  - Classes and inheritance
+  - async/await syntax
+- Does not handle:
   - Module imports/exports
   - Advanced optimizations like tree-shaking
+  - Dynamic imports
+
+## Error Handling
+
+The minifier includes several safety features:
+
+- Validates input to ensure it's non-empty and string type
+- Preserves necessary whitespace to prevent syntax errors
+- Skips shortening of reserved JavaScript keywords and built-ins
+- Maintains function and method names that could affect program behavior
 
 ## Security Considerations
 
-- All processing happens locally in your browser
+### Local Processing
+- All minification happens entirely in your browser
 - No code is sent to external servers
-- Be cautious when using experimental features in production code
-- Always test minified code thoroughly
+- Source code remains private and secure
+
+### Best Practices
+- Always test minified code thoroughly before deployment
+- Use source maps in development for easier debugging
+- Keep original source code for maintenance
+- Be cautious with experimental features in production
+- Consider running tests on both original and minified code
+- Verify that all external dependencies still work with minified code
+
+### Known Issues
+- Property mangling may break code that uses reflection
+- Dynamic property access using string literals needs careful consideration
+- Some browser-specific features may require manual testing
 
 ## Screenshot
 
