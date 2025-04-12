@@ -16,6 +16,10 @@ A powerful, browser-based tool for decoding and validating JSON Web Tokens (JWT)
   - Instantly decode JWT tokens as you type
   - Debounced input handling for optimal performance
   - Clear error messages for invalid tokens
+- **Button Status Indicators**:
+    - The "Decode JWT" button dynamically updates its text and appearance ("Decoded ✓", "Invalid Token ✗", "Decode JWT") to reflect the current token's validity. It is disabled and acts purely as a status indicator.
+    - The "Verify Signature" button also updates its text and appearance ("✓ Valid", "✗ Invalid", "Secret Missing", "Token Invalid", "Verify Signature") based on the last verification attempt. It is enabled only when a token has been successfully decoded.
+- **Real-time Verification**: Signature verification status updates automatically (debounced) as you type in the secret key field, provided a valid token is present.
 - **Signature Verification**: Validate JWT signatures using HMAC-SHA256
 - **Base64 Support**: Automatic handling of both standard and URL-safe Base64 encoding
 - **Secure Processing**: All operations performed client-side for maximum security
@@ -99,6 +103,8 @@ The tool is built using vanilla JavaScript and modern web APIs, requiring no ext
 
 - `index.html`: Structure and layout
 - `JWTDecoder.js`: Class responsible for parsing, decoding, and validating JWTs
-- `script.js`: Handles UI interactions, event listeners, and uses `JWTDecoder` for processing
+- `JsonTreeViewRenderer.js`: Class responsible for rendering the interactive JSON tree view
+- `script.js`: Handles UI interactions, event listeners, and uses `JWTDecoder` and `JsonTreeViewRenderer`
 - `styles.css`: Responsive styling and visual design
 - `JWTDecoder.test.js`: Unit tests for the `JWTDecoder` class
+- `script.test.js`: Unit tests for the UI interactions in `script.js`
