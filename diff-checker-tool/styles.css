@@ -190,10 +190,8 @@
   font-size: 14px;
   line-height: 1.5;
   background-color: white;
-  overflow-y: auto; /* Make this area scrollable */
-  /* Adjust max-height based on the height of BOTH sticky elements */
-  /* Original options bar ~90px + new nav header ~60px + margins/padding */
-  max-height: calc(100vh - 340px); /* Adjusted height estimate */
+  /* overflow-y: auto; - Removed */
+  /* max-height: calc(100vh - 340px); - Removed */
 }
 
 /* Diff styles */

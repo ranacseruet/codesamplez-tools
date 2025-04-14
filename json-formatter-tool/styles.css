@@ -145,8 +145,8 @@
   font-family: monospace;
   font-size: 14px;
   line-height: 1.5;
-  max-height: 400px;
-  overflow: auto;
+  /* max-height: 400px; - Removed */
+  /* overflow: auto; - Removed */
 }
 
 .json-node {
