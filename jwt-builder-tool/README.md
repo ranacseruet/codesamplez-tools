@@ -152,10 +152,11 @@ Compatible with modern browsers that support:
 
 ## Development
 
-The tool consists of three main files:
+The tool consists of the following main files:
 - `index.html`: Structure and UI elements
-- `styles.css`: Styling and layout
+- `styles.css`: Tool-specific styling and layout (inherits base styles from `common/shared-styles.css`)
 - `script.js`: JWT generation logic and user interactions
+- `base64.js`: Helper functions for Base64URL encoding
 
 ## License
 

@@ -15,18 +15,22 @@
   --color-bg: white;
   --color-bg-light: #f8f9fa;
   --color-success: #28a745;
+  --color-danger: #dc3545;
+  --color-danger-hover: #c82333;
   --color-shadow: rgba(0, 0, 0, 0.1);
 
   /* Typography */
   --font-family-base: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   --font-family-mono: monospace;
   --font-size-base: 14px;
+  --font-size-small: 13px; /* Added for small button */
   --font-size-h1: 24px;
   --font-size-h2: 18px;
   --line-height-base: 1.6;
   --line-height-tight: 1.5;
 
   /* Spacing */
+  --spacing-xxs: 6px; /* Added for small button */
   --spacing-xs: 5px;
   --spacing-sm: 10px;
   --spacing-md: 15px;
@@ -142,10 +146,26 @@
   gap: var(--spacing-sm);
 }
 
+/* Generic 2-column grid layout */
+.o-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr; /* Default to 1 column */
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg); /* Add some space below the grid */
+}
+
+@media (min-width: 768px) { /* Apply 2 columns on medium screens and up */
+  .o-grid-2col {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+
 /* ==========================================================================
    Components Layer - UI Components
    ========================================================================== */
 
+/* --- Buttons --- */
 .c-button {
   background-color: var(--color-primary);
   color: var(--color-bg);
@@ -174,6 +194,20 @@
   background-color: var(--color-secondary-hover);
 }
 
+.c-button--danger {
+  background-color: var(--color-danger);
+}
+
+.c-button--danger:hover {
+  background-color: var(--color-danger-hover);
+}
+
+.c-button--small {
+  padding: var(--spacing-xxs) var(--spacing-sm); /* Adjusted padding */
+  font-size: var(--font-size-small);
+  white-space: nowrap; /* Added from jwt-builder styles */
+}
+
 .c-notification {
   position: fixed;
   bottom: var(--spacing-lg);
@@ -192,6 +226,140 @@
   transform: translateY(0);
   opacity: 1;
 }
+
+/* --- Form Elements --- */
+.c-input {
+  flex: 1; /* Allow input to grow */
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-base);
+  transition: border-color 0.2s;
+  background-color: var(--color-bg);
+  min-width: 0; /* Prevents input from overflowing flex containers */
+}
+
+.c-input:hover {
+  border-color: var(--color-secondary); /* Use a slightly darker border on hover */
+}
+
+.c-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.c-form-group {
+  background-color: var(--color-bg);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--color-border);
+  height: fit-content; /* Allow group to size based on content */
+}
+
+.c-form-group-header {
+  font-size: var(--font-size-h2);
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border-light);
+  font-weight: 600;
+  display: flex; /* Allow alignment of header text and potential actions */
+  justify-content: space-between;
+  align-items: center;
+}
+
+.c-form-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: flex-start; /* Align label and input top */
+  margin-bottom: var(--spacing-md); /* Consistent spacing between rows */
+  position: relative; /* For tooltip positioning */
+}
+
+.c-form-row label {
+  flex: 0 0 200px; /* Fixed width for labels, adjust as needed */
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  display: flex;
+  align-items: flex-start; /* Align icon/text within label */
+  gap: var(--spacing-xs);
+  padding-top: var(--spacing-sm); /* Align label text roughly with input text */
+}
+
+.c-form-row label.required::after {
+  content: "*";
+  color: var(--color-danger);
+  margin-left: 4px;
+}
+
+/* --- Tooltip --- */
+.c-tooltip-container { /* Wrapper for the element that triggers the tooltip */
+  position: relative;
+  display: inline-block; /* Or block, depending on context */
+}
+
+.c-tooltip {
+  position: absolute;
+  visibility: hidden;
+  width: 200px;
+  background-color: var(--color-secondary); /* Darker background */
+  color: var(--color-bg);
+  text-align: center;
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-xs);
+  z-index: 10; /* Ensure tooltip is above other elements */
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: var(--font-size-small);
+  font-weight: normal;
+  /* Default positioning (adjust as needed, e.g., bottom, left) */
+  bottom: 125%; /* Position above the container */
+  left: 50%;
+  margin-left: -100px; /* Center the tooltip */
+}
+
+/* Arrow for tooltip */
+.c-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%; /* At the bottom of the tooltip */
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--color-secondary) transparent transparent transparent;
+}
+
+.c-tooltip-container:hover .c-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* --- Code Output --- */
+.c-code-output {
+  flex: 1;
+  padding: var(--spacing-md);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-tight);
+  min-height: 100px; /* Default min height */
+  color: var(--color-text);
+  word-break: break-all;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap; /* Preserve whitespace and wrap */
+  overflow-x: auto; /* Add horizontal scroll if needed */
+}
+
+.c-code-output:empty::before {
+  content: "Output will appear here"; /* Generic placeholder */
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
 
 /* ==========================================================================
    Utilities Layer
@@ -244,5 +412,35 @@
   
   .o-panel {
     width: 100%;
+  }
+
+  /* Responsive adjustments for form rows */
+  .c-form-row {
+    flex-direction: column;
+    align-items: stretch; /* Make label and input full width */
+    gap: var(--spacing-xs);
+  }
+
+  .c-form-row label {
+    flex: none; /* Reset fixed width */
+    width: 100%;
+    margin-bottom: 3px;
+    padding-top: 0; /* Reset padding */
+  }
+
+  /* Responsive tooltip adjustments */
+  .c-tooltip {
+    bottom: auto;
+    top: 100%; /* Position below */
+    left: 0;
+    margin-left: 0;
+    width: 100%;
+    margin-top: var(--spacing-xs);
+  }
+  .c-tooltip::after {
+     top: -10px; /* Position arrow at the top */
+     left: 50%;
+     margin-left: -5px;
+     border-color: transparent transparent var(--color-secondary) transparent;
   }
 }

@@ -1,12 +1,5 @@
 import { jest } from '@jest/globals';
-import {
-  getFormattedDate,
-  parseDateTime,
-  uint8ArrayToString,
-  base64UrlEncode,
-  generateSignature,
-  buildJWT
-} from './script.js';
+import { JWTBuilder } from './JWTBuilder.js';
 import { setupBase64Polyfills } from './base64.js';
 
 // Polyfills for test environment
@@ -42,7 +35,8 @@ if (typeof TextDecoder === 'undefined') {
 
 setupBase64Polyfills();
 
-describe('JWT Builder Tests', () => {
+describe('JWTBuilder', () => {
+  let jwtBuilder;
   const mockSignature = new Uint8Array([1, 2, 3, 4, 5]).buffer;
   const originalCrypto = global.crypto;
 
@@ -59,7 +53,7 @@ describe('JWT Builder Tests', () => {
   });
 
   beforeEach(() => {
-    global.document = undefined;
+    jwtBuilder = new JWTBuilder();
   });
 
   afterEach(() => {
@@ -73,13 +67,13 @@ describe('JWT Builder Tests', () => {
   describe('getFormattedDate', () => {
     test('formats date correctly', () => {
       const date = new Date('2024-01-01T12:00:00Z');
-      const result = getFormattedDate(date);
+      const result = jwtBuilder.getFormattedDate(date);
       expect(result).toBe('2024-01-01T12:00:00Z');
     });
 
     test('handles different timezones', () => {
       const date = new Date('2024-01-01T12:00:00-05:00');
-      const result = getFormattedDate(date);
+      const result = jwtBuilder.getFormattedDate(date);
       expect(result).toBe('2024-01-01T17:00:00Z');
     });
   });
@@ -87,24 +81,24 @@ describe('JWT Builder Tests', () => {
   describe('parseDateTime', () => {
     test('parses numeric timestamp', () => {
       const timestamp = '1704110400';
-      const result = parseDateTime(timestamp);
+      const result = jwtBuilder.parseDateTime(timestamp);
       expect(result).toBe(1704110400);
     });
 
     test('parses ISO date string', () => {
       const dateStr = '2024-01-01T12:00:00Z';
-      const result = parseDateTime(dateStr);
+      const result = jwtBuilder.parseDateTime(dateStr);
       expect(result).toBe(1704110400);
     });
 
     test('returns null for invalid date', () => {
       const invalid = 'not-a-date';
-      const result = parseDateTime(invalid);
+      const result = jwtBuilder.parseDateTime(invalid);
       expect(result).toBeNull();
     });
 
     test('returns null for empty string', () => {
-      const result = parseDateTime('');
+      const result = jwtBuilder.parseDateTime('');
       expect(result).toBeNull();
     });
   });
@@ -112,19 +106,19 @@ describe('JWT Builder Tests', () => {
   describe('uint8ArrayToString', () => {
     test('converts Uint8Array to string', () => {
       const array = new Uint8Array([72, 101, 108, 108, 111]); // "Hello"
-      const result = uint8ArrayToString(array);
+      const result = jwtBuilder.uint8ArrayToString(array);
       expect(result).toBe('Hello');
     });
 
     test('handles empty array', () => {
       const array = new Uint8Array([]);
-      const result = uint8ArrayToString(array);
+      const result = jwtBuilder.uint8ArrayToString(array);
       expect(result).toBe('');
     });
 
     test('handles large arrays', () => {
       const array = new Uint8Array(10000).fill(65); // 10000 'A' characters
-      const result = uint8ArrayToString(array);
+      const result = jwtBuilder.uint8ArrayToString(array);
       expect(result.length).toBe(10000);
       expect(result).toBe('A'.repeat(10000));
     });
@@ -133,26 +127,26 @@ describe('JWT Builder Tests', () => {
   describe('base64UrlEncode', () => {
     test('encodes string input', () => {
       const input = 'Hello, World!';
-      const result = base64UrlEncode(input);
+      const result = jwtBuilder.base64UrlEncode(input);
       expect(result).toBe('SGVsbG8sIFdvcmxkIQ');
     });
 
     test('encodes ArrayBuffer input', () => {
       const encoder = new TextEncoder();
       const buffer = encoder.encode('Test').buffer;
-      const result = base64UrlEncode(buffer);
+      const result = jwtBuilder.base64UrlEncode(buffer);
       expect(result).toBe('VGVzdA');
     });
 
     test('encodes Uint8Array input', () => {
       const array = new Uint8Array([84, 101, 115, 116]); // "Test"
-      const result = base64UrlEncode(array);
+      const result = jwtBuilder.base64UrlEncode(array);
       expect(result).toBe('VGVzdA');
     });
 
     test('replaces base64 special characters', () => {
       const input = new Uint8Array([251, 239, 255]); // Will produce base64 with +/=
-      const result = base64UrlEncode(input);
+      const result = jwtBuilder.base64UrlEncode(input);
       expect(result).not.toContain('+');
       expect(result).not.toContain('/');
       expect(result).not.toContain('=');
@@ -164,7 +158,7 @@ describe('JWT Builder Tests', () => {
       const signingInput = 'test.input';
       const key = 'secret-key';
       
-      const signature = await generateSignature(signingInput, key);
+      const signature = await jwtBuilder.generateSignature(signingInput, key);
       expect(signature).toBeDefined();
       expect(typeof signature).toBe('string');
       
@@ -178,21 +172,21 @@ describe('JWT Builder Tests', () => {
     });
 
     test('throws error for empty signing input', async () => {
-      await expect(generateSignature('', 'key')).rejects.toThrow();
+      await expect(jwtBuilder.generateSignature('', 'key')).rejects.toThrow();
     });
 
     test('throws error for empty key', async () => {
-      await expect(generateSignature('input', '')).rejects.toThrow();
+      await expect(jwtBuilder.generateSignature('input', '')).rejects.toThrow();
     });
 
     test('handles crypto.subtle.sign failure', async () => {
       global.crypto.subtle.sign = jest.fn().mockRejectedValue(new Error('Sign failed'));
-      await expect(generateSignature('test', 'key')).rejects.toThrow('Sign failed');
+      await expect(jwtBuilder.generateSignature('test', 'key')).rejects.toThrow('Sign failed');
     });
 
     test('handles crypto.subtle.sign success', async () => {
       global.crypto.subtle.sign = jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3, 4, 5]));
-      const signature = await generateSignature('test', 'key');
+      const signature = await jwtBuilder.generateSignature('test', 'key');
       expect(signature).toBeDefined();
     });
   });
@@ -205,7 +199,7 @@ describe('JWT Builder Tests', () => {
         role: 'admin'
       };
       
-      const jwt = await buildJWT(payload, 'test-secret');
+      const jwt = await jwtBuilder.buildJWT(payload, 'test-secret');
       expect(jwt).toBeDefined();
       expect(jwt.split('.')).toHaveLength(3);
 
@@ -218,8 +212,8 @@ describe('JWT Builder Tests', () => {
       expect(decodedPayload).toEqual(payload);
     });
 
-    test('builds JWT with default claims when no payload provided', async () => {
-      const jwt = await buildJWT(null, 'test-secret');
+    test('builds JWT with default claims', async () => {
+      const jwt = await jwtBuilder.buildJWT(null, 'test-secret');
       expect(jwt).toBeDefined();
       expect(jwt.split('.')).toHaveLength(3);
 
@@ -237,7 +231,7 @@ describe('JWT Builder Tests', () => {
     });
 
     test('throws error when no secret key provided', async () => {
-      await expect(buildJWT({ sub: 'test' }, '')).rejects.toThrow('Secret key is required for JWT signing');
+      await expect(jwtBuilder.buildJWT({ sub: 'test' }, '')).rejects.toThrow('Secret key is required for JWT signing');
     });
 
     test('throws error for invalid payload', async () => {
@@ -246,7 +240,7 @@ describe('JWT Builder Tests', () => {
       };
       payload.circular.self = payload; // Create circular reference
 
-      await expect(buildJWT(payload, 'test-secret')).rejects.toThrow();
+      await expect(jwtBuilder.buildJWT(payload, 'test-secret')).rejects.toThrow();
     });
 
     test('creates JWT with complex nested payload', async () => {
@@ -261,7 +255,7 @@ describe('JWT Builder Tests', () => {
         }
       };
       
-      const jwt = await buildJWT(payload, 'test-secret');
+      const jwt = await jwtBuilder.buildJWT(payload, 'test-secret');
       expect(jwt).toBeDefined();
       
       const [headerB64, payloadB64] = jwt.split('.');
@@ -274,7 +268,7 @@ describe('JWT Builder Tests', () => {
         message: '!@#$%^&*()_+-=[]{}|;:,.<>?'
       };
       
-      const jwt = await buildJWT(payload, 'test-secret');
+      const jwt = await jwtBuilder.buildJWT(payload, 'test-secret');
       expect(jwt).toBeDefined();
       
       const [headerB64, payloadB64] = jwt.split('.');
@@ -287,7 +281,7 @@ describe('JWT Builder Tests', () => {
         message: '你好，世界！🌎'
       };
       
-      const jwt = await buildJWT(payload, 'test-secret');
+      const jwt = await jwtBuilder.buildJWT(payload, 'test-secret');
       expect(jwt).toBeDefined();
       
       const [headerB64, payloadB64] = jwt.split('.');
