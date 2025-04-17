@@ -51,7 +51,7 @@ h3 {
 
 
 .text-analyzer-stats { /* Keep as is */
-  background-color: var(--color-bg-light);
+  /* background-color: var(--color-bg-light); */ /* Removed background */
   border-radius: var(--border-radius-sm);
   padding: var(--spacing-md);
   margin-top: var(--spacing-lg);
@@ -61,7 +61,7 @@ h3 {
 }
 
 .text-analyzer-punctuation {
-  background-color: var(--color-bg-light);
+  /* background-color: var(--color-bg-light); */ /* Removed background */
   border-radius: var(--border-radius-sm);
   padding: var(--spacing-md);
   margin-top: var(--spacing-lg);
@@ -71,11 +71,18 @@ h3 {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-md);
+  justify-content: space-between; /* Distribute items evenly */
 }
 
 .text-analyzer-stat-item {
   display: flex;
   flex-direction: column;
+  background-color: var(--color-bg-light); /* Corrected: Use defined light gray background */
+  padding: var(--spacing-md); /* Add padding */
+  border-radius: var(--border-radius-sm); /* Add rounded corners */
+  text-align: center; /* Center the text */
+  flex-grow: 1; /* Allow items to grow and fill space */
+  min-width: 100px; /* Ensure a minimum width */
 }
 
 .text-analyzer-stat-label {
