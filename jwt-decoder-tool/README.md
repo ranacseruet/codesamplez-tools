@@ -104,7 +104,7 @@ The tool is built using vanilla JavaScript and modern web APIs, requiring no ext
 - `index.html`: Structure and layout
 - `JWTDecoder.js`: Class responsible for parsing, decoding, and validating JWTs
 - `JsonTreeViewRenderer.js`: Class responsible for rendering the interactive JSON tree view
-- `script.js`: Handles UI interactions, event listeners, and uses `JWTDecoder` and `JsonTreeViewRenderer`
+- `script.js`: Contains the `JWTDecoderUI` class which handles UI interactions, event listeners, and uses `JWTDecoder` and `JsonTreeViewRenderer`. Also initializes the UI on DOMContentLoaded.
 - `styles.css`: Responsive styling and visual design
 - `JWTDecoder.test.js`: Unit tests for the `JWTDecoder` class
 - `script.test.js`: Unit tests for the UI interactions in `script.js`

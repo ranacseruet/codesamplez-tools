@@ -13,7 +13,11 @@ jest.mock('./JWTDecoder.js', () => ({
       getHeader: jest.fn(() => (isValid ? mockHeader : null)),
       getPayload: jest.fn(() => (isValid ? mockPayload : null)),
       getParsingError: jest.fn(() => (isValid ? null : 'Invalid mock format')),
-      verifySignature: jest.fn().mockResolvedValue(token === 'valid.token.sig'), // Mock verification
+      // Updated mock: verifySignature now checks the secret argument
+      verifySignature: jest.fn().mockImplementation(async (secret) => {
+        // Mock verification: returns true only if token is 'valid.token.sig' AND secret is 'secret'
+        return Promise.resolve(token === 'valid.token.sig' && secret === 'secret');
+      }),
     };
   }),
 }));
@@ -43,8 +47,6 @@ beforeEach(() => {
     <div id="payloadJson" class="jwt-decoder-json-viewer"></div>
     <div id="rawJsonViewer" class="jwt-decoder-json-viewer"></div>
     <div id="jwtSignatureStatus" class="jwt-decoder-status"></div>
-    <button id="jwt-decoder-decode-btn"></button>
-    <button id="jwt-decoder-verify-btn"></button>
     <button id="jwt-decoder-copy-btn"></button>
     <button id="jwt-decoder-clear-btn"></button>
     <!-- Basic Tab Structure -->
@@ -116,8 +118,8 @@ describe('JWT Decoder UI Interactions', () => {
     expect(headerJson.innerHTML).toBe('');
     expect(payloadJson.innerHTML).toBe('');
     expect(rawJsonViewer.innerHTML).toBe('');
-    expect(statusOutput.textContent).toBe('Not verified');
-    expect(statusOutput.style.color).toBe('rgb(102, 102, 102)');
+    expect(statusOutput.textContent).toBe('Cleared. Enter a JWT token.');
+    expect(statusOutput.classList.contains('status-default')).toBe(true);
   });
 
   it('should decode token automatically on input after debounce', async () => {
@@ -139,27 +141,76 @@ describe('JWT Decoder UI Interactions', () => {
     expect(rawJsonViewer.innerHTML).toContain('"header":{"alg":"HS256"');
   });
 
-   it('should verify signature when verify button is clicked', async () => {
-        const jwtInput = document.getElementById('jwtInputToken');
-        const secretInput = document.getElementById('jwtSecretKey');
-        const verifyBtn = document.getElementById('jwt-decoder-verify-btn');
-        const statusOutput = document.getElementById('jwtSignatureStatus');
+  it('should verify signature automatically on secret input after debounce', async () => {
+    const jwtInput = document.getElementById('jwtInputToken');
+    const secretInput = document.getElementById('jwtSecretKey');
+    const statusOutput = document.getElementById('jwtSignatureStatus');
 
-        jwtInput.value = 'valid.token.sig'; // Mock considers this valid
-        secretInput.value = 'secret';
+    jwtInput.value = 'valid.token.sig'; // Mock considers this valid
+    // Trigger initial decode first
+    jwtInput.dispatchEvent(new Event('input'));
+    await jest.runAllTimersAsync(); // Wait for decode debounce
 
-        // Trigger initial decode first (simulating auto-decode or previous action)
-        jwtInput.dispatchEvent(new Event('input'));
-        await jest.runAllTimersAsync(); // Wait for decode debounce
+    // Now enter secret
+    secretInput.value = 'secret';
+    secretInput.dispatchEvent(new Event('input'));
 
-        // Now click verify
-        verifyBtn.click();
-        // Verification is async, wait for promises/timers
-        await jest.runAllTimersAsync(); // Ensure verify debounce and async operations complete
+    // Fast-forward time past the verify debounce delay (300ms in script.js)
+    await jest.runAllTimersAsync();
 
-        expect(statusOutput.textContent).toBe('✓ Signature is valid');
-        expect(statusOutput.style.color).toBe('rgb(40, 167, 69)');
-    });
+    // Check if status updated to valid
+    expect(statusOutput.textContent).toBe('✓ Decoded successfully. Signature is valid.');
+    expect(statusOutput.classList.contains('status-success')).toBe(true);
+
+    // Test invalid signature
+    secretInput.value = 'wrong-secret';
+    secretInput.dispatchEvent(new Event('input'));
+    await jest.runAllTimersAsync();
+    expect(statusOutput.textContent).toBe('✗ Decoded successfully. Signature is invalid.');
+    expect(statusOutput.classList.contains('status-error')).toBe(true);
+
+    // Test removing secret
+    secretInput.value = '';
+    secretInput.dispatchEvent(new Event('input'));
+    await jest.runAllTimersAsync();
+    expect(statusOutput.textContent).toBe('Decoded successfully. Signature not verified.');
+    expect(statusOutput.classList.contains('status-warning')).toBe(true); // Expect warning style now
+  });
+
+  it('should re-verify signature automatically on token input if secret is present', async () => {
+    const jwtInput = document.getElementById('jwtInputToken');
+    const secretInput = document.getElementById('jwtSecretKey');
+    const statusOutput = document.getElementById('jwtSignatureStatus');
+
+    // 1. Set initial valid token and secret
+    jwtInput.value = 'valid.token.sig';
+    secretInput.value = 'secret';
+    secretInput.dispatchEvent(new Event('input')); // Trigger verification
+    await jest.runAllTimersAsync();
+    expect(statusOutput.textContent).toBe('✓ Decoded successfully. Signature is valid.');
+    expect(statusOutput.classList.contains('status-success')).toBe(true);
+
+    // 2. Change token to one with invalid signature (but valid format)
+    jwtInput.value = 'invalid.token.sig'; // Mock verifySignature returns false for this
+    jwtInput.dispatchEvent(new Event('input')); // Trigger decode/verify
+    await jest.runAllTimersAsync();
+    expect(statusOutput.textContent).toBe('✗ Decoded successfully. Signature is invalid.');
+    expect(statusOutput.classList.contains('status-error')).toBe(true);
+
+    // 3. Change token back to valid
+    jwtInput.value = 'valid.token.sig';
+    jwtInput.dispatchEvent(new Event('input')); // Trigger decode/verify
+    await jest.runAllTimersAsync();
+    expect(statusOutput.textContent).toBe('✓ Decoded successfully. Signature is valid.');
+    expect(statusOutput.classList.contains('status-success')).toBe(true);
+
+    // 4. Change token to invalid format
+    jwtInput.value = 'invalid-format';
+    jwtInput.dispatchEvent(new Event('input')); // Trigger decode/verify
+    await jest.runAllTimersAsync();
+    expect(statusOutput.textContent).toContain('Error: Invalid mock format'); // Check for parsing error
+    expect(statusOutput.classList.contains('status-error')).toBe(true);
+  });
 
   it('should copy decoded content when copy button is clicked', async () => {
     const copyBtn = document.getElementById('jwt-decoder-copy-btn');

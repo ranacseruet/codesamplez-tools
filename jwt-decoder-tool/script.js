@@ -1,99 +1,15 @@
 import { JWTDecoder } from './JWTDecoder.js';
 import { JsonTreeViewRenderer } from './JsonTreeViewRenderer.js';
 
-// Instantiate the renderer globally for this script scope
-const jsonRenderer = new JsonTreeViewRenderer();
+class JWTDecoderUI {
+    constructor() {
+        // Instantiate the renderer within the class
+        this.jsonRenderer = new JsonTreeViewRenderer();
 
-// Function to setup tab functionality (can remain top-level)
-function setupTabs() {
-    const tabs = document.querySelectorAll('.jwt-decoder-tab');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-
-            const tabPanes = document.querySelectorAll('.jwt-decoder-tab-pane');
-            tabPanes.forEach(pane => pane.classList.remove('active'));
-
-            const tabId = tab.getAttribute('data-tab');
-            const targetPane = document.getElementById(`${tabId}Tab`);
-            if (targetPane) {
-                targetPane.classList.add('active');
-            }
-        });
-    });
-}
-
-// Function to manage PERSISTENT state of the Decode button
-function updateDecodeButtonState(decodeBtn, status) { // status: 'empty', 'success', 'error'
-    if (!decodeBtn) return;
-    decodeBtn.classList.remove('success', 'error', 'empty');
-    switch (status) {
-        case 'success':
-            decodeBtn.textContent = 'Decoded ✓';
-            decodeBtn.disabled = true;
-            decodeBtn.classList.add('success');
-            break;
-        case 'error':
-            decodeBtn.textContent = 'Invalid Token ✗';
-            decodeBtn.disabled = true;
-            decodeBtn.classList.add('error');
-            break;
-        case 'empty':
-        default:
-            decodeBtn.textContent = 'Decode JWT';
-            decodeBtn.disabled = true; // Decode button is generally disabled unless actively decoding
-            decodeBtn.classList.add('empty');
-            break;
-    }
-}
-
-// Function to manage PERSISTENT state of the Verify button
-function updateVerifyButtonState(verifyBtn, verifyStatus, decodeStatus) {
-    // verifyStatus: 'notVerified', 'valid', 'invalid', 'secretMissing', 'tokenInvalid'
-    // decodeStatus: 'empty', 'success', 'error'
-    if (!verifyBtn) return;
-    verifyBtn.classList.remove('verify-valid', 'verify-invalid', 'verify-warning', 'verify-error', 'verify-not-verified');
-
-    // Determine enabled state: Enabled only if token is successfully decoded
-    verifyBtn.disabled = (decodeStatus !== 'success');
-
-    switch (verifyStatus) {
-        case 'valid':
-            verifyBtn.textContent = '✓ Valid';
-            verifyBtn.classList.add('verify-valid');
-            break;
-        case 'invalid':
-            verifyBtn.textContent = '✗ Invalid';
-            verifyBtn.classList.add('verify-invalid');
-            break;
-        case 'secretMissing':
-            verifyBtn.textContent = 'Secret Missing';
-            verifyBtn.classList.add('verify-warning');
-            break;
-        case 'tokenInvalid': // When the token itself is bad
-             verifyBtn.textContent = 'Token Invalid';
-             verifyBtn.classList.add('verify-error'); // Use error style
-             break;
-        case 'notVerified':
-        default:
-            verifyBtn.textContent = 'Verify Signature';
-            verifyBtn.classList.add('verify-not-verified'); // Default class
-            // Keep disabled state based on decodeStatus
-            break;
-    }
-}
-
-
-// Initialize the UI when the DOM is loaded
-if (typeof document !== 'undefined') {
-    document.addEventListener('DOMContentLoaded', () => {
-        // --- Cache DOM Elements ---
-        const elements = {
+        // Cache DOM Elements
+        this.elements = {
             jwtInput: document.getElementById('jwtInputToken'),
             secretInput: document.getElementById('jwtSecretKey'),
-            decodeBtn: document.getElementById('jwt-decoder-decode-btn'),
-            verifyBtn: document.getElementById('jwt-decoder-verify-btn'),
             copyBtn: document.getElementById('jwt-decoder-copy-btn'),
             clearBtn: document.getElementById('jwt-decoder-clear-btn'),
             decodedOutput: document.getElementById('jwtDecodedOutput'), // Hidden textarea
@@ -103,186 +19,228 @@ if (typeof document !== 'undefined') {
             rawJsonViewerContainer: document.getElementById('rawJsonViewer')
         };
 
-        // --- Define Core Logic Functions (Scoped) ---
-        async function decodeJWTScoped(verifySignature = false) {
-            let decodeStatus = 'empty';
-            let verifyStatus = 'notVerified';
-            const jwt = elements.jwtInput.value.trim();
-            const secret = elements.secretInput.value.trim();
+        // Debounce timers
+        this.decodeTimeout = null;
+        this.verifyTimeout = null;
+    }
 
-            if (!jwt) {
-                // Clear outputs if JWT is empty
-                elements.decodedOutput.value = '';
-                elements.headerJsonContainer.innerHTML = '';
-                elements.payloadJsonContainer.innerHTML = '';
-                elements.rawJsonViewerContainer.innerHTML = '';
-                elements.statusOutput.textContent = 'Not verified';
-                elements.statusOutput.style.color = 'rgb(102, 102, 102)';
-                decodeStatus = 'empty';
-                verifyStatus = 'notVerified';
-            } else {
-                try {
-                    const decoder = new JWTDecoder(jwt);
+    // --- Initialization ---
+    initialize() {
+        if (typeof document === 'undefined') return; // Guard against non-browser environments
 
-                    if (!decoder.isValidFormat) {
-                        throw new Error(decoder.getParsingError() || 'Invalid JWT format');
-                    }
+        this.setupTabs();
+        this.setupEventListeners();
+        this.preloadData();
+        this.decodeAndRender(true); // Initial decode and verify
+        this.initializeTooltips();
+    }
 
-                    const header = decoder.getHeader();
-                    const payload = decoder.getPayload();
+    // --- UI Setup ---
+    setupTabs() {
+        const tabs = document.querySelectorAll('.jwt-decoder-tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
 
-                    // Use the renderer instance with cached elements
-                    jsonRenderer.render(header, elements.headerJsonContainer);
-                    jsonRenderer.render(payload, elements.payloadJsonContainer);
+                const tabPanes = document.querySelectorAll('.jwt-decoder-tab-pane');
+                tabPanes.forEach(pane => pane.classList.remove('active'));
 
-                    const combinedData = { header, payload };
-                    elements.decodedOutput.value = JSON.stringify(combinedData, null, 2); // Update hidden textarea
-                    jsonRenderer.render(combinedData, elements.rawJsonViewerContainer); // Update raw view
-
-                    decodeStatus = 'success';
-
-                    // Switch to Raw tab after successful decode
-                    const rawTab = document.querySelector('.jwt-decoder-tab[data-tab="raw"]');
-                    if (rawTab) rawTab.click();
-
-                    // --- Determine Verify Status ---
-                    if (verifySignature) {
-                        if (!secret) {
-                            verifyStatus = 'secretMissing';
-                            elements.statusOutput.textContent = 'Secret key required for verification';
-                            elements.statusOutput.style.color = 'rgb(255, 193, 7)'; // Warning color
-                        } else {
-                            const isValid = await decoder.verifySignature(secret);
-                            verifyStatus = isValid ? 'valid' : 'invalid';
-                            elements.statusOutput.textContent = isValid ? '✓ Signature is valid' : '✗ Signature is invalid';
-                            elements.statusOutput.style.color = isValid ? 'rgb(40, 167, 69)' : 'rgb(220, 53, 69)';
-                        }
-                    } else {
-                         // Reset verification status display if not actively verifying
-                         verifyStatus = 'notVerified';
-                         elements.statusOutput.textContent = 'Not verified';
-                         elements.statusOutput.style.color = 'rgb(102, 102, 102)';
-                    }
-                    // --- End Determine Verify Status ---
-
-                } catch (e) {
-                    // Handle errors
-                    elements.decodedOutput.value = `Error: ${e.message}`;
-                    elements.headerJsonContainer.innerHTML = '';
-                    elements.payloadJsonContainer.innerHTML = '';
-                    elements.rawJsonViewerContainer.innerHTML = '';
-                    elements.statusOutput.textContent = 'Error processing token';
-                    elements.statusOutput.style.color = 'rgb(220, 53, 69)';
-                    console.error('JWT Processing Error:', e);
-                    decodeStatus = 'error';
-                    verifyStatus = 'tokenInvalid';
+                const tabId = tab.getAttribute('data-tab');
+                const targetPane = document.getElementById(`${tabId}Tab`);
+                if (targetPane) {
+                    targetPane.classList.add('active');
                 }
-            }
+            });
+        });
+    }
 
-            // Update the persistent state of BOTH buttons AFTER processing
-            updateDecodeButtonState(elements.decodeBtn, decodeStatus);
-            updateVerifyButtonState(elements.verifyBtn, verifyStatus, decodeStatus);
-        }
+    setupEventListeners() {
+        // Debounced Input Handlers
+        this.elements.jwtInput.addEventListener('input', this.debounceDecode.bind(this));
+        this.elements.jwtInput.addEventListener('paste', this.debounceDecode.bind(this));
+        this.elements.secretInput.addEventListener('input', this.debounceVerify.bind(this));
+        this.elements.secretInput.addEventListener('paste', this.debounceVerify.bind(this));
 
-        // Define copyDecoded within this scope
-        async function copyDecodedScoped() {
-            const decodedContent = elements.decodedOutput.value;
-            const copyBtn = elements.copyBtn; // Use cached button
+        // Button Click Handlers
+        // Removed verifyBtn listener
+        this.elements.copyBtn.addEventListener('click', this.copyDecoded.bind(this));
+        this.elements.clearBtn.addEventListener('click', this.clearAll.bind(this));
+    }
 
-            if (!decodedContent || decodedContent.startsWith('Error:')) {
-                copyBtn.setAttribute('title', !decodedContent ? 'No content to copy' : 'Cannot copy error content');
-                return;
-            }
+    preloadData() {
+        // Preload with sample JWT token and secret (optional)
+        this.elements.jwtInput.value = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+        this.elements.secretInput.value = 'your-256-bit-secret';
+    }
 
+    initializeTooltips() {
+        this.elements.copyBtn.setAttribute('title', 'Copy decoded token to clipboard');
+    }
+
+    // --- Core Logic & Rendering ---
+    async decodeAndRender(verifySignature = false) {
+        const jwt = this.elements.jwtInput.value.trim();
+        const secret = this.elements.secretInput.value.trim();
+
+        if (!jwt) {
+            this.clearOutputs();
+            this.updateStatusOutput('Please enter a JWT token.', 'default');
+        } else {
             try {
-                await navigator.clipboard.writeText(decodedContent);
-                copyBtn.textContent = 'Copied!';
-                copyBtn.style.backgroundColor = 'rgb(40, 167, 69)';
+                const decoder = new JWTDecoder(jwt);
 
-                setTimeout(() => {
-                    copyBtn.textContent = 'Copy Decoded';
-                    copyBtn.style.backgroundColor = '';
-                    copyBtn.setAttribute('title', 'Copy decoded token to clipboard'); // Reset title
-                }, 2000);
-            } catch (err) {
-                console.error('Failed to copy:', err);
-                copyBtn.setAttribute('title', 'Failed to copy to clipboard');
+                if (!decoder.isValidFormat) {
+                    throw new Error(decoder.getParsingError() || 'Invalid JWT format');
+                }
+
+                const header = decoder.getHeader();
+                const payload = decoder.getPayload();
+
+                // Render JSON views
+                this.jsonRenderer.render(header, this.elements.headerJsonContainer);
+                this.jsonRenderer.render(payload, this.elements.payloadJsonContainer);
+
+                const combinedData = { header, payload };
+                this.elements.decodedOutput.value = JSON.stringify(combinedData, null, 2); // Update hidden textarea
+                this.jsonRenderer.render(combinedData, this.elements.rawJsonViewerContainer); // Update raw view
+
+                this.switchToRawTab();
+
+                // Determine Verify Status and Update Combined Status Output
+                if (verifySignature) {
+                    if (!secret) {
+                        this.updateStatusOutput('Decoded successfully. Secret key required for verification.', 'warning');
+                    } else {
+                        const isValid = await decoder.verifySignature(secret);
+                        this.updateStatusOutput(
+                            isValid ? '✓ Decoded successfully. Signature is valid.' : '✗ Decoded successfully. Signature is invalid.',
+                            isValid ? 'success' : 'error'
+                        );
+                    }
+                } else {
+                    // Use 'warning' style for partially validated state
+                    this.updateStatusOutput('Decoded successfully. Signature not verified.', 'warning');
+                }
+
+            } catch (e) {
+                this.handleProcessingError(e);
             }
         }
+    }
 
-        // Define clearAll within this scope
-        function clearAllScoped() {
-            elements.jwtInput.value = '';
-            elements.secretInput.value = '';
-            elements.decodedOutput.value = '';
-            elements.headerJsonContainer.innerHTML = '';
-            elements.payloadJsonContainer.innerHTML = '';
-            elements.rawJsonViewerContainer.innerHTML = '';
-            elements.statusOutput.textContent = 'Not verified';
-            elements.statusOutput.style.color = 'rgb(102, 102, 102)';
+    // --- UI Update Helpers ---
+    // Removed updateButtonStates, updateDecodeButtonState, updateVerifyButtonState
 
-            // Reset tab to raw view
-            const rawTab = document.querySelector('.jwt-decoder-tab[data-tab="raw"]');
-            if (rawTab) rawTab.click();
+    updateStatusOutput(message, type = 'default') { // type: 'default', 'success', 'error', 'warning'
+        const output = this.elements.statusOutput;
+        output.textContent = message;
+        output.className = 'jwt-decoder-status'; // Reset classes
+        switch (type) {
+            case 'success':
+                output.classList.add('status-success');
+                break;
+            case 'error':
+                output.classList.add('status-error');
+                break;
+            case 'warning':
+                output.classList.add('status-warning');
+                break;
+            case 'default':
+            default:
+                output.classList.add('status-default');
+                break;
+        }
+    }
 
-            // Reset button states using cached elements
-            updateDecodeButtonState(elements.decodeBtn, 'empty');
-            updateVerifyButtonState(elements.verifyBtn, 'notVerified', 'empty');
+    clearOutputs() {
+        this.elements.decodedOutput.value = '';
+        this.elements.headerJsonContainer.innerHTML = '';
+        this.elements.payloadJsonContainer.innerHTML = '';
+        this.elements.rawJsonViewerContainer.innerHTML = '';
+        // Status is updated in decodeAndRender or clearAll
+    }
+
+    switchToRawTab() {
+        const rawTab = document.querySelector('.jwt-decoder-tab[data-tab="raw"]');
+        if (rawTab) rawTab.click();
+    }
+
+    handleProcessingError(e) {
+        this.elements.decodedOutput.value = `Error: ${e.message}`;
+        this.elements.headerJsonContainer.innerHTML = '';
+        this.elements.payloadJsonContainer.innerHTML = '';
+        this.elements.rawJsonViewerContainer.innerHTML = '';
+        this.updateStatusOutput(`Error: ${e.message}`, 'error');
+        console.error('JWT Processing Error:', e);
+    }
+
+    // --- Event Handlers ---
+    debounceDecode() {
+        clearTimeout(this.decodeTimeout);
+        const token = this.elements.jwtInput.value.trim();
+
+        if (!token) {
+            this.clearAll(); // Reset immediately if token is cleared
+            return;
+        }
+        // Auto-decode after a short delay. Trigger verification if a secret is present.
+        this.decodeTimeout = setTimeout(() => {
+            const shouldVerify = !!this.elements.secretInput.value.trim();
+            this.decodeAndRender(shouldVerify);
+        }, 300);
+    }
+
+    debounceVerify() {
+        clearTimeout(this.verifyTimeout);
+        // Auto-verify after a short delay if secret is present
+        const secret = this.elements.secretInput.value.trim();
+        if (secret) {
+            this.verifyTimeout = setTimeout(() => this.decodeAndRender(true), 300); // Trigger verification
+        } else {
+             // If secret is removed, update status to reflect only decode status (which will now be warning)
+             this.decodeAndRender(false);
+        }
+    }
+
+    async copyDecoded() {
+        const decodedContent = this.elements.decodedOutput.value;
+        const copyBtn = this.elements.copyBtn;
+
+        if (!decodedContent || decodedContent.startsWith('Error:')) {
+            copyBtn.setAttribute('title', !decodedContent ? 'No content to copy' : 'Cannot copy error content');
+            return;
         }
 
-        // --- Initialize UI and Event Listeners ---
-        setupTabs(); // Initialize tab switching
+        try {
+            await navigator.clipboard.writeText(decodedContent);
+            copyBtn.textContent = 'Copied!';
+            copyBtn.style.backgroundColor = 'rgb(40, 167, 69)';
 
-        // Preload with sample JWT token and secret (optional, but good for demo)
-        elements.jwtInput.value = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
-        elements.secretInput.value = 'your-256-bit-secret';
+            setTimeout(() => {
+                copyBtn.textContent = 'Copy Decoded';
+                copyBtn.style.backgroundColor = '';
+                copyBtn.setAttribute('title', 'Copy decoded token to clipboard'); // Reset title
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+            copyBtn.setAttribute('title', 'Failed to copy to clipboard');
+        }
+    }
 
-        // Trigger initial decode AND VERIFICATION on load
-        decodeJWTScoped(true);
+    clearAll() {
+        this.elements.jwtInput.value = '';
+        this.elements.secretInput.value = '';
+        this.clearOutputs();
+        this.switchToRawTab();
+        this.updateStatusOutput('Cleared. Enter a JWT token.', 'default');
+    }
+}
 
-        // --- Debounced Input Handlers ---
-        let decodeTimeout;
-        const debounceDecode = () => {
-            clearTimeout(decodeTimeout);
-            const token = elements.jwtInput.value.trim();
-            elements.decodeBtn.disabled = !token; // Enable/disable decode button based on input
-
-            if (!token) {
-                // If token is cleared, reset everything immediately
-                clearAllScoped();
-                return;
-            }
-            // Auto-decode (without verification) after a short delay
-            decodeTimeout = setTimeout(() => decodeJWTScoped(false), 300);
-        };
-
-        elements.jwtInput.addEventListener('input', debounceDecode);
-        elements.jwtInput.addEventListener('paste', debounceDecode); // Handle paste too
-
-        let verifyTimeout;
-        const debounceVerify = () => {
-            clearTimeout(verifyTimeout);
-            // Only attempt auto-verification if the verify button is enabled (token is valid)
-            if (!elements.verifyBtn.disabled) {
-                 verifyTimeout = setTimeout(() => decodeJWTScoped(true), 300); // Trigger verification
-            } else {
-                 // If verify button is disabled (e.g., token invalid), ensure status reflects 'not verified'
-                 // This might be redundant if decodeJWTScoped handles it, but ensures consistency
-                 const currentDecodeStatus = elements.decodeBtn.classList.contains('success') ? 'success' :
-                                            elements.decodeBtn.classList.contains('error') ? 'error' : 'empty';
-                 updateVerifyButtonState(elements.verifyBtn, 'notVerified', currentDecodeStatus);
-            }
-        };
-        elements.secretInput.addEventListener('input', debounceVerify);
-        elements.secretInput.addEventListener('paste', debounceVerify); // Handle paste too
-
-        // --- Button Click Handlers ---
-        // Decode button is driven by input changes, not clicks
-        elements.verifyBtn.addEventListener('click', () => decodeJWTScoped(true)); // Explicit verify click
-        elements.copyBtn.addEventListener('click', copyDecodedScoped);
-        elements.clearBtn.addEventListener('click', clearAllScoped);
-
-        // --- Initialize Tooltips ---
-        elements.copyBtn.setAttribute('title', 'Copy decoded token to clipboard');
+// Initialize the UI when the DOM is loaded
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        const jwtDecoderApp = new JWTDecoderUI();
+        jwtDecoderApp.initialize();
     });
 }

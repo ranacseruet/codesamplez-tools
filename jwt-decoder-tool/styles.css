@@ -88,110 +88,21 @@
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; /* Added transitions */
 }
 
-/* Decode Button States */
-#jwt-decoder-decode-btn.success {
-  background-color: #d4edda; /* Light green */
-  border-color: #c3e6cb;
-  color: #155724; /* Dark green text */
-  cursor: default; /* Indicate non-interactive state */
-  opacity: 1; /* Ensure full opacity even if disabled */
-}
-#jwt-decoder-decode-btn.error {
-  background-color: #f8d7da; /* Light red */
-  border-color: #f5c6cb;
-  color: #721c24; /* Dark red text */
-  cursor: default;
-}
-#jwt-decoder-decode-btn.empty {
-   /* Default styles apply, but ensure cursor is default and it looks disabled */
-   cursor: default;
-   /* opacity: 0.65; Let specific states handle appearance */
-}
-
 /* General disabled style for ALL buttons */
 .jwt-decoder-container button:disabled {
     cursor: default;
     opacity: 0.65;
 }
 
-/* Verify Button States */
-#jwt-decoder-verify-btn.verify-valid {
-  background-color: #d4edda; /* Light green */
-  border-color: #c3e6cb;
-  color: #155724; /* Dark green text */
-  cursor: default; /* Indicate non-interactive state */
-}
-#jwt-decoder-verify-btn.verify-invalid {
-  background-color: #f8d7da; /* Light red */
-  border-color: #f5c6cb;
-  color: #721c24; /* Dark red text */
-}
-#jwt-decoder-verify-btn.verify-warning { /* For secret missing */
-  background-color: #fff3cd; /* Light yellow */
-  border-color: #ffeeba;
-  color: #856404; /* Dark yellow text */
-}
-#jwt-decoder-verify-btn.verify-error { /* For token invalid */
-  background-color: #f8d7da; /* Light red */
-  border-color: #f5c6cb;
-  color: #721c24; /* Dark red text */
-}
-#jwt-decoder-verify-btn.verify-not-verified {
-   /* Use default button styles when enabled */
-   background-color: #2563eb;
-   color: white;
-   border-color: #2563eb;
-}
-/* Ensure disabled verify button looks right, overriding specific states if needed */
-#jwt-decoder-verify-btn:disabled {
-    background-color: #6b7280 !important; /* Grey out when disabled, use important to override state colors */
-    border-color: #6b7280 !important;
-    color: #e5e7eb !important;
-    opacity: 0.65;
-}
-/* Override text for specific disabled states if needed */
-#jwt-decoder-verify-btn.verify-error:disabled {
-    /* Keep the error text but greyed out */
-    color: #e5e7eb !important;
-}
-#jwt-decoder-verify-btn.verify-not-verified:disabled {
-    /* Keep the default text but greyed out */
-     color: #e5e7eb !important;
-}
-
-
-
-
 .jwt-decoder-container button:hover:not(:disabled) { /* Only apply hover to non-disabled */
   background-color: #1d4ed8;
   color: white;
-}
-
-/* Ensure hover doesn't override specific state colors for stateful buttons */
-#jwt-decoder-decode-btn.success:hover,
-#jwt-decoder-decode-btn.error:hover,
-#jwt-decoder-decode-btn.empty:hover,
-#jwt-decoder-verify-btn.verify-valid:hover,
-#jwt-decoder-verify-btn.verify-invalid:hover,
-#jwt-decoder-verify-btn.verify-warning:hover,
-#jwt-decoder-verify-btn.verify-error:hover {
-    /* Prevent hover effect when button shows a specific state */
-    background-color: initial; /* Use the state's background */
-    color: initial; /* Use the state's color */
-    border-color: initial; /* Use the state's border */
-}
-/* Allow hover only on the default 'Verify Signature' state when enabled */
-#jwt-decoder-verify-btn.verify-not-verified:not(:disabled):hover {
-    background-color: #1d4ed8; /* Default hover blue */
-    color: white;
 }
 
 /* Adjust hover for secondary buttons */
 .jwt-decoder-container button.jwt-decoder-secondary:hover:not(:disabled) {
   background-color: #4b5563;
 }
-
-
 
 .jwt-decoder-container button.jwt-decoder-secondary {
   background-color: #6b7280;
@@ -218,6 +129,29 @@
   font-family: monospace;
   background-color: #fff;
   border: 1px solid #ddd;
+  color: rgb(102, 102, 102); /* Default color */
+}
+
+/* Status Message Styles */
+.jwt-decoder-status.status-success {
+  color: rgb(40, 167, 69);
+  border-color: #c3e6cb;
+  background-color: #d4edda;
+}
+.jwt-decoder-status.status-error {
+  color: rgb(220, 53, 69);
+  border-color: #f5c6cb;
+  background-color: #f8d7da;
+}
+.jwt-decoder-status.status-warning {
+  color: rgb(133, 100, 4); /* Darker yellow for better contrast */
+  border-color: #ffeeba;
+  background-color: #fff3cd;
+}
+.jwt-decoder-status.status-default {
+  color: rgb(102, 102, 102);
+  border-color: #ddd;
+  background-color: #fff;
 }
 
 .jwt-decoder-container .jwt-decoder-tooltip {
