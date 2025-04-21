@@ -66,10 +66,16 @@ describe('JSONFormatter', () => {
     test('should toggle between expanded/collapsed states', () => {
       formatter.renderJSON({ a: 1 }, formatter.output);
       const toggle = formatter.output.querySelector('.json-toggle');
+      // Initial state should be expanded ('-')
+      expect(toggle.textContent).toBe('-'); 
+      
+      // Click to collapse
       toggle.click();
-      expect(toggle.textContent).toBe('▶');
+      expect(toggle.textContent).toBe('+'); // Collapsed state should be '+'
+      
+      // Click to expand again
       toggle.click();
-      expect(toggle.textContent).toBe('▼');
+      expect(toggle.textContent).toBe('-'); // Expanded state should be '-'
     });
   });
 

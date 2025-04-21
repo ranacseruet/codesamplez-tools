@@ -157,8 +157,9 @@
 .json-toggle {
   cursor: pointer;
   margin-right: 5px;
-  color: #666;
+  color: #333; /* Changed from #666 for better contrast */
   user-select: none;
+  font-weight: bold; /* Make it bolder */
 }
 
 .json-toggle:hover {

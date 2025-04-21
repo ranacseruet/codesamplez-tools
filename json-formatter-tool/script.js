@@ -65,10 +65,10 @@ export class JSONFormatter {
     if (!isEmpty) {
       const toggle = document.createElement('span');
       toggle.className = 'json-toggle';
-      toggle.textContent = '▼';
+      toggle.textContent = '-'; // Initial state is expanded
       toggle.addEventListener('click', () => {
         container.classList.toggle('collapsed');
-        toggle.textContent = container.classList.contains('collapsed') ? '▶' : '▼';
+        toggle.textContent = container.classList.contains('collapsed') ? '+' : '-'; // '+' for collapsed, '-' for expanded
       });
       container.appendChild(toggle);
     }
@@ -144,11 +144,11 @@ export class JSONFormatter {
     try {
       // Clone the output to avoid modifying the original
       const outputClone = this.output.cloneNode(true);
-      
-      // Remove all toggle markers (▼/▶)
+
+      // Remove all toggle markers (+/-)
       const toggles = outputClone.querySelectorAll('.json-toggle');
       toggles.forEach(toggle => toggle.remove());
-      
+
       const textToCopy = outputClone.textContent;
       
       // Try modern Clipboard API first
