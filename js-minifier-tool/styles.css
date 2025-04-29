@@ -1,182 +1,120 @@
-.js-minifier-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  line-height: 1.6;
-  color: #333;
-}
+/* js-minifier-tool/styles.css */
+/* Specific styles for the JavaScript Minifier tool */
 
-.js-minifier-container * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
+/* Header and description styles */
 .js-minifier-header {
   text-align: center;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
-}
-
-.js-minifier-container h1 {
-  color: #2563eb;
-  margin-bottom: 10px;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .js-minifier-description {
-  color: #666;
-  margin-bottom: 20px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-lg);
 }
 
-.js-minifier-editor-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+/* Toolbar styles */
+.js-minifier-toolbar.o-toolbar {
+  justify-content: center; /* Center buttons within the toolbar */
+  margin-top: var(--spacing-lg);
+  flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+  width: 100%; /* Ensure toolbar spans full width */
+  gap: var(--spacing-md); /* Add consistent spacing between buttons */
 }
 
-@media (min-width: 768px) {
-  .js-minifier-editor-container {
-    flex-direction: row;
-  }
-}
-
-.js-minifier-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.js-minifier-container h2 {
-  font-size: 18px;
-  margin-bottom: 10px;
-  color: #333;
-}
-
-.js-minifier-container textarea {
-  width: 100%;
-  height: 300px;
-  padding: 15px;
-  font-family: monospace;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  resize: none;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.js-minifier-toolbar {
-  display: flex;
-  gap: 10px;
-  margin: 15px 0;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.js-minifier-container button {
-  background-color: #2563eb;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s;
-}
-
-.js-minifier-container button:hover {
-  background-color: #1d4ed8;
-}
-
-.js-minifier-container button.js-minifier-secondary {
-  background-color: #6b7280;
-}
-
-.js-minifier-container button.js-minifier-secondary:hover {
-  background-color: #4b5563;
-}
-
+/* Stats panel styles */
 .js-minifier-stats {
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  padding: 15px;
-  margin-top: 20px;
+  width: 100%; /* Ensure stats panel spans full width */
+  margin-top: var(--spacing-lg);
 }
 
 .js-minifier-stat-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 5px;
+  margin-bottom: var(--spacing-xs);
+  padding: var(--spacing-xs) 0;
 }
 
-.js-minifier-container .js-minifier-tooltip {
-  position: relative;
-  display: inline-block;
-  cursor: pointer;
-  margin-left: 5px;
-}
-
-.js-minifier-container .js-minifier-tooltip .js-minifier-tooltiptext {
-  visibility: hidden;
-  width: 200px;
-  background-color: #555;
-  color: #fff;
-  text-align: center;
-  border-radius: 6px;
-  padding: 5px;
-  position: absolute;
-  z-index: 1;
-  bottom: 125%;
-  left: 50%;
-  margin-left: -100px;
-  opacity: 0;
-  transition: opacity 0.3s;
-  font-size: 14px;
-}
-
-.js-minifier-container .js-minifier-tooltip:hover .js-minifier-tooltiptext {
-  visibility: visible;
-  opacity: 1;
-}
-
+/* Options panel styles */
 .js-minifier-options {
-  margin: 20px 0;
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-}
-
-.js-minifier-option-group {
-  margin-bottom: 15px;
-}
-
-.js-minifier-checkbox-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
-.js-minifier-checkbox-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.js-minifier-container input[type="checkbox"] {
-  margin-right: 5px;
-}
-
-.js-minifier-container label {
-  font-size: 14px;
+  margin: var(--spacing-lg) 0;
 }
 
 .js-minifier-footer {
   text-align: center;
   margin-top: 30px;
-  color: #666;
-  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
 }
+
+/* Grid and panel layout fixes */
+.js-minifier-container .o-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Force 2 columns */
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  min-height: 350px; /* Set minimum height for the grid */
+}
+
+/* Force panel flex layout specifically within this tool */
+.js-minifier-container .o-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 350px; /* Set minimum height for panels */
+  box-sizing: border-box;
+}
+
+/* Fix textarea sizing */
+.js-minifier-container .c-input--textarea {
+  height: auto;
+  flex: 1;
+  min-height: 300px; /* Increase minimum height */
+  box-sizing: border-box;
+  width: 100%; /* Ensure full width */
+  max-width: 100%; /* Prevent overflow */
+}
+
+/* Ensure panels take full width in their grid cells */
+.js-minifier-container .o-panel {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .js-minifier-container .o-grid-2col {
+    grid-template-columns: 1fr; /* Single column on mobile */
+  }
+  
+  .js-minifier-toolbar.o-toolbar {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .js-minifier-toolbar.o-toolbar button {
+    width: 100%;
+    margin-bottom: var(--spacing-sm);
+  }
+}
+
+/*
+  Styles removed previously as they are covered by common/shared-styles.css:
+  - .js-minifier-container (covered by .c-tool-container)
+  - .js-minifier-container * (covered by .tool-container *)
+  - .js-minifier-container h1 (covered by .tool-container h1)
+  - .js-minifier-container h2 (covered by .tool-container h2)
+  - .js-minifier-editor-container (covered by .o-grid-2col)
+  - .js-minifier-panel base styles (covered by .o-panel)
+  - .js-minifier-container textarea (covered by .c-input, .c-input--textarea)
+  - .js-minifier-toolbar base styles (covered by .c-toolbar)
+  - .js-minifier-container button styles (covered by .c-button, .c-button--secondary)
+  - .js-minifier-stats base styles (covered by .c-stats-panel)
+  - .js-minifier-stat-row (covered by .c-stat-row)
+  - .js-minifier-container .js-minifier-tooltip styles (covered by .c-tooltip)
+  - .js-minifier-options base styles (covered by .c-options-panel)
+  - .js-minifier-checkbox-group (covered by .c-checkbox-group)
+  - .js-minifier-checkbox-item (covered by .c-checkbox-item)
+  - .js-minifier-container input[type="checkbox"] (covered by .c-checkbox-item input)
+  - .js-minifier-container label (covered by .c-checkbox-item label)
+*/

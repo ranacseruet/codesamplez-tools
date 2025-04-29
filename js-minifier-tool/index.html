@@ -4,47 +4,48 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JavaScript Minifier</title>
-  <link rel="stylesheet" href="styles.main.css">
+  <link rel="stylesheet" href="styles.main.css"> <!-- Reverted path for build process -->
 </head>
 <body>
-  <div class="js-minifier-container">
+  <div class="js-minifier-container tool-container"> <!-- Corrected to use shared .tool-container class -->
     <header class="js-minifier-header">
       <h1>JavaScript Minifier</h1>
       <p class="js-minifier-description">Minify your JavaScript code to reduce file size and improve load times</p>
     </header>
     
-    <div class="js-minifier-options">
+    <div class="js-minifier-options c-options-panel"> <!-- Use shared options panel -->
       <h2>Minification Options</h2>
-      <div class="js-minifier-checkbox-group">
-        <div class="js-minifier-checkbox-item">
+      <div class="c-checkbox-group"> <!-- Use shared checkbox group directly -->
+        <div class="c-checkbox-item"> <!-- Use shared checkbox item -->
           <input type="checkbox" id="js-minifier-remove-comments" checked>
           <label for="js-minifier-remove-comments">Remove comments</label>
         </div>
-        <div class="js-minifier-checkbox-item">
+        <div class="c-checkbox-item"> <!-- Use shared checkbox item -->
           <input type="checkbox" id="js-minifier-remove-whitespace" checked>
           <label for="js-minifier-remove-whitespace">Remove whitespace</label>
         </div>
-        <div class="js-minifier-checkbox-item">
+        <div class="c-checkbox-item"> <!-- Use shared checkbox item -->
           <input type="checkbox" id="js-minifier-shorten-variables">
           <label for="js-minifier-shorten-variables">Shorten variable names</label>
-          <div class="js-minifier-tooltip">ⓘ
-            <span class="js-minifier-tooltiptext">This is experimental and may break your code</span>
-          </div>
+          <span class="c-tooltip-container">ⓘ <!-- Correct tooltip structure -->
+            <span class="c-tooltip">This is experimental and may break your code</span>
+          </span>
         </div>
-        <div class="js-minifier-checkbox-item">
+        <div class="c-checkbox-item"> <!-- Use shared checkbox item -->
           <input type="checkbox" id="js-minifier-mangle-properties">
           <label for="js-minifier-mangle-properties">Mangle properties</label>
-          <div class="js-minifier-tooltip">ⓘ
-            <span class="js-minifier-tooltiptext">This is experimental and may break your code</span>
-          </div>
+           <span class="c-tooltip-container">ⓘ <!-- Correct tooltip structure -->
+            <span class="c-tooltip">This is experimental and may break your code</span>
+           </span> <!-- Removed extra closing div -->
         </div>
       </div>
     </div>
     
-    <div class="js-minifier-editor-container">
-      <div class="js-minifier-panel">
+    <div class="o-grid-2col"> <!-- Use shared 2-column grid -->
+      <div class="o-panel"> <!-- Use only shared panel class -->
+        <!-- Removed inner o-panel-content wrapper -->
         <h2>Original JavaScript</h2>
-        <textarea id="js-minifier-input" placeholder="Paste your JavaScript code here...">// Example JavaScript function
+        <textarea id="js-minifier-input" class="c-input c-input--textarea" placeholder="Paste your JavaScript code here...">// Example JavaScript function <!-- Use shared input class -->
 function calculateSum(numbers) {
   // This function calculates the sum of all numbers in an array
   let sum = 0;
@@ -62,31 +63,34 @@ function calculateSum(numbers) {
 const myNumbers = [1, 2, 3, 4, 5];
 const result = calculateSum(myNumbers);
 console.log("The sum is: " + result);</textarea>
+        <!-- Removed inner o-panel-content wrapper -->
       </div>
       
-      <div class="js-minifier-panel">
+      <div class="o-panel"> <!-- Use only shared panel class -->
+        <!-- Removed inner o-panel-content wrapper -->
         <h2>Minified JavaScript</h2>
-        <textarea id="js-minifier-output" readonly placeholder="Minified code will appear here..."></textarea>
+        <textarea id="js-minifier-output" class="c-input c-input--textarea" readonly placeholder="Minified code will appear here..."></textarea> <!-- Use shared input class -->
+        <!-- Removed inner o-panel-content wrapper -->
       </div>
     </div>
     
-    <div class="js-minifier-toolbar">
-      <button id="js-minifier-minify-btn">Minify JavaScript</button>
-      <button id="js-minifier-copy-btn" class="js-minifier-secondary">Copy Minified Code</button>
-      <button id="js-minifier-clear-btn" class="js-minifier-secondary">Clear All</button>
+    <div class="js-minifier-toolbar o-toolbar"> <!-- Use shared toolbar class -->
+      <button id="js-minifier-minify-btn" class="c-button">Minify JavaScript</button> <!-- Use shared button class -->
+      <button id="js-minifier-copy-btn" class="c-button c-button--secondary">Copy Minified Code</button> <!-- Use shared button classes -->
+      <button id="js-minifier-clear-btn" class="c-button c-button--secondary">Clear All</button> <!-- Use shared button classes -->
     </div>
     
-    <div class="js-minifier-stats">
+    <div class="js-minifier-stats c-stats-panel"> <!-- Use shared stats panel class -->
       <h2>Statistics</h2>
-      <div class="js-minifier-stat-row">
+      <div class="c-stat-row js-minifier-stat-row">
         <span>Original Size:</span>
         <span id="js-minifier-original-size">0 bytes</span>
       </div>
-      <div class="js-minifier-stat-row">
+      <div class="c-stat-row js-minifier-stat-row">
         <span>Minified Size:</span>
         <span id="js-minifier-minified-size">0 bytes</span>
       </div>
-      <div class="js-minifier-stat-row">
+      <div class="c-stat-row js-minifier-stat-row">
         <span>Compression Ratio:</span>
         <span id="js-minifier-compression-ratio">0%</span>
       </div>
@@ -96,6 +100,6 @@ console.log("The sum is: " + result);</textarea>
       <p>JavaScript Minifier - Use at your own risk. Always test minified code before deployment.</p>
     </footer>
   </div>
-  <script src="bundle.main.js"></script>
+  <script src="bundle.main.js"></script> <!-- Reverted path for build process -->
 </body>
 </html>

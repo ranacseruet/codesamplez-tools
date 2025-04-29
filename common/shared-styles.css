@@ -129,10 +129,26 @@
 }
 
 .o-panel {
-  flex: 1;
+  flex: 1; /* Keep for potential use in flex contexts */
+  display: flex; /* Restore display:flex */
+  flex-direction: column; /* Restore flex-direction */
+  min-height: 0; /* Add min-height to help flex sizing within grid */
+  /* height: 100%; */ /* Removed explicit height, rely on grid stretch */
+  /* Panel now acts as a flex container again */
+}
+
+/* Remove rules for the inner wrapper as it will be removed */
+/*
+.o-panel-content {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
+.o-panel-content .c-input--textarea {
+  flex: 1;
+  min-height: 200px;
+}
+*/
 
 .o-panel-header {
   display: flex;
@@ -159,7 +175,6 @@
     grid-template-columns: 1fr 1fr;
   }
 }
-
 
 /* ==========================================================================
    Components Layer - UI Components
@@ -229,7 +244,7 @@
 
 /* --- Form Elements --- */
 .c-input {
-  flex: 1; /* Allow input to grow */
+  /* flex: 1; */ /* Removed flex: 1 from base input, rely on specific rules */
   padding: var(--spacing-sm);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-sm);
@@ -246,6 +261,14 @@
 .c-input:focus {
   outline: none;
   border-color: var(--color-primary);
+}
+
+/* Modifier for textarea inputs */
+.c-input--textarea {
+  /* height: 300px; */ /* Remove fixed height, rely on flex: 1 where needed */
+  resize: vertical; /* Allow vertical resize */
+  line-height: var(--line-height-tight); /* Match textarea line-height */
+  font-family: var(--font-family-mono); /* Use monospace for code */
 }
 
 .c-form-group {
@@ -360,6 +383,57 @@
   font-style: italic;
 }
 
+
+/* --- Stats Panel (from js-minifier) --- */
+.c-stats-panel {
+  background-color: var(--color-bg-light);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.c-stat-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-base);
+}
+
+.c-stat-row span:first-child {
+  color: var(--color-text-secondary);
+}
+
+/* --- Checkbox Group (from js-minifier) --- */
+.c-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md); /* Use medium gap */
+}
+
+.c-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs); /* Use small gap */
+}
+
+.c-checkbox-item input[type="checkbox"] {
+  margin: 0; /* Reset margin */
+  width: 16px; /* Consistent size */
+  height: 16px;
+}
+
+.c-checkbox-item label {
+  font-size: var(--font-size-base);
+  color: var(--color-text); /* Ensure label text color matches base text */
+}
+
+/* --- Options Panel (from js-minifier) --- */
+.c-options-panel {
+  margin: var(--spacing-lg) 0;
+  padding: var(--spacing-lg);
+  background-color: var(--color-bg-light);
+  border-radius: var(--border-radius-sm);
+}
 
 /* ==========================================================================
    Utilities Layer
