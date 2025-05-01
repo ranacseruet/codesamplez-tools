@@ -2,92 +2,97 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CSS Minifier</title>
   <link rel="stylesheet" href="styles.main.css">
 </head>
 <body>
-  <div class="css-minifier-container">
-    <div class="css-minifier-header">
+  <div class="css-minifier-container tool-container">
+    <header class="css-minifier-header o-header">
       <h1>CSS Minifier</h1>
-      <p class="css-minifier-description">Optimize your CSS files by removing unnecessary characters without changing functionality.</p>
-    </div>
+      <p class="css-minifier-description o-description">Optimize your CSS files by removing unnecessary characters without changing functionality.</p>
+    </header>
     
-    <div class="css-minifier-editor-container">
-      <div class="css-minifier-panel">
-        <div class="css-minifier-panel-header">
+    <div class="o-grid-2col">
+      <div class="o-panel">
+        <div class="o-panel-header">
           <h2>Input CSS</h2>
-          <div class="css-minifier-toolbar">
-            <button class="css-minifier-secondary" id="clear-input">Clear</button>
-            <button class="css-minifier-secondary" id="load-sample">Load Sample</button>
+          <div class="css-minifier-toolbar o-toolbar">
+            <button class="c-button c-button--secondary" id="clear-input">Clear</button>
+            <button class="c-button c-button--secondary" id="load-sample">Load Sample</button>
           </div>
         </div>
-        <textarea id="input-css" placeholder="Paste your CSS code here..."></textarea>
+        <textarea id="input-css" class="c-input c-input--textarea" placeholder="Paste your CSS code here..."></textarea>
       </div>
       
-      <div class="css-minifier-panel">
-        <div class="css-minifier-panel-header">
+      <div class="o-panel">
+        <div class="o-panel-header">
           <h2>Minified Output</h2>
-          <div class="css-minifier-toolbar">
-            <button class="css-minifier-secondary" id="copy-output">Copy</button>
+          <div class="css-minifier-toolbar o-toolbar">
+            <button class="c-button c-button--secondary" id="copy-output">Copy</button>
           </div>
         </div>
-        <textarea id="output-css" readonly placeholder="Minified CSS will appear here..."></textarea>
+        <textarea id="output-css" class="c-input c-input--textarea" readonly placeholder="Minified CSS will appear here..."></textarea>
       </div>
     </div>
     
-    <div class="css-minifier-options">
-      <div class="css-minifier-option-group">
-        <div class="css-minifier-checkbox-group">
-          <div class="css-minifier-checkbox-item">
-            <input type="checkbox" id="remove-comments" checked>
-            <label for="remove-comments">Remove comments</label>
-          </div>
-          <div class="css-minifier-checkbox-item">
-            <input type="checkbox" id="remove-whitespace" checked>
-            <label for="remove-whitespace">Remove whitespace</label>
-          </div>
-          <div class="css-minifier-checkbox-item">
-            <input type="checkbox" id="combine-selectors" checked>
-            <label for="combine-selectors">Combine duplicate selectors</label>
-          </div>
-          <div class="css-minifier-checkbox-item">
-            <input type="checkbox" id="shorten-colors" checked>
-            <label for="shorten-colors">Shorten color values</label>
-          </div>
-          <div class="css-minifier-checkbox-item">
-            <input type="checkbox" id="remove-units" checked>
-            <label for="remove-units">Remove unnecessary units</label>
-          </div>
-          <div class="css-minifier-checkbox-item">
-            <input type="checkbox" id="remove-last-semicolons" checked>
-            <label for="remove-last-semicolons">Remove last semicolons</label>
-          </div>
+    <div class="css-minifier-options c-options-panel">
+      <h2>Minification Options</h2>
+      <div class="c-checkbox-group">
+        <div class="c-checkbox-item">
+          <input type="checkbox" id="remove-comments" checked>
+          <label for="remove-comments">Remove comments</label>
+        </div>
+        <div class="c-checkbox-item">
+          <input type="checkbox" id="remove-whitespace" checked>
+          <label for="remove-whitespace">Remove whitespace</label>
+        </div>
+        <div class="c-checkbox-item">
+          <input type="checkbox" id="combine-selectors" checked>
+          <label for="combine-selectors">Combine duplicate selectors</label>
+        </div>
+        <div class="c-checkbox-item">
+          <input type="checkbox" id="shorten-colors" checked>
+          <label for="shorten-colors">Shorten color values</label>
+        </div>
+        <div class="c-checkbox-item">
+          <input type="checkbox" id="remove-units" checked>
+          <label for="remove-units">Remove unnecessary units</label>
+        </div>
+        <div class="c-checkbox-item">
+          <input type="checkbox" id="remove-last-semicolons" checked>
+          <label for="remove-last-semicolons">Remove last semicolons</label>
         </div>
       </div>
       
-      <div class="css-minifier-toolbar">
-        <button id="reset-options" class="css-minifier-secondary">Reset Options</button>
-        <button id="minify-btn">Minify CSS</button>
+      <div class="css-minifier-toolbar o-toolbar">
+        <button id="reset-options" class="c-button c-button--secondary">Reset Options</button>
+        <button id="minify-btn" class="c-button">Minify CSS</button>
       </div>
     </div>
 
-    <div class="css-minifier-stats">
-      <div class="css-minifier-stat-item">
-        <span class="css-minifier-stat-label">Original Size</span>
-        <span id="original-size" class="css-minifier-stat-value">0 bytes</span>
+    <div class="css-minifier-stats c-stats-panel">
+      <h2>Statistics</h2>
+      <div class="c-stat-row">
+        <span>Original Size</span>
+        <span id="original-size">0 bytes</span>
       </div>
-      <div class="css-minifier-stat-item">
-        <span class="css-minifier-stat-label">Minified Size</span>
-        <span id="minified-size" class="css-minifier-stat-value">0 bytes</span>
+      <div class="c-stat-row">
+        <span>Minified Size</span>
+        <span id="minified-size">0 bytes</span>
       </div>
-      <div class="css-minifier-stat-item">
-        <span class="css-minifier-stat-label">Savings</span>
-        <span id="saving" class="css-minifier-stat-value css-minifier-saving-percentage">0%</span>
+      <div class="c-stat-row">
+        <span>Savings</span>
+        <span id="saving" class="css-minifier-saving-percentage">0%</span>
       </div>
     </div>
+    
+    <footer class="css-minifier-footer">
+      <p>CSS Minifier - Always test minified CSS before deployment.</p>
+    </footer>
   </div>
   
-  <div id="notification" class="css-minifier-notification">Copied to clipboard!</div>
+  <div id="notification" class="c-notification">Copied to clipboard!</div>
   <script src="bundle.main.js"></script>
 </body>
 </html>

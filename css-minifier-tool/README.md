@@ -184,6 +184,26 @@ When errors occur, the tool:
 - CSS custom property declarations
 - Certain legacy browser hacks
 
+## UI Implementation
+
+### CSS Architecture
+The CSS Minifier tool follows a structured CSS architecture that leverages shared components and styles:
+
+- **Shared Styles**: Utilizes the common CSS framework from `common/shared-styles.css`
+- **Component-Based Design**: Implements UI using reusable components with consistent naming conventions
+- **OOCSS Approach**: Separates structure from skin using object and component classes
+- **Responsive Layout**: Adapts to different screen sizes using a flexible grid system
+
+### Key UI Components
+- **Layout Objects**: `.o-grid-2col`, `.o-panel`, `.o-panel-header`, `.o-toolbar`
+- **Form Components**: `.c-input`, `.c-input--textarea`, `.c-button`, `.c-checkbox-group`, `.c-checkbox-item`
+- **Utility Components**: `.c-stats-panel`, `.c-stat-row`, `.c-notification`
+
+### CSS Organization
+- **Tool-Specific Styles**: Contains only overrides and adjustments specific to the CSS Minifier tool
+- **Shared Framework**: Leverages common styles for consistent appearance across all tools
+- **Responsive Behavior**: Adapts layout for different screen sizes using media queries
+
 ## Contributing
 
 See CONTRIBUTING.md for detailed information about:
