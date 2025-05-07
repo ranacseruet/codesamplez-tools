@@ -12,7 +12,9 @@ A powerful, browser-based tool for decoding and validating JSON Web Tokens (JWT)
 
 ## Features
 
-- **Real-time Decoding**: 
+- **Consistent Text Area Height**:
+  - Ensures the JWT Token and Decoded Token text areas maintain a consistent height, even when inputs are cleared.
+- **Real-time Decoding**:
   - Instantly decode JWT tokens as you type
   - Debounced input handling for optimal performance
   - Clear error messages for invalid tokens

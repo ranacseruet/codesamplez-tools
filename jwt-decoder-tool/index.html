@@ -7,36 +7,43 @@
   <link rel="stylesheet" href="styles.main.css">
 </head>
 <body>
-  <div class="jwt-decoder-container">
-    <header class="jwt-decoder-header">
+  <div class="tool-container"> <!-- Use shared container -->
+    <header class="o-header"> <!-- Use shared header object -->
       <h1>JWT Decoder & Validator</h1>
-      <p class="jwt-decoder-description">Decode and validate JSON Web Tokens (JWT) with ease</p>
+      <p class="o-description">Decode and validate JSON Web Tokens (JWT) with ease</p> <!-- Use shared description object -->
     </header>
     
-    <div class="jwt-decoder-options">
+    <div class="c-options-panel"> <!-- Use shared options panel component -->
       <h2>Signature Options</h2>
-      <div class="jwt-decoder-input-group">
-        <div class="jwt-decoder-input-item">
-          <input type="text" id="jwtSecretKey" placeholder="Enter secret key to verify signature">
-          <div class="jwt-decoder-tooltip">ⓘ
-            <span class="jwt-decoder-tooltiptext">Optional - Enter the secret key to verify the JWT signature</span>
+      <div class="c-form-group"> <!-- Use shared form group component -->
+        <div class="c-form-row"> <!-- Use shared form row component -->
+          <input type="text" id="jwtSecretKey" class="c-input" placeholder="Enter secret key to verify signature"> <!-- Use shared input component -->
+          <div class="c-tooltip-container">ⓘ <!-- Use shared tooltip container -->
+            <span class="c-tooltip">Optional - Enter the secret key to verify the JWT signature</span> <!-- Use shared tooltip component -->
           </div>
         </div>
       </div>
     </div>
     
-    <div class="jwt-decoder-editor-container">
-      <div class="jwt-decoder-panel">
-        <h2>JWT Token</h2>
-        <textarea id="jwtInputToken" placeholder="Paste your JWT token here..."></textarea>
+    <div class="o-grid-2col"> <!-- Use shared 2-column grid object -->
+      <div class="o-panel"> <!-- Use shared panel object -->
+        <div class="o-panel-header"> <!-- Use shared panel header object -->
+          <h2>JWT Token</h2>
+        </div>
+        <div class="o-panel-content"> <!-- Add inner wrapper -->
+          <textarea id="jwtInputToken" class="c-input c-input--textarea" placeholder="Paste your JWT token here..."></textarea> <!-- Use shared input components -->
+        </div>
       </div>
       
-      <div class="jwt-decoder-panel">
-        <h2>Decoded Token</h2>
-        <div id="jwtDecodedContainer" class="jwt-decoder-json-container">
-          <!-- Tab navigation -->
-          <div class="jwt-decoder-tabs">
-            <button class="jwt-decoder-tab active" data-tab="raw">Raw</button>
+      <div class="o-panel"> <!-- Use shared panel object -->
+        <div class="o-panel-header"> <!-- Use shared panel header object -->
+          <h2>Decoded Token</h2>
+        </div>
+        <div class="o-panel-content"> <!-- Add inner wrapper -->
+          <div id="jwtDecodedContainer" class="jwt-decoder-json-container"> <!-- Keep specific container for tabs/viewer -->
+            <!-- Tab navigation -->
+            <div class="jwt-decoder-tabs">
+              <button class="jwt-decoder-tab active" data-tab="raw">Raw</button>
             <button class="jwt-decoder-tab" data-tab="header">Header</button>
             <button class="jwt-decoder-tab" data-tab="payload">Payload</button>
           </div>
@@ -54,23 +61,24 @@
               <div id="payloadJson" class="jwt-decoder-json-viewer"></div>
             </div>
           </div>
-        </div>
-      </div>
+        </div> <!-- Close jwtDecodedContainer -->
+      </div> <!-- Close o-panel-content -->
+    </div> <!-- Close o-panel -->
+  </div> <!-- Close o-grid-2col -->
+    
+    <div class="o-toolbar"> <!-- Use shared toolbar object (removed u-text-center) -->
+      <button id="jwt-decoder-copy-btn" class="c-button c-button--secondary">Copy Decoded</button> <!-- Use shared button components -->
+      <button id="jwt-decoder-clear-btn" class="c-button c-button--secondary">Clear All</button> <!-- Use shared button components -->
     </div>
     
-    <div class="jwt-decoder-toolbar">
-      <button id="jwt-decoder-copy-btn" class="jwt-decoder-secondary">Copy Decoded</button>
-      <button id="jwt-decoder-clear-btn" class="jwt-decoder-secondary">Clear All</button>
-    </div>
-    
-    <div class="jwt-decoder-stats">
+    <div class="c-stats-panel"> <!-- Use shared stats panel component -->
       <h2>Validation Result</h2>
-      <div class="jwt-decoder-status-container">
-        <div id="jwtSignatureStatus" class="jwt-decoder-status">Not verified</div>
+      <div class="jwt-decoder-status-container"> <!-- Keep specific container for status message -->
+        <div id="jwtSignatureStatus" class="jwt-decoder-status">Not verified</div> <!-- Keep specific status element -->
       </div>
     </div>
     
-    <footer class="jwt-decoder-footer">
+    <footer class="jwt-decoder-footer"> <!-- Keep specific footer for now -->
       <p>JWT Decoder - Safely decode and verify your JWT tokens. No tokens are stored or transmitted</p>
     </footer>
   </div>

@@ -137,25 +137,21 @@
   /* Panel now acts as a flex container again */
 }
 
-/* Remove rules for the inner wrapper as it will be removed */
-/*
+/* Add rules for the inner wrapper */
 .o-panel-content {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1; /* Allow content wrapper to fill the panel */
+  min-height: 0; /* Crucial for flex sizing within grid/flex parents */
 }
-.o-panel-content .c-input--textarea {
-  flex: 1;
-  min-height: 200px;
+.o-panel-content .c-input--textarea { /* Apply flex sizing to textarea */
+  flex: 1; /* Allow textarea to grow and fill the panel content area */
+  min-height: 300px; /* Ensure a minimum height for textareas */
 }
-*/
 
-.o-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-sm);
-}
+/* Removed .o-panel-content .jwt-decoder-json-container rule from shared styles */
+
+/* Removed the duplicated .o-panel block and stray closing brace that were here */
 
 .o-toolbar {
   display: flex;
@@ -266,6 +262,7 @@
 /* Modifier for textarea inputs */
 .c-input--textarea {
   /* height: 300px; */ /* Remove fixed height, rely on flex: 1 where needed */
+  min-height: 300px; /* Ensure a minimum height */
   resize: vertical; /* Allow vertical resize */
   line-height: var(--line-height-tight); /* Match textarea line-height */
   font-family: var(--font-family-mono); /* Use monospace for code */
@@ -473,9 +470,9 @@
   }
   
   .o-panel {
-    width: 50%;
-    min-width: 0;
-    max-width: 50%;
+    /* width: 50%; */ /* Remove explicit width, let grid handle it */
+    min-width: 0; /* Keep min-width for flex/grid item safety */
+    /* max-width: 50%; */ /* Remove explicit max-width */
   }
 }
 
