@@ -1,15 +1,15 @@
 export class JSONFormatter {
   constructor(initDom = true) {
     if (initDom) {
-      this.input = document.querySelector('.jsonf-input');
-      this.output = document.querySelector('.jsonf-output code');
-      this.copyBtn = document.querySelector('.jsonf-button.jsonf-secondary');
-      this.formatBtn = document.querySelector('.jsonf-button:not(.jsonf-secondary):not(.jsonf-sample)');
-      this.sampleBtn = document.querySelector('.jsonf-button.jsonf-sample');
-      this.sortCheckbox = document.querySelector('.jsonf-checkbox');
-      this.errorContainer = document.querySelector('.jsonf-error');
-      this.originalSizeEl = document.querySelector('.jsonf-original-size');
-      this.formattedSizeEl = document.querySelector('.jsonf-formatted-size');
+      this.input = document.querySelector('.c-input.c-input--textarea');
+      this.output = document.querySelector('.c-code-output code');
+      this.formatBtn = document.querySelector('#formatJsonBtn');
+      this.copyBtn = document.querySelector('#copyOutputBtn');
+      this.sampleBtn = document.querySelector('#loadSampleBtn');
+      this.sortCheckbox = document.querySelector('#sortKeys'); // Use ID for checkbox
+      this.errorContainer = document.querySelector('.jsonf-error'); // This class was kept
+      this.originalSizeEl = document.querySelector('.jsonf-original-size'); // This class was kept
+      this.formattedSizeEl = document.querySelector('.jsonf-formatted-size'); // This class was kept
 
       this.initializeEvents();
     }

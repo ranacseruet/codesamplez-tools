@@ -67,6 +67,7 @@ The tool shows:
 - Unicode characters in strings are not escaped/unescaped
 - No support for JSON5 or JSON with comments (JSONC)
 - No syntax highlighting (basic text rendering only)
+- **Styling**: Leverages `common/shared-styles.css` for a consistent look and feel with other tools in the suite, with tool-specific styles in `json-formatter-tool/styles.css`.
 
 ## Error Handling
 - Provides specific text error messages for common JSON syntax errors:

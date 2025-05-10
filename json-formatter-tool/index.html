@@ -7,50 +7,54 @@
     <link rel="stylesheet" href="styles.main.css">
 </head>
 <body>
-    <div class="jsonf-container">
-        <div class="jsonf-header">
-            <h1 class="jsonf-title">JSON Formatter</h1>
-            <p class="jsonf-description">Format, validate, and beautify your JSON with this easy-to-use tool</p>
+    <div class="tool-container"> <!-- Replaced jsonf-container -->
+        <div class="o-header"> <!-- Replaced jsonf-header -->
+            <h1>JSON Formatter</h1> <!-- Removed jsonf-title class -->
+            <p class="o-description">Format, validate, and beautify your JSON with this easy-to-use tool</p> <!-- Replaced jsonf-description -->
         </div>
 
-        <div class="jsonf-editor-container">
-            <div class="jsonf-panel">
-                <h2>Input JSON</h2>
-                <textarea class="jsonf-input" placeholder="Paste your JSON here..."></textarea>
+        <!-- Input Panel -->
+        <div class="o-panel"> <!-- Replaced jsonf-panel -->
+            <h2>Input JSON</h2>
+            <div class="o-panel-content">
+                <textarea class="c-input c-input--textarea" placeholder="Paste your JSON here..."></textarea> <!-- Replaced jsonf-input -->
             </div>
         </div>
 
-        <div class="jsonf-controls">
-            <button class="jsonf-button">Format JSON</button>
-            <button class="jsonf-button jsonf-secondary" disabled>Copy Output</button>
-            <button class="jsonf-button jsonf-sample">Load Sample</button>
-            <div class="jsonf-checkbox-container">
-                <input type="checkbox" id="sortKeys" class="jsonf-checkbox" checked>
-                <label for="sortKeys" class="jsonf-checkbox-label">Sort keys</label>
+        <!-- Controls -->
+        <div class="o-toolbar jsonf-controls-custom"> <!-- Replaced jsonf-controls, added custom class for centering -->
+            <button class="c-button" id="formatJsonBtn">Format JSON</button> <!-- Replaced jsonf-button, added ID -->
+            <button class="c-button c-button--secondary" id="copyOutputBtn" disabled>Copy Output</button> <!-- Replaced jsonf-button jsonf-secondary, added ID -->
+            <button class="c-button c-button--success" id="loadSampleBtn">Load Sample</button> <!-- Replaced jsonf-button jsonf-sample with c-button--success, added ID -->
+            <div class="c-checkbox-item"> <!-- Replaced jsonf-checkbox-container -->
+                <input type="checkbox" id="sortKeys" checked> <!-- Removed jsonf-checkbox class -->
+                <label for="sortKeys">Sort keys</label> <!-- Removed jsonf-checkbox-label class -->
             </div>
         </div>
 
-        <div class="jsonf-panel">
+        <!-- Output Panel -->
+        <div class="o-panel"> <!-- Replaced jsonf-panel -->
             <h2>Formatted Output</h2>
-            <div class="jsonf-output-container">
-                <pre class="jsonf-output"><code></code></pre>
+            <div class="o-panel-content"> <!-- Added o-panel-content -->
+                <pre class="c-code-output"><code></code></pre> <!-- Replaced jsonf-output-container and jsonf-output -->
             </div>
         </div>
 
-        <div class="jsonf-stats">
-            <div class="jsonf-stat-row">
+        <!-- Stats -->
+        <div class="c-stats-panel"> <!-- Replaced jsonf-stats -->
+            <div class="c-stat-row"> <!-- Replaced jsonf-stat-row -->
                 <span>Original Size:</span>
-                <span class="jsonf-original-size">0 bytes</span>
+                <span class="jsonf-original-size">0 bytes</span> <!-- Kept specific class for JS targeting -->
             </div>
-            <div class="jsonf-stat-row">
+            <div class="c-stat-row"> <!-- Replaced jsonf-stat-row -->
                 <span>Formatted Size:</span>
-                <span class="jsonf-formatted-size">0 bytes</span>
+                <span class="jsonf-formatted-size">0 bytes</span> <!-- Kept specific class for JS targeting -->
             </div>
         </div>
 
-        <div class="jsonf-error"></div>
+        <div class="jsonf-error"></div> <!-- Kept tool-specific error display -->
 
-        <div class="jsonf-footer">
+        <div class="jsonf-footer"> <!-- Kept tool-specific footer -->
             Made with ❤️ for developers
         </div>
     </div>
