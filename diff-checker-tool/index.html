@@ -8,62 +8,66 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
 </head>
 <body>
-  <div class="diff-checker-container">
-    <div class="diff-checker-header">
+  <div class="tool-container">
+    <div class="o-header">
       <h1>Diff Checker Tool</h1>
-      <p class="diff-checker-description">Compare two texts or code snippets and highlight the differences between them.</p>
+      <p class="o-description">Compare two texts or code snippets and highlight the differences between them.</p>
     </div>
     
-    <div class="diff-checker-editor-container">
-      <div class="diff-checker-panel">
+    <div class="o-grid-2col">
+      <div class="o-panel">
         <div class="diff-checker-panel-header">
           <h2>Original Text</h2>
-          <div class="diff-checker-toolbar">
-            <button class="diff-checker-secondary" id="clear-text1">Clear</button>
+          <div class="o-toolbar">
+            <button class="c-button c-button--secondary" id="clear-text1">Clear</button>
           </div>
         </div>
-        <textarea id="text1" placeholder="Paste your first text here..." title="Enter your original text or code here"></textarea>
+        <div class="o-panel-content">
+          <textarea id="text1" class="c-input c-input--textarea" placeholder="Paste your first text here..." title="Enter your original text or code here"></textarea>
+        </div>
       </div>
       
-      <div class="diff-checker-panel">
+      <div class="o-panel">
         <div class="diff-checker-panel-header">
           <h2>Modified Text</h2>
-          <div class="diff-checker-toolbar">
-            <button class="diff-checker-secondary" id="clear-text2">Clear</button>
+          <div class="o-toolbar">
+            <button class="c-button c-button--secondary" id="clear-text2">Clear</button>
           </div>
         </div>
-        <textarea id="text2" placeholder="Paste your second text here..." title="Enter your modified text or code here"></textarea>
+        <div class="o-panel-content">
+          <textarea id="text2" class="c-input c-input--textarea" placeholder="Paste your second text here..." title="Enter your modified text or code here"></textarea>
+        </div>
       </div>
     </div>
     
-    <div class="diff-checker-options">
-      <div class="diff-checker-option-group">
-        <div class="diff-checker-checkbox-group">
-          <div class="diff-checker-checkbox-item">
-            <input type="checkbox" id="ignore-whitespace" checked>
-            <label for="ignore-whitespace">Ignore whitespace differences</label>
-          </div>
+    <div class="o-controls diff-checker-options">
+      <div class="c-checkbox-group">
+        <div class="c-checkbox-item">
+          <input type="checkbox" id="ignore-whitespace" checked>
+          <label for="ignore-whitespace">Ignore whitespace differences</label>
         </div>
       </div>
       
-      <div class="diff-checker-toolbar">
-        <button id="compare-button">Compare</button>
+      <div class="o-toolbar">
+        <button id="compare-button" class="c-button">Compare</button>
       </div>
     </div>
 
-    <div id="diff-result-container" class="diff-checker-result">
+    <div id="diff-result-container" class="o-panel">
       <div class="diff-result-header">
         <h2>Differences</h2>
         <div class="diff-navigation">
-          <button id="prev-diff-button" class="diff-checker-secondary" disabled>< Prev</button>
+          <button id="prev-diff-button" class="c-button c-button--secondary c-button--small" disabled>< Prev</button>
           <span id="diff-counter">0 of 0</span>
-          <button id="next-diff-button" class="diff-checker-secondary" disabled>Next ></button>
+          <button id="next-diff-button" class="c-button c-button--secondary c-button--small" disabled>Next ></button>
         </div>
       </div>
-      <pre id="diff-result"></pre>
+      <div class="o-panel-content">
+        <pre id="diff-result" class="c-code-output"></pre>
+      </div>
     </div>
   </div>
-  <div id="notification" class="diff-checker-notification">Copied to clipboard!</div>
+  <div id="notification" class="c-notification">Copied to clipboard!</div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="bundle.main.js"></script>
 </body>

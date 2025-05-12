@@ -79,35 +79,32 @@ export class DiffComputer {
             prevLines.pop();
           }
 
-          // Perform word diff only if the number of added/removed lines match
-          if (prevLines.length === lines.length) {
-            // Remove the previously added 'removed' lines from result
-            result.splice(-prevLines.length);
-            originalLineIndex -= prevLines.length; // Adjust index back
+          const numPrev = prevLines.length; // Corrected variable name
+          const numCurr = lines.length; // Corrected variable name (lines from outer scope)
+          const commonLen = Math.min(numPrev, numCurr);
 
-            for (let j = 0; j < lines.length; j++) {
-              // Use the *actual* lines being compared for word diff
-              const originalLineForWordDiff = originalLines[originalLineIndex];
-              const modifiedLineForWordDiff = modifiedLines[modifiedLineIndex];
-              const wordDiff = Diff.diffWordsWithSpace(originalLineForWordDiff, modifiedLineForWordDiff);
+          // Remove the `numPrev` 'removed' lines that were added by the previous chunk's processing.
+          // These were pushed when the 'removed' chunk itself was processed.
+          if (result.length >= numPrev) { // Ensure we don't splice if result is too short (defensive)
+            result.splice(result.length - numPrev, numPrev);
+          }
+          originalLineIndex -= numPrev; // Adjust index back to the start of the removed block
 
-              let removedHtml = '';
-              let addedHtml = '';
+          // Process common lines with word diff
+          for (let j = 0; j < commonLen; j++) {
+            const originalLineForWordDiff = originalLines[originalLineIndex];
+            const modifiedLineForWordDiff = modifiedLines[modifiedLineIndex];
+            const wordDiff = Diff.diffWordsWithSpace(originalLineForWordDiff, modifiedLineForWordDiff);
 
-              // Check if the word diff resulted in only unchanged parts
-              const isEffectivelyUnchanged = wordDiff.every(part => !part.added && !part.removed);
+            let removedHtml = '';
+            let addedHtml = '';
 
-              // If effectively unchanged after word diff, treat as unchanged line
-              if (isEffectivelyUnchanged) {
-                 result.push(['unchanged', originalLineForWordDiff]);
-                 originalLineIndex++;
-                 modifiedLineIndex++;
-                 // Skip the rest of the loop for this line pair
-                 continue;
-              }
+            const isEffectivelyUnchanged = wordDiff.every(part => !part.added && !part.removed);
 
+            if (isEffectivelyUnchanged) {
+              result.push(['unchanged', originalLineForWordDiff]);
+            } else {
               wordDiff.forEach(part => {
-                // No escaping here - rely on innerHTML
                 const value = part.value;
                 if (part.added) {
                   addedHtml += `<span class="word-added">${value}</span>`;
@@ -118,38 +115,41 @@ export class DiffComputer {
                   addedHtml += value;
                 }
               });
-
-              result.push(['removed', removedHtml]); // Raw HTML string
-              result.push(['added', addedHtml]);     // Raw HTML string
-              originalLineIndex++;
-              modifiedLineIndex++;
+              result.push(['removed', removedHtml]);
+              result.push(['added', addedHtml]);
             }
-            // Skip the normal processing for this 'added' chunk as it's handled
-            continue;
+            originalLineIndex++;
+            modifiedLineIndex++;
           }
-        }
 
-        // If not part of a modification pair, treat as simple addition
-        lines.forEach(() => { // Iterate based on count, but use index
-          result.push(['added', modifiedLines[modifiedLineIndex]]); // Raw line
+          // Add remaining lines from prevChunk (if any) as simple removals
+          for (let j = commonLen; j < numPrev; j++) {
+            result.push(['removed', originalLines[originalLineIndex]]);
+            originalLineIndex++;
+          }
+
+          // Add remaining lines from current 'added' chunk (if any) as simple additions
+          for (let j = commonLen; j < numCurr; j++) {
+            result.push(['added', modifiedLines[modifiedLineIndex]]);
+            modifiedLineIndex++;
+          }
+          // This 'added' chunk (and its corresponding 'removed' part) is fully handled.
+          continue; // Skip default 'added' processing
+        }
+        // If no preceding 'removed' chunk, treat as simple additions:
+        lines.forEach(() => { // Corrected: chunkLines to lines
+          result.push(['added', modifiedLines[modifiedLineIndex]]);
           modifiedLineIndex++;
         });
 
       } else if (chunk.removed) {
-        // Check if the next chunk is 'added' - if so, defer processing to the 'added' block
-        if (i + 1 < lineDiffResult.length && lineDiffResult[i + 1].added) {
-           // Add the raw removed lines for now.
-           lines.forEach(() => { // Iterate based on count, but use index
-             result.push(['removed', originalLines[originalLineIndex]]); // Raw line
-             originalLineIndex++;
-           });
-        } else {
-          // If no following 'added' chunk, treat as simple removal
-          lines.forEach(() => { // Iterate based on count, but use index
-            result.push(['removed', originalLines[originalLineIndex]]); // Raw line
-            originalLineIndex++;
-          });
-        }
+        // If next chunk is 'added', its logic (in the chunk.added block) will handle
+        // this 'removed' chunk by splicing out these lines and replacing them with word-diffed versions.
+        // If not followed by 'added', these lines remain as simple removals.
+        lines.forEach(() => { // Corrected: chunkLines to lines
+          result.push(['removed', originalLines[originalLineIndex]]);
+          originalLineIndex++;
+        });
       } else { // unchanged
         lines.forEach(() => { // Iterate based on count, but use index
           result.push(['unchanged', originalLines[originalLineIndex]]); // Raw line

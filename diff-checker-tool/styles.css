@@ -1,168 +1,28 @@
-.diff-checker-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  line-height: 1.6;
-  color: #333;
+/* diff-checker-tool/styles.css */
 
-  /* Define CSS variables for sticky positioning */
+/* Retain tool-specific variables if needed, or rely on shared ones */
+.tool-container { /* Inherits from shared-styles.css */
   --sticky-offset-base: 58px; 
-  --options-bar-height: 100px; /* Estimated height of the options bar */
+  --options-bar-height: 60px; /* Adjusted estimated height of the options bar */
 }
 
-.diff-checker-container * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-.diff-checker-header {
-  text-align: center;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
-}
-
-.diff-checker-container h1 {
-  color: #2563eb;
-  margin-bottom: 10px;
-}
-
-.diff-checker-description {
-  color: #666;
-  margin-bottom: 20px;
-}
-
-.diff-checker-editor-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-@media (min-width: 768px) {
-  .diff-checker-editor-container {
-    flex-direction: row;
-  }
-}
-
-.diff-checker-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
+/* Tool-specific overrides or additions */
 .diff-checker-panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: var(--spacing-sm); /* Use shared variable */
 }
 
-.diff-checker-container h2 {
-  font-size: 18px;
-  color: #333;
-  margin: 0;
-}
-
-.diff-checker-container textarea {
-  width: 100%;
-  height: 300px;
-  padding: 15px;
-  font-family: monospace;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  resize: none;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.diff-checker-toolbar {
-  display: flex;
-  gap: 10px;
-  margin: 15px 0;
-  justify-content: flex-end;
-}
-
-.diff-checker-container button {
-  background-color: #2563eb;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s;
-}
-
-.diff-checker-container button:hover {
-  background-color: #1d4ed8;
-}
-
-.diff-checker-container button.diff-checker-secondary {
-  background-color: #6b7280;
-}
-
-.diff-checker-container button.diff-checker-secondary:hover {
-  background-color: #4b5563;
-}
-
-.diff-checker-options {
-  display: flex; /* Add flex display */
-  justify-content: space-between; /* Push items to opposite ends */
-  align-items: center; /* Vertically align items */
-  margin: 20px 0;
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
+/* Keep .diff-checker-options specific sticky positioning and background */
+.diff-checker-options { /* Extends .o-controls */
   position: sticky;
-  top: var(--sticky-offset-base); /* Use variable */
-  z-index: 10; /* Ensure it stays on top */
-}
-
-.diff-checker-option-group {
-  margin-bottom: 15px;
-}
-
-.diff-checker-checkbox-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
-.diff-checker-checkbox-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.diff-checker-container input[type="checkbox"] {
-  margin-right: 5px;
-  vertical-align: middle; /* Ensure consistent vertical alignment */
-}
-
-/* Increase size specifically for the ignore-whitespace checkbox */
-.diff-checker-container input[type="checkbox"] {
-  width: 16px; /* Adjust size as needed */
-  height: 16px; /* Adjust size as needed */
-}
-
-.diff-checker-container label {
-  font-size: 14px;
-}
-
-.diff-checker-result {
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  padding: 15px;
-  margin-top: 20px;
-}
-
-.diff-checker-result h2 {
-  margin-bottom: 15px !important;
+  top: var(--sticky-offset-base);
+  z-index: 10;
+  /* background-color is already var(--color-bg-light) from .o-controls */
+  /* padding is already var(--spacing-lg) from .o-controls */
+  /* margin is already var(--spacing-lg) 0 from .o-controls */
+  /* display, justify-content, align-items are handled by .o-controls */
 }
 
 /* Styles for the diff result header containing title and navigation */
@@ -170,195 +30,145 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  /* margin-bottom: 15px; /* Removed margin, handled by padding */
   position: sticky;
-  /* Position below the .diff-checker-options bar */
-  top: calc(var(--sticky-offset-base) + var(--options-bar-height)); /* Calculate using variables */
-  background-color: #f8f9fa; /* Match result container background */
-  padding: 10px 15px; /* Add some padding */
-  margin: 0 -15px 15px -15px; /* Adjust margin to align with container padding */
-  border-bottom: 1px solid #ddd; /* Add separator */
-  z-index: 9; /* Below options bar (z-index: 10) */
+  top: calc(var(--sticky-offset-base) + var(--options-bar-height));
+  background-color: var(--color-bg-light); /* Use shared variable */
+  padding: var(--spacing-sm) var(--spacing-lg); /* Match horizontal padding of o-controls */
+  margin: 0 0 var(--spacing-md) 0; /* Remove horizontal margin, keep bottom margin */
+  border-bottom: 1px solid var(--color-border); /* Use shared variable */
+  z-index: 9;
 }
 
 .diff-result-header h2 {
   margin-bottom: 0 !important; /* Override default margin */
 }
 
-#diff-result {
-  white-space: pre-wrap;
-  padding: 15px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-  font-family: monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  background-color: white;
-  /* overflow-y: auto; - Removed */
-  /* max-height: calc(100vh - 340px); - Removed */
+/* Diff-specific styles for the output area */
+#diff-result.c-code-output { /* Extends .c-code-output */
+  /* white-space, font-family, font-size, line-height, background-color are from .c-code-output */
+  /* border, border-radius, padding are from .c-code-output */
+  /* min-height is from .c-code-output */
+  /* overflow-y: auto; - Handled by .o-panel-content or specific needs */
+  /* max-height: calc(100vh - 340px); - Remove, let flexbox handle height */
 }
 
-/* Diff styles */
-.diff-checker-container .diff-line {
-  display: flex; /* Align line number and content horizontally */
-  margin: 2px 0; /* Reduced margin slightly */
-  position: relative; /* For positioning icons */
-  border-left: 4px solid transparent; /* Add transparent border to reserve space on ALL lines */
+/* Diff line presentation */
+.tool-container .diff-line {
+  display: flex;
+  margin: 2px 0;
+  position: relative;
+  border-left: 4px solid transparent;
 }
 
-/* Style for the content span */
-.diff-checker-container .diff-content {
-  flex-grow: 1; /* Allow content to take remaining space */
-  padding: 2px 12px 2px 12px; /* Add padding back, especially left */
-  border-radius: 0 4px 4px 0;
+.tool-container .diff-content {
+  flex-grow: 1;
+  padding: 2px 12px;
+  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0; /* Use shared variable */
   transition: background-color 0.3s ease;
-  display: inline-block; /* Ensure it behaves like a block for padding/border */
-  width: 100%; /* Take full width within flex container */
+  display: inline-block;
+  width: 100%;
 }
 
-/* Apply background and override border color for added/removed lines */
-.diff-checker-container .diff-line:has(.diff-content.diff-added) {
-  background-color: rgba(46, 204, 113, 0.1);
-  border-left-color: #2ecc71; /* Override border color */
+.tool-container .diff-line:has(.diff-content.diff-added) {
+  background-color: rgba(46, 204, 113, 0.1); /* Consider CSS var if this green is common */
+  border-left-color: #2ecc71; /* Consider CSS var */
 }
-.diff-checker-container .diff-line:has(.diff-content.diff-removed) {
-  background-color: rgba(231, 76, 60, 0.1);
-  border-left-color: #e74c3c; /* Override border color */
-}
-
-/* Keep only text color on the content span */
-.diff-checker-container .diff-content.diff-added {
-  color: #27ae60;
-  /* border-left removed */
-  /* background-color removed */
+.tool-container .diff-line:has(.diff-content.diff-removed) {
+  background-color: rgba(231, 76, 60, 0.1); /* Consider CSS var if this red is common */
+  border-left-color: #e74c3c; /* Consider CSS var */
 }
 
-.diff-checker-container .diff-content.diff-removed {
-  color: #c0392b;
-  /* border-left removed */
-  /* background-color removed */
+.tool-container .diff-content.diff-added {
+  color: #27ae60; /* Consider CSS var */
+}
+
+.tool-container .diff-content.diff-removed {
+  color: #c0392b; /* Consider CSS var */
 }
 
 /* Word-level diff highlighting */
-.diff-checker-container .word-added {
-  background-color: rgba(46, 204, 113, 0.3); /* Darker green */
+.tool-container .word-added {
+  background-color: rgba(46, 204, 113, 0.3);
   padding: 1px 2px;
-  border-radius: 2px;
-  box-shadow: 0 0 0 1px rgba(46, 204, 113, 0.5); /* Subtle outline */
+  border-radius: 2px; /* Could be a smaller radius var */
+  box-shadow: 0 0 0 1px rgba(46, 204, 113, 0.5);
 }
 
-.diff-checker-container .word-removed {
-  background-color: rgba(231, 76, 60, 0.3); /* Darker red */
-  text-decoration: line-through; /* Add strike-through for removed words */
+.tool-container .word-removed {
+  background-color: rgba(231, 76, 60, 0.3);
+  text-decoration: line-through;
   padding: 1px 2px;
   border-radius: 2px;
-  box-shadow: 0 0 0 1px rgba(231, 76, 60, 0.5); /* Subtle outline */
+  box-shadow: 0 0 0 1px rgba(231, 76, 60, 0.5);
 }
 
-
-/* Apply hover effects to the line container */
-.diff-checker-container .diff-line:has(.diff-content.diff-added):hover {
+.tool-container .diff-line:has(.diff-content.diff-added):hover {
   background-color: rgba(46, 204, 113, 0.15);
 }
 
-.diff-checker-container .diff-line:has(.diff-content.diff-removed):hover {
+.tool-container .diff-line:has(.diff-content.diff-removed):hover {
   background-color: rgba(231, 76, 60, 0.15);
 }
 
-/* Diff icons positioned relative to the line container */
-.diff-checker-container .diff-line::before {
+.tool-container .diff-line::before {
   position: absolute;
-  /* Adjust left position to be outside the line number */
-  left: -18px; /* May need fine-tuning */
-  top: 2px; /* Align vertically */
-  color: #333;
+  left: -18px;
+  top: 2px;
+  color: var(--color-text); /* Use shared variable */
   opacity: 0.5;
   font-weight: 900;
-  font-size: 14px; /* Match content font size */
+  font-size: var(--font-size-base); /* Use shared variable */
 }
 
-/* Add '+' icon if the line contains added content */
-.diff-checker-container .diff-line:has(.diff-content.diff-added)::before {
+.tool-container .diff-line:has(.diff-content.diff-added)::before {
   content: '+';
 }
 
-/* Add '-' icon if the line contains removed content */
-.diff-checker-container .diff-line:has(.diff-content.diff-removed)::before {
+.tool-container .diff-line:has(.diff-content.diff-removed)::before {
   content: '-';
 }
 
-.diff-checker-container .diff-line-number {
+.tool-container .diff-line-number {
   opacity: 0.6;
-  display: inline-block; /* Keep as inline-block */
-  flex-shrink: 0; /* Prevent shrinking in flex layout */
-  /* Adjust min-width if needed based on getLineNumberText logic */
-  min-width: 50px; /* Slightly increased min-width */
-  padding: 2px 6px; /* Match content padding vertically */
+  display: inline-block;
+  flex-shrink: 0;
+  min-width: 50px;
+  padding: 2px 6px;
   text-align: right;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 12px;
+  font-family: var(--font-family-mono); /* Use shared variable */
+  font-size: 12px; /* Consider a smaller font-size var if common */
   user-select: none;
   white-space: pre;
-  background-color: rgba(0, 0, 0, 0.04);
-  border-right: 1px solid #ddd;
-  margin-right: 0; /* Remove margin, padding on content handles spacing */
-  /* vertical-align is not needed with flexbox */
-  line-height: 1.6; /* Keep line-height consistent */
-}
-
-.diff-checker-notification {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background-color: #28a745;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 4px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  transform: translateY(100px);
-  opacity: 0;
-  transition: transform 0.3s, opacity 0.3s;
-}
-
-.diff-checker-notification.show {
-  transform: translateY(0);
-  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.04); /* Consider a subtle bg var */
+  border-right: 1px solid var(--color-border); /* Use shared variable */
+  margin-right: 0;
+  line-height: var(--line-height-base); /* Use shared variable */
 }
 
 /* Styles for the navigation controls container */
 .diff-navigation {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-sm); /* Use shared variable */
 }
 
-/* Style for the diff counter */
 #diff-counter {
-  font-size: 14px;
-  color: #555;
-  min-width: 50px; /* Ensure some space */
+  font-size: var(--font-size-base); /* Use shared variable */
+  color: var(--color-text-secondary); /* Use shared variable */
+  min-width: 50px;
   text-align: center;
 }
 
-/* Style for navigation buttons */
-.diff-navigation button {
-  padding: 5px 10px; /* Smaller padding */
-  font-size: 12px; /* Smaller font size */
-}
-
-/* Style for disabled navigation buttons */
-.diff-navigation button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-.diff-navigation button:disabled:hover {
-  background-color: #ccc; /* Prevent hover effect */
-}
+/* Navigation buttons use .c-button, .c-button--secondary, .c-button--small from shared */
 
 /* Style for highlighting the current diff */
-.diff-checker-container .diff-line.current-diff {
-  outline: 2px solid #2563eb; /* Blue outline */
-  outline-offset: -1px; /* Offset slightly inwards */
-  background-color: rgba(37, 99, 235, 0.1); /* Light blue background */
+.tool-container .diff-line.current-diff {
+  outline: 2px solid var(--color-primary); /* Use shared variable */
+  outline-offset: -1px;
+  background-color: rgba(37, 99, 235, 0.1); /* Consider a primary-bg-light var */
+}
+
+/* Ensure panel headers within this tool have no margin on h2 if it's from shared */
+.diff-checker-panel-header h2 {
+    margin-bottom: 0; /* Override if shared h2 has margin */
 }
