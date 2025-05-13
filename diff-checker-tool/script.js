@@ -84,50 +84,63 @@ class DiffDisplay {
   }
 
   // Updated createLineElement to separate line number and content spans
+  // Pass changeType to formatLine
   createLineElement(changeType, lineContent, isCodeContent) {
-    const lineContainer = document.createElement('div'); // Use div for block display per line
+    const lineContainer = document.createElement('div');
     const lineNumberElement = document.createElement('span');
     const contentElement = document.createElement('span');
 
-    // Get the raw text content for the line number span
     const lineNumbersContent = this.getLineNumberText(changeType); 
+    lineNumberElement.className = 'diff-line-number';
+    lineNumberElement.textContent = lineNumbersContent;
 
-    lineNumberElement.className = 'diff-line-number'; // Apply class directly
-    lineNumberElement.textContent = lineNumbersContent; // Set text content
+    // All content formatting is now handled by formatLine
+    // Pass changeType to formatLine
+    contentElement.innerHTML = this.formatLine(lineContent, isCodeContent, changeType);
 
-    // Check if the line already contains word-level diff HTML
-    if (lineContent.includes('class="word-added"') || lineContent.includes('class="word-removed"')) {
-      // For lines with word-level diffs, preserve the spans but escape other HTML
-      const safeContent = this.escapeHtmlPreserveDiff(lineContent);
-      contentElement.innerHTML = safeContent + '\n'; // Use innerHTML for word-level diff spans
-    } else {
-      // For regular lines, just set the text content directly
-      contentElement.textContent = lineContent + '\n';
-    }
-
-    contentElement.classList.add('diff-content'); // Add class for content span
-    // Apply specific diff class only to the content span
+    contentElement.classList.add('diff-content');
     if (changeType !== 'unchanged') {
       contentElement.classList.add(`diff-${changeType}`);
     }
 
-    lineContainer.appendChild(lineNumberElement); // Add line number span to container
-    lineContainer.appendChild(contentElement); // Add content span to container
-    lineContainer.classList.add('diff-line'); // Add class for the container div
+    lineContainer.appendChild(lineNumberElement);
+    lineContainer.appendChild(contentElement);
+    lineContainer.classList.add('diff-line');
 
     return lineContainer;
   }
 
-  formatLine(lineContent, isCodeContent) {
-    // For non-code content, just return the line as is
-    if (!isCodeContent) return lineContent + '\n';
-    
-    // For code content, apply syntax highlighting without escaping
-    try {
-      return Prism.highlight(lineContent, Prism.languages.javascript, 'javascript') + '\n';
-    } catch (error) {
-      console.warn('Syntax highlighting failed:', error);
-      return lineContent + '\n';
+  /**
+   * Formats a line of content for the diff view.
+   * @param {string} lineContent - The content of the line.
+   * @param {boolean} isCodeContent - Whether the line contains code content.
+   * @param {string} changeType - The type of change for the line. Expected values are:
+   *   - 'added': The line was added.
+   *   - 'removed': The line was removed.
+   *   - 'unchanged': The line is unchanged.
+   * @returns {string} The formatted line content, with appropriate HTML and syntax highlighting.
+   */
+  formatLine(lineContent, isCodeContent, changeType) {
+    // Only apply Prism highlighting if the line is unchanged and it's code content
+    if (changeType === 'unchanged' && isCodeContent) {
+      try {
+        // Ensure Prism is available
+        if (typeof Prism !== 'undefined' && Prism.languages && Prism.languages.javascript) {
+          return Prism.highlight(lineContent, Prism.languages.javascript, 'javascript') + '\n';
+        } else {
+          console.warn('Prism.js or javascript language not available. Falling back to escaped HTML.');
+          // Fallback for Prism errors or unavailability: escaped HTML
+          return this.escapeHtml(lineContent) + '\n';
+        }
+      } catch (error) {
+        console.warn('Syntax highlighting failed:', error);
+        // Fallback for Prism errors: escaped HTML
+        return this.escapeHtml(lineContent) + '\n';
+      }
+    } else {
+      // For added, removed, or non-code lines, or lines with word diffs (handled by escapeHtmlPreserveDiff)
+      // Use escapeHtmlPreserveDiff to handle potential word-diff spans correctly
+      return this.escapeHtmlPreserveDiff(lineContent) + '\n';
     }
   }
 
@@ -353,6 +366,8 @@ if (typeof document !== 'undefined') {
       // Update the navigator with the new diff elements
       diffNavigator.updateDiffElements();
 
+      // Show notification
+      NotificationManager.show('Diff computation complete!');
     });
   }
 }

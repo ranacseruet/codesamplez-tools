@@ -144,7 +144,7 @@ const developmentConfig = {
       publicPath: '/'
     },
     compress: true,
-    port: 8080,
+    port: 8081, // Changed port from 8080 to 8081
     hot: true,
     open: false,
     historyApiFallback: true

@@ -40,6 +40,9 @@ The **Diff Checker Tool** is a lightweight, web-based utility designed to compar
 7. **Word-Level Highlighting**
    - Highlights specific word changes within modified lines using darker shades of red/green.
 
+8. **Visual Feedback**
+   - Displays a "Diff computation complete!" message briefly after the diff results are shown.
+
 ---
 
 ## Usage Example
@@ -114,8 +117,9 @@ To integrate this tool into another webpage:
 1. **Character-Level Diffs**
    - Option for character-level diffing for even finer granularity (currently supports line and word level).
 
-2. **Syntax Highlighting**
-   - Add syntax highlighting for programming languages and markup languages like HTML, CSS, and JavaScript.
+2. **Syntax Highlighting (Unchanged Lines Only)**
+   - Basic syntax highlighting (currently JavaScript) is applied only to code lines that are completely **unchanged** between the two inputs.
+   - Added, removed, or modified lines (including those with only word-level differences) are *not* syntax highlighted to ensure diff markers remain clear.
 
 3. **Export Options**
    - Allow users to export the diff results as a file (e.g., `.txt` or `.html`).

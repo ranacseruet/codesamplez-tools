@@ -163,7 +163,8 @@ describe('DiffDisplay', () => {
         languages: { javascript: {} }
       };
       
-      const result = diffDisplay.formatLine('const x = 1;', true);
+      // Pass 'unchanged' as changeType to trigger highlighting attempt
+      const result = diffDisplay.formatLine('const x = 1;', true, 'unchanged'); 
       expect(result).toBe('highlighted\n');
       expect(Prism.highlight).toHaveBeenCalledWith('const x = 1;', Prism.languages.javascript, 'javascript');
     });
@@ -174,7 +175,8 @@ describe('DiffDisplay', () => {
         languages: { javascript: {} }
       };
       
-      const result = diffDisplay.formatLine('const x = 1;', true);
+      // Pass 'unchanged' as changeType to trigger highlighting attempt
+      const result = diffDisplay.formatLine('const x = 1;', true, 'unchanged'); 
       expect(result).toBe('const x = 1;\n');
     });
   });
