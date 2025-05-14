@@ -118,3 +118,24 @@
   - .css-minifier-stat-item (covered by .c-stat-row)
   - .css-minifier-notification (covered by .c-notification)
 */
+
+/* Notification styles */
+.c-notification {
+  z-index: 1000;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 24px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background-color: var(--color-success); /* Default green background */
+}
+
+.c-notification.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.c-notification.error {
+  background-color: var(--color-danger);
+}

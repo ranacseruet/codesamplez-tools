@@ -132,4 +132,38 @@ function minifyCSS(css) {
   return minified;
 }
 
-export { removeCommentsFromCss, removeWhitespaceFromCss, shortenColorsInCss, removeUnnecessaryUnits, removeLastSemicolonsFromCss, combineSelectorsInCss, minifyCSS };
+// CSS Validation Function
+function isValidCSS(cssString) {
+  const trimmedCss = cssString.trim();
+  if (!trimmedCss) {
+    return true; // Empty CSS is considered valid
+  }
+
+  // Heuristic: Remove comments to see if there's any actual CSS content
+  const cssWithoutComments = trimmedCss.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '').trim();
+  if (!cssWithoutComments) {
+    return true; // CSS with only comments is considered valid
+  }
+
+  const styleElement = document.createElement('style');
+  document.head.appendChild(styleElement);
+  styleElement.textContent = cssString;
+
+  let isValid = false;
+  try {
+    if (styleElement.sheet && styleElement.sheet.cssRules) {
+      isValid = styleElement.sheet.cssRules.length > 0;
+    } else {
+      isValid = false;
+    }
+  } catch (e) {
+    isValid = false;
+  } finally {
+    if (styleElement.parentNode === document.head) {
+        document.head.removeChild(styleElement);
+    }
+  }
+  return isValid;
+}
+
+export { removeCommentsFromCss, removeWhitespaceFromCss, shortenColorsInCss, removeUnnecessaryUnits, removeLastSemicolonsFromCss, combineSelectorsInCss, minifyCSS, isValidCSS };

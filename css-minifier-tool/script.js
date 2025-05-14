@@ -1,4 +1,4 @@
-import { removeCommentsFromCss, removeWhitespaceFromCss, shortenColorsInCss, removeUnnecessaryUnits, removeLastSemicolonsFromCss, combineSelectorsInCss } from './minifier.js';
+import { removeCommentsFromCss, removeWhitespaceFromCss, shortenColorsInCss, removeUnnecessaryUnits, removeLastSemicolonsFromCss, combineSelectorsInCss, isValidCSS } from './minifier.js';
 
 // Make functions available globally for webpack bundling
 window.removeCommentsFromCss = removeCommentsFromCss;
@@ -7,6 +7,7 @@ window.shortenColorsInCss = shortenColorsInCss;
 window.removeUnnecessaryUnits = removeUnnecessaryUnits;
 window.removeLastSemicolonsFromCss = removeLastSemicolonsFromCss;
 window.combineSelectorsInCss = combineSelectorsInCss;
+window.isValidCSS = isValidCSS; // Expose for testing
 
 document.addEventListener('DOMContentLoaded', function() {
     // Elements
@@ -119,6 +120,14 @@ top: 0px;
     // CSS Minifier Functions
     function minifyCss() {
         const originalCss = inputCss.value;
+        
+        if (!isValidCSS(originalCss)) {
+          outputCss.value = '';
+          updateStats(originalCss, '');
+          showNotification('Error: Invalid CSS input. Please check your CSS syntax.', true);
+          return;
+        }
+
         let result = originalCss;
         
         // Process the CSS based on selected options
@@ -165,17 +174,27 @@ top: 0px;
       minifyCss();
     }
     
+    function showNotification(message, isError = false) {
+      notification.textContent = message;
+      notification.classList.remove('show', 'error');
+      // Reset any previous transitions by forcing a reflow
+      notification.offsetHeight;
+      notification.classList.add('show');
+      if (isError) {
+        notification.classList.add('error');
+      }
+      setTimeout(() => {
+        notification.classList.remove('show', 'error');
+      }, 3000);
+    }
+
     function copyOutput() {
       if (!outputCss.value) return;
       
       outputCss.select();
       document.execCommand('copy');
       
-      // Show notification
-      notification.classList.add('show');
-      setTimeout(() => {
-        notification.classList.remove('show');
-      }, 2000);
+      showNotification('Copied to clipboard!');
     }
     
     function resetOptions() {

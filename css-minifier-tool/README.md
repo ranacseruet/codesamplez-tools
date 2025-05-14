@@ -121,17 +121,12 @@ A powerful web-based tool for optimizing CSS code by intelligently removing redu
 
 ### Error Handling
 
-The tool includes robust error handling for common issues:
-- Invalid CSS syntax
-- Unclosed comments or brackets
-- Malformed media queries
-- Invalid selector syntax
-
-When errors occur, the tool:
-1. Preserves the original input
-2. Displays specific error messages
-3. Highlights problematic code sections
-4. Suggests possible fixes
+The tool performs an initial validation of the input CSS using the browser's built-in CSS parser.
+- **Invalid CSS Syntax**: If the provided CSS is syntactically incorrect and cannot be parsed by the browser:
+    - An error message (e.g., "Error: Invalid CSS input. Please check your CSS syntax.") will be displayed in the output area.
+    - The statistics (original size, minified size, savings) will be cleared or reflect an error state.
+    - The minification process will not proceed.
+- This basic validation helps catch significant syntax errors before attempting minification.
 
 ## Browser Compatibility
 
