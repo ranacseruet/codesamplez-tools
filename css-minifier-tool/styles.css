@@ -18,6 +18,7 @@
 .css-minifier-toolbar.o-toolbar {
   justify-content: flex-end; /* Align buttons to the right */
   margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-md); /* Add space below buttons */
   flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
   width: 100%; /* Ensure toolbar spans full width */
   gap: var(--spacing-md); /* Add consistent spacing between buttons */

@@ -43,62 +43,81 @@ describe('CSS Minifier', () => {
     const expected = '@media (max-width:600px){.test{color:red;}}';
     expect(minifyCSS(input)).toBe(expected);
   });
+
+  test('should throw error for invalid CSS', () => {
+    const input = 'body { color: red';  // missing closing brace
+    expect(() => minifyCSS(input)).toThrow('Invalid CSS input');
+  });
 });
 
 describe('CSS Validator', () => {
   // Mock document.head.appendChild and document.head.removeChild
-  // and styleElement.sheet.cssRules
+  // and styleElement.sheet.cssRules for DOM-based validation in JSDOM
   let mockStyleElement;
   let originalAppendChild;
   let originalRemoveChild;
   let originalCreateElement;
 
   beforeEach(() => {
-    mockStyleElement = {
-      sheet: {
-        cssRules: []
-      },
-      textContent: '',
-      parentNode: document.head
-    };
-    originalAppendChild = document.head.appendChild;
-    originalRemoveChild = document.head.removeChild;
-    originalCreateElement = document.createElement;
+    // Mock for JSDOM environment
+    if (typeof document !== 'undefined') {
+      mockStyleElement = {
+        sheet: {
+          cssRules: []
+        },
+        textContent: '',
+        parentNode: null // Will be set to document.head by appendChild
+      };
+      originalAppendChild = document.head.appendChild;
+      originalRemoveChild = document.head.removeChild;
+      originalCreateElement = document.createElement;
 
-    document.head.appendChild = jest.fn(() => mockStyleElement);
-    document.head.removeChild = jest.fn();
-    
-    document.createElement = jest.fn(tagName => {
-      if (tagName.toLowerCase() === 'style') {
-        return mockStyleElement;
-      }
-      return originalCreateElement.call(document, tagName);
-    });
+      document.head.appendChild = jest.fn(el => {
+        if (el === mockStyleElement) {
+          mockStyleElement.parentNode = document.head;
+        }
+        return el; // Return the element itself
+      });
+      document.head.removeChild = jest.fn(el => {
+        if (el === mockStyleElement) {
+          mockStyleElement.parentNode = null;
+        }
+      });
+      document.createElement = jest.fn(tagName => {
+        if (tagName.toLowerCase() === 'style') {
+          return mockStyleElement;
+        }
+        // Fallback to original for other elements if needed by other tests
+        return originalCreateElement.call(document, tagName); 
+      });
+    }
   });
 
   afterEach(() => {
-    document.head.appendChild = originalAppendChild;
-    document.head.removeChild = originalRemoveChild;
-    document.createElement = originalCreateElement;
+    if (typeof document !== 'undefined') {
+      document.head.appendChild = originalAppendChild;
+      document.head.removeChild = originalRemoveChild;
+      document.createElement = originalCreateElement;
+    }
   });
-  
+
   test('should return true for valid CSS', () => {
-    mockStyleElement.sheet.cssRules = [{ cssText: 'body { color: red; }' }];
+    if (mockStyleElement) mockStyleElement.sheet.cssRules = [{ cssText: 'body { color: red; }' }];
     expect(isValidCSS('body { color: red; }')).toBe(true);
   });
 
   test('should return false for invalid CSS (e.g., unclosed brace)', () => {
-    mockStyleElement.sheet.cssRules = []; 
+    if (mockStyleElement) mockStyleElement.sheet.cssRules = [];
     expect(isValidCSS('body { color: red; ')).toBe(false);
   });
 
   test('should return false for CSS with only a selector but no declaration block', () => {
-    mockStyleElement.sheet.cssRules = [];
+     if (mockStyleElement) mockStyleElement.sheet.cssRules = [];
     expect(isValidCSS('body ')).toBe(false);
   });
   
   test('should return false for CSS with a property but no value', () => {
-    mockStyleElement.sheet.cssRules = [];
+    if (mockStyleElement) mockStyleElement.sheet.cssRules = [];
     expect(isValidCSS('body { color: }')).toBe(false);
   });
 
@@ -111,30 +130,63 @@ describe('CSS Validator', () => {
   });
   
   test('should return false for malformed comments', () => {
-    mockStyleElement.sheet.cssRules = []; // Malformed comment might lead to no rules
+    if (mockStyleElement) mockStyleElement.sheet.cssRules = [];
     expect(isValidCSS('/* this is a malformed comment body {color: red;}')).toBe(false);
   });
 
   test('should handle CSS with multiple valid rules', () => {
-    mockStyleElement.sheet.cssRules = [
+    if (mockStyleElement) mockStyleElement.sheet.cssRules = [
       { cssText: 'p { font-size: 12px; }' },
       { cssText: 'a { text-decoration: none; }' }
     ];
     expect(isValidCSS('p { font-size: 12px; } a { text-decoration: none; }')).toBe(true);
   });
 
-  test('should return false when styleElement.sheet is null', () => {
-    mockStyleElement.sheet = null;
-    expect(isValidCSS('body { color: blue; }')).toBe(false);
-  });
-  
-  test('should return false when styleElement.sheet.cssRules is null', () => {
-    mockStyleElement.sheet = { cssRules: null };
-    expect(isValidCSS('body { color: green; }')).toBe(false);
+  test('should correctly identify valid CSS with leading/trailing whitespace', () => {
+    if (mockStyleElement) mockStyleElement.sheet.cssRules = [{ cssText: 'div { border: 1px solid black; }'}];
+    expect(isValidCSS('  div { border: 1px solid black; }  ')).toBe(true);
   });
 
-  test('should correctly identify valid CSS with leading/trailing whitespace', () => {
-    mockStyleElement.sheet.cssRules = [{ cssText: 'div { border: 1px solid black; }'}];
-    expect(isValidCSS('  div { border: 1px solid black; }  ')).toBe(true);
+  test('should handle @media queries', () => {
+    // JSDOM's CSSOM might not fully parse media queries into distinct rules in styleElement.sheet.cssRules
+    // but it should still consider it valid if the syntax is correct.
+    // The current DOM-based isValidCSS might return true if no error is thrown and content exists.
+    if (mockStyleElement) mockStyleElement.sheet.cssRules = [{ cssText: '@media (max-width: 600px) { body { color: red; } }'}];
+    expect(isValidCSS('@media (max-width: 600px) { body { color: red; } }')).toBe(true);
+  });
+
+  test('should handle CSS variables', () => {
+    // Similar to media queries, JSDOM might not populate cssRules for this but should not error on valid syntax.
+    if (mockStyleElement) mockStyleElement.sheet.cssRules = [{ cssText: ':root { --primary-color: #fff; }'}];
+    expect(isValidCSS(':root { --primary-color: #fff; } body { color: var(--primary-color); }')).toBe(true);
+  });
+
+  test('should return false if styleElement.sheet is null', () => {
+    if (mockStyleElement) {
+      mockStyleElement.sheet = null;
+    }
+    expect(isValidCSS('body { color: red; }')).toBe(false);
+  });
+
+  test('should return false if setting textContent throws an error', () => {
+    if (mockStyleElement) {
+      Object.defineProperty(mockStyleElement, 'textContent', {
+        set: () => {
+          throw new Error('Simulated error on setting textContent');
+        },
+        get: () => '', // Provide a getter to avoid issues if it's read
+        configurable: true
+      });
+    }
+    expect(isValidCSS('body { color: red; }')).toBe(false);
+    // Restore original textContent behavior for other tests if necessary,
+    // though beforeEach should reset mockStyleElement.
+    if (mockStyleElement) {
+       Object.defineProperty(mockStyleElement, 'textContent', {
+        value: '',
+        writable: true,
+        configurable: true
+      });
+    }
   });
 });

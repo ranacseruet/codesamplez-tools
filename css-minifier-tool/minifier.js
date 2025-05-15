@@ -121,18 +121,23 @@
     return processedMedia + processedRegular;
   }
 
-function minifyCSS(css) {
+function minifyCSS(css) { // Made synchronous for now
+  // First validate the CSS
+  if (!isValidCSS(css)) { // Synchronous call
+    throw new Error('Invalid CSS input');
+  }
+
   let minified = css;
   minified = removeCommentsFromCss(minified);
   minified = removeWhitespaceFromCss(minified);
   // Don't shorten colors to preserve color names
   minified = removeUnnecessaryUnits(minified);
   // Don't remove last semicolons to match test expectations
-  minified = combineSelectorsInCss(minified);
+  minified = combineSelectorsInCss(minified); // Re-enable this step
   return minified;
 }
 
-// CSS Validation Function
+// CSS Validation Function - Reverted to DOM-based for JSDOM compatibility in tests
 function isValidCSS(cssString) {
   const trimmedCss = cssString.trim();
   if (!trimmedCss) {
@@ -145,22 +150,52 @@ function isValidCSS(cssString) {
     return true; // CSS with only comments is considered valid
   }
 
+  // DOM-based validation for JSDOM
   const styleElement = document.createElement('style');
-  document.head.appendChild(styleElement);
-  styleElement.textContent = cssString;
+  // Append to head to ensure sheet is created - JSDOM might require this
+  if (typeof document !== 'undefined' && document.head) {
+    document.head.appendChild(styleElement);
+  }
 
   let isValid = false;
   try {
+    styleElement.textContent = cssString;
+    // Check if the sheet and cssRules exist and have content
     if (styleElement.sheet && styleElement.sheet.cssRules) {
-      isValid = styleElement.sheet.cssRules.length > 0;
+      if (styleElement.sheet.cssRules.length > 0) {
+        // Check for invalid rules like "body { color: }" which might still create a rule
+        const firstRule = styleElement.sheet.cssRules[0];
+        if (firstRule.style && firstRule.style.length === 0 && cssWithoutComments.includes(':') && !cssWithoutComments.endsWith(';}') && cssWithoutComments.endsWith('}')) {
+          // Heuristic: if a rule exists, has a colon, but no actual styles applied, and doesn't look like a valid empty rule.
+          // This targets "property: }"
+          isValid = false;
+        } else {
+          isValid = true;
+        }
+      } else { // cssRules.length === 0
+        // If there are no rules, it's valid only if the content was truly empty
+        // or just an empty block like "selector {}".
+        // A simple check: if it contains "{" but not much else, or is just whitespace.
+        const contentAfterBraces = cssWithoutComments.replace(/[\w\s-]*\{[\s]*\}/g, '').trim();
+        if (contentAfterBraces === '') {
+          isValid = true; // Valid empty rule or just comments
+        } else {
+          // Content exists beyond an empty rule structure, but no rules parsed.
+          // This covers malformed comments not caught by regex, or other syntax errors.
+          isValid = false;
+        }
+      }
     } else {
+      // If sheet or cssRules is null/undefined, it's invalid
       isValid = false;
     }
   } catch (e) {
+    // Errors during parsing (e.g., from styleElement.textContent = cssString) mean invalid CSS
     isValid = false;
   } finally {
-    if (styleElement.parentNode === document.head) {
-        document.head.removeChild(styleElement);
+    // Clean up the style element
+    if (typeof document !== 'undefined' && document.head && styleElement.parentNode === document.head) {
+      document.head.removeChild(styleElement);
     }
   }
   return isValid;

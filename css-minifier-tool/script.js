@@ -108,7 +108,9 @@ top: 0px;
 }`;
 
     // Event Listeners
-    minifyBtn.addEventListener('click', minifyCss);
+    minifyBtn.addEventListener('click', () => minifyCss().catch(error => {
+        showNotification('Error: ' + error.message, true);
+    }));
     clearInputBtn.addEventListener('click', clearInput);
     loadSampleBtn.addEventListener('click', loadSample);
     copyOutputBtn.addEventListener('click', copyOutput);
@@ -118,48 +120,55 @@ top: 0px;
     resetOptions();
 
     // CSS Minifier Functions
-    function minifyCss() {
+    async function minifyCss() {
         const originalCss = inputCss.value;
         
-        if (!isValidCSS(originalCss)) {
-          outputCss.value = '';
-          updateStats(originalCss, '');
-          showNotification('Error: Invalid CSS input. Please check your CSS syntax.', true);
-          return;
-        }
+        try {
+            const isValid = await isValidCSS(originalCss);
+            if (!isValid) {
+                outputCss.value = '';
+                updateStats(originalCss, '');
+                showNotification('Error: Invalid CSS input. Please check your CSS syntax.', true);
+                return;
+            }
 
-        let result = originalCss;
-        
-        // Process the CSS based on selected options
-        if (removeComments.checked) {
-        result = removeCommentsFromCss(result);
+            let result = originalCss;
+            
+            // Process the CSS based on selected options
+            if (removeComments.checked) {
+                result = removeCommentsFromCss(result);
+            }
+            
+            if (combineSelectors.checked) {
+                result = combineSelectorsInCss(result);
+            }
+            
+            if (shortenColors.checked) {
+                result = shortenColorsInCss(result);
+            }
+            
+            if (removeUnits.checked) {
+                result = removeUnnecessaryUnits(result);
+            }
+            
+            if (removeWhitespace.checked) {
+                result = removeWhitespaceFromCss(result);
+            }
+            
+            if (removeLastSemicolons.checked) {
+                result = removeLastSemicolonsFromCss(result);
+            }
+            
+            // Update the output
+            outputCss.value = result;
+            
+            // Update stats
+            updateStats(originalCss, result);
+        } catch (error) {
+            outputCss.value = '';
+            updateStats(originalCss, '');
+            showNotification('Error: Failed to process CSS. ' + error.message, true);
         }
-        
-        if (combineSelectors.checked) {
-        result = combineSelectorsInCss(result);
-        }
-        
-        if (shortenColors.checked) {
-        result = shortenColorsInCss(result);
-        }
-        
-        if (removeUnits.checked) {
-        result = removeUnnecessaryUnits(result);
-        }
-        
-        if (removeWhitespace.checked) {
-        result = removeWhitespaceFromCss(result);
-        }
-        
-        if (removeLastSemicolons.checked) {
-        result = removeLastSemicolonsFromCss(result);
-        }
-        
-        // Update the output
-        outputCss.value = result;
-        
-        // Update stats
-        updateStats(originalCss, result);
     }
     
     // UI Helper Functions
@@ -169,9 +178,9 @@ top: 0px;
       updateStats('', '');
     }
     
-    function loadSample() {
+    async function loadSample() {
       inputCss.value = sampleCss;
-      minifyCss();
+      await minifyCss();
     }
     
     function showNotification(message, isError = false) {
