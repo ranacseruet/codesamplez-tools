@@ -4,11 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JavaScript Minifier</title>
-  
+  <link rel="stylesheet" href="styles.main.css"> <!-- Reverted path for build process -->
 </head>
 <body>
-  <%= header %>
-  <main class="js-minifier-container tool-container"> <!-- Corrected to use shared .tool-container class -->
+  <div class="js-minifier-container tool-container"> <!-- Corrected to use shared .tool-container class -->
     <header class="js-minifier-header">
       <h1>JavaScript Minifier</h1>
       <p class="js-minifier-description">Minify your JavaScript code to reduce file size and improve load times</p>
@@ -46,7 +45,7 @@
       <div class="o-panel"> <!-- Use only shared panel class -->
         <!-- Removed inner o-panel-content wrapper -->
         <h2>Original JavaScript</h2>
-        <textarea id="js-minifier-input" class="c-input c-input--textarea" placeholder="Paste your JavaScript code here...">// Example JavaScript function 
+        <textarea id="js-minifier-input" class="c-input c-input--textarea" placeholder="Paste your JavaScript code here...">// Example JavaScript function <!-- Use shared input class -->
 function calculateSum(numbers) {
   // This function calculates the sum of all numbers in an array
   let sum = 0;
@@ -100,8 +99,7 @@ console.log("The sum is: " + result);</textarea>
     <footer class="js-minifier-footer">
       <p>JavaScript Minifier - Use at your own risk. Always test minified code before deployment.</p>
     </footer>
-  </main>
-  <%= footer %>
-  
+  </div>
+  <script src="bundle.main.js"></script> <!-- Reverted path for build process -->
 </body>
 </html>

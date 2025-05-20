@@ -182,13 +182,12 @@ The tool performs an initial validation of the input CSS. This is achieved by at
 ## UI Implementation
 
 ### CSS Architecture
-The CSS Minifier tool adheres to the project-wide layered CSS architecture:
+The CSS Minifier tool follows a structured CSS architecture that leverages shared components and styles:
 
-- **Base Styles**: Inherits global resets, typography, and base element styling.
-- **Layout Patterns**: Utilizes common layout structures (e.g., grids, panels) defined in shared styles.
-- **Component Styles**: Employs reusable UI components (e.g., buttons, inputs) with BEM methodology for specific component styling. Tool-specific styles in `styles.css` primarily focus on adjustments or unique elements for the CSS Minifier.
-- **Shared Styles**: Core styles, variables, and utilities are drawn from `common/shared-styles.css`, which is processed and bundled by Webpack.
-- **Responsive Design**: Ensures adaptability across various screen sizes through responsive techniques.
+- **Shared Styles**: Utilizes the common CSS framework from `common/shared-styles.css`
+- **Component-Based Design**: Implements UI using reusable components with consistent naming conventions
+- **OOCSS Approach**: Separates structure from skin using object and component classes
+- **Responsive Layout**: Adapts to different screen sizes using a flexible grid system
 
 ### Key UI Components
 - **Layout Objects**: `.o-grid-2col`, `.o-panel`, `.o-panel-header`, `.o-toolbar`

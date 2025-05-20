@@ -4,11 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JWT Decoder</title>
-  
+  <link rel="stylesheet" href="styles.main.css">
 </head>
 <body>
-  <%= header %>
-  <main class="tool-container"> <!-- Use shared container -->
+  <div class="tool-container"> <!-- Use shared container -->
     <header class="o-header"> <!-- Use shared header object -->
       <h1>JWT Decoder & Validator</h1>
       <p class="o-description">Decode and validate JSON Web Tokens (JWT) with ease</p> <!-- Use shared description object -->
@@ -82,8 +81,7 @@
     <footer class="jwt-decoder-footer"> <!-- Keep specific footer for now -->
       <p>JWT Decoder - Safely decode and verify your JWT tokens. No tokens are stored or transmitted</p>
     </footer>
-  </main>
-  <%= footer %>
-  
+  </div>
+  <script src="bundle.main.js"></script>
 </body>
 </html>

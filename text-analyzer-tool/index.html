@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text Analyzer</title>
-    
+    <link rel="stylesheet" href="styles.main.css">
 </head>
 <body>
-    <%= header %>
-    <main class="tool-container">
+    <div class="tool-container">
         <div class="o-header">
             <h1>Text Analyzer</h1>
             <p class="o-description">Analyze your text to get word count, character statistics, and more.</p>
@@ -77,10 +76,9 @@
                 </div>
             </div>
         </div>
-    </main>
+    </div>
     
     <div id="notification" class="c-notification">Text analyzed successfully!</div> 
-    <%= footer %>
-    
+    <script src="bundle.main.js"></script>
 </body>
 </html>
