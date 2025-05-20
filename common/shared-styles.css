@@ -176,6 +176,45 @@
    Components Layer - UI Components
    ========================================================================== */
 
+/* --- Header --- */
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) 0; /* Adjust padding as needed */
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+}
+
+.logo a {
+  font-size: var(--font-size-h1);
+  font-weight: bold;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+nav .menu {
+  list-style: none;
+  display: flex;
+  gap: var(--spacing-md);
+  margin: 0;
+  padding: 0;
+}
+
+nav .menu li a {
+  text-decoration: none;
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+nav .menu li a:hover {
+  background-color: var(--color-primary);
+  color: var(--color-bg);
+}
+
 /* --- Buttons --- */
 .c-button {
   background-color: var(--color-primary);
@@ -463,6 +502,28 @@
 /* ==========================================================================
    Media Queries
    ========================================================================== */
+
+@media (max-width: 992px) { /* Adjust breakpoint as needed */
+  .header-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  nav .menu {
+    flex-direction: column;
+    width: 100%;
+    margin-top: var(--spacing-sm);
+  }
+
+  nav .menu li {
+    width: 100%;
+  }
+
+  nav .menu li a {
+    display: block;
+    text-align: left;
+  }
+}
 
 @media (min-width: 768px) {
   .o-controls {

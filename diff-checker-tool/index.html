@@ -4,11 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Diff Checker</title>
-  <link rel="stylesheet" href="styles.main.css">
+  
   <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
 </head>
 <body>
-  <div class="tool-container">
+  <%= header %>
+  <main class="tool-container">
     <div class="o-header">
       <h1>Diff Checker Tool</h1>
       <p class="o-description">Compare two texts or code snippets and highlight the differences between them.</p>
@@ -66,9 +67,10 @@
         <pre id="diff-result" class="c-code-output"></pre>
       </div>
     </div>
-  </div>
+  </main>
   <div id="notification" class="c-notification">Copied to clipboard!</div>
+  <%= footer %>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-  <script src="bundle.main.js"></script>
+  
 </body>
 </html>

@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JSON Formatter</title>
-    <link rel="stylesheet" href="styles.main.css">
+    
 </head>
 <body>
-    <div class="tool-container"> <!-- Replaced jsonf-container -->
+    <%= header %>
+    <main class="tool-container"> <!-- Replaced jsonf-container -->
         <div class="o-header"> <!-- Replaced jsonf-header -->
             <h1>JSON Formatter</h1> <!-- Removed jsonf-title class -->
             <p class="o-description">Format, validate, and beautify your JSON with this easy-to-use tool</p> <!-- Replaced jsonf-description -->
@@ -57,7 +58,8 @@
         <div class="jsonf-footer"> <!-- Kept tool-specific footer -->
             Made with ❤️ for developers
         </div>
-    </div>
-    <script src="bundle.main.js"></script>
+    </main>
+    <%= footer %>
+    
 </body>
 </html>

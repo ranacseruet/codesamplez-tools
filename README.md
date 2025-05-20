@@ -111,6 +111,7 @@ The build process creates a production-ready version in the `build/` directory:
 - Minifies JavaScript files
 - Optimizes CSS files
 - Updates HTML to reference minified assets
+- Injects shared HTML partials (e.g., header, footer) into HTML templates using EJS syntax and Webpack's HtmlWebpackPlugin.
 - Copies static assets (images)
 
 ### Testing

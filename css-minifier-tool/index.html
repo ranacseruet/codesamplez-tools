@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CSS Minifier</title>
-  <link rel="stylesheet" href="styles.main.css">
+  
 </head>
 <body>
-  <div class="css-minifier-container tool-container">
+  <%= header %>
+  <main class="css-minifier-container tool-container">
     <header class="css-minifier-header o-header">
       <h1>CSS Minifier</h1>
       <p class="css-minifier-description o-description">Optimize your CSS files by removing unnecessary characters without changing functionality.</p>
@@ -90,9 +91,10 @@
     <footer class="css-minifier-footer">
       <p>CSS Minifier - Always test minified CSS before deployment.</p>
     </footer>
-  </div>
+  </main>
   
   <div id="notification" class="c-notification">Copied to clipboard!</div>
-  <script src="bundle.main.js"></script>
+  <%= footer %>
+  
 </body>
 </html>
