@@ -1,5 +1,10 @@
 /* Base64 Converter specific styles */
 
+/* Add spacing between panel header (with buttons) and textarea/result area */
+.o-panel-header {
+    margin-bottom: var(--spacing-md);
+}
+
 /* Make encoding select wider than default */
 #base64converter-encoding {
     min-width: 120px;
