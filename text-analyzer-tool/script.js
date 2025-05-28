@@ -1,149 +1,99 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const textInput = document.getElementById('textInput');
-    const clearButton = document.getElementById('clear-input');
-    const loadSampleButton = document.getElementById('load-sample');
-    const analyzeButton = document.getElementById('analyze-btn');
-    const notification = document.getElementById('notification');
-    
-    // Analyze text on input (real-time)
-    textInput.addEventListener('input', analyzeText);
-    
-    // Clear button functionality
-    clearButton.addEventListener('click', () => {
-        document.getElementById('textInput').value = '';
-        analyzeText();
-        showNotification('Text cleared!');
-    });
-    
-    // Load sample text
-    loadSampleButton.addEventListener('click', () => {
-        textInput.value = getSampleText();
-        analyzeText();
-    });
-    
-    // Analyze button functionality
-    analyzeButton.addEventListener('click', () => {
-        analyzeText();
-        showNotification('Text analyzed successfully!');
-    });
-    
-    // Initial analysis
-    analyzeText();
-});
+function analyzeText(text = '') {
+    // Convert null/undefined to empty string and ensure we're working with a string
+    text = String(text);
 
-// Show notification
-function showNotification(message) {
-    const notification = document.getElementById('notification');
-    notification.textContent = message;
-    notification.classList.add('show');
-    
-    setTimeout(() => {
-        notification.classList.remove('show');
-    }, 3000);
-}
-
-// Sample text for the "Load Sample" button
-function getSampleText() {
-    return `The quick brown fox jumps over the lazy dog. This pangram contains every letter of the English alphabet at least once.
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris!
-
-How are you today? I hope you're doing well. This sample text demonstrates various punctuation marks, including commas, periods, question marks, and exclamation points.`;
-}
-
-function analyzeText() {
-    const text = document.getElementById('textInput').value;
-    
-    // Basic counts
-    updateWordCount(text);
-    updateCharCount(text);
-    updateParagraphCount(text);
-    updateAverageWordLength(text);
-    updateAverageSentenceLength(text);
-    updatePunctuationStats(text);
-}
-
-function updateWordCount(text) {
-    const words = text.trim().split(/\s+/).filter(word => word.length > 0);
-    document.getElementById('wordCount').textContent = words.length;
-    return words.length;
-}
-
-function updateCharCount(text) {
-    document.getElementById('charCount').textContent = text.length;
-    return text.length;
-}
-
-function updateParagraphCount(text) {
-    // Split on double newlines to count paragraphs
-    const paragraphs = text.trim().split(/\n\s*\n/).filter(para => para.length > 0);
-    document.getElementById('paragraphCount').textContent = paragraphs.length || 0;
-    return paragraphs.length || 0;
-}
-
-function updateAverageWordLength(text) {
-    const words = text.trim().split(/\s+/).filter(word => word.length > 0);
-    if (words.length === 0) {
-        document.getElementById('avgWordLength').textContent = '0';
-        return '0';
+    // Handle empty input
+    if (!text) {
+        return {
+            charCount: 0,
+            wordCount: 0,
+            lineCount: 0,
+            sentenceCount: 0,
+            paragraphCount: 0,
+            avgWordLength: '0.00',
+            avgSentenceLength: '0.00',
+            periodCount: 0,
+            commaCount: 0,
+            questionCount: 0,
+            exclamationCount: 0
+        };
     }
-    
-    // Calculate total characters in words (excluding punctuation)
-    // Calculate average word length by summing individual word lengths after removing punctuation
-    const totalChars = words.reduce((sum, word) => {
-        const cleanWord = word.replace(/[^a-zA-Z]/g, '');
-        return sum + cleanWord.length;
-    }, 0);
-    
-    const avgLength = (totalChars / words.length).toFixed(1);
-    document.getElementById('avgWordLength').textContent = avgLength;
-    return avgLength;
-}
 
-function updateAverageSentenceLength(text) {
-    // Split on sentence terminators
-    const sentences = text.trim().split(/[.!?]+/).filter(sent => sent.trim().length > 0);
-    if (sentences.length === 0) {
-        document.getElementById('avgSentenceLength').textContent = '0';
-        return '0';
+    // Character count is straightforward
+    const charCount = text.length;
+
+    // Word count: split on whitespace and filter out empty strings
+    const words = text.trim() ? text.trim().split(/\s+/) : [];
+    const wordCount = words.length;
+
+    // Average Word Length: calculate after stripping punctuation
+    const cleanedWords = words.map(word => word.replace(/[^a-zA-Z0-9]/g, '')); // Remove all non-alphanumeric
+    const totalWordLength = cleanedWords.reduce((sum, word) => sum + word.length, 0);
+    const avgWordLength = wordCount > 0 ? (totalWordLength / wordCount).toFixed(2) : '0.00';
+
+    // Line count: split on newlines, but return 0 for empty string
+    const lineCount = text ? text.split('\n').length : 0;
+
+    // Sentence count
+    let sentenceCount = 0;
+    const trimmedText = text.trim();
+    if (trimmedText) {
+        // Match sentences ending with . ! ? followed by whitespace or end of string
+        const sentences = trimmedText.match(/[^.!?]+[.!?]+(?:\s+|$)/g) || [];
+        sentenceCount = sentences.length;
+        // If there's remaining text without punctuation, count it as a sentence
+        const remainingText = trimmedText.replace(/[^.!?]+[.!?]+(?:\s+|$)/g, '').trim();
+        if (remainingText) {
+            sentenceCount++;
+        }
     }
-    
-    // Count words in each sentence
-    const totalWords = sentences.reduce((sum, sentence) => {
-        const words = sentence.trim().split(/\s+/).filter(word => word.length > 0);
-        return sum + words.length;
-    }, 0);
-    
-    const avgLength = (totalWords / sentences.length).toFixed(1);
-    document.getElementById('avgSentenceLength').textContent = avgLength;
-    return avgLength;
-}
 
-function updatePunctuationStats(text) {
-    const stats = {
-        periods: text.split('').filter(char => char === '.').length,
-        commas: (text.match(/,/g) || []).length,
-        questions: (text.match(/\?/g) || []).length,
-        exclamations: (text.match(/!/g) || []).length
+    // Paragraph count
+    let paragraphCount = 0;
+    if (trimmedText) {
+        const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim());
+        paragraphCount = paragraphs.length;
+    }
+
+    // Average Sentence Length (in words)
+    let avgSentenceLength = '0.00'; // Default to string "0.00"
+    if (sentenceCount > 0) {
+        const totalWordsInSentences = words.length; // Assuming all words belong to some sentence
+        avgSentenceLength = (totalWordsInSentences / sentenceCount).toFixed(2);
+    }
+
+    // Punctuation Counts
+    const periodCount = (text.match(/\./g) || []).length;
+    const commaCount = (text.match(/,/g) || []).length;
+    const questionCount = (text.match(/\?/g) || []).length;
+    const exclamationCount = (text.match(/!/g) || []).length;
+
+    return {
+        charCount,
+        wordCount,
+        lineCount,
+        sentenceCount,
+        paragraphCount,
+        avgWordLength,
+        avgSentenceLength,
+        periodCount,
+        commaCount,
+        questionCount,
+        exclamationCount
     };
-    
-    document.getElementById('periodCount').textContent = stats.periods;
-    document.getElementById('commaCount').textContent = stats.commas;
-    document.getElementById('questionCount').textContent = stats.questions;
-    document.getElementById('exclamationCount').textContent = stats.exclamations;
-    
-    return stats;
 }
 
-// Export functions for testing
+// Export for both ES modules and CommonJS
+export { analyzeText };
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        updateWordCount,
-        updateCharCount,
-        updateParagraphCount,
-        updateAverageWordLength,
-        updateAverageSentenceLength,
-        updatePunctuationStats,
-        getSampleText
-    };
+    module.exports = { analyzeText };
+}
+
+import { TextAnalyzerUI } from './TextAnalyzerUI.js';
+
+// Browser event handling
+if (typeof window !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        new TextAnalyzerUI();
+    });
 }

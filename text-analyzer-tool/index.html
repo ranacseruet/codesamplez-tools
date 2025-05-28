@@ -26,12 +26,6 @@
             </div>
         </div>
         
-        <div class="text-analyzer-options"> <!-- Reverted from o-controls -->
-            <div class="text-analyzer-toolbar"> <!-- Reverted from o-toolbar -->
-                <button class="c-button" id="analyze-btn">Analyze Text</button> 
-            </div>
-        </div>
-        
         <div class="text-analyzer-stats"> 
             <div class="text-analyzer-stat-item">
                 <span class="text-analyzer-stat-label">Word Count</span>
@@ -44,6 +38,14 @@
             <div class="text-analyzer-stat-item">
                 <span class="text-analyzer-stat-label">Paragraph Count</span>
                 <span id="paragraphCount" class="text-analyzer-stat-value">0</span>
+            </div>
+            <div class="text-analyzer-stat-item">
+                <span class="text-analyzer-stat-label">Sentence Count</span>
+                <span id="sentenceCount" class="text-analyzer-stat-value">0</span>
+            </div>
+            <div class="text-analyzer-stat-item">
+                <span class="text-analyzer-stat-label">Lines Counter</span>
+                <span id="lineCount" class="text-analyzer-stat-value">0</span>
             </div>
             <div class="text-analyzer-stat-item">
                 <span class="text-analyzer-stat-label">Average Word Length</span>
@@ -79,6 +81,6 @@
     </div>
     
     <div id="notification" class="c-notification">Text analyzed successfully!</div> 
-    <script src="bundle.main.js"></script>
+    <script src="bundle.main.js" type="module"></script>
 </body>
 </html>
