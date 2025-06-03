@@ -1,0 +1,212 @@
+/* ==========================================================================
+   Settings Layer - Variables (copied from shared-styles.css)
+   ========================================================================== */
+
+:root {
+  /* Colors */
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-secondary: #6b7280;
+  --color-secondary-hover: #4b5563;
+  --color-text: #333;
+  --color-text-secondary: #666;
+  --color-border: #ddd;
+  --color-border-light: #eee;
+  --color-bg: white;
+  --color-bg-light: #f8f9fa;
+  --color-success: #28a745;
+  --color-danger: #dc3545;
+  --color-danger-hover: #c82333;
+  --color-shadow: rgba(0, 0, 0, 0.1);
+
+  /* Typography */
+  --font-family-base: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-family-mono: monospace;
+  --font-size-base: 14px;
+  --font-size-small: 13px;
+  --font-size-h1: 24px;
+  --font-size-h2: 18px;
+  --line-height-base: 1.6;
+  --line-height-tight: 1.5;
+
+  /* Spacing */
+  --spacing-xxs: 6px;
+  --spacing-xs: 5px;
+  --spacing-sm: 10px;
+  --spacing-md: 15px;
+  --spacing-lg: 20px;
+
+  /* Layout */
+  --container-max-width: 1200px;
+  --border-radius-sm: 4px;
+  --border-radius-lg: 8px;
+  --box-shadow: 0 2px 10px var(--color-shadow);
+}
+
+/* ==========================================================================
+   Index Page Styles - Scoped to main-container
+   ========================================================================== */
+
+.main-container {
+  font-family: var(--font-family-base);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: var(--line-height-base);
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+  box-sizing: border-box;
+}
+
+.main-container * {
+  box-sizing: border-box;
+}
+
+.main-container .main-title {
+  text-align: center;
+  color: var(--color-primary);
+  margin-bottom: calc(var(--spacing-lg) * 2);
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.main-container .section-title {
+  margin-top: calc(var(--spacing-lg) * 2);
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-text);
+  font-size: var(--font-size-h1);
+  font-weight: 600;
+}
+
+.main-container .section-title:first-of-type {
+  margin-top: var(--spacing-lg);
+}
+
+.main-container .tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.main-container .tool-card {
+  background: var(--color-bg);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--box-shadow);
+  transition: transform 0.2s ease-in-out;
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border-light);
+}
+
+.main-container .tool-card:hover {
+  transform: translateY(-4px);
+}
+
+.main-container .tool-thumbnail {
+  width: 100%;
+  height: 200px;
+  background-color: var(--color-bg-light);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-container .tool-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.main-container .tool-content {
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.main-container .tool-name {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-h1);
+  color: var(--color-primary);
+}
+
+.main-container .tool-description {
+  margin: 0 0 var(--spacing-lg) 0;
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-base);
+  flex-grow: 1;
+}
+
+.main-container .tool-description a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.main-container .tool-description a:hover {
+  text-decoration: underline;
+}
+
+.main-container .cta-button {
+  display: inline-block;
+  background-color: var(--color-primary);
+  color: var(--color-bg);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius-sm);
+  text-decoration: none;
+  font-weight: 500;
+  text-align: center;
+  transition: background-color 0.2s ease-in-out;
+  margin-top: auto;
+  font-size: var(--font-size-base);
+}
+
+.main-container .cta-button:hover {
+  background-color: var(--color-primary-hover);
+  color: var(--color-bg);
+}
+
+.main-container .faqs {
+  margin-top: calc(var(--spacing-lg) * 2);
+}
+
+.main-container .faqs dl {
+  margin: 0;
+}
+
+.main-container .faqs dt {
+  font-weight: 600;
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+}
+
+.main-container .faqs dd {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-base);
+}
+
+.main-container .faqs a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.main-container .faqs a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .main-container .tools-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  
+  .main-container {
+    padding: var(--spacing-md);
+  }
+}

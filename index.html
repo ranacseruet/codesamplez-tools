@@ -4,287 +4,107 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CodeSamplez Tools</title>
-  <style>
-    .codesamplez-tools {
-      --cst-primary-color: #007bff;
-      --cst-background-color: #ffffff;
-      --cst-card-background: #ffffff;
-      --cst-text-color: #333333;
-      --cst-shadow-color: rgba(9, 2, 2, 0.1);
-      
-      font-family: Arial, sans-serif;
-      background-color: var(--cst-background-color);
-      color: var(--cst-text-color);
-      margin: 0;
-      padding: 0;
-    }
-
-    .codesamplez-tools .cst-main-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-
-    .codesamplez-tools .cst-main-title {
-      text-align: center;
-      color: var(--cst-text-color);
-      margin-bottom: 2rem;
-      font-size: 2.5rem;
-      font-weight: bold;
-    }
-
-    .codesamplez-tools .cst-section-title {
-      margin-top: 4rem;
-      margin-bottom: 2rem;
-      color: var(--cst-text-color);
-      font-size: 1.8rem;
-      font-weight: 600;
-    }
-
-    .codesamplez-tools .cst-section-title:first-of-type {
-      margin-top: 2rem;
-    }
-
-    .codesamplez-tools .cst-tools-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 1rem;
-    }
-
-    .codesamplez-tools .cst-tool-card {
-      background: var(--cst-card-background);
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px var(--cst-shadow-color);
-      transition: transform 0.2s ease-in-out;
-      color: var(--cst-text-color);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .codesamplez-tools .cst-tool-card:hover {
-      transform: translateY(-4px);
-    }
-
-    .codesamplez-tools .cst-tool-thumbnail {
-      width: 100%;
-      height: 200px;
-      background-color: #f8f9fa;
-      overflow: hidden;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--cst-card-background);
-    }
-
-    .codesamplez-tools .cst-tool-thumbnail img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .codesamplez-tools .cst-tool-content {
-      padding: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      flex-grow: 1;
-    }
-
-    .codesamplez-tools .cst-tool-name {
-      margin: 0 0 0.5rem 0;
-      font-size: 1.5rem;
-      color: var(--cst-primary-color);
-      font-weight: 600;
-    }
-
-    .codesamplez-tools .cst-tool-description {
-      margin: 0 0 1.5rem 0;
-      color: #666;
-      line-height: 1.5;
-      flex-grow: 1;
-    }
-
-    .codesamplez-tools .cst-tool-description a {
-      color: var(--cst-primary-color);
-      text-decoration: none;
-    }
-
-    .codesamplez-tools .cst-tool-description a:hover {
-      text-decoration: underline;
-    }
-
-    .codesamplez-tools .cst-cta-button {
-      display: inline-block;
-      background-color: var(--cst-primary-color);
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: 500;
-      text-align: center;
-      transition: background-color 0.2s ease-in-out;
-      margin-top: auto;
-    }
-
-    .codesamplez-tools .cst-cta-button:hover {
-      background-color: #0056b3;
-      color: white;
-    }
-
-    .codesamplez-tools .cst-faqs {
-      margin-top: 4rem;
-    }
-
-    .codesamplez-tools .cst-faqs dl {
-      margin: 0;
-    }
-
-    .codesamplez-tools .cst-faqs dt {
-      font-weight: 600;
-      margin-top: 1.5rem;
-      margin-bottom: 0.5rem;
-      color: var(--cst-text-color);
-    }
-
-    .codesamplez-tools .cst-faqs dd {
-      margin: 0 0 1rem 0;
-      color: #666;
-      line-height: 1.5;
-    }
-
-    .codesamplez-tools .cst-faqs a {
-      color: var(--cst-primary-color);
-      text-decoration: none;
-    }
-
-    .codesamplez-tools .cst-faqs a:hover {
-      text-decoration: underline;
-    }
-
-    @media (max-width: 768px) {
-      .codesamplez-tools .cst-tools-grid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="codesamplez-tools">
-    <div class="cst-main-container">
-      <h1 class="cst-main-title">CodeSamplez Tools</h1>
+  <div class="main-container">
+    <h1 class="main-title">CodeSamplez Tools</h1>
     
-    <h2 class="cst-section-title">Code Formatters & Validators</h2>
-    <div class="cst-tools-grid">
-      <div class="cst-tool-card">
-        <div class="cst-tool-thumbnail">
+    <h2 class="section-title">Code Formatters & Validators</h2>
+    <div class="tools-grid">
+      <div class="tool-card">
+        <div class="tool-thumbnail">
           <img src="//codesamplez.com/wp-content/uploads/2025/03/json-formatter-ui.webp" alt="JSON Formatter thumbnail">
         </div>
-        <div class="cst-tool-content">
-          <h3 class="cst-tool-name">JSON Formatter</h3>
-          <p class="cst-tool-description">Format and validate <a href="https://en.wikipedia.org/wiki/JSON" target="_blank">JSON</a> data with proper indentation and alphabetical key sorting. Features syntax highlighting, error detection, and clipboard integration.</p>
-          <a href="json-formatter-tool/" class="cst-cta-button">Try Tool</a>
+        <div class="tool-content">
+          <h3 class="tool-name">JSON Formatter</h3>
+          <p class="tool-description">Format and validate <a href="https://en.wikipedia.org/wiki/JSON" target="_blank">JSON</a> data with proper indentation and alphabetical key sorting. Features syntax highlighting, error detection, and clipboard integration.</p>
+          <a href="json-formatter-tool/" class="cta-button" target="_blank">Try Tool</a>
         </div>
       </div>
 
-      <div class="cst-tool-card">
-        <div class="cst-tool-thumbnail">
+      <div class="tool-card">
+        <div class="tool-thumbnail">
           <img src="//codesamplez.com/wp-content/uploads/2025/03/javascript-minifier-ui.webp" alt="JavaScript Minifier thumbnail">
         </div>
-        <div class="cst-tool-content">
-          <h3 class="cst-tool-name">JavaScript Minifier</h3>
-          <p class="cst-tool-description">Minify JavaScript code by removing comments, whitespace, and optionally shortening variable names (<a href="https://en.wikipedia.org/wiki/Minification_(programming)" target="_blank">minification</a>). Features real-time size statistics and clipboard integration.</p>
-          <a href="js-minifier-tool/" class="cst-cta-button">Try Tool</a>
+        <div class="tool-content">
+          <h3 class="tool-name">JavaScript Minifier</h3>
+          <p class="tool-description">Minify JavaScript code by removing comments, whitespace, and optionally shortening variable names (<a href="https://en.wikipedia.org/wiki/Minification_(programming)" target="_blank">minification</a>). Features real-time size statistics and clipboard integration.</p>
+          <a href="js-minifier-tool/" class="cta-button" target="_blank">Try Tool</a>
         </div>
       </div>
 
-      <div class="cst-tool-card">
-        <div class="cst-tool-thumbnail">
+      <div class="tool-card">
+        <div class="tool-thumbnail">
           <img src="//codesamplez.com/wp-content/uploads/2025/03/css-minifier-ui.webp" alt="CSS Minifier thumbnail">
         </div>
-        <div class="cst-tool-content">
-          <h3 class="cst-tool-name">CSS Minifier</h3>
-          <p class="cst-tool-description">Minify CSS code by removing unnecessary whitespace, comments, and optimizing style declarations (<a href="https://en.wikipedia.org/wiki/Minification_(programming)" target="_blank">minification</a>). Features real-time size reduction statistics and clipboard support.</p>
-          <a href="css-minifier-tool/" class="cst-cta-button">Try Tool</a>
+        <div class="tool-content">
+          <h3 class="tool-name">CSS Minifier</h3>
+          <p class="tool-description">Minify CSS code by removing unnecessary whitespace, comments, and optimizing style declarations (<a href="https://en.wikipedia.org/wiki/Minification_(programming)" target="_blank">minification</a>). Features real-time size reduction statistics and clipboard support.</p>
+          <a href="css-minifier-tool/" class="cta-button" target="_blank">Try Tool</a>
         </div>
       </div>
     </div>
 
-    <h2 class="cst-section-title">Encoders & Decoders</h2>
-    <div class="cst-tools-grid">
-      <div class="cst-tool-card">
-        <div class="cst-tool-thumbnail">
+    <h2 class="section-title">Encoders & Decoders</h2>
+    <div class="tools-grid">
+      <div class="tool-card">
+        <div class="tool-thumbnail">
           <img src="//codesamplez.com/wp-content/uploads/2025/04/base64-converter-ui.webp" alt="Base64 Converter thumbnail">
         </div>
-        <div class="cst-tool-content">
-          <h3 class="cst-tool-name">Base64 Converter</h3>
-          <p class="cst-tool-description">Convert text and files to <a href="https://en.wikipedia.org/wiki/Base64" target="_blank">Base64 encoding</a> and decode Base64 strings back to their original format. Supports multiple encodings and file uploads.</p>
-          <a href="base64-converter-tool/" class="cst-cta-button">Try Tool</a>
+        <div class="tool-content">
+          <h3 class="tool-name">Base64 Converter</h3>
+          <p class="tool-description">Convert text and files to <a href="https://en.wikipedia.org/wiki/Base64" target="_blank">Base64 encoding</a> and decode Base64 strings back to their original format. Supports multiple encodings and file uploads.</p>
+          <a href="base64-converter-tool/" class="cta-button" target="_blank">Try Tool</a>
         </div>
       </div>
 
-      <div class="cst-tool-card">
-        <div class="cst-tool-thumbnail">
+      <div class="tool-card">
+        <div class="tool-thumbnail">
           <img src="//codesamplez.com/wp-content/uploads/2025/04/jwt-decoder-ui.webp" alt="JWT Decoder thumbnail">
         </div>
-        <div class="cst-tool-content">
-          <h3 class="cst-tool-name">JWT Decoder</h3>
-          <p class="cst-tool-description">Decode and validate <a href="https://en.wikipedia.org/wiki/JSON_Web_Token" target="_blank">JSON Web Tokens (JWT)</a>. Inspect header, payload, and verify signatures with your secret key for token authenticity.</p>
-          <a href="jwt-decoder-tool/" class="cst-cta-button">Try Tool</a>
+        <div class="tool-content">
+          <h3 class="tool-name">JWT Decoder</h3>
+          <p class="tool-description">Decode and validate <a href="https://en.wikipedia.org/wiki/JSON_Web_Token" target="_blank">JSON Web Tokens (JWT)</a>. Inspect header, payload, and verify signatures with your secret key for token authenticity.</p>
+          <a href="jwt-decoder-tool/" class="cta-button" target="_blank">Try Tool</a>
         </div>
       </div>
 
-      <div class="cst-tool-card">
-        <div class="cst-tool-thumbnail">
+      <div class="tool-card">
+        <div class="tool-thumbnail">
           <img src="//codesamplez.com/wp-content/uploads/2025/04/jwt-builder-ui.webp" alt="JWT Generator thumbnail">
         </div>
-        <div class="cst-tool-content">
-          <h3 class="cst-tool-name">JWT Builder</h3>
-          <p class="cst-tool-description">Create and sign <a href="https://en.wikipedia.org/wiki/JSON_Web_Token" target="_blank">JSON Web Tokens (JWT)</a> with custom headers and payloads. Generate secure tokens with various signing algorithms and secret keys.</p>
-          <a href="jwt-builder-tool/" class="cst-cta-button">Try Tool</a>
+        <div class="tool-content">
+          <h3 class="tool-name">JWT Builder</h3>
+          <p class="tool-description">Create and sign <a href="https://en.wikipedia.org/wiki/JSON_Web_Token" target="_blank">JSON Web Tokens (JWT)</a> with custom headers and payloads. Generate secure tokens with various signing algorithms and secret keys.</p>
+          <a href="jwt-builder-tool/" class="cta-button" target="_blank">Try Tool</a>
         </div>
       </div>
     </div>
 
-    <h2 class="cst-section-title">Text Analysis & Diff Tools</h2>
-    <div class="cst-tools-grid">
-      <div class="cst-tool-card">
-        <div class="cst-tool-thumbnail">
+    <h2 class="section-title">Text Analysis & Diff Tools</h2>
+    <div class="tools-grid">
+      <div class="tool-card">
+        <div class="tool-thumbnail">
           <img src="//codesamplez.com/wp-content/uploads/2025/03/diff-checker-ui.webp" alt="Diff Checker thumbnail">
         </div>
-        <div class="cst-tool-content">
-          <h3 class="cst-tool-name">Diff Checker</h3>
-          <p class="cst-tool-description">Compare two texts side by side and highlight the differences (<a href="https://en.wikipedia.org/wiki/Diff" target="_blank">diff</a>). Perfect for comparing code snippets, configurations, or any text-based content.</p>
-          <a href="diff-checker-tool/" class="cst-cta-button">Try Tool</a>
+        <div class="tool-content">
+          <h3 class="tool-name">Diff Checker</h3>
+          <p class="tool-description">Compare two texts side by side and highlight the differences (<a href="https://en.wikipedia.org/wiki/Diff" target="_blank">diff</a>). Perfect for comparing code snippets, configurations, or any text-based content.</p>
+          <a href="diff-checker-tool/" class="cta-button" target="_blank">Try Tool</a>
         </div>
       </div>
 
-      <div class="cst-tool-card">
-        <div class="cst-tool-thumbnail">
+      <div class="tool-card">
+        <div class="tool-thumbnail">
           <img src="//codesamplez.com/wp-content/uploads/2025/02/text-analyzer.png" alt="Text Analyzer thumbnail">
         </div>
-        <div class="cst-tool-content">
-          <h3 class="cst-tool-name">Text Analyzer</h3>
-          <p class="cst-tool-description">Analyze text to get insights like character count, word count, line count, and other useful text statistics. Perfect for content writers and developers.</p>
-          <a href="text-analyzer-tool/" class="cst-cta-button">Try Tool</a>
+        <div class="tool-content">
+          <h3 class="tool-name">Text Analyzer</h3>
+          <p class="tool-description">Analyze text to get insights like character count, word count, line count, and other useful text statistics. Perfect for content writers and developers.</p>
+          <a href="text-analyzer-tool/" class="cta-button" target="_blank">Try Tool</a>
         </div>
       </div>
-    </div>
-
-    <section class="cst-faqs">
-      <h2 class="cst-section-title">Frequently Asked Questions</h2>
-      <dl>
-        <dt>Are these tools free to use?</dt>
-        <dd>Yes, all tools on CodeSamplez.com are free and run directly in your browser without sending your data to any external server.</dd>
-        <dt>Is my data secure when using these tools?</dt>
-        <dd>Absolutely. All processing is done client-side to ensure your data remains private and secure.</dd>
-        <dt>Can I suggest a new tool?</dt>
-        <dd>Yes! Please visit our <a href="/contact">Contact</a> page to send us your suggestions or requests.</dd>
-      </dl>
-    </section>
     </div>
   </div>
 </body>

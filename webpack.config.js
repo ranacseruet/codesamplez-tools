@@ -122,6 +122,10 @@ const developmentConfig = {
           from: 'index.html',
           to: 'index.html'
         },
+        {
+          from: 'styles.css',
+          to: 'styles.css'
+        },
         ...tools.reduce((patterns, tool) => {
           const toolName = tool.name || tool;
           return patterns.concat([
