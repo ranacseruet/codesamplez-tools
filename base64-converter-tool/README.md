@@ -37,9 +37,14 @@ A powerful and user-friendly web tool for encoding and decoding Base64 strings w
 
 ### File Processing
 
-1. Click "Upload File" to select a text file
-2. The file content will be loaded into the input area
-3. Conversion happens automatically based on your selected mode and encoding
+The "Upload File" feature allows you to directly encode any file into its Base64 representation.
+
+1.  Click "Upload File" to select any file from your computer (text, image, PDF, binary, etc.).
+2.  The tool will read the file's content and directly encode it to Base64.
+3.  The resulting Base64 string will be displayed in the **Output** area.
+4.  The **Input** area will show a placeholder message, for example: `[File: yourfile.png uploaded and encoded to output]`.
+5.  The character encoding selection (`UTF-8`, `ASCII`, etc.) is not applicable when uploading files this way, as the file is treated as binary data for direct Base64 encoding.
+6.  If you need to decode a Base64 string that is *inside* a text file, you should open that file, copy the Base64 text, and paste it into the **Input** area, then select the "Decode" mode.
 
 ## Character Encodings
 
@@ -84,9 +89,8 @@ The converter includes comprehensive error handling for:
   - Empty string handling
   - Invalid character encoding selection
 - File operations:
-  - File reading errors
-  - File size limits
-  - Unsupported file types
+  - File reading errors (e.g., if the file is inaccessible)
+  - Errors during the Base64 encoding process of the file content
 - Clipboard operations:
   - Copy operation failures
   - Permissions handling

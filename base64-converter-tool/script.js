@@ -79,15 +79,53 @@ const initConverter = () => {
             const file = e.target.files[0];
             if (!file) return;
 
-            try {
-                const text = await file.text();
-                this.elements.input.value = text;
-                this.processInput();
-            } catch (error) {
-                console.error('File reading error:', error);
-                this.elements.status.textContent = '⚠ Error reading file: ' + error.message;
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                try {
+                    const dataUrl = reader.result;
+                    const commaIndex = dataUrl.indexOf(',');
+
+                    if (commaIndex === -1) {
+                        throw new Error('Invalid Data URL format: missing comma.');
+                    }
+                    
+                    const base64String = dataUrl.substring(commaIndex + 1);
+
+                    if (!base64String) { // Handles cases like "data:,"
+                        throw new Error('Invalid Data URL format: empty Base64 content.');
+                    }
+
+                    this.elements.result.textContent = base64String;
+                    this.elements.input.value = `[File: ${file.name} uploaded and encoded to output]`; // Or clear it: this.elements.input.value = '';
+                    this.elements.status.textContent = `✓ Encoded file: ${file.name}`;
+                    this.elements.status.className = 'success';
+                    this.elements.copyButton.disabled = false;
+                } catch (error) {
+                    console.error('File processing error after read:', error);
+                    this.elements.result.textContent = '';
+                    this.elements.input.value = '';
+                    this.elements.status.textContent = '⚠ Error processing file: ' + error.message;
+                    this.elements.status.className = 'error';
+                    this.elements.copyButton.disabled = true;
+                } finally {
+                    // Reset file input to allow uploading the same file again
+                    e.target.value = null;
+                }
+            };
+
+            reader.onerror = () => {
+                console.error('File reading error:', reader.error);
+                this.elements.result.textContent = '';
+                this.elements.input.value = '';
+                this.elements.status.textContent = '⚠ Error reading file: ' + reader.error.message;
                 this.elements.status.className = 'error';
-            }
+                this.elements.copyButton.disabled = true;
+                // Reset file input
+                e.target.value = null;
+            };
+
+            reader.readAsDataURL(file);
         },
 
         async handleCopy() {

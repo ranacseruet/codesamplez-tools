@@ -196,3 +196,7 @@ describe('Base64Codec', () => {
 
 // Restore global
 Object.assign(global, original);
+// Clean up JSDOM
+afterEach(() => {
+    document.body.innerHTML = '';
+});
