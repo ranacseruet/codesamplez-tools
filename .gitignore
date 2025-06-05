@@ -52,3 +52,4 @@ yarn.lock
 
 # Memory Bank
 **/memory-bank/
+.clinerules
