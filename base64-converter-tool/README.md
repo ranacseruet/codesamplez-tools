@@ -12,7 +12,8 @@ A powerful and user-friendly web tool for encoding and decoding Base64 strings w
 
 - 🔄 Auto-detection of Base64 strings
 - 📝 Multiple encoding support (UTF-8, ASCII, ISO-8859-1, UCS-2)
-- 📁 File upload capability
+- 📁 File upload capability for encoding
+- 💾 Download decoded Base64 as a file (supports any file type)
 - 📋 One-click copy to clipboard
 - 🎨 Clean, responsive user interface
 - ⚡ Real-time conversion
@@ -37,6 +38,8 @@ A powerful and user-friendly web tool for encoding and decoding Base64 strings w
 
 ### File Processing
 
+#### Encoding Files to Base64
+
 The "Upload File" feature allows you to directly encode any file into its Base64 representation.
 
 1.  Click "Upload File" to select any file from your computer (text, image, PDF, binary, etc.).
@@ -44,7 +47,20 @@ The "Upload File" feature allows you to directly encode any file into its Base64
 3.  The resulting Base64 string will be displayed in the **Output** area.
 4.  The **Input** area will show a placeholder message, for example: `[File: yourfile.png uploaded and encoded to output]`.
 5.  The character encoding selection (`UTF-8`, `ASCII`, etc.) is not applicable when uploading files this way, as the file is treated as binary data for direct Base64 encoding.
-6.  If you need to decode a Base64 string that is *inside* a text file, you should open that file, copy the Base64 text, and paste it into the **Input** area, then select the "Decode" mode.
+
+#### Decoding Base64 to Files
+
+You can decode a Base64 string (whether it represents text or binary data like an image or PDF) and download it as a file.
+
+1.  Paste your Base64 string into the **Input** area.
+    *   If your input is a **Data URL** (e.g., `data:image/png;base64,iVBORw...`), the tool will attempt to parse the MIME type and suggest a filename (e.g., `decoded_file.png`).
+    *   If it's a raw Base64 string, you'll need to provide a suitable filename.
+2.  Select "Decode" or "Auto Detect" mode. The text representation of the decoded content will appear in the **Output** area (this may look like garbled text for binary files).
+3.  If the input is valid Base64, the "Download Decoded File" button will become active.
+4.  Enter a desired filename (e.g., `myImage.png`, `document.pdf`) in the "Download Filename" input field next to the button. If you don't provide one, a default like `download.dat` or one based on a detected MIME type will be used.
+5.  Click "Download Decoded File". The browser will download the decoded binary data as the specified file.
+6.  The character encoding selection (`UTF-8`, `ASCII`, etc.) is primarily for how the text preview in the **Output** area is interpreted. For downloading files, the raw binary data from the Base64 string is used.
+7.  If you need to decode a Base64 string that is *inside* a text file, you should open that file, copy the Base64 text, and paste it into the **Input** area.
 
 ## Character Encodings
 

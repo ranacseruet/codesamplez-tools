@@ -4,23 +4,34 @@ class Base64Codec {
         this.decoder = new TextDecoder('utf-8', { fatal: true });
     }
 
-    isBase64(str) {
-        if (!str) return false;
-        
-        // Check length and basic pattern
-        const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
-        if (str.length % 4 !== 0 || !base64Regex.test(str)) return false;
-        
-        // Check padding
-        const paddingChar = str.indexOf('=');
-        if (paddingChar > -1) {
-            if (paddingChar < str.length - 2) return false;
-            if (str.length - paddingChar > 2) return false;
+    isBase64(payload) { // Expects only the base64 data payload, no prefix
+        if (typeof payload !== 'string' || payload === '') {
+            return false;
         }
-        
+
+        // Handle URL-safe base64 by converting to standard base64
+        let cleanedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
+
+        // A valid Base64 string's length must be a multiple of 4.
+        if (cleanedPayload.length % 4 !== 0) {
+            return false;
+        }
+
+        // The length of a base64 string's data part (no padding) can't be 1 mod 4.
+        if (cleanedPayload.replace(/=/g, '').length % 4 === 1) {
+            return false;
+        }
+
+        // Regex to check for valid standard Base64 characters and padding.
+        const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+        if (!base64Regex.test(cleanedPayload)) {
+            return false;
+        }
+
         try {
-            return btoa(atob(str)) === str;
-        } catch (err) {
+            atob(cleanedPayload); // If atob doesn't throw, it's decodable.
+            return true;
+        } catch (e) {
             return false;
         }
     }
@@ -119,9 +130,11 @@ class Base64Codec {
                 }
             }
         } catch (error) {
-            if (error.message.includes('UCS-2')) {
-                throw new Error('Invalid UCS-2 byte sequence');
+            // If the error is a specific decoding error we want to preserve, propagate it.
+            if (error.message.includes('UTF-8') || error.message.includes('UCS-2')) {
+                throw error;
             }
+            // Otherwise, it's likely an issue with the Base64 string itself (e.g., from atob).
             throw new Error('Invalid base64 string');
         }
     }

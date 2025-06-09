@@ -1,87 +1,10 @@
-// Setup minimal test environment
-const original = { ...global };
-
-// TextEncoder/Decoder polyfills with better Unicode support
-global.TextEncoder = class {
-    encode(str) {
-        const chunks = [];
-        for (let i = 0; i < str.length; i++) {
-            let char = str.codePointAt(i);
-            if (char > 0xffff) {
-                i++; // Skip next code unit, as it's part of the same character
-            }
-            
-            if (char <= 0x7f) {
-                chunks.push(char);
-            } else if (char <= 0x7ff) {
-                chunks.push(0xc0 | (char >> 6), 0x80 | (char & 0x3f));
-            } else if (char <= 0xffff) {
-                chunks.push(
-                    0xe0 | (char >> 12),
-                    0x80 | ((char >> 6) & 0x3f),
-                    0x80 | (char & 0x3f)
-                );
-            } else {
-                chunks.push(
-                    0xf0 | (char >> 18),
-                    0x80 | ((char >> 12) & 0x3f),
-                    0x80 | ((char >> 6) & 0x3f),
-                    0x80 | (char & 0x3f)
-                );
-            }
-        }
-        return new Uint8Array(chunks);
-    }
-};
-
-global.TextDecoder = class {
-    decode(arr) {
-        const bytes = new Uint8Array(arr);
-        let str = '';
-        for (let i = 0; i < bytes.length;) {
-            let byte = bytes[i];
-            let char;
-            
-            if ((byte & 0x80) === 0) { // ASCII
-                char = byte;
-                i += 1;
-            } else if ((byte & 0xe0) === 0xc0) { // 2-byte sequence
-                if (i + 1 >= bytes.length) throw new Error('Invalid UTF-8 sequence');
-                char = ((byte & 0x1f) << 6) | (bytes[i + 1] & 0x3f);
-                i += 2;
-            } else if ((byte & 0xf0) === 0xe0) { // 3-byte sequence
-                if (i + 2 >= bytes.length) throw new Error('Invalid UTF-8 sequence');
-                char = ((byte & 0x0f) << 12) |
-                      ((bytes[i + 1] & 0x3f) << 6) |
-                      (bytes[i + 2] & 0x3f);
-                i += 3;
-            } else if ((byte & 0xf8) === 0xf0) { // 4-byte sequence
-                if (i + 3 >= bytes.length) throw new Error('Invalid UTF-8 sequence');
-                char = ((byte & 0x07) << 18) |
-                      ((bytes[i + 1] & 0x3f) << 12) |
-                      ((bytes[i + 2] & 0x3f) << 6) |
-                      (bytes[i + 3] & 0x3f);
-                i += 4;
-            } else {
-                throw new Error('Invalid UTF-8 sequence');
-            }
-            
-            str += String.fromCodePoint(char);
-        }
-        return str;
-    }
-};
-
-// btoa/atob polyfills
-if (!global.btoa) {
-    global.btoa = str => Buffer.from(str, 'binary').toString('base64');
-}
-if (!global.atob) {
-    global.atob = str => Buffer.from(str, 'base64').toString('binary');
-}
-
-// Import Base64Codec
+// Import test utilities and Base64Codec
+const { setupPolyfills, cleanup } = require('./test-utils.js');
 const Base64Codec = require('./Base64Codec.js');
+
+// Setup test environment
+const original = { ...global };
+setupPolyfills();
 const codec = new Base64Codec();
 
 describe('Base64Codec', () => {
