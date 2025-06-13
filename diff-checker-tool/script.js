@@ -200,20 +200,8 @@ class DiffDisplay {
   }
 }
 
-// Notification handler
-class NotificationManager {
-  static show(message, duration = 2000) {
-    const notification = document.getElementById('notification');
-    if (!notification) return;
-    
-    notification.textContent = message;
-    notification.classList.add('show');
-    
-    setTimeout(() => {
-      notification.classList.remove('show');
-    }, duration);
-  }
-}
+// Import shared notification manager
+import { NotificationManager } from '../common/notification-manager.js';
 
 // Class to handle diff navigation
 class DiffNavigator {
