@@ -233,6 +233,10 @@
   transition: transform 0.3s, opacity 0.3s;
 }
 
+.c-notification.notification-error {
+  background-color: var(--color-danger);
+}
+
 .c-notification.show {
   transform: translateY(0);
   opacity: 1;

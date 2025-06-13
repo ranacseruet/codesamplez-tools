@@ -1,4 +1,5 @@
 import { removeCommentsFromCss, removeWhitespaceFromCss, shortenColorsInCss, removeUnnecessaryUnits, removeLastSemicolonsFromCss, combineSelectorsInCss, isValidCSS } from './minifier.js';
+import { NotificationManager } from '../common/notification-manager.js';
 
 // Make functions available globally for webpack bundling
 window.removeCommentsFromCss = removeCommentsFromCss;
@@ -18,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadSampleBtn = document.getElementById('load-sample');
     const copyOutputBtn = document.getElementById('copy-output');
     const resetOptionsBtn = document.getElementById('reset-options');
-    const notification = document.getElementById('notification');
     
     // Stats elements
     const originalSizeEl = document.getElementById('original-size');
@@ -109,7 +109,7 @@ top: 0px;
 
     // Event Listeners
     minifyBtn.addEventListener('click', () => minifyCss().catch(error => {
-        showNotification('Error: ' + error.message, true);
+        NotificationManager.show('Error: ' + error.message, 3000, { type: 'error' });
     }));
     clearInputBtn.addEventListener('click', clearInput);
     loadSampleBtn.addEventListener('click', loadSample);
@@ -121,14 +121,21 @@ top: 0px;
 
     // CSS Minifier Functions
     async function minifyCss() {
-        const originalCss = inputCss.value;
+        const originalCss = inputCss.value.trim();
+        
+        if (!originalCss) {
+            outputCss.value = '';
+            updateStats('', '');
+            NotificationManager.show('Error: Please enter CSS to minify', 3000, { type: 'error' });
+            return;
+        }
         
         try {
             const isValid = await isValidCSS(originalCss);
             if (!isValid) {
                 outputCss.value = '';
                 updateStats(originalCss, '');
-                showNotification('Error: Invalid CSS input. Please check your CSS syntax.', true);
+                NotificationManager.show('Error: Invalid CSS input. Please check your CSS syntax.', 3000, { type: 'error' });
                 return;
             }
 
@@ -164,10 +171,14 @@ top: 0px;
             
             // Update stats
             updateStats(originalCss, result);
+            
+            // Show success message with size reduction
+            const savings = ((originalCss.length - result.length) / originalCss.length * 100).toFixed(1);
+            NotificationManager.show(`CSS minified successfully! Reduced by ${savings}%`, 2000, { type: 'success' });
         } catch (error) {
             outputCss.value = '';
             updateStats(originalCss, '');
-            showNotification('Error: Failed to process CSS. ' + error.message, true);
+            NotificationManager.show('Error: Failed to process CSS. ' + error.message, 3000, { type: 'error' });
         }
     }
     
@@ -176,34 +187,22 @@ top: 0px;
       inputCss.value = '';
       outputCss.value = '';
       updateStats('', '');
+      NotificationManager.show('Input cleared', 2000, { type: 'success' });
     }
     
     async function loadSample() {
       inputCss.value = sampleCss;
       await minifyCss();
+      NotificationManager.show('Sample CSS loaded and minified', 2000, { type: 'success' });
     }
     
-    function showNotification(message, isError = false) {
-      notification.textContent = message;
-      notification.classList.remove('show', 'error');
-      // Reset any previous transitions by forcing a reflow
-      notification.offsetHeight;
-      notification.classList.add('show');
-      if (isError) {
-        notification.classList.add('error');
-      }
-      setTimeout(() => {
-        notification.classList.remove('show', 'error');
-      }, 3000);
-    }
-
     function copyOutput() {
       if (!outputCss.value) return;
       
       outputCss.select();
       document.execCommand('copy');
       
-      showNotification('Copied to clipboard!');
+      NotificationManager.show('Copied to clipboard!', 2000, { type: 'success' });
     }
     
     function resetOptions() {
@@ -213,6 +212,7 @@ top: 0px;
       shortenColors.checked = true;
       removeUnits.checked = true;
       removeLastSemicolons.checked = true;
+      NotificationManager.show('Options reset to defaults', 2000, { type: 'success' });
     }
     
     function updateStats(original, minified) {
