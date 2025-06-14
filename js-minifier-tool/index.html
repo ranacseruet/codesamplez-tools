@@ -45,24 +45,7 @@
       <div class="o-panel"> <!-- Use only shared panel class -->
         <!-- Removed inner o-panel-content wrapper -->
         <h2>Original JavaScript</h2>
-        <textarea id="js-minifier-input" class="c-input c-input--textarea" placeholder="Paste your JavaScript code here...">// Example JavaScript function <!-- Use shared input class -->
-function calculateSum(numbers) {
-  // This function calculates the sum of all numbers in an array
-  let sum = 0;
-  
-  for (let i = 0; i < numbers.length; i++) {
-    // Add each number to the sum
-    sum = sum + numbers[i];
-  }
-  
-  // Return the final sum
-  return sum;
-}
-
-// Example usage
-const myNumbers = [1, 2, 3, 4, 5];
-const result = calculateSum(myNumbers);
-console.log("The sum is: " + result);</textarea>
+        <textarea id="js-minifier-input" class="c-input c-input--textarea" placeholder="Paste your JavaScript code here..."></textarea>
         <!-- Removed inner o-panel-content wrapper -->
       </div>
       
@@ -78,6 +61,7 @@ console.log("The sum is: " + result);</textarea>
       <button id="js-minifier-minify-btn" class="c-button">Minify JavaScript</button> <!-- Use shared button class -->
       <button id="js-minifier-copy-btn" class="c-button c-button--secondary">Copy Minified Code</button> <!-- Use shared button classes -->
       <button id="js-minifier-clear-btn" class="c-button c-button--secondary">Clear All</button> <!-- Use shared button classes -->
+      <button id="js-minifier-load-sample-btn" class="c-button c-button--secondary">Load Sample</button> <!-- Use shared button classes -->
     </div>
     
     <div class="js-minifier-stats c-stats-panel"> <!-- Use shared stats panel class -->
@@ -101,5 +85,6 @@ console.log("The sum is: " + result);</textarea>
     </footer>
   </div>
   <script src="bundle.main.js"></script> <!-- Reverted path for build process -->
+  <div id="notification" class="c-notification"></div>
 </body>
 </html>

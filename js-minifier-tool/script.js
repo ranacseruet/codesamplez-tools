@@ -1,7 +1,28 @@
 import { JSMinifier } from './minifier.js';
+import { NotificationManager } from '../common/notification-manager.js';
 
 // Make JSMinifier available globally
 window.JSMinifier = JSMinifier;
+
+// Sample JavaScript code
+const SAMPLE_CODE = `// Example JavaScript function
+function calculateSum(numbers) {
+  // This function calculates the sum of all numbers in an array
+  let sum = 0;
+  
+  for (let i = 0; i < numbers.length; i++) {
+    // Add each number to the sum
+    sum = sum + numbers[i];
+  }
+  
+  // Return the final sum
+  return sum;
+}
+
+// Example usage
+const myNumbers = [1, 2, 3, 4, 5];
+const result = calculateSum(myNumbers);
+console.log("The sum is: " + result);`;
 
 // UI Functionality
 document.addEventListener('DOMContentLoaded', () => {
@@ -38,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!code.trim()) {
       output.value = '';
       updateStats('', '');
+      NotificationManager.show('Please enter JavaScript to minify', 2000, { type: 'error' });
       return;
     }
     
@@ -54,8 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const minified = minifier.minify(code);
       output.value = minified;
       updateStats(code, minified);
+      NotificationManager.show(`JavaScript minified successfully! (${compressionRatioEl.textContent} reduction)`, 2000, { type: 'success' });
     } catch (error) {
-      output.value = `Error during minification: ${error.message}`;
+      output.value = '';
+      NotificationManager.show(`Minification error: ${error.message}`, 3000, { type: 'error' });
       console.error('Minification error:', error);
     }
   }
@@ -66,11 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.execCommand('copy');
     
     // Visual feedback
-    const originalText = copyBtn.textContent;
-    copyBtn.textContent = 'Copied!';
-    setTimeout(() => {
-      copyBtn.textContent = originalText;
-    }, 1500);
+    NotificationManager.show('Copied to clipboard!', 1500, { type: 'success' });
   }
 
   // Clear all fields
@@ -78,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     input.value = '';
     output.value = '';
     updateStats('', '');
+    NotificationManager.show('All fields cleared', 1500, { type: 'success' });
   }
 
   // Event listeners
@@ -91,6 +112,11 @@ document.addEventListener('DOMContentLoaded', () => {
   shortenVariablesCheckbox.addEventListener('change', minifyCode);
   manglePropertiesCheckbox.addEventListener('change', minifyCode);
   
-  // Initial minification
-  minifyCode();
+  // Add event listener for Load Sample button
+  const loadSampleBtn = document.getElementById('js-minifier-load-sample-btn');
+  loadSampleBtn.addEventListener('click', () => {
+    input.value = SAMPLE_CODE;
+    minifyCode();
+    NotificationManager.show('Sample code loaded and minified', 1500, { type: 'success' });
+  });
 });

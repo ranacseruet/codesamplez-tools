@@ -9,10 +9,28 @@ class JSMinifier {
     };
   }
 
+  // Validate JavaScript syntax
+  isValidJavaScript(code) {
+    try {
+      new Function(code);
+      return true;
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        console.log('Invalid JavaScript: ', e.message);
+        return false;
+      }
+      throw e; // Re-throw non-syntax errors
+    }
+  }
+
   // Main minify method
   minify(code) {
     if (!code || typeof code !== 'string') {
       return '';
+    }
+
+    if (!this.isValidJavaScript(code)) {
+      throw new Error('Invalid JavaScript syntax');
     }
 
     let result = code;
@@ -42,6 +60,10 @@ class JSMinifier {
 
   // Remove all comments (single line and multi-line)
   removeComments(code) {
+    if (!this.options.removeComments) {
+      return code;
+    }
+
     // First handle strings to avoid removing comments within strings
     const stringPlaceholders = [];
     let processedCode = code.replace(/(['"`])(?:\\[\s\S]|(?!\1)[^\\])*\1/g, match => {
@@ -87,7 +109,7 @@ class JSMinifier {
     // Ensure keywords have proper spacing
     const keywords = ['if', 'else', 'for', 'while', 'do', 'switch', 'try', 'catch', 'finally', 'with', 'return', 'throw', 'var', 'let', 'const', 'function', 'typeof', 'instanceof', 'in'];
     keywords.forEach(keyword => {
-      const regex = new RegExp(`([^a-zA-Z0-9_$])${keyword}([^a-zA-Z0-9_$])`, 'g');
+      const regex = new RegExp(`([^a-zA-Z0-9_$])\\s*${keyword}\\s*([^a-zA-Z0-9_$])`, 'g');
       processedCode = processedCode.replace(regex, `$1${keyword}$2`);
     });
     
@@ -107,8 +129,8 @@ class JSMinifier {
     }
 
     // This is a simplified implementation!
-    // Parse out variables and functions (a full implementation would need a proper parser)
-    const variableRegex = /(?:var|let|const|function)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
+    // Parse out variables (excluding function names)
+    const variableRegex = /(?:var|let|const)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
     const foundVariables = new Set();
     
     let match;
@@ -128,7 +150,9 @@ class JSMinifier {
       'transient', 'volatile',
       // Common globals
       'window', 'document', 'console', 'Math', 'Array', 'Object', 'String', 'Number',
-      'Boolean', 'RegExp', 'Date', 'JSON', 'undefined'
+      'Boolean', 'RegExp', 'Date', 'JSON', 'undefined',
+      // Function names (don't shorten these)
+      'test', 'describe', 'it', 'expect', 'beforeEach', 'afterEach', 'beforeAll', 'afterAll'
     ]);
     
     const variables = [...foundVariables].filter(v => !reservedWords.has(v));
@@ -150,15 +174,19 @@ class JSMinifier {
       varMap[varName] = shortName;
     });
     
-    // Replace variable names
+    // Replace variable names (careful not to replace function names)
     let result = code;
     Object.keys(varMap).forEach(varName => {
+      // Skip if this looks like a function declaration
+      if (new RegExp(`function\\s+${varName}\\s*\\(`).test(code)) {
+        return;
+      }
+      
       // This is a very simplified approach and can cause bugs!
       // A proper implementation would use an AST to ensure correct replacements
       const regex = new RegExp(`\\b${varName}\\b`, 'g');
       result = result.replace(regex, varMap[varName]);
     });
-    
     return result;
   }
 
