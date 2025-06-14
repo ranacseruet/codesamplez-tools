@@ -1,11 +1,11 @@
 import { analyzeText } from './script.js';
+import { NotificationManager } from '../common/notification-manager.js';
 
 export class TextAnalyzerUI {
     constructor() {
         this.textInput = document.getElementById('textInput');
         this.clearButton = document.getElementById('clear-input');
         this.loadSampleButton = document.getElementById('load-sample');
-        this.notificationElement = document.getElementById('notification');
 
         this.elements = {
             charCount: document.getElementById('charCount'),
@@ -25,22 +25,6 @@ export class TextAnalyzerUI {
         this.updateCounts();
     }
 
-    showNotification(message, isError = false) {
-        if (this.notificationElement) {
-            this.notificationElement.textContent = message;
-            this.notificationElement.classList.remove('c-notification--success', 'c-notification--error');
-            this.notificationElement.classList.add('c-notification--visible');
-            if (isError) {
-                this.notificationElement.classList.add('c-notification--error');
-            } else {
-                this.notificationElement.classList.add('c-notification--success');
-            }
-            setTimeout(() => {
-                this.notificationElement.classList.remove('c-notification--visible');
-            }, 3000);
-        }
-    }
-
     updateCounts() {
         if (!this.textInput) return;
         const result = analyzeText(this.textInput.value);
@@ -55,9 +39,6 @@ export class TextAnalyzerUI {
         if (this.textInput) {
             this.textInput.addEventListener('input', () => {
                 this.updateCounts();
-                if (this.notificationElement) {
-                    this.notificationElement.classList.remove('c-notification--visible');
-                }
             });
         }
 
@@ -65,7 +46,7 @@ export class TextAnalyzerUI {
             this.clearButton.addEventListener('click', () => {
                 this.textInput.value = '';
                 this.updateCounts();
-                this.showNotification("Text cleared.", false);
+                NotificationManager.show("Text cleared", 3000, {type: 'success'});
             });
         }
 
@@ -74,7 +55,7 @@ export class TextAnalyzerUI {
                 const sampleText = "This is a sample text for analysis. It has multiple sentences and paragraphs.\n\nLet's see how well it works!";
                 this.textInput.value = sampleText;
                 this.updateCounts();
-                this.showNotification("Sample text loaded.", false);
+                NotificationManager.show("Sample text loaded", 3000, {type: 'success'});
             });
         }
     }

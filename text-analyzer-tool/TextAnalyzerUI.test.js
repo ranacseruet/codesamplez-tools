@@ -1,5 +1,6 @@
 import TextAnalyzerUI from './TextAnalyzerUI.js';
 import { analyzeText } from './script.js';
+import { NotificationManager } from '../common/notification-manager.js';
 
 // Polyfill TextEncoder/TextDecoder for jsdom
 const { TextEncoder, TextDecoder } = require('util');
@@ -54,6 +55,15 @@ jest.mock('./script.js', () => {
   };
 });
 
+// Mock NotificationManager
+jest.mock('../common/notification-manager.js', () => {
+  return {
+    NotificationManager: {
+      show: jest.fn()
+    }
+  };
+});
+
 const { analyzeText: mockAnalyzeText } = require('./script.js');
 
 describe('TextAnalyzerUI', () => {
@@ -90,45 +100,33 @@ describe('TextAnalyzerUI', () => {
     expect(textAnalyzerUI.textInput).toBe(document.getElementById('textInput'));
     expect(textAnalyzerUI.clearButton).toBe(document.getElementById('clear-input'));
     expect(textAnalyzerUI.loadSampleButton).toBe(document.getElementById('load-sample'));
-    expect(textAnalyzerUI.notificationElement).toBe(document.getElementById('notification'));
     
     // Verify count elements
     expect(textAnalyzerUI.elements.charCount).toBe(document.getElementById('charCount'));
     expect(textAnalyzerUI.elements.wordCount).toBe(document.getElementById('wordCount'));
   });
 
-  describe('showNotification', () => {
-    beforeEach(() => {
-      jest.useFakeTimers();
+  describe('NotificationManager integration', () => {
+    test('should call NotificationManager.show when clearing text', () => {
+      const clearButton = document.getElementById('clear-input');
+      clearButton.click();
+      
+      expect(NotificationManager.show).toHaveBeenCalledWith(
+        "Text cleared", 
+        3000, 
+        {type: 'success'}
+      );
     });
 
-    afterEach(() => {
-      jest.useRealTimers();
-    });
-
-    test('should show success notification', () => {
-      textAnalyzerUI.showNotification('Test message');
+    test('should call NotificationManager.show when loading sample text', () => {
+      const loadSampleButton = document.getElementById('load-sample');
+      loadSampleButton.click();
       
-      expect(textAnalyzerUI.notificationElement.textContent).toBe('Test message');
-      expect(textAnalyzerUI.notificationElement.classList.contains('c-notification--visible')).toBe(true);
-      expect(textAnalyzerUI.notificationElement.classList.contains('c-notification--success')).toBe(true);
-    });
-
-    test('should show error notification', () => {
-      textAnalyzerUI.showNotification('Error message', true);
-      
-      expect(textAnalyzerUI.notificationElement.textContent).toBe('Error message');
-      expect(textAnalyzerUI.notificationElement.classList.contains('c-notification--visible')).toBe(true);
-      expect(textAnalyzerUI.notificationElement.classList.contains('c-notification--error')).toBe(true);
-    });
-
-    test('should hide notification after timeout', () => {
-      textAnalyzerUI.showNotification('Test message');
-      
-      // Fast-forward until all timers have been executed
-      jest.runAllTimers();
-      
-      expect(textAnalyzerUI.notificationElement.classList.contains('c-notification--visible')).toBe(false);
+      expect(NotificationManager.show).toHaveBeenCalledWith(
+        "Sample text loaded", 
+        3000, 
+        {type: 'success'}
+      );
     });
   });
 
