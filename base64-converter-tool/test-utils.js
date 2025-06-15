@@ -106,9 +106,6 @@ const setupPolyfills = () => {
 
 const cleanup = (originalGlobals) => {
     Object.assign(global, originalGlobals);
-    afterEach(() => {
-        document.body.innerHTML = '';
-    });
 };
 
 module.exports = {
