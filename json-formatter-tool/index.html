@@ -15,7 +15,10 @@
 
         <!-- Input Panel -->
         <div class="o-panel"> <!-- Replaced jsonf-panel -->
-            <h2>Input JSON</h2>
+            <h3>Input JSON</h3>
+            <div class="o-panel-header jsonf-panel-header">
+                <button class="c-button c-button--secondary jsonf-clear-btn" id="clearInputBtn">Clear Input</button>
+            </div>
             <div class="o-panel-content">
                 <textarea class="c-input c-input--textarea" placeholder="Paste your JSON here..."></textarea> <!-- Replaced jsonf-input -->
             </div>
@@ -34,7 +37,10 @@
 
         <!-- Output Panel -->
         <div class="o-panel"> <!-- Replaced jsonf-panel -->
-            <h2>Formatted Output</h2>
+            <h3>Formatted Output</h3>
+            <div class="o-panel-header jsonf-panel-header">
+                <button class="c-button c-button--secondary jsonf-clear-btn" id="clearOutputBtn">Clear Output</button>
+            </div>
             <div class="o-panel-content"> <!-- Added o-panel-content -->
                 <pre class="c-code-output"><code></code></pre> <!-- Replaced jsonf-output-container and jsonf-output -->
             </div>
@@ -52,10 +58,9 @@
             </div>
         </div>
 
-        <div class="jsonf-error"></div> <!-- Kept tool-specific error display -->
-
+        <div id="notification" class="c-notification"></div> <!-- Notification element for shared NotificationManager -->
         <div class="jsonf-footer"> <!-- Kept tool-specific footer -->
-            Made with ❤️ for developers
+            Made by Developer, for developers  with ❤️
         </div>
     </div>
     <script src="bundle.main.js"></script>

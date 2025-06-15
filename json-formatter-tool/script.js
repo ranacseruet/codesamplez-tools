@@ -1,3 +1,5 @@
+import { NotificationManager } from '../common/notification-manager.js';
+
 export class JSONFormatter {
   constructor(initDom = true) {
     if (initDom) {
@@ -7,6 +9,8 @@ export class JSONFormatter {
       this.copyBtn = document.querySelector('#copyOutputBtn');
       this.sampleBtn = document.querySelector('#loadSampleBtn');
       this.sortCheckbox = document.querySelector('#sortKeys'); // Use ID for checkbox
+      this.clearInputBtn = document.querySelector('#clearInputBtn');
+      this.clearOutputBtn = document.querySelector('#clearOutputBtn');
       this.errorContainer = document.querySelector('.jsonf-error'); // This class was kept
       this.originalSizeEl = document.querySelector('.jsonf-original-size'); // This class was kept
       this.formattedSizeEl = document.querySelector('.jsonf-formatted-size'); // This class was kept
@@ -24,6 +28,12 @@ export class JSONFormatter {
         this.clearError();
         this.updateStats(this.input.value, '');
       });
+      if (this.clearInputBtn) {
+        this.clearInputBtn.addEventListener('click', () => this.clearInput());
+      }
+      if (this.clearOutputBtn) {
+        this.clearOutputBtn.addEventListener('click', () => this.clearOutput());
+      }
     }
   }
 
@@ -38,8 +48,9 @@ export class JSONFormatter {
       this.output.innerHTML = '';
       this.renderJSON(formatted, this.output);
       this.copyBtn.disabled = false;
-      this.errorContainer.textContent = '';
+      // No need to manipulate errorContainer as NotificationManager handles messaging
       this.updateStats(inputValue, JSON.stringify(formatted, null, 2));
+      NotificationManager.show('JSON formatted successfully!', 2000, { type: 'success' });
     } catch (error) {
       this.showError(`Invalid JSON: ${error.message}`);
       this.copyBtn.disabled = true;
@@ -154,7 +165,7 @@ export class JSONFormatter {
       // Try modern Clipboard API first
       if (globalThis.navigator?.clipboard) {
         await globalThis.navigator.clipboard.writeText(textToCopy);
-        this.showTemporaryMessage('Copied to clipboard!');
+        NotificationManager.show('Copied to clipboard!', 2000, { type: 'success' });
         return;
       }
 
@@ -170,7 +181,7 @@ export class JSONFormatter {
         if (!successful) {
           throw new Error('Copy command failed');
         }
-        this.showTemporaryMessage('Copied to clipboard!');
+        NotificationManager.show('Copied to clipboard!', 2000, { type: 'success' });
       } finally {
         document.body.removeChild(textarea);
       }
@@ -180,22 +191,26 @@ export class JSONFormatter {
   }
 
   showError(message) {
-    this.errorContainer.textContent = message;
-    this.errorContainer.classList.add('active');
+    NotificationManager.show(message, 3000, { type: 'error' });
   }
 
   clearError() {
-    this.errorContainer.textContent = '';
-    this.errorContainer.classList.remove('active');
+    // No action needed as NotificationManager handles auto-dismissal
   }
 
-  showTemporaryMessage(message) {
-    const msg = document.createElement('div');
-    msg.textContent = message;
-    msg.className = 'jsonf-temp-message';
-    document.body.appendChild(msg);
-    
-    setTimeout(() => msg.remove(), 2000);
+
+  clearInput() {
+    this.input.value = '';
+    this.clearError();
+    this.updateStats('', '');
+    NotificationManager.show('Input cleared!', 2000, { type: 'success' });
+  }
+
+  clearOutput() {
+    this.output.innerHTML = '';
+    this.copyBtn.disabled = true;
+    this.updateStats(this.input.value, '');
+    NotificationManager.show('Output cleared!', 2000, { type: 'success' });
   }
 
   loadSampleData() {
@@ -252,6 +267,7 @@ export class JSONFormatter {
 
     this.input.value = JSON.stringify(sampleData);
     this.formatJSON();
+    NotificationManager.show('Sample data loaded successfully!', 2000, { type: 'success' });
   }
 }
 

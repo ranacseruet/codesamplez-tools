@@ -1,7 +1,15 @@
 import { JSONFormatter } from './script.js';
+import * as NotificationManagerModule from '../common/notification-manager.js';
+
+jest.mock('../common/notification-manager.js', () => ({
+  NotificationManager: {
+    show: jest.fn()
+  }
+}));
 
 describe('JSONFormatter', () => {
   let formatter;
+  let mockNotificationManager;
 
   beforeEach(() => {
     formatter = new JSONFormatter(false);
@@ -12,6 +20,8 @@ describe('JSONFormatter', () => {
     formatter.originalSizeEl = { textContent: '' };
     formatter.formattedSizeEl = { textContent: '' };
     formatter.sortCheckbox = { checked: true };
+    mockNotificationManager = NotificationManagerModule.NotificationManager;
+    jest.clearAllMocks();
   });
 
   describe('sortKeysAlphabetically', () => {
@@ -103,7 +113,28 @@ describe('JSONFormatter', () => {
     test('should handle invalid JSON', () => {
       formatter.input.value = '{"invalid": json}';
       formatter.formatJSON();
-      expect(formatter.errorContainer.textContent).toContain('Invalid JSON');
+      expect(mockNotificationManager.show).toHaveBeenCalledWith(expect.stringContaining('Invalid JSON'), 3000, { type: 'error' });
+    });
+
+    test('should handle very large JSON input', () => {
+      const largeObject = {};
+      for (let i = 0; i < 1000; i++) {
+        largeObject[`key${i}`] = `value${i}`;
+      }
+      formatter.input.value = JSON.stringify(largeObject);
+      formatter.formatJSON();
+      const keys = formatter.output.querySelectorAll('.json-key');
+      expect(keys.length).toBe(1000);
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('JSON formatted successfully!', 2000, { type: 'success' });
+    });
+
+    test('should handle deeply nested JSON structures', () => {
+      const nestedObject = { a: { b: { c: { d: { e: 1 } } } } };
+      formatter.input.value = JSON.stringify(nestedObject);
+      formatter.formatJSON();
+      const containers = formatter.output.querySelectorAll('.json-node');
+      expect(containers.length).toBeGreaterThanOrEqual(5); // At least 5 nested levels
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('JSON formatted successfully!', 2000, { type: 'success' });
     });
 
     test('should properly sort nested objects', () => {
@@ -149,6 +180,39 @@ describe('JSONFormatter', () => {
     });
   });
 
+  describe('updateStats', () => {
+    beforeEach(() => {
+      formatter.originalSizeEl = { textContent: '' };
+      formatter.formattedSizeEl = { textContent: '' };
+    });
+
+    test('should update stats with correct byte sizes for original and formatted JSON', () => {
+      const original = '{"key":"value"}';
+      const formatted = JSON.stringify(JSON.parse(original), null, 2);
+      formatter.updateStats(original, formatted);
+      expect(formatter.originalSizeEl.textContent).toBe('15.00 bytes');
+      expect(formatter.formattedSizeEl.textContent).toContain('bytes');
+    });
+
+    test('should handle empty input and output in stats', () => {
+      formatter.updateStats('', '');
+      expect(formatter.originalSizeEl.textContent).toBe('0 bytes');
+      expect(formatter.formattedSizeEl.textContent).toBe('0 bytes');
+    });
+
+    test('should handle large JSON data in stats', () => {
+      const largeObject = {};
+      for (let i = 0; i < 1000; i++) {
+        largeObject[`key${i}`] = `value${i}`;
+      }
+      const original = JSON.stringify(largeObject);
+      const formatted = JSON.stringify(largeObject, null, 2);
+      formatter.updateStats(original, formatted);
+      expect(formatter.originalSizeEl.textContent).toContain('KB');
+      expect(formatter.formattedSizeEl.textContent).toContain('KB');
+    });
+  });
+
   describe('copyOutput', () => {
     let originalNavigator;
     let mockClipboard;
@@ -159,8 +223,8 @@ describe('JSONFormatter', () => {
         writeText: jest.fn().mockResolvedValue(undefined)
       };
       
-      // Directly mock the clipboard on the formatter instance
-      formatter.navigator = { clipboard: mockClipboard };
+      // Mock globalThis.navigator.clipboard as used in script.js
+      global.navigator.clipboard = mockClipboard;
       
       formatter.output = document.createElement('div');
       formatter.output.textContent = 'test content';
@@ -175,9 +239,9 @@ describe('JSONFormatter', () => {
 
     afterEach(() => {
       global.navigator = originalNavigator;
+      delete global.navigator.clipboard; // Clean up mock
     });
 
-    /*
     test('should copy output text to clipboard', async () => {
       // Ensure output has content
       formatter.output.textContent = 'test content';
@@ -187,45 +251,81 @@ describe('JSONFormatter', () => {
       // Verify clipboard was called with correct content
       expect(mockClipboard.writeText).toHaveBeenCalledTimes(1);
       expect(mockClipboard.writeText).toHaveBeenCalledWith('test content');
-      expect(formatter.errorContainer.classList.add).not.toHaveBeenCalled();
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('Copied to clipboard!', 2000, { type: 'success' });
     });
-    */
+
+    test('should handle empty output during copy', async () => {
+      formatter.output.textContent = '';
+      await formatter.copyOutput();
+      expect(mockClipboard.writeText).toHaveBeenCalledWith('');
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('Copied to clipboard!', 2000, { type: 'success' });
+    });
+
+    test('should handle special characters in output during copy', async () => {
+      formatter.output.textContent = '{"key": "value\\nwith\\nspecial chars"}';
+      await formatter.copyOutput();
+      expect(mockClipboard.writeText).toHaveBeenCalledWith('{"key": "value\\nwith\\nspecial chars"}');
+    });
 
     test('should show error message on copy failure', async () => {
       mockClipboard.writeText.mockRejectedValue(new Error('Failed'));
       await formatter.copyOutput();
-      expect(formatter.errorContainer.textContent).toContain('Failed to copy');
-      expect(formatter.errorContainer.classList.add).toHaveBeenCalledWith('active');
+      expect(mockNotificationManager.show).toHaveBeenCalledWith(expect.stringContaining('Failed to copy'), 3000, { type: 'error' });
+    });
+
+    test('should use fallback copy mechanism when clipboard API is unavailable', async () => {
+      // Simulate no clipboard API by deleting it
+      delete global.navigator.clipboard;
+      
+      // Mock document.execCommand for fallback
+      document.execCommand = jest.fn().mockReturnValue(true);
+      const mockCreateElement = jest.spyOn(document, 'createElement').mockReturnValue({
+        value: '',
+        style: { position: '' },
+        select: jest.fn()
+      });
+      const mockAppendChild = jest.spyOn(document.body, 'appendChild').mockImplementation(() => {});
+      const mockRemoveChild = jest.spyOn(document.body, 'removeChild').mockImplementation(() => {});
+      
+      formatter.output.textContent = 'fallback test content';
+      await formatter.copyOutput();
+      
+      expect(document.execCommand).toHaveBeenCalledWith('copy');
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('Copied to clipboard!', 2000, { type: 'success' });
+      
+      mockCreateElement.mockRestore();
+      mockAppendChild.mockRestore();
+      mockRemoveChild.mockRestore();
+      delete document.execCommand; // Clean up
     });
   });
 
-  describe('showTemporaryMessage', () => {
-    let originalBody;
-    let mockTimers;
-
-    beforeEach(() => {
-      originalBody = document.body.innerHTML;
-      document.body.innerHTML = ''; // Clear completely
-      mockTimers = jest.useFakeTimers();
+  describe('NotificationManager.show', () => {
+    test('should call NotificationManager.show with correct parameters for success messages', () => {
+      formatter.clearInput();
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('Input cleared!', 2000, { type: 'success' });
     });
+  });
 
-    afterEach(() => {
-      document.body.innerHTML = originalBody;
-      mockTimers.clearAllTimers();
-      mockTimers.useRealTimers();
+  describe('clearInput', () => {
+    test('should clear input field and update stats', () => {
+      formatter.input.value = '{"key": "value"}';
+      formatter.clearInput();
+      
+      expect(formatter.input.value).toBe('');
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('Input cleared!', 2000, { type: 'success' });
     });
+  });
 
-    test('should create and remove temporary message', () => {
-      formatter.showTemporaryMessage('Test message');
+  describe('clearOutput', () => {
+    test('should clear output field and disable copy button', () => {
+      formatter.output.innerHTML = '<div>Formatted JSON</div>';
+      formatter.copyBtn.disabled = false;
+      formatter.clearOutput();
       
-      // Verify message was created with correct content
-      const msg = document.querySelector('.jsonf-temp-message');
-      expect(msg).not.toBeNull();
-      expect(msg.textContent).toBe('Test message');
-      
-      // Verify message is removed after timeout
-      mockTimers.advanceTimersByTime(2000);
-      expect(document.querySelector('.jsonf-temp-message')).toBeNull();
+      expect(formatter.output.innerHTML).toBe('');
+      expect(formatter.copyBtn.disabled).toBe(true);
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('Output cleared!', 2000, { type: 'success' });
     });
   });
 
@@ -240,26 +340,156 @@ describe('JSONFormatter', () => {
   });
 
   describe('initializeEvents', () => {
+    let callbacks;
+    let formatBtnMock;
+    let copyBtnMock;
+    let sampleBtnMock;
+    let inputMock;
+    let clearInputBtnMock;
+    let clearOutputBtnMock;
+
+    beforeEach(() => {
+      callbacks = {
+        formatBtn: { click: null },
+        copyBtn: { click: null },
+        sampleBtn: { click: null },
+        input: { input: null },
+        clearInputBtn: { click: null },
+        clearOutputBtn: { click: null }
+      };
+
+      formatBtnMock = jest.fn((event, callback) => {
+        if (event === 'click') {
+          callbacks.formatBtn.click = callback;
+        }
+      });
+
+      copyBtnMock = jest.fn((event, callback) => {
+        if (event === 'click') {
+          callbacks.copyBtn.click = callback;
+        }
+      });
+
+      sampleBtnMock = jest.fn((event, callback) => {
+        if (event === 'click') {
+          callbacks.sampleBtn.click = callback;
+        }
+      });
+
+      inputMock = jest.fn((event, callback) => {
+        if (event === 'input') {
+          callbacks.input.input = callback;
+        }
+      });
+
+      clearInputBtnMock = jest.fn((event, callback) => {
+        if (event === 'click') {
+          callbacks.clearInputBtn.click = callback;
+        }
+      });
+
+      clearOutputBtnMock = jest.fn((event, callback) => {
+        if (event === 'click') {
+          callbacks.clearOutputBtn.click = callback;
+        }
+      });
+
+      formatter.formatBtn = { addEventListener: formatBtnMock };
+      formatter.copyBtn = { addEventListener: copyBtnMock };
+      formatter.sampleBtn = { addEventListener: sampleBtnMock };
+      formatter.input = { addEventListener: inputMock, value: '{"key": "value"}' };
+      formatter.clearInputBtn = { addEventListener: clearInputBtnMock };
+      formatter.clearOutputBtn = { addEventListener: clearOutputBtnMock };
+    });
+
     test('should set up event listeners', () => {
-      const mockAddEventListener = jest.fn();
-      formatter.formatBtn = { addEventListener: mockAddEventListener };
-      formatter.copyBtn = { addEventListener: mockAddEventListener };
-      formatter.sampleBtn = { addEventListener: mockAddEventListener };
-      formatter.input = { addEventListener: mockAddEventListener };
-      
       formatter.initializeEvents();
-      expect(mockAddEventListener).toHaveBeenCalledTimes(4);
+      expect(formatBtnMock).toHaveBeenCalledTimes(1);
+      expect(copyBtnMock).toHaveBeenCalledTimes(1);
+      expect(sampleBtnMock).toHaveBeenCalledTimes(1);
+      expect(inputMock).toHaveBeenCalledTimes(1);
+      expect(clearInputBtnMock).toHaveBeenCalledTimes(1);
+      expect(clearOutputBtnMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('should trigger formatJSON on format button click', () => {
+      formatter.formatJSON = jest.fn();
+      formatter.initializeEvents();
+      if (callbacks.formatBtn.click) {
+        callbacks.formatBtn.click();
+        expect(formatter.formatJSON).toHaveBeenCalled();
+      } else {
+        throw new Error('formatBtn callback not set');
+      }
+    });
+
+    test('should trigger copyOutput on copy button click', () => {
+      formatter.copyOutput = jest.fn();
+      formatter.initializeEvents();
+      if (callbacks.copyBtn.click) {
+        callbacks.copyBtn.click();
+        expect(formatter.copyOutput).toHaveBeenCalled();
+      } else {
+        throw new Error('copyBtn callback not set');
+      }
+    });
+
+    test('should trigger loadSampleData on sample button click', () => {
+      formatter.loadSampleData = jest.fn();
+      formatter.initializeEvents();
+      if (callbacks.sampleBtn.click) {
+        callbacks.sampleBtn.click();
+        expect(formatter.loadSampleData).toHaveBeenCalled();
+      } else {
+        throw new Error('sampleBtn callback not set');
+      }
+    });
+
+    test('should trigger clearInput on clear input button click', () => {
+      formatter.clearInput = jest.fn();
+      formatter.initializeEvents();
+      if (callbacks.clearInputBtn.click) {
+        callbacks.clearInputBtn.click();
+        expect(formatter.clearInput).toHaveBeenCalled();
+      } else {
+        throw new Error('clearInputBtn callback not set');
+      }
+    });
+
+    test('should trigger clearOutput on clear output button click', () => {
+      formatter.clearOutput = jest.fn();
+      formatter.initializeEvents();
+      if (callbacks.clearOutputBtn.click) {
+        callbacks.clearOutputBtn.click();
+        expect(formatter.clearOutput).toHaveBeenCalled();
+      } else {
+        throw new Error('clearOutputBtn callback not set');
+      }
+    });
+
+    test('should trigger clearError and updateStats on input change', () => {
+      formatter.clearError = jest.fn();
+      formatter.updateStats = jest.fn();
+      formatter.initializeEvents();
+      if (callbacks.input.input) {
+        callbacks.input.input();
+        expect(formatter.clearError).toHaveBeenCalled();
+        expect(formatter.updateStats).toHaveBeenCalledWith('{"key": "value"}', '');
+      } else {
+        throw new Error('input callback not set');
+      }
     });
   });
 
   describe('clearError', () => {
-    test('should clear error state', () => {
+    test('should do nothing as NotificationManager handles auto-dismissal', () => {
       formatter.errorContainer.textContent = 'Error';
       formatter.errorContainer.classList.add('active');
       
       formatter.clearError();
-      expect(formatter.errorContainer.textContent).toBe('');
-      expect(formatter.errorContainer.classList.remove).toHaveBeenCalledWith('active');
+      // No expectations as the method is now a no-op
+      expect(formatter.errorContainer.textContent).toBe('Error');
+      expect(formatter.errorContainer.classList.remove).not.toHaveBeenCalled();
     });
   });
 

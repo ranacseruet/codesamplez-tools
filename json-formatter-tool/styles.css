@@ -1,5 +1,12 @@
 /* Tool-specific styles for JSON Formatter */
 
+/* Custom styles for panel headers with right-aligned buttons */
+.jsonf-panel-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--spacing-sm); /* 10px */
+}
+
 /* Custom styles for the controls toolbar */
 .jsonf-controls-custom {
   margin: var(--spacing-md) 0; /* 15px */
