@@ -17,8 +17,16 @@ jest.mock('./JWTBuilder.js', () => ({
   JWTBuilder: jest.fn(() => mockBuilder)
 }));
 
+// Mock NotificationManager
+jest.mock('../common/notification-manager.js', () => ({
+  NotificationManager: {
+    show: jest.fn()
+  }
+}));
+
 // Import after mocking
 const scriptModule = jest.requireActual('./script.js');
+const { NotificationManager } = jest.requireMock('../common/notification-manager.js');
 
 describe('JWT Builder UI Tests', () => {
   beforeEach(() => {
@@ -101,7 +109,7 @@ describe('JWT Builder UI Tests', () => {
   });
 
   describe('JWT Building', () => {
-    test('builds JWT with all claims', async () => {
+    test('builds JWT with all claims and shows success notification', async () => {
       const jwt = await scriptModule.buildJWT();
 
       expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
@@ -118,6 +126,7 @@ describe('JWT Builder UI Tests', () => {
       );
 
       expect(document.getElementById('result').textContent).toBe('mocked.jwt.token');
+      expect(NotificationManager.show).toHaveBeenCalledWith('JWT successfully built', 2000, { type: 'success' });
       expect(jwt).toBe('mocked.jwt.token');
     });
 
@@ -157,10 +166,103 @@ describe('JWT Builder UI Tests', () => {
       expect(jwt).toBe('mocked.jwt.token');
     });
 
-    test('shows error when no secret key provided', async () => {
+    test('ignores custom claims with empty name or value', async () => {
+      scriptModule.addClaim();
+      const claimRow = document.querySelector('.custom-claim-row');
+      claimRow.querySelector('input[name="claimName"]').value = '';
+      claimRow.querySelector('input[name="claimValue"]').value = 'value';
+
+      scriptModule.addClaim();
+      const claimRow2 = document.querySelectorAll('.custom-claim-row')[1];
+      claimRow2.querySelector('input[name="claimName"]').value = 'key';
+      claimRow2.querySelector('input[name="claimValue"]').value = '';
+
+      const jwt = await scriptModule.buildJWT();
+
+      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
+        expect.not.objectContaining({
+          '': expect.anything(),
+          'key': expect.anything()
+        }),
+        expect.any(String)
+      );
+
+      expect(jwt).toBe('mocked.jwt.token');
+    });
+
+    test('handles error when building JWT with invalid payload', async () => {
+      mockBuilder.buildJWT.mockRejectedValue(new SyntaxError('Invalid JSON'));
+      const jwt = await scriptModule.buildJWT();
+
+      expect(document.getElementById('result').textContent).toBe('');
+      expect(NotificationManager.show).toHaveBeenCalledWith('Invalid JSON payload.', 3000, { type: 'error' });
+      expect(jwt).toBeNull();
+    });
+
+    test('handles generic error when building JWT', async () => {
+      mockBuilder.buildJWT.mockRejectedValue(new Error('Generic error'));
+      const jwt = await scriptModule.buildJWT();
+
+      expect(document.getElementById('result').textContent).toBe('');
+      expect(NotificationManager.show).toHaveBeenCalledWith('Error building JWT: Generic error', 3000, { type: 'error' });
+      expect(jwt).toBeNull();
+    });
+
+    test('shows error notification when no secret key provided', async () => {
       document.getElementById('key').value = '';
       const jwt = await scriptModule.buildJWT();
-      expect(document.getElementById('result').textContent).toBe('Error: Secret key is required for JWT signing');
+      expect(document.getElementById('result').textContent).toBe('');
+      expect(NotificationManager.show).toHaveBeenCalledWith('Error: Secret key is required for JWT signing', 3000, { type: 'error' });
+      expect(jwt).toBeNull();
+    });
+  });
+
+  describe('Date Parsing', () => {
+    test('handles invalid date input for exp', async () => {
+      document.getElementById('exp').value = 'invalid-date';
+      mockBuilder.parseDateTime.mockReturnValue(null);
+
+      const jwt = await scriptModule.buildJWT();
+
+      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
+        expect.not.objectContaining({
+          exp: expect.any(Number)
+        }),
+        expect.any(String)
+      );
+
+      expect(jwt).toBeNull();
+    });
+
+    test('handles invalid date input for nbf', async () => {
+      document.getElementById('nbf').value = 'invalid-date';
+      mockBuilder.parseDateTime.mockReturnValue(null);
+
+      const jwt = await scriptModule.buildJWT();
+
+      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
+        expect.not.objectContaining({
+          nbf: expect.any(Number)
+        }),
+        expect.any(String)
+      );
+
+      expect(jwt).toBeNull();
+    });
+
+    test('handles invalid date input for iat', async () => {
+      document.getElementById('iat').value = 'invalid-date';
+      mockBuilder.parseDateTime.mockReturnValue(null);
+
+      const jwt = await scriptModule.buildJWT();
+
+      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
+        expect.not.objectContaining({
+          iat: expect.any(Number)
+        }),
+        expect.any(String)
+      );
+
       expect(jwt).toBeNull();
     });
   });
@@ -178,12 +280,12 @@ describe('JWT Builder UI Tests', () => {
       document.body.innerHTML += '<button id="copyJwtBtn">Copy</button>';
     });
 
-    test('copies JWT to clipboard', async () => {
+    test('copies JWT to clipboard and shows success notification', async () => {
       document.getElementById('result').textContent = 'test.jwt.token';
       const result = await scriptModule.copyJWT();
       
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith('test.jwt.token');
-      expect(document.getElementById('copyJwtBtn').textContent).toBe('Copied!');
+      expect(NotificationManager.show).toHaveBeenCalledWith('JWT copied to clipboard', 2000, { type: 'success' });
       expect(result).toBe(true);
     });
 
@@ -192,25 +294,35 @@ describe('JWT Builder UI Tests', () => {
       const result = await scriptModule.copyJWT();
       
       expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
-      expect(document.getElementById('copyJwtBtn').textContent).not.toBe('Copied!');
       expect(result).toBe(false);
     });
 
-    test('button text returns to original after timeout', async () => {
-      jest.useFakeTimers();
-      
+    test('shows error notification on clipboard copy failure', async () => {
       document.getElementById('result').textContent = 'test.jwt.token';
-      const copyButton = document.getElementById('copyJwtBtn');
-      copyButton.textContent = 'Copy JWT';
-      
+      navigator.clipboard.writeText.mockRejectedValue(new Error('Clipboard error'));
       const result = await scriptModule.copyJWT();
-      expect(copyButton.textContent).toBe('Copied!');
+      
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('test.jwt.token');
+      expect(NotificationManager.show).toHaveBeenCalledWith('Failed to copy JWT to clipboard', 3000, { type: 'error' });
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('JWT Clearing', () => {
+    test('clears JWT output and shows success notification', () => {
+      document.getElementById('result').textContent = 'test.jwt.token';
+      const result = scriptModule.clearJWT();
+      
+      expect(document.getElementById('result').textContent).toBe('');
+      expect(NotificationManager.show).toHaveBeenCalledWith('JWT output cleared', 2000, { type: 'success' });
       expect(result).toBe(true);
+    });
+
+    test('returns false when result element does not exist', () => {
+      document.getElementById('result').remove();
+      const result = scriptModule.clearJWT();
       
-      jest.advanceTimersByTime(2000);
-      expect(copyButton.textContent).toBe('Copy JWT');
-      
-      jest.useRealTimers();
+      expect(result).toBe(false);
     });
   });
 });

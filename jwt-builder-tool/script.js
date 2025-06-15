@@ -1,4 +1,5 @@
 import { JWTBuilder } from './JWTBuilder.js';
+import { NotificationManager } from '../common/notification-manager.js';
 
 // Export for testing and create a singleton instance
 export const jwtBuilder = (typeof window !== 'undefined' && window.jwtBuilder) || new JWTBuilder();
@@ -121,18 +122,21 @@ export async function buildJWT() {
 
   try {
     if (!key.trim()) {
-      resultDiv.textContent = 'Error: Secret key is required for JWT signing';
+      NotificationManager.show('Error: Secret key is required for JWT signing', 3000, { type: 'error' });
+      resultDiv.textContent = '';
       return null;
     }
 
     const jwt = await jwtBuilder.buildJWT(payload, key);
     resultDiv.textContent = jwt;
+    NotificationManager.show('JWT successfully built', 2000, { type: 'success' });
     return jwt;
   } catch (error) {
     const message = error instanceof SyntaxError ? 
       'Invalid JSON payload.' : 
       'Error building JWT: ' + error.message;
-    resultDiv.textContent = message;
+    NotificationManager.show(message, 3000, { type: 'error' });
+    resultDiv.textContent = '';
     return null;
   }
 }
@@ -148,19 +152,22 @@ export async function copyJWT() {
 
   try {
     await navigator.clipboard.writeText(jwt);
-    const copyButton = document.getElementById('copyJwtBtn');
-    if (copyButton) {
-      const originalText = copyButton.textContent;
-      copyButton.textContent = 'Copied!';
-      setTimeout(() => {
-        copyButton.textContent = originalText;
-      }, 2000);
-    }
+    NotificationManager.show('JWT copied to clipboard', 2000, { type: 'success' });
     return true;
   } catch (err) {
     console.error('Failed to copy JWT:', err);
+    NotificationManager.show('Failed to copy JWT to clipboard', 3000, { type: 'error' });
     return false;
   }
+}
+
+export function clearJWT() {
+  const resultDiv = document.getElementById('result');
+  if (!resultDiv) return false;
+  
+  resultDiv.textContent = '';
+  NotificationManager.show('JWT output cleared', 2000, { type: 'success' });
+  return true;
 }
 
 // Add functions to window for HTML use
@@ -169,4 +176,5 @@ if (typeof window !== 'undefined') {
   window.removeClaim = removeClaim;
   window.buildJWT = buildJWT;
   window.copyJWT = copyJWT;
+  window.clearJWT = clearJWT;
 }

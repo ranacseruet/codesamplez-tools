@@ -59,6 +59,23 @@
   align-items: flex-start; /* Align button top */
 }
 
+/* JWT Token Output Styling */
+.jwt-builder-container .jwt-token-output {
+  font-size: 16px; /* Increased from default 14px */
+  font-weight: 500; /* Slightly bolder */
+  color: #059669; /* Awesome emerald green color */
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); /* Subtle green gradient background */
+  border: 2px solid #10b981; /* Green border to match the color theme */
+  line-height: 1.6; /* Better readability */
+  letter-spacing: 0.5px; /* Slight letter spacing for better readability */
+}
+
+.jwt-builder-container .jwt-token-output:empty::before {
+  color: var(--color-text-secondary); /* Keep placeholder text normal */
+  font-weight: normal; /* Reset font weight for placeholder */
+  letter-spacing: normal; /* Reset letter spacing for placeholder */
+}
+
 /* Center the Build JWT button */
 .jwt-builder-container #buildJwtBtn {
   align-self: center;
@@ -70,18 +87,21 @@
   font-family: var(--font-family-mono);
   background-color: var(--color-bg-light);
   border-color: var(--color-border-light);
-  color: var(--color-primary);
+  color: #1f2937; /* Modern dark gray for better readability */
+  font-weight: 500; /* Slightly bolder for better visibility */
 }
 
 .jwt-builder-container .c-input:focus {
   background-color: var(--color-bg);
   border-color: var(--color-primary);
-  color: var(--color-text);
+  color: #111827; /* Even darker for focused state */
+  font-weight: 500; /* Maintain weight in focus */
 }
 
 .jwt-builder-container .c-input::placeholder {
-  color: var(--color-text-secondary);
-  opacity: 0.7;
+  color: #9ca3af; /* Modern light gray for placeholders */
+  opacity: 1; /* Full opacity for better visibility */
+  font-weight: 400; /* Normal weight for placeholders */
 }
 
 /* Responsive adjustments */
