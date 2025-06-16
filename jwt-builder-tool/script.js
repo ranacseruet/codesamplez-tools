@@ -117,12 +117,24 @@ export async function buildJWT() {
   });
 
   const key = document.getElementById('key')?.value || '';
+  const iss = document.getElementById('iss')?.value || '';
+  const exp = document.getElementById('exp')?.value || '';
   const resultDiv = document.getElementById('result');
   if (!resultDiv) return null;
 
   try {
     if (!key.trim()) {
       NotificationManager.show('Error: Secret key is required for JWT signing', 3000, { type: 'error' });
+      resultDiv.textContent = '';
+      return null;
+    }
+    if (!iss.trim()) {
+      NotificationManager.show('Error: Issuer (iss) is required for JWT', 3000, { type: 'error' });
+      resultDiv.textContent = '';
+      return null;
+    }
+    if (!exp.trim()) {
+      NotificationManager.show('Error: Expiration Time (exp) is required for JWT', 3000, { type: 'error' });
       resultDiv.textContent = '';
       return null;
     }

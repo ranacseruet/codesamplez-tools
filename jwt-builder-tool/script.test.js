@@ -215,6 +215,22 @@ describe('JWT Builder UI Tests', () => {
       expect(NotificationManager.show).toHaveBeenCalledWith('Error: Secret key is required for JWT signing', 3000, { type: 'error' });
       expect(jwt).toBeNull();
     });
+
+    test('shows error notification when no issuer (iss) provided', async () => {
+      document.getElementById('iss').value = '';
+      const jwt = await scriptModule.buildJWT();
+      expect(document.getElementById('result').textContent).toBe('');
+      expect(NotificationManager.show).toHaveBeenCalledWith('Error: Issuer (iss) is required for JWT', 3000, { type: 'error' });
+      expect(jwt).toBeNull();
+    });
+
+    test('shows error notification when no expiration time (exp) provided', async () => {
+      document.getElementById('exp').value = '';
+      const jwt = await scriptModule.buildJWT();
+      expect(document.getElementById('result').textContent).toBe('');
+      expect(NotificationManager.show).toHaveBeenCalledWith('Error: Expiration Time (exp) is required for JWT', 3000, { type: 'error' });
+      expect(jwt).toBeNull();
+    });
   });
 
   describe('Date Parsing', () => {
