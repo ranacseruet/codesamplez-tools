@@ -67,8 +67,12 @@
   </div> <!-- Close o-grid-2col -->
     
     <div class="o-toolbar"> <!-- Use shared toolbar object (removed u-text-center) -->
-      <button id="jwt-decoder-copy-btn" class="c-button c-button--secondary">Copy Decoded</button> <!-- Use shared button components -->
       <button id="jwt-decoder-clear-btn" class="c-button c-button--secondary">Clear All</button> <!-- Use shared button components -->
+      <div class="primary-actions">
+        <button id="jwt-decoder-decode-btn" class="c-button c-button--primary">Decode JWT Token</button> <!-- Use shared button components -->
+        <button id="jwt-decoder-validate-btn" class="c-button c-button--primary">Validate Signature</button> <!-- Use shared button components -->
+      </div>
+      <button id="jwt-decoder-copy-btn" class="c-button c-button--secondary">Copy Decoded</button> <!-- Use shared button components -->
     </div>
     
     <div class="c-stats-panel"> <!-- Use shared stats panel component -->
@@ -81,6 +85,7 @@
     <footer class="jwt-decoder-footer"> <!-- Keep specific footer for now -->
       <p>JWT Decoder - Safely decode and verify your JWT tokens. No tokens are stored or transmitted</p>
     </footer>
+    <div id="notification" class="c-notification"></div>
   </div>
   <script src="bundle.main.js"></script>
 </body>

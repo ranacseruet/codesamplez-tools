@@ -2,8 +2,16 @@
 
 /* Center the toolbar buttons */
 .o-toolbar {
-  justify-content: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin: var(--spacing-md) 0; /* Add margin consistent with original */
+}
+
+.o-toolbar .primary-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin: 0 auto; /* Center the primary actions */
 }
 
 .jwt-decoder-status-container {

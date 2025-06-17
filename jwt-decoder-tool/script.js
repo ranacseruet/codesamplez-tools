@@ -1,5 +1,6 @@
 import { JWTDecoder } from './JWTDecoder.js';
 import { JsonTreeViewRenderer } from './JsonTreeViewRenderer.js';
+import { NotificationManager } from '../common/notification-manager.js';
 
 class JWTDecoderUI {
     constructor() {
@@ -31,7 +32,7 @@ class JWTDecoderUI {
         this.setupTabs();
         this.setupEventListeners();
         this.preloadData();
-        this.decodeAndRender(true); // Initial decode and verify
+        this.decodeAndRender(false); // Initial decode only, no signature validation
         this.initializeTooltips();
     }
 
@@ -56,16 +57,17 @@ class JWTDecoderUI {
     }
 
     setupEventListeners() {
-        // Debounced Input Handlers
+        // Debounced Input Handlers for automatic actions
         this.elements.jwtInput.addEventListener('input', this.debounceDecode.bind(this));
         this.elements.jwtInput.addEventListener('paste', this.debounceDecode.bind(this));
         this.elements.secretInput.addEventListener('input', this.debounceVerify.bind(this));
         this.elements.secretInput.addEventListener('paste', this.debounceVerify.bind(this));
 
-        // Button Click Handlers
-        // Removed verifyBtn listener
+        // Button Click Handlers for manual actions
         this.elements.copyBtn.addEventListener('click', this.copyDecoded.bind(this));
         this.elements.clearBtn.addEventListener('click', this.clearAll.bind(this));
+        document.getElementById('jwt-decoder-decode-btn').addEventListener('click', () => this.decodeAndRender(false));
+        document.getElementById('jwt-decoder-validate-btn').addEventListener('click', () => this.decodeAndRender(true));
     }
 
     preloadData() {
@@ -76,16 +78,22 @@ class JWTDecoderUI {
 
     initializeTooltips() {
         this.elements.copyBtn.setAttribute('title', 'Copy decoded token to clipboard');
+        document.getElementById('jwt-decoder-decode-btn').setAttribute('title', 'Decode the JWT token');
+        document.getElementById('jwt-decoder-validate-btn').setAttribute('title', 'Decode and validate the JWT signature with the provided secret key');
     }
 
     // --- Core Logic & Rendering ---
     async decodeAndRender(verifySignature = false) {
+        return this.decodeAndRenderWithAutoVerify(verifySignature, false);
+    }
+
+    async decodeAndRenderWithAutoVerify(verifySignature = false, isAuto = false) {
         const jwt = this.elements.jwtInput.value.trim();
         const secret = this.elements.secretInput.value.trim();
 
         if (!jwt) {
             this.clearOutputs();
-            this.updateStatusOutput('Please enter a JWT token.', 'default');
+            this.updateStatusOutput('Enter a JWT token.', 'default');
         } else {
             try {
                 const decoder = new JWTDecoder(jwt);
@@ -107,10 +115,14 @@ class JWTDecoderUI {
 
                 this.switchToRawTab();
 
-                // Determine Verify Status and Update Combined Status Output
+                // Determine Verify Status and Update Status Output based on action
                 if (verifySignature) {
                     if (!secret) {
-                        this.updateStatusOutput('Decoded successfully. Secret key required for verification.', 'warning');
+                        if (isAuto) {
+                            this.updateStatusOutput('Decoded successfully. Secret key required for verification.', 'warning');
+                        } else {
+                            this.updateStatusOutput('Decoded successfully. Secret key required for signature validation.', 'warning');
+                        }
                     } else {
                         const isValid = await decoder.verifySignature(secret);
                         this.updateStatusOutput(
@@ -119,8 +131,12 @@ class JWTDecoderUI {
                         );
                     }
                 } else {
-                    // Use 'warning' style for partially validated state
-                    this.updateStatusOutput('Decoded successfully. Signature not verified.', 'warning');
+                    // Only show decoding status when not verifying signature, unless it's an auto action
+                    if (isAuto) {
+                        this.updateStatusOutput('Decoded successfully. Signature not verified.', 'warning');
+                    } else {
+                        this.updateStatusOutput('Decoded successfully.', 'success');
+                    }
                 }
 
             } catch (e) {
@@ -139,16 +155,20 @@ class JWTDecoderUI {
         switch (type) {
             case 'success':
                 output.classList.add('status-success');
+                NotificationManager.show(message, 2000, { type: 'success' });
                 break;
             case 'error':
                 output.classList.add('status-error');
+                NotificationManager.show(message, 2000, { type: 'error' });
                 break;
             case 'warning':
                 output.classList.add('status-warning');
+                NotificationManager.show(message, 2000, { type: 'warning' });
                 break;
             case 'default':
             default:
                 output.classList.add('status-default');
+                NotificationManager.show(message, 2000, { type: 'default' });
                 break;
         }
     }
@@ -184,22 +204,21 @@ class JWTDecoderUI {
             this.clearAll(); // Reset immediately if token is cleared
             return;
         }
-        // Auto-decode after a short delay. Trigger verification if a secret is present.
+        // Auto-decode after a short delay, trigger signature validation if secret is present.
         this.decodeTimeout = setTimeout(() => {
             const shouldVerify = !!this.elements.secretInput.value.trim();
-            this.decodeAndRender(shouldVerify);
+            this.decodeAndRenderWithAutoVerify(shouldVerify);
         }, 300);
     }
 
     debounceVerify() {
         clearTimeout(this.verifyTimeout);
-        // Auto-verify after a short delay if secret is present
+        // Auto-verify on secret input change if secret is present.
         const secret = this.elements.secretInput.value.trim();
         if (secret) {
-            this.verifyTimeout = setTimeout(() => this.decodeAndRender(true), 300); // Trigger verification
+            this.verifyTimeout = setTimeout(() => this.decodeAndRenderWithAutoVerify(true), 300);
         } else {
-             // If secret is removed, update status to reflect only decode status (which will now be warning)
-             this.decodeAndRender(false);
+            this.verifyTimeout = setTimeout(() => this.decodeAndRenderWithAutoVerify(false), 300);
         }
     }
 
@@ -208,22 +227,17 @@ class JWTDecoderUI {
         const copyBtn = this.elements.copyBtn;
 
         if (!decodedContent || decodedContent.startsWith('Error:')) {
+            NotificationManager.show(!decodedContent ? 'No content to copy' : 'Cannot copy error content', 2000, { type: 'error' });
             copyBtn.setAttribute('title', !decodedContent ? 'No content to copy' : 'Cannot copy error content');
             return;
         }
 
         try {
             await navigator.clipboard.writeText(decodedContent);
-            copyBtn.textContent = 'Copied!';
-            copyBtn.style.backgroundColor = 'rgb(40, 167, 69)';
-
-            setTimeout(() => {
-                copyBtn.textContent = 'Copy Decoded';
-                copyBtn.style.backgroundColor = '';
-                copyBtn.setAttribute('title', 'Copy decoded token to clipboard'); // Reset title
-            }, 2000);
+            NotificationManager.show('Copied to clipboard!', 2000, { type: 'success' });
         } catch (err) {
             console.error('Failed to copy:', err);
+            NotificationManager.show('Failed to copy to clipboard', 2000, { type: 'error' });
             copyBtn.setAttribute('title', 'Failed to copy to clipboard');
         }
     }
@@ -233,7 +247,8 @@ class JWTDecoderUI {
         this.elements.secretInput.value = '';
         this.clearOutputs();
         this.switchToRawTab();
-        this.updateStatusOutput('Cleared. Enter a JWT token.', 'default');
+        this.updateStatusOutput('Enter a JWT token.', 'default');
+        NotificationManager.show('All fields cleared.', 2000, { type: 'success' });
     }
 }
 
