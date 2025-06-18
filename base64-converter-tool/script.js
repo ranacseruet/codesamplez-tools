@@ -365,11 +365,18 @@ if (typeof window !== 'undefined') {
 
         // Set up event listeners
         const convertHandler = function() {
+            if (!this.elements.input.value.trim()) {
+                NotificationManager.show('Please enter some text or upload a file to convert', 3000, { type: 'error' });
+            }
             this.processInput();
         }.bind(converter);
         elements.convertButton.addEventListener('click', convertHandler);
 
         const clearButtonHandler = function() {
+            if (!this.elements.input.value.trim() && !this.elements.result.textContent.trim()) {
+                NotificationManager.show('Nothing to clear', 3000, { type: 'info' });
+                return;
+            }
             this.elements.input.value = '';
             this.elements.result.textContent = '';
             this.elements.status.textContent = '';
@@ -377,6 +384,7 @@ if (typeof window !== 'undefined') {
             this.elements.downloadDecodedButton.disabled = true;
             this.elements.copyButton.disabled = true;
             this.elements.fileInput.value = '';
+            NotificationManager.show('Cleared', 2000, { type: 'success' });
         }.bind(converter);
         elements.clearButton.addEventListener('click', clearButtonHandler);
 
