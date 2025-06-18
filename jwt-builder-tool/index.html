@@ -99,16 +99,26 @@
         <div class="c-form-group">
           <h3 class="c-form-group-header">Signature</h3>
           <div class="c-form-row">
-          <label for="key" class="required">
-            <span class="c-tooltip-container" title="Secret key for signing the JWT">
-              Signature Key:
-              <span class="c-tooltip">Required - The secret key used to sign the JWT. Keep this secure and never share it.</span>
-            </span>
-          </label>
-          <input type="text" id="key" class="c-input" value="jwt-secret" placeholder="Your secret key">
-        </div>
+            <label for="key" class="required">
+              <span class="c-tooltip-container" title="Secret key for signing the JWT">
+                Signature Key:
+                <span class="c-tooltip">Required - The secret key used to sign the JWT. Keep this secure and never share it.</span>
+              </span>
+            </label>
+            <input type="text" id="key" class="c-input" value="your-jwt-secret-key" placeholder="Your secret key">
+            <button type="button" class="c-button c-button--secondary c-button--small" onclick="generateRandomSecret()" title="Generate a random secret key">
+              🎲
+            </button>
+          </div>
         </div>
       </div> <!-- End of o-grid-2col -->
+
+      <!-- Algorithm Information -->
+      <div class="c-form-group">
+        <p class="algorithm-info">
+          NOTE: For signature key signing, we only support "HS256 (HMAC with SHA-256)" algorithm for now.
+        </p>
+      </div>
 
       <!-- Custom Claims -->
       <div class="c-form-group">

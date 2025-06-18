@@ -142,3 +142,10 @@
   /* Redundant rule removed from here, now applied globally above */
   /* .jwt-builder-container #buildJwtBtn { ... } */
 }
+
+/* Style for algorithm information note */
+.jwt-builder-container .algorithm-info {
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}

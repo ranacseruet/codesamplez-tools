@@ -191,6 +191,26 @@ describe('JWTBuilder', () => {
     });
   });
 
+  describe('generateRandomSecret', () => {
+    test('generates a random secret of specified length', () => {
+      const secret = jwtBuilder.generateRandomSecret(32);
+      expect(secret).toBeDefined();
+      expect(secret.length).toBe(32);
+    });
+
+    test('generates different secrets on subsequent calls', () => {
+      const secret1 = jwtBuilder.generateRandomSecret(32);
+      const secret2 = jwtBuilder.generateRandomSecret(32);
+      expect(secret1).not.toBe(secret2);
+    });
+
+    test('generates base64url encoded secret', () => {
+      const secret = jwtBuilder.generateRandomSecret(32);
+      // Base64url characters only
+      expect(secret).toMatch(/^[A-Za-z0-9\-_]+$/);
+    });
+  });
+
   describe('buildJWT', () => {
     test('builds JWT with custom payload', async () => {
       const payload = {

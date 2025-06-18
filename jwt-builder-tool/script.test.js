@@ -9,7 +9,8 @@ const mockBuilder = {
     return Math.floor(date.getTime() / 1000);
   }),
   buildJWT: jest.fn().mockResolvedValue('mocked.jwt.token'),
-  getFormattedDate: jest.fn().mockReturnValue('2024-01-01T00:00:00Z')
+  getFormattedDate: jest.fn().mockReturnValue('2024-01-01T00:00:00Z'),
+  generateRandomSecret: jest.fn().mockReturnValue('random-secret-key-32-chars-long!!')
 };
 
 // Mock modules
@@ -321,6 +322,30 @@ describe('JWT Builder UI Tests', () => {
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith('test.jwt.token');
       expect(NotificationManager.show).toHaveBeenCalledWith('Failed to copy JWT to clipboard', 3000, { type: 'error' });
       expect(result).toBe(false);
+    });
+  });
+
+  describe('Random Secret Generation', () => {
+    beforeEach(() => {
+      mockBuilder.generateRandomSecret = jest.fn().mockReturnValue('random-secret-key-32-chars-long!!');
+    });
+
+    test('generates random secret and updates input field', () => {
+      const keyInput = document.getElementById('key');
+      keyInput.value = 'old-secret';
+      
+      const result = scriptModule.generateRandomSecret();
+      
+      expect(keyInput.value).toBe('random-secret-key-32-chars-long!!');
+      expect(NotificationManager.show).toHaveBeenCalledWith('Random secret generated', 2000, { type: 'success' });
+      expect(result).toBe('random-secret-key-32-chars-long!!');
+    });
+
+    test('returns null when key input element does not exist', () => {
+      document.getElementById('key').remove();
+      const result = scriptModule.generateRandomSecret();
+      
+      expect(result).toBeNull();
     });
   });
 

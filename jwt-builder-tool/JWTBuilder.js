@@ -127,6 +127,12 @@ export class JWTBuilder {
     };
   }
 
+  generateRandomSecret(length = 32) {
+    const array = new Uint8Array(length);
+    crypto.getRandomValues(array);
+    return this.base64UrlEncode(array).substring(0, length);
+  }
+
   async buildJWT(payload = null, secretKey = '') {
     try {
       if (!secretKey?.trim()) {

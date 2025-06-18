@@ -153,6 +153,17 @@ export async function buildJWT() {
   }
 }
 
+export function generateRandomSecret() {
+  const keyInput = document.getElementById('key');
+  if (keyInput) {
+    const randomSecret = jwtBuilder.generateRandomSecret(32);
+    keyInput.value = randomSecret;
+    NotificationManager.show('Random secret generated', 2000, { type: 'success' });
+    return randomSecret;
+  }
+  return null;
+}
+
 export async function copyJWT() {
   const resultDiv = document.getElementById('result');
   if (!resultDiv) return false;
@@ -189,4 +200,5 @@ if (typeof window !== 'undefined') {
   window.buildJWT = buildJWT;
   window.copyJWT = copyJWT;
   window.clearJWT = clearJWT;
+  window.generateRandomSecret = generateRandomSecret;
 }
