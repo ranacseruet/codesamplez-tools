@@ -36,6 +36,28 @@ class Base64Codec {
         }
     }
 
+    _encodeBase64Bytes(bytes) {
+        // Manual Base64 encoding is used to avoid issues with `btoa()` and large byte arrays.
+        // The `btoa(String.fromCharCode(...bytes))` approach can cause a "Maximum call stack size exceeded" error
+        // for large inputs and may not handle all Unicode characters correctly.
+        const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+        let result = '';
+        const len = bytes.length;
+        for (let i = 0; i < len; i += 3) {
+            const byte1 = bytes[i];
+            const byte2 = i + 1 < len ? bytes[i + 1] : 0;
+            const byte3 = i + 2 < len ? bytes[i + 2] : 0;
+
+            const triplet = (byte1 << 16) | (byte2 << 8) | byte3;
+
+            result += base64Chars[(triplet >> 18) & 0x3F];
+            result += base64Chars[(triplet >> 12) & 0x3F];
+            result += i + 1 < len ? base64Chars[(triplet >> 6) & 0x3F] : '=';
+            result += i + 2 < len ? base64Chars[triplet & 0x3F] : '=';
+        }
+        return result;
+    }
+
     encodeText(text, encoding) {
         if (text === undefined || text === null) {
             throw new Error('Input text cannot be null or undefined');
@@ -71,7 +93,7 @@ class Base64Codec {
                 case 'utf8':
                 default: {
                     const bytes = this.encoder.encode(text);
-                    return btoa(String.fromCharCode(...bytes));
+                    return this._encodeBase64Bytes(bytes);
                 }
             }
         } catch (error) {
@@ -137,6 +159,42 @@ class Base64Codec {
             // Otherwise, it's likely an issue with the Base64 string itself (e.g., from atob).
             throw new Error('Invalid base64 string');
         }
+    }
+
+    // URL-safe Base64 methods adapted from jwt-builder-tool/base64.js
+    base64UrlToBase64(str) {
+        let output = str.replace(/-/g, '+').replace(/_/g, '/');
+        switch (output.length % 4) {
+            case 0:
+                break;
+            case 2:
+                output += '==';
+                break;
+            case 3:
+                output += '=';
+                break;
+            default:
+                throw new Error('Invalid base64url string');
+        }
+        return output;
+    }
+
+    base64ToBase64Url(str) {
+        return str.replace(/[+]/g, '-')
+            .replace(/[/]/g, '_')
+            .replace(/[=]+$/, '');
+    }
+
+    encodeBase64Url(data) {
+        const bytes = typeof data === 'string' ? this.encoder.encode(data) : new Uint8Array(data);
+        const base64 = this._encodeBase64Bytes(bytes);
+        return this.base64ToBase64Url(base64);
+    }
+
+    decodeBase64Url(str) {
+        const base64 = this.base64UrlToBase64(str);
+        const decoded = atob(base64);
+        return Uint8Array.from(decoded, c => c.charCodeAt(0));
     }
 }
 

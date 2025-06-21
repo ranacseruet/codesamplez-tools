@@ -1,8 +1,9 @@
-import { base64ToBase64Url, encodeBase64 } from './base64.js';
+const Base64Codec = require('../common/Base64Codec.js');
 
 export class JWTBuilder {
   constructor() {
     this.header = { alg: 'HS256', typ: 'JWT' };
+    this.codec = new Base64Codec();
   }
 
   getFormattedDate(date) {
@@ -29,54 +30,12 @@ export class JWTBuilder {
   }
 
   uint8ArrayToString(array) {
-    const CHUNK_SIZE = 8192; // Process in chunks to avoid call stack limits
-    let result = '';
-    for (let i = 0; i < array.length; i++) {
-      const byte = array[i];
-      if ((byte & 0x80) === 0) {
-        // ASCII character
-        result += String.fromCharCode(byte);
-      } else if ((byte & 0xe0) === 0xc0) {
-        // 2-byte UTF-8 sequence
-        const byte2 = array[++i];
-        const codePoint = ((byte & 0x1f) << 6) | (byte2 & 0x3f);
-        result += String.fromCharCode(codePoint);
-      } else if ((byte & 0xf0) === 0xe0) {
-        // 3-byte UTF-8 sequence
-        const byte2 = array[++i];
-        const byte3 = array[++i];
-        const codePoint = ((byte & 0x0f) << 12) | ((byte2 & 0x3f) << 6) | (byte3 & 0x3f);
-        result += String.fromCharCode(codePoint);
-      } else if ((byte & 0xf8) === 0xf0) {
-        // 4-byte UTF-8 sequence
-        const byte2 = array[++i];
-        const byte3 = array[++i];
-        const byte4 = array[++i];
-        let codePoint = ((byte & 0x07) << 18) | ((byte2 & 0x3f) << 12) | ((byte3 & 0x3f) << 6) | (byte4 & 0x3f);
-        // Convert to UTF-16 surrogate pairs
-        codePoint -= 0x10000;
-        result += String.fromCharCode(
-          (codePoint >> 10) + 0xd800,
-          (codePoint & 0x3ff) + 0xdc00
-        );
-      }
-    }
-    return result;
+    return new TextDecoder().decode(array);
   }
 
   base64UrlEncode(input) {
-    let data;
-    if (input instanceof ArrayBuffer) {
-      data = new Uint8Array(input);
-    } else if (input instanceof Uint8Array) {
-      data = input;
-    } else {
-      // For strings, convert to UTF-8 bytes first
-      data = new TextEncoder().encode(input);
-    }
-    
-    const base64 = encodeBase64(data);
-    return base64ToBase64Url(base64);
+    const data = typeof input === 'string' ? new TextEncoder().encode(input) : input;
+    return this.codec.encodeBase64Url(data);
   }
 
   async generateSignature(signingInput, key) {

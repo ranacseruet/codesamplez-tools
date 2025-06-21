@@ -1,39 +1,23 @@
 import { jest } from '@jest/globals';
+const { TextEncoder, TextDecoder } = require('util');
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
+// Simple polyfills for atob and btoa for the test environment
+global.atob = str => Buffer.from(str, 'base64').toString('binary');
+global.btoa = str => Buffer.from(str, 'binary').toString('base64');
+
 import { JWTBuilder } from './JWTBuilder.js';
-import { setupBase64Polyfills } from './base64.js';
 
-// Polyfills for test environment
-class MockTextEncoder {
-  encode(str) {
-    const utf8 = unescape(encodeURIComponent(str));
-    const result = new Uint8Array(utf8.length);
-    for (let i = 0; i < utf8.length; i++) {
-      result[i] = utf8.charCodeAt(i);
-    }
-    return result;
+function decodeBase64Url(str) {
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
   }
+  return Buffer.from(base64, 'base64').toString('utf8');
 }
 
-class MockTextDecoder {
-  decode(bytes) {
-    let result = '';
-    const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-    for (let i = 0; i < data.length; i++) {
-      result += String.fromCharCode(data[i]);
-    }
-    return decodeURIComponent(escape(result));
-  }
-}
 
-if (typeof TextEncoder === 'undefined') {
-  global.TextEncoder = MockTextEncoder;
-}
-
-if (typeof TextDecoder === 'undefined') {
-  global.TextDecoder = MockTextDecoder;
-}
-
-setupBase64Polyfills();
 
 describe('JWTBuilder', () => {
   let jwtBuilder;
@@ -164,7 +148,7 @@ describe('JWTBuilder', () => {
       
       expect(crypto.subtle.importKey).toHaveBeenCalledWith(
         'raw',
-        expect.any(Uint8Array),
+        new TextEncoder().encode('secret-key'),
         { name: 'HMAC', hash: 'SHA-256' },
         false,
         ['sign']
@@ -225,8 +209,8 @@ describe('JWTBuilder', () => {
 
       // Verify header and payload
       const [headerB64, payloadB64] = jwt.split('.');
-      const header = JSON.parse(atob(headerB64));
-      const decodedPayload = JSON.parse(atob(payloadB64));
+      const header = JSON.parse(decodeBase64Url(headerB64));
+      const decodedPayload = JSON.parse(decodeBase64Url(payloadB64));
 
       expect(header).toEqual({ alg: 'HS256', typ: 'JWT' });
       expect(decodedPayload).toEqual(payload);
@@ -238,7 +222,7 @@ describe('JWTBuilder', () => {
       expect(jwt.split('.')).toHaveLength(3);
 
       const [headerB64, payloadB64] = jwt.split('.');
-      const decodedPayload = JSON.parse(atob(payloadB64));
+      const decodedPayload = JSON.parse(decodeBase64Url(payloadB64));
 
       // Verify standard claims are present
       expect(decodedPayload).toHaveProperty('iat');
@@ -279,7 +263,7 @@ describe('JWTBuilder', () => {
       expect(jwt).toBeDefined();
       
       const [headerB64, payloadB64] = jwt.split('.');
-      const decodedPayload = JSON.parse(atob(payloadB64));
+      const decodedPayload = JSON.parse(decodeBase64Url(payloadB64));
       expect(decodedPayload).toEqual(payload);
     });
 
@@ -292,7 +276,7 @@ describe('JWTBuilder', () => {
       expect(jwt).toBeDefined();
       
       const [headerB64, payloadB64] = jwt.split('.');
-      const decodedPayload = JSON.parse(atob(payloadB64));
+      const decodedPayload = JSON.parse(decodeBase64Url(payloadB64));
       expect(decodedPayload).toEqual(payload);
     });
 
@@ -305,7 +289,7 @@ describe('JWTBuilder', () => {
       expect(jwt).toBeDefined();
       
       const [headerB64, payloadB64] = jwt.split('.');
-      const decodedPayload = JSON.parse(atob(payloadB64));
+      const decodedPayload = JSON.parse(decodeBase64Url(payloadB64));
       expect(decodedPayload).toEqual(payload);
     });
   });

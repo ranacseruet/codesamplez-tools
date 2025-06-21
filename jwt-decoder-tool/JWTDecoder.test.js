@@ -1,4 +1,7 @@
 // Import the class and standalone function
+const { TextEncoder, TextDecoder } = require('util');
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
 import { JWTDecoder, hmacSha256 } from './JWTDecoder.js';
 
 // Helper function needed for comparing results in tests

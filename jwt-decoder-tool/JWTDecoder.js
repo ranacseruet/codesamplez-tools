@@ -42,6 +42,8 @@ export async function hmacSha256(message, key) {
 /**
  * Decodes and validates JWT tokens.
  */
+const Base64Codec = require('../common/Base64Codec.js');
+
 export class JWTDecoder {
     #tokenString = '';
     #header = null;
@@ -49,6 +51,7 @@ export class JWTDecoder {
     #signature = null;
     #isValidTokenFormat = false;
     #parseError = null;
+    #codec = new Base64Codec();
 
     /**
      * Creates an instance of JWTDecoder and parses the token.
@@ -123,34 +126,8 @@ export class JWTDecoder {
      * @private
      */
     #base64UrlDecode(str) {
-        str = str.trim();
-        // Allow empty strings? For now, assume they are invalid based on JWT structure
-        if (!str) {
-             throw new Error('Invalid base64url: input is empty');
-        }
-        if (!/^[A-Za-z0-9\-_]+$/.test(str)) {
-            throw new Error('Invalid base64url characters');
-        }
-        str = str.replace(/-/g, '+').replace(/_/g, '/');
-        switch (str.length % 4) {
-            case 0: break;
-            case 2: str += '=='; break;
-            case 3: str += '='; break;
-            default: throw new Error('Invalid base64url length');
-        }
-        try {
-            // Use TextDecoder for potentially better UTF-8 handling
-            const binaryString = atob(str);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            // Revert to simple binary string return, as TextDecoder may not be available in all test envs (like JSDOM)
-            return binaryString;
-        } catch (e) {
-            // Catch potential errors from atob itself
-             throw new Error(`Failed to decode base64: ${e.message}`);
-        }
+        const bytes = this.#codec.decodeBase64Url(str);
+        return new TextDecoder().decode(bytes);
     }
 
     /**

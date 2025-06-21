@@ -1,5 +1,5 @@
 // Import dependencies
-const Base64Codec = require('./Base64Codec.js');
+const Base64Codec = require('../common/Base64Codec.js');
 const { NotificationManager } = require('../common/notification-manager.js');
 
 // Converter factory function
