@@ -68,8 +68,17 @@ export class TextAnalyzerUI {
         }
 
         try {
-            // Simple worker path - no complex path detection needed
-            const workerPath = './text-analyzer.worker.js';
+            // Dynamic worker path resolution based on current script location
+            let workerPath = './text-analyzer.worker.js'; // Default for development
+            
+            // Only override for production-like environments
+            if (typeof window !== 'undefined' && window.location) {
+                const pathSegments = window.location.pathname.split('/');
+                // Check if we're likely in a production environment
+                if (pathSegments.includes('tools') && !window.location.port) {
+                    workerPath = 'text-analyzer-tool/text-analyzer.worker.js';
+                }
+            }
             
             console.log('Initializing worker with path:', workerPath);
             this.worker = new Worker(workerPath);
