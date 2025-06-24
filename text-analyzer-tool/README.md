@@ -1,11 +1,11 @@
 # Text Analyzer
 
-A lightweight, browser-based text analysis tool that provides real-time statistics about your text using Web Workers for optimal performance.
+A lightweight, browser-based text analysis tool that provides real-time statistics about your text.
 
 ![Text Analyzer Tool](images/text-analyzer.png)
 
 ## Privacy & Security
-- 🔒 **100% Client-Side Processing**: All text analysis happens locally in your browser using Web Workers
+- 🔒 **100% Client-Side Processing**: All text analysis happens locally in your browser
 - 🚫 **No Data Storage**: Your text is never saved or transmitted to any server
 - 💻 **Offline Support**: Works without internet connection after initial page load
 - 🔐 **Zero Data Collection**: No cookies, tracking, or data persistence
@@ -22,28 +22,18 @@ A lightweight, browser-based text analysis tool that provides real-time statisti
 - **Average Sentence Length**: Computes the average number of words per sentence
 - **Punctuation Statistics**: Tracks usage frequency of common punctuation marks (periods, commas, question marks, exclamation marks)
 
-## Browser Requirements
-
-This tool requires a modern browser with **Web Worker support**. Supported browsers include:
-- Chrome 4+
-- Firefox 3.5+
-- Safari 4+
-- Edge (all versions)
-- Opera 10.6+
-
 ## Usage
 
 ### Online
 1. Visit [Codesamplez.com/tools/text-analyzer](https://codesamplez.com/tools/text-analyzer)
 2. Enter or paste your text in the textarea
-3. Click "Analyze Text" to get comprehensive statistics
-4. View real-time results displayed below the input area
+3. View real-time statistics updating automatically as you type or modify the text
 
 ### Local Development
 1. Clone the repository
 2. Install dependencies: `npm install`
 3. Start the development server: `npm run dev`
-4. Visit `http://localhost:8081` in your browser
+4. Visit `http://localhost:8080` in your browser
 5. Navigate to the Text Analyzer tool
 
 ## Development
@@ -51,7 +41,6 @@ This tool requires a modern browser with **Web Worker support**. Supported brows
 ### Prerequisites
 - Node.js (v14 or higher)
 - npm (v6 or higher)
-- Modern browser with Web Worker support
 
 ### Setup
 1. Clone the repository
@@ -69,86 +58,65 @@ All test files are located in the same directory as their implementation files.
 
 ## How It Works
 
-The tool uses a **Web Worker-based architecture** for optimal performance:
+The tool uses vanilla JavaScript with event listeners to provide real-time text analysis:
 
-- **Main Thread**: Handles UI interactions and displays results
-- **Web Worker**: Performs all text analysis computations to prevent UI blocking
-- **Shared Analysis Logic**: Self-contained worker with embedded analysis algorithms
-
-### Performance Optimization
-
-- **Non-blocking Analysis**: All text processing happens in a Web Worker to keep the UI responsive
-- **Result Caching**: Identical text analysis results are cached to avoid redundant processing
-- **Error Handling**: Comprehensive error handling with user-friendly notifications
-- **Loading Indicators**: Visual feedback during analysis operations
+- **Character Counting**: Direct string length measurement with support for Unicode characters
+- **Word Counting**: Splits text on whitespace and filters empty entries
+- **Sentence Detection**: Uses regex pattern `[.!?]+` to identify sentence boundaries, with special handling for abbreviations
+- **Line Counting**: Splits text on newline characters (`\n`)
+- **Paragraph Analysis**: Identifies text blocks separated by blank lines
 
 ## Architecture
 
-The application follows a simplified, modern architecture:
+The application follows a modular architecture:
 
 - **HTML5**: Semantic markup for accessibility and SEO, using shared classes where applicable.
 - **CSS**: Leverages shared styles from `common/shared-styles.css` for base elements, layout, and common components (buttons, notifications). Tool-specific styles or overrides are located in `text-analyzer-tool/styles.css`. Follows BEM methodology.
-- **JavaScript**: Vanilla JS with modular class-based design and Web Worker integration.
+- **JavaScript**: Vanilla JS with modular class-based design.
 
 ### Key Components
 
 ```javascript
-// Main UI Controller
-class TextAnalyzerUI {
-    constructor() {
-        this.initWorker();
-        this.initializeEventListeners();
-    }
+// Real-time text analysis with modular update functions
+document.addEventListener('DOMContentLoaded', () => {
+    const textInput = document.querySelector('.text-analyzer-input');
+    textInput.addEventListener('input', analyzeText);
+});
+
+function analyzeText() {
+    const text = document.querySelector('.text-analyzer-input').value;
     
-    initWorker() {
-        this.worker = new Worker('./text-analyzer.worker.js');
-        this.worker.onmessage = (e) => {
-            this.updateUI(e.data.data);
-        };
-    }
-    
-    updateCounts() {
-        this.worker.postMessage(this.textInput.value);
-    }
+    // Update all statistics
+    updateWordCount(text);
+    updateCharCount(text);
+    updateParagraphCount(text);
+    updateAverageWordLength(text);
+    updateAverageSentenceLength(text);
+    updatePunctuationStats(text);
 }
 
-// Web Worker (text-analyzer.worker.js)
-function analyzeText(text) {
-    // Comprehensive text analysis logic
-    return {
-        charCount, wordCount, sentenceCount,
-        paragraphCount, avgWordLength, avgSentenceLength,
-        periodCount, commaCount, questionCount, exclamationCount
+// Example of new analysis functions
+function updateParagraphCount(text) {
+    const paragraphs = text.trim().split(/\n\s*\n/).filter(para => para.length > 0);
+    document.querySelector('#paragraphCount').textContent = paragraphs.length;
+}
+
+function updatePunctuationStats(text) {
+    const stats = {
+        periods: (text.match(/\./g) || []).length,
+        commas: (text.match(/,/g) || []).length,
+        questions: (text.match(/\?/g) || []).length,
+        exclamations: (text.match(/!/g) || []).length
     };
+    // Update UI with punctuation counts
 }
-
-self.onmessage = function(e) {
-    const result = analyzeText(e.data);
-    self.postMessage({ success: true, data: result });
-};
-```
-
-### File Structure
-
-```
-text-analyzer-tool/
-├── index.html              # Main HTML structure
-├── styles.css              # Tool-specific styles
-├── script.js               # Entry point and initialization
-├── TextAnalyzerUI.js       # Main UI controller class
-├── text-analyzer.worker.js # Self-contained Web Worker
-├── TextAnalyzerUI.test.js  # UI component tests
-├── script.test.js          # Integration tests
-└── images/
-    └── text-analyzer.png   # Tool screenshot
 ```
 
 ## Limitations
 
-- **Browser Compatibility**: Requires Web Worker support (not available in very old browsers)
-- **Word Count Accuracy**: Word count is approximate and may not handle all international writing systems perfectly
-- **Sentence Detection**: Basic sentence detection that may not catch all edge cases (e.g., abbreviations with periods)
-- **Line Count**: Includes empty lines in the count
+- Word count is approximate and may not handle all international writing systems perfectly
+- Sentence detection is basic and may not catch all edge cases (e.g., abbreviations with periods)
+- Line count includes empty lines after trimming whitespace
 
 ## Future Improvements
 
@@ -169,10 +137,3 @@ text-analyzer-tool/
 - **Language Support**:
   - Multi-language support for word/sentence detection
   - Special character handling for different writing systems
-
-## Technical Notes
-
-- **Web Worker Path**: The worker file is automatically copied during the build process
-- **Error Handling**: Graceful degradation with informative error messages
-- **Performance**: Optimized for large text processing without blocking the main thread
-- **Memory Management**: Efficient text processing with minimal memory footprint

@@ -17,20 +17,13 @@ const tools = [
 
 const baseConfig = {
   mode: process.env.NODE_ENV || 'development',
-    optimization: {
-      minimize: true,
-      minimizer: [
-        new TerserPlugin({
-          terserOptions: {
-            compress: {
-              drop_console: process.env.NODE_ENV === 'production' ? ['log', 'info', 'warn'] : false,
-              drop_debugger: process.env.NODE_ENV === 'production'
-            }
-          }
-        }),
-        new CssMinimizerPlugin()
-      ]
-    },
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin(),
+      new CssMinimizerPlugin()
+    ]
+  },
   resolve: {
     fallback: { "crypto": false }
   },
@@ -58,53 +51,42 @@ const baseConfig = {
   }
 };
 
-const getToolConfig = (toolName) => {
-  const config = {
-    ...baseConfig,
-    name: toolName,
-    context: path.resolve(__dirname, toolName),
-    entry: {
-      main: [
-        '../common/shared-styles.css',
-        './script.js',
-        './styles.css'
-      ]
-    },
-    output: {
-      path: path.resolve(__dirname, 'build', toolName),
-      filename: 'bundle.main.js',
-      publicPath: `/${toolName}/`
-    },
-    plugins: [
-      new CleanWebpackPlugin({
-        cleanOnceBeforeBuildPatterns: ['**/*', '!*.html']
-      }),
-      new MiniCssExtractPlugin({
-        filename: 'styles.main.css'
-      }),
-      new CopyPlugin({
-        patterns: [
-          {
-            from: path.join(__dirname, toolName, 'index.html'),
-            to: path.join(__dirname, 'build', toolName, 'index.html')
-          },
-          {
-            from: path.join(__dirname, toolName, 'images'),
-            to: path.join(__dirname, 'build', toolName, 'images')
-          },
-          {
-            from: path.join(__dirname, toolName, '*.worker.js'),
-            to: path.join(__dirname, 'build', toolName, '[name][ext]'),
-            noErrorOnMissing: true
-          }
-        ]
-      })
+const getToolConfig = (toolName) => ({
+  ...baseConfig,
+  name: toolName,
+  entry: {
+    main: [
+      './common/shared-styles.css',
+      `./${toolName}/script.js`,
+      `./${toolName}/styles.css`
     ]
-  };
-
-
-  return config;
-};
+  },
+  output: {
+    path: path.resolve(__dirname, 'build', toolName),
+    filename: 'bundle.main.js',
+    publicPath: `/${toolName}/`
+  },
+  plugins: [
+    new CleanWebpackPlugin({
+      cleanOnceBeforeBuildPatterns: ['**/*', '!*.html']
+    }),
+    new MiniCssExtractPlugin({
+      filename: 'styles.main.css'
+    }),
+    new CopyPlugin({
+      patterns: [
+        {
+          from: path.join(__dirname, toolName, 'index.html'),
+          to: path.join(__dirname, 'build', toolName, 'index.html')
+        },
+        {
+          from: path.join(__dirname, toolName, 'images'),
+          to: path.join(__dirname, toolName, 'images')
+        }
+      ]
+    })
+  ]
+});
 
 const configs = tools.map((tool) => {
   return getToolConfig(tool);
@@ -154,16 +136,11 @@ const developmentConfig = {
             {
               from: path.join(__dirname, toolName, 'images'),
               to: path.join(__dirname, 'build', toolName, 'images')
-            },
-            {
-              from: path.join(__dirname, toolName, '*.worker.js'),
-              to: path.join(__dirname, 'build', toolName, '[name][ext]'),
-              noErrorOnMissing: true
             }
           ]);
         }, [])
       ]
-    }),
+    })
   ],
   devServer: {
     static: {

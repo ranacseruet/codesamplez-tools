@@ -50,11 +50,6 @@ yarn.lock
 **/*.temp
 **/.cache/
 
-# Agentic AI
+# Memory Bank
 **/memory-bank/
 .clinerules
-.clineignore
-
-# Additional ignores from .clineignore
-tmp/
-temp/
