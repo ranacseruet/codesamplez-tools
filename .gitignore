@@ -50,6 +50,7 @@ yarn.lock
 **/*.temp
 **/.cache/
 
-# Memory Bank
+# AI Code Assistants
 **/memory-bank/
 .clinerules
+.clineignore
