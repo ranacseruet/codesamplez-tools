@@ -12,6 +12,8 @@
   "devDependencies": {
     "@babel/core": "^7.23.3",
     "@babel/preset-env": "^7.23.3",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
     "babel-jest": "^29.7.0",
     "babel-loader": "^10.0.0",
     "clean-webpack-plugin": "^4.0.0",
@@ -33,7 +35,9 @@
   },
   "jest": {
     "testEnvironment": "jsdom",
-    "setupFilesAfterEnv": [],
+    "setupFilesAfterEnv": [
+      "./jest.setup.js"
+    ],
     "testMatch": [
       "**/*.test.js"
     ],
@@ -50,6 +54,7 @@
     }
   },
   "dependencies": {
-    "diff": "^7.0.0"
+    "diff": "^7.0.0",
+    "qrcode": "^1.5.4"
   }
 }

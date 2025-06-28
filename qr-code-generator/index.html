@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    
+    <!-- Bundled styles and scripts from Webpack build -->
+    <link rel="stylesheet" href="styles.main.css">
+</head>
+<body>
+    <div id="qr-code-generator-tool" class="qr-tool">
+        <header class="qr-tool__header">
+            <h1 class="qr-tool__title">QR Code Generator</h1>
+            <p class="qr-tool__subtitle">Create and customize your QR codes instantly.</p>
+        </header>
+
+        <main class="qr-tool__main-content">
+            <div class="qr-tool__controls">
+                <h2 class="qr-tool__section-title">Configuration</h2>
+
+                <div class="qr-tool__form-group">
+                    <label for="qr-text" class="qr-tool__label">Text or URL</label>
+                    <textarea id="qr-text" rows="4" class="qr-tool__textarea" placeholder="e.g. https://codesamplez.com">https://codesamplez.com</textarea>
+                </div>
+                
+                <div class="qr-tool__form-group">
+                    <label for="qr-size" class="qr-tool__label">Size: <span id="size-label">256px</span></label>
+                    <input id="qr-size" type="range" min="128" max="600" step="16" value="256" class="qr-tool__slider">
+                </div>
+                
+                <div class="qr-tool__form-group">
+                    <label for="qr-margin" class="qr-tool__label">Quiet Zone (Margin): <span id="margin-label">2</span></label>
+                    <input id="qr-margin" type="range" min="0" max="10" step="1" value="2" class="qr-tool__slider">
+                </div>
+
+                <div class="qr-tool__form-group">
+                    <label for="error-correction" class="qr-tool__label">Error Correction</label>
+                    <select id="error-correction" class="qr-tool__select">
+                        <option value="L">Low (L) - ~7%</option>
+                        <option value="M" selected>Medium (M) - ~15%</option>
+                        <option value="Q">Quartile (Q) - ~25%</option>
+                        <option value="H">High (H) - ~30%</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="qr-tool__preview">
+                <div id="qr-code-container" class="qr-tool__qr-container">
+                    <canvas id="qr-canvas"></canvas>
+                </div>
+                <button id="download-btn" class="qr-tool__button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download PNG
+                </button>
+                <p id="error-message" class="qr-tool__error-message"></p>
+            </div>
+        </main>
+        
+        <footer class="qr-tool__footer">
+        </footer>
+    </div>
+
+    <script src="bundle.main.js"></script>
+</body>
+</html>

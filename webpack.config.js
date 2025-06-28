@@ -12,7 +12,8 @@ const tools = [
   'json-formatter-tool',
   'jwt-builder-tool',
   'jwt-decoder-tool',
-  'text-analyzer-tool'
+  'text-analyzer-tool',
+  'qr-code-generator'
 ];
 
 const baseConfig = {
@@ -148,7 +149,7 @@ const developmentConfig = {
       publicPath: '/'
     },
     compress: true,
-    port: 8081, // Changed port from 8080 to 8081
+    port: 8081,
     hot: true,
     open: false,
     historyApiFallback: true
