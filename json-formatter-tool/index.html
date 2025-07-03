@@ -27,8 +27,7 @@
         <!-- Controls -->
         <div class="o-toolbar jsonf-controls-custom"> <!-- Replaced jsonf-controls, added custom class for centering -->
             <button class="c-button" id="formatJsonBtn">Format JSON</button> <!-- Replaced jsonf-button, added ID -->
-            <button class="c-button c-button--secondary" id="copyOutputBtn" disabled>Copy Output</button> <!-- Replaced jsonf-button jsonf-secondary, added ID -->
-            <button class="c-button c-button--success" id="loadSampleBtn">Load Sample</button> <!-- Replaced jsonf-button jsonf-sample with c-button--success, added ID -->
+            <button class="c-button c-button--secondary" id="loadSampleBtn">Load Sample</button> <!-- Replaced jsonf-button jsonf-sample with c-button--secondary, added ID -->
             <div class="c-checkbox-item"> <!-- Replaced jsonf-checkbox-container -->
                 <input type="checkbox" id="sortKeys" checked> <!-- Removed jsonf-checkbox class -->
                 <label for="sortKeys">Sort keys</label> <!-- Removed jsonf-checkbox-label class -->
@@ -40,6 +39,7 @@
             <h3>Formatted Output</h3>
             <div class="o-panel-header jsonf-panel-header">
                 <button class="c-button c-button--secondary jsonf-clear-btn" id="clearOutputBtn">Clear Output</button>
+                <button class="c-button c-button--secondary" id="copyOutputBtn" disabled style="margin-left: 10px;">Copy Output</button>
             </div>
             <div class="o-panel-content"> <!-- Added o-panel-content -->
                 <pre class="c-code-output"><code></code></pre> <!-- Replaced jsonf-output-container and jsonf-output -->
