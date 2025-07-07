@@ -13,7 +13,8 @@ const tools = [
   'jwt-builder-tool',
   'jwt-decoder-tool',
   'text-analyzer-tool',
-  'qr-code-generator'
+  'qr-code-generator',
+  'data-format-converter'
 ];
 
 const baseConfig = {
