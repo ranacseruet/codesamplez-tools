@@ -243,8 +243,8 @@ describe('JSONFormatter', () => {
     });
 
     test('should copy output text to clipboard', async () => {
-      // Ensure output has content
-      formatter.output.textContent = 'test content';
+      // Set input value instead of output content
+      formatter.input.value = 'test content';
       
       await formatter.copyOutput();
       
@@ -255,16 +255,16 @@ describe('JSONFormatter', () => {
     });
 
     test('should handle empty output during copy', async () => {
-      formatter.output.textContent = '';
+      formatter.input.value = '';
       await formatter.copyOutput();
       expect(mockClipboard.writeText).toHaveBeenCalledWith('');
       expect(mockNotificationManager.show).toHaveBeenCalledWith('Copied to clipboard!', 2000, { type: 'success' });
     });
 
     test('should handle special characters in output during copy', async () => {
-      formatter.output.textContent = '{"key": "value\\nwith\\nspecial chars"}';
+      formatter.input.value = '{"key": "value\\nwith\\nspecial chars"}';
       await formatter.copyOutput();
-      expect(mockClipboard.writeText).toHaveBeenCalledWith('{"key": "value\\nwith\\nspecial chars"}');
+      expect(mockClipboard.writeText).toHaveBeenCalledWith('{\n  "key": "value\\nwith\\nspecial chars"\n}');
     });
 
     test('should show error message on copy failure', async () => {

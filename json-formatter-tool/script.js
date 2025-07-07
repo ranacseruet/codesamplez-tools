@@ -153,14 +153,19 @@ export class JSONFormatter {
 
   async copyOutput() {
     try {
-      // Clone the output to avoid modifying the original
-      const outputClone = this.output.cloneNode(true);
-
-      // Remove all toggle markers (+/-)
-      const toggles = outputClone.querySelectorAll('.json-toggle');
-      toggles.forEach(toggle => toggle.remove());
-
-      const textToCopy = outputClone.textContent;
+      // Get the formatted JSON data directly from the input after formatting
+      const inputValue = this.input.value.trim();
+      let textToCopy = inputValue;
+      try {
+        const parsed = JSON.parse(inputValue);
+        const formatted = this.sortCheckbox.checked 
+          ? this.sortKeysAlphabetically(parsed)
+          : parsed;
+        textToCopy = JSON.stringify(formatted, null, 2);
+      } catch (error) {
+        // If parsing fails, fall back to the input value
+        textToCopy = inputValue;
+      }
       
       // Try modern Clipboard API first
       if (globalThis.navigator?.clipboard) {
