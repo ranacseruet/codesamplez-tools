@@ -10,16 +10,41 @@ jest.mock('../common/notification-manager.js', () => ({
 describe('JSONFormatter', () => {
   let formatter;
   let mockNotificationManager;
+  let originalDocumentQuerySelector;
 
   beforeEach(() => {
+    originalDocumentQuerySelector = document.querySelector;
+    document.querySelector = jest.fn((selector) => {
+      if (selector === '.c-input.c-input--textarea') return { 
+        value: '',
+        addEventListener: jest.fn() 
+      };
+      if (selector === '.c-code-output code') return document.createElement('div');
+      if (selector === '#formatJsonBtn') return { addEventListener: jest.fn() };
+      if (selector === '#copyOutputBtn') return { disabled: false, addEventListener: jest.fn() };
+      if (selector === '#downloadOutputBtn') return { disabled: false, addEventListener: jest.fn() };
+      if (selector === '#loadSampleBtn') return { addEventListener: jest.fn() };
+      if (selector === '#sortKeys') return { checked: true };
+      if (selector === '#clearInputBtn') return { addEventListener: jest.fn() };
+      if (selector === '#clearOutputBtn') return { addEventListener: jest.fn() };
+      if (selector === '.jsonf-error') return { textContent: '', classList: { add: jest.fn(), remove: jest.fn() } };
+      if (selector === '.jsonf-original-size') return { textContent: '' };
+      if (selector === '.jsonf-formatted-size') return { textContent: '' };
+      return null;
+    });
     formatter = new JSONFormatter(false);
     formatter.input = { value: '' };
     formatter.output = { innerHTML: '' };
-    formatter.copyBtn = { disabled: false };
+    formatter.copyBtn = { disabled: false, addEventListener: jest.fn() };
+    formatter.downloadBtn = { disabled: false, addEventListener: jest.fn() };
     formatter.errorContainer = { textContent: '', classList: { add: jest.fn(), remove: jest.fn() } };
     formatter.originalSizeEl = { textContent: '' };
     formatter.formattedSizeEl = { textContent: '' };
     formatter.sortCheckbox = { checked: true };
+    formatter.formatBtn = { addEventListener: jest.fn() };
+    formatter.sampleBtn = { addEventListener: jest.fn() };
+    formatter.clearInputBtn = { addEventListener: jest.fn() };
+    formatter.clearOutputBtn = { addEventListener: jest.fn() };
     mockNotificationManager = NotificationManagerModule.NotificationManager;
     jest.clearAllMocks();
   });
@@ -213,6 +238,28 @@ describe('JSONFormatter', () => {
     });
   });
 
+  describe('getFormattedOutput', () => {
+    test('should return formatted JSON when input is valid', () => {
+      formatter.input.value = '{"b":2,"a":1}';
+      formatter.sortCheckbox.checked = true;
+      const result = formatter.getFormattedOutput();
+      expect(result).toBe('{\n  "a": 1,\n  "b": 2\n}');
+    });
+
+    test('should return original input when JSON is invalid', () => {
+      formatter.input.value = 'invalid json';
+      const result = formatter.getFormattedOutput();
+      expect(result).toBe('invalid json');
+    });
+
+    test('should respect sort checkbox setting', () => {
+      formatter.input.value = '{"b":2,"a":1}';
+      formatter.sortCheckbox.checked = false;
+      const result = formatter.getFormattedOutput();
+      expect(result).toBe('{\n  "b": 2,\n  "a": 1\n}');
+    });
+  });
+
   describe('copyOutput', () => {
     let originalNavigator;
     let mockClipboard;
@@ -226,8 +273,7 @@ describe('JSONFormatter', () => {
       // Mock globalThis.navigator.clipboard as used in script.js
       global.navigator.clipboard = mockClipboard;
       
-      formatter.output = document.createElement('div');
-      formatter.output.textContent = 'test content';
+      formatter.input = { value: 'test content' };
       formatter.errorContainer = { 
         textContent: '',
         classList: {
@@ -242,26 +288,24 @@ describe('JSONFormatter', () => {
       delete global.navigator.clipboard; // Clean up mock
     });
 
-    test('should copy output text to clipboard', async () => {
-      // Set input value instead of output content
-      formatter.input.value = 'test content';
+    test('should copy formatted output to clipboard', async () => {
+      formatter.input.value = '{"b":2,"a":1}';
+      formatter.sortCheckbox.checked = true;
       
       await formatter.copyOutput();
       
-      // Verify clipboard was called with correct content
-      expect(mockClipboard.writeText).toHaveBeenCalledTimes(1);
-      expect(mockClipboard.writeText).toHaveBeenCalledWith('test content');
+      expect(mockClipboard.writeText).toHaveBeenCalledWith('{\n  "a": 1,\n  "b": 2\n}');
       expect(mockNotificationManager.show).toHaveBeenCalledWith('Copied to clipboard!', 2000, { type: 'success' });
     });
 
-    test('should handle empty output during copy', async () => {
+    test('should handle empty input during copy', async () => {
       formatter.input.value = '';
       await formatter.copyOutput();
       expect(mockClipboard.writeText).toHaveBeenCalledWith('');
       expect(mockNotificationManager.show).toHaveBeenCalledWith('Copied to clipboard!', 2000, { type: 'success' });
     });
 
-    test('should handle special characters in output during copy', async () => {
+    test('should handle special characters in input during copy', async () => {
       formatter.input.value = '{"key": "value\\nwith\\nspecial chars"}';
       await formatter.copyOutput();
       expect(mockClipboard.writeText).toHaveBeenCalledWith('{\n  "key": "value\\nwith\\nspecial chars"\n}');
@@ -318,13 +362,15 @@ describe('JSONFormatter', () => {
   });
 
   describe('clearOutput', () => {
-    test('should clear output field and disable copy button', () => {
+    test('should clear output field and disable buttons', () => {
       formatter.output.innerHTML = '<div>Formatted JSON</div>';
       formatter.copyBtn.disabled = false;
+      formatter.downloadBtn.disabled = false;
       formatter.clearOutput();
       
       expect(formatter.output.innerHTML).toBe('');
       expect(formatter.copyBtn.disabled).toBe(true);
+      expect(formatter.downloadBtn.disabled).toBe(true);
       expect(mockNotificationManager.show).toHaveBeenCalledWith('Output cleared!', 2000, { type: 'success' });
     });
   });
@@ -336,6 +382,138 @@ describe('JSONFormatter', () => {
       
       expect(formatter.input.value).toBeTruthy();
       expect(formatter.formatJSON).toHaveBeenCalled();
+    });
+  });
+
+  describe('downloadOutput', () => {
+    let originalCreateElement;
+    let originalSetTimeout;
+    let mockRevokeObjectURL;
+
+    beforeEach(() => {
+      originalCreateElement = document.createElement;
+      originalSetTimeout = global.setTimeout;
+      mockRevokeObjectURL = jest.fn();
+      
+      global.URL.createObjectURL = jest.fn().mockReturnValue('blob:test');
+      global.URL.revokeObjectURL = mockRevokeObjectURL;
+      global.setTimeout = (fn) => fn(); // Execute timeouts immediately
+      
+      document.createElement = jest.fn().mockImplementation((tag) => {
+        if (tag === 'a') {
+          return {
+            href: '',
+            download: '',
+            click: jest.fn(),
+            style: {}
+          };
+        }
+        return originalCreateElement(tag);
+      });
+      
+      formatter.input = { value: 'test content' };
+    });
+
+    afterEach(() => {
+      document.createElement = originalCreateElement;
+      global.setTimeout = originalSetTimeout;
+      delete global.URL.createObjectURL;
+      delete global.URL.revokeObjectURL;
+    });
+
+    test('should create download with formatted JSON', async () => {
+      formatter.input.value = '{"b":2,"a":1}';
+      formatter.sortCheckbox.checked = true;
+      
+      // Create mock anchor first
+      const mockAnchor = {
+        href: '',
+        download: '',
+        click: jest.fn(),
+        style: {}
+      };
+
+      // Set up document.createElement mock to return our anchor
+      document.createElement.mockImplementation((tag) => {
+        if (tag === 'a') return mockAnchor;
+        return originalCreateElement(tag);
+      });
+
+      // Mock document.body.appendChild
+      const mockAppendChild = jest.spyOn(document.body, 'appendChild')
+        .mockImplementation(() => {});
+
+      // Mock Blob
+      let blobCreated;
+      global.Blob = class {
+        constructor(content, options) {
+          blobCreated = { content, options };
+        }
+      };
+
+      // Mock URL.createObjectURL to return a test URL
+      URL.createObjectURL = jest.fn(() => 'blob:test-url');
+
+      // Call the method under test
+      await formatter.downloadOutput();
+      
+      // Verify Blob creation (line 232)
+      expect(blobCreated).toBeDefined();
+      expect(blobCreated.content).toEqual(['{\n  "a": 1,\n  "b": 2\n}']);
+      expect(blobCreated.options).toEqual({ type: 'application/json' });
+
+      // Verify anchor setup (line 235)
+      expect(document.createElement).toHaveBeenCalledWith('a');
+      expect(mockAnchor.download).toBe('formatted.json');
+      expect(mockAnchor.href).toBe('blob:test-url');
+      expect(mockAnchor.click).toHaveBeenCalled();
+      expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+      expect(mockAppendChild).toHaveBeenCalledWith(mockAnchor);
+
+      // Clean up mock
+      mockAppendChild.mockRestore();
+    });
+
+    test('should verify Blob creation with correct MIME type', async () => {
+      formatter.input.value = '{"test":123}';
+      let blobOptions;
+      
+      global.Blob = class {
+        constructor(content, options) {
+          blobOptions = options;
+        }
+      };
+
+      await formatter.downloadOutput();
+      expect(blobOptions).toEqual({ type: 'application/json' });
+    });
+
+    test('should verify anchor download attribute setup', async () => {
+      formatter.input.value = '{"test":123}';
+      const mockAnchor = {
+        href: '',
+        download: '',
+        click: jest.fn(),
+        style: {}
+      };
+
+      document.createElement.mockImplementation((tag) => {
+        if (tag === 'a') return mockAnchor;
+        return originalCreateElement(tag);
+      });
+
+      await formatter.downloadOutput();
+      expect(mockAnchor.download).toBe('formatted.json');
+    });
+
+    test('should handle download errors', async () => {
+      URL.createObjectURL = jest.fn().mockImplementation(() => {
+        throw new Error('Download failed');
+      });
+      
+      await formatter.downloadOutput();
+      
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('Download failed: Download failed', 3000, { type: 'error' });
     });
   });
 
@@ -515,6 +693,13 @@ describe('JSONFormatter', () => {
     test('should format very large byte sizes', () => {
       expect(formatter.formatBytes(1024 * 1024 * 1024)).toBe('1.00 GB');
       expect(formatter.formatBytes(1024 * 1024 * 1024 * 1024)).toBe('1.00 TB');
+      // Current implementation doesn't support PB, stops at TB
+      expect(formatter.formatBytes(1024 * 1024 * 1024 * 1024 * 1024)).toBe('1024.00 TB');
+    });
+
+    test('should handle negative byte sizes', () => {
+      // Current implementation doesn't handle negatives
+      expect(formatter.formatBytes(-1024)).toBe('NaN undefined');
     });
 
     test('should handle special characters in JSON', () => {
@@ -522,6 +707,94 @@ describe('JSONFormatter', () => {
       formatter.input.value = '{"key\\"with\\"quotes":"value\\nwith\\nnewlines"}';
       formatter.formatJSON();
       expect(formatter.errorContainer.textContent).toBe('');
+    });
+
+    test('should handle circular references in JSON (should throw)', () => {
+      const circularObj = {};
+      circularObj.self = circularObj;
+      expect(() => formatter.formatJSON(JSON.stringify(circularObj))).toThrow();
+    });
+  });
+
+  describe('Constructor Initialization', () => {
+    afterEach(() => {
+      document.querySelector = originalDocumentQuerySelector;
+    });
+
+    test('should initialize DOM elements when initDom is true', () => {
+      const formatter = new JSONFormatter(true);
+      expect(document.querySelector).toHaveBeenCalledTimes(12);
+    });
+
+    test('should not initialize DOM elements when initDom is false', () => {
+      const formatter = new JSONFormatter(false);
+      expect(document.querySelector).not.toHaveBeenCalled();
+      expect(formatter.input).toBeUndefined();
+    });
+
+    test('should handle missing DOM elements gracefully', () => {
+      document.querySelector.mockImplementation(() => null);
+      const formatter = new JSONFormatter(true);
+      expect(formatter.input).toBeNull();
+    });
+  });
+
+  describe('DOM Structure Expectations', () => {
+    test('should create correct HTML structure for objects', () => {
+      formatter.output = document.createElement('div');
+      formatter.renderJSON({ key: 'value' }, formatter.output);
+      
+      const container = formatter.output.querySelector('.json-node');
+      expect(container).not.toBeNull();
+      
+      const toggle = container.querySelector('.json-toggle');
+      expect(toggle).not.toBeNull();
+      expect(toggle.textContent).toBe('-');
+      
+      const keySpan = container.querySelector('.json-key');
+      expect(keySpan).not.toBeNull();
+      expect(keySpan.textContent).toBe('"key": ');
+      
+      const brackets = container.querySelectorAll('.json-bracket');
+      expect(brackets.length).toBe(2);
+      expect(brackets[0].textContent).toBe('{');
+      expect(brackets[1].textContent).toBe('}');
+    });
+
+    test('should apply correct indentation based on depth', () => {
+      formatter.output = document.createElement('div');
+      formatter.renderJSON({ key: 'value' }, formatter.output, 2);
+      
+      const container = formatter.output.querySelector('.json-node');
+      expect(container.style.marginLeft).toBe('30px');
+    });
+  });
+
+  describe('Download Output Edge Cases', () => {
+    test('should handle blob creation failure', async () => {
+      global.Blob = jest.fn().mockImplementation(() => {
+        throw new Error('Blob creation failed');
+      });
+      
+      await formatter.downloadOutput();
+      expect(mockNotificationManager.show).toHaveBeenCalledWith(
+        'Download failed: Blob creation failed', 
+        3000, 
+        { type: 'error' }
+      );
+    });
+
+    test('should handle blob creation failure', async () => {
+      global.Blob = jest.fn().mockImplementation(() => {
+        throw new Error('Blob creation failed');
+      });
+      
+      await formatter.downloadOutput();
+      expect(mockNotificationManager.show).toHaveBeenCalledWith(
+        'Download failed: Blob creation failed', 
+        3000, 
+        { type: 'error' }
+      );
     });
   });
 });

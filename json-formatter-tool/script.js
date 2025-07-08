@@ -7,6 +7,7 @@ export class JSONFormatter {
       this.output = document.querySelector('.c-code-output code');
       this.formatBtn = document.querySelector('#formatJsonBtn');
       this.copyBtn = document.querySelector('#copyOutputBtn');
+      this.downloadBtn = document.querySelector('#downloadOutputBtn');
       this.sampleBtn = document.querySelector('#loadSampleBtn');
       this.sortCheckbox = document.querySelector('#sortKeys'); // Use ID for checkbox
       this.clearInputBtn = document.querySelector('#clearInputBtn');
@@ -20,9 +21,10 @@ export class JSONFormatter {
   }
 
   initializeEvents() {
-    if (this.formatBtn && this.copyBtn && this.sampleBtn && this.input) {
+    if (this.formatBtn && this.copyBtn && this.downloadBtn && this.sampleBtn && this.input) {
       this.formatBtn.addEventListener('click', () => this.formatJSON());
       this.copyBtn.addEventListener('click', () => this.copyOutput());
+      this.downloadBtn.addEventListener('click', () => this.downloadOutput());
       this.sampleBtn.addEventListener('click', () => this.loadSampleData());
       this.input.addEventListener('input', () => {
         this.clearError();
@@ -48,6 +50,7 @@ export class JSONFormatter {
       this.output.innerHTML = '';
       this.renderJSON(formatted, this.output);
       this.copyBtn.disabled = false;
+      this.downloadBtn.disabled = false;
       // No need to manipulate errorContainer as NotificationManager handles messaging
       this.updateStats(inputValue, JSON.stringify(formatted, null, 2));
       NotificationManager.show('JSON formatted successfully!', 2000, { type: 'success' });
@@ -151,21 +154,23 @@ export class JSONFormatter {
     return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`;
   }
 
+  getFormattedOutput() {
+    const inputValue = this.input.value.trim();
+    try {
+      const parsed = JSON.parse(inputValue);
+      const formatted = this.sortCheckbox.checked 
+        ? this.sortKeysAlphabetically(parsed)
+        : parsed;
+      return JSON.stringify(formatted, null, 2);
+    } catch (error) {
+      // If parsing fails, fall back to the input value
+      return inputValue;
+    }
+  }
+
   async copyOutput() {
     try {
-      // Get the formatted JSON data directly from the input after formatting
-      const inputValue = this.input.value.trim();
-      let textToCopy = inputValue;
-      try {
-        const parsed = JSON.parse(inputValue);
-        const formatted = this.sortCheckbox.checked 
-          ? this.sortKeysAlphabetically(parsed)
-          : parsed;
-        textToCopy = JSON.stringify(formatted, null, 2);
-      } catch (error) {
-        // If parsing fails, fall back to the input value
-        textToCopy = inputValue;
-      }
+      const textToCopy = this.getFormattedOutput();
       
       // Try modern Clipboard API first
       if (globalThis.navigator?.clipboard) {
@@ -203,7 +208,6 @@ export class JSONFormatter {
     // No action needed as NotificationManager handles auto-dismissal
   }
 
-
   clearInput() {
     this.input.value = '';
     this.clearError();
@@ -211,9 +215,33 @@ export class JSONFormatter {
     NotificationManager.show('Input cleared!', 2000, { type: 'success' });
   }
 
+  async downloadOutput() {
+    try {
+      const textToDownload = this.getFormattedOutput();
+      const blob = new Blob([textToDownload], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'formatted.json';
+      document.body.appendChild(a);
+      a.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+      
+      NotificationManager.show('Download started!', 2000, { type: 'success' });
+    } catch (err) {
+      NotificationManager.show(`Download failed: ${err.message}`, 3000, { type: 'error' });
+    }
+  }
+
   clearOutput() {
     this.output.innerHTML = '';
     this.copyBtn.disabled = true;
+    this.downloadBtn.disabled = true;
     this.updateStats(this.input.value, '');
     NotificationManager.show('Output cleared!', 2000, { type: 'success' });
   }
