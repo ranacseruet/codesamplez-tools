@@ -55,6 +55,8 @@
   },
   "dependencies": {
     "diff": "^7.0.0",
+    "fast-xml-parser": "^5.2.5",
+    "js-yaml": "^4.1.0",
     "qrcode": "^1.5.4"
   }
 }

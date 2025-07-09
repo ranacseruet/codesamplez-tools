@@ -7,51 +7,48 @@
     <link rel="stylesheet" href="styles.main.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
+    <div id="notification" class="c-notification"></div>
+    <div class="tool-container">
+        <div class="o-header">
             <h1>Data Format Converter</h1>
             <p>Convert between JSON, XML, and YAML formats seamlessly</p>
         </div>
 
-        <div class="converter-section">
-            <div class="input-section">
-                <h2 class="section-title">Input Format</h2>
+        <div class="converter-section o-grid-2col">
+            <div class="input-section o-panel">
+                <h2>Input Format</h2>
                 <div class="format-selector">
-                    <button class="format-btn active" data-format="json">JSON</button>
-                    <button class="format-btn" data-format="xml">XML</button>
-                    <button class="format-btn" data-format="yaml">YAML</button>
+                    <button class="format-btn active c-button c-button--small" data-format="json">JSON</button>
+                    <button class="format-btn c-button c-button--small" data-format="xml">XML</button>
+                    <button class="format-btn c-button c-button--small" data-format="yaml">YAML</button>
                 </div>
                 <textarea 
                     id="inputText" 
-                    class="text-area" 
+                    class="text-area c-input c-input--textarea" 
                     placeholder="Paste your data here..."
                 ></textarea>
-                <div id="inputError" class="error" style="display: none;"></div>
             </div>
-
-            <div class="arrow-container">
-                <div class="arrow">⬇</div>
-            </div>
-
-            <div class="output-section">
-                <h2 class="section-title">Output Format</h2>
+            <div class="output-section o-panel">
+                <h2>Output Format</h2>
                 <div class="format-selector">
-                    <button class="format-btn" data-format="json">JSON</button>
-                    <button class="format-btn active" data-format="xml">XML</button>
-                    <button class="format-btn" data-format="yaml">YAML</button>
+                    <button class="format-btn c-button c-button--small" data-format="json">JSON</button>
+                    <button class="format-btn active c-button c-button--small" data-format="xml">XML</button>
+                    <button class="format-btn c-button c-button--small" data-format="yaml">YAML</button>
                 </div>
                 <textarea 
                     id="outputText" 
-                    class="text-area" 
+                    class="text-area c-input c-input--textarea" 
                     placeholder="Converted data will appear here..."
                     readonly
                 ></textarea>
-                <div id="outputSuccess" class="success" style="display: none;"></div>
             </div>
 
-            <button id="convertBtn" class="convert-btn">Convert Data</button>
         </div>
+        <div class="u-text-center">
+            <button id="convertBtn" class="convert-btn c-button">Convert</button>
+        </div>
+        <div id="inputError" class="error" style="display: none;"></div>
     </div>
-    <script src="bundle.main.js"></script>
+    <script type="module" src="bundle.main.js"></script>
 </body>
 </html>
