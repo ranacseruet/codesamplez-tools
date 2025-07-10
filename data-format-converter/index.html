@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="styles.main.css">
 </head>
 <body>
-    <div id="notification" class="c-notification"></div>
     <div class="tool-container">
         <div class="o-header">
             <h1>Data Format Converter</h1>
@@ -41,13 +40,18 @@
                     placeholder="Converted data will appear here..."
                     readonly
                 ></textarea>
+                <div class="output-actions" style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+                    <button id="copyBtn" class="c-button c-button--small">Copy</button>
+                    <button id="downloadBtn" class="c-button c-button--small">Download</button>
+                </div>
             </div>
 
         </div>
         <div class="u-text-center">
-            <button id="convertBtn" class="convert-btn c-button">Convert</button>
+            <button id="convertBtn" class="convert-btn c-button">Convert Data</button>
         </div>
         <div id="inputError" class="error" style="display: none;"></div>
+        <div id="notification" class="c-notification"></div>
     </div>
     <script type="module" src="bundle.main.js"></script>
 </body>

@@ -1,5 +1,6 @@
 import { DataFormatConverter } from './DataFormatConverter.js';
 import { NotificationManager } from '../common/notification-manager.js';
+import DownloadManager from '../common/DownloadManager.js';
 
 class DataFormatConverterUI {
     constructor() {
@@ -18,6 +19,16 @@ class DataFormatConverterUI {
         // Convert button
         document.getElementById('convertBtn').addEventListener('click', () => {
             this.convertData();
+        });
+
+        // Copy button
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            this.copyOutput();
+        });
+
+        // Download button
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            this.downloadOutput();
         });
 
         // Real-time conversion on input
@@ -95,6 +106,50 @@ class DataFormatConverterUI {
     showSuccess(message) {
         NotificationManager.show(message, 3000, { type: 'success' });
         document.getElementById('inputError').style.display = 'none';
+    }
+
+    copyOutput() {
+        const outputText = document.getElementById('outputText').value;
+        if (!outputText) {
+            this.showError('No data to copy');
+            return;
+        }
+
+        navigator.clipboard.writeText(outputText)
+            .then(() => {
+                this.showSuccess('Copied to clipboard!');
+            })
+            .catch(err => {
+                this.showError('Failed to copy: ' + err.message);
+            });
+    }
+
+    downloadOutput() {
+        const outputText = document.getElementById('outputText').value;
+        if (!outputText) {
+            this.showError('No data to download');
+            return;
+        }
+
+        const format = this.converter.outputFormat;
+        const mimeTypes = {
+            json: 'application/json',
+            xml: 'application/xml',
+            yaml: 'text/yaml'
+        };
+        const extensions = {
+            json: 'json',
+            xml: 'xml',
+            yaml: 'yaml'
+        };
+
+        const downloadManager = new DownloadManager();
+        downloadManager.downloadFile(
+            outputText,
+            `data.${extensions[format]}`,
+            mimeTypes[format]
+        );
+        this.showSuccess('Download started!');
     }
 }
 
