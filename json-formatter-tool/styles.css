@@ -51,6 +51,21 @@
 }
 
 /* Error Message Styles */
+.c-input-status {
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-sm); /* 10px */
+  padding: var(--spacing-xs); /* 5px */
+  font-size: var(--font-size-sm); /* 12px */
+  min-height: 20px;
+}
+
+.c-input-status.error {
+  color: var(--color-danger);
+  background-color: #fef2f2;
+  border-radius: var(--border-radius-sm); /* 4px */
+  padding: var(--spacing-sm); /* 10px */
+}
+
 .jsonf-error {
   color: var(--color-danger);
   margin-top: var(--spacing-md); /* 15px */

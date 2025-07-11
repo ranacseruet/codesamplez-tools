@@ -11,8 +11,7 @@ export class JSONFormatter {
       this.sampleBtn = document.querySelector('#loadSampleBtn');
       this.sortCheckbox = document.querySelector('#sortKeys'); // Use ID for checkbox
       this.clearInputBtn = document.querySelector('#clearInputBtn');
-      this.clearOutputBtn = document.querySelector('#clearOutputBtn');
-      this.errorContainer = document.querySelector('.jsonf-error'); // This class was kept
+      this.errorStatus = document.querySelector('#jsonErrorStatus');
       this.originalSizeEl = document.querySelector('.jsonf-original-size'); // This class was kept
       this.formattedSizeEl = document.querySelector('.jsonf-formatted-size'); // This class was kept
 
@@ -32,9 +31,6 @@ export class JSONFormatter {
       });
       if (this.clearInputBtn) {
         this.clearInputBtn.addEventListener('click', () => this.clearInput());
-      }
-      if (this.clearOutputBtn) {
-        this.clearOutputBtn.addEventListener('click', () => this.clearOutput());
       }
     }
   }
@@ -202,10 +198,13 @@ export class JSONFormatter {
 
   showError(message) {
     NotificationManager.show(message, 3000, { type: 'error' });
+    this.errorStatus.textContent = message;
+    this.errorStatus.classList.add('error');
   }
 
   clearError() {
-    // No action needed as NotificationManager handles auto-dismissal
+    this.errorStatus.textContent = '';
+    this.errorStatus.classList.remove('error');
   }
 
   clearInput() {
@@ -236,14 +235,6 @@ export class JSONFormatter {
     } catch (err) {
       NotificationManager.show(`Download failed: ${err.message}`, 3000, { type: 'error' });
     }
-  }
-
-  clearOutput() {
-    this.output.innerHTML = '';
-    this.copyBtn.disabled = true;
-    this.downloadBtn.disabled = true;
-    this.updateStats(this.input.value, '');
-    NotificationManager.show('Output cleared!', 2000, { type: 'success' });
   }
 
   loadSampleData() {

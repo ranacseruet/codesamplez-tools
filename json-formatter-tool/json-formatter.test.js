@@ -26,8 +26,10 @@ describe('JSONFormatter', () => {
       if (selector === '#loadSampleBtn') return { addEventListener: jest.fn() };
       if (selector === '#sortKeys') return { checked: true };
       if (selector === '#clearInputBtn') return { addEventListener: jest.fn() };
-      if (selector === '#clearOutputBtn') return { addEventListener: jest.fn() };
-      if (selector === '.jsonf-error') return { textContent: '', classList: { add: jest.fn(), remove: jest.fn() } };
+      if (selector === '#jsonErrorStatus') return { 
+        textContent: '', 
+        classList: { add: jest.fn(), remove: jest.fn() } 
+      };
       if (selector === '.jsonf-original-size') return { textContent: '' };
       if (selector === '.jsonf-formatted-size') return { textContent: '' };
       return null;
@@ -37,14 +39,13 @@ describe('JSONFormatter', () => {
     formatter.output = { innerHTML: '' };
     formatter.copyBtn = { disabled: false, addEventListener: jest.fn() };
     formatter.downloadBtn = { disabled: false, addEventListener: jest.fn() };
-    formatter.errorContainer = { textContent: '', classList: { add: jest.fn(), remove: jest.fn() } };
+    formatter.errorStatus = { textContent: '', classList: { add: jest.fn(), remove: jest.fn() } };
     formatter.originalSizeEl = { textContent: '' };
     formatter.formattedSizeEl = { textContent: '' };
     formatter.sortCheckbox = { checked: true };
     formatter.formatBtn = { addEventListener: jest.fn() };
     formatter.sampleBtn = { addEventListener: jest.fn() };
     formatter.clearInputBtn = { addEventListener: jest.fn() };
-    formatter.clearOutputBtn = { addEventListener: jest.fn() };
     mockNotificationManager = NotificationManagerModule.NotificationManager;
     jest.clearAllMocks();
   });
@@ -138,7 +139,13 @@ describe('JSONFormatter', () => {
     test('should handle invalid JSON', () => {
       formatter.input.value = '{"invalid": json}';
       formatter.formatJSON();
-      expect(mockNotificationManager.show).toHaveBeenCalledWith(expect.stringContaining('Invalid JSON'), 3000, { type: 'error' });
+      expect(mockNotificationManager.show).toHaveBeenCalledWith(
+        expect.stringContaining('Invalid JSON'), 
+        3000, 
+        { type: 'error' }
+      );
+      expect(formatter.errorStatus.textContent).toContain('Invalid JSON');
+      expect(formatter.errorStatus.classList.add).toHaveBeenCalledWith('error');
     });
 
     test('should handle very large JSON input', () => {
@@ -361,20 +368,6 @@ describe('JSONFormatter', () => {
     });
   });
 
-  describe('clearOutput', () => {
-    test('should clear output field and disable buttons', () => {
-      formatter.output.innerHTML = '<div>Formatted JSON</div>';
-      formatter.copyBtn.disabled = false;
-      formatter.downloadBtn.disabled = false;
-      formatter.clearOutput();
-      
-      expect(formatter.output.innerHTML).toBe('');
-      expect(formatter.copyBtn.disabled).toBe(true);
-      expect(formatter.downloadBtn.disabled).toBe(true);
-      expect(mockNotificationManager.show).toHaveBeenCalledWith('Output cleared!', 2000, { type: 'success' });
-    });
-  });
-
   describe('loadSampleData', () => {
     test('should load sample data and format it', () => {
       formatter.formatJSON = jest.fn();
@@ -587,7 +580,7 @@ describe('JSONFormatter', () => {
       expect(sampleBtnMock).toHaveBeenCalledTimes(1);
       expect(inputMock).toHaveBeenCalledTimes(1);
       expect(clearInputBtnMock).toHaveBeenCalledTimes(1);
-      expect(clearOutputBtnMock).toHaveBeenCalledTimes(1);
+      expect(clearOutputBtnMock).toHaveBeenCalledTimes(0);
     });
 
     test('should trigger formatJSON on format button click', () => {
@@ -634,17 +627,6 @@ describe('JSONFormatter', () => {
       }
     });
 
-    test('should trigger clearOutput on clear output button click', () => {
-      formatter.clearOutput = jest.fn();
-      formatter.initializeEvents();
-      if (callbacks.clearOutputBtn.click) {
-        callbacks.clearOutputBtn.click();
-        expect(formatter.clearOutput).toHaveBeenCalled();
-      } else {
-        throw new Error('clearOutputBtn callback not set');
-      }
-    });
-
     test('should trigger clearError and updateStats on input change', () => {
       formatter.clearError = jest.fn();
       formatter.updateStats = jest.fn();
@@ -660,14 +642,23 @@ describe('JSONFormatter', () => {
   });
 
   describe('clearError', () => {
-    test('should do nothing as NotificationManager handles auto-dismissal', () => {
-      formatter.errorContainer.textContent = 'Error';
-      formatter.errorContainer.classList.add('active');
-      
+    test('should clear error status text', () => {
+      formatter.errorStatus.textContent = 'Error';
       formatter.clearError();
-      // No expectations as the method is now a no-op
-      expect(formatter.errorContainer.textContent).toBe('Error');
-      expect(formatter.errorContainer.classList.remove).not.toHaveBeenCalled();
+      expect(formatter.errorStatus.textContent).toBe('');
+    });
+  });
+
+  describe('showError', () => {
+    test('should show error in notification and status div', () => {
+      formatter.showError('Test error');
+      expect(mockNotificationManager.show).toHaveBeenCalledWith(
+        'Test error', 
+        3000, 
+        { type: 'error' }
+      );
+      expect(formatter.errorStatus.textContent).toBe('Test error');
+      expect(formatter.errorStatus.classList.add).toHaveBeenCalledWith('error');
     });
   });
 
@@ -706,7 +697,7 @@ describe('JSONFormatter', () => {
       formatter.output = document.createElement('div');
       formatter.input.value = '{"key\\"with\\"quotes":"value\\nwith\\nnewlines"}';
       formatter.formatJSON();
-      expect(formatter.errorContainer.textContent).toBe('');
+      expect(formatter.errorStatus.textContent).toBe('');
     });
 
     test('should handle circular references in JSON (should throw)', () => {
@@ -723,7 +714,7 @@ describe('JSONFormatter', () => {
 
     test('should initialize DOM elements when initDom is true', () => {
       const formatter = new JSONFormatter(true);
-      expect(document.querySelector).toHaveBeenCalledTimes(12);
+      expect(document.querySelector).toHaveBeenCalledTimes(11);
     });
 
     test('should not initialize DOM elements when initDom is false', () => {
