@@ -1,15 +1,18 @@
 // Import dependencies
 const Base64Codec = require('../common/Base64Codec.js');
 const { NotificationManager } = require('../common/notification-manager.js');
+const DownloadManager = require('../common/DownloadManager.js').default;
 
 // Converter factory function
 const createConverter = () => {
     // Create Base64Codec instance
     const codec = new Base64Codec();
+    const downloadManager = new DownloadManager();
     
     return {
         elements: {},
         currentMimeType: null, // To store MIME type from Data URL
+        downloadManager: downloadManager, // Expose downloadManager for testing
 
         processInput() {
             const rawInput = this.elements.input.value.trim();
@@ -214,17 +217,7 @@ const createConverter = () => {
                     content = outputContent;
                 }
 
-                const blob = new Blob([content]);
-                const url = URL.createObjectURL(blob);
-
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
+                downloadManager.downloadFile(content, filename, 'application/octet-stream'); // Default to octet-stream for binary
                 NotificationManager.show(`Content downloaded as "${filename}"`, 2000, { type: 'success' });
             } catch (error) {
                 console.error('Download error:', error);
