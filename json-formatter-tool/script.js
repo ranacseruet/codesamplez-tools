@@ -1,8 +1,10 @@
 import { NotificationManager } from '../common/notification-manager.js';
+import DownloadManager from '../common/DownloadManager.js';
 
 export class JSONFormatter {
   constructor(initDom = true) {
     if (initDom) {
+      this.downloadManager = new DownloadManager();
       this.input = document.querySelector('.c-input.c-input--textarea');
       this.output = document.querySelector('.c-code-output code');
       this.formatBtn = document.querySelector('#formatJsonBtn');
@@ -217,20 +219,7 @@ export class JSONFormatter {
   async downloadOutput() {
     try {
       const textToDownload = this.getFormattedOutput();
-      const blob = new Blob([textToDownload], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'formatted.json';
-      document.body.appendChild(a);
-      a.click();
-      
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
-      
+      this.downloadManager.downloadFile(textToDownload, 'formatted.json', 'application/json');
       NotificationManager.show('Download started!', 2000, { type: 'success' });
     } catch (err) {
       NotificationManager.show(`Download failed: ${err.message}`, 3000, { type: 'error' });

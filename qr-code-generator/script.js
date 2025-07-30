@@ -1,6 +1,7 @@
 import QRCode from 'qrcode';
+import DownloadManager from '../common/DownloadManager';
 
-class QRCodeGeneratorUI {
+export class QRCodeGeneratorUI {
   constructor(options) {
     this.qrText = document.getElementById(options.qrTextId);
     this.qrSize = document.getElementById(options.qrSizeId);
@@ -11,6 +12,7 @@ class QRCodeGeneratorUI {
     this.qrCanvas = document.getElementById(options.qrCanvasId);
     this.downloadBtn = document.getElementById(options.downloadBtnId);
     this.errorMessage = document.getElementById(options.errorMessageId);
+    this.downloadManager = new DownloadManager();
 
     this.debounceTimer = null;
     this.bindEvents();
@@ -74,13 +76,8 @@ class QRCodeGeneratorUI {
 
   downloadQRCode() {
     const dataUrl = this.qrCanvas.toDataURL('image/png');
-    const link = document.createElement('a');
-    link.href = dataUrl;
     const filename = `qrcode-${Date.now()}.png`;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    this.downloadManager.downloadFile(dataUrl, filename, 'image/png');
   }
 
   initializeApp() {

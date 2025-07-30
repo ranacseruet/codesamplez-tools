@@ -1,5 +1,6 @@
 import { JSONFormatter } from './script.js';
 import * as NotificationManagerModule from '../common/notification-manager.js';
+import DownloadManager from '../common/DownloadManager.js';
 
 jest.mock('../common/notification-manager.js', () => ({
   NotificationManager: {
@@ -7,9 +8,18 @@ jest.mock('../common/notification-manager.js', () => ({
   }
 }));
 
+jest.mock('../common/DownloadManager.js', () => {
+  return jest.fn().mockImplementation(() => {
+    return {
+      downloadFile: jest.fn()
+    };
+  });
+});
+
 describe('JSONFormatter', () => {
   let formatter;
   let mockNotificationManager;
+  let mockDownloadManager;
   let originalDocumentQuerySelector;
 
   beforeEach(() => {
@@ -47,6 +57,8 @@ describe('JSONFormatter', () => {
     formatter.sampleBtn = { addEventListener: jest.fn() };
     formatter.clearInputBtn = { addEventListener: jest.fn() };
     mockNotificationManager = NotificationManagerModule.NotificationManager;
+    mockDownloadManager = new DownloadManager(); // Get instance of the mocked DownloadManager
+    formatter.downloadManager = mockDownloadManager; // Assign to formatter instance
     jest.clearAllMocks();
   });
 
@@ -379,134 +391,36 @@ describe('JSONFormatter', () => {
   });
 
   describe('downloadOutput', () => {
-    let originalCreateElement;
-    let originalSetTimeout;
-    let mockRevokeObjectURL;
-
     beforeEach(() => {
-      originalCreateElement = document.createElement;
-      originalSetTimeout = global.setTimeout;
-      mockRevokeObjectURL = jest.fn();
-      
-      global.URL.createObjectURL = jest.fn().mockReturnValue('blob:test');
-      global.URL.revokeObjectURL = mockRevokeObjectURL;
-      global.setTimeout = (fn) => fn(); // Execute timeouts immediately
-      
-      document.createElement = jest.fn().mockImplementation((tag) => {
-        if (tag === 'a') {
-          return {
-            href: '',
-            download: '',
-            click: jest.fn(),
-            style: {}
-          };
-        }
-        return originalCreateElement(tag);
-      });
-      
       formatter.input = { value: 'test content' };
     });
 
-    afterEach(() => {
-      document.createElement = originalCreateElement;
-      global.setTimeout = originalSetTimeout;
-      delete global.URL.createObjectURL;
-      delete global.URL.revokeObjectURL;
-    });
-
-    test('should create download with formatted JSON', async () => {
+    test('should call DownloadManager.downloadFile with formatted JSON', async () => {
       formatter.input.value = '{"b":2,"a":1}';
       formatter.sortCheckbox.checked = true;
       
-      // Create mock anchor first
-      const mockAnchor = {
-        href: '',
-        download: '',
-        click: jest.fn(),
-        style: {}
-      };
-
-      // Set up document.createElement mock to return our anchor
-      document.createElement.mockImplementation((tag) => {
-        if (tag === 'a') return mockAnchor;
-        return originalCreateElement(tag);
-      });
-
-      // Mock document.body.appendChild
-      const mockAppendChild = jest.spyOn(document.body, 'appendChild')
-        .mockImplementation(() => {});
-
-      // Mock Blob
-      let blobCreated;
-      global.Blob = class {
-        constructor(content, options) {
-          blobCreated = { content, options };
-        }
-      };
-
-      // Mock URL.createObjectURL to return a test URL
-      URL.createObjectURL = jest.fn(() => 'blob:test-url');
-
-      // Call the method under test
       await formatter.downloadOutput();
       
-      // Verify Blob creation (line 232)
-      expect(blobCreated).toBeDefined();
-      expect(blobCreated.content).toEqual(['{\n  "a": 1,\n  "b": 2\n}']);
-      expect(blobCreated.options).toEqual({ type: 'application/json' });
-
-      // Verify anchor setup (line 235)
-      expect(document.createElement).toHaveBeenCalledWith('a');
-      expect(mockAnchor.download).toBe('formatted.json');
-      expect(mockAnchor.href).toBe('blob:test-url');
-      expect(mockAnchor.click).toHaveBeenCalled();
-      expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
-      expect(mockAppendChild).toHaveBeenCalledWith(mockAnchor);
-
-      // Clean up mock
-      mockAppendChild.mockRestore();
+      expect(mockDownloadManager.downloadFile).toHaveBeenCalledWith(
+        '{\n  "a": 1,\n  "b": 2\n}',
+        'formatted.json',
+        'application/json'
+      );
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('Download started!', 2000, { type: 'success' });
     });
 
-    test('should verify Blob creation with correct MIME type', async () => {
-      formatter.input.value = '{"test":123}';
-      let blobOptions;
-      
-      global.Blob = class {
-        constructor(content, options) {
-          blobOptions = options;
-        }
-      };
-
-      await formatter.downloadOutput();
-      expect(blobOptions).toEqual({ type: 'application/json' });
-    });
-
-    test('should verify anchor download attribute setup', async () => {
-      formatter.input.value = '{"test":123}';
-      const mockAnchor = {
-        href: '',
-        download: '',
-        click: jest.fn(),
-        style: {}
-      };
-
-      document.createElement.mockImplementation((tag) => {
-        if (tag === 'a') return mockAnchor;
-        return originalCreateElement(tag);
-      });
-
-      await formatter.downloadOutput();
-      expect(mockAnchor.download).toBe('formatted.json');
-    });
-
-    test('should handle download errors', async () => {
-      URL.createObjectURL = jest.fn().mockImplementation(() => {
-        throw new Error('Download failed');
+    test('should handle download errors from DownloadManager', async () => {
+      mockDownloadManager.downloadFile.mockImplementation(() => {
+        throw new Error('Simulated download error');
       });
       
       await formatter.downloadOutput();
       
-      expect(mockNotificationManager.show).toHaveBeenCalledWith('Download failed: Download failed', 3000, { type: 'error' });
+      expect(mockNotificationManager.show).toHaveBeenCalledWith(
+        'Download failed: Simulated download error', 
+        3000, 
+        { type: 'error' }
+      );
     });
   });
 
@@ -761,31 +675,4 @@ describe('JSONFormatter', () => {
     });
   });
 
-  describe('Download Output Edge Cases', () => {
-    test('should handle blob creation failure', async () => {
-      global.Blob = jest.fn().mockImplementation(() => {
-        throw new Error('Blob creation failed');
-      });
-      
-      await formatter.downloadOutput();
-      expect(mockNotificationManager.show).toHaveBeenCalledWith(
-        'Download failed: Blob creation failed', 
-        3000, 
-        { type: 'error' }
-      );
-    });
-
-    test('should handle blob creation failure', async () => {
-      global.Blob = jest.fn().mockImplementation(() => {
-        throw new Error('Blob creation failed');
-      });
-      
-      await formatter.downloadOutput();
-      expect(mockNotificationManager.show).toHaveBeenCalledWith(
-        'Download failed: Blob creation failed', 
-        3000, 
-        { type: 'error' }
-      );
-    });
-  });
 });
