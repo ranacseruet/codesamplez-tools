@@ -20,10 +20,3 @@
     overflow-x: hidden;
     background-color: var(--color-bg-light);
 }
-
-/* Media query adjustments */
-@media (max-width: 768px) {
-    #base64converter-encoding {
-        width: 100%;
-    }
-}

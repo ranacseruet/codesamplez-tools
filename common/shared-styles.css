@@ -481,11 +481,34 @@
 }
 
 @media (max-width: 768px) {
+  .tool-container {
+    padding: var(--spacing-md);
+  }
+
+  .u-flex.u-gap-lg {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
   .o-controls {
     flex-direction: column;
   }
-  
+
+  .o-controls .u-flex {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
   .o-panel {
+    width: 100%;
+  }
+
+  .o-toolbar {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .tool-container select {
     width: 100%;
   }
 
