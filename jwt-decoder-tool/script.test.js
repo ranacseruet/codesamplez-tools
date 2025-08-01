@@ -39,6 +39,14 @@ jest.mock('../common/notification-manager.js', () => ({
     }
 }));
 
+// Mock the ClearButton component
+jest.mock('../common/clear-button/ClearButton.js', () => {
+    return jest.fn().mockImplementation(() => ({
+        updateVisibility: jest.fn(),
+        disconnect: jest.fn()
+    }));
+});
+
 
 beforeEach(() => {
   // Reset mocks and timers before each test
@@ -55,7 +63,6 @@ beforeEach(() => {
     <div id="rawJsonViewer" class="jwt-decoder-json-viewer"></div>
     <div id="jwtSignatureStatus" class="jwt-decoder-status"></div>
     <button id="jwt-decoder-copy-btn"></button>
-    <button id="jwt-decoder-clear-btn"></button>
     <button id="jwt-decoder-decode-btn"></button>
     <button id="jwt-decoder-validate-btn"></button>
     <!-- Basic Tab Structure -->
@@ -94,49 +101,6 @@ describe('JWT Decoder UI Interactions', () => {
     triggerDOMContentLoaded();
   });
 
-  it('should clear all fields when clear button is clicked', async () => { // Make test async
-    // Set initial values
-    const jwtInput = document.getElementById('jwtInputToken');
-    const secretInput = document.getElementById('jwtSecretKey');
-    const decodedOutput = document.getElementById('jwtDecodedOutput');
-    const headerJson = document.getElementById('headerJson');
-    const payloadJson = document.getElementById('payloadJson');
-    const rawJsonViewer = document.getElementById('rawJsonViewer');
-    const statusOutput = document.getElementById('jwtSignatureStatus');
-    const clearBtn = document.getElementById('jwt-decoder-clear-btn');
-
-    jwtInput.value = 'test.token.sig';
-    secretInput.value = 'secret';
-    decodedOutput.value = '{"header":{},"payload":{}}';
-    headerJson.innerHTML = 'header';
-    payloadJson.innerHTML = 'payload';
-    rawJsonViewer.innerHTML = 'raw';
-    statusOutput.textContent = 'Verified';
-    statusOutput.style.color = 'green';
-
-    // Reset mock calls to ensure clean state
-    require('../common/notification-manager.js').NotificationManager.show.mockClear();
-
-    // Simulate click
-    clearBtn.click();
-
-    // Allow potential microtasks from event handling to settle
-    await Promise.resolve();
-
-    // Assertions
-    expect(jwtInput.value).toBe('');
-    expect(secretInput.value).toBe('');
-    expect(decodedOutput.value).toBe(''); // Hidden textarea
-    expect(headerJson.innerHTML).toBe('');
-    expect(payloadJson.innerHTML).toBe('');
-    expect(rawJsonViewer.innerHTML).toBe('');
-    expect(statusOutput.textContent).toBe('Enter a JWT token.');
-    expect(statusOutput.classList.contains('status-default')).toBe(true);
-    expect(require('../common/notification-manager.js').NotificationManager.show)
-        .toHaveBeenCalledWith('Enter a JWT token.', 2000, expect.objectContaining({ type: 'default' }));
-    expect(require('../common/notification-manager.js').NotificationManager.show)
-        .toHaveBeenCalledWith('All fields cleared.', 2000, expect.objectContaining({ type: 'success' }));
-  });
 
   it('should decode token automatically on input after debounce', async () => {
     const jwtInput = document.getElementById('jwtInputToken');

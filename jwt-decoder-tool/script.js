@@ -1,6 +1,7 @@
 import { JWTDecoder } from './JWTDecoder.js';
 import { JsonTreeViewRenderer } from './JsonTreeViewRenderer.js';
 import { NotificationManager } from '../common/notification-manager.js';
+import ClearButton from '../common/clear-button/ClearButton.js';
 
 class JWTDecoderUI {
     constructor() {
@@ -12,7 +13,6 @@ class JWTDecoderUI {
             jwtInput: document.getElementById('jwtInputToken'),
             secretInput: document.getElementById('jwtSecretKey'),
             copyBtn: document.getElementById('jwt-decoder-copy-btn'),
-            clearBtn: document.getElementById('jwt-decoder-clear-btn'),
             decodedOutput: document.getElementById('jwtDecodedOutput'), // Hidden textarea
             statusOutput: document.getElementById('jwtSignatureStatus'),
             headerJsonContainer: document.getElementById('headerJson'),
@@ -23,6 +23,9 @@ class JWTDecoderUI {
         // Debounce timers
         this.decodeTimeout = null;
         this.verifyTimeout = null;
+
+        // Clear button component
+        this.clearButton = null;
     }
 
     // --- Initialization ---
@@ -32,7 +35,7 @@ class JWTDecoderUI {
         this.setupTabs();
         this.setupEventListeners();
         this.preloadData();
-        this.decodeAndRender(false); // Initial decode only, no signature validation
+        this.decodeAndRender(false, true); // Initial decode only, no signature validation, suppress notification
         this.initializeTooltips();
     }
 
@@ -57,6 +60,9 @@ class JWTDecoderUI {
     }
 
     setupEventListeners() {
+        // Initialize Clear Button component for JWT input
+        this.clearButton = new ClearButton(this.elements.jwtInput);
+
         // Debounced Input Handlers for automatic actions
         this.elements.jwtInput.addEventListener('input', this.debounceDecode.bind(this));
         this.elements.jwtInput.addEventListener('paste', this.debounceDecode.bind(this));
@@ -65,7 +71,6 @@ class JWTDecoderUI {
 
         // Button Click Handlers for manual actions
         this.elements.copyBtn.addEventListener('click', this.copyDecoded.bind(this));
-        this.elements.clearBtn.addEventListener('click', this.clearAll.bind(this));
         document.getElementById('jwt-decoder-decode-btn').addEventListener('click', () => this.decodeAndRender(false));
         document.getElementById('jwt-decoder-validate-btn').addEventListener('click', () => this.decodeAndRender(true));
     }
@@ -74,6 +79,11 @@ class JWTDecoderUI {
         // Preload with sample JWT token and secret (optional)
         this.elements.jwtInput.value = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
         this.elements.secretInput.value = 'your-256-bit-secret';
+        
+        // Update clear button visibility after preloading data
+        if (this.clearButton) {
+            this.clearButton.updateVisibility();
+        }
     }
 
     initializeTooltips() {
@@ -83,11 +93,11 @@ class JWTDecoderUI {
     }
 
     // --- Core Logic & Rendering ---
-    async decodeAndRender(verifySignature = false) {
-        return this.decodeAndRenderWithAutoVerify(verifySignature, false);
+    async decodeAndRender(verifySignature = false, suppressNotification = false) {
+        return this.decodeAndRenderWithAutoVerify(verifySignature, false, suppressNotification);
     }
 
-    async decodeAndRenderWithAutoVerify(verifySignature = false, isAuto = false) {
+    async decodeAndRenderWithAutoVerify(verifySignature = false, isAuto = false, suppressNotification = false) {
         const jwt = this.elements.jwtInput.value.trim();
         const secret = this.elements.secretInput.value.trim();
 
@@ -119,23 +129,24 @@ class JWTDecoderUI {
                 if (verifySignature) {
                     if (!secret) {
                         if (isAuto) {
-                            this.updateStatusOutput('Decoded successfully. Secret key required for verification.', 'warning');
+                            this.updateStatusOutput('Decoded successfully. Secret key required for verification.', 'warning', suppressNotification);
                         } else {
-                            this.updateStatusOutput('Decoded successfully. Secret key required for signature validation.', 'warning');
+                            this.updateStatusOutput('Decoded successfully. Secret key required for signature validation.', 'warning', suppressNotification);
                         }
                     } else {
                         const isValid = await decoder.verifySignature(secret);
                         this.updateStatusOutput(
                             isValid ? '✓ Decoded successfully. Signature is valid.' : '✗ Decoded successfully. Signature is invalid.',
-                            isValid ? 'success' : 'error'
+                            isValid ? 'success' : 'error',
+                            suppressNotification
                         );
                     }
                 } else {
                     // Only show decoding status when not verifying signature, unless it's an auto action
                     if (isAuto) {
-                        this.updateStatusOutput('Decoded successfully. Signature not verified.', 'warning');
+                        this.updateStatusOutput('Decoded successfully. Signature not verified.', 'warning', suppressNotification);
                     } else {
-                        this.updateStatusOutput('Decoded successfully.', 'success');
+                        this.updateStatusOutput('Decoded successfully.', 'success', suppressNotification);
                     }
                 }
 
@@ -148,27 +159,35 @@ class JWTDecoderUI {
     // --- UI Update Helpers ---
     // Removed updateButtonStates, updateDecodeButtonState, updateVerifyButtonState
 
-    updateStatusOutput(message, type = 'default') { // type: 'default', 'success', 'error', 'warning'
+    updateStatusOutput(message, type = 'default', suppressNotification = false) { // type: 'default', 'success', 'error', 'warning'
         const output = this.elements.statusOutput;
         output.textContent = message;
         output.className = 'jwt-decoder-status'; // Reset classes
         switch (type) {
             case 'success':
                 output.classList.add('status-success');
-                NotificationManager.show(message, 2000, { type: 'success' });
+                if (!suppressNotification) {
+                    NotificationManager.show(message, 2000, { type: 'success' });
+                }
                 break;
             case 'error':
                 output.classList.add('status-error');
-                NotificationManager.show(message, 2000, { type: 'error' });
+                if (!suppressNotification) {
+                    NotificationManager.show(message, 2000, { type: 'error' });
+                }
                 break;
             case 'warning':
                 output.classList.add('status-warning');
-                NotificationManager.show(message, 2000, { type: 'warning' });
+                if (!suppressNotification) {
+                    NotificationManager.show(message, 2000, { type: 'warning' });
+                }
                 break;
             case 'default':
             default:
                 output.classList.add('status-default');
-                NotificationManager.show(message, 2000, { type: 'default' });
+                if (!suppressNotification) {
+                    NotificationManager.show(message, 2000, { type: 'default' });
+                }
                 break;
         }
     }
@@ -201,7 +220,8 @@ class JWTDecoderUI {
         const token = this.elements.jwtInput.value.trim();
 
         if (!token) {
-            this.clearAll(); // Reset immediately if token is cleared
+            this.clearOutputs();
+            this.updateStatusOutput('Enter a JWT token.', 'default');
             return;
         }
         // Auto-decode after a short delay, trigger signature validation if secret is present.
@@ -257,5 +277,8 @@ if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
         const jwtDecoderApp = new JWTDecoderUI();
         jwtDecoderApp.initialize();
+        
+        // Expose instance globally for testing
+        window.jwtDecoderApp = jwtDecoderApp;
     });
 }

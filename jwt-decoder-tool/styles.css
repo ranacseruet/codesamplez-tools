@@ -92,10 +92,12 @@
 .tool-container .jwt-decoder-tab-pane {
   display: none;
   height: 100%;
+  flex: 1; /* Allow tab pane to fill available space */
 }
 
 .tool-container .jwt-decoder-tab-pane.active {
-  display: block;
+  display: flex; /* Change from block to flex to enable flex sizing */
+  flex-direction: column; /* Stack content vertically */
 }
 
 .tool-container .jwt-decoder-tab-content {
@@ -106,16 +108,19 @@
   padding: 0;
   position: relative;
   z-index: 0;
+  flex: 1; /* Allow tab content to fill remaining space */
+  display: flex; /* Make tab content a flex container */
+  flex-direction: column; /* Stack tab panes vertically */
 }
 
 /* JSON Viewer (Increased Specificity) */
 /* Sizing (flex: 1, min-height) is now handled by shared .o-panel-content rule */
 .tool-container .jwt-decoder-json-container {
-  /* height: 300px; */ /* Remove fixed height */
+  height: 300px; /* Set fixed height to match textarea */
   display: flex; /* Keep for internal tab/viewer layout */
   flex-direction: column; /* Keep for internal tab/viewer layout */
   overflow: hidden;
-  flex: 1; /* Ensure it takes available space within o-panel-content */
+  /* Remove flex: 1 to use fixed height instead */
 }
 
 /* No change needed for .jwt-decoder-tab-content flex rule */
@@ -125,8 +130,8 @@
   font-size: 14px; /* Restore specific size */
   line-height: 1.5; /* Restore specific line height */
   padding: 15px; /* Restore specific padding */
-  min-height: 300px; /* Restore specific min-height */
-  height: 100%;
+  min-height: 250px; /* Reduce to account for tab height (~50px) */
+  flex: 1; /* Allow viewer to fill available space in tab pane */
   overflow: auto;
   background-color: #fff; /* Restore specific background */
   border-radius: 0 0 4px 4px; /* Restore specific radius */
@@ -156,6 +161,13 @@
 /* JSON key-value styling (Increased Specificity) */
 .tool-container .jwt-decoder-json-key-value {
   position: relative;
+}
+
+/* Override shared textarea styles for consistent height */
+.tool-container .o-panel-content .c-input--textarea {
+  height: 300px; /* Match the JSON container height */
+  min-height: 300px; /* Ensure minimum height */
+  flex: none; /* Override flex: 1 from shared styles */
 }
 
 .tool-container .jwt-decoder-footer {
