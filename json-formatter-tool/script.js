@@ -1,5 +1,6 @@
 import { NotificationManager } from '../common/notification-manager.js';
 import DownloadManager from '../common/DownloadManager.js';
+import ClearButton from '../common/clear-button/ClearButton.js';
 
 export class JSONFormatter {
   constructor(initDom = true) {
@@ -12,10 +13,12 @@ export class JSONFormatter {
       this.downloadBtn = document.querySelector('#downloadOutputBtn');
       this.sampleBtn = document.querySelector('#loadSampleBtn');
       this.sortCheckbox = document.querySelector('#sortKeys'); // Use ID for checkbox
-      this.clearInputBtn = document.querySelector('#clearInputBtn');
       this.errorStatus = document.querySelector('#jsonErrorStatus');
       this.originalSizeEl = document.querySelector('.jsonf-original-size'); // This class was kept
       this.formattedSizeEl = document.querySelector('.jsonf-formatted-size'); // This class was kept
+
+      // Initialize ClearButton for the input textarea
+      this.clearButtonInstance = new ClearButton(this.input);
 
       this.initializeEvents();
     }
@@ -31,9 +34,6 @@ export class JSONFormatter {
         this.clearError();
         this.updateStats(this.input.value, '');
       });
-      if (this.clearInputBtn) {
-        this.clearInputBtn.addEventListener('click', () => this.clearInput());
-      }
     }
   }
 
@@ -209,12 +209,6 @@ export class JSONFormatter {
     this.errorStatus.classList.remove('error');
   }
 
-  clearInput() {
-    this.input.value = '';
-    this.clearError();
-    this.updateStats('', '');
-    NotificationManager.show('Input cleared!', 2000, { type: 'success' });
-  }
 
   async downloadOutput() {
     try {
@@ -279,6 +273,7 @@ export class JSONFormatter {
     };
 
     this.input.value = JSON.stringify(sampleData);
+    this.clearButtonInstance.updateVisibility(); // Explicitly update ClearButton visibility
     this.formatJSON();
     NotificationManager.show('Sample data loaded successfully!', 2000, { type: 'success' });
   }

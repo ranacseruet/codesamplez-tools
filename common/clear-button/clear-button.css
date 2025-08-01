@@ -1,0 +1,50 @@
+.clear-button-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.clear-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--color-danger, #dc3545);
+    color: white;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: none;
+    z-index: 1000;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-weight: bold;
+    text-align: center;
+    line-height: 24px;
+    font-size: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.clear-button:hover {
+    background: var(--color-danger-hover, #c82333);
+    transform: scale(1.1);
+}
+
+.clear-button:focus {
+    outline: 2px solid var(--color-primary, #2563eb);
+    outline-offset: 1px;
+}
+
+.clear-button::before {
+    content: '×';
+    display: block;
+}
+
+/* Ensure textarea respects the button's position */
+.clear-button-wrapper .c-input--textarea,
+.clear-button-wrapper textarea {
+    padding-right: 35px;
+    width: 100%;
+    box-sizing: border-box;
+}

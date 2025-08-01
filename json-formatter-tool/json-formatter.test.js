@@ -16,6 +16,15 @@ jest.mock('../common/DownloadManager.js', () => {
   });
 });
 
+jest.mock('../common/clear-button/ClearButton.js', () => {
+  return jest.fn().mockImplementation(() => {
+    return {
+      updateVisibility: jest.fn(),
+      disconnect: jest.fn()
+    };
+  });
+});
+
 describe('JSONFormatter', () => {
   let formatter;
   let mockNotificationManager;
@@ -25,17 +34,19 @@ describe('JSONFormatter', () => {
   beforeEach(() => {
     originalDocumentQuerySelector = document.querySelector;
     document.querySelector = jest.fn((selector) => {
-      if (selector === '.c-input.c-input--textarea') return { 
-        value: '',
-        addEventListener: jest.fn() 
-      };
+      if (selector === '.c-input.c-input--textarea') {
+        // Create a proper textarea element for ClearButton
+        const textarea = document.createElement('textarea');
+        textarea.value = '';
+        textarea.addEventListener = jest.fn();
+        return textarea;
+      }
       if (selector === '.c-code-output code') return document.createElement('div');
       if (selector === '#formatJsonBtn') return { addEventListener: jest.fn() };
       if (selector === '#copyOutputBtn') return { disabled: false, addEventListener: jest.fn() };
       if (selector === '#downloadOutputBtn') return { disabled: false, addEventListener: jest.fn() };
       if (selector === '#loadSampleBtn') return { addEventListener: jest.fn() };
       if (selector === '#sortKeys') return { checked: true };
-      if (selector === '#clearInputBtn') return { addEventListener: jest.fn() };
       if (selector === '#jsonErrorStatus') return { 
         textContent: '', 
         classList: { add: jest.fn(), remove: jest.fn() } 
@@ -55,7 +66,7 @@ describe('JSONFormatter', () => {
     formatter.sortCheckbox = { checked: true };
     formatter.formatBtn = { addEventListener: jest.fn() };
     formatter.sampleBtn = { addEventListener: jest.fn() };
-    formatter.clearInputBtn = { addEventListener: jest.fn() };
+    formatter.clearButtonInstance = { updateVisibility: jest.fn(), disconnect: jest.fn() };
     mockNotificationManager = NotificationManagerModule.NotificationManager;
     mockDownloadManager = new DownloadManager(); // Get instance of the mocked DownloadManager
     formatter.downloadManager = mockDownloadManager; // Assign to formatter instance
@@ -363,22 +374,6 @@ describe('JSONFormatter', () => {
     });
   });
 
-  describe('NotificationManager.show', () => {
-    test('should call NotificationManager.show with correct parameters for success messages', () => {
-      formatter.clearInput();
-      expect(mockNotificationManager.show).toHaveBeenCalledWith('Input cleared!', 2000, { type: 'success' });
-    });
-  });
-
-  describe('clearInput', () => {
-    test('should clear input field and update stats', () => {
-      formatter.input.value = '{"key": "value"}';
-      formatter.clearInput();
-      
-      expect(formatter.input.value).toBe('');
-      expect(mockNotificationManager.show).toHaveBeenCalledWith('Input cleared!', 2000, { type: 'success' });
-    });
-  });
 
   describe('loadSampleData', () => {
     test('should load sample data and format it', () => {
@@ -493,8 +488,6 @@ describe('JSONFormatter', () => {
       expect(copyBtnMock).toHaveBeenCalledTimes(1);
       expect(sampleBtnMock).toHaveBeenCalledTimes(1);
       expect(inputMock).toHaveBeenCalledTimes(1);
-      expect(clearInputBtnMock).toHaveBeenCalledTimes(1);
-      expect(clearOutputBtnMock).toHaveBeenCalledTimes(0);
     });
 
     test('should trigger formatJSON on format button click', () => {
@@ -530,16 +523,6 @@ describe('JSONFormatter', () => {
       }
     });
 
-    test('should trigger clearInput on clear input button click', () => {
-      formatter.clearInput = jest.fn();
-      formatter.initializeEvents();
-      if (callbacks.clearInputBtn.click) {
-        callbacks.clearInputBtn.click();
-        expect(formatter.clearInput).toHaveBeenCalled();
-      } else {
-        throw new Error('clearInputBtn callback not set');
-      }
-    });
 
     test('should trigger clearError and updateStats on input change', () => {
       formatter.clearError = jest.fn();
@@ -628,7 +611,7 @@ describe('JSONFormatter', () => {
 
     test('should initialize DOM elements when initDom is true', () => {
       const formatter = new JSONFormatter(true);
-      expect(document.querySelector).toHaveBeenCalledTimes(11);
+      expect(document.querySelector).toHaveBeenCalledTimes(10);
     });
 
     test('should not initialize DOM elements when initDom is false', () => {
