@@ -1,5 +1,6 @@
 import { removeCommentsFromCss, removeWhitespaceFromCss, shortenColorsInCss, removeUnnecessaryUnits, removeLastSemicolonsFromCss, combineSelectorsInCss, isValidCSS } from './minifier.js';
 import { NotificationManager } from '../common/notification-manager.js';
+import ClearButton from '../common/clear-button/ClearButton.js';
 
 // Make functions available globally for webpack bundling
 window.removeCommentsFromCss = removeCommentsFromCss;
@@ -15,7 +16,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const inputCss = document.getElementById('input-css');
     const outputCss = document.getElementById('output-css');
     const minifyBtn = document.getElementById('minify-btn');
-    const clearInputBtn = document.getElementById('clear-input');
     const loadSampleBtn = document.getElementById('load-sample');
     const copyOutputBtn = document.getElementById('copy-output');
     const resetOptionsBtn = document.getElementById('reset-options');
@@ -111,10 +111,20 @@ top: 0px;
     minifyBtn.addEventListener('click', () => minifyCss().catch(error => {
         NotificationManager.show('Error: ' + error.message, 3000, { type: 'error' });
     }));
-    clearInputBtn.addEventListener('click', clearInput);
     loadSampleBtn.addEventListener('click', loadSample);
     copyOutputBtn.addEventListener('click', copyOutput);
     resetOptionsBtn.addEventListener('click', resetOptions);
+    
+    // Initialize ClearButton component
+    const clearButtonInstance = new ClearButton(inputCss);
+    
+    // Add event listener to clear output when input is cleared
+    inputCss.addEventListener('input', () => {
+        if (inputCss.value === '') {
+            outputCss.value = '';
+            updateStats('', '');
+        }
+    });
     
     // Initialize the page
     resetOptions();
@@ -183,15 +193,9 @@ top: 0px;
     }
     
     // UI Helper Functions
-    function clearInput() {
-      inputCss.value = '';
-      outputCss.value = '';
-      updateStats('', '');
-      NotificationManager.show('Input cleared', 2000, { type: 'success' });
-    }
-    
     async function loadSample() {
       inputCss.value = sampleCss;
+      clearButtonInstance.updateVisibility();
       await minifyCss();
       NotificationManager.show('Sample CSS loaded and minified', 2000, { type: 'success' });
     }

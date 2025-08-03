@@ -17,11 +17,15 @@
 /* Toolbar styles */
 .css-minifier-toolbar.o-toolbar {
   justify-content: flex-end; /* Align buttons to the right */
-  margin-top: var(--spacing-lg);
-  margin-bottom: var(--spacing-md); /* Add space below buttons */
+  /* Removed margin to prevent height discrepancies */
   flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
   width: 100%; /* Ensure toolbar spans full width */
   gap: var(--spacing-md); /* Add consistent spacing between buttons */
+}
+
+/* Add padding to the panel header to maintain spacing after removing toolbar margin */
+.css-minifier-container .o-panel-header {
+  padding-bottom: var(--spacing-md);
 }
 
 /* Stats panel styles */
@@ -38,6 +42,23 @@
 /* Options panel styles */
 .css-minifier-options {
   margin: var(--spacing-lg) 0;
+}
+
+.c-checkbox-group {
+  display: flex;
+  flex-direction: column; /* Stack rows vertically */
+  gap: var(--spacing-md); /* Gap between rows */
+}
+
+.c-checkbox-row {
+  display: flex;
+  flex-wrap: wrap; /* Allow items to wrap within a row if needed */
+  gap: var(--spacing-md); /* Gap between items in a row */
+}
+
+.c-checkbox-item {
+  flex: 1 1 calc(33.33% - (2 * var(--spacing-md) / 3)); /* Max 3 items per row, accounting for gap */
+  min-width: 150px; /* Ensure items don't get too small */
 }
 
 /* Footer styles */
@@ -65,14 +86,19 @@
   box-sizing: border-box;
 }
 
-/* Fix textarea sizing */
+/* Fix textarea sizing - Ensure both textareas have equal height */
+.css-minifier-container .o-panel {
+  display: flex;
+  flex-direction: column;
+}
+
 .css-minifier-container .c-input--textarea {
-  height: auto;
   flex: 1;
-  min-height: 300px; /* Increase minimum height */
+  min-height: 300px;
   box-sizing: border-box;
-  width: 100%; /* Ensure full width */
-  max-width: 100%; /* Prevent overflow */
+  width: 100%;
+  max-width: 100%;
+  resize: vertical;
 }
 
 /* Ensure panels take full width in their grid cells */

@@ -18,7 +18,6 @@
         <div class="o-panel-header">
           <h2>Input CSS</h2>
           <div class="css-minifier-toolbar o-toolbar">
-            <button class="c-button c-button--secondary" id="clear-input">Clear</button>
             <button class="c-button c-button--secondary" id="load-sample">Load Sample</button>
           </div>
         </div>
@@ -36,38 +35,45 @@
       </div>
     </div>
     
+    <div class="css-minifier-actions" style="text-align: center; margin: 20px 0;">
+      <button id="minify-btn" class="c-button">Minify CSS</button>
+    </div>
+    
     <div class="css-minifier-options c-options-panel">
       <h2>Minification Options</h2>
       <div class="c-checkbox-group">
-        <div class="c-checkbox-item">
-          <input type="checkbox" id="remove-comments" checked>
-          <label for="remove-comments">Remove comments</label>
+        <div class="c-checkbox-row">
+          <div class="c-checkbox-item">
+            <input type="checkbox" id="remove-comments" checked>
+            <label for="remove-comments">Remove comments</label>
+          </div>
+          <div class="c-checkbox-item">
+            <input type="checkbox" id="remove-whitespace" checked>
+            <label for="remove-whitespace">Remove whitespace</label>
+          </div>
+          <div class="c-checkbox-item">
+            <input type="checkbox" id="combine-selectors" checked>
+            <label for="combine-selectors">Combine duplicate selectors</label>
+          </div>
         </div>
-        <div class="c-checkbox-item">
-          <input type="checkbox" id="remove-whitespace" checked>
-          <label for="remove-whitespace">Remove whitespace</label>
-        </div>
-        <div class="c-checkbox-item">
-          <input type="checkbox" id="combine-selectors" checked>
-          <label for="combine-selectors">Combine duplicate selectors</label>
-        </div>
-        <div class="c-checkbox-item">
-          <input type="checkbox" id="shorten-colors" checked>
-          <label for="shorten-colors">Shorten color values</label>
-        </div>
-        <div class="c-checkbox-item">
-          <input type="checkbox" id="remove-units" checked>
-          <label for="remove-units">Remove unnecessary units</label>
-        </div>
-        <div class="c-checkbox-item">
-          <input type="checkbox" id="remove-last-semicolons" checked>
-          <label for="remove-last-semicolons">Remove last semicolons</label>
+        <div class="c-checkbox-row">
+          <div class="c-checkbox-item">
+            <input type="checkbox" id="shorten-colors" checked>
+            <label for="shorten-colors">Shorten color values</label>
+          </div>
+          <div class="c-checkbox-item">
+            <input type="checkbox" id="remove-units" checked>
+            <label for="remove-units">Remove unnecessary units</label>
+          </div>
+          <div class="c-checkbox-item">
+            <input type="checkbox" id="remove-last-semicolons" checked>
+            <label for="remove-last-semicolons">Remove last semicolons</label>
+          </div>
         </div>
       </div>
       
       <div class="css-minifier-toolbar o-toolbar">
         <button id="reset-options" class="c-button c-button--secondary">Reset Options</button>
-        <button id="minify-btn" class="c-button">Minify CSS</button>
       </div>
     </div>
 
