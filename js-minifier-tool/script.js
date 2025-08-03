@@ -1,5 +1,6 @@
 import { JSMinifier } from './minifier.js';
 import { NotificationManager } from '../common/notification-manager.js';
+import ClearButton from '../common/clear-button/ClearButton.js';
 
 // Make JSMinifier available globally
 window.JSMinifier = JSMinifier;
@@ -30,10 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const output = document.getElementById('js-minifier-output');
   const minifyBtn = document.getElementById('js-minifier-minify-btn');
   const copyBtn = document.getElementById('js-minifier-copy-btn');
-  const clearBtn = document.getElementById('js-minifier-clear-btn');
   const originalSizeEl = document.getElementById('js-minifier-original-size');
   const minifiedSizeEl = document.getElementById('js-minifier-minified-size');
   const compressionRatioEl = document.getElementById('js-minifier-compression-ratio');
+  
+  // Initialize ClearButton component for the input textarea
+  const clearButtonInstance = new ClearButton(input);
   
   // Option checkboxes
   const removeCommentsCheckbox = document.getElementById('js-minifier-remove-comments');
@@ -93,18 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
     NotificationManager.show('Copied to clipboard!', 1500, { type: 'success' });
   }
 
-  // Clear all fields
-  function clearAll() {
-    input.value = '';
-    output.value = '';
-    updateStats('', '');
-    NotificationManager.show('All fields cleared', 1500, { type: 'success' });
-  }
-
   // Event listeners
   minifyBtn.addEventListener('click', minifyCode);
   copyBtn.addEventListener('click', copyToClipboard);
-  clearBtn.addEventListener('click', clearAll);
   
   // Auto-minify when options change
   removeCommentsCheckbox.addEventListener('change', minifyCode);
@@ -118,5 +112,14 @@ document.addEventListener('DOMContentLoaded', () => {
     input.value = SAMPLE_CODE;
     minifyCode();
     NotificationManager.show('Sample code loaded and minified', 1500, { type: 'success' });
+    clearButtonInstance.updateVisibility();
+  });
+  
+  // Update stats when input is cleared by ClearButton
+  input.addEventListener('input', () => {
+    if (input.value === '') {
+      output.value = '';
+      updateStats('', '');
+    }
   });
 });
