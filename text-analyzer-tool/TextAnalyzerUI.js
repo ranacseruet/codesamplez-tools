@@ -1,12 +1,11 @@
 import { analyzeText } from './script.js';
 import { NotificationManager } from '../common/notification-manager.js';
-import ClearButton from '../common/clear-button/ClearButton.js';
 
 export class TextAnalyzerUI {
     constructor() {
         this.textInput = document.getElementById('textInput');
+        this.clearButton = document.getElementById('clear-input');
         this.loadSampleButton = document.getElementById('load-sample');
-        new ClearButton(this.textInput);
 
         this.elements = {
             charCount: document.getElementById('charCount'),
@@ -43,8 +42,9 @@ export class TextAnalyzerUI {
             });
         }
 
-        if (this.textInput) {
-            this.textInput.addEventListener('textCleared', () => {
+        if (this.clearButton) {
+            this.clearButton.addEventListener('click', () => {
+                this.textInput.value = '';
                 this.updateCounts();
                 NotificationManager.show("Text cleared", 3000, {type: 'success'});
             });
