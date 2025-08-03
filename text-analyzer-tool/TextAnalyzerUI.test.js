@@ -98,7 +98,6 @@ describe('TextAnalyzerUI', () => {
 
   test('should initialize with all DOM elements', () => {
     expect(textAnalyzerUI.textInput).toBe(document.getElementById('textInput'));
-    expect(textAnalyzerUI.clearButton).toBe(document.getElementById('clear-input'));
     expect(textAnalyzerUI.loadSampleButton).toBe(document.getElementById('load-sample'));
     
     // Verify count elements
@@ -106,10 +105,9 @@ describe('TextAnalyzerUI', () => {
     expect(textAnalyzerUI.elements.wordCount).toBe(document.getElementById('wordCount'));
   });
 
-  describe('NotificationManager integration', () => {
-    test('should call NotificationManager.show when clearing text', () => {
-      const clearButton = document.getElementById('clear-input');
-      clearButton.click();
+  describe('NotificationManager integration', () => {test('should call NotificationManager.show when clearing text', () => {
+      const textArea = document.getElementById('textInput');
+      textArea.dispatchEvent(new Event('textCleared')); // Trigger clear input event
       
       expect(NotificationManager.show).toHaveBeenCalledWith(
         "Text cleared", 
@@ -117,7 +115,6 @@ describe('TextAnalyzerUI', () => {
         {type: 'success'}
       );
     });
-
     test('should call NotificationManager.show when loading sample text', () => {
       const loadSampleButton = document.getElementById('load-sample');
       loadSampleButton.click();
