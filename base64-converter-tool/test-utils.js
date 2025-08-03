@@ -1,7 +1,7 @@
 // Shared test utilities for Base64 converter tests
 
 // TextEncoder/Decoder polyfills with better Unicode support
-const setupPolyfills = () => {
+export const setupPolyfills = () => {
     global.TextEncoder = class {
         encode(str) {
             const chunks = [];
@@ -104,11 +104,6 @@ const setupPolyfills = () => {
     }
 };
 
-const cleanup = (originalGlobals) => {
+export const cleanup = (originalGlobals) => {
     Object.assign(global, originalGlobals);
-};
-
-module.exports = {
-    setupPolyfills,
-    cleanup
 };

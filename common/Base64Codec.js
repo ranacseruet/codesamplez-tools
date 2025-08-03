@@ -199,4 +199,4 @@ class Base64Codec {
 }
 
 // Export the class
-module.exports = Base64Codec;
+export default Base64Codec;

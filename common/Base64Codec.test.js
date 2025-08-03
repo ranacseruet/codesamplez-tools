@@ -1,6 +1,6 @@
 // Import test utilities and Base64Codec
-const { setupPolyfills, cleanup } = require('../base64-converter-tool/test-utils.js');
-const Base64Codec = require('./Base64Codec.js');
+import { setupPolyfills, cleanup } from '../base64-converter-tool/test-utils.js';
+import Base64Codec from './Base64Codec.js';
 
 // Setup test environment
 const original = { ...global };

@@ -42,7 +42,7 @@ export async function hmacSha256(message, key) {
 /**
  * Decodes and validates JWT tokens.
  */
-const Base64Codec = require('../common/Base64Codec.js');
+import Base64Codec from '../common/Base64Codec.js';
 
 export class JWTDecoder {
     #tokenString = '';

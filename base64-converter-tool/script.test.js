@@ -1,10 +1,10 @@
-const { TextEncoder, TextDecoder } = require('util');
+import { TextEncoder, TextDecoder } from 'util';
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
-const Base64Codec = require('../common/Base64Codec.js');
-const { NotificationManager } = require('../common/notification-manager.js');
-const DownloadManager = require('../common/DownloadManager.js').default;
+import Base64Codec from '../common/Base64Codec.js';
+import { NotificationManager } from '../common/notification-manager.js';
+import DownloadManager from '../common/DownloadManager.js';
 
 // Mock NotificationManager at the top level
 jest.mock('../common/notification-manager.js', () => ({
@@ -104,19 +104,6 @@ describe('Base64Converter UI (script.js)', () => {
             expect(converter.elements.downloadDecodedButton).toBeDefined();
         });
 
-        test('should clear UI when clear button clicked', () => {
-            elements.input.value = 'test';
-            elements.result.textContent = 'result';
-            elements.status.textContent = 'status';
-            
-            elements.clearButton.click();
-            
-            expect(elements.input.value).toBe('');
-            expect(elements.result.textContent).toBe('');
-            expect(elements.status.textContent).toBe('');
-            expect(elements.downloadDecodedButton.disabled).toBe(true);
-            expect(elements.copyButton.disabled).toBe(true);
-        });
 
         test('should encode text in encode mode with UTF-8', () => {
             elements.input.value = 'Hello World';

@@ -1,4 +1,4 @@
-const Base64Codec = require('../common/Base64Codec.js');
+import Base64Codec from '../common/Base64Codec.js';
 
 export class JWTBuilder {
   constructor() {

@@ -1,7 +1,8 @@
 // Import dependencies
-const Base64Codec = require('../common/Base64Codec.js');
-const { NotificationManager } = require('../common/notification-manager.js');
-const DownloadManager = require('../common/DownloadManager.js').default;
+import Base64Codec from '../common/Base64Codec.js';
+import { NotificationManager } from '../common/notification-manager.js';
+import DownloadManager from '../common/DownloadManager.js';
+import ClearButton from '../common/clear-button/ClearButton.js';
 
 // Converter factory function
 const createConverter = () => {
@@ -298,7 +299,7 @@ const createConverter = () => {
 };
 
 // Export the factory function
-module.exports = createConverter;
+export default createConverter;
 
 // Initialize when DOM is loaded
 if (typeof window !== 'undefined') {
@@ -316,7 +317,6 @@ if (typeof window !== 'undefined') {
             copyButton: document.getElementById('base64converter-copy'),
             fileInput: document.getElementById('base64converter-file'),
             convertButton: document.getElementById('base64converter-convert'),
-            clearButton: document.getElementById('base64converter-clear'),
             downloadDecodedButton: document.getElementById('base64converter-download-decoded')
         };
         
@@ -325,7 +325,7 @@ if (typeof window !== 'undefined') {
             'base64converter-input', 'base64converter-result', 'base64converter-status',
             'base64converter-copy-status', 'base64converter-mode', 'base64converter-encoding',
             'base64converter-copy', 'base64converter-file', 'base64converter-convert',
-            'base64converter-clear', 'base64converter-download-decoded'
+            'base64converter-download-decoded'
         ];
 
         for (const id of requiredElementIds) {
@@ -347,39 +347,25 @@ if (typeof window !== 'undefined') {
         elements.copyButton = document.getElementById('base64converter-copy');
         elements.fileInput = document.getElementById('base64converter-file');
         elements.convertButton = document.getElementById('base64converter-convert');
-        elements.clearButton = document.getElementById('base64converter-clear');
         elements.downloadDecodedButton = document.getElementById('base64converter-download-decoded');
 
         // Assign elements to converter
         converter.elements = elements;
 
+        // Initialize ClearButton component
+        const clearButtonInstance = new ClearButton(elements.input);
+
         // Expose the initialized instance for testing/debugging if needed
         window.base64ConverterInstance = converter;
 
         // Set up event listeners
-        const convertHandler = function() {
-            if (!this.elements.input.value.trim()) {
+        const convertHandler = () => {
+            if (!converter.elements.input.value.trim()) {
                 NotificationManager.show('Please enter some text or upload a file to convert', 3000, { type: 'error' });
             }
-            this.processInput();
-        }.bind(converter);
+            converter.processInput();
+        };
         elements.convertButton.addEventListener('click', convertHandler);
-
-        const clearButtonHandler = function() {
-            if (!this.elements.input.value.trim() && !this.elements.result.textContent.trim()) {
-                NotificationManager.show('Nothing to clear', 3000, { type: 'info' });
-                return;
-            }
-            this.elements.input.value = '';
-            this.elements.result.textContent = '';
-            this.elements.status.textContent = '';
-            this.elements.copyStatus.textContent = '';
-            this.elements.downloadDecodedButton.disabled = true;
-            this.elements.copyButton.disabled = true;
-            this.elements.fileInput.value = '';
-            NotificationManager.show('Cleared', 2000, { type: 'success' });
-        }.bind(converter);
-        elements.clearButton.addEventListener('click', clearButtonHandler);
 
         const copyHandler = () => converter.handleCopy();
         elements.copyButton.addEventListener('click', copyHandler);
