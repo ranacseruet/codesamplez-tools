@@ -60,8 +60,11 @@ class ClearButton {
         this.textArea.value = '';
         this.updateVisibility();
         this.textArea.focus();
-        const event = new Event('input', { bubbles: true });
-        this.textArea.dispatchEvent(event);
+        const inputEvent = new Event('input', { bubbles: true });
+        this.textArea.dispatchEvent(inputEvent);
+
+        const clearEvent = new CustomEvent('textCleared', { bubbles: true });
+        this.textArea.dispatchEvent(clearEvent);
     }
 
     updateVisibility() {
