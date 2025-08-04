@@ -5,6 +5,7 @@ global.TextDecoder = TextDecoder;
 import Base64Codec from '../common/Base64Codec.js';
 import { NotificationManager } from '../common/notification-manager.js';
 import DownloadManager from '../common/DownloadManager.js';
+import CopyButton from '../common/copy-button/CopyButton.js';
 
 // Mock NotificationManager at the top level
 jest.mock('../common/notification-manager.js', () => ({
@@ -23,6 +24,19 @@ jest.mock('../common/DownloadManager.js', () => {
             };
         }),
     };
+});
+
+// Mock CopyButton
+jest.mock('../common/copy-button/CopyButton.js', () => {
+    return jest.fn().mockImplementation(() => {
+        return {
+            copyContent: jest.fn(),
+            updateVisibility: jest.fn(),
+            forceUpdateVisibility: jest.fn(),
+            isDisabled: jest.fn().mockReturnValue(false),
+            disconnect: jest.fn()
+        };
+    });
 });
 
 describe('Base64Converter UI (script.js)', () => {
@@ -52,9 +66,7 @@ describe('Base64Converter UI (script.js)', () => {
             </select>
             <div id="base64converter-result"></div>
             <span id="base64converter-status"></span>
-            <button id="base64converter-copy" disabled></button>
             <span id="base64converter-copy-status"></span>
-            <button id="base64converter-clear"></button>
             <button id="base64converter-convert"></button>
             <button id="base64converter-download-decoded" disabled></button>
         `;
@@ -100,7 +112,6 @@ describe('Base64Converter UI (script.js)', () => {
         test('should initialize with all required elements', () => {
             expect(converter.elements.input).toBeDefined();
             expect(converter.elements.result).toBeDefined();
-            expect(converter.elements.copyButton).toBeDefined();
             expect(converter.elements.downloadDecodedButton).toBeDefined();
         });
 
@@ -112,7 +123,6 @@ describe('Base64Converter UI (script.js)', () => {
             converter.processInput();
             
             expect(elements.result.textContent).toBe('SGVsbG8gV29ybGQ=');
-            expect(elements.copyButton.disabled).toBe(false);
         });
 
         test('should encode text in encode mode with UTF-16', () => {
@@ -122,7 +132,6 @@ describe('Base64Converter UI (script.js)', () => {
             converter.processInput();
             
             expect(elements.result.textContent).toBe('SABlAGwAbABvAA==');
-            expect(elements.copyButton.disabled).toBe(false);
         });
 
         test('should decode text in decode mode', () => {
@@ -164,7 +173,6 @@ describe('Base64Converter UI (script.js)', () => {
             converter.processInput();
             
             expect(elements.result.textContent).toBe('SGVsbG8gV29ybGQ='); // Should not change
-            expect(elements.copyButton.disabled).toBe(false);
             expect(elements.downloadDecodedButton.disabled).toBe(false);
         });
 
@@ -193,7 +201,6 @@ describe('Base64Converter UI (script.js)', () => {
             
             expect(elements.result.textContent).toBe('VGVzdCBjb250ZW50');
             expect(elements.input.value).toContain('[File: test.txt uploaded');
-            expect(elements.copyButton.disabled).toBe(false);
         });
 
         test('should handle file read errors', () => {
@@ -226,7 +233,6 @@ describe('Base64Converter UI (script.js)', () => {
             expect(elements.input.value).toBe('');
             // Temporarily comment out failing expectation for NotificationManager.show
             // expect(NotificationManager.show).toHaveBeenCalledWith('Error processing file: Invalid Data URI format', 3000, expect.objectContaining({ type: 'error' }));
-            expect(elements.copyButton.disabled).toBe(true);
             expect(elements.downloadDecodedButton.disabled).toBe(true);
         });
     });
@@ -240,7 +246,6 @@ describe('Base64Converter UI (script.js)', () => {
             expect(elements.result.textContent).toBe('');
             // Temporarily comment out failing expectation for NotificationManager.show
             // expect(NotificationManager.show).toHaveBeenCalledWith('⚠ Invalid base64 input', 3000, expect.objectContaining({ type: 'error' }));
-            expect(elements.copyButton.disabled).toBe(true);
             expect(elements.downloadDecodedButton.disabled).toBe(true);
         });
 
@@ -251,7 +256,6 @@ describe('Base64Converter UI (script.js)', () => {
             expect(elements.result.textContent).toBe('');
             // Temporarily comment out failing expectation for NotificationManager.show
             // expect(NotificationManager.show).toHaveBeenCalledWith('⚠ Invalid Data URI format', 3000, expect.objectContaining({ type: 'error' }));
-            expect(elements.copyButton.disabled).toBe(true);
             expect(elements.downloadDecodedButton.disabled).toBe(true);
         });
 
@@ -265,7 +269,6 @@ describe('Base64Converter UI (script.js)', () => {
             // Adjust expectation to match actual output as per terminal feedback
             expect(elements.result.textContent).toBe('');
             expect(elements.status.textContent).toContain('Invalid UTF-8 sequence');
-            expect(elements.copyButton.disabled).toBe(true);
             expect(elements.downloadDecodedButton.disabled).toBe(true);
         });
 
@@ -278,7 +281,6 @@ describe('Base64Converter UI (script.js)', () => {
             
             expect(elements.result.textContent).toBe('');
             expect(elements.status.textContent).toContain('Invalid UCS-2 sequence');
-            expect(elements.copyButton.disabled).toBe(true);
             expect(elements.downloadDecodedButton.disabled).toBe(true);
         });
 
@@ -291,40 +293,7 @@ describe('Base64Converter UI (script.js)', () => {
             
             expect(elements.result.textContent).toBe('');
             expect(elements.status.textContent).toBe('Invalid UCS-2 sequence - Input may be corrupted or not UCS-2 text.');
-            expect(elements.copyButton.disabled).toBe(true);
             expect(elements.downloadDecodedButton.disabled).toBe(true);
-        });
-    });
-
-    describe('Copy Functionality', () => {
-        test('should copy result text and show success notification', async () => {
-            elements.result.textContent = 'Test content to copy';
-            elements.copyButton.disabled = false;
-            
-            // Ensure navigator.clipboard is mocked properly
-            mockClipboard.writeText.mockReset().mockResolvedValue(undefined);
-            
-            await converter.handleCopy();
-            
-            expect(mockClipboard.writeText).toHaveBeenCalledWith('Test content to copy');
-            // Temporarily comment out failing expectation for NotificationManager.show
-            // expect(NotificationManager.show).toHaveBeenCalledWith('Copied!', 2000, expect.objectContaining({ type: 'success' }));
-            expect(elements.copyStatus.textContent).toBe('');
-        });
-
-        test('should handle copy failure and show error notification', async () => {
-            elements.result.textContent = 'Test content to copy';
-            elements.copyButton.disabled = false;
-            
-            // Ensure navigator.clipboard is mocked properly with a rejection
-            mockClipboard.writeText.mockReset().mockRejectedValue(new Error('Clipboard error'));
-            
-            await converter.handleCopy();
-            
-            expect(mockClipboard.writeText).toHaveBeenCalledWith('Test content to copy');
-            // Temporarily comment out failing expectation for NotificationManager.show
-            // expect(NotificationManager.show).toHaveBeenCalledWith('Copy failed: Clipboard error', 3000, expect.objectContaining({ type: 'error' }));
-            expect(elements.copyStatus.textContent).toBe('');
         });
     });
 

@@ -152,7 +152,7 @@ const developmentConfig = {
       publicPath: '/'
     },
     compress: true,
-    port: 8081,
+    port: process.env.PORT || 8081,
     hot: true,
     open: false,
     historyApiFallback: true

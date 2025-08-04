@@ -3,6 +3,7 @@ import Base64Codec from '../common/Base64Codec.js';
 import { NotificationManager } from '../common/notification-manager.js';
 import DownloadManager from '../common/DownloadManager.js';
 import ClearButton from '../common/clear-button/ClearButton.js';
+import CopyButton from '../common/copy-button/CopyButton.js';
 
 // Converter factory function
 const createConverter = () => {
@@ -21,14 +22,12 @@ const createConverter = () => {
             // If the input is the file upload placeholder, do not process it as text for encoding/decoding.
             // The result and status should already be set by handleFileUpload.
             if (rawInput.startsWith('[File:') && rawInput.endsWith('uploaded and encoded to output]')) {
-                this.elements.copyButton.disabled = false;
                 this.elements.downloadDecodedButton.disabled = false;
                 return; 
             }
 
             this.currentMimeType = null; // Reset MIME type, will be set if Data URI
             this.elements.downloadDecodedButton.disabled = true;
-            this.elements.copyButton.disabled = true;
 
             if (!rawInput) {
                 this.elements.result.textContent = '';
@@ -124,6 +123,8 @@ const createConverter = () => {
                 }
 
                 this.elements.result.textContent = resultText;
+                // Update CopyButton visibility directly
+                this.copyButtonInstance.forceUpdateVisibility();
                 if (statusActionMessage === 'Decoded' && detectedMimeType && !detectedMimeType.startsWith('text/')) {
                     NotificationManager.show(`${statusActionMessage}. MIME: ${detectedMimeType}. Selected encoding (${this.elements.encoding.value}) ignored for binary display.`, 2000, { type: 'success' });
                 } else if (statusActionMessage === 'Decoded' && !detectedMimeType && (resultText.startsWith('[Decoded content (likely binary') || resultText.startsWith('[Binary content'))) {
@@ -132,7 +133,6 @@ const createConverter = () => {
                 else {
                     NotificationManager.show(`${statusActionMessage} using ${this.elements.encoding.value}`, 2000, { type: 'success' });
                 }
-                this.elements.copyButton.disabled = false;
                 this.elements.downloadDecodedButton.disabled = false;
 
             } catch (error) {
@@ -163,7 +163,6 @@ const createConverter = () => {
                     NotificationManager.show('⚠ ' + errorMessage, 3000, { type: 'error' });
                 }
                 this.elements.downloadDecodedButton.disabled = true;
-                this.elements.copyButton.disabled = true;
             }
         },
 
@@ -253,18 +252,15 @@ const createConverter = () => {
 
                     this.elements.input.value = `[File: ${file.name} uploaded and encoded to output]`;
                     this.elements.result.textContent = base64String;
-                    this.currentMimeType = mimeType;
-
-                    NotificationManager.show(`Encoded file: ${file.name}`, 2000, { type: 'success' });
-                    this.elements.copyButton.disabled = false;
-                    this.elements.downloadDecodedButton.disabled = false;
+                    // Update CopyButton visibility directly
+                    this.copyButtonInstance.forceUpdateVisibility();
 
                 } catch (error) {
                 console.error('File processing error after read:', error);
                 this.elements.result.textContent = '';
+                this.copyButtonInstance.forceUpdateVisibility();
                 this.elements.input.value = '';
                 NotificationManager.show('Error processing file: ' + error.message, 3000, { type: 'error' });
-                    this.elements.copyButton.disabled = true;
                     this.elements.downloadDecodedButton.disabled = true;
                 } finally {
                     e.target.value = null;
@@ -274,9 +270,9 @@ const createConverter = () => {
             reader.onerror = () => {
                 console.error('File reading error:', reader.error);
                 this.elements.result.textContent = '';
+                this.copyButtonInstance.forceUpdateVisibility();
                 this.elements.input.value = '';
                 NotificationManager.show('Error reading file: ' + reader.error.message, 3000, { type: 'error' });
-                this.elements.copyButton.disabled = true;
                 this.elements.downloadDecodedButton.disabled = true;
                 e.target.value = null;
             };
@@ -284,17 +280,6 @@ const createConverter = () => {
             reader.readAsDataURL(file);
         },
 
-        async handleCopy() {
-            try {
-                await navigator.clipboard.writeText(this.elements.result.textContent);
-                NotificationManager.show('Copied!', 2000, { type: 'success' });
-                this.elements.copyStatus.textContent = '';
-            } catch (error) {
-                console.error('Copy error:', error);
-                NotificationManager.show('Copy failed: ' + error.message, 3000, { type: 'error' });
-                this.elements.copyStatus.textContent = '';
-            }
-        }
     };
 };
 
@@ -314,7 +299,7 @@ if (typeof window !== 'undefined') {
             copyStatus: document.getElementById('base64converter-copy-status'),
             mode: document.getElementById('base64converter-mode'),
             encoding: document.getElementById('base64converter-encoding'),
-            copyButton: document.getElementById('base64converter-copy'),
+            // CopyButton is initialized directly on the result textarea
             fileInput: document.getElementById('base64converter-file'),
             convertButton: document.getElementById('base64converter-convert'),
             downloadDecodedButton: document.getElementById('base64converter-download-decoded')
@@ -324,18 +309,21 @@ if (typeof window !== 'undefined') {
         const requiredElementIds = [
             'base64converter-input', 'base64converter-result', 'base64converter-status',
             'base64converter-copy-status', 'base64converter-mode', 'base64converter-encoding',
-            'base64converter-copy', 'base64converter-file', 'base64converter-convert',
+            'base64converter-file', 'base64converter-convert',
             'base64converter-download-decoded'
         ];
 
+        let missingElements = [];
         for (const id of requiredElementIds) {
-            if (!elements[id.split('-')[1]]) { // elements keys are shortened e.g. 'input' for 'base64converter-input'
-                 if (!document.getElementById(id)) {
-                    console.error('Some elements not found');
-                    NotificationManager.show('Required elements not found - tool may not function properly', 3000, { type: 'error' });
-                    return;
-                 }
+            if (!document.getElementById(id)) {
+                missingElements.push(id);
             }
+        }
+
+        if (missingElements.length > 0) {
+            console.error('Missing required elements:', missingElements);
+            NotificationManager.show('Required elements not found - tool may not function properly', 3000, { type: 'error' });
+            return;
         }
         // Re-assign elements to ensure all are captured if some were missed by the initial simple check
         elements.input = document.getElementById('base64converter-input');
@@ -344,7 +332,6 @@ if (typeof window !== 'undefined') {
         elements.copyStatus = document.getElementById('base64converter-copy-status');
         elements.mode = document.getElementById('base64converter-mode');
         elements.encoding = document.getElementById('base64converter-encoding');
-        elements.copyButton = document.getElementById('base64converter-copy');
         elements.fileInput = document.getElementById('base64converter-file');
         elements.convertButton = document.getElementById('base64converter-convert');
         elements.downloadDecodedButton = document.getElementById('base64converter-download-decoded');
@@ -367,8 +354,8 @@ if (typeof window !== 'undefined') {
         };
         elements.convertButton.addEventListener('click', convertHandler);
 
-        const copyHandler = () => converter.handleCopy();
-        elements.copyButton.addEventListener('click', copyHandler);
+        // Initialize CopyButton component on result textarea and store reference
+        converter.copyButtonInstance = new CopyButton(elements.result);
 
         const fileUploadHandler = (e) => converter.handleFileUpload(e);
         elements.fileInput.addEventListener('change', fileUploadHandler);
