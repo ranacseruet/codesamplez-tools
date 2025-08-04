@@ -103,6 +103,34 @@ describe('ClearButton', () => {
         dispatchEventSpy.mockRestore();
     });
 
+    describe('clear button animation states', () => {
+        beforeEach(() => {
+            jest.useFakeTimers();
+            textArea.value = 'initial text';
+            textArea.dispatchEvent(new Event('input'));
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        test('should handle success animation states correctly', () => {
+            clearButtonInstance.clearButton.click();
+            
+            // Initially 'clearing' class should be added
+            expect(clearButtonInstance.clearButton.classList.contains('clearing')).toBe(true);
+            
+            // After 300ms, 'clearing' class should be removed and 'clear-success' added
+            jest.advanceTimersByTime(300);
+            expect(clearButtonInstance.clearButton.classList.contains('clearing')).toBe(false);
+            expect(clearButtonInstance.clearButton.classList.contains('clear-success')).toBe(true);
+            
+            // After additional 800ms, 'clear-success' class should be removed
+            jest.advanceTimersByTime(800);
+            expect(clearButtonInstance.clearButton.classList.contains('clear-success')).toBe(false);
+        });
+    });
+
     test('should add event listeners on initialization', () => {
         const tempTextArea = document.createElement('textarea');
         document.body.appendChild(tempTextArea);

@@ -63,23 +63,6 @@ describe('CopyButton', () => {
             expect(wrapper.querySelector('.copy-button')).not.toBeNull();
         });
 
-        test('should use existing clear-button-wrapper if present', () => {
-            // Clean up first instance
-            copyButtonInstance.disconnect();
-            
-            // Create a new textarea with clear button wrapper
-            document.body.innerHTML = `
-                <div class="clear-button-wrapper">
-                    <textarea id="test-textarea">Sample content</textarea>
-                </div>
-            `;
-            textArea = document.getElementById('test-textarea');
-            copyButtonInstance = new CopyButton(textArea);
-            
-            const wrapper = textArea.parentNode;
-            expect(wrapper.classList.contains('clear-button-wrapper')).toBe(true);
-            expect(wrapper.classList.contains('copy-button-wrapper')).toBe(true);
-        });
 
         test('should set proper accessibility attributes', () => {
             const copyButton = copyButtonInstance.copyButton;

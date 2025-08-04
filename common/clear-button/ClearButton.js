@@ -19,11 +19,12 @@ class ClearButton {
     }
 
     appendClearButton() {
-        const wrapper = document.createElement('div');
-        wrapper.classList.add('clear-button-wrapper');
-        this.textArea.parentNode.insertBefore(wrapper, this.textArea);
-        wrapper.appendChild(this.textArea);
-        wrapper.appendChild(this.clearButton);
+        // Create wrapper for the clear button
+        this.wrapper = document.createElement('div');
+        this.wrapper.classList.add('clear-button-wrapper');
+        this.textArea.parentNode.insertBefore(this.wrapper, this.textArea);
+        this.wrapper.appendChild(this.textArea);
+        this.wrapper.appendChild(this.clearButton);
     }
 
     addEventListeners() {
@@ -57,14 +58,31 @@ class ClearButton {
     }
 
     clearText() {
+        // Add clearing animation
+        this.clearButton.classList.add('clearing');
+        
+        // Clear the text
         this.textArea.value = '';
         this.updateVisibility();
         this.textArea.focus();
+        
+        // Dispatch events
         const inputEvent = new Event('input', { bubbles: true });
         this.textArea.dispatchEvent(inputEvent);
 
         const clearEvent = new CustomEvent('textCleared', { bubbles: true });
         this.textArea.dispatchEvent(clearEvent);
+        
+        // Show success feedback
+        setTimeout(() => {
+            this.clearButton.classList.remove('clearing');
+            this.clearButton.classList.add('clear-success');
+            
+            // Remove success state after animation
+            setTimeout(() => {
+                this.clearButton.classList.remove('clear-success');
+            }, 800);
+        }, 300);
     }
 
     updateVisibility() {

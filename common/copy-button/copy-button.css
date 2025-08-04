@@ -29,10 +29,6 @@
     overflow: hidden;
 }
 
-/* When both clear and copy buttons exist, adjust positioning */
-.clear-button-wrapper.copy-button-wrapper .copy-button {
-    right: 40px; /* Position to the left of clear button */
-}
 
 .copy-button:hover {
     background: var(--color-primary-hover, #1d4ed8);
@@ -170,12 +166,6 @@
     box-sizing: border-box;
 }
 
-/* When both buttons exist, add more padding */
-.clear-button-wrapper.copy-button-wrapper .c-input--textarea,
-.clear-button-wrapper.copy-button-wrapper textarea {
-    padding-right: 75px;
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .copy-button {
@@ -186,18 +176,9 @@
         right: 6px;
     }
     
-    .clear-button-wrapper.copy-button-wrapper .copy-button {
-        right: 44px;
-    }
-    
     .copy-button-wrapper .c-input--textarea,
     .copy-button-wrapper textarea {
         padding-right: 50px;
-    }
-    
-    .clear-button-wrapper.copy-button-wrapper .c-input--textarea,
-    .clear-button-wrapper.copy-button-wrapper textarea {
-        padding-right: 85px;
     }
 }
 

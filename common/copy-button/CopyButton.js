@@ -20,21 +20,11 @@ class CopyButton {
     }
 
     appendCopyButton() {
-        // Check if element is already wrapped by ClearButton
-        const existingWrapper = this.targetElement.parentNode;
-        
-        if (existingWrapper && existingWrapper.classList.contains('clear-button-wrapper')) {
-            // Use existing wrapper and position copy button differently
-            this.wrapper = existingWrapper;
-            this.wrapper.classList.add('copy-button-wrapper');
-        } else {
-            // Create new wrapper
-            this.wrapper = document.createElement('div');
-            this.wrapper.classList.add('copy-button-wrapper');
-            this.targetElement.parentNode.insertBefore(this.wrapper, this.targetElement);
-            this.wrapper.appendChild(this.targetElement);
-        }
-        
+        // Create wrapper for the copy button
+        this.wrapper = document.createElement('div');
+        this.wrapper.classList.add('copy-button-wrapper');
+        this.targetElement.parentNode.insertBefore(this.wrapper, this.targetElement);
+        this.wrapper.appendChild(this.targetElement);
         this.wrapper.appendChild(this.copyButton);
     }
 
