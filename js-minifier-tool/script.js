@@ -1,6 +1,7 @@
 import { JSMinifier } from './minifier.js';
 import { NotificationManager } from '../common/notification-manager.js';
 import ClearButton from '../common/clear-button/ClearButton.js';
+import CopyButton from '../common/copy-button/CopyButton.js';
 
 // Make JSMinifier available globally
 window.JSMinifier = JSMinifier;
@@ -30,8 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const input = document.getElementById('js-minifier-input');
   const output = document.getElementById('js-minifier-output');
   const minifyBtn = document.getElementById('js-minifier-minify-btn');
-  const copyBtn = document.getElementById('js-minifier-copy-btn');
   const originalSizeEl = document.getElementById('js-minifier-original-size');
+  const copyButton = new CopyButton(output);
   const minifiedSizeEl = document.getElementById('js-minifier-minified-size');
   const compressionRatioEl = document.getElementById('js-minifier-compression-ratio');
   
@@ -78,27 +79,19 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const minified = minifier.minify(code);
       output.value = minified;
+      copyButton.updateVisibility();
       updateStats(code, minified);
       NotificationManager.show(`JavaScript minified successfully! (${compressionRatioEl.textContent} reduction)`, 2000, { type: 'success' });
     } catch (error) {
       output.value = '';
+      copyButton.updateVisibility();
       NotificationManager.show(`Minification error: ${error.message}`, 3000, { type: 'error' });
       console.error('Minification error:', error);
     }
   }
 
-  // Copy to clipboard
-  function copyToClipboard() {
-    output.select();
-    document.execCommand('copy');
-    
-    // Visual feedback
-    NotificationManager.show('Copied to clipboard!', 1500, { type: 'success' });
-  }
-
   // Event listeners
   minifyBtn.addEventListener('click', minifyCode);
-  copyBtn.addEventListener('click', copyToClipboard);
   
   // Auto-minify when options change
   removeCommentsCheckbox.addEventListener('change', minifyCode);
@@ -120,6 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (input.value === '') {
       output.value = '';
       updateStats('', '');
+      copyButton.updateVisibility();
     }
   });
 });
