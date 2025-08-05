@@ -1,6 +1,6 @@
 # 🔥 CopyButton Component
 
-A stunning, feature-rich copy button component that provides seamless clipboard functionality for textarea and input elements. Built with modern web standards and designed for maximum usability and visual appeal.
+A stunning, feature-rich copy button component that provides seamless clipboard functionality for textarea, input, and pre elements. Built with modern web standards and designed for maximum usability and visual appeal.
 
 ## ✨ Features
 
@@ -28,11 +28,17 @@ import './common/copy-button/copy-button.css';
 ### Basic Usage
 
 ```javascript
-// Get your textarea or input element
+// Works with textarea elements
 const textArea = document.getElementById('my-textarea');
-
-// Create the copy button instance
 const copyButton = new CopyButton(textArea);
+
+// Works with input elements
+const inputField = document.getElementById('my-input');
+const inputCopyButton = new CopyButton(inputField);
+
+// Works with pre elements (NEW!)
+const preElement = document.getElementById('code-output');
+const preCopyButton = new CopyButton(preElement);
 
 // That's it! The copy button will automatically appear when there's content
 ```
@@ -119,10 +125,10 @@ new CopyButton(targetElement)
 ```
 
 **Parameters:**
-- `targetElement` (HTMLTextAreaElement | HTMLInputElement): The textarea or input element to attach the copy button to
+- `targetElement` (HTMLTextAreaElement | HTMLInputElement | HTMLPreElement): The textarea, input, or pre element to attach the copy button to
 
 **Throws:**
-- `Error`: If the target element is not a valid HTMLTextAreaElement or HTMLInputElement
+- `Error`: If the target element is not a valid HTMLTextAreaElement, HTMLInputElement, or HTMLPreElement
 
 ### Methods
 
@@ -179,6 +185,38 @@ The CopyButton automatically detects and integrates with existing clear-button w
 ```javascript
 // CopyButton will use the existing wrapper
 const copyButton = new CopyButton(document.getElementById('my-textarea'));
+```
+
+### Pre Element Usage
+
+Perfect for code output, formatted text, and read-only content:
+
+```html
+<!-- Code output example -->
+<pre id="jwt-output" class="c-code-output">
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+</pre>
+
+<!-- JSON formatter output -->
+<pre id="json-output" class="c-code-output">
+{
+  "name": "John Doe",
+  "age": 30,
+  "city": "New York"
+}
+</pre>
+```
+
+```javascript
+// Add copy buttons to pre elements
+const jwtOutput = document.getElementById('jwt-output');
+const jsonOutput = document.getElementById('json-output');
+
+const jwtCopyButton = new CopyButton(jwtOutput);
+const jsonCopyButton = new CopyButton(jsonOutput);
+
+// The copy button automatically detects content changes via MutationObserver
+// No need to manually trigger updates when content changes!
 ```
 
 ### Multiple Instances

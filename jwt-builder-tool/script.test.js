@@ -37,7 +37,7 @@ describe('JWT Builder UI Tests', () => {
     // Create a fresh DOM environment for each test
     document.body.innerHTML = `
       <div id="customClaims"></div>
-      <div id="result"></div>
+      <pre id="result"></pre>
       <input id="key" value="test-key">
       <input id="iss" value="test-issuer">
       <input id="sub" value="test-subject">

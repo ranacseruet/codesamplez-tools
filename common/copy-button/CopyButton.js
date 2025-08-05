@@ -1,10 +1,13 @@
 class CopyButton {
     constructor(targetElement) {
-        if (!(targetElement instanceof HTMLTextAreaElement) && !(targetElement instanceof HTMLInputElement)) {
-            throw new Error('CopyButton must be initialized with a valid HTMLTextAreaElement or HTMLInputElement.');
+        if (!(targetElement instanceof HTMLTextAreaElement) && 
+            !(targetElement instanceof HTMLInputElement) && 
+            !(targetElement instanceof HTMLPreElement)) {
+            throw new Error('CopyButton must be initialized with a valid HTMLTextAreaElement, HTMLInputElement, or HTMLPreElement.');
         }
 
         this.targetElement = targetElement;
+        this.isPreElement = targetElement instanceof HTMLPreElement;
         this.copyButton = this.createCopyButton();
         this.appendCopyButton();
         this.addEventListeners();
@@ -35,22 +38,41 @@ class CopyButton {
         
         this.copyButton.addEventListener('click', this.boundCopyContent);
         
-        // Listen for all events that can change the textarea value
-        this.targetElement.addEventListener('input', this.boundUpdateVisibility);
-        this.targetElement.addEventListener('paste', this.boundUpdateVisibility);
-        this.targetElement.addEventListener('cut', this.boundUpdateVisibility);
-        this.targetElement.addEventListener('keyup', this.boundUpdateVisibility);
-        this.targetElement.addEventListener('change', this.boundUpdateVisibility);
+        if (this.isPreElement) {
+            // For pre elements, use MutationObserver to detect content changes
+            this.mutationObserver = new MutationObserver(this.boundUpdateVisibility);
+            this.mutationObserver.observe(this.targetElement, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+        } else {
+            // For textarea/input elements, use traditional form events
+            this.targetElement.addEventListener('input', this.boundUpdateVisibility);
+            this.targetElement.addEventListener('paste', this.boundUpdateVisibility);
+            this.targetElement.addEventListener('cut', this.boundUpdateVisibility);
+            this.targetElement.addEventListener('keyup', this.boundUpdateVisibility);
+            this.targetElement.addEventListener('change', this.boundUpdateVisibility);
+        }
     }
 
     disconnect() {
         // Remove event listeners to prevent memory leaks
-        if (this.boundUpdateVisibility) {
-            this.targetElement.removeEventListener('input', this.boundUpdateVisibility);
-            this.targetElement.removeEventListener('paste', this.boundUpdateVisibility);
-            this.targetElement.removeEventListener('cut', this.boundUpdateVisibility);
-            this.targetElement.removeEventListener('keyup', this.boundUpdateVisibility);
-            this.targetElement.removeEventListener('change', this.boundUpdateVisibility);
+        if (this.isPreElement) {
+            // Disconnect MutationObserver for pre elements
+            if (this.mutationObserver) {
+                this.mutationObserver.disconnect();
+                this.mutationObserver = null;
+            }
+        } else {
+            // Remove form event listeners for textarea/input elements
+            if (this.boundUpdateVisibility) {
+                this.targetElement.removeEventListener('input', this.boundUpdateVisibility);
+                this.targetElement.removeEventListener('paste', this.boundUpdateVisibility);
+                this.targetElement.removeEventListener('cut', this.boundUpdateVisibility);
+                this.targetElement.removeEventListener('keyup', this.boundUpdateVisibility);
+                this.targetElement.removeEventListener('change', this.boundUpdateVisibility);
+            }
         }
         
         if (this.boundCopyContent) {
@@ -58,8 +80,12 @@ class CopyButton {
         }
     }
 
+    getContent() {
+        return this.isPreElement ? this.targetElement.textContent : this.targetElement.value;
+    }
+
     async copyContent() {
-        const content = this.targetElement.value;
+        const content = this.getContent();
         
         if (!content.trim()) {
             return;
@@ -144,7 +170,8 @@ class CopyButton {
     }
 
     updateVisibility() {
-        if (this.targetElement.value.length > 0) {
+        const content = this.getContent();
+        if (content.length > 0) {
             this.copyButton.style.display = 'block';
         } else {
             this.copyButton.style.display = 'none';

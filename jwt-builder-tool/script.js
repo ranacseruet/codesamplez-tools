@@ -1,5 +1,6 @@
 import { JWTBuilder } from './JWTBuilder.js';
 import { NotificationManager } from '../common/notification-manager.js';
+import CopyButton from '../common/copy-button/CopyButton.js';
 
 // Export for testing and create a singleton instance
 export const jwtBuilder = (typeof window !== 'undefined' && window.jwtBuilder) || new JWTBuilder();
@@ -28,6 +29,12 @@ document.addEventListener('DOMContentLoaded', function() {
   standardClaims.forEach(claim => {
     document.getElementById(claim)?.setAttribute('value', payload[claim]);
   });
+
+  // Add copy button to JWT result pre element
+  const resultElement = document.getElementById('result');
+  if (resultElement) {
+    new CopyButton(resultElement);
+  }
 });
 
 // Export UI functions for testing
