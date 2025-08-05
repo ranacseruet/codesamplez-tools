@@ -1,5 +1,6 @@
-// Import diff computation from separate module
+// Import shared components and styles
 import { computeDiff } from './diff';
+import ClearButton from '../common/clear-button/ClearButton';
 
 // Class to detect if content is code (used for syntax highlighting)
 class CodeDetector {
@@ -304,8 +305,6 @@ if (typeof document !== 'undefined') {
   const compareButton = document.getElementById('compare-button');
   const text1 = document.getElementById('text1');
   const text2 = document.getElementById('text2');
-  const clearText1Button = document.getElementById('clear-text1');
-  const clearText2Button = document.getElementById('clear-text2');
   const diffResultElement = document.getElementById('diff-result');
 
   // Instantiate the navigator
@@ -316,21 +315,32 @@ if (typeof document !== 'undefined') {
     document.getElementById('diff-counter')
   );
 
-  // Clear buttons functionality
-  if (clearText1Button && text1) {
-    clearText1Button.addEventListener('click', function() {
-      text1.value = '';
-      text1.focus();
-    });
-  }
+  // Initialize clear buttons with cleanup support
+  let clearButton1, clearButton2;
   
-  if (clearText2Button && text2) {
-    clearText2Button.addEventListener('click', function() {
-      text2.value = '';
-      text2.focus();
-    });
-  }
+  // Cleanup function to disconnect clear buttons
+  /* istanbul ignore next */
+  const cleanup = () => {
+    if (clearButton1) {
+      clearButton1.disconnect();
+      clearButton1 = null;
+    }
+    if (clearButton2) {
+      clearButton2.disconnect();
+      clearButton2 = null;
+    }
+  };
+
+
+  // Handle page unload
+  window.addEventListener('unload', cleanup);
   
+   /* istanbul ignore next */
+  if (text1 && text2) {
+    clearButton1 = new ClearButton(text1);
+    clearButton2 = new ClearButton(text2);
+  }
+
   if (compareButton && text1 && text2) {
     compareButton.addEventListener('click', function () {
       const originalText = text1.value;
@@ -358,6 +368,9 @@ if (typeof document !== 'undefined') {
       NotificationManager.show('Diff computation complete!');
     });
   }
+
+  // Export cleanup function for testing
+  window.diffCheckerCleanup = cleanup;
 }
 
 // Export classes/functions needed for testing or potentially other modules
