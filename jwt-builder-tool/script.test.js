@@ -284,47 +284,6 @@ describe('JWT Builder UI Tests', () => {
     });
   });
 
-  describe('JWT Copying', () => {
-    beforeEach(() => {
-      // Mock clipboard API
-      Object.assign(navigator, {
-        clipboard: {
-          writeText: jest.fn()
-        }
-      });
-      
-      // Add copy button
-      document.body.innerHTML += '<button id="copyJwtBtn">Copy</button>';
-    });
-
-    test('copies JWT to clipboard and shows success notification', async () => {
-      document.getElementById('result').textContent = 'test.jwt.token';
-      const result = await scriptModule.copyJWT();
-      
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('test.jwt.token');
-      expect(NotificationManager.show).toHaveBeenCalledWith('JWT copied to clipboard', 2000, { type: 'success' });
-      expect(result).toBe(true);
-    });
-
-    test('does not copy when result contains error', async () => {
-      document.getElementById('result').textContent = 'Error: Invalid token';
-      const result = await scriptModule.copyJWT();
-      
-      expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
-      expect(result).toBe(false);
-    });
-
-    test('shows error notification on clipboard copy failure', async () => {
-      document.getElementById('result').textContent = 'test.jwt.token';
-      navigator.clipboard.writeText.mockRejectedValue(new Error('Clipboard error'));
-      const result = await scriptModule.copyJWT();
-      
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('test.jwt.token');
-      expect(NotificationManager.show).toHaveBeenCalledWith('Failed to copy JWT to clipboard', 3000, { type: 'error' });
-      expect(result).toBe(false);
-    });
-  });
-
   describe('Random Secret Generation', () => {
     beforeEach(() => {
       mockBuilder.generateRandomSecret = jest.fn().mockReturnValue('random-secret-key-32-chars-long!!');
@@ -346,24 +305,6 @@ describe('JWT Builder UI Tests', () => {
       const result = scriptModule.generateRandomSecret();
       
       expect(result).toBeNull();
-    });
-  });
-
-  describe('JWT Clearing', () => {
-    test('clears JWT output and shows success notification', () => {
-      document.getElementById('result').textContent = 'test.jwt.token';
-      const result = scriptModule.clearJWT();
-      
-      expect(document.getElementById('result').textContent).toBe('');
-      expect(NotificationManager.show).toHaveBeenCalledWith('JWT output cleared', 2000, { type: 'success' });
-      expect(result).toBe(true);
-    });
-
-    test('returns false when result element does not exist', () => {
-      document.getElementById('result').remove();
-      const result = scriptModule.clearJWT();
-      
-      expect(result).toBe(false);
     });
   });
 });

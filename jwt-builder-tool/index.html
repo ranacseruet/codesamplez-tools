@@ -136,19 +136,11 @@
       <button type="button" id="buildJwtBtn" class="c-button" onclick="buildJWT()">Build JWT</button>
     </form>
 
-    <!-- Result Section -->
+      <!-- Result Section -->
     <div class="c-form-group result-section">
       <h3 class="c-form-group-header">Generated JWT</h3>
       <div class="u-flex u-gap-sm result-container"> <!-- Use flex utilities -->
         <pre id="result" class="c-code-output jwt-token-output" title="Generated JWT token"></pre> <!-- Use pre for code output -->
-        <div class="u-flex u-flex-column u-gap-sm">
-          <button type="button" id="copyJwtBtn" class="c-button c-button--secondary copy-button" onclick="copyJWT()" title="Copy token to clipboard">
-            Copy JWT
-          </button>
-          <button type="button" id="clearJwtBtn" class="c-button c-button--secondary copy-button" onclick="clearJWT()" title="Clear the generated token">
-            Clear
-          </button>
-        </div>
       </div>
     </div>
   </div>

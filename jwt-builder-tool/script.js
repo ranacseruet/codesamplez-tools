@@ -171,41 +171,10 @@ export function generateRandomSecret() {
   return null;
 }
 
-export async function copyJWT() {
-  const resultDiv = document.getElementById('result');
-  if (!resultDiv) return false;
-  
-  const jwt = resultDiv.textContent;
-  if (!jwt || jwt.includes('Error')) {
-    return false;
-  }
-
-  try {
-    await navigator.clipboard.writeText(jwt);
-    NotificationManager.show('JWT copied to clipboard', 2000, { type: 'success' });
-    return true;
-  } catch (err) {
-    console.error('Failed to copy JWT:', err);
-    NotificationManager.show('Failed to copy JWT to clipboard', 3000, { type: 'error' });
-    return false;
-  }
-}
-
-export function clearJWT() {
-  const resultDiv = document.getElementById('result');
-  if (!resultDiv) return false;
-  
-  resultDiv.textContent = '';
-  NotificationManager.show('JWT output cleared', 2000, { type: 'success' });
-  return true;
-}
-
 // Add functions to window for HTML use
 if (typeof window !== 'undefined') {
   window.addClaim = addClaim;
   window.removeClaim = removeClaim;
   window.buildJWT = buildJWT;
-  window.copyJWT = copyJWT;
-  window.clearJWT = clearJWT;
   window.generateRandomSecret = generateRandomSecret;
 }

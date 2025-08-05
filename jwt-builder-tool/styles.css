@@ -36,13 +36,6 @@
   align-self: center; /* Align vertically in the flex row */
 }
 
-/* Specific overrides for the copy button */
-.jwt-builder-container .copy-button {
-  min-width: 100px; /* Keep specific min-width */
-  white-space: nowrap; /* Keep nowrap */
-  align-self: flex-start; /* Align with the top of the result box */
-}
-
 /* Placeholder for empty custom claims */
 .jwt-builder-container .empty-claims-message {
   color: var(--color-text-secondary);
