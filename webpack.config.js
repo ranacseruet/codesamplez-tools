@@ -59,7 +59,6 @@ const getToolConfig = (toolName) => ({
   entry: {
     main: [
       './common/shared-styles.css',
-      './common/clear-button/clear-button.css',
       `./${toolName}/script.js`,
       `./${toolName}/styles.css`
     ]
@@ -102,7 +101,6 @@ const developmentConfig = {
     const toolName = tool.name || tool;
     entries[toolName] = [
       './common/shared-styles.css',
-      './common/clear-button/clear-button.css', // Add the new shared CSS
       `./${toolName}/script.js`,
       `./${toolName}/styles.css`
     ];

@@ -1,8 +1,5 @@
 /* Data Format Converter Styles - Using Shared Theme */
 
-/* Import shared styles if needed, but for now we'll directly use the patterns */
-@import url('../common/shared-styles.css');
-
 /* Custom styles specific to Data Format Converter */
 .tool-container {
   max-width: var(--container-max-width);

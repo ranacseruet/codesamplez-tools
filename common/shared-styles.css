@@ -176,6 +176,10 @@
    Components Layer - UI Components
    ========================================================================== */
 
+@import '../common/copy-button/copy-button.css';
+@import '../common/clear-button/clear-button.css';
+
+
 /* --- Buttons --- */
 .c-button {
   background-color: var(--color-primary);

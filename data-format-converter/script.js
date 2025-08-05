@@ -1,11 +1,32 @@
 import { DataFormatConverter } from './DataFormatConverter.js';
 import { NotificationManager } from '../common/notification-manager.js';
 import DownloadManager from '../common/DownloadManager.js';
+import ClearButton from '../common/clear-button/ClearButton.js';
+import CopyButton from '../common/copy-button/CopyButton.js';
 
 class DataFormatConverterUI {
     constructor() {
         this.converter = new DataFormatConverter();
         this.setupEventListeners();
+        this.initializeCommonButtons();
+    }
+
+    initializeCommonButtons() {
+        const inputTextArea = document.getElementById('inputText');
+        const outputTextArea = document.getElementById('outputText');
+        
+        this.clearButton = new ClearButton(inputTextArea);
+        this.copyButton = new CopyButton(outputTextArea);
+        
+        // Update the input textarea's clear event to also clear any error messages
+        inputTextArea.addEventListener('textCleared', () => {
+            NotificationManager.show("Input cleared", 3000, { type: 'success' });
+        });
+
+        // Listen for copy events
+        outputTextArea.addEventListener('contentCopied', (event) => {
+            NotificationManager.show("Copied to clipboard!", 3000, { type: 'success' });
+        });
     }
 
     setupEventListeners() {
@@ -19,11 +40,6 @@ class DataFormatConverterUI {
         // Convert button
         document.getElementById('convertBtn').addEventListener('click', () => {
             this.convertData();
-        });
-
-        // Copy button
-        document.getElementById('copyBtn').addEventListener('click', () => {
-            this.copyOutput();
         });
 
         // Download button
@@ -57,8 +73,7 @@ class DataFormatConverterUI {
         } else {
             this.converter.outputFormat = format;
         }
-        
-        this.clearMessages();
+        this.clearButton.clearText(); // Clear input when format changes
     }
 
     updateInputPlaceholder() {
@@ -88,6 +103,7 @@ class DataFormatConverterUI {
             
             // Display result
             document.getElementById('outputText').value = outputData;
+            this.copyButton.updateVisibility();
             this.showSuccess(`Successfully converted from ${this.converter.inputFormat.toUpperCase()} to ${this.converter.outputFormat.toUpperCase()}`);
             
         } catch (error) {
@@ -106,22 +122,6 @@ class DataFormatConverterUI {
     showSuccess(message) {
         NotificationManager.show(message, 3000, { type: 'success' });
         document.getElementById('inputError').style.display = 'none';
-    }
-
-    copyOutput() {
-        const outputText = document.getElementById('outputText').value;
-        if (!outputText) {
-            this.showError('No data to copy');
-            return;
-        }
-
-        navigator.clipboard.writeText(outputText)
-            .then(() => {
-                this.showSuccess('Copied to clipboard!');
-            })
-            .catch(err => {
-                this.showError('Failed to copy: ' + err.message);
-            });
     }
 
     downloadOutput() {
