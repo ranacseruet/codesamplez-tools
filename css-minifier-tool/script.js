@@ -119,6 +119,9 @@ top: 0px;
     
     // Initialize CopyButton component
     const copyButtonInstance = new CopyButton(outputCss);
+    inputCss.addEventListener('textCleared', (e) => 
+        copyButtonInstance.updateVisibility());{
+    }
     outputCss.addEventListener('contentCopied', (e) => {
         NotificationManager.show('Copied to clipboard!', 2000, { type: 'success' });
     });
@@ -214,7 +217,6 @@ top: 0px;
       shortenColors.checked = true;
       removeUnits.checked = true;
       removeLastSemicolons.checked = true;
-      NotificationManager.show('Options reset to defaults', 2000, { type: 'success' });
     }
     
     function updateStats(original, minified) {
