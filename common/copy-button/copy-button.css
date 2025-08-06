@@ -16,7 +16,7 @@
     cursor: pointer;
     padding: 0;
     display: none;
-    z-index: 1000;
+    z-index: 10;
     width: 28px;
     height: 28px;
     border-radius: 6px;
