@@ -1,6 +1,7 @@
 import { removeCommentsFromCss, removeWhitespaceFromCss, shortenColorsInCss, removeUnnecessaryUnits, removeLastSemicolonsFromCss, combineSelectorsInCss, isValidCSS } from './minifier.js';
 import { NotificationManager } from '../common/notification-manager.js';
 import ClearButton from '../common/clear-button/ClearButton.js';
+import CopyButton from '../common/copy-button/CopyButton.js';
 
 // Make functions available globally for webpack bundling
 window.removeCommentsFromCss = removeCommentsFromCss;
@@ -17,7 +18,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const outputCss = document.getElementById('output-css');
     const minifyBtn = document.getElementById('minify-btn');
     const loadSampleBtn = document.getElementById('load-sample');
-    const copyOutputBtn = document.getElementById('copy-output');
     const resetOptionsBtn = document.getElementById('reset-options');
     
     // Stats elements
@@ -112,11 +112,16 @@ top: 0px;
         NotificationManager.show('Error: ' + error.message, 3000, { type: 'error' });
     }));
     loadSampleBtn.addEventListener('click', loadSample);
-    copyOutputBtn.addEventListener('click', copyOutput);
     resetOptionsBtn.addEventListener('click', resetOptions);
     
     // Initialize ClearButton component
     const clearButtonInstance = new ClearButton(inputCss);
+    
+    // Initialize CopyButton component
+    const copyButtonInstance = new CopyButton(outputCss);
+    outputCss.addEventListener('contentCopied', (e) => {
+        NotificationManager.show('Copied to clipboard!', 2000, { type: 'success' });
+    });
     
     // Add event listener to clear output when input is cleared
     inputCss.addEventListener('input', () => {
@@ -197,17 +202,10 @@ top: 0px;
       inputCss.value = sampleCss;
       clearButtonInstance.updateVisibility();
       await minifyCss();
+      copyButtonInstance.updateVisibility();
       NotificationManager.show('Sample CSS loaded and minified', 2000, { type: 'success' });
     }
     
-    function copyOutput() {
-      if (!outputCss.value) return;
-      
-      outputCss.select();
-      document.execCommand('copy');
-      
-      NotificationManager.show('Copied to clipboard!', 2000, { type: 'success' });
-    }
     
     function resetOptions() {
       removeComments.checked = true;
