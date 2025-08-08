@@ -20,3 +20,16 @@
     overflow-x: hidden;
     background-color: var(--color-bg-light);
 }
+
+/* Button container styles */
+.u-mt-md {
+    margin-top: var(--spacing-md);
+}
+
+.u-justify-between {
+    justify-content: space-between;
+}
+
+.u-justify-center {
+    justify-content: center;
+}

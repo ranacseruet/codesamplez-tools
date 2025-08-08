@@ -29,21 +29,12 @@
                 </select>
             </div>
 
-            <div class="u-flex u-gap-sm">
-                <label class="c-button" for="base64converter-file">
-                    Upload File
-                </label>
-                <input type="file" id="base64converter-file" style="display: none;">
-            </div>
         </div>
 
         <div class="u-flex u-gap-lg">
             <div class="o-panel">
                 <div class="o-panel-header">
                     <h2>Input</h2>
-                    <div class="o-toolbar">
-                        <button id="base64converter-convert" class="c-button">Convert</button>
-                    </div>
                 </div>
                 <textarea id="base64converter-input" 
                     placeholder="Enter text to encode or decode..."></textarea>
@@ -52,12 +43,25 @@
             <div class="o-panel">
                 <div class="o-panel-header">
                     <h2>Output</h2>
-                    <div class="o-toolbar">
-                        <button id="base64converter-download-decoded" class="c-button c-button--secondary" disabled>Download</button>
-                    </div>
                 </div>
                 <textarea id="base64converter-result" class="tool-container textarea" readonly></textarea>
             </div>
+        </div>
+
+        <div class="u-flex u-justify-between u-mt-md">
+             <div class="u-flex u-gap-sm">
+                <label class="c-button c-button--secondary" for="base64converter-file">
+                    Upload File
+                </label>
+                <input type="file" id="base64converter-file" style="display: none;">
+            </div>
+            <div class="u-flex u-justify-center" style="flex: 1;">
+                <button id="base64converter-convert" class="c-button">Convert</button>
+            </div>
+            <div>
+                <button id="base64converter-download-decoded" class="c-button c-button--secondary c-button--icon-download" disabled>Download</button>
+            </div>
+        </div>
         </div>
         
         <div class="o-controls">
