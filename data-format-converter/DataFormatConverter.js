@@ -15,6 +15,8 @@ export class DataFormatConverter {
                 return this.parseXML(input);
             case 'yaml':
                 return this.parseYAML(input);
+            case 'properties':
+                return this.parseProperties(input);
             default:
                 throw new Error(`Unsupported input format: ${format}`);
         }
@@ -31,6 +33,9 @@ export class DataFormatConverter {
                     break;
                 case 'yaml':
                     yaml.load(output);
+                    break;
+                case 'properties':
+                    this.parseProperties(output);
                     break;
             }
             return true;
@@ -50,6 +55,9 @@ export class DataFormatConverter {
                 break;
             case 'yaml':
                 output = this.formatYAML(data);
+                break;
+            case 'properties':
+                output = this.formatProperties(data);
                 break;
             default:
                 throw new Error(`Unsupported output format: ${format}`);
@@ -88,6 +96,45 @@ export class DataFormatConverter {
         } catch (e) {
             throw new Error('Invalid XML format');
         }
+    }
+
+    parseProperties(content) {
+        const result = {};
+        let validLineFound = false;
+        content.split(/\r?\n/).forEach(line => {
+            line = line.trim();
+            if (!line || line.startsWith('#') || line.startsWith('!')) return;
+            const separatorIndex = line.search(/[:=]/);
+            if (separatorIndex === -1) {
+                throw new Error('Invalid properties format');
+            }
+            validLineFound = true;
+            const key = line.slice(0, separatorIndex).trim();
+            const value = line.slice(separatorIndex + 1).trim();
+            result[key] = value;
+        });
+        if (!validLineFound && content.trim() !== '') {
+            throw new Error('Invalid properties format');
+        }
+        return result;
+    }
+
+    formatProperties(obj) {
+        if (obj === null || obj === undefined || typeof obj !== 'object') {
+            throw new Error('Cannot format to properties');
+        }
+        return Object.entries(obj)
+            .map(([key, value]) => `${this.escapeProp(key)}=${this.escapeProp(value)}`)
+            .join('\n');
+    }
+
+    escapeProp(str) {
+        return String(str)
+            .replace(/\\/g, '\\\\')
+            .replace(/\n/g, '\\n')
+            .replace(/\t/g, '\\t')
+            .replace(/:/g, '\\:')
+            .replace(/=/g, '\\=');
     }
 
     xmlToObject(xmlNode) {

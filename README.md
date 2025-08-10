@@ -14,6 +14,15 @@ A collection of browser-based developer utilities and tools built with AI techno
 
 ## Tools
 
+### Data Format Converter
+Convert between JSON, XML, YAML, and `.properties` formats with full bidirectional support.
+- Preserve data structure and hierarchy during conversion
+- Validate input data before conversion with clear error messages
+- Pretty-print output and support downloads with proper file extensions
+- Copy to clipboard functionality
+- Example placeholders for each input format
+- Works 100% client-side for privacy and can function offline
+
 ### Base64 Converter
 A powerful tool for encoding and decoding Base64 strings with support for multiple character encodings.
 - Convert plain text to Base64 encoding and vice versa

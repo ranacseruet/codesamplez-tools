@@ -1,7 +1,7 @@
 # Data Format Converter
 
 ## Summary
-The **Data Format Converter Tool** is a web-based utility that converts between JSON, XML, and YAML data formats. It provides a simple interface for users to paste data in one format and convert it to another, with validation and error handling. The tool performs all processing client-side, ensuring data privacy and security.
+The **Data Format Converter Tool** is a web-based utility that converts between JSON, XML, YAML, and `.properties` data formats. It provides a simple interface for users to paste data in one format and convert it to another, with validation and error handling. The tool performs all processing client-side, ensuring data privacy and security.
 
 ## Privacy & Security
 - 🔒 **100% Client-Side Processing**: All conversions happen in your browser
@@ -13,8 +13,8 @@ The **Data Format Converter Tool** is a web-based utility that converts between 
 
 ## Supported Features
 1. **Format Conversion**
-   - Convert between JSON, XML, and YAML formats
-   - Bidirectional conversion between all supported formats
+   - Convert between JSON, XML, YAML, and `.properties` formats
+   - Bidirectional conversion between all supported formats, including `.properties`
    - Preserves data structure and hierarchy during conversion
 
 2. **Input Validation**
@@ -84,6 +84,13 @@ The **Data Format Converter Tool** is a web-based utility that converts between 
 name: John
 age: 30
 city: New York
+```
+
+**Output (.properties):**
+```properties
+name=John
+age=30
+city=New York
 ```
 
 ---

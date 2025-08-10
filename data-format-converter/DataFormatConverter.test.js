@@ -84,6 +84,47 @@ describe('DataFormatConverter', () => {
         });
     });
 
+    describe('properties format', () => {
+        const propertiesString = `name=John Doe\nage=30\ncity=New York`;
+        const propertiesObject = { name: 'John Doe', age: '30', city: 'New York' };
+
+        it('should parse valid properties input', () => {
+            const result = converter.parseInput(propertiesString, 'properties');
+            expect(result).toEqual(propertiesObject);
+        });
+
+        it('should ignore comments and empty lines in properties', () => {
+            const input = `# This is a comment
+name=John
+
+! Another comment
+age=30`;
+            const result = converter.parseInput(input, 'properties');
+            expect(result).toEqual({ name: 'John', age: '30' });
+        });
+
+        it('should format object to properties string', () => {
+            const output = converter.formatOutput(propertiesObject, 'properties');
+            expect(output).toContain('name=John Doe');
+            expect(output).toContain('age=30');
+            expect(output).toContain('city=New York');
+        });
+
+        it('should produce a parseable properties output', () => {
+            const formatted = converter.formatOutput(propertiesObject, 'properties');
+            const reparsed = converter.parseInput(formatted, 'properties');
+            expect(reparsed).toEqual(propertiesObject);
+        });
+
+        it('should validate correct properties output', () => {
+            expect(converter.validateOutput(propertiesString, 'properties')).toBe(true);
+        });
+
+        it('should invalidate malformed properties (no delimiter)', () => {
+            expect(converter.validateOutput('invalidLineWithoutEquals', 'properties')).toBe(false);
+        });
+    });
+
     describe('formatOutput', () => {
         const testData = { name: 'test', value: 123 };
 

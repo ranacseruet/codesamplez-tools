@@ -81,7 +81,8 @@ class DataFormatConverterUI {
         const placeholders = {
             json: 'Paste your JSON data here...\n\nExample:\n{\n  "name": "John",\n  "age": 30,\n  "city": "New York"\n}',
             xml: 'Paste your XML data here...\n\nExample:\n<person>\n  <name>John</name>\n  <age>30</age>\n  <city>New York</city>\n</person>',
-            yaml: 'Paste your YAML data here...\n\nExample:\nname: John\nage: 30\ncity: New York'
+            yaml: 'Paste your YAML data here...\n\nExample:\nname: John\nage: 30\ncity: New York',
+            properties: 'Paste your Properties data here...\n\nExample:\nname=John\nage=30\ncity=New York'
         };
         inputText.placeholder = placeholders[this.converter.inputFormat];
     }
@@ -135,12 +136,14 @@ class DataFormatConverterUI {
         const mimeTypes = {
             json: 'application/json',
             xml: 'application/xml',
-            yaml: 'text/yaml'
+            yaml: 'text/yaml',
+            properties: 'text/plain'
         };
         const extensions = {
             json: 'json',
             xml: 'xml',
-            yaml: 'yaml'
+            yaml: 'yaml',
+            properties: 'properties'
         };
 
         const downloadManager = new DownloadManager();
