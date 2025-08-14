@@ -64,6 +64,7 @@ describe('JSONFormatter', () => {
     formatter.originalSizeEl = { textContent: '' };
     formatter.formattedSizeEl = { textContent: '' };
     formatter.sortCheckbox = { checked: true };
+    formatter.autoFixCheckbox = { checked: false };
     formatter.formatBtn = { addEventListener: jest.fn() };
     formatter.sampleBtn = { addEventListener: jest.fn() };
     formatter.clearButtonInstance = { updateVisibility: jest.fn(), disconnect: jest.fn() };
@@ -71,6 +72,38 @@ describe('JSONFormatter', () => {
     mockDownloadManager = new DownloadManager(); // Get instance of the mocked DownloadManager
     formatter.downloadManager = mockDownloadManager; // Assign to formatter instance
     jest.clearAllMocks();
+  });
+
+  describe('autoFixJSON', () => {
+    test('should fix trailing commas in objects', () => {
+      const input = '{"a": 1, "b": 2,}';
+      const expected = '{"a": 1, "b": 2}';
+      expect(formatter.autoFixJSON(input)).toEqual(expected);
+    });
+
+    test('should fix trailing commas in arrays', () => {
+      const input = '[1, 2, 3,]';
+      const expected = '[1, 2, 3]';
+      expect(formatter.autoFixJSON(input)).toEqual(expected);
+    });
+
+    test('should fix single quotes', () => {
+      const input = "{'a': 1, 'b': 'hello'}";
+      const expected = '{"a": 1, "b": "hello"}';
+      expect(formatter.autoFixJSON(input)).toEqual(expected);
+    });
+
+    test('should fix unquoted keys', () => {
+      const input = '{a: 1, b: 2}';
+      const expected = '{"a": 1, "b": 2}';
+      expect(formatter.autoFixJSON(input)).toEqual(expected);
+    });
+
+    test('should fix a combination of errors', () => {
+      const input = "{a: 1, 'b': 'hello',}";
+      const expected = '{"a": 1, "b": "hello"}';
+      expect(formatter.autoFixJSON(input)).toEqual(expected);
+    });
   });
 
   describe('sortKeysAlphabetically', () => {
@@ -232,6 +265,15 @@ describe('JSONFormatter', () => {
       const keys = formatter.output.querySelectorAll('.json-key');
       expect(keys[0].textContent).toBe('"a": ');
       expect(keys[1].textContent).toBe('"b": ');
+    });
+
+    test('should use auto-fix when checkbox is checked', () => {
+      formatter.autoFixCheckbox = { checked: true };
+      formatter.input.value = "{'a':1,}";
+      formatter.formatJSON();
+      const keys = formatter.output.querySelectorAll('.json-key');
+      expect(keys[0].textContent).toBe('"a": ');
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('JSON formatted successfully!', 2000, { type: 'success' });
     });
   });
 
@@ -611,7 +653,7 @@ describe('JSONFormatter', () => {
 
     test('should initialize DOM elements when initDom is true', () => {
       const formatter = new JSONFormatter(true);
-      expect(document.querySelector).toHaveBeenCalledTimes(10);
+      expect(document.querySelector).toHaveBeenCalledTimes(11);
     });
 
     test('should not initialize DOM elements when initDom is false', () => {

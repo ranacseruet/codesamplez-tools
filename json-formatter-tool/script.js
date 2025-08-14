@@ -13,6 +13,7 @@ export class JSONFormatter {
       this.downloadBtn = document.querySelector('#downloadOutputBtn');
       this.sampleBtn = document.querySelector('#loadSampleBtn');
       this.sortCheckbox = document.querySelector('#sortKeys'); // Use ID for checkbox
+      this.autoFixCheckbox = document.querySelector('#autoFix');
       this.errorStatus = document.querySelector('#jsonErrorStatus');
       this.originalSizeEl = document.querySelector('.jsonf-original-size'); // This class was kept
       this.formattedSizeEl = document.querySelector('.jsonf-formatted-size'); // This class was kept
@@ -39,18 +40,20 @@ export class JSONFormatter {
 
   formatJSON() {
     try {
-      const inputValue = this.input.value.trim();
+      let inputValue = this.input.value.trim();
+      if (this.autoFixCheckbox.checked) {
+        inputValue = this.autoFixJSON(inputValue);
+      }
       const parsed = JSON.parse(inputValue);
-      const formatted = this.sortCheckbox.checked 
+      const formatted = this.sortCheckbox.checked
         ? this.sortKeysAlphabetically(parsed)
         : parsed;
-      
+
       this.output.innerHTML = '';
       this.renderJSON(formatted, this.output);
       this.copyBtn.disabled = false;
       this.downloadBtn.disabled = false;
-      // No need to manipulate errorContainer as NotificationManager handles messaging
-      this.updateStats(inputValue, JSON.stringify(formatted, null, 2));
+      this.updateStats(this.input.value.trim(), JSON.stringify(formatted, null, 2));
       NotificationManager.show('JSON formatted successfully!', 2000, { type: 'success' });
     } catch (error) {
       this.showError(`Invalid JSON: ${error.message}`);
@@ -152,17 +155,34 @@ export class JSONFormatter {
     return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`;
   }
 
+  autoFixJSON(jsonString) {
+    // Add your auto-fixing logic here
+    // Example: remove trailing commas
+    let fixedJson = jsonString.replace(/,\s*([}\]])/g, '$1');
+
+    // Example: convert single quotes to double quotes
+    fixedJson = fixedJson.replace(/'/g, '"');
+
+    // Example: add quotes to unquoted keys
+    fixedJson = fixedJson.replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":');
+
+    return fixedJson;
+  }
+
   getFormattedOutput() {
-    const inputValue = this.input.value.trim();
+    let inputValue = this.input.value.trim();
+    if (this.autoFixCheckbox.checked) {
+      inputValue = this.autoFixJSON(inputValue);
+    }
     try {
       const parsed = JSON.parse(inputValue);
-      const formatted = this.sortCheckbox.checked 
+      const formatted = this.sortCheckbox.checked
         ? this.sortKeysAlphabetically(parsed)
         : parsed;
       return JSON.stringify(formatted, null, 2);
     } catch (error) {
-      // If parsing fails, fall back to the input value
-      return inputValue;
+      // If parsing fails, fall back to the original input value
+      return this.input.value.trim();
     }
   }
 
