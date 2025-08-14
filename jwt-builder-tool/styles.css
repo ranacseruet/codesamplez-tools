@@ -78,14 +78,11 @@
 /* Style input fields */
 .jwt-builder-container .c-input {
   font-family: var(--font-family-mono);
-  background-color: var(--color-bg-light);
-  border-color: var(--color-border-light);
   color: #1f2937; /* Modern dark gray for better readability */
   font-weight: 500; /* Slightly bolder for better visibility */
 }
 
 .jwt-builder-container .c-input:focus {
-  background-color: var(--color-bg);
   border-color: var(--color-primary);
   color: #111827; /* Even darker for focused state */
   font-weight: 500; /* Maintain weight in focus */
@@ -128,10 +125,6 @@
     align-items: stretch; /* Make items full width */
   }
 
-  .jwt-builder-container .copy-button {
-    width: 100%; /* Make copy button full width */
-  }
-
   /* Redundant rule removed from here, now applied globally above */
   /* .jwt-builder-container #buildJwtBtn { ... } */
 }
@@ -141,4 +134,46 @@
   margin-top: var(--spacing-sm);
   font-size: var(--font-size-small);
   color: var(--color-text-secondary);
+}
+
+/* Style for the refresh secret key button - remove background, just show icon */
+.jwt-builder-container button[onclick="generateRandomSecret()"] {
+  background: none !important;
+  border: none !important;
+  padding: 4px !important;
+  margin: 0 !important;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #374151; /* Dark gray color for the icon */
+  transition: color 0.2s ease;
+}
+
+.jwt-builder-container button[onclick="generateRandomSecret()"]:hover {
+  color: #111827; /* Darker on hover */
+}
+
+.jwt-builder-container button[onclick="generateRandomSecret()"] svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Ensure signature key input has proper padding for copy button */
+.jwt-builder-container .copy-button-wrapper {
+  flex: 1; /* Take up available space in flex container */
+  display: flex; /* Use flex instead of inline-block */
+  position: relative; /* Maintain relative positioning for absolute copy button */
+}
+
+.jwt-builder-container .copy-button-wrapper .c-input {
+  padding-right: 45px; /* Make room for copy button */
+  flex: 1; /* Take up available space within wrapper */
+}
+
+/* Adjust for mobile */
+@media (max-width: 768px) {
+  .jwt-builder-container .copy-button-wrapper .c-input {
+    padding-right: 50px;
+  }
 }

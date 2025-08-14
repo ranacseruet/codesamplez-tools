@@ -16,6 +16,7 @@ class CopyButton {
 
     createCopyButton() {
         const button = document.createElement('button');
+        button.type = 'button'; // Prevent form submission when inside forms
         button.classList.add('copy-button');
         button.setAttribute('aria-label', 'Copy content to clipboard');
         button.setAttribute('title', 'Copy to clipboard');
