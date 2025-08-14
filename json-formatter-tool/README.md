@@ -11,6 +11,7 @@ A tool for formatting and validating JSON data with optional alphabetical key so
 ## Features
 - Pretty-print JSON with proper indentation (2 spaces)
 - Optional alphabetical sorting of object keys (enabled by default)
+- Auto-fix common JSON errors (enabled by default)
 - Validate JSON syntax with detailed error messages
 - Copy formatted output to clipboard with success confirmation
 - Collapsible/expandable JSON nodes for better navigation
@@ -23,7 +24,8 @@ A tool for formatting and validating JSON data with optional alphabetical key so
 ## Usage
 1. Paste your JSON into the input area
 2. Toggle "Sort Keys" checkbox to enable/disable alphabetical sorting
-3. Click "Format JSON" to validate and format
+3. Toggle "Auto fix" checkbox to enable/disable automatic error correction.
+4. Click "Format JSON" to validate and format
    - The tool will automatically validate the JSON syntax
    - If valid, it will format with proper indentation (2 spaces)
    - Object keys will be sorted alphabetically if enabled
@@ -170,9 +172,8 @@ Calculation methodology:
 - Array elements are never sorted (only object keys when enabled)
 - Clipboard operations require secure context (HTTPS or localhost)
 - Comments in JSON are not supported (as per JSON specification)
-- Does not preserve trailing commas
+- The auto-fix feature is not a full JSON5 parser and may not fix all syntax errors.
 - Unicode characters in strings are not escaped/unescaped
-- No support for JSON5 or JSON with comments (JSONC)
 - No syntax highlighting (basic text rendering only)
 
 ## UI Components
