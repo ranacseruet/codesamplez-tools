@@ -9,7 +9,7 @@ export const jwtBuilder = (typeof window !== 'undefined' && window.jwtBuilder) |
 if (typeof window !== 'undefined') {
   window.jwtBuilder = jwtBuilder;
 }
-
+let keyCopyButton = null;
 document.addEventListener('DOMContentLoaded', function() {
   const now = new Date();
   const sixMonthsFromNow = new Date(now);
@@ -34,6 +34,12 @@ document.addEventListener('DOMContentLoaded', function() {
   const resultElement = document.getElementById('result');
   if (resultElement) {
     new CopyButton(resultElement);
+  }
+
+  // Add copy button to signature key input field
+  const keyInput = document.getElementById('key');
+  if (keyInput) {
+    keyCopyButton = new CopyButton(keyInput);
   }
 });
 
@@ -165,6 +171,9 @@ export function generateRandomSecret() {
   if (keyInput) {
     const randomSecret = jwtBuilder.generateRandomSecret(32);
     keyInput.value = randomSecret;
+    if (keyCopyButton) {
+      keyCopyButton.updateVisibility();
+    }
     NotificationManager.show('Random secret generated', 2000, { type: 'success' });
     return randomSecret;
   }

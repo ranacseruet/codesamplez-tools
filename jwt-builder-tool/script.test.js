@@ -25,9 +25,19 @@ jest.mock('../common/notification-manager.js', () => ({
   }
 }));
 
+// Mock CopyButton
+const mockCopyButton = {
+  updateVisibility: jest.fn(),
+  forceUpdateVisibility: jest.fn()
+};
+jest.mock('../common/copy-button/CopyButton.js', () => {
+  return jest.fn(() => mockCopyButton);
+});
+
 // Import after mocking
 const scriptModule = jest.requireActual('./script.js');
 const { NotificationManager } = jest.requireMock('../common/notification-manager.js');
+const CopyButton = jest.requireMock('../common/copy-button/CopyButton.js');
 
 describe('JWT Builder UI Tests', () => {
   beforeEach(() => {
@@ -68,6 +78,20 @@ describe('JWT Builder UI Tests', () => {
       expect(document.getElementById('sub').value).toBe('your-subject');
       expect(document.getElementById('aud').value).toBe('your-audience');
       expect(document.getElementById('jti').value).toBe('your-indentifier');
+    });
+
+    test('initializes copy buttons for result and key input', () => {
+      // Trigger DOMContentLoaded
+      document.dispatchEvent(new Event('DOMContentLoaded'));
+
+      // Verify CopyButton was called twice - once for result, once for key input
+      expect(CopyButton).toHaveBeenCalledTimes(2);
+      
+      // Verify it was called with the result element
+      expect(CopyButton).toHaveBeenCalledWith(document.getElementById('result'));
+      
+      // Verify it was called with the key input element
+      expect(CopyButton).toHaveBeenCalledWith(document.getElementById('key'));
     });
   });
 
