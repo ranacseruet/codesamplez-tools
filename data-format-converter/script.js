@@ -57,23 +57,28 @@ class DataFormatConverterUI {
         const button = event.target;
         const format = button.getAttribute('data-format');
         const section = button.closest('.input-section, .output-section');
-        
+
         // Remove active class from siblings
         section.querySelectorAll('.format-btn').forEach(btn => {
             btn.classList.remove('active');
         });
-        
+
         // Add active class to clicked button
         button.classList.add('active');
-        
+
         // Update format selection
         if (section.classList.contains('input-section')) {
             this.converter.inputFormat = format;
             this.updateInputPlaceholder();
+            this.clearButton.clearText(); // Only clear input when INPUT format changes
         } else {
             this.converter.outputFormat = format;
+            // If there's input data, trigger conversion when output format changes
+            const inputText = document.getElementById('inputText').value.trim();
+            if (inputText) {
+                this.convertData();
+            }
         }
-        this.clearButton.clearText(); // Clear input when format changes
     }
 
     updateInputPlaceholder() {
