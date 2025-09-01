@@ -73,6 +73,70 @@ h3 {
   gap: var(--spacing-md);
 }
 
+.text-analyzer-word-frequency {
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.word-frequency-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.word-frequency-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background-color: var(--color-bg-light);
+  border-radius: var(--border-radius-sm);
+  min-height: 40px;
+}
+
+.word-frequency-label {
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  font-weight: 500;
+  min-width: 80px;
+  text-align: right;
+}
+
+.word-frequency-bar-container {
+  flex: 1;
+  height: 20px;
+  background-color: var(--color-bg);
+  border-radius: var(--border-radius-xs);
+  overflow: hidden;
+  position: relative;
+}
+
+.word-frequency-bar {
+  height: 100%;
+  background-color: var(--color-primary); /* Use a solid primary color for better visibility */
+  border-radius: var(--border-radius-xs);
+  transition: width 0.3s ease;
+  position: relative;
+  min-width: 5px; /* Ensure even small bars are visible */
+}
+
+.word-frequency-bar::after {
+  content: attr(data-count);
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-weight: 600;
+  color: white; /* White color for better visibility inside blue bars */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.word-frequency-count {
+  display: none; /* Hide redundant count numbers */
+}
+
 .text-analyzer-stat-item {
   display: flex;
   flex-direction: column;

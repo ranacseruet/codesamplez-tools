@@ -323,6 +323,103 @@ describe('Text Analyzer Tests', () => {
         });
     });
 
+    describe('Word Frequency Analysis', () => {
+        test('empty string should not have wordFrequency property', () => {
+            const text = '';
+            const result = analyzeText(text);
+            expect(result.wordFrequency).toBeUndefined();
+        });
+
+        test('text with no words should return empty word frequency array', () => {
+            const text = '!!! ??? ...';
+            const result = analyzeText(text);
+            expect(result.wordFrequency).toEqual([]);
+        });
+
+        test('single word should return that word with count 1', () => {
+            const text = 'hello';
+            const result = analyzeText(text);
+            expect(result.wordFrequency).toEqual([{ word: 'hello', count: 1 }]);
+        });
+
+        test('should count word frequency correctly', () => {
+            const text = 'hello world hello test world hello';
+            const result = analyzeText(text);
+            expect(result.wordFrequency).toEqual([
+                { word: 'hello', count: 3 },
+                { word: 'world', count: 2 },
+                { word: 'test', count: 1 }
+            ]);
+        });
+
+        test('should handle case insensitivity', () => {
+            const text = 'Hello hello HELLO world World';
+            const result = analyzeText(text);
+            expect(result.wordFrequency).toEqual([
+                { word: 'hello', count: 3 },
+                { word: 'world', count: 2 }
+            ]);
+        });
+
+        test('should remove punctuation from words', () => {
+            const text = 'hello, world! hello. test? hello!';
+            const result = analyzeText(text);
+            expect(result.wordFrequency).toEqual([
+                { word: 'hello', count: 3 },
+                { word: 'world', count: 1 },
+                { word: 'test', count: 1 }
+            ]);
+        });
+
+        test('should handle mixed case and punctuation', () => {
+            const text = 'Hello, World! hello. WORLD? Hello!';
+            const result = analyzeText(text);
+            expect(result.wordFrequency).toEqual([
+                { word: 'hello', count: 3 },
+                { word: 'world', count: 2 }
+            ]);
+        });
+
+        test('should return only top 5 most frequent words', () => {
+            const text = 'a b c d e f a b c d a b c a b a'; // a:5, b:4, c:3, d:2, e:1, f:1
+            const result = analyzeText(text);
+            expect(result.wordFrequency).toHaveLength(5);
+            expect(result.wordFrequency[0]).toEqual({ word: 'a', count: 5 });
+            expect(result.wordFrequency[1]).toEqual({ word: 'b', count: 4 });
+            expect(result.wordFrequency[2]).toEqual({ word: 'c', count: 3 });
+            expect(result.wordFrequency[3]).toEqual({ word: 'd', count: 2 });
+            expect(result.wordFrequency[4]).toEqual({ word: 'e', count: 1 });
+        });
+
+        test('should handle words with numbers', () => {
+            const text = 'test123 test test123 word';
+            const result = analyzeText(text);
+            expect(result.wordFrequency).toEqual([
+                { word: 'test123', count: 2 },
+                { word: 'test', count: 1 },
+                { word: 'word', count: 1 }
+            ]);
+        });
+
+        test('should ignore empty strings after cleaning', () => {
+            const text = 'hello !!! ??? ... world';
+            const result = analyzeText(text);
+            expect(result.wordFrequency).toEqual([
+                { word: 'hello', count: 1 },
+                { word: 'world', count: 1 }
+            ]);
+        });
+
+        test('should handle multiple spaces and newlines', () => {
+            const text = 'hello   world\n\nhello\tworld hello';
+            const result = analyzeText(text);
+            expect(result.wordFrequency).toEqual([
+                { word: 'hello', count: 3 },
+                { word: 'world', count: 2 }
+            ]);
+        });
+    });
+
     // Removed 'Sample Text' describe block as getSampleText is not exported
 
     describe('Analyze Button State and Notification', () => {
