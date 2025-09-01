@@ -102,11 +102,28 @@
   font-size: var(--font-size-base); /* 14px */
 }
 
+/* Ensure the output container can scroll horizontally */
+.tool-container .c-code-output {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.tool-container .c-code-output code {
+  display: block; /* Make code block level to contain the tree */
+  min-width: max-content; /* Allow content to expand to its natural width */
+  white-space: pre; /* Preserve whitespace and formatting */
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   /* Apply specific height to input/output areas on smaller screens */
   .tool-container .c-input--textarea,
   .tool-container .c-code-output {
     height: 350px;
+  }
+
+  /* Ensure horizontal scrolling works on mobile */
+  .tool-container .c-code-output {
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
   }
 }

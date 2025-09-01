@@ -391,6 +391,8 @@
   overflow-wrap: break-word;
   white-space: pre-wrap; /* Preserve whitespace and wrap */
   overflow-x: auto; /* Add horizontal scroll if needed */
+  overflow-y: auto; /* Add vertical scroll if needed */
+  max-width: 100%; /* Ensure container doesn't exceed parent width */
 }
 
 .c-code-output:empty::before {
