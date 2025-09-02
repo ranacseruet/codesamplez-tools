@@ -381,14 +381,14 @@ describe('Text Analyzer Tests', () => {
         });
 
         test('should return only top 5 most frequent words', () => {
-            const text = 'a b c d e f a b c d a b c a b a'; // a:5, b:4, c:3, d:2, e:1, f:1
+            const text = 'apple banana cherry date elderberry fig apple banana cherry date apple banana cherry apple banana apple'; // apple:5, banana:4, cherry:3, date:2, elderberry:1, fig:1
             const result = analyzeText(text);
             expect(result.wordFrequency).toHaveLength(5);
-            expect(result.wordFrequency[0]).toEqual({ word: 'a', count: 5 });
-            expect(result.wordFrequency[1]).toEqual({ word: 'b', count: 4 });
-            expect(result.wordFrequency[2]).toEqual({ word: 'c', count: 3 });
-            expect(result.wordFrequency[3]).toEqual({ word: 'd', count: 2 });
-            expect(result.wordFrequency[4]).toEqual({ word: 'e', count: 1 });
+            expect(result.wordFrequency[0]).toEqual({ word: 'apple', count: 5 });
+            expect(result.wordFrequency[1]).toEqual({ word: 'banana', count: 4 });
+            expect(result.wordFrequency[2]).toEqual({ word: 'cherry', count: 3 });
+            expect(result.wordFrequency[3]).toEqual({ word: 'date', count: 2 });
+            expect(result.wordFrequency[4]).toEqual({ word: 'elderberry', count: 1 });
         });
 
         test('should handle words with numbers', () => {
