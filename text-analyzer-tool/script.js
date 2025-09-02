@@ -68,6 +68,24 @@ function analyzeText(text = '') {
     const questionCount = (text.match(/\?/g) || []).length;
     const exclamationCount = (text.match(/!/g) || []).length;
 
+    // Word Frequency Analysis
+    const wordFrequency = {};
+    if (words.length > 0) {
+        words.forEach(word => {
+            // Clean word: remove punctuation and convert to lowercase
+            const cleanWord = word.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
+            if (cleanWord && cleanWord.length > 0) {
+                wordFrequency[cleanWord] = (wordFrequency[cleanWord] || 0) + 1;
+            }
+        });
+    }
+
+    // Get top 5 most frequent words
+    const topWords = Object.entries(wordFrequency)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([word, count]) => ({ word, count }));
+
     return {
         charCount,
         wordCount,
@@ -79,7 +97,8 @@ function analyzeText(text = '') {
         periodCount,
         commaCount,
         questionCount,
-        exclamationCount
+        exclamationCount,
+        wordFrequency: topWords
     };
 }
 

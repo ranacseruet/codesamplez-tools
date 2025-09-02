@@ -22,6 +22,8 @@ export class TextAnalyzerUI {
             exclamationCount: document.getElementById('exclamationCount')
         };
 
+        this.wordFrequencyChart = document.getElementById('wordFrequencyChart');
+
         this.initializeEventListeners();
         this.updateCounts();
     }
@@ -33,6 +35,65 @@ export class TextAnalyzerUI {
             if (this.elements[key]) {
                 this.elements[key].textContent = String(value);
             }
+        });
+
+        // Update word frequency chart
+        this.updateWordFrequencyChart(result.wordFrequency);
+    }
+
+    updateWordFrequencyChart(wordFrequency) {
+        if (!this.wordFrequencyChart) return;
+
+        // Clear existing chart
+        this.wordFrequencyChart.innerHTML = '';
+
+        if (!wordFrequency || wordFrequency.length === 0) {
+            const emptyMessage = document.createElement('div');
+            emptyMessage.className = 'word-frequency-empty';
+            emptyMessage.textContent = 'No words to analyze';
+            emptyMessage.style.cssText = `
+                text-align: center;
+                color: var(--color-text-secondary);
+                font-style: italic;
+                padding: var(--spacing-md);
+            `;
+            this.wordFrequencyChart.appendChild(emptyMessage);
+            return;
+        }
+
+        // Find the maximum count for scaling the bars
+        const maxCount = Math.max(...wordFrequency.map(item => item.count));
+
+        // Create bars for each word
+        wordFrequency.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'word-frequency-item';
+
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'word-frequency-label';
+            labelSpan.textContent = item.word;
+
+            const barContainer = document.createElement('div');
+            barContainer.className = 'word-frequency-bar-container';
+
+            const bar = document.createElement('div');
+            bar.className = 'word-frequency-bar';
+            bar.setAttribute('data-count', item.count);
+
+            // Calculate bar width as percentage of max count
+            const percentage = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
+            bar.style.width = `${percentage}%`;
+
+            const countSpan = document.createElement('span');
+            countSpan.className = 'word-frequency-count';
+            countSpan.textContent = item.count;
+
+            barContainer.appendChild(bar);
+            itemDiv.appendChild(labelSpan);
+            itemDiv.appendChild(barContainer);
+            itemDiv.appendChild(countSpan);
+
+            this.wordFrequencyChart.appendChild(itemDiv);
         });
     }
 
