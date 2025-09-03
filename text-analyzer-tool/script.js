@@ -69,12 +69,13 @@ function analyzeText(text = '') {
     const exclamationCount = (text.match(/!/g) || []).length;
 
     // Word Frequency Analysis
+    const stopWords = new Set(['a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'shall', 'this', 'that', 'these', 'those', 'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'you', 'your', 'yours', 'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them', 'their', 'theirs']);
     const wordFrequency = {};
     if (words.length > 0) {
         words.forEach(word => {
             // Clean word: remove punctuation and convert to lowercase
             const cleanWord = word.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
-            if (cleanWord && cleanWord.length > 0) {
+            if (cleanWord && cleanWord.length > 0 && !stopWords.has(cleanWord)) {
                 wordFrequency[cleanWord] = (wordFrequency[cleanWord] || 0) + 1;
             }
         });
