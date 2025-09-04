@@ -83,7 +83,11 @@ const getToolConfig = (toolName) => ({
         },
         {
           from: path.join(__dirname, toolName, 'images'),
-          to: path.join(__dirname, toolName, 'images')
+          to: path.join(__dirname, 'build', toolName, 'images')
+        },
+        {
+          from: 'robots.txt',
+          to: path.join(__dirname, 'build', 'robots.txt')
         }
       ]
     })
@@ -138,6 +142,10 @@ const developmentConfig = {
             {
               from: path.join(__dirname, toolName, 'images'),
               to: path.join(__dirname, 'build', toolName, 'images')
+            },
+            {
+              from: 'robots.txt',
+              to: path.join(__dirname, 'build', 'robots.txt')
             }
           ]);
         }, [])
