@@ -292,6 +292,39 @@ if (typeof window !== 'undefined') {
         window.Base64Converter = createConverter;
         const converter = createConverter();
 
+        // Handle URL parameters for external linking
+        const urlParams = new URLSearchParams(window.location.search);
+        const dataParam = urlParams.get('data');
+
+        let dataFromUrl = null;
+        let shouldAutoConvert = false;
+
+        if (dataParam) {
+            try {
+                // Decode the URL parameter value
+                dataFromUrl = decodeURIComponent(dataParam);
+
+                // Additional validation: check if re-encoding matches original to detect malformed input
+                if (encodeURIComponent(dataFromUrl) !== dataParam) {
+                    throw new Error('URL parameter contains invalid encoding');
+                }
+                // eslint-disable-next-line
+                shouldAutoConvert = true;
+            } catch (urlDecodeError) {
+                // If URL decoding fails, try with malformed URI handling
+                try {
+                    dataFromUrl = decodeURIComponent(dataParam.replace(/%(?![0-9a-fA-F][0-9a-fA-F])/g, '%25'));
+                    shouldAutoConvert = true;
+                } catch (secondError) {
+                    console.error('Failed to decode URL parameter:', urlDecodeError);
+                    NotificationManager.show('Invalid data parameter in URL', 3000, { type: 'error' });
+                    // Fall back to empty string and disable auto-convert to avoid processing invalid data
+                    dataFromUrl = '';
+                    shouldAutoConvert = false;
+                }
+            }
+        }
+
         const elements = {
             input: document.getElementById('base64converter-input'),
             result: document.getElementById('base64converter-result'),
@@ -339,6 +372,12 @@ if (typeof window !== 'undefined') {
         // Assign elements to converter
         converter.elements = elements;
 
+        // Handle URL parameter data if present (for external linking)
+        if (dataFromUrl) {
+            elements.input.value = dataFromUrl;
+            elements.mode.value = 'auto'; // Use auto-detect mode for external links
+        }
+
         // Initialize ClearButton component
         const clearButtonInstance = new ClearButton(elements.input);
 
@@ -362,5 +401,13 @@ if (typeof window !== 'undefined') {
 
         const downloadHandler = () => converter.handleDownload();
         elements.downloadDecodedButton.addEventListener('click', downloadHandler);
+
+        // Auto-convert if data was provided via URL parameter (for external linking)
+        if (shouldAutoConvert && dataFromUrl && typeof converter.processInput === 'function') {
+            // Use setTimeout to ensure DOM is fully ready
+            setTimeout(() => {
+                converter.processInput();
+            }, 100);
+        }
     });
 }

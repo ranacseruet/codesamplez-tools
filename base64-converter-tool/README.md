@@ -10,6 +10,7 @@ A powerful and user-friendly web tool for encoding and decoding Base64 strings w
 
 ## Features
 
+- 🔗 **URL Parameter Support**: Pre-load data directly from links (external site integration)
 - 🔄 Auto-detection of Base64 strings
 - 📝 Multiple encoding support (UTF-8, ASCII, ISO-8859-1, UCS-2)
 - 📁 File upload capability for encoding
@@ -35,6 +36,58 @@ A powerful and user-friendly web tool for encoding and decoding Base64 strings w
    - UCS-2
 4. View the result below the input area
 5. Click "Copy Result" to copy the converted text to clipboard
+
+### URL Parameter Integration
+
+The tool supports external linking, allowing you to create URLs that automatically load data into the converter.
+
+#### Creating Shareable Links
+
+You can create links that pre-load data by adding a `data` URL parameter:
+
+```
+https://your-domain.com/base64-converter/?data=YOUR_BASE64_OR_TEXT_DATA
+```
+
+**Examples:**
+
+- Encode mode: `?data=Hello%20World`
+- Decode mode: `?data=SGVsbG8gV29ybGQ%3D`
+
+#### How It Works
+
+1. Add `?data=` followed by URL-encoded text or Base64 data
+2. The tool will:
+   - Automatically decode the URL parameter
+   - Pre-populate the input field with the decoded data
+   - Set the mode to "Auto Detect" for smart processing
+   - Immediately perform the conversion
+3. The conversion starts instantly when the page loads
+
+#### URL Encoding Requirements
+
+When creating links, ensure special characters are properly URL-encoded:
+
+- Spaces become `%20`
+- Plus signs (`+`) become `%2B`
+- Equal signs (`=`) become `%3D`
+- Ampersands (`&`) become `%26`
+
+#### From Your Website
+
+You can integrate this into your own applications by creating links like:
+
+```html
+<!-- Link to encode "Hello World" -->
+<a href="https://your-domain.com/base64-converter/?data=Hello%20World">
+  Encode "Hello World"
+</a>
+
+<!-- Link with Base64 data to decode -->
+<a href="https://your-domain.com/base64-converter/?data=SGVsbG8gV29ybGQ%3D">
+  Decode Base64 string
+</a>
+```
 
 ### File Processing
 
