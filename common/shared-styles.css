@@ -153,6 +153,10 @@
 
 /* Removed the duplicated .o-panel block and stray closing brace that were here */
 
+.o-panel-header {
+  margin-bottom: var(--spacing-md);
+}
+
 .o-toolbar {
   display: flex;
   gap: var(--spacing-sm);
@@ -479,6 +483,18 @@
 
 .u-gap-lg {
   gap: var(--spacing-lg);
+}
+
+.u-mt-md {
+  margin-top: var(--spacing-md);
+}
+
+.u-justify-between {
+  justify-content: space-between;
+}
+
+.u-justify-center {
+  justify-content: center;
 }
 
 /* ==========================================================================
