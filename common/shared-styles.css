@@ -57,6 +57,7 @@
   font-family: var(--font-family-base);
   line-height: var(--line-height-base);
   color: var(--color-text);
+  contain: style layout paint;
 }
 
 .tool-container * {
