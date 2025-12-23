@@ -47,9 +47,9 @@ describe('JSONFormatter', () => {
       if (selector === '#downloadOutputBtn') return { disabled: false, addEventListener: jest.fn() };
       if (selector === '#loadSampleBtn') return { addEventListener: jest.fn() };
       if (selector === '#sortKeys') return { checked: true };
-      if (selector === '#jsonErrorStatus') return { 
-        textContent: '', 
-        classList: { add: jest.fn(), remove: jest.fn() } 
+      if (selector === '#jsonErrorStatus') return {
+        textContent: '',
+        classList: { add: jest.fn(), remove: jest.fn() }
       };
       if (selector === '.jsonf-original-size') return { textContent: '' };
       if (selector === '.jsonf-formatted-size') return { textContent: '' };
@@ -78,31 +78,31 @@ describe('JSONFormatter', () => {
     test('should fix trailing commas in objects', () => {
       const input = '{"a": 1, "b": 2,}';
       const expected = '{"a": 1, "b": 2}';
-      expect(formatter.autoFixJSON(input)).toEqual(expected);
+      expect(JSONFormatter.autoFixJSON(input)).toEqual(expected);
     });
 
     test('should fix trailing commas in arrays', () => {
       const input = '[1, 2, 3,]';
       const expected = '[1, 2, 3]';
-      expect(formatter.autoFixJSON(input)).toEqual(expected);
+      expect(JSONFormatter.autoFixJSON(input)).toEqual(expected);
     });
 
     test('should fix single quotes', () => {
       const input = "{'a': 1, 'b': 'hello'}";
       const expected = '{"a": 1, "b": "hello"}';
-      expect(formatter.autoFixJSON(input)).toEqual(expected);
+      expect(JSONFormatter.autoFixJSON(input)).toEqual(expected);
     });
 
     test('should fix unquoted keys', () => {
       const input = '{a: 1, b: 2}';
       const expected = '{"a": 1, "b": 2}';
-      expect(formatter.autoFixJSON(input)).toEqual(expected);
+      expect(JSONFormatter.autoFixJSON(input)).toEqual(expected);
     });
 
     test('should fix a combination of errors', () => {
       const input = "{a: 1, 'b': 'hello',}";
       const expected = '{"a": 1, "b": "hello"}';
-      expect(formatter.autoFixJSON(input)).toEqual(expected);
+      expect(JSONFormatter.autoFixJSON(input)).toEqual(expected);
     });
   });
 
@@ -110,33 +110,33 @@ describe('JSONFormatter', () => {
     test('should sort object keys alphabetically', () => {
       const input = { z: 1, a: 2, m: 3 };
       const expected = { a: 2, m: 3, z: 1 };
-      expect(formatter.sortKeysAlphabetically(input)).toEqual(expected);
+      expect(JSONFormatter.sortKeysAlphabetically(input)).toEqual(expected);
     });
 
     test('should handle nested objects', () => {
       const input = { z: { y: 1, x: 2 }, a: 3 };
       const expected = { a: 3, z: { x: 2, y: 1 } };
-      expect(formatter.sortKeysAlphabetically(input)).toEqual(expected);
+      expect(JSONFormatter.sortKeysAlphabetically(input)).toEqual(expected);
     });
 
     test('should handle arrays', () => {
       const input = { items: [{ b: 1, a: 2 }, { d: 3, c: 4 }] };
       const expected = { items: [{ a: 2, b: 1 }, { c: 4, d: 3 }] };
-      expect(formatter.sortKeysAlphabetically(input)).toEqual(expected);
+      expect(JSONFormatter.sortKeysAlphabetically(input)).toEqual(expected);
     });
 
     test('should handle null values', () => {
       const input = { b: null, a: 1 };
       const expected = { a: 1, b: null };
-      expect(formatter.sortKeysAlphabetically(input)).toEqual(expected);
+      expect(JSONFormatter.sortKeysAlphabetically(input)).toEqual(expected);
     });
   });
 
   describe('formatBytes', () => {
     test('should format bytes to appropriate units', () => {
-      expect(formatter.formatBytes(0)).toBe('0 bytes');
-      expect(formatter.formatBytes(1024)).toBe('1.00 KB');
-      expect(formatter.formatBytes(1024 * 1024)).toBe('1.00 MB');
+      expect(JSONFormatter.formatBytes(0)).toBe('0 bytes');
+      expect(JSONFormatter.formatBytes(1024)).toBe('1.00 KB');
+      expect(JSONFormatter.formatBytes(1024 * 1024)).toBe('1.00 MB');
     });
   });
 
@@ -159,15 +159,18 @@ describe('JSONFormatter', () => {
       formatter.renderJSON({ a: 1 }, formatter.output);
       const toggle = formatter.output.querySelector('.json-toggle');
       // Initial state should be expanded ('-')
-      expect(toggle.textContent).toBe('-'); 
-      
+      expect(toggle.textContent).toBe('-');
+      expect(toggle.getAttribute('aria-expanded')).toBe('true');
+
       // Click to collapse
       toggle.click();
       expect(toggle.textContent).toBe('+'); // Collapsed state should be '+'
-      
+      expect(toggle.getAttribute('aria-expanded')).toBe('false');
+
       // Click to expand again
       toggle.click();
       expect(toggle.textContent).toBe('-'); // Expanded state should be '-'
+      expect(toggle.getAttribute('aria-expanded')).toBe('true');
     });
   });
 
@@ -176,9 +179,9 @@ describe('JSONFormatter', () => {
       formatter.input = { value: '' };
       formatter.output = document.createElement('div');
       formatter.copyBtn = { disabled: false };
-      formatter.errorContainer = { 
-        textContent: '', 
-        classList: { add: jest.fn(), remove: jest.fn() } 
+      formatter.errorContainer = {
+        textContent: '',
+        classList: { add: jest.fn(), remove: jest.fn() }
       };
       formatter.sortCheckbox = { checked: true };
     });
@@ -186,7 +189,7 @@ describe('JSONFormatter', () => {
     test('should format valid JSON', () => {
       formatter.input.value = '{"b":2,"a":1}';
       formatter.formatJSON();
-      
+
       const keys = formatter.output.querySelectorAll('.json-key');
       expect(keys[0].textContent).toBe('"a": ');
       expect(keys[1].textContent).toBe('"b": ');
@@ -196,8 +199,8 @@ describe('JSONFormatter', () => {
       formatter.input.value = '{"invalid": json}';
       formatter.formatJSON();
       expect(mockNotificationManager.show).toHaveBeenCalledWith(
-        expect.stringContaining('Invalid JSON'), 
-        3000, 
+        expect.stringContaining('Invalid JSON'),
+        3000,
         { type: 'error' }
       );
       expect(formatter.errorStatus.textContent).toContain('Invalid JSON');
@@ -228,7 +231,7 @@ describe('JSONFormatter', () => {
     test('should properly sort nested objects', () => {
       formatter.input.value = '{"b":[{"d":4,"c":3}],"a":{"z":2,"y":1}}';
       formatter.formatJSON();
-      
+
       const keys = formatter.output.querySelectorAll('.json-key');
       expect(keys[0].textContent).toBe('"a": ');
       expect(keys[1].textContent).toBe('"y": ');
@@ -242,7 +245,7 @@ describe('JSONFormatter', () => {
       formatter.sortCheckbox.checked = false;
       formatter.input.value = '{"b":2,"a":1}';
       formatter.formatJSON();
-      
+
       const keys = formatter.output.querySelectorAll('.json-key');
       expect(keys[0].textContent).toBe('"b": ');
       expect(keys[1].textContent).toBe('"a": ');
@@ -252,7 +255,7 @@ describe('JSONFormatter', () => {
       formatter.sortCheckbox.checked = true;
       formatter.input.value = '{"b":2,"a":1}';
       formatter.formatJSON();
-      
+
       const keys = formatter.output.querySelectorAll('.json-key');
       expect(keys[0].textContent).toBe('"a": ');
       expect(keys[1].textContent).toBe('"b": ');
@@ -261,7 +264,7 @@ describe('JSONFormatter', () => {
     test('should have sorting enabled by default', () => {
       formatter.input.value = '{"b":2,"a":1}';
       formatter.formatJSON();
-      
+
       const keys = formatter.output.querySelectorAll('.json-key');
       expect(keys[0].textContent).toBe('"a": ');
       expect(keys[1].textContent).toBe('"b": ');
@@ -341,12 +344,12 @@ describe('JSONFormatter', () => {
       mockClipboard = {
         writeText: jest.fn().mockResolvedValue(undefined)
       };
-      
+
       // Mock globalThis.navigator.clipboard as used in script.js
       global.navigator.clipboard = mockClipboard;
-      
+
       formatter.input = { value: 'test content' };
-      formatter.errorContainer = { 
+      formatter.errorContainer = {
         textContent: '',
         classList: {
           add: jest.fn(),
@@ -363,9 +366,9 @@ describe('JSONFormatter', () => {
     test('should copy formatted output to clipboard', async () => {
       formatter.input.value = '{"b":2,"a":1}';
       formatter.sortCheckbox.checked = true;
-      
+
       await formatter.copyOutput();
-      
+
       expect(mockClipboard.writeText).toHaveBeenCalledWith('{\n  "a": 1,\n  "b": 2\n}');
       expect(mockNotificationManager.show).toHaveBeenCalledWith('Copied to clipboard!', 2000, { type: 'success' });
     });
@@ -392,7 +395,7 @@ describe('JSONFormatter', () => {
     test('should use fallback copy mechanism when clipboard API is unavailable', async () => {
       // Simulate no clipboard API by deleting it
       delete global.navigator.clipboard;
-      
+
       // Mock document.execCommand for fallback
       document.execCommand = jest.fn().mockReturnValue(true);
       const mockCreateElement = jest.spyOn(document, 'createElement').mockReturnValue({
@@ -400,15 +403,15 @@ describe('JSONFormatter', () => {
         style: { position: '' },
         select: jest.fn()
       });
-      const mockAppendChild = jest.spyOn(document.body, 'appendChild').mockImplementation(() => {});
-      const mockRemoveChild = jest.spyOn(document.body, 'removeChild').mockImplementation(() => {});
-      
+      const mockAppendChild = jest.spyOn(document.body, 'appendChild').mockImplementation(() => { });
+      const mockRemoveChild = jest.spyOn(document.body, 'removeChild').mockImplementation(() => { });
+
       formatter.output.textContent = 'fallback test content';
       await formatter.copyOutput();
-      
+
       expect(document.execCommand).toHaveBeenCalledWith('copy');
       expect(mockNotificationManager.show).toHaveBeenCalledWith('Copied to clipboard!', 2000, { type: 'success' });
-      
+
       mockCreateElement.mockRestore();
       mockAppendChild.mockRestore();
       mockRemoveChild.mockRestore();
@@ -421,7 +424,7 @@ describe('JSONFormatter', () => {
     test('should load sample data and format it', () => {
       formatter.formatJSON = jest.fn();
       formatter.loadSampleData();
-      
+
       expect(formatter.input.value).toBeTruthy();
       expect(formatter.formatJSON).toHaveBeenCalled();
     });
@@ -435,9 +438,9 @@ describe('JSONFormatter', () => {
     test('should call DownloadManager.downloadFile with formatted JSON', async () => {
       formatter.input.value = '{"b":2,"a":1}';
       formatter.sortCheckbox.checked = true;
-      
+
       await formatter.downloadOutput();
-      
+
       expect(mockDownloadManager.downloadFile).toHaveBeenCalledWith(
         '{\n  "a": 1,\n  "b": 2\n}',
         'formatted.json',
@@ -450,12 +453,12 @@ describe('JSONFormatter', () => {
       mockDownloadManager.downloadFile.mockImplementation(() => {
         throw new Error('Simulated download error');
       });
-      
+
       await formatter.downloadOutput();
-      
+
       expect(mockNotificationManager.show).toHaveBeenCalledWith(
-        'Download failed: Simulated download error', 
-        3000, 
+        'Download failed: Simulated download error',
+        3000,
         { type: 'error' }
       );
     });
@@ -592,8 +595,8 @@ describe('JSONFormatter', () => {
     test('should show error in notification and status div', () => {
       formatter.showError('Test error');
       expect(mockNotificationManager.show).toHaveBeenCalledWith(
-        'Test error', 
-        3000, 
+        'Test error',
+        3000,
         { type: 'error' }
       );
       expect(formatter.errorStatus.textContent).toBe('Test error');
@@ -621,15 +624,15 @@ describe('JSONFormatter', () => {
     });
 
     test('should format very large byte sizes', () => {
-      expect(formatter.formatBytes(1024 * 1024 * 1024)).toBe('1.00 GB');
-      expect(formatter.formatBytes(1024 * 1024 * 1024 * 1024)).toBe('1.00 TB');
+      expect(JSONFormatter.formatBytes(1024 * 1024 * 1024)).toBe('1.00 GB');
+      expect(JSONFormatter.formatBytes(1024 * 1024 * 1024 * 1024)).toBe('1.00 TB');
       // Current implementation doesn't support PB, stops at TB
-      expect(formatter.formatBytes(1024 * 1024 * 1024 * 1024 * 1024)).toBe('1024.00 TB');
+      expect(JSONFormatter.formatBytes(1024 * 1024 * 1024 * 1024 * 1024)).toBe('1024.00 TB');
     });
 
     test('should handle negative byte sizes', () => {
       // Current implementation doesn't handle negatives
-      expect(formatter.formatBytes(-1024)).toBe('NaN undefined');
+      expect(JSONFormatter.formatBytes(-1024)).toBe('NaN undefined');
     });
 
     test('should handle special characters in JSON', () => {
@@ -673,18 +676,18 @@ describe('JSONFormatter', () => {
     test('should create correct HTML structure for objects', () => {
       formatter.output = document.createElement('div');
       formatter.renderJSON({ key: 'value' }, formatter.output);
-      
+
       const container = formatter.output.querySelector('.json-node');
       expect(container).not.toBeNull();
-      
+
       const toggle = container.querySelector('.json-toggle');
       expect(toggle).not.toBeNull();
       expect(toggle.textContent).toBe('-');
-      
+
       const keySpan = container.querySelector('.json-key');
       expect(keySpan).not.toBeNull();
       expect(keySpan.textContent).toBe('"key": ');
-      
+
       const brackets = container.querySelectorAll('.json-bracket');
       expect(brackets.length).toBe(2);
       expect(brackets[0].textContent).toBe('{');
@@ -694,7 +697,7 @@ describe('JSONFormatter', () => {
     test('should apply correct indentation based on depth', () => {
       formatter.output = document.createElement('div');
       formatter.renderJSON({ key: 'value' }, formatter.output, 2);
-      
+
       const container = formatter.output.querySelector('.json-node');
       expect(container.style.marginLeft).toBe('30px');
     });

@@ -42,15 +42,16 @@ export class JSONFormatter {
     try {
       let inputValue = this.input.value.trim();
       if (this.autoFixCheckbox.checked) {
-        inputValue = this.autoFixJSON(inputValue);
+        inputValue = this.constructor.autoFixJSON(inputValue);
       }
       const parsed = JSON.parse(inputValue);
       const formatted = this.sortCheckbox.checked
-        ? this.sortKeysAlphabetically(parsed)
+        ? this.constructor.sortKeysAlphabetically(parsed)
         : parsed;
 
-      this.output.innerHTML = '';
-      this.renderJSON(formatted, this.output);
+      const fragment = document.createDocumentFragment();
+      this.renderJSON(formatted, fragment);
+      this.output.replaceChildren(fragment);
       this.copyBtn.disabled = false;
       this.downloadBtn.disabled = false;
       this.updateStats(this.input.value.trim(), JSON.stringify(formatted, null, 2));
@@ -84,7 +85,11 @@ export class JSONFormatter {
       toggle.addEventListener('click', () => {
         container.classList.toggle('collapsed');
         toggle.textContent = container.classList.contains('collapsed') ? '+' : '-'; // '+' for collapsed, '-' for expanded
+        toggle.setAttribute('aria-expanded', !container.classList.contains('collapsed'));
       });
+      toggle.setAttribute('aria-expanded', 'true');
+      toggle.setAttribute('role', 'button');
+      toggle.setAttribute('tabindex', '0');
       container.appendChild(toggle);
     }
 
@@ -96,7 +101,7 @@ export class JSONFormatter {
     if (!isEmpty) {
       const childrenContainer = document.createElement('div');
       childrenContainer.className = 'json-children';
-      
+
       if (isArray) {
         data.forEach((item, i) => {
           const itemContainer = document.createElement('div');
@@ -106,17 +111,17 @@ export class JSONFormatter {
       } else {
         Object.entries(data).forEach(([key, value]) => {
           const itemContainer = document.createElement('div');
-          
+
           const keySpan = document.createElement('span');
           keySpan.className = 'json-key';
           keySpan.textContent = `"${key}": `;
           itemContainer.appendChild(keySpan);
-          
+
           this.renderJSON(value, itemContainer, depth + 1);
           childrenContainer.appendChild(itemContainer);
         });
       }
-      
+
       container.appendChild(childrenContainer);
     }
 
@@ -128,14 +133,15 @@ export class JSONFormatter {
     parentEl.appendChild(container);
   }
 
-  sortKeysAlphabetically(obj) {
-    if (Array.isArray(obj)) return obj.map(item => this.sortKeysAlphabetically(item));
+  static sortKeysAlphabetically(obj) {
+    if (Array.isArray(obj)) return obj.map(item => this.sortKeysAlphabetically(item)); // 'this' in static method is class
     if (typeof obj !== 'object' || obj === null) return obj;
 
     return Object.keys(obj)
       .sort()
       .reduce((sorted, key) => {
-        sorted[key] = this.sortKeysAlphabetically(obj[key]);
+        sorted[key] = this.sortKeysAlphabetically(obj[key]); // This is static, but recursive call can't use 'this' if it's static?
+        // Wait, inside a static method, 'this' refers to the class constructor!
         return sorted;
       }, {});
   }
@@ -143,19 +149,19 @@ export class JSONFormatter {
   updateStats(original, formatted) {
     const originalBytes = new Blob([original]).size;
     const formattedBytes = new Blob([formatted]).size;
-    
-    this.originalSizeEl.textContent = this.formatBytes(originalBytes);
-    this.formattedSizeEl.textContent = this.formatBytes(formattedBytes);
+
+    this.originalSizeEl.textContent = this.constructor.formatBytes(originalBytes);
+    this.formattedSizeEl.textContent = this.constructor.formatBytes(formattedBytes);
   }
 
-  formatBytes(bytes) {
+  static formatBytes(bytes) {
     if (bytes === 0) return '0 bytes';
     const units = ['bytes', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
     return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`;
   }
 
-  autoFixJSON(jsonString) {
+  static autoFixJSON(jsonString) {
     // Add your auto-fixing logic here
     // Example: remove trailing commas
     let fixedJson = jsonString.replace(/,\s*([}\]])/g, '$1');
@@ -172,12 +178,12 @@ export class JSONFormatter {
   getFormattedOutput() {
     let inputValue = this.input.value.trim();
     if (this.autoFixCheckbox.checked) {
-      inputValue = this.autoFixJSON(inputValue);
+      inputValue = this.constructor.autoFixJSON(inputValue);
     }
     try {
       const parsed = JSON.parse(inputValue);
       const formatted = this.sortCheckbox.checked
-        ? this.sortKeysAlphabetically(parsed)
+        ? this.constructor.sortKeysAlphabetically(parsed)
         : parsed;
       return JSON.stringify(formatted, null, 2);
     } catch (error) {
@@ -189,7 +195,7 @@ export class JSONFormatter {
   async copyOutput() {
     try {
       const textToCopy = this.getFormattedOutput();
-      
+
       // Try modern Clipboard API first
       if (globalThis.navigator?.clipboard) {
         await globalThis.navigator.clipboard.writeText(textToCopy);
@@ -203,7 +209,7 @@ export class JSONFormatter {
       textarea.style.position = 'fixed';  // Prevent scrolling to bottom
       document.body.appendChild(textarea);
       textarea.select();
-      
+
       try {
         const successful = document.execCommand('copy');
         if (!successful) {

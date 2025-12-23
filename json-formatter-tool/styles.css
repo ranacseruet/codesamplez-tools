@@ -42,7 +42,7 @@
 }
 
 .json-key {
-  color: #9d174d; /* Specific color for JSON keys */
+  color: var(--color-primary); /* Uses theme primary color */
 }
 
 .json-bracket {
