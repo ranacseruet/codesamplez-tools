@@ -4,15 +4,67 @@
 .jsonf-panel-header {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: var(--spacing-sm); /* 10px */
+  margin-bottom: var(--spacing-sm);
+  /* 10px */
 }
 
 /* Custom styles for the controls toolbar */
 .jsonf-controls-custom {
-  margin: var(--spacing-md) 0; /* 15px */
+  margin: var(--spacing-md) 0;
+  /* 15px */
   justify-content: center;
   flex-wrap: wrap;
   /* gap is inherited from .o-toolbar (var(--spacing-sm) = 10px) */
+}
+
+/* Tabs Styles */
+.jsonf-tabs {
+  display: flex;
+  margin-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.jsonf-tab {
+  background: none;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  /* Overlap border */
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.jsonf-tab:hover {
+  color: var(--color-text);
+}
+
+.jsonf-tab.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: bold;
+}
+
+.view-container {
+  display: none;
+}
+
+.view-container.active {
+  display: block;
+}
+
+/* Ensure textarea in plain view fits well */
+#plainView .c-input--textarea {
+  min-height: 400px;
+  font-family: monospace;
+}
+
+/* Generous max-height for tree view */
+#treeView .c-code-output {
+  max-height: 800px;
+  overflow-y: auto;
 }
 
 /* JSON Tree View Styles */
@@ -23,7 +75,8 @@
 
 .json-toggle {
   cursor: pointer;
-  margin-right: var(--spacing-xs); /* 5px */
+  margin-right: var(--spacing-xs);
+  /* 5px */
   color: var(--color-text);
   user-select: none;
   font-weight: bold;
@@ -34,7 +87,8 @@
 }
 
 .json-children {
-  margin-left: var(--spacing-md); /* 15px */
+  margin-left: var(--spacing-md);
+  /* 15px */
 }
 
 .json-node.collapsed .json-children {
@@ -42,7 +96,8 @@
 }
 
 .json-key {
-  color: var(--color-primary); /* Uses theme primary color */
+  color: var(--color-primary);
+  /* Uses theme primary color */
 }
 
 .json-bracket {
@@ -53,27 +108,37 @@
 /* Error Message Styles */
 .c-input-status {
   color: var(--color-text-secondary);
-  margin-top: var(--spacing-sm); /* 10px */
-  padding: var(--spacing-xs); /* 5px */
-  font-size: var(--font-size-sm); /* 12px */
+  margin-top: var(--spacing-sm);
+  /* 10px */
+  padding: var(--spacing-xs);
+  /* 5px */
+  font-size: var(--font-size-sm);
+  /* 12px */
   min-height: 20px;
 }
 
 .c-input-status.error {
   color: var(--color-danger);
   background-color: #fef2f2;
-  border-radius: var(--border-radius-sm); /* 4px */
-  padding: var(--spacing-sm); /* 10px */
+  border-radius: var(--border-radius-sm);
+  /* 4px */
+  padding: var(--spacing-sm);
+  /* 10px */
 }
 
 .jsonf-error {
   color: var(--color-danger);
-  margin-top: var(--spacing-md); /* 15px */
-  padding: var(--spacing-sm); /* 10px */
-  background-color: #fef2f2; /* Light red background for errors - consider a CSS var like --color-danger-light-bg */
-  border-radius: var(--border-radius-sm); /* 4px */
+  margin-top: var(--spacing-md);
+  /* 15px */
+  padding: var(--spacing-sm);
+  /* 10px */
+  background-color: #fef2f2;
+  /* Light red background for errors - consider a CSS var like --color-danger-light-bg */
+  border-radius: var(--border-radius-sm);
+  /* 4px */
   display: none;
-  font-size: var(--font-size-base); /* 14px */
+  font-size: var(--font-size-base);
+  /* 14px */
 }
 
 .jsonf-error.active {
@@ -83,23 +148,31 @@
 /* Temporary Message Styles */
 .jsonf-temp-message {
   position: fixed;
-  bottom: var(--spacing-lg); /* 20px */
-  right: var(--spacing-lg); /* 20px */
+  bottom: var(--spacing-lg);
+  /* 20px */
+  right: var(--spacing-lg);
+  /* 20px */
   background-color: var(--color-primary);
   color: var(--color-bg);
-  padding: var(--spacing-sm) var(--spacing-lg); /* 10px 20px */
-  border-radius: var(--border-radius-sm); /* 4px */
+  padding: var(--spacing-sm) var(--spacing-lg);
+  /* 10px 20px */
+  border-radius: var(--border-radius-sm);
+  /* 4px */
   box-shadow: var(--box-shadow);
-  font-size: var(--font-size-base); /* 14px */
-  z-index: 100; /* Ensure visibility above other elements like shared notifications */
+  font-size: var(--font-size-base);
+  /* 14px */
+  z-index: 100;
+  /* Ensure visibility above other elements like shared notifications */
 }
 
 /* Footer Styles */
 .jsonf-footer {
   text-align: center;
-  margin-top: calc(var(--spacing-lg) + var(--spacing-sm)); /* 30px */
+  margin-top: calc(var(--spacing-lg) + var(--spacing-sm));
+  /* 30px */
   color: var(--color-text-secondary);
-  font-size: var(--font-size-base); /* 14px */
+  font-size: var(--font-size-base);
+  /* 14px */
 }
 
 /* Ensure the output container can scroll horizontally */
@@ -109,13 +182,17 @@
 }
 
 .tool-container .c-code-output code {
-  display: block; /* Make code block level to contain the tree */
-  min-width: max-content; /* Allow content to expand to its natural width */
-  white-space: pre; /* Preserve whitespace and formatting */
+  display: block;
+  /* Make code block level to contain the tree */
+  min-width: max-content;
+  /* Allow content to expand to its natural width */
+  white-space: pre;
+  /* Preserve whitespace and formatting */
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+
   /* Apply specific height to input/output areas on smaller screens */
   .tool-container .c-input--textarea,
   .tool-container .c-code-output {
@@ -124,6 +201,7 @@
 
   /* Ensure horizontal scrolling works on mobile */
   .tool-container .c-code-output {
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling on iOS */
   }
 }

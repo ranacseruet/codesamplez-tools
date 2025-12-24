@@ -45,8 +45,20 @@
                 <button class="c-button c-button--secondary" id="copyOutputBtn" disabled>Copy Output</button>
                 <button class="c-button c-button--secondary c-button--icon-download" id="downloadOutputBtn" disabled style="margin-left: 10px;">Download</button>
             </div>
+            
+            <!-- Output Tabs -->
+            <div class="jsonf-tabs">
+                <button class="jsonf-tab active" data-view="tree">Tree View</button>
+                <button class="jsonf-tab" data-view="plain">Plain View</button>
+            </div>
+
             <div class="o-panel-content"> <!-- Added o-panel-content -->
-                <pre class="c-code-output"><code></code></pre> <!-- Replaced jsonf-output-container and jsonf-output -->
+                <div id="treeView" class="view-container active">
+                    <pre class="c-code-output"><code></code></pre> <!-- Replaced jsonf-output-container and jsonf-output -->
+                </div>
+                <div id="plainView" class="view-container">
+                    <textarea class="c-input c-input--textarea" readonly placeholder="Formatted JSON will appear here..."></textarea>
+                </div>
             </div>
         </div>
 

@@ -8,6 +8,12 @@ export class JSONFormatter {
       this.downloadManager = new DownloadManager();
       this.input = document.querySelector('.c-input.c-input--textarea');
       this.output = document.querySelector('.c-code-output code');
+      this.plainViewTextarea = document.querySelector('#plainView .c-input--textarea'); // New plain view textarea
+      this.tabs = document.querySelectorAll('.jsonf-tab'); // Tabs
+      this.viewContainers = {
+        tree: document.querySelector('#treeView'),
+        plain: document.querySelector('#plainView')
+      };
       this.formatBtn = document.querySelector('#formatJsonBtn');
       this.copyBtn = document.querySelector('#copyOutputBtn');
       this.downloadBtn = document.querySelector('#downloadOutputBtn');
@@ -35,6 +41,13 @@ export class JSONFormatter {
         this.clearError();
         this.updateStats(this.input.value, '');
       });
+
+      this.tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const viewName = tab.dataset.view;
+          this.switchView(viewName);
+        });
+      });
     }
   }
 
@@ -52,15 +65,39 @@ export class JSONFormatter {
       const fragment = document.createDocumentFragment();
       this.renderJSON(formatted, fragment);
       this.output.replaceChildren(fragment);
+
+      const formattedString = JSON.stringify(formatted, null, 2);
+      this.plainViewTextarea.value = formattedString; // Populate plain view
+
       this.copyBtn.disabled = false;
       this.downloadBtn.disabled = false;
-      this.updateStats(this.input.value.trim(), JSON.stringify(formatted, null, 2));
+      this.updateStats(this.input.value.trim(), formattedString);
       NotificationManager.show('JSON formatted successfully!', 2000, { type: 'success' });
     } catch (error) {
       this.showError(`Invalid JSON: ${error.message}`);
       this.copyBtn.disabled = true;
       this.updateStats(this.input.value, '');
     }
+  }
+
+  switchView(viewName) {
+    // Update tabs
+    this.tabs.forEach(tab => {
+      if (tab.dataset.view === viewName) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+
+    // Update views
+    Object.entries(this.viewContainers).forEach(([name, container]) => {
+      if (name === viewName) {
+        container.classList.add('active');
+      } else {
+        container.classList.remove('active');
+      }
+    });
   }
 
   renderJSON(data, parentEl, depth = 0) {
