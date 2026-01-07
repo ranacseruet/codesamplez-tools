@@ -227,10 +227,23 @@ class DiffNavigator {
   }
 
   updateDiffElements() {
-    // Find all diff lines after rendering
-    this.diffElements = Array.from(
-      this.resultElement.querySelectorAll('.diff-line:has(.diff-added), .diff-line:has(.diff-removed)')
-    );
+    this.diffElements = [];
+    let currentBlock = [];
+    const allDiffLines = Array.from(this.resultElement.querySelectorAll('.diff-line'));
+    for (const line of allDiffLines) {
+      const hasDiff = line.querySelector('.diff-added, .diff-removed');
+      if (hasDiff) {
+        currentBlock.push(line);
+      } else {
+        if (currentBlock.length > 0) {
+          this.diffElements.push(currentBlock);
+          currentBlock = [];
+        }
+      }
+    }
+    if (currentBlock.length > 0) {
+      this.diffElements.push(currentBlock);
+    }
     this.reset();
   }
 
@@ -264,19 +277,29 @@ class DiffNavigator {
       return; // Invalid index
     }
 
-    // Remove highlight from the previous diff
+    // Remove highlight from the previous block
     if (this.currentDiffIndex !== -1 && this.diffElements[this.currentDiffIndex]) {
-      this.diffElements[this.currentDiffIndex].classList.remove('current-diff');
+      this.diffElements[this.currentDiffIndex].forEach(el => {
+        el.classList.remove('current-diff-single', 'current-diff-start', 'current-diff-middle', 'current-diff-end');
+      });
     }
 
     this.currentDiffIndex = index;
 
-    // Add highlight to the current diff
-    const currentElement = this.diffElements[this.currentDiffIndex];
-    if (currentElement) {
-      currentElement.classList.add('current-diff');
-      // Scroll into view
-      currentElement.scrollIntoView({
+    // Add highlight to the current block
+    const currentBlock = this.diffElements[this.currentDiffIndex];
+    if (currentBlock && currentBlock.length > 0) {
+      if (currentBlock.length === 1) {
+        currentBlock[0].classList.add('current-diff-single');
+      } else {
+        currentBlock[0].classList.add('current-diff-start');
+        for (let i = 1; i < currentBlock.length - 1; i++) {
+          currentBlock[i].classList.add('current-diff-middle');
+        }
+        currentBlock[currentBlock.length - 1].classList.add('current-diff-end');
+      }
+      // Scroll to the first element in the block
+      currentBlock[0].scrollIntoView({
         behavior: 'smooth',
         block: 'nearest',
         inline: 'nearest'

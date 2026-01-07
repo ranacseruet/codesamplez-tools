@@ -35,7 +35,7 @@ The **Diff Checker Tool** is a lightweight, web-based utility designed to compar
    - Works in all modern browsers without requiring additional plugins or configurations
 
 6. **Difference Navigation**
-   - Use the "Prev" and "Next" buttons above the results to jump between highlighted differences. A counter shows the current difference number and the total count.
+    - Use the "Prev" and "Next" buttons above the results to jump between blocks of consecutive differences. A counter shows the current block number and the total count.
 
 7. **Word-Level Highlighting**
    - Highlights specific word changes within modified lines using darker shades of red/green.

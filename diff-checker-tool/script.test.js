@@ -340,7 +340,7 @@ describe('DiffNavigator', () => { // Test the class directly
   });
 
   it('should enable navigation and update counter correctly when differences are found', () => {
-    const lineTypes = ['unchanged', 'added', 'removed'];
+    const lineTypes = ['added', 'unchanged', 'removed'];
     setupRealDiffLines(lineTypes);
 
     expect(navigator.diffElements.length).toBe(2);
@@ -363,7 +363,7 @@ describe('DiffNavigator', () => { // Test the class directly
     // Check state after first click
     expect(navigator.navigateToIndex).toHaveBeenCalledWith(0); // Should navigate to index 0
     expect(navigator.currentDiffIndex).toBe(0);
-    expect(addedLine.classList.contains('current-diff')).toBe(true); // added line is highlighted
+    expect(addedLine.classList.contains('current-diff-single')).toBe(true); // added line is highlighted
     expect(addedLine.scrollIntoView).toHaveBeenCalled();
     expect(counter.textContent).toBe('1 of 2');
     expect(prevButton.disabled).toBe(true);
@@ -375,8 +375,8 @@ describe('DiffNavigator', () => { // Test the class directly
     // Check state after second click
     expect(navigator.navigateToIndex).toHaveBeenCalledWith(1); // Should navigate to index 1
     expect(navigator.currentDiffIndex).toBe(1);
-    expect(addedLine.classList.contains('current-diff')).toBe(false); // Highlight removed
-    expect(removedLine.classList.contains('current-diff')).toBe(true); // removed line is highlighted
+    expect(addedLine.classList.contains('current-diff-single')).toBe(false); // Highlight removed
+    expect(removedLine.classList.contains('current-diff-single')).toBe(true); // removed line is highlighted
     expect(removedLine.scrollIntoView).toHaveBeenCalled();
     expect(counter.textContent).toBe('2 of 2');
     expect(prevButton.disabled).toBe(false);
@@ -392,7 +392,7 @@ describe('DiffNavigator', () => { // Test the class directly
 
     // Check initial state (at the end)
     expect(navigator.currentDiffIndex).toBe(1);
-    expect(removedLine.classList.contains('current-diff')).toBe(true);
+    expect(removedLine.classList.contains('current-diff-single')).toBe(true);
     expect(counter.textContent).toBe('2 of 2');
     expect(prevButton.disabled).toBe(false);
     expect(nextButton.disabled).toBe(true);
@@ -403,8 +403,8 @@ describe('DiffNavigator', () => { // Test the class directly
     // Check state after first click
     expect(navigator.navigateToIndex).toHaveBeenCalledWith(0); // Should navigate to index 0
     expect(navigator.currentDiffIndex).toBe(0);
-    expect(removedLine.classList.contains('current-diff')).toBe(false); // Highlight removed
-    expect(addedLine.classList.contains('current-diff')).toBe(true); // added line is highlighted
+    expect(removedLine.classList.contains('current-diff-single')).toBe(false); // Highlight removed
+    expect(addedLine.classList.contains('current-diff-single')).toBe(true); // added line is highlighted
     expect(addedLine.scrollIntoView).toHaveBeenCalled();
     expect(counter.textContent).toBe('1 of 2');
     expect(prevButton.disabled).toBe(true); // At the start
@@ -412,7 +412,7 @@ describe('DiffNavigator', () => { // Test the class directly
   });
 
    it('should not navigate past the first or last difference', () => {
-     const lineTypes = ['added', 'removed'];
+     const lineTypes = ['added', 'unchanged', 'removed'];
      setupRealDiffLines(lineTypes);
      navigator.navigateToIndex(0); // Go to first
 
@@ -450,10 +450,10 @@ describe('DiffNavigator', () => { // Test the class directly
      // Check initial state
      expect(navigator.currentDiffIndex).toBe(0);
      expect(counter.textContent).toBe('1 of 1');
-     expect(firstAddedLine.classList.contains('current-diff')).toBe(true);
+     expect(firstAddedLine.classList.contains('current-diff-single')).toBe(true);
 
      // Simulate comparing again by setting up new lines
-     const lineTypes2 = ['removed', 'added'];
+     const lineTypes2 = ['removed', 'unchanged', 'added'];
      setupRealDiffLines(lineTypes2); // This calls updateDiffElements -> reset -> updateNavigationState
 
      // Check reset state
@@ -464,8 +464,33 @@ describe('DiffNavigator', () => { // Test the class directly
      // Check that previous highlight is gone (mock check)
      // We can't easily check the *old* element's classList.remove mock here
      // Instead, check that no elements currently have the highlight
-     const highlighted = diffResultElement.querySelectorAll('.current-diff');
+     const highlighted = diffResultElement.querySelectorAll('.current-diff-single, .current-diff-start, .current-diff-middle, .current-diff-end');
      expect(highlighted.length).toBe(0);
+   });
+
+   it('should highlight multi-line blocks correctly', () => {
+     const lineTypes = ['added', 'removed', 'unchanged', 'added'];
+     setupRealDiffLines(lineTypes);
+     // This should create two blocks: [added, removed] and [added]
+
+     expect(navigator.diffElements.length).toBe(2);
+     expect(navigator.diffElements[0].length).toBe(2); // First block has 2 lines
+     expect(navigator.diffElements[1].length).toBe(1); // Second block has 1 line
+
+     navigator.navigateToIndex(0); // Navigate to first block
+
+     const firstBlockLines = navigator.diffElements[0];
+     expect(firstBlockLines[0].classList.contains('current-diff-start')).toBe(true);
+     expect(firstBlockLines[1].classList.contains('current-diff-end')).toBe(true);
+     expect(counter.textContent).toBe('1 of 2');
+
+     navigator.navigateToIndex(1); // Navigate to second block
+
+     const secondBlockLines = navigator.diffElements[1];
+     expect(firstBlockLines[0].classList.contains('current-diff-start')).toBe(false);
+     expect(firstBlockLines[1].classList.contains('current-diff-end')).toBe(false);
+     expect(secondBlockLines[0].classList.contains('current-diff-single')).toBe(true);
+     expect(counter.textContent).toBe('2 of 2');
    });
 
 });

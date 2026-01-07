@@ -161,11 +161,31 @@
 
 /* Navigation buttons use .c-button, .c-button--secondary, .c-button--small from shared */
 
-/* Style for highlighting the current diff */
-.tool-container .diff-line.current-diff {
-  outline: 2px solid var(--color-primary); /* Use shared variable */
+/* Style for highlighting the current diff block */
+.tool-container .diff-line.current-diff-single {
+  outline: 2px solid var(--color-primary);
   outline-offset: -1px;
-  background-color: rgba(37, 99, 235, 0.1); /* Consider a primary-bg-light var */
+  background-color: rgba(37, 99, 235, 0.1);
+}
+
+.tool-container .diff-line.current-diff-start {
+  border-top: 2px solid var(--color-primary);
+  border-left: 2px solid var(--color-primary);
+  border-right: 2px solid var(--color-primary);
+  background-color: rgba(37, 99, 235, 0.1);
+}
+
+.tool-container .diff-line.current-diff-middle {
+  border-left: 2px solid var(--color-primary);
+  border-right: 2px solid var(--color-primary);
+  background-color: rgba(37, 99, 235, 0.1);
+}
+
+.tool-container .diff-line.current-diff-end {
+  border-bottom: 2px solid var(--color-primary);
+  border-left: 2px solid var(--color-primary);
+  border-right: 2px solid var(--color-primary);
+  background-color: rgba(37, 99, 235, 0.1);
 }
 
 /* Ensure panel headers within this tool have no margin on h2 if it's from shared */
