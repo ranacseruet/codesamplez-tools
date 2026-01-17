@@ -1,5 +1,6 @@
 import { removeCommentsFromCss, removeWhitespaceFromCss, shortenColorsInCss, removeUnnecessaryUnits, removeLastSemicolonsFromCss, combineSelectorsInCss, isValidCSS } from './minifier.js';
 import { NotificationManager } from '../common/notification-manager.js';
+import { formatBytes } from '../common/format-utils.js';
 import ClearButton from '../common/clear-button/ClearButton.js';
 import CopyButton from '../common/copy-button/CopyButton.js';
 
@@ -12,19 +13,19 @@ window.removeLastSemicolonsFromCss = removeLastSemicolonsFromCss;
 window.combineSelectorsInCss = combineSelectorsInCss;
 window.isValidCSS = isValidCSS; // Expose for testing
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Elements
     const inputCss = document.getElementById('input-css');
     const outputCss = document.getElementById('output-css');
     const minifyBtn = document.getElementById('minify-btn');
     const loadSampleBtn = document.getElementById('load-sample');
     const resetOptionsBtn = document.getElementById('reset-options');
-    
+
     // Stats elements
     const originalSizeEl = document.getElementById('original-size');
     const minifiedSizeEl = document.getElementById('minified-size');
     const savingEl = document.getElementById('saving');
-    
+
     // Options
     const removeComments = document.getElementById('remove-comments');
     const removeWhitespace = document.getElementById('remove-whitespace');
@@ -32,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const shortenColors = document.getElementById('shorten-colors');
     const removeUnits = document.getElementById('remove-units');
     const removeLastSemicolons = document.getElementById('remove-last-semicolons');
-    
+
     // Sample CSS
     const sampleCss = `/* Basic styles for a simple page */
 body {
@@ -113,19 +114,19 @@ top: 0px;
     }));
     loadSampleBtn.addEventListener('click', loadSample);
     resetOptionsBtn.addEventListener('click', resetOptions);
-    
+
     // Initialize ClearButton component
     const clearButtonInstance = new ClearButton(inputCss);
-    
+
     // Initialize CopyButton component
     const copyButtonInstance = new CopyButton(outputCss);
-    inputCss.addEventListener('textCleared', (e) => 
-        copyButtonInstance.updateVisibility());{
+    inputCss.addEventListener('textCleared', (e) =>
+        copyButtonInstance.updateVisibility()); {
     }
     outputCss.addEventListener('contentCopied', (e) => {
         NotificationManager.show('Copied to clipboard!', 2000, { type: 'success' });
     });
-    
+
     // Add event listener to clear output when input is cleared
     inputCss.addEventListener('input', () => {
         if (inputCss.value === '') {
@@ -133,21 +134,21 @@ top: 0px;
             updateStats('', '');
         }
     });
-    
+
     // Initialize the page
     resetOptions();
 
     // CSS Minifier Functions
     async function minifyCss() {
         const originalCss = inputCss.value.trim();
-        
+
         if (!originalCss) {
             outputCss.value = '';
             updateStats('', '');
             NotificationManager.show('Error: Please enter CSS to minify', 3000, { type: 'error' });
             return;
         }
-        
+
         try {
             const isValid = await isValidCSS(originalCss);
             if (!isValid) {
@@ -158,38 +159,38 @@ top: 0px;
             }
 
             let result = originalCss;
-            
+
             // Process the CSS based on selected options
             if (removeComments.checked) {
                 result = removeCommentsFromCss(result);
             }
-            
+
             if (combineSelectors.checked) {
                 result = combineSelectorsInCss(result);
             }
-            
+
             if (shortenColors.checked) {
                 result = shortenColorsInCss(result);
             }
-            
+
             if (removeUnits.checked) {
                 result = removeUnnecessaryUnits(result);
             }
-            
+
             if (removeWhitespace.checked) {
                 result = removeWhitespaceFromCss(result);
             }
-            
+
             if (removeLastSemicolons.checked) {
                 result = removeLastSemicolonsFromCss(result);
             }
-            
+
             // Update the output
             outputCss.value = result;
-            
+
             // Update stats
             updateStats(originalCss, result);
-            
+
             // Show success message with size reduction
             const savings = ((originalCss.length - result.length) / originalCss.length * 100).toFixed(1);
             NotificationManager.show(`CSS minified successfully! Reduced by ${savings}%`, 2000, { type: 'success' });
@@ -199,43 +200,35 @@ top: 0px;
             NotificationManager.show('Error: Failed to process CSS. ' + error.message, 3000, { type: 'error' });
         }
     }
-    
+
     // UI Helper Functions
     async function loadSample() {
-      inputCss.value = sampleCss;
-      clearButtonInstance.updateVisibility();
-      await minifyCss();
-      copyButtonInstance.updateVisibility();
-      NotificationManager.show('Sample CSS loaded and minified', 2000, { type: 'success' });
+        inputCss.value = sampleCss;
+        clearButtonInstance.updateVisibility();
+        await minifyCss();
+        copyButtonInstance.updateVisibility();
+        NotificationManager.show('Sample CSS loaded and minified', 2000, { type: 'success' });
     }
-    
-    
+
+
     function resetOptions() {
-      removeComments.checked = true;
-      removeWhitespace.checked = true;
-      combineSelectors.checked = true;
-      shortenColors.checked = true;
-      removeUnits.checked = true;
-      removeLastSemicolons.checked = true;
+        removeComments.checked = true;
+        removeWhitespace.checked = true;
+        combineSelectors.checked = true;
+        shortenColors.checked = true;
+        removeUnits.checked = true;
+        removeLastSemicolons.checked = true;
     }
-    
+
     function updateStats(original, minified) {
-      const originalSize = new Blob([original]).size;
-      const minifiedSize = new Blob([minified]).size;
-      const savings = originalSize ? (1 - minifiedSize / originalSize) * 100 : 0;
-      
-      originalSizeEl.textContent = formatBytes(originalSize);
-      minifiedSizeEl.textContent = formatBytes(minifiedSize);
-      savingEl.textContent = `${savings.toFixed(1)}%`;
+        const originalSize = new Blob([original]).size;
+        const minifiedSize = new Blob([minified]).size;
+        const savings = originalSize ? (1 - minifiedSize / originalSize) * 100 : 0;
+
+        originalSizeEl.textContent = formatBytes(originalSize);
+        minifiedSizeEl.textContent = formatBytes(minifiedSize);
+        savingEl.textContent = `${savings.toFixed(1)}%`;
     }
-    
-    function formatBytes(bytes) {
-      if (bytes === 0) return '0 bytes';
-      
-      const k = 1024;
-      const sizes = ['bytes', 'KB', 'MB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      
-      return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-    }
-  });
+
+
+});

@@ -8,6 +8,10 @@ jest.mock('../common/notification-manager.js', () => ({
   }
 }));
 
+jest.mock('../common/format-utils.js', () => ({
+  formatBytes: jest.fn(bytes => `${bytes} formatted`)
+}));
+
 jest.mock('../common/DownloadManager.js', () => {
   return jest.fn().mockImplementation(() => {
     return {
@@ -49,6 +53,7 @@ describe('JSONFormatter', () => {
       if (selector === '#treeView') return { classList: { add: jest.fn(), remove: jest.fn() } };
       if (selector === '#plainView') return { classList: { add: jest.fn(), remove: jest.fn() } };
       if (selector === '#formatJsonBtn') return { addEventListener: jest.fn() };
+
       if (selector === '#copyOutputBtn') return { disabled: false, addEventListener: jest.fn() };
       if (selector === '#downloadOutputBtn') return { disabled: false, addEventListener: jest.fn() };
       if (selector === '#loadSampleBtn') return { addEventListener: jest.fn() };
@@ -89,7 +94,9 @@ describe('JSONFormatter', () => {
     formatter.formattedSizeEl = { textContent: '' };
     formatter.sortCheckbox = { checked: true };
     formatter.autoFixCheckbox = { checked: false };
+    formatter.autoFixCheckbox = { checked: false };
     formatter.formatBtn = { addEventListener: jest.fn() };
+
     formatter.sampleBtn = { addEventListener: jest.fn() };
     formatter.clearButtonInstance = { updateVisibility: jest.fn(), disconnect: jest.fn() };
     mockNotificationManager = NotificationManagerModule.NotificationManager;
@@ -156,13 +163,7 @@ describe('JSONFormatter', () => {
     });
   });
 
-  describe('formatBytes', () => {
-    test('should format bytes to appropriate units', () => {
-      expect(JSONFormatter.formatBytes(0)).toBe('0 bytes');
-      expect(JSONFormatter.formatBytes(1024)).toBe('1.00 KB');
-      expect(JSONFormatter.formatBytes(1024 * 1024)).toBe('1.00 MB');
-    });
-  });
+
 
   describe('renderJSON', () => {
     beforeEach(() => {
@@ -195,6 +196,38 @@ describe('JSONFormatter', () => {
       toggle.click();
       expect(toggle.textContent).toBe('-'); // Expanded state should be '-'
       expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    test('should toggle via keyboard Enter key', () => {
+      formatter.renderJSON({ a: 1 }, formatter.output);
+      const toggle = formatter.output.querySelector('.json-toggle');
+      expect(toggle.textContent).toBe('-');
+
+      // Simulate Enter keydown
+      const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
+      toggle.dispatchEvent(enterEvent);
+      expect(toggle.textContent).toBe('+');
+    });
+
+    test('should toggle via keyboard Space key', () => {
+      formatter.renderJSON({ a: 1 }, formatter.output);
+      const toggle = formatter.output.querySelector('.json-toggle');
+      expect(toggle.textContent).toBe('-');
+
+      // Simulate Space keydown
+      const spaceEvent = new KeyboardEvent('keydown', { key: ' ' });
+      toggle.dispatchEvent(spaceEvent);
+      expect(toggle.textContent).toBe('+');
+    });
+
+    test('should handle max depth limit', () => {
+      // Create deeply nested object
+      let deepObj = { value: 'deep' };
+      for (let i = 0; i < 150; i++) {
+        deepObj = { nested: deepObj };
+      }
+      formatter.renderJSON(deepObj, formatter.output);
+      expect(formatter.output.textContent).toContain('...');
     });
   });
 
@@ -314,14 +347,14 @@ describe('JSONFormatter', () => {
       const original = '{"key":"value"}';
       const formatted = JSON.stringify(JSON.parse(original), null, 2);
       formatter.updateStats(original, formatted);
-      expect(formatter.originalSizeEl.textContent).toBe('15.00 bytes');
-      expect(formatter.formattedSizeEl.textContent).toContain('bytes');
+      expect(formatter.originalSizeEl.textContent).toBe('15 formatted');
+      expect(formatter.formattedSizeEl.textContent).toBe('20 formatted'); // Using mock implementation
     });
 
     test('should handle empty input and output in stats', () => {
       formatter.updateStats('', '');
-      expect(formatter.originalSizeEl.textContent).toBe('0 bytes');
-      expect(formatter.formattedSizeEl.textContent).toBe('0 bytes');
+      expect(formatter.originalSizeEl.textContent).toBe('0 formatted');
+      expect(formatter.formattedSizeEl.textContent).toBe('0 formatted');
     });
 
     test('should handle large JSON data in stats', () => {
@@ -332,10 +365,12 @@ describe('JSONFormatter', () => {
       const original = JSON.stringify(largeObject);
       const formatted = JSON.stringify(largeObject, null, 2);
       formatter.updateStats(original, formatted);
-      expect(formatter.originalSizeEl.textContent).toContain('KB');
-      expect(formatter.formattedSizeEl.textContent).toContain('KB');
+      expect(formatter.originalSizeEl.textContent).toContain('formatted');
+      expect(formatter.formattedSizeEl.textContent).toContain('formatted');
     });
   });
+
+
 
   describe('getFormattedOutput', () => {
     test('should return formatted JSON when input is valid', () => {
@@ -558,6 +593,7 @@ describe('JSONFormatter', () => {
     beforeEach(() => {
       callbacks = {
         formatBtn: { click: null },
+
         copyBtn: { click: null },
         sampleBtn: { click: null },
         input: { input: null },
@@ -570,6 +606,8 @@ describe('JSONFormatter', () => {
           callbacks.formatBtn.click = callback;
         }
       });
+
+
 
       copyBtnMock = jest.fn((event, callback) => {
         if (event === 'click') {
@@ -602,6 +640,7 @@ describe('JSONFormatter', () => {
       });
 
       formatter.formatBtn = { addEventListener: formatBtnMock };
+
       formatter.copyBtn = { addEventListener: copyBtnMock };
       formatter.sampleBtn = { addEventListener: sampleBtnMock };
       formatter.input = { addEventListener: inputMock, value: '{"key": "value"}' };
@@ -652,16 +691,20 @@ describe('JSONFormatter', () => {
 
 
     test('should trigger clearError and updateStats on input change', () => {
+      jest.useFakeTimers();
       formatter.clearError = jest.fn();
       formatter.updateStats = jest.fn();
       formatter.initializeEvents();
       if (callbacks.input.input) {
         callbacks.input.input();
         expect(formatter.clearError).toHaveBeenCalled();
-        expect(formatter.updateStats).toHaveBeenCalledWith('{"key": "value"}', '');
+        // updateStats is debounced, advance timers past delay
+        jest.advanceTimersByTime(200);
+        expect(formatter.updateStats).toHaveBeenCalledWith('{\"key\": \"value\"}', '');
       } else {
         throw new Error('input callback not set');
       }
+      jest.useRealTimers();
     });
 
     test('should trigger switchView on tab click', () => {
@@ -724,17 +767,7 @@ describe('JSONFormatter', () => {
       expect(html).toContain(']');
     });
 
-    test('should format very large byte sizes', () => {
-      expect(JSONFormatter.formatBytes(1024 * 1024 * 1024)).toBe('1.00 GB');
-      expect(JSONFormatter.formatBytes(1024 * 1024 * 1024 * 1024)).toBe('1.00 TB');
-      // Current implementation doesn't support PB, stops at TB
-      expect(JSONFormatter.formatBytes(1024 * 1024 * 1024 * 1024 * 1024)).toBe('1024.00 TB');
-    });
 
-    test('should handle negative byte sizes', () => {
-      // Current implementation doesn't handle negatives
-      expect(JSONFormatter.formatBytes(-1024)).toBe('NaN undefined');
-    });
 
     test('should handle special characters in JSON', () => {
       formatter.output = document.createElement('div');

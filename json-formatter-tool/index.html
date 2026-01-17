@@ -1,23 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JSON Formatter</title>
     <link rel="stylesheet" href="styles.main.css">
 </head>
+
 <body>
     <div class="tool-container"> <!-- Replaced jsonf-container -->
         <div class="o-header"> <!-- Replaced jsonf-header -->
             <h1>JSON Formatter</h1> <!-- Removed jsonf-title class -->
-            <p class="o-description">Format, validate, and beautify your JSON with this easy-to-use tool</p> <!-- Replaced jsonf-description -->
+            <p class="o-description">Format, validate, and beautify your JSON with this easy-to-use tool</p>
+            <!-- Replaced jsonf-description -->
         </div>
 
         <!-- Input Panel -->
         <div class="o-panel"> <!-- Replaced jsonf-panel -->
             <h3>Input JSON</h3>
             <div class="o-panel-content">
-                <textarea class="c-input c-input--textarea" placeholder="Paste your JSON here..."></textarea> <!-- Replaced jsonf-input -->
+                <textarea class="c-input c-input--textarea" placeholder="Paste your JSON here..."></textarea>
+                <!-- Replaced jsonf-input -->
             </div>
             <div class="o-panel-content">
                 <div class="c-input-status" id="jsonErrorStatus"></div>
@@ -27,7 +31,8 @@
         <!-- Controls -->
         <div class="o-toolbar jsonf-controls-custom"> <!-- Replaced jsonf-controls, added custom class for centering -->
             <button class="c-button" id="formatJsonBtn">Format JSON</button> <!-- Replaced jsonf-button, added ID -->
-            <button class="c-button c-button--secondary" id="loadSampleBtn">Load Sample</button> <!-- Replaced jsonf-button jsonf-sample with c-button--secondary, added ID -->
+            <button class="c-button c-button--secondary" id="loadSampleBtn">Load Sample</button>
+            <!-- Replaced jsonf-button jsonf-sample with c-button--secondary, added ID -->
             <div class="c-checkbox-item"> <!-- Replaced jsonf-checkbox-container -->
                 <input type="checkbox" id="sortKeys" checked> <!-- Removed jsonf-checkbox class -->
                 <label for="sortKeys">Sort keys</label> <!-- Removed jsonf-checkbox-label class -->
@@ -43,9 +48,10 @@
             <h3>Formatted Output</h3>
             <div class="o-panel-header jsonf-panel-header">
                 <button class="c-button c-button--secondary" id="copyOutputBtn" disabled>Copy Output</button>
-                <button class="c-button c-button--secondary c-button--icon-download" id="downloadOutputBtn" disabled style="margin-left: 10px;">Download</button>
+                <button class="c-button c-button--secondary c-button--icon-download jsonf-download-btn"
+                    id="downloadOutputBtn" disabled>Download</button>
             </div>
-            
+
             <!-- Output Tabs -->
             <div class="jsonf-tabs">
                 <button class="jsonf-tab active" data-view="tree">Tree View</button>
@@ -54,10 +60,12 @@
 
             <div class="o-panel-content"> <!-- Added o-panel-content -->
                 <div id="treeView" class="view-container active">
-                    <pre class="c-code-output"><code></code></pre> <!-- Replaced jsonf-output-container and jsonf-output -->
+                    <pre class="c-code-output"><code></code></pre>
+                    <!-- Replaced jsonf-output-container and jsonf-output -->
                 </div>
                 <div id="plainView" class="view-container">
-                    <textarea class="c-input c-input--textarea" readonly placeholder="Formatted JSON will appear here..."></textarea>
+                    <textarea class="c-input c-input--textarea" readonly
+                        placeholder="Formatted JSON will appear here..."></textarea>
                 </div>
             </div>
         </div>
@@ -74,11 +82,13 @@
             </div>
         </div>
 
-        <div id="notification" class="c-notification"></div> <!-- Notification element for shared NotificationManager -->
+        <div id="notification" class="c-notification"></div>
+        <!-- Notification element for shared NotificationManager -->
         <div class="jsonf-footer"> <!-- Kept tool-specific footer -->
-            Made by Developer, for developers  with ❤️
+            Made by Developer, for developers with ❤️
         </div>
     </div>
     <script src="bundle.main.js"></script>
 </body>
+
 </html>

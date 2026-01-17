@@ -1,4 +1,5 @@
 import { NotificationManager } from '../common/notification-manager.js';
+import { formatBytes } from '../common/format-utils.js';
 import DownloadManager from '../common/DownloadManager.js';
 import ClearButton from '../common/clear-button/ClearButton.js';
 
@@ -15,6 +16,7 @@ export class JSONFormatter {
         plain: document.querySelector('#plainView')
       };
       this.formatBtn = document.querySelector('#formatJsonBtn');
+
       this.copyBtn = document.querySelector('#copyOutputBtn');
       this.downloadBtn = document.querySelector('#downloadOutputBtn');
       this.sampleBtn = document.querySelector('#loadSampleBtn');
@@ -34,12 +36,17 @@ export class JSONFormatter {
   initializeEvents() {
     if (this.formatBtn && this.copyBtn && this.downloadBtn && this.sampleBtn && this.input) {
       this.formatBtn.addEventListener('click', () => this.formatJSON());
+
       this.copyBtn.addEventListener('click', () => this.copyOutput());
       this.downloadBtn.addEventListener('click', () => this.downloadOutput());
       this.sampleBtn.addEventListener('click', () => this.loadSampleData());
+      const debouncedUpdate = this.constructor.debounce(() => {
+        this.updateStats(this.input.value, '');
+      }, 150);
+
       this.input.addEventListener('input', () => {
         this.clearError();
-        this.updateStats(this.input.value, '');
+        debouncedUpdate();
       });
 
       this.tabs.forEach(tab => {
@@ -80,6 +87,8 @@ export class JSONFormatter {
     }
   }
 
+
+
   switchView(viewName) {
     // Update tabs
     this.tabs.forEach(tab => {
@@ -100,7 +109,15 @@ export class JSONFormatter {
     });
   }
 
-  renderJSON(data, parentEl, depth = 0) {
+  renderJSON(data, parentEl, depth = 0, maxDepth = 100) {
+    if (depth > maxDepth) {
+      const span = document.createElement('span');
+      span.textContent = '...';
+      span.title = 'Maximum nesting depth reached';
+      parentEl.appendChild(span);
+      return;
+    }
+
     if (data === null || typeof data !== 'object') {
       const span = document.createElement('span');
       span.textContent = JSON.stringify(data);
@@ -121,8 +138,14 @@ export class JSONFormatter {
       toggle.textContent = '-'; // Initial state is expanded
       toggle.addEventListener('click', () => {
         container.classList.toggle('collapsed');
-        toggle.textContent = container.classList.contains('collapsed') ? '+' : '-'; // '+' for collapsed, '-' for expanded
+        toggle.textContent = container.classList.contains('collapsed') ? '+' : '-';
         toggle.setAttribute('aria-expanded', !container.classList.contains('collapsed'));
+      });
+      toggle.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggle.click();
+        }
       });
       toggle.setAttribute('aria-expanded', 'true');
       toggle.setAttribute('role', 'button');
@@ -177,8 +200,7 @@ export class JSONFormatter {
     return Object.keys(obj)
       .sort()
       .reduce((sorted, key) => {
-        sorted[key] = this.sortKeysAlphabetically(obj[key]); // This is static, but recursive call can't use 'this' if it's static?
-        // Wait, inside a static method, 'this' refers to the class constructor!
+        sorted[key] = this.sortKeysAlphabetically(obj[key]);
         return sorted;
       }, {});
   }
@@ -187,26 +209,29 @@ export class JSONFormatter {
     const originalBytes = new Blob([original]).size;
     const formattedBytes = new Blob([formatted]).size;
 
-    this.originalSizeEl.textContent = this.constructor.formatBytes(originalBytes);
-    this.formattedSizeEl.textContent = this.constructor.formatBytes(formattedBytes);
+    this.originalSizeEl.textContent = formatBytes(originalBytes);
+    this.formattedSizeEl.textContent = formatBytes(formattedBytes);
   }
 
-  static formatBytes(bytes) {
-    if (bytes === 0) return '0 bytes';
-    const units = ['bytes', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-    return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`;
+  static debounce(fn, delay) {
+    let timeoutId;
+    return (...args) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => fn(...args), delay);
+    };
   }
+
+
+
 
   static autoFixJSON(jsonString) {
-    // Add your auto-fixing logic here
-    // Example: remove trailing commas
+    // Remove trailing commas
     let fixedJson = jsonString.replace(/,\s*([}\]])/g, '$1');
 
-    // Example: convert single quotes to double quotes
-    fixedJson = fixedJson.replace(/'/g, '"');
+    // Convert single-quoted strings to double-quoted (handles escaped quotes)
+    fixedJson = fixedJson.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"');
 
-    // Example: add quotes to unquoted keys
+    // Add quotes to unquoted keys
     fixedJson = fixedJson.replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":');
 
     return fixedJson;

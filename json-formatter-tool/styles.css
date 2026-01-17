@@ -126,44 +126,12 @@
   /* 10px */
 }
 
-.jsonf-error {
-  color: var(--color-danger);
-  margin-top: var(--spacing-md);
-  /* 15px */
-  padding: var(--spacing-sm);
-  /* 10px */
-  background-color: #fef2f2;
-  /* Light red background for errors - consider a CSS var like --color-danger-light-bg */
-  border-radius: var(--border-radius-sm);
-  /* 4px */
-  display: none;
-  font-size: var(--font-size-base);
-  /* 14px */
+/* Download button margin */
+.jsonf-download-btn {
+  margin-left: var(--spacing-sm);
 }
 
-.jsonf-error.active {
-  display: block;
-}
 
-/* Temporary Message Styles */
-.jsonf-temp-message {
-  position: fixed;
-  bottom: var(--spacing-lg);
-  /* 20px */
-  right: var(--spacing-lg);
-  /* 20px */
-  background-color: var(--color-primary);
-  color: var(--color-bg);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  /* 10px 20px */
-  border-radius: var(--border-radius-sm);
-  /* 4px */
-  box-shadow: var(--box-shadow);
-  font-size: var(--font-size-base);
-  /* 14px */
-  z-index: 100;
-  /* Ensure visibility above other elements like shared notifications */
-}
 
 /* Footer Styles */
 .jsonf-footer {

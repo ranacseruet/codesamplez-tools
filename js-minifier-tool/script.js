@@ -1,4 +1,5 @@
 import { JSMinifier } from './minifier.js';
+import { formatBytes } from '../common/format-utils.js';
 import { NotificationManager } from '../common/notification-manager.js';
 import ClearButton from '../common/clear-button/ClearButton.js';
 import CopyButton from '../common/copy-button/CopyButton.js';
@@ -35,10 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const copyButton = new CopyButton(output);
   const minifiedSizeEl = document.getElementById('js-minifier-minified-size');
   const compressionRatioEl = document.getElementById('js-minifier-compression-ratio');
-  
+
   // Initialize ClearButton component for the input textarea
   const clearButtonInstance = new ClearButton(input);
-  
+
   // Option checkboxes
   const removeCommentsCheckbox = document.getElementById('js-minifier-remove-comments');
   const removeWhitespaceCheckbox = document.getElementById('js-minifier-remove-whitespace');
@@ -50,32 +51,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const originalBytes = new Blob([original]).size;
     const minifiedBytes = new Blob([minified]).size;
     const ratio = originalBytes ? ((1 - minifiedBytes / originalBytes) * 100).toFixed(2) : 0;
-    
-    originalSizeEl.textContent = `${originalBytes.toLocaleString()} bytes`;
-    minifiedSizeEl.textContent = `${minifiedBytes.toLocaleString()} bytes`;
+
+    originalSizeEl.textContent = formatBytes(originalBytes);
+    minifiedSizeEl.textContent = formatBytes(minifiedBytes);
     compressionRatioEl.textContent = `${ratio}%`;
   }
 
   // Minify the code
   function minifyCode() {
     const code = input.value;
-    
+
     if (!code.trim()) {
       output.value = '';
       updateStats('', '');
       NotificationManager.show('Please enter JavaScript to minify', 2000, { type: 'error' });
       return;
     }
-    
+
     const options = {
       removeComments: removeCommentsCheckbox.checked,
       removeWhitespace: removeWhitespaceCheckbox.checked,
       shortenVariables: shortenVariablesCheckbox.checked,
       mangleProperties: manglePropertiesCheckbox.checked
     };
-    
+
     const minifier = new JSMinifier(options);
-    
+
     try {
       const minified = minifier.minify(code);
       output.value = minified;
@@ -92,13 +93,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Event listeners
   minifyBtn.addEventListener('click', minifyCode);
-  
+
   // Auto-minify when options change
   removeCommentsCheckbox.addEventListener('change', minifyCode);
   removeWhitespaceCheckbox.addEventListener('change', minifyCode);
   shortenVariablesCheckbox.addEventListener('change', minifyCode);
   manglePropertiesCheckbox.addEventListener('change', minifyCode);
-  
+
   // Add event listener for Load Sample button
   const loadSampleBtn = document.getElementById('js-minifier-load-sample-btn');
   loadSampleBtn.addEventListener('click', () => {
@@ -107,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
     NotificationManager.show('Sample code loaded and minified', 1500, { type: 'success' });
     clearButtonInstance.updateVisibility();
   });
-  
+
   // Update stats when input is cleared by ClearButton
   input.addEventListener('input', () => {
     if (input.value === '') {
