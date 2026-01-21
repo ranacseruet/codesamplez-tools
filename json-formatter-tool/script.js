@@ -34,12 +34,23 @@ export class JSONFormatter {
   }
 
   initializeEvents() {
-    if (this.formatBtn && this.copyBtn && this.downloadBtn && this.sampleBtn && this.input) {
+    if (this.formatBtn) {
       this.formatBtn.addEventListener('click', () => this.formatJSON());
+    }
 
+    if (this.copyBtn) {
       this.copyBtn.addEventListener('click', () => this.copyOutput());
+    }
+
+    if (this.downloadBtn) {
       this.downloadBtn.addEventListener('click', () => this.downloadOutput());
+    }
+
+    if (this.sampleBtn) {
       this.sampleBtn.addEventListener('click', () => this.loadSampleData());
+    }
+
+    if (this.input) {
       const debouncedUpdate = this.constructor.debounce(() => {
         this.updateStats(this.input.value, '');
       }, 150);
@@ -48,7 +59,9 @@ export class JSONFormatter {
         this.clearError();
         debouncedUpdate();
       });
+    }
 
+    if (this.tabs?.length) {
       this.tabs.forEach(tab => {
         tab.addEventListener('click', () => {
           const viewName = tab.dataset.view;
@@ -83,6 +96,9 @@ export class JSONFormatter {
     } catch (error) {
       this.showError(`Invalid JSON: ${error.message}`);
       this.copyBtn.disabled = true;
+      this.downloadBtn.disabled = true;
+      this.output.replaceChildren();
+      this.plainViewTextarea.value = '';
       this.updateStats(this.input.value, '');
     }
   }
