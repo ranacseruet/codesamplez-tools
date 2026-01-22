@@ -108,10 +108,8 @@ class JSMinifier {
     
     // Ensure keywords have proper spacing
     const keywords = ['if', 'else', 'for', 'while', 'do', 'switch', 'try', 'catch', 'finally', 'with', 'return', 'throw', 'var', 'let', 'const', 'function', 'typeof', 'instanceof', 'in'];
-    keywords.forEach(keyword => {
-      const regex = new RegExp(`([^a-zA-Z0-9_$])\\s*${keyword}\\s*([^a-zA-Z0-9_$])`, 'g');
-      processedCode = processedCode.replace(regex, `$1${keyword}$2`);
-    });
+    const keywordRegex = new RegExp(`([^a-zA-Z0-9_$])\\s*(${keywords.join('|')})\\s*([^a-zA-Z0-9_$])`, 'g');
+    processedCode = processedCode.replace(keywordRegex, '$1$2$3');
     
     // Restore strings and regexes
     patterns.forEach((pattern, i) => {
