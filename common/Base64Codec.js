@@ -41,8 +41,10 @@ class Base64Codec {
         // The `btoa(String.fromCharCode(...bytes))` approach can cause a "Maximum call stack size exceeded" error
         // for large inputs and may not handle all Unicode characters correctly.
         const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-        let result = '';
         const len = bytes.length;
+        const result = new Array(Math.ceil(len / 3));
+        let index = 0;
+
         for (let i = 0; i < len; i += 3) {
             const byte1 = bytes[i];
             const byte2 = i + 1 < len ? bytes[i + 1] : 0;
@@ -50,12 +52,13 @@ class Base64Codec {
 
             const triplet = (byte1 << 16) | (byte2 << 8) | byte3;
 
-            result += base64Chars[(triplet >> 18) & 0x3F];
-            result += base64Chars[(triplet >> 12) & 0x3F];
-            result += i + 1 < len ? base64Chars[(triplet >> 6) & 0x3F] : '=';
-            result += i + 2 < len ? base64Chars[triplet & 0x3F] : '=';
+            result[index++] =
+                base64Chars[(triplet >> 18) & 0x3F] +
+                base64Chars[(triplet >> 12) & 0x3F] +
+                (i + 1 < len ? base64Chars[(triplet >> 6) & 0x3F] : '=') +
+                (i + 2 < len ? base64Chars[triplet & 0x3F] : '=');
         }
-        return result;
+        return result.join('');
     }
 
     encodeText(text, encoding) {
