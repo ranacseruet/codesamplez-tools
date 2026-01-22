@@ -1,4 +1,4 @@
-import { minifyCSS, isValidCSS } from './minifier.js';
+import { minifyCSS, isValidCSS, shortenColorsInCss } from './minifier.js';
 
 describe('CSS Minifier', () => {
   test('should remove whitespace and newlines', () => {
@@ -188,5 +188,68 @@ describe('CSS Validator', () => {
         configurable: true
       });
     }
+  });
+});
+
+describe('shortenColorsInCss', () => {
+  test('should shorten named colors', () => {
+    const input = 'color: white; background: black;';
+    const expected = 'color: #fff; background: #000;';
+    expect(shortenColorsInCss(input)).toBe(expected);
+  });
+
+  test('should handle multiple colors', () => {
+    const input = 'border: 1px solid red; outline: green;';
+    const expected = 'border: 1px solid #f00; outline: #0f0;';
+    expect(shortenColorsInCss(input)).toBe(expected);
+  });
+
+  test('should be case insensitive', () => {
+    const input = 'color: WHITE; background: ReD;';
+    const expected = 'color: #fff; background: #f00;';
+    expect(shortenColorsInCss(input)).toBe(expected);
+  });
+
+  test('should not replace colors inside other words', () => {
+    const input = 'color: whitesmoke; class: bred;';
+    const expected = 'color: whitesmoke; class: bred;';
+    expect(shortenColorsInCss(input)).toBe(expected);
+  });
+
+  test('should handle colors at boundaries', () => {
+    const input = 'color: blue';
+    const expected = 'color: #00f';
+    expect(shortenColorsInCss(input)).toBe(expected);
+  });
+
+  test('should handle colors with closing brace', () => {
+    const input = 'color: yellow}';
+    const expected = 'color: #ff0}';
+    expect(shortenColorsInCss(input)).toBe(expected);
+  });
+
+  test('should hex colors #RRGGBB to #RGB', () => {
+    const input = 'color: #aabbcc;';
+    const expected = 'color: #abc;';
+    expect(shortenColorsInCss(input)).toBe(expected);
+  });
+
+  // Regression tests
+  test('should handle consecutive colors correctly', () => {
+    const input = 'border-color: red green;';
+    const expected = 'border-color: #f00 #0f0;';
+    expect(shortenColorsInCss(input)).toBe(expected);
+  });
+
+  test('should handle three consecutive colors', () => {
+    const input = 'border-color: red green blue;';
+    const expected = 'border-color: #f00 #0f0 #00f;';
+    expect(shortenColorsInCss(input)).toBe(expected);
+  });
+
+  test('should handle colors separated by newline', () => {
+    const input = 'color: red;\nbackground: green;';
+    const expected = 'color: #f00;\nbackground: #0f0;';
+    expect(shortenColorsInCss(input)).toBe(expected);
   });
 });

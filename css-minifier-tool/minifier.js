@@ -37,30 +37,35 @@
     
     return minified;
   }
+
+  // Pre-compiled regex for hex color shortening
+  const hexColorRegex = /#([0-9a-f])\1([0-9a-f])\2([0-9a-f])\3/gi;
+
+  // Pre-compiled map and regex for named color shortening
+  const colorMap = {
+    'white': '#fff',
+    'black': '#000',
+    'red': '#f00',
+    'green': '#0f0',
+    'blue': '#00f',
+    'yellow': '#ff0',
+    'cyan': '#0ff',
+    'magenta': '#f0f'
+  };
+
+  const colorPattern = Object.keys(colorMap).join('|');
+  const colorRegex = new RegExp(`(:|\\s)(${colorPattern})(?=(;|\\s|\\}|$))`, 'gi');
   
   function shortenColorsInCss(css) {
     let minified = css;
     
     // Replace #RRGGBB with #RGB when possible
-    const hexColorRegex = /#([0-9a-f])\1([0-9a-f])\2([0-9a-f])\3/gi;
     minified = minified.replace(hexColorRegex, '#$1$2$3');
     
     // Replace named colors with hex values if shorter
-    const colorMap = {
-      'white': '#fff',
-      'black': '#000',
-      'red': '#f00',
-      'green': '#0f0',
-      'blue': '#00f',
-      'yellow': '#ff0',
-      'cyan': '#0ff',
-      'magenta': '#f0f'
-    };
-    
-    for (const [colorName, hexValue] of Object.entries(colorMap)) {
-      const regex = new RegExp(`(:|\\s)${colorName}(;|\\s|\\}|$)`, 'gi');
-      minified = minified.replace(regex, `$1${hexValue}$2`);
-    }
+    minified = minified.replace(colorRegex, (match, prefix, color) => {
+      return `${prefix}${colorMap[color.toLowerCase()]}`;
+    });
     
     return minified;
   }
