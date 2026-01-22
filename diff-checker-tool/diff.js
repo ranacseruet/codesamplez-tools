@@ -162,7 +162,9 @@ export class DiffComputer {
   }
 
   static hasAnyMatch(arr1, arr2) {
-    return arr1.some(line1 => arr2.includes(line1));
+    const [smaller, larger] = arr1.length < arr2.length ? [arr1, arr2] : [arr2, arr1];
+    const set = new Set(smaller);
+    return larger.some(item => set.has(item));
   }
 }
 
