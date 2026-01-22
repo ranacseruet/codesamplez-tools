@@ -63,10 +63,23 @@ function analyzeText(text = '') {
     }
 
     // Punctuation Counts
-    const periodCount = (text.match(/\./g) || []).length;
-    const commaCount = (text.match(/,/g) || []).length;
-    const questionCount = (text.match(/\?/g) || []).length;
-    const exclamationCount = (text.match(/!/g) || []).length;
+    let periodCount = 0;
+    let commaCount = 0;
+    let questionCount = 0;
+    let exclamationCount = 0;
+
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (char === '.') {
+            periodCount++;
+        } else if (char === ',') {
+            commaCount++;
+        } else if (char === '?') {
+            questionCount++;
+        } else if (char === '!') {
+            exclamationCount++;
+        }
+    }
 
     // Word Frequency Analysis
     const stopWords = new Set(['a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'as', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'shall', 'this', 'that', 'these', 'those', 'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'you', 'your', 'yours', 'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them', 'their', 'theirs', 'up', 'down', 'out', 'about', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between', 'among', 'under', 'over', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'just', 'don', 'now', 'd', 'll', 'm', 'o', 're', 've', 'y', 'ain', 'aren', 'couldn', 'didn', 'doesn', 'hadn', 'hasn', 'haven', 'isn', 'ma', 'mightn', 'mustn', 'needn', 'shan', 'shouldn', 'wasn', 'weren', 'won', 'wouldn']);
