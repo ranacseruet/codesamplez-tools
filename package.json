@@ -54,6 +54,10 @@
     }
   },
   "dependencies": {
+    "@babel/generator": "^7.28.6",
+    "@babel/parser": "^7.28.6",
+    "@babel/traverse": "^7.28.6",
+    "@babel/types": "^7.28.6",
     "diff": "^7.0.0",
     "fast-xml-parser": "^5.2.5",
     "js-yaml": "^4.1.0",

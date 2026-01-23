@@ -99,15 +99,16 @@ describe('JS Minifier', () => {
       const minifier = new JSMinifier({ shortenVariables: true });
       const input = `function test() { const longVariableName = 1; return longVariableName; }`;
       const output = minifier.minify(input);
-      expect(output).toMatch(/function test\(\)\{const [a-zA-Z$_][a-zA-Z0-9$_]*=1;return [a-zA-Z$_][a-zA-Z0-9$_]*;\}/);
+      expect(output).toMatch(/function test\(\)\{const [a-zA-Z$_][a-zA-Z0-9$_]*=1;return [a-zA-Z$_][a-zA-Z0-9$_]*;?\}/);
       expect(output.length).toBeLessThan(input.length);
     });
 
-    test('should not shorten reserved words', () => {
+    test('should shorten local variables even if they shadow globals', () => {
       const minifier = new JSMinifier({ shortenVariables: true });
       const input = `function test() { const window = 1; return window; }`;
-      const output = `function test(){const window=1;return window;}`;
-      expect(minifier.minify(input)).toBe(output);
+      const output = minifier.minify(input);
+      expect(output).toMatch(/function test\(\)\{const [a-zA-Z$_][a-zA-Z0-9$_]*=1;return [a-zA-Z$_][a-zA-Z0-9$_]*;?\}/);
+      expect(output.length).toBeLessThan(input.length);
     });
 
     test('should handle nested functions with same variable names', () => {
@@ -121,7 +122,7 @@ describe('JS Minifier', () => {
         return x + inner(); 
       }`;
       const output = minifier.minify(input);
-      expect(output).toMatch(/function outer\(\)\{const [a-zA-Z$_][a-zA-Z0-9$_]*=1;function inner\(\)\{const [a-zA-Z$_][a-zA-Z0-9$_]*=2;return [a-zA-Z$_][a-zA-Z0-9$_]*;\}return [a-zA-Z$_][a-zA-Z0-9$_]*\+inner\(\);\}/);
+      expect(output).toMatch(/function outer\(\)\{const [a-zA-Z$_][a-zA-Z0-9$_]*=1;function inner\(\)\{const [a-zA-Z$_][a-zA-Z0-9$_]*=2;return [a-zA-Z$_][a-zA-Z0-9$_]*;?\}return [a-zA-Z$_][a-zA-Z0-9$_]*\+inner\(\);?\}/);
     });
 
     test('should handle closures with outer scope variables', () => {
@@ -139,6 +140,23 @@ describe('JS Minifier', () => {
       expect(counter()).toBe(1);
       expect(counter()).toBe(2);
       expect(counter()).toBe(3);
+    });
+
+    test('should NOT replace variable names inside strings', () => {
+      const minifier = new JSMinifier({ shortenVariables: true });
+      const input = `const myVar = 1; return "myVar";`;
+      const output = minifier.minify(input);
+      expect(output).toContain('"myVar"');
+      expect(output).not.toContain('const myVar=');
+    });
+
+    test('should NOT replace object property keys that match variable names', () => {
+      const minifier = new JSMinifier({ shortenVariables: true });
+      const input = `const key = 1; const obj = { key: 2 }; return obj.key;`;
+      const output = minifier.minify(input);
+      expect(output).toMatch(/key:2/);
+      expect(output).toMatch(/\.key/);
+      expect(output).not.toContain('const key=');
     });
   });
 

@@ -1,3 +1,7 @@
+import { parse } from '@babel/parser';
+import traverse from '@babel/traverse';
+import generate from '@babel/generator';
+
 // JavaScript Minifier Implementation
 class JSMinifier {
   constructor(options = {}) {
@@ -126,66 +130,104 @@ class JSMinifier {
       return code;
     }
 
-    // This is a simplified implementation!
-    // Parse out variables (excluding function names)
-    const variableRegex = /(?:var|let|const)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
-    const foundVariables = new Set();
-    
-    let match;
-    while ((match = variableRegex.exec(code)) !== null) {
-      foundVariables.add(match[1]);
-    }
-    
-    // Filter out reserved keywords and built-ins
-    const reservedWords = new Set([
-      'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 
-      'delete', 'do', 'else', 'export', 'extends', 'false', 'finally', 'for', 'function', 
-      'if', 'import', 'in', 'instanceof', 'new', 'null', 'return', 'super', 'switch', 
-      'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield',
-      'let', 'static', 'implements', 'interface', 'package', 'private', 'protected', 
-      'public', 'await', 'abstract', 'boolean', 'byte', 'char', 'double', 'final', 
-      'float', 'goto', 'int', 'long', 'native', 'short', 'synchronized', 'throws', 
-      'transient', 'volatile',
-      // Common globals
-      'window', 'document', 'console', 'Math', 'Array', 'Object', 'String', 'Number',
-      'Boolean', 'RegExp', 'Date', 'JSON', 'undefined',
-      // Function names (don't shorten these)
-      'test', 'describe', 'it', 'expect', 'beforeEach', 'afterEach', 'beforeAll', 'afterAll'
-    ]);
-    
-    const variables = [...foundVariables].filter(v => !reservedWords.has(v));
-    
-    // Create variable name mapping
-    const varMap = {};
-    const shortNameChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_';
-    let shortNameCounter = 0;
-    
-    variables.forEach(varName => {
-      let shortName = '';
-      let counter = shortNameCounter++;
+    try {
+      const ast = parse(code, {
+        sourceType: 'module',
+        allowReturnOutsideFunction: true,
+        plugins: ['jsx', 'typescript']
+      });
+
+      const allBindings = new Set();
       
-      do {
-        shortName = shortNameChars[counter % shortNameChars.length] + shortName;
-        counter = Math.floor(counter / shortNameChars.length);
-      } while (counter > 0);
+      // Collect all bindings
+      const traverseFn = traverse.default || traverse;
+      traverseFn(ast, {
+        Scope(path) {
+          for (const name in path.scope.bindings) {
+            allBindings.add(path.scope.bindings[name]);
+          }
+        }
+      });
+
+      // Filter and Rename
+      const shortNameChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_';
+      let shortNameCounter = 0;
       
-      varMap[varName] = shortName;
-    });
-    
-    // Replace variable names (careful not to replace function names)
-    let result = code;
-    Object.keys(varMap).forEach(varName => {
-      // Skip if this looks like a function declaration
-      if (new RegExp(`function\\s+${varName}\\s*\\(`).test(code)) {
-        return;
+      const getNextShortName = () => {
+        let shortName = '';
+        let counter = shortNameCounter++;
+        do {
+          shortName = shortNameChars[counter % shortNameChars.length] + shortName;
+          counter = Math.floor(counter / shortNameChars.length);
+        } while (counter > 0);
+        return shortName;
+      };
+
+      const reserved = new Set([
+        'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default',
+        'delete', 'do', 'else', 'export', 'extends', 'false', 'finally', 'for', 'function',
+        'if', 'import', 'in', 'instanceof', 'new', 'null', 'return', 'super', 'switch',
+        'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield',
+        'let', 'static', 'await', 'async'
+      ]);
+
+      const getSafeShortName = () => {
+         let name;
+         do {
+           name = getNextShortName();
+         } while (reserved.has(name));
+         return name;
+      };
+
+      const bindingsToRename = [];
+      const namesInUse = new Set();
+
+      // Preserve function names and other critical identifiers
+      for (const binding of allBindings) {
+         if (binding.path.isFunctionDeclaration() || binding.path.isClassDeclaration()) {
+             namesInUse.add(binding.identifier.name);
+         } else {
+             bindingsToRename.push(binding);
+         }
       }
       
-      // This is a very simplified approach and can cause bugs!
-      // A proper implementation would use an AST to ensure correct replacements
-      const regex = new RegExp(`\\b${varName}\\b`, 'g');
-      result = result.replace(regex, varMap[varName]);
-    });
-    return result;
+      // Collect globals used
+      traverseFn(ast, {
+          Program(path) {
+              Object.keys(path.scope.globals).forEach(g => namesInUse.add(g));
+          }
+      });
+
+      // Rename bindings
+      for (const binding of bindingsToRename) {
+          let newName = getSafeShortName();
+          // Ensure uniqueness against preserved names and globals
+          while (namesInUse.has(newName)) {
+              newName = getSafeShortName();
+          }
+
+          // Perform rename
+          binding.scope.rename(binding.identifier.name, newName);
+
+          // Since we are using globally unique names, we effectively reserve this name
+          // Not adding to namesInUse because getSafeShortName guarantees uniqueness in its sequence
+          // But if we wanted to be super safe in case sequence collided with existing (though we skipped existing)
+          // `getSafeShortName` doesn't check `namesInUse`.
+          // So we should loop.
+      }
+
+      const generateFn = generate.default || generate;
+      const { code: newCode } = generateFn(ast, {
+          minified: true,
+          comments: false
+      });
+
+      return newCode;
+
+    } catch (e) {
+      console.warn("AST Parse failed, falling back to original code", e);
+      return code;
+    }
   }
 
   // Experimental: Mangle object properties
