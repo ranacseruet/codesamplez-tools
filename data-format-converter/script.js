@@ -7,6 +7,7 @@ import CopyButton from '../common/copy-button/CopyButton.js';
 class DataFormatConverterUI {
     constructor() {
         this.converter = new DataFormatConverter();
+        this.debounceTimer = null;
         this.setupEventListeners();
         this.initializeCommonButtons();
     }
@@ -49,8 +50,40 @@ class DataFormatConverterUI {
 
         // Real-time conversion on input
         document.getElementById('inputText').addEventListener('input', () => {
-            // No need to clear messages as NotificationManager handles auto-hiding
+            this.handleAutoConvert();
         });
+
+        // Auto-convert checkbox
+        document.getElementById('autoConvert').addEventListener('change', () => {
+            if (document.getElementById('autoConvert').checked) {
+                this.convertData(true);
+            }
+        });
+
+        // Swap button
+        document.getElementById('swapBtn').addEventListener('click', () => {
+            this.swapContent();
+        });
+    }
+
+    handleAutoConvert() {
+        if (!document.getElementById('autoConvert').checked) return;
+
+        clearTimeout(this.debounceTimer);
+        this.debounceTimer = setTimeout(() => {
+            const inputText = document.getElementById('inputText').value.trim();
+            if (inputText) {
+                const detectedFormat = this.converter.detectFormat(inputText);
+                if (detectedFormat && detectedFormat !== this.converter.inputFormat) {
+                    this.converter.inputFormat = detectedFormat;
+                    this.updateFormatButtons('input-section', detectedFormat);
+                    // Don't update placeholder or clear text as user is typing
+                }
+
+                // Suppress success notification for auto-convert to avoid spam
+                this.convertData(true);
+            }
+        }, 500); // 500ms debounce
     }
 
     handleFormatSelection(event) {
@@ -76,7 +109,7 @@ class DataFormatConverterUI {
             // If there's input data, trigger conversion when output format changes
             const inputText = document.getElementById('inputText').value.trim();
             if (inputText) {
-                this.convertData();
+                this.convertData(document.getElementById('autoConvert').checked);
             }
         }
     }
@@ -92,11 +125,14 @@ class DataFormatConverterUI {
         inputText.placeholder = placeholders[this.converter.inputFormat];
     }
 
-    convertData() {
+    convertData(silent = false) {
         const inputText = document.getElementById('inputText').value.trim();
         
         if (!inputText) {
-            this.showError('Please enter some data to convert.');
+            // Only show error if clicked manually. Auto-convert shouldn't nag if empty.
+            if (!silent) {
+                 this.showError('Please enter some data to convert.');
+            }
             return;
         }
 
@@ -110,16 +146,72 @@ class DataFormatConverterUI {
             // Display result
             document.getElementById('outputText').value = outputData;
             this.copyButton.updateVisibility();
-            this.showSuccess(`Successfully converted from ${this.converter.inputFormat.toUpperCase()} to ${this.converter.outputFormat.toUpperCase()}`);
+
+            if (!silent) {
+                this.showSuccess(`Successfully converted from ${this.converter.inputFormat.toUpperCase()} to ${this.converter.outputFormat.toUpperCase()}`);
+            } else {
+                document.getElementById('inputError').style.display = 'none';
+            }
             
         } catch (error) {
-            this.showError(`Conversion failed: ${error.message}`);
+            this.showError(`Conversion failed: ${error.message}`, silent);
         }
     }
 
+    swapContent() {
+         const oldInputFormat = this.converter.inputFormat;
+         const oldOutputFormat = this.converter.outputFormat;
 
-    showError(message) {
-        NotificationManager.show(message, 3000, { type: 'error' });
+         // Swap internal formats
+         this.converter.inputFormat = oldOutputFormat;
+         this.converter.outputFormat = oldInputFormat;
+
+         // Update UI buttons
+         this.updateFormatButtons('input-section', oldOutputFormat);
+         this.updateFormatButtons('output-section', oldInputFormat);
+
+         // Swap textarea content
+         const inputText = document.getElementById('inputText');
+         const outputText = document.getElementById('outputText');
+
+         const newInputValue = outputText.value;
+         // We don't necessarily swap output to input if output was generated.
+         // But "Swap" usually means "I want to take what I generated and use it as input for next step".
+         // The old input becomes... well, discarded or put in output?
+         // Usually swapping just moves Output -> Input. What happens to Input?
+         // It can move to Output, but if formats are swapped, the old Input (in old InputFormat) might not match new OutputFormat (old InputFormat).
+         // Actually, Old Input (Format A) -> Old Output (Format B).
+         // New Input (Format B) -> New Output (Format A).
+         // So if we move Old Input to New Output, it matches the format!
+         // So yes, full swap is safe format-wise.
+
+         const temp = inputText.value;
+         inputText.value = newInputValue;
+         outputText.value = temp;
+
+         this.updateInputPlaceholder();
+
+         // Trigger conversion
+         if (inputText.value.trim()) {
+             this.convertData(true);
+         }
+    }
+
+    updateFormatButtons(sectionClass, format) {
+        const section = document.querySelector('.' + sectionClass);
+        section.querySelectorAll('.format-btn').forEach(btn => {
+            if (btn.getAttribute('data-format') === format) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    showError(message, silent = false) {
+        if (!silent) {
+            NotificationManager.show(message, 3000, { type: 'error' });
+        }
         const errorDiv = document.getElementById('inputError');
         errorDiv.textContent = message;
         errorDiv.style.display = 'block';

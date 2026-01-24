@@ -38,7 +38,7 @@ describe('DataFormatConverter', () => {
 
         it('should throw error for invalid XML input', () => {
             const invalidXml = '<root><name>test</root>';
-            expect(() => converter.parseInput(invalidXml, 'xml')).toThrow('Invalid XML format');
+            expect(() => converter.parseInput(invalidXml, 'xml')).toThrow();
         });
 
         it('should parse valid YAML input', () => {
@@ -123,6 +123,58 @@ age=30`;
         it('should invalidate malformed properties (no delimiter)', () => {
             expect(converter.validateOutput('invalidLineWithoutEquals', 'properties')).toBe(false);
         });
+
+        it('should handle escaped characters in properties', () => {
+            const input = 'key\\:colon=value\\=equals\\nnewline';
+            const result = converter.parseInput(input, 'properties');
+            expect(result).toEqual({ 'key:colon': 'value=equals\nnewline' });
+        });
+
+        it('should escape characters when formatting properties', () => {
+            const obj = { 'key:colon': 'value=equals\nnewline' };
+            const output = converter.formatOutput(obj, 'properties');
+            expect(output).toContain('key\\:colon=value\\=equals\\nnewline');
+        });
+
+        it('should throw error for properties with only comments', () => {
+            const input = '# just a comment';
+            expect(() => converter.parseInput(input, 'properties')).toThrow('Invalid properties format');
+        });
+
+        it('should handle special escapes in properties', () => {
+            const input = 'key=\\t\\\\\\z'; // \t, \\, \z (unknown)
+            const result = converter.parseInput(input, 'properties');
+            expect(result).toEqual({ key: '\t\\z' });
+        });
+    });
+
+    describe('detectFormat', () => {
+        it('should detect XML', () => {
+            expect(converter.detectFormat('<root></root>')).toBe('xml');
+            expect(converter.detectFormat('  <root>')).toBe('xml');
+        });
+
+        it('should detect JSON', () => {
+            expect(converter.detectFormat('{}')).toBe('json');
+            expect(converter.detectFormat('[]')).toBe('json');
+            expect(converter.detectFormat('  {"a":1}')).toBe('json');
+        });
+
+        it('should detect Properties', () => {
+            expect(converter.detectFormat('key=value')).toBe('properties');
+            expect(converter.detectFormat('key=value\nother=1')).toBe('properties');
+        });
+
+        it('should detect YAML', () => {
+            expect(converter.detectFormat('key: value')).toBe('yaml');
+            expect(converter.detectFormat('list:\n  - item')).toBe('yaml');
+            expect(converter.detectFormat('just a string')).toBe('yaml'); // Default
+        });
+
+        it('should return null for empty input', () => {
+            expect(converter.detectFormat('')).toBe(null);
+            expect(converter.detectFormat('   ')).toBe(null);
+        });
     });
 
     describe('formatOutput', () => {
@@ -147,6 +199,10 @@ age=30`;
 
         it('should throw error for unsupported format', () => {
             expect(() => converter.formatOutput(testData, 'csv')).toThrow('Unsupported output format: csv');
+        });
+
+        it('should throw error for invalid properties input', () => {
+            expect(() => converter.formatOutput(null, 'properties')).toThrow('Cannot format to properties');
         });
 
         it('should throw error for circular JSON structure', () => {
@@ -283,9 +339,7 @@ empty: null`;
         });
 
         it('should throw error for invalid YAML', () => {
-            const yaml = `invalid:
-  - item1
-    - item2`;
+            const yaml = `[unclosed`;
             expect(() => converter.parseInput(yaml, 'yaml')).toThrow();
         });
     });

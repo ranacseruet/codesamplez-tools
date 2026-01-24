@@ -13,7 +13,7 @@
             <p>Convert between JSON, XML, and YAML formats seamlessly</p>
         </div>
 
-        <div class="converter-section o-grid-2col">
+        <div class="converter-section o-grid-2col swap-container-wrapper">
             <div class="input-section o-panel">
                 <h2>Input Format</h2>
                 <div class="format-selector">
@@ -28,6 +28,11 @@
                     placeholder="Paste your data here..."
                 ></textarea>
             </div>
+
+            <div class="swap-action-container">
+                <button id="swapBtn" class="c-button c-button--small c-button--outline" title="Swap Input and Output">Swap ⇄</button>
+            </div>
+
             <div class="output-section o-panel">
                 <h2>Output Format</h2>
                 <div class="format-selector">
@@ -42,14 +47,16 @@
                     placeholder="Converted data will appear here..."
                     readonly
                 ></textarea>
-                <div class="output-actions" style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
-                    <button id="downloadBtn" class="c-button c-button--small c-button--icon-download">Download</button>
-                </div>
             </div>
 
         </div>
-        <div class="u-text-center">
+        <div class="u-text-center" style="display: flex; justify-content: center; align-items: center; gap: 20px;">
+            <label class="c-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+                <input type="checkbox" id="autoConvert" checked>
+                <span>Auto-convert</span>
+            </label>
             <button id="convertBtn" class="convert-btn c-button">Convert Data</button>
+            <button id="downloadBtn" class="c-button c-button--small c-button--icon-download">Download</button>
         </div>
         <div id="inputError" class="error" style="display: none;"></div>
         <div id="notification" class="c-notification"></div>

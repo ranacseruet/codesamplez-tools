@@ -1,5 +1,5 @@
 import yaml from 'js-yaml';
-import { XMLParser, XMLBuilder } from 'fast-xml-parser';
+import { XMLParser, XMLBuilder, XMLValidator } from 'fast-xml-parser';
 
 export class DataFormatConverter {
     constructor() {
@@ -24,20 +24,7 @@ export class DataFormatConverter {
 
     validateOutput(output, format) {
         try {
-            switch (format) {
-                case 'json':
-                    JSON.parse(output);
-                    break;
-                case 'xml':
-                    this.parseXML(output);
-                    break;
-                case 'yaml':
-                    yaml.load(output);
-                    break;
-                case 'properties':
-                    this.parseProperties(output);
-                    break;
-            }
+            this.parseInput(output, format);
             return true;
         } catch (e) {
             return false;
@@ -70,14 +57,12 @@ export class DataFormatConverter {
     }
 
     parseXML(xmlString) {
-        // First validate basic XML structure
-        if (!xmlString.trim().startsWith('<') || !xmlString.trim().endsWith('>')) {
-            throw new Error('Invalid XML format');
-        }
-
-        // Additional validation for malformed XML
-        if (xmlString.includes('<root><name>test</root>')) {
-            throw new Error('Invalid XML format');
+        // Validate XML structure
+        const validation = XMLValidator.validate(xmlString);
+        if (validation !== true) {
+            // Provide specific error from validator if available, or generic message
+            const msg = validation.err ? validation.err.msg : 'Invalid XML format';
+            throw new Error(msg);
         }
 
         const parser = new XMLParser({
@@ -104,13 +89,16 @@ export class DataFormatConverter {
         content.split(/\r?\n/).forEach(line => {
             line = line.trim();
             if (!line || line.startsWith('#') || line.startsWith('!')) return;
-            const separatorIndex = line.search(/[:=]/);
-            if (separatorIndex === -1) {
+
+            const match = line.match(/^((?:\\.|[^:=])+)([:=])(.*)$/);
+
+            if (!match) {
                 throw new Error('Invalid properties format');
             }
+
             validLineFound = true;
-            const key = line.slice(0, separatorIndex).trim();
-            const value = line.slice(separatorIndex + 1).trim();
+            const key = this.unescapeProp(match[1].trim());
+            const value = this.unescapeProp(match[3].trim());
             result[key] = value;
         });
         if (!validLineFound && content.trim() !== '') {
@@ -135,6 +123,19 @@ export class DataFormatConverter {
             .replace(/\t/g, '\\t')
             .replace(/:/g, '\\:')
             .replace(/=/g, '\\=');
+    }
+
+    unescapeProp(str) {
+        return str.replace(/\\(.)/g, (match, char) => {
+            switch(char) {
+                case 'n': return '\n';
+                case 't': return '\t';
+                case ':': return ':';
+                case '=': return '=';
+                case '\\': return '\\';
+                default: return char;
+            }
+        });
     }
 
     xmlToObject(xmlNode) {
@@ -170,11 +171,6 @@ export class DataFormatConverter {
                 return {};
             }
             
-            // Explicitly check for the invalid YAML case from the test
-            if (yamlString.includes('- item1\n    - item2')) {
-                throw new Error('Invalid YAML format');
-            }
-            
             const result = yaml.load(yamlString);
             // Convert undefined to empty object to match test expectations
             return result === undefined ? {} : result;
@@ -192,5 +188,25 @@ export class DataFormatConverter {
         } catch (e) {
             throw new Error(`Cannot format to YAML: ${e.message}`);
         }
+    }
+
+    detectFormat(input) {
+        const trimmed = input.trim();
+        if (!trimmed) return null;
+
+        if (trimmed.startsWith('<')) return 'xml';
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) return 'json';
+
+        // Simple heuristics for Properties vs YAML
+        // Properties typically uses = or : but YAML strictly uses : followed by space or newline
+        const hasEquals = trimmed.includes('=');
+        const hasColonSpace = trimmed.includes(': ');
+        const hasColonNewline = /:\s*\n/.test(trimmed);
+
+        if (hasEquals && !hasColonSpace && !hasColonNewline) return 'properties';
+        if ((hasColonSpace || hasColonNewline) && !hasEquals) return 'yaml';
+
+        // If ambiguous, default to YAML as it's more flexible
+        return 'yaml';
     }
 }
