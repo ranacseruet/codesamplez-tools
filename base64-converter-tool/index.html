@@ -15,13 +15,13 @@
         
         <div class="o-controls">
             <div class="u-flex u-gap-sm">
-                <select id="base64converter-mode" class="tool-container select">
+                <select id="base64converter-mode" class="tool-container select" aria-label="Conversion Mode">
                     <option value="auto">Auto Detect</option>
                     <option value="encode">Encode</option>
                     <option value="decode">Decode</option>
                 </select>
 
-                <select id="base64converter-encoding" class="tool-container select">
+                <select id="base64converter-encoding" class="tool-container select" aria-label="Character Encoding">
                     <option value="utf8">UTF-8</option>
                     <option value="ascii">ASCII</option>
                     <option value="iso88591">ISO-8859-1</option>
@@ -37,14 +37,14 @@
                     <h2>Input</h2>
                 </div>
                 <textarea id="base64converter-input" 
-                    placeholder="Enter text to encode or decode..."></textarea>
+                    placeholder="Enter text to encode or decode..." aria-label="Input text"></textarea>
             </div>
             
             <div class="o-panel">
                 <div class="o-panel-header">
                     <h2>Output</h2>
                 </div>
-                <textarea id="base64converter-result" class="tool-container textarea" readonly></textarea>
+                <textarea id="base64converter-result" class="tool-container textarea" readonly aria-label="Output text"></textarea>
             </div>
         </div>
 
@@ -65,12 +65,12 @@
         </div>
         
         <div class="o-controls">
-            <span id="base64converter-status"></span>
-            <span id="base64converter-copy-status"></span>
+            <span id="base64converter-status" aria-live="polite"></span>
+            <span id="base64converter-copy-status" aria-live="polite"></span>
         </div>
     </div>
 
-    <div id="notification" class="c-notification">Copied to clipboard!</div>
+    <div id="notification" class="c-notification" role="status" aria-live="polite">Copied to clipboard!</div>
     <script src="/base64-converter-tool/bundle.main.js"></script>
 </body>
 </html>
