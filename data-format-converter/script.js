@@ -4,12 +4,23 @@ import DownloadManager from '../common/DownloadManager.js';
 import ClearButton from '../common/clear-button/ClearButton.js';
 import CopyButton from '../common/copy-button/CopyButton.js';
 
-class DataFormatConverterUI {
+export class DataFormatConverterUI {
     constructor() {
         this.converter = new DataFormatConverter();
         this.debounceTimer = null;
         this.setupEventListeners();
         this.initializeCommonButtons();
+        this.initializeAriaAttributes();
+    }
+
+    initializeAriaAttributes() {
+        document.querySelectorAll('.format-btn').forEach(btn => {
+            if (btn.classList.contains('active')) {
+                btn.setAttribute('aria-pressed', 'true');
+            } else {
+                btn.setAttribute('aria-pressed', 'false');
+            }
+        });
     }
 
     initializeCommonButtons() {
