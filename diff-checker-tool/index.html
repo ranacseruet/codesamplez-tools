@@ -21,7 +21,7 @@
           <div class="o-toolbar"></div>
         </div>
         <div class="o-panel-content">
-          <textarea id="text1" class="c-input c-input--textarea" placeholder="Paste your first text here..." title="Enter your original text or code here"></textarea>
+          <textarea id="text1" class="c-input c-input--textarea" placeholder="Paste your first text here..." title="Enter your original text or code here" aria-label="Original text input"></textarea>
         </div>
       </div>
       
@@ -31,7 +31,7 @@
           <div class="o-toolbar"></div>
         </div>
         <div class="o-panel-content">
-          <textarea id="text2" class="c-input c-input--textarea" placeholder="Paste your second text here..." title="Enter your modified text or code here"></textarea>
+          <textarea id="text2" class="c-input c-input--textarea" placeholder="Paste your second text here..." title="Enter your modified text or code here" aria-label="Modified text input"></textarea>
         </div>
       </div>
     </div>
@@ -53,9 +53,9 @@
       <div class="diff-result-header">
         <h2>Differences</h2>
         <div class="diff-navigation">
-          <button id="prev-diff-button" class="c-button c-button--secondary c-button--small" disabled>< Prev</button>
-          <span id="diff-counter">0 of 0</span>
-          <button id="next-diff-button" class="c-button c-button--secondary c-button--small" disabled>Next ></button>
+          <button id="prev-diff-button" class="c-button c-button--secondary c-button--small" disabled aria-label="Go to previous difference">< Prev</button>
+          <span id="diff-counter" aria-live="polite" aria-atomic="true">0 of 0</span>
+          <button id="next-diff-button" class="c-button c-button--secondary c-button--small" disabled aria-label="Go to next difference">Next ></button>
         </div>
       </div>
       <div class="o-panel-content">
