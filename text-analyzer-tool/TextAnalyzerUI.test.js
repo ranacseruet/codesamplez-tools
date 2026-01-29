@@ -80,7 +80,7 @@ describe('TextAnalyzerUI', () => {
     
     // Create DOM elements first
     document.body.innerHTML = `
-      <textarea id="textInput"></textarea>
+      <textarea id="textInput" aria-label="Input text to analyze"></textarea>
       <button id="clear-input"></button>
       <button id="load-sample"></button>
       <div id="notification" class="c-notification"></div>
@@ -109,6 +109,10 @@ describe('TextAnalyzerUI', () => {
     // Verify count elements
     expect(textAnalyzerUI.elements.charCount).toBe(document.getElementById('charCount'));
     expect(textAnalyzerUI.elements.wordCount).toBe(document.getElementById('wordCount'));
+  });
+
+  test('textarea should have accessible label', () => {
+    expect(textAnalyzerUI.textInput.getAttribute('aria-label')).toBe('Input text to analyze');
   });
 
   describe('NotificationManager integration', () => {test('should call NotificationManager.show when clearing text', () => {
