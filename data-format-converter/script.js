@@ -94,10 +94,12 @@ class DataFormatConverterUI {
         // Remove active class from siblings
         section.querySelectorAll('.format-btn').forEach(btn => {
             btn.classList.remove('active');
+            btn.setAttribute('aria-pressed', 'false');
         });
 
         // Add active class to clicked button
         button.classList.add('active');
+        button.setAttribute('aria-pressed', 'true');
 
         // Update format selection
         if (section.classList.contains('input-section')) {
@@ -202,8 +204,10 @@ class DataFormatConverterUI {
         section.querySelectorAll('.format-btn').forEach(btn => {
             if (btn.getAttribute('data-format') === format) {
                 btn.classList.add('active');
+                btn.setAttribute('aria-pressed', 'true');
             } else {
                 btn.classList.remove('active');
+                btn.setAttribute('aria-pressed', 'false');
             }
         });
     }

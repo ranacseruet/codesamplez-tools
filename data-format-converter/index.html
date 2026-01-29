@@ -16,11 +16,11 @@
         <div class="converter-section o-grid-2col swap-container-wrapper">
             <div class="input-section o-panel">
                 <h2>Input Format</h2>
-                <div class="format-selector">
-                    <button class="format-btn active c-button c-button--small" data-format="json">JSON</button>
-                    <button class="format-btn c-button c-button--small" data-format="xml">XML</button>
-                    <button class="format-btn c-button c-button--small" data-format="yaml">YAML</button>
-                    <button class="format-btn c-button c-button--small" data-format="properties">Properties</button>
+                <div class="format-selector" role="group" aria-label="Input Format">
+                    <button class="format-btn active c-button c-button--small" data-format="json" aria-pressed="true">JSON</button>
+                    <button class="format-btn c-button c-button--small" data-format="xml" aria-pressed="false">XML</button>
+                    <button class="format-btn c-button c-button--small" data-format="yaml" aria-pressed="false">YAML</button>
+                    <button class="format-btn c-button c-button--small" data-format="properties" aria-pressed="false">Properties</button>
                 </div>
                 <textarea 
                     id="inputText" 
@@ -35,11 +35,11 @@
 
             <div class="output-section o-panel">
                 <h2>Output Format</h2>
-                <div class="format-selector">
-                    <button class="format-btn c-button c-button--small" data-format="json">JSON</button>
-                    <button class="format-btn active c-button c-button--small" data-format="xml">XML</button>
-                    <button class="format-btn c-button c-button--small" data-format="yaml">YAML</button>
-                    <button class="format-btn c-button c-button--small" data-format="properties">Properties</button>
+                <div class="format-selector" role="group" aria-label="Output Format">
+                    <button class="format-btn c-button c-button--small" data-format="json" aria-pressed="false">JSON</button>
+                    <button class="format-btn active c-button c-button--small" data-format="xml" aria-pressed="true">XML</button>
+                    <button class="format-btn c-button c-button--small" data-format="yaml" aria-pressed="false">YAML</button>
+                    <button class="format-btn c-button c-button--small" data-format="properties" aria-pressed="false">Properties</button>
                 </div>
                 <textarea 
                     id="outputText" 
