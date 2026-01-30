@@ -68,6 +68,7 @@ export class TextAnalyzerUI {
         wordFrequency.forEach(item => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'word-frequency-item';
+            itemDiv.setAttribute('role', 'listitem');
 
             const labelSpan = document.createElement('span');
             labelSpan.className = 'word-frequency-label';
@@ -75,6 +76,7 @@ export class TextAnalyzerUI {
 
             const barContainer = document.createElement('div');
             barContainer.className = 'word-frequency-bar-container';
+            barContainer.setAttribute('aria-hidden', 'true');
 
             const bar = document.createElement('div');
             bar.className = 'word-frequency-bar';
@@ -85,8 +87,8 @@ export class TextAnalyzerUI {
             bar.style.width = `${percentage}%`;
 
             const countSpan = document.createElement('span');
-            countSpan.className = 'word-frequency-count';
-            countSpan.textContent = item.count;
+            countSpan.className = 'word-frequency-count sr-only';
+            countSpan.textContent = `${item.count} occurrences`;
 
             barContainer.appendChild(bar);
             itemDiv.appendChild(labelSpan);

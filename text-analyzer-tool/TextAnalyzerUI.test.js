@@ -277,9 +277,29 @@ describe('TextAnalyzerUI', () => {
       expect(labels).toContain('world');
       expect(labels).toContain('test');
 
-      expect(counts).toContain('3'); // hello count
-      expect(counts).toContain('2'); // world count
-      expect(counts).toContain('1'); // test count
+      // The count text now includes "occurrences"
+      expect(counts).toContain('3 occurrences');
+      expect(counts).toContain('2 occurrences');
+      expect(counts).toContain('1 occurrences');
+    });
+
+    test('should have accessible attributes', () => {
+      const chart = document.getElementById('wordFrequencyChart');
+      // Set roles manually as they would be in the real HTML or added by JS if we did that
+      chart.setAttribute('role', 'list');
+
+      textAnalyzerUI.updateCounts();
+
+      const items = chart.querySelectorAll('.word-frequency-item');
+      items.forEach(item => {
+        expect(item.getAttribute('role')).toBe('listitem');
+
+        const barContainer = item.querySelector('.word-frequency-bar-container');
+        expect(barContainer.getAttribute('aria-hidden')).toBe('true');
+
+        const countSpan = item.querySelector('.word-frequency-count');
+        expect(countSpan.classList.contains('sr-only')).toBe(true);
+      });
     });
   });
 
