@@ -108,11 +108,13 @@ export class JSONFormatter {
   switchView(viewName) {
     // Update tabs
     this.tabs.forEach(tab => {
-      if (tab.dataset.view === viewName) {
+      const isActive = tab.dataset.view === viewName;
+      if (isActive) {
         tab.classList.add('active');
       } else {
         tab.classList.remove('active');
       }
+      tab.setAttribute('aria-pressed', isActive);
     });
 
     // Update views

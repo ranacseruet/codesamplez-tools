@@ -69,8 +69,8 @@ describe('JSONFormatter', () => {
     document.querySelectorAll = jest.fn((selector) => {
       if (selector === '.jsonf-tab') {
         return [
-          { dataset: { view: 'tree' }, classList: { add: jest.fn(), remove: jest.fn() }, addEventListener: jest.fn() },
-          { dataset: { view: 'plain' }, classList: { add: jest.fn(), remove: jest.fn() }, addEventListener: jest.fn() }
+          { dataset: { view: 'tree' }, classList: { add: jest.fn(), remove: jest.fn() }, addEventListener: jest.fn(), setAttribute: jest.fn() },
+          { dataset: { view: 'plain' }, classList: { add: jest.fn(), remove: jest.fn() }, addEventListener: jest.fn(), setAttribute: jest.fn() }
         ];
       }
       return [];
@@ -84,8 +84,8 @@ describe('JSONFormatter', () => {
       plain: { classList: { add: jest.fn(), remove: jest.fn() } }
     };
     formatter.tabs = [
-      { dataset: { view: 'tree' }, classList: { add: jest.fn(), remove: jest.fn() }, addEventListener: jest.fn() },
-      { dataset: { view: 'plain' }, classList: { add: jest.fn(), remove: jest.fn() }, addEventListener: jest.fn() }
+      { dataset: { view: 'tree' }, classList: { add: jest.fn(), remove: jest.fn() }, addEventListener: jest.fn(), setAttribute: jest.fn() },
+      { dataset: { view: 'plain' }, classList: { add: jest.fn(), remove: jest.fn() }, addEventListener: jest.fn(), setAttribute: jest.fn() }
     ];
     formatter.copyBtn = { disabled: false, addEventListener: jest.fn() };
     formatter.downloadBtn = { disabled: false, addEventListener: jest.fn() };

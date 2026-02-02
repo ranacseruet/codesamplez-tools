@@ -23,4 +23,20 @@ describe('JSON Formatter Accessibility', () => {
     expect(output.hasAttribute('aria-label')).toBe(true);
     expect(output.getAttribute('aria-label')).toBe('Formatted JSON Output');
   });
+
+  test('View switcher should have proper ARIA attributes', () => {
+    const tabList = document.querySelector('.jsonf-tabs');
+    expect(tabList.getAttribute('role')).toBe('group');
+    expect(tabList.hasAttribute('aria-label')).toBe(true);
+
+    const tabs = document.querySelectorAll('.jsonf-tab');
+    expect(tabs.length).toBe(2);
+
+    tabs.forEach(tab => {
+      expect(tab.hasAttribute('aria-pressed')).toBe(true);
+    });
+
+    const activeTab = document.querySelector('.jsonf-tab.active');
+    expect(activeTab.getAttribute('aria-pressed')).toBe('true');
+  });
 });
