@@ -374,9 +374,22 @@
   border-color: var(--color-secondary) transparent transparent transparent;
 }
 
-.c-tooltip-container:hover .c-tooltip {
+.c-tooltip-container:hover .c-tooltip,
+.c-tooltip-container:focus .c-tooltip,
+.c-tooltip-container:focus-within .c-tooltip {
   visibility: visible;
   opacity: 1;
+}
+
+button.c-tooltip-container {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 /* --- Code Output --- */

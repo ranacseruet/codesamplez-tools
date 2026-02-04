@@ -27,16 +27,16 @@
         <div class="c-checkbox-item"> <!-- Use shared checkbox item -->
           <input type="checkbox" id="js-minifier-shorten-variables">
           <label for="js-minifier-shorten-variables">Shorten variable names</label>
-          <span class="c-tooltip-container">ⓘ <!-- Correct tooltip structure -->
-            <span class="c-tooltip">This is experimental and may break your code</span>
-          </span>
+          <button type="button" class="c-tooltip-container" aria-label="More information about shortening variable names" aria-describedby="tooltip-shorten-vars">ⓘ
+            <span id="tooltip-shorten-vars" class="c-tooltip" role="tooltip">This is experimental and may break your code</span>
+          </button>
         </div>
         <div class="c-checkbox-item"> <!-- Use shared checkbox item -->
           <input type="checkbox" id="js-minifier-mangle-properties">
           <label for="js-minifier-mangle-properties">Mangle properties</label>
-           <span class="c-tooltip-container">ⓘ <!-- Correct tooltip structure -->
-            <span class="c-tooltip">This is experimental and may break your code</span>
-           </span> <!-- Removed extra closing div -->
+           <button type="button" class="c-tooltip-container" aria-label="More information about mangling properties" aria-describedby="tooltip-mangle-props">ⓘ
+            <span id="tooltip-mangle-props" class="c-tooltip" role="tooltip">This is experimental and may break your code</span>
+           </button>
         </div>
       </div>
     </div>
