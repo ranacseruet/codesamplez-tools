@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const CopyPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
@@ -72,6 +73,11 @@ const getToolConfig = (toolName) => ({
     new CleanWebpackPlugin({
       cleanOnceBeforeBuildPatterns: ['**/*', '!*.html']
     }),
+    new webpack.DefinePlugin({
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+      'process.platform': JSON.stringify(process.platform),
+      'process.env': JSON.stringify({})
+    }),
     new MiniCssExtractPlugin({
       filename: 'styles.main.css'
     }),
@@ -118,6 +124,11 @@ const developmentConfig = {
   plugins: [
     new CleanWebpackPlugin({
       cleanOnceBeforeBuildPatterns: ['**/*', '!*.html']
+    }),
+    new webpack.DefinePlugin({
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+      'process.platform': JSON.stringify(process.platform),
+      'process.env': JSON.stringify({})
     }),
     new MiniCssExtractPlugin({
       filename: '[name]/styles.main.css'

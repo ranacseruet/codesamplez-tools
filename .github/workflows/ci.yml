@@ -36,6 +36,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-build-${{ github.sha }}
 
+    - name: Verify Build Artifacts
+      run: npm run verify-build
+
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v5
       with:
