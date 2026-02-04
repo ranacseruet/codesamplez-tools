@@ -261,6 +261,21 @@ describe('CopyButton', () => {
             jest.useRealTimers();
         });
 
+        test('should update aria-label on success', async () => {
+            textArea.value = 'success test';
+            jest.useFakeTimers();
+
+            await copyButtonInstance.copyContent();
+
+            expect(copyButtonInstance.copyButton.getAttribute('aria-label')).toBe('Copied successfully!');
+
+            jest.advanceTimersByTime(600);
+
+            expect(copyButtonInstance.copyButton.getAttribute('aria-label')).toBe('Copy content to clipboard');
+
+            jest.useRealTimers();
+        });
+
         test('should show error animation when all copy methods fail', async () => {
             textArea.value = 'error test';
             navigator.clipboard.writeText.mockRejectedValue(new Error('Clipboard failed'));

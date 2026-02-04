@@ -142,10 +142,12 @@ class CopyButton {
 
     showSuccessAnimation() {
         this.copyButton.classList.add('copy-success');
+        this.copyButton.setAttribute('aria-label', 'Copied successfully!');
         
         // Remove the class after animation completes
         setTimeout(() => {
             this.copyButton.classList.remove('copy-success');
+            this.copyButton.setAttribute('aria-label', 'Copy content to clipboard');
         }, 600);
     }
 
