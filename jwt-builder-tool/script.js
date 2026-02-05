@@ -72,15 +72,28 @@ export function addClaim() {
       </label>
       <input type="text" name="claimValue" class="c-input" placeholder="e.g., admin" style="flex: 1;">
     </div>
-    <button type="button" class="c-button c-button--danger delete-claim" onclick="removeClaim(this)" title="Remove this claim">x</button>
+    <button type="button" class="c-button c-button--danger delete-claim" onclick="removeClaim(this)" aria-label="Remove custom claim" title="Remove this claim">x</button>
   `;
   customClaimsDiv.appendChild(newClaimRow);
+
+  // Focus the new claim name input for better keyboard accessibility
+  const nameInput = newClaimRow.querySelector('input[name="claimName"]');
+  if (nameInput) {
+    nameInput.focus();
+  }
 }
 
 export function removeClaim(button) {
   const customClaimsDiv = document.getElementById('customClaims');
+  const addClaimBtn = document.querySelector('.add-claim');
+
   button.parentElement.remove();
   
+  // Move focus back to "Add Claim" button to prevent focus loss
+  if (addClaimBtn) {
+    addClaimBtn.focus();
+  }
+
   if (customClaimsDiv.children.length === 0) {
     const emptyMessage = document.createElement('div');
     emptyMessage.className = 'empty-claims-message';

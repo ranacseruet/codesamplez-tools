@@ -46,7 +46,10 @@ describe('JWT Builder UI Tests', () => {
 
     // Create a fresh DOM environment for each test
     document.body.innerHTML = `
-      <div id="customClaims"></div>
+      <div class="c-form-group">
+        <button class="add-claim">+ Add Claim</button>
+        <div id="customClaims"></div>
+      </div>
       <pre id="result"></pre>
       <input id="key" value="test-key">
       <input id="iss" value="test-issuer">
@@ -96,7 +99,7 @@ describe('JWT Builder UI Tests', () => {
   });
 
   describe('Custom Claims Management', () => {
-    test('adds new custom claim row', () => {
+    test('adds new custom claim row with accessible delete button', () => {
       scriptModule.addClaim();
       const customClaimsDiv = document.getElementById('customClaims');
       const claimRow = customClaimsDiv.querySelector('.custom-claim-row');
@@ -104,18 +107,56 @@ describe('JWT Builder UI Tests', () => {
       expect(claimRow).toBeTruthy();
       expect(claimRow.querySelector('input[name="claimName"]')).toBeTruthy();
       expect(claimRow.querySelector('input[name="claimValue"]')).toBeTruthy();
+
+      const deleteButton = claimRow.querySelector('.delete-claim');
+      expect(deleteButton.getAttribute('aria-label')).toBe('Remove custom claim');
     });
 
-    test('removes custom claim row', () => {
+    test('sets focus to new input when claim is added', () => {
+      // Mock focus method since JSDOM might not support it fully or we want to verify the call
+      const originalCreateElement = document.createElement;
+      const focusSpy = jest.fn();
+
+      jest.spyOn(document, 'createElement').mockImplementation((tagName) => {
+        const element = originalCreateElement.call(document, tagName);
+        if (tagName === 'div') { // The row is a div
+           // When innerHTML is set, the inputs are created.
+           // We need to attach spy to the input AFTER it's in the DOM or spy on the prototype.
+        }
+        return element;
+      });
+
+      // Simpler approach: check document.activeElement if JSDOM supports it,
+      // or spy on HTMLElement.prototype.focus
+      const focusSpySimple = jest.spyOn(HTMLElement.prototype, 'focus');
+
+      scriptModule.addClaim();
+
+      const nameInput = document.querySelector('input[name="claimName"]');
+      expect(focusSpySimple).toHaveBeenCalled();
+      // In JSDOM, focus() should update activeElement
+      expect(document.activeElement).toBe(nameInput);
+
+      focusSpySimple.mockRestore();
+    });
+
+    test('removes custom claim row and moves focus to add button', () => {
       scriptModule.addClaim();
       const customClaimsDiv = document.getElementById('customClaims');
       const claimRow = customClaimsDiv.querySelector('.custom-claim-row');
       const deleteButton = claimRow.querySelector('.delete-claim');
+      const addClaimBtn = document.querySelector('.add-claim');
       
+      // Spy on focus
+      const focusSpy = jest.spyOn(addClaimBtn, 'focus');
+
       scriptModule.removeClaim(deleteButton);
       
       expect(customClaimsDiv.querySelector('.custom-claim-row')).toBeNull();
       expect(customClaimsDiv.querySelector('.empty-claims-message')).toBeTruthy();
+      expect(focusSpy).toHaveBeenCalled();
+
+      focusSpy.mockRestore();
     });
 
     test('shows empty message when last claim is removed', () => {
