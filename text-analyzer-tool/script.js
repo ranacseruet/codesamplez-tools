@@ -27,8 +27,7 @@ function analyzeText(text = '') {
     const wordCount = words.length;
 
     // Average Word Length: calculate after stripping punctuation
-    const cleanedWords = words.map(word => word.replace(/[^a-zA-Z0-9]/g, '')); // Remove all non-alphanumeric
-    const totalWordLength = cleanedWords.reduce((sum, word) => sum + word.length, 0);
+    const totalWordLength = words.reduce((sum, word) => sum + word.replace(/[^a-zA-Z0-9]/g, '').length, 0);
     const avgWordLength = wordCount > 0 ? (totalWordLength / wordCount).toFixed(2) : '0.00';
 
     // Line count: split on newlines, but return 0 for empty string
