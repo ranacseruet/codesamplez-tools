@@ -3,6 +3,7 @@ import { NotificationManager } from '../common/notification-manager.js';
 import { formatBytes } from '../common/format-utils.js';
 import ClearButton from '../common/clear-button/ClearButton.js';
 import CopyButton from '../common/copy-button/CopyButton.js';
+import { scheduleTask } from '../common/scheduler-utils.js';
 
 // Make functions available globally for webpack bundling
 window.removeCommentsFromCss = removeCommentsFromCss;
@@ -149,7 +150,15 @@ top: 0px;
             return;
         }
 
+        // UI Feedback: Show loading state
+        minifyBtn.textContent = 'Minifying...';
+        minifyBtn.disabled = true;
+        outputCss.classList.add('processing');
+
         try {
+            // Yield to main thread
+            await scheduleTask(20);
+
             const isValid = await isValidCSS(originalCss);
             if (!isValid) {
                 outputCss.value = '';
@@ -198,6 +207,11 @@ top: 0px;
             outputCss.value = '';
             updateStats(originalCss, '');
             NotificationManager.show('Error: Failed to process CSS. ' + error.message, 3000, { type: 'error' });
+        } finally {
+            // Restore UI state
+            minifyBtn.textContent = 'Minify CSS';
+            minifyBtn.disabled = false;
+            outputCss.classList.remove('processing');
         }
     }
 

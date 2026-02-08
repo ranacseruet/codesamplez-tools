@@ -3,6 +3,7 @@ import { formatBytes } from '../common/format-utils.js';
 import { NotificationManager } from '../common/notification-manager.js';
 import ClearButton from '../common/clear-button/ClearButton.js';
 import CopyButton from '../common/copy-button/CopyButton.js';
+import { scheduleTask } from '../common/scheduler-utils.js';
 
 // Make JSMinifier available globally
 window.JSMinifier = JSMinifier;
@@ -58,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Minify the code
-  function minifyCode() {
+  async function minifyCode() {
     const code = input.value;
 
     if (!code.trim()) {
@@ -68,16 +69,24 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const options = {
-      removeComments: removeCommentsCheckbox.checked,
-      removeWhitespace: removeWhitespaceCheckbox.checked,
-      shortenVariables: shortenVariablesCheckbox.checked,
-      mangleProperties: manglePropertiesCheckbox.checked
-    };
-
-    const minifier = new JSMinifier(options);
+    // UI Feedback: Show loading state
+    minifyBtn.textContent = 'Minifying...';
+    minifyBtn.disabled = true;
+    output.classList.add('processing'); // Optional visual cue
 
     try {
+      // Yield to main thread to allow UI to update
+      await scheduleTask(20);
+
+      const options = {
+        removeComments: removeCommentsCheckbox.checked,
+        removeWhitespace: removeWhitespaceCheckbox.checked,
+        shortenVariables: shortenVariablesCheckbox.checked,
+        mangleProperties: manglePropertiesCheckbox.checked
+      };
+
+      const minifier = new JSMinifier(options);
+
       const minified = minifier.minify(code);
       output.value = minified;
       copyButton.updateVisibility();
@@ -88,6 +97,11 @@ document.addEventListener('DOMContentLoaded', () => {
       copyButton.updateVisibility();
       NotificationManager.show(`Minification error: ${error.message}`, 3000, { type: 'error' });
       console.error('Minification error:', error);
+    } finally {
+      // Restore UI state
+      minifyBtn.textContent = 'Minify JavaScript';
+      minifyBtn.disabled = false;
+      output.classList.remove('processing');
     }
   }
 

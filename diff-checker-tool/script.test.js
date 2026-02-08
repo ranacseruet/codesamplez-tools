@@ -1,4 +1,24 @@
-import { DiffDisplay, DiffNavigator } from './script.js'; // Import DiffNavigator
+import { DiffDisplay, DiffNavigator, CodeDetector, initializeDiffChecker } from './script.js';
+import { NotificationManager } from '../common/notification-manager.js';
+
+// Mock NotificationManager
+jest.mock('../common/notification-manager.js', () => ({
+  NotificationManager: {
+    show: jest.fn()
+  }
+}));
+
+// Mock scheduler
+jest.mock('../common/scheduler-utils.js', () => ({
+  scheduleTask: jest.fn().mockResolvedValue()
+}));
+
+// Mock ClearButton
+jest.mock('../common/clear-button/ClearButton.js', () => {
+  return jest.fn().mockImplementation(() => ({
+    disconnect: jest.fn()
+  }));
+});
 
 // Removed global document.createElement mock
 
@@ -30,9 +50,9 @@ describe('DiffDisplay', () => {
         ['removed', 'old line'],
         ['unchanged', 'same line']
       ];
-      
+
       diffDisplay.displayDiff(diffResults, false);
-      
+
       expect(mockElement.innerHTML).toBe('');
       // Check that appendChild was called for each result
       expect(mockElement.appendChild).toHaveBeenCalledTimes(diffResults.length);
@@ -162,9 +182,9 @@ describe('DiffDisplay', () => {
         highlight: jest.fn().mockReturnValue('highlighted'),
         languages: { javascript: {} }
       };
-      
+
       // Pass 'unchanged' as changeType to trigger highlighting attempt
-      const result = diffDisplay.formatLine('const x = 1;', true, 'unchanged'); 
+      const result = diffDisplay.formatLine('const x = 1;', true, 'unchanged');
       expect(result).toBe('highlighted\n');
       expect(Prism.highlight).toHaveBeenCalledWith('const x = 1;', Prism.languages.javascript, 'javascript');
     });
@@ -174,9 +194,9 @@ describe('DiffDisplay', () => {
         highlight: jest.fn().mockImplementation(() => { throw new Error(); }),
         languages: { javascript: {} }
       };
-      
+
       // Pass 'unchanged' as changeType to trigger highlighting attempt
-      const result = diffDisplay.formatLine('const x = 1;', true, 'unchanged'); 
+      const result = diffDisplay.formatLine('const x = 1;', true, 'unchanged');
       expect(result).toBe('const x = 1;\n');
     });
   });
@@ -251,7 +271,7 @@ describe('DiffDisplay', () => {
     it('should handle different digit lengths correctly', () => {
       diffDisplay.originalLineNumber = 9;
       diffDisplay.modifiedLineNumber = 99;
-      
+
       const result = diffDisplay.createLineNumberHTML('unchanged');
       expect(result).toBe(' 9│99');
     });
@@ -304,9 +324,9 @@ describe('DiffNavigator', () => { // Test the class directly
 
     // Instantiate the navigator with real JSDOM elements
     navigator = new DiffNavigator(diffResultElement, prevButton, nextButton, counter);
-     // Spy on methods AFTER instantiation
-     // No need to spy on updateNavigationState/reset as they are internal calls triggered by others
-     jest.spyOn(navigator, 'navigateToIndex'); // Still useful to spy on this
+    // Spy on methods AFTER instantiation
+    // No need to spy on updateNavigationState/reset as they are internal calls triggered by others
+    jest.spyOn(navigator, 'navigateToIndex'); // Still useful to spy on this
 
   });
 
@@ -411,86 +431,165 @@ describe('DiffNavigator', () => { // Test the class directly
     expect(nextButton.disabled).toBe(false);
   });
 
-   it('should not navigate past the first or last difference', () => {
-     const lineTypes = ['added', 'unchanged', 'removed'];
-     setupRealDiffLines(lineTypes);
-     navigator.navigateToIndex(0); // Go to first
+  it('should not navigate past the first or last difference', () => {
+    const lineTypes = ['added', 'unchanged', 'removed'];
+    setupRealDiffLines(lineTypes);
+    navigator.navigateToIndex(0); // Go to first
 
-     // Check state at first diff
-     expect(navigator.currentDiffIndex).toBe(0);
-     expect(prevButton.disabled).toBe(true);
+    // Check state at first diff
+    expect(navigator.currentDiffIndex).toBe(0);
+    expect(prevButton.disabled).toBe(true);
 
-     // Simulate clicking Prev button (should do nothing)
-     prevButton.click();
-     // navigateToIndex should have been called once for the initial setup
-     expect(navigator.navigateToIndex).toHaveBeenCalledTimes(1);
-     expect(navigator.currentDiffIndex).toBe(0); // Still at index 0
-     expect(counter.textContent).toBe('1 of 2');
-     expect(prevButton.disabled).toBe(true);
+    // Simulate clicking Prev button (should do nothing)
+    prevButton.click();
+    // navigateToIndex should have been called once for the initial setup
+    expect(navigator.navigateToIndex).toHaveBeenCalledTimes(1);
+    expect(navigator.currentDiffIndex).toBe(0); // Still at index 0
+    expect(counter.textContent).toBe('1 of 2');
+    expect(prevButton.disabled).toBe(true);
 
-     navigator.navigateToIndex(1); // Go to last
-     expect(navigator.currentDiffIndex).toBe(1);
-     expect(nextButton.disabled).toBe(true);
+    navigator.navigateToIndex(1); // Go to last
+    expect(navigator.currentDiffIndex).toBe(1);
+    expect(nextButton.disabled).toBe(true);
 
-     // Simulate clicking Next button (should do nothing)
-     nextButton.click();
-     // navigateToIndex should have been called twice now (initial + manual navToIndex(1))
-     expect(navigator.navigateToIndex).toHaveBeenCalledTimes(2);
-     expect(navigator.currentDiffIndex).toBe(1); // Still at index 1
-     expect(counter.textContent).toBe('2 of 2');
-     expect(nextButton.disabled).toBe(true);
-   });
+    // Simulate clicking Next button (should do nothing)
+    nextButton.click();
+    // navigateToIndex should have been called twice now (initial + manual navToIndex(1))
+    expect(navigator.navigateToIndex).toHaveBeenCalledTimes(2);
+    expect(navigator.currentDiffIndex).toBe(1); // Still at index 1
+    expect(counter.textContent).toBe('2 of 2');
+    expect(nextButton.disabled).toBe(true);
+  });
 
-   it('should reset navigation state on re-compare', () => {
-     const lineTypes1 = ['added'];
-     setupRealDiffLines(lineTypes1);
-     const firstAddedLine = diffResultElement.children[0];
-     navigator.navigateToIndex(0); // Navigate to the first diff
+  it('should reset navigation state on re-compare', () => {
+    const lineTypes1 = ['added'];
+    setupRealDiffLines(lineTypes1);
+    const firstAddedLine = diffResultElement.children[0];
+    navigator.navigateToIndex(0); // Navigate to the first diff
 
-     // Check initial state
-     expect(navigator.currentDiffIndex).toBe(0);
-     expect(counter.textContent).toBe('1 of 1');
-     expect(firstAddedLine.classList.contains('current-diff-single')).toBe(true);
+    // Check initial state
+    expect(navigator.currentDiffIndex).toBe(0);
+    expect(counter.textContent).toBe('1 of 1');
+    expect(firstAddedLine.classList.contains('current-diff-single')).toBe(true);
 
-     // Simulate comparing again by setting up new lines
-     const lineTypes2 = ['removed', 'unchanged', 'added'];
-     setupRealDiffLines(lineTypes2); // This calls updateDiffElements -> reset -> updateNavigationState
+    // Simulate comparing again by setting up new lines
+    const lineTypes2 = ['removed', 'unchanged', 'added'];
+    setupRealDiffLines(lineTypes2); // This calls updateDiffElements -> reset -> updateNavigationState
 
-     // Check reset state
-     expect(navigator.currentDiffIndex).toBe(-1); // Index reset
-     expect(counter.textContent).toBe('0 of 2'); // Counter reset (index -1)
-     expect(prevButton.disabled).toBe(true);
-     expect(nextButton.disabled).toBe(false); // Can go next
-     // Check that previous highlight is gone (mock check)
-     // We can't easily check the *old* element's classList.remove mock here
-     // Instead, check that no elements currently have the highlight
-     const highlighted = diffResultElement.querySelectorAll('.current-diff-single, .current-diff-start, .current-diff-middle, .current-diff-end');
-     expect(highlighted.length).toBe(0);
-   });
+    // Check reset state
+    expect(navigator.currentDiffIndex).toBe(-1); // Index reset
+    expect(counter.textContent).toBe('0 of 2'); // Counter reset (index -1)
+    expect(prevButton.disabled).toBe(true);
+    expect(nextButton.disabled).toBe(false); // Can go next
+    // Check that previous highlight is gone (mock check)
+    // We can't easily check the *old* element's classList.remove mock here
+    // Instead, check that no elements currently have the highlight
+    const highlighted = diffResultElement.querySelectorAll('.current-diff-single, .current-diff-start, .current-diff-middle, .current-diff-end');
+    expect(highlighted.length).toBe(0);
+  });
 
-   it('should highlight multi-line blocks correctly', () => {
-     const lineTypes = ['added', 'removed', 'unchanged', 'added'];
-     setupRealDiffLines(lineTypes);
-     // This should create two blocks: [added, removed] and [added]
+  it('should highlight multi-line blocks correctly', () => {
+    const lineTypes = ['added', 'removed', 'unchanged', 'added'];
+    setupRealDiffLines(lineTypes);
+    // This should create two blocks: [added, removed] and [added]
 
-     expect(navigator.diffElements.length).toBe(2);
-     expect(navigator.diffElements[0].length).toBe(2); // First block has 2 lines
-     expect(navigator.diffElements[1].length).toBe(1); // Second block has 1 line
+    expect(navigator.diffElements.length).toBe(2);
+    expect(navigator.diffElements[0].length).toBe(2); // First block has 2 lines
+    expect(navigator.diffElements[1].length).toBe(1); // Second block has 1 line
 
-     navigator.navigateToIndex(0); // Navigate to first block
+    navigator.navigateToIndex(0); // Navigate to first block
 
-     const firstBlockLines = navigator.diffElements[0];
-     expect(firstBlockLines[0].classList.contains('current-diff-start')).toBe(true);
-     expect(firstBlockLines[1].classList.contains('current-diff-end')).toBe(true);
-     expect(counter.textContent).toBe('1 of 2');
+    const firstBlockLines = navigator.diffElements[0];
+    expect(firstBlockLines[0].classList.contains('current-diff-start')).toBe(true);
+    expect(firstBlockLines[1].classList.contains('current-diff-end')).toBe(true);
+    expect(counter.textContent).toBe('1 of 2');
 
-     navigator.navigateToIndex(1); // Navigate to second block
+    navigator.navigateToIndex(1); // Navigate to second block
 
-     const secondBlockLines = navigator.diffElements[1];
-     expect(firstBlockLines[0].classList.contains('current-diff-start')).toBe(false);
-     expect(firstBlockLines[1].classList.contains('current-diff-end')).toBe(false);
-     expect(secondBlockLines[0].classList.contains('current-diff-single')).toBe(true);
-     expect(counter.textContent).toBe('2 of 2');
-   });
+    const secondBlockLines = navigator.diffElements[1];
+    expect(firstBlockLines[0].classList.contains('current-diff-start')).toBe(false);
+    expect(firstBlockLines[1].classList.contains('current-diff-end')).toBe(false);
+    expect(secondBlockLines[0].classList.contains('current-diff-single')).toBe(true);
+    expect(counter.textContent).toBe('2 of 2');
+  });
 
+});
+
+
+describe('CodeDetector', () => {
+  test('should detect JavaScript code keywords', () => {
+    const code = 'function test() { const a = 1; return a; }';
+    expect(CodeDetector.isCode(code)).toBe(true);
+  });
+
+  test('should detect code syntax characters', () => {
+    const code = '{ a: 1, b: 2 }; [1, 2, 3];';
+    expect(CodeDetector.isCode(code)).toBe(true);
+  });
+
+  test('should not detect plain text as code', () => {
+    const text = 'This is just some plain text with no code symbols.';
+    expect(CodeDetector.isCode(text)).toBe(false);
+  });
+});
+
+describe('initializeDiffChecker', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.innerHTML = `
+      <textarea id="text1"></textarea>
+      <textarea id="text2"></textarea>
+      <button id="compare-button">Compare</button>
+      <div id="diff-result"></div>
+      <button id="prev-diff-button"></button>
+      <button id="next-diff-button"></button>
+      <span id="diff-counter"></span>
+      <input type="checkbox" id="ignore-whitespace">
+    `;
+    document.body.appendChild(container); // Using JSDOM document
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    document.body.removeChild(container);
+    // Cleanup global state if needed
+  });
+
+  test('should initialize event listeners', () => {
+    const btn = document.getElementById('compare-button');
+    const addEventListenerSpy = jest.spyOn(btn, 'addEventListener');
+
+    initializeDiffChecker();
+
+    expect(addEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function));
+  });
+
+  test('should trigger diff computation on click', async () => {
+    initializeDiffChecker();
+
+    document.getElementById('text1').value = 'foo\nbar';
+    document.getElementById('text2').value = 'foo\nbaz';
+    document.getElementById('compare-button').click();
+
+    // Wait for async operations (setTimeout, etc)
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    expect(NotificationManager.show).toHaveBeenCalledWith('Diff computation complete!');
+
+    // Verify results were populated
+    const result = document.getElementById('diff-result');
+    expect(result.children.length).toBeGreaterThan(0);
+  });
+
+  test('should show error validation if inputs empty', async () => {
+    initializeDiffChecker();
+    document.getElementById('compare-button').click();
+
+    // Wait slightly
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(NotificationManager.show).toHaveBeenCalledWith(expect.stringContaining('Please enter text'));
+  });
 });

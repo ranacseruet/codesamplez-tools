@@ -5,8 +5,8 @@ import ClearButton from '../common/clear-button/ClearButton';
 // Class to detect if content is code (used for syntax highlighting)
 class CodeDetector {
   static KEYWORDS = ['function', 'const', 'let', 'var', 'import', 'export', 'class', 'return'];
-  static CODE_CHARACTERS = ['{', '}', '(', ')', ';', '=', '=>', '.'];
-  
+  static CODE_CHARACTERS = ['{', '}', '(', ')', '[', ']', ';', ':', '=', '=>', '.', ','];
+
   static isCode(textContent) {
     const keywordCount = this.countOccurrences(textContent, this.KEYWORDS);
     const syntaxCharCount = this.countOccurrences(textContent, this.CODE_CHARACTERS);
@@ -14,7 +14,7 @@ class CodeDetector {
   }
 
   static countOccurrences(textContent, searchPatterns) {
-    return searchPatterns.reduce((totalCount, pattern) => 
+    return searchPatterns.reduce((totalCount, pattern) =>
       totalCount + (textContent.split(pattern).length - 1), 0);
   }
 }
@@ -42,38 +42,38 @@ class DiffDisplay {
       // Split the string by the opening and closing tags of word-level diff spans
       const parts = [];
       let currentIndex = 0;
-      
+
       // Regular expression to match word-level diff spans
       const spanRegex = /(<span class="word-(added|removed)">(.*?)<\/span>)/g;
       let match;
-      
+
       while ((match = spanRegex.exec(html)) !== null) {
         // Add the text before the span (escaped)
         if (match.index > currentIndex) {
           const textBefore = html.substring(currentIndex, match.index);
           parts.push(this.escapeHtml(textBefore));
         }
-        
+
         // Add the span itself (unescaped)
         parts.push(match[0]);
-        
+
         // Update the current index
         currentIndex = match.index + match[0].length;
       }
-      
+
       // Add any remaining text after the last span (escaped)
       if (currentIndex < html.length) {
         const textAfter = html.substring(currentIndex);
         parts.push(this.escapeHtml(textAfter));
       }
-      
+
       return parts.join('');
     }
-    
+
     // If no word-level diff spans, escape all HTML
     return this.escapeHtml(html);
   }
-  
+
   // Basic HTML escaping function
   escapeHtml(html) {
     return html
@@ -91,7 +91,7 @@ class DiffDisplay {
     const lineNumberElement = document.createElement('span');
     const contentElement = document.createElement('span');
 
-    const lineNumbersContent = this.getLineNumberText(changeType); 
+    const lineNumbersContent = this.getLineNumberText(changeType);
     lineNumberElement.className = 'diff-line-number';
     lineNumberElement.textContent = lineNumbersContent;
 
@@ -150,7 +150,7 @@ class DiffDisplay {
       this.originalLineNumber.toString().length,
       this.modifiedLineNumber.toString().length
     );
-    
+
     let lineNumbers = '';
     switch (changeType) {
       case 'added':
@@ -166,14 +166,14 @@ class DiffDisplay {
   }
 
   formatLineNumbers(originalNum, modifiedNum, maxDigits) {
-    const originalStr = originalNum 
-      ? originalNum.toString().padStart(maxDigits, ' ') 
+    const originalStr = originalNum
+      ? originalNum.toString().padStart(maxDigits, ' ')
       : ''.padStart(maxDigits, ' ');
-    const modifiedStr = modifiedNum 
-      ? modifiedNum.toString().padStart(maxDigits, ' ') 
+    const modifiedStr = modifiedNum
+      ? modifiedNum.toString().padStart(maxDigits, ' ')
       : ''.padStart(maxDigits, ' ');
     // Return only the text content, not the span tag
-    return `${originalStr}│${modifiedStr}`; 
+    return `${originalStr}│${modifiedStr}`;
   }
 
   // Renamed from createLineNumberHTML to getLineNumberText to reflect it returns text
@@ -202,7 +202,9 @@ class DiffDisplay {
 }
 
 // Import shared notification manager
+// Import shared notification manager
 import { NotificationManager } from '../common/notification-manager.js';
+import { scheduleTask } from '../common/scheduler-utils.js';
 
 // Class to handle diff navigation
 class DiffNavigator {
@@ -248,7 +250,7 @@ class DiffNavigator {
   }
 
   reset() {
-     // Remove any existing highlight
+    // Remove any existing highlight
     this.resultElement.querySelectorAll('.current-diff').forEach(el => el.classList.remove('current-diff'));
     this.currentDiffIndex = -1;
     this.updateNavigationState();
@@ -324,7 +326,9 @@ class DiffNavigator {
 
 
 // Main event handler
-if (typeof document !== 'undefined') {
+export function initializeDiffChecker() {
+  if (typeof document === 'undefined') return;
+
   const compareButton = document.getElementById('compare-button');
   const text1 = document.getElementById('text1');
   const text2 = document.getElementById('text2');
@@ -340,7 +344,7 @@ if (typeof document !== 'undefined') {
 
   // Initialize clear buttons with cleanup support
   let clearButton1, clearButton2;
-  
+
   // Cleanup function to disconnect clear buttons
   /* istanbul ignore next */
   const cleanup = () => {
@@ -357,38 +361,54 @@ if (typeof document !== 'undefined') {
 
   // Handle page unload
   window.addEventListener('unload', cleanup);
-  
-   /* istanbul ignore next */
+
+  /* istanbul ignore next */
   if (text1 && text2) {
     clearButton1 = new ClearButton(text1);
     clearButton2 = new ClearButton(text2);
   }
 
   if (compareButton && text1 && text2) {
-    compareButton.addEventListener('click', function () {
+    compareButton.addEventListener('click', async function () {
       const originalText = text1.value;
       const modifiedText = text2.value;
-      
+
       if (!originalText && !modifiedText) {
         NotificationManager.show('Please enter text in at least one of the fields');
         return;
       }
 
-      const originalLines = originalText.split('\n');
-      const modifiedLines = modifiedText.split('\n');
+      // UI Feedback: Show loading state
+      compareButton.textContent = 'Computing Diff...';
+      compareButton.disabled = true;
 
-      const isCodeContent = CodeDetector.isCode(originalText) || CodeDetector.isCode(modifiedText);
-      const ignoreWhitespace = document.getElementById('ignore-whitespace').checked;
-      const diffResults = computeDiff(originalLines, modifiedLines, ignoreWhitespace);
+      try {
+        // Yield to main thread
+        await scheduleTask(20);
 
-      const diffDisplay = new DiffDisplay(diffResultElement);
-      diffDisplay.displayDiff(diffResults, isCodeContent);
+        const originalLines = originalText.split('\n');
+        const modifiedLines = modifiedText.split('\n');
 
-      // Update the navigator with the new diff elements
-      diffNavigator.updateDiffElements();
+        const isCodeContent = CodeDetector.isCode(originalText) || CodeDetector.isCode(modifiedText);
+        const ignoreWhitespace = document.getElementById('ignore-whitespace').checked;
+        const diffResults = computeDiff(originalLines, modifiedLines, ignoreWhitespace);
 
-      // Show notification
-      NotificationManager.show('Diff computation complete!');
+        const diffDisplay = new DiffDisplay(diffResultElement);
+        diffDisplay.displayDiff(diffResults, isCodeContent);
+
+        // Update the navigator with the new diff elements
+        diffNavigator.updateDiffElements();
+
+        // Show notification
+        NotificationManager.show('Diff computation complete!');
+      } catch (error) {
+        NotificationManager.show('Error computing diff: ' + error.message);
+        console.error(error);
+      } finally {
+        // Restore UI state
+        compareButton.textContent = 'Compare';
+        compareButton.disabled = false;
+      }
     });
   }
 
@@ -396,5 +416,10 @@ if (typeof document !== 'undefined') {
   window.diffCheckerCleanup = cleanup;
 }
 
+// Auto-initialize if document exists
+if (typeof document !== 'undefined') {
+  initializeDiffChecker();
+}
+
 // Export classes/functions needed for testing or potentially other modules
-export { computeDiff, DiffDisplay, DiffNavigator };
+export { computeDiff, DiffDisplay, DiffNavigator, CodeDetector };

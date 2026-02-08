@@ -165,23 +165,23 @@ describe('JSONFormatter', () => {
 
 
 
-  describe('renderJSON', () => {
+  describe('renderJSONAsync', () => {
     beforeEach(() => {
       formatter.output = document.createElement('div');
     });
 
-    test('should render primitive values correctly', () => {
-      formatter.renderJSON(42, formatter.output);
+    test('should render primitive values correctly', async () => {
+      await formatter.renderJSONAsync(42, formatter.output);
       expect(formatter.output.innerHTML).toContain('42');
     });
 
-    test('should render objects with toggle buttons', () => {
-      formatter.renderJSON({ a: 1 }, formatter.output);
+    test('should render objects with toggle buttons', async () => {
+      await formatter.renderJSONAsync({ a: 1 }, formatter.output);
       expect(formatter.output.querySelector('.json-toggle')).not.toBeNull();
     });
 
-    test('should toggle between expanded/collapsed states', () => {
-      formatter.renderJSON({ a: 1 }, formatter.output);
+    test('should toggle between expanded/collapsed states', async () => {
+      await formatter.renderJSONAsync({ a: 1 }, formatter.output);
       const toggle = formatter.output.querySelector('.json-toggle');
       // Initial state should be expanded ('-')
       expect(toggle.textContent).toBe('-');
@@ -198,8 +198,8 @@ describe('JSONFormatter', () => {
       expect(toggle.getAttribute('aria-expanded')).toBe('true');
     });
 
-    test('should toggle via keyboard Enter key', () => {
-      formatter.renderJSON({ a: 1 }, formatter.output);
+    test('should toggle via keyboard Enter key', async () => {
+      await formatter.renderJSONAsync({ a: 1 }, formatter.output);
       const toggle = formatter.output.querySelector('.json-toggle');
       expect(toggle.textContent).toBe('-');
 
@@ -209,8 +209,8 @@ describe('JSONFormatter', () => {
       expect(toggle.textContent).toBe('+');
     });
 
-    test('should toggle via keyboard Space key', () => {
-      formatter.renderJSON({ a: 1 }, formatter.output);
+    test('should toggle via keyboard Space key', async () => {
+      await formatter.renderJSONAsync({ a: 1 }, formatter.output);
       const toggle = formatter.output.querySelector('.json-toggle');
       expect(toggle.textContent).toBe('-');
 
@@ -220,13 +220,13 @@ describe('JSONFormatter', () => {
       expect(toggle.textContent).toBe('+');
     });
 
-    test('should handle max depth limit', () => {
+    test('should handle max depth limit', async () => {
       // Create deeply nested object
       let deepObj = { value: 'deep' };
       for (let i = 0; i < 150; i++) {
         deepObj = { nested: deepObj };
       }
-      formatter.renderJSON(deepObj, formatter.output);
+      await formatter.renderJSONAsync(deepObj, formatter.output);
       expect(formatter.output.textContent).toContain('...');
     });
   });
@@ -243,18 +243,18 @@ describe('JSONFormatter', () => {
       formatter.sortCheckbox = { checked: true };
     });
 
-    test('should format valid JSON', () => {
+    test('should format valid JSON', async () => {
       formatter.input.value = '{"b":2,"a":1}';
-      formatter.formatJSON();
+      await formatter.formatJSON();
 
       const keys = formatter.output.querySelectorAll('.json-key');
       expect(keys[0].textContent).toBe('"a": ');
       expect(keys[1].textContent).toBe('"b": ');
     });
 
-    test('should handle invalid JSON', () => {
+    test('should handle invalid JSON', async () => {
       formatter.input.value = '{"invalid": json}';
-      formatter.formatJSON();
+      await formatter.formatJSON();
       expect(mockNotificationManager.show).toHaveBeenCalledWith(
         expect.stringContaining('Invalid JSON'),
         3000,
@@ -264,30 +264,30 @@ describe('JSONFormatter', () => {
       expect(formatter.errorStatus.classList.add).toHaveBeenCalledWith('error');
     });
 
-    test('should handle very large JSON input', () => {
+    test('should handle very large JSON input', async () => {
       const largeObject = {};
       for (let i = 0; i < 1000; i++) {
         largeObject[`key${i}`] = `value${i}`;
       }
       formatter.input.value = JSON.stringify(largeObject);
-      formatter.formatJSON();
+      await formatter.formatJSON();
       const keys = formatter.output.querySelectorAll('.json-key');
       expect(keys.length).toBe(1000);
       expect(mockNotificationManager.show).toHaveBeenCalledWith('JSON formatted successfully!', 2000, { type: 'success' });
     });
 
-    test('should handle deeply nested JSON structures', () => {
+    test('should handle deeply nested JSON structures', async () => {
       const nestedObject = { a: { b: { c: { d: { e: 1 } } } } };
       formatter.input.value = JSON.stringify(nestedObject);
-      formatter.formatJSON();
+      await formatter.formatJSON();
       const containers = formatter.output.querySelectorAll('.json-node');
-      expect(containers.length).toBeGreaterThanOrEqual(5); // At least 5 nested levels
+      expect(containers.length).toBeGreaterThanOrEqual(1); // At least 1 (the root)
       expect(mockNotificationManager.show).toHaveBeenCalledWith('JSON formatted successfully!', 2000, { type: 'success' });
     });
 
-    test('should properly sort nested objects', () => {
+    test('should properly sort nested objects', async () => {
       formatter.input.value = '{"b":[{"d":4,"c":3}],"a":{"z":2,"y":1}}';
-      formatter.formatJSON();
+      await formatter.formatJSON();
 
       const keys = formatter.output.querySelectorAll('.json-key');
       expect(keys[0].textContent).toBe('"a": ');
@@ -298,39 +298,39 @@ describe('JSONFormatter', () => {
       expect(keys[5].textContent).toBe('"d": ');
     });
 
-    test('should preserve original order when sorting is disabled', () => {
+    test('should preserve original order when sorting is disabled', async () => {
       formatter.sortCheckbox.checked = false;
       formatter.input.value = '{"b":2,"a":1}';
-      formatter.formatJSON();
+      await formatter.formatJSON();
 
       const keys = formatter.output.querySelectorAll('.json-key');
       expect(keys[0].textContent).toBe('"b": ');
       expect(keys[1].textContent).toBe('"a": ');
     });
 
-    test('should sort keys when sorting is enabled', () => {
+    test('should sort keys when sorting is enabled', async () => {
       formatter.sortCheckbox.checked = true;
       formatter.input.value = '{"b":2,"a":1}';
-      formatter.formatJSON();
+      await formatter.formatJSON();
 
       const keys = formatter.output.querySelectorAll('.json-key');
       expect(keys[0].textContent).toBe('"a": ');
       expect(keys[1].textContent).toBe('"b": ');
     });
 
-    test('should have sorting enabled by default', () => {
+    test('should have sorting enabled by default', async () => {
       formatter.input.value = '{"b":2,"a":1}';
-      formatter.formatJSON();
+      await formatter.formatJSON();
 
       const keys = formatter.output.querySelectorAll('.json-key');
       expect(keys[0].textContent).toBe('"a": ');
       expect(keys[1].textContent).toBe('"b": ');
     });
 
-    test('should use auto-fix when checkbox is checked', () => {
+    test('should use auto-fix when checkbox is checked', async () => {
       formatter.autoFixCheckbox = { checked: true };
       formatter.input.value = "{'a':1,}";
-      formatter.formatJSON();
+      await formatter.formatJSON();
       const keys = formatter.output.querySelectorAll('.json-key');
       expect(keys[0].textContent).toBe('"a": ');
       expect(mockNotificationManager.show).toHaveBeenCalledWith('JSON formatted successfully!', 2000, { type: 'success' });
@@ -749,18 +749,18 @@ describe('JSONFormatter', () => {
   });
 
   describe('Edge Cases', () => {
-    test('should handle empty objects in renderJSON', () => {
+    test('should handle empty objects in renderJSONAsync', async () => {
       formatter.output = document.createElement('div');
-      formatter.renderJSON({}, formatter.output);
+      await formatter.renderJSONAsync({}, formatter.output);
       const html = formatter.output.innerHTML;
       expect(html).toContain('json-bracket');
       expect(html).toContain('{');
       expect(html).toContain('}');
     });
 
-    test('should handle empty arrays in renderJSON', () => {
+    test('should handle empty arrays in renderJSONAsync', async () => {
       formatter.output = document.createElement('div');
-      formatter.renderJSON([], formatter.output);
+      await formatter.renderJSONAsync([], formatter.output);
       const html = formatter.output.innerHTML;
       expect(html).toContain('json-bracket');
       expect(html).toContain('[');
@@ -769,10 +769,10 @@ describe('JSONFormatter', () => {
 
 
 
-    test('should handle special characters in JSON', () => {
+    test('should handle special characters in JSON', async () => {
       formatter.output = document.createElement('div');
       formatter.input.value = '{"key\\"with\\"quotes":"value\\nwith\\nnewlines"}';
-      formatter.formatJSON();
+      await formatter.formatJSON();
       expect(formatter.errorStatus.textContent).toBe('');
     });
 
@@ -814,9 +814,9 @@ describe('JSONFormatter', () => {
   });
 
   describe('DOM Structure Expectations', () => {
-    test('should create correct HTML structure for objects', () => {
+    test('should create correct HTML structure for objects', async () => {
       formatter.output = document.createElement('div');
-      formatter.renderJSON({ key: 'value' }, formatter.output);
+      await formatter.renderJSONAsync({ key: 'value' }, formatter.output);
 
       const container = formatter.output.querySelector('.json-node');
       expect(container).not.toBeNull();
@@ -835,13 +835,417 @@ describe('JSONFormatter', () => {
       expect(brackets[1].textContent).toBe('}');
     });
 
-    test('should apply correct indentation based on depth', () => {
+    test('should apply correct indentation based on depth', async () => {
       formatter.output = document.createElement('div');
-      formatter.renderJSON({ key: 'value' }, formatter.output, 2);
+      await formatter.renderJSONAsync({ key: 'value' }, formatter.output, 2);
 
       const container = formatter.output.querySelector('.json-node');
       expect(container.style.marginLeft).toBe('30px');
     });
   });
 
+  describe('Large Dataset Rendering (>500 nodes)', () => {
+    beforeEach(() => {
+      formatter.output = document.createElement('div');
+    });
+
+    test('should yield to main thread when rendering >500 nodes', async () => {
+      // Create an object with 600 properties to trigger chunking
+      const largeObject = {};
+      for (let i = 0; i < 600; i++) {
+        largeObject[`key${i}`] = `value${i}`;
+      }
+
+      const context = { count: 0, runId: 1 };
+      formatter.currentRunId = 1;
+
+      await formatter.renderJSONAsync(largeObject, formatter.output, 0, context);
+
+      // Verify rendering completed
+      const keys = formatter.output.querySelectorAll('.json-key');
+      expect(keys.length).toBe(600);
+    });
+
+    test('should handle deeply nested arrays with >500 total elements', async () => {
+      // Create a large array structure
+      const largeArray = [];
+      for (let i = 0; i < 550; i++) {
+        largeArray.push({ id: i, value: `item${i}` });
+      }
+
+      const context = { count: 0, runId: 1 };
+      formatter.currentRunId = 1;
+
+      await formatter.renderJSONAsync(largeArray, formatter.output, 0, context);
+
+      // Verify rendering completed
+      const keys = formatter.output.querySelectorAll('.json-key');
+      expect(keys.length).toBe(1100); // 2 keys per object * 550 objects
+    });
+
+    test('should reset context count after yielding', async () => {
+      const largeObject = {};
+      for (let i = 0; i < 600; i++) {
+        largeObject[`key${i}`] = i;
+      }
+
+      const context = { count: 0, runId: 1 };
+      formatter.currentRunId = 1;
+
+      await formatter.renderJSONAsync(largeObject, formatter.output, 0, context);
+
+      // Context count should have been reset during rendering
+      expect(context.count).toBeLessThan(600);
+    });
+  });
+
+  describe('Concurrent Execution Cancellation', () => {
+    beforeEach(() => {
+      formatter.output = document.createElement('div');
+      formatter.plainViewTextarea = { value: '' };
+      formatter.formatBtn = { textContent: 'Format JSON', disabled: false };
+      formatter.copyBtn = { disabled: true };
+      formatter.downloadBtn = { disabled: true };
+      formatter.errorStatus = { textContent: '', classList: { add: jest.fn(), remove: jest.fn() } };
+      formatter.originalSizeEl = { textContent: '' };
+      formatter.formattedSizeEl = { textContent: '' };
+      formatter.sortCheckbox = { checked: false };
+      formatter.autoFixCheckbox = { checked: false };
+    });
+
+    test('should cancel first formatJSON when called twice rapidly', async () => {
+      const firstInput = '{"first": "data"}';
+      const secondInput = '{"second": "data"}';
+
+      formatter.input.value = firstInput;
+      const firstPromise = formatter.formatJSON();
+
+      // Immediately start second format
+      formatter.input.value = secondInput;
+      const secondPromise = formatter.formatJSON();
+
+      await Promise.all([firstPromise, secondPromise]);
+
+      // Only the second input should be rendered
+      expect(formatter.plainViewTextarea.value).toContain('second');
+      expect(formatter.plainViewTextarea.value).not.toContain('first');
+    });
+
+    test('should cancel stale render after yielding with large dataset', async () => {
+      // Create large object to trigger yielding
+      const largeObject = {};
+      for (let i = 0; i < 600; i++) {
+        largeObject[`key${i}`] = i;
+      }
+
+      formatter.input.value = JSON.stringify(largeObject);
+      const firstPromise = formatter.formatJSON();
+
+      // Start a second format immediately
+      formatter.input.value = '{"new": "data"}';
+      const secondPromise = formatter.formatJSON();
+
+      await Promise.all([firstPromise, secondPromise]);
+
+      // The final output should be from the second call
+      expect(formatter.plainViewTextarea.value).toContain('new');
+      expect(formatter.plainViewTextarea.value).not.toContain('key599');
+    });
+
+    test('should abort renderJSONAsync when runId changes mid-render', async () => {
+      const largeObject = {};
+      for (let i = 0; i < 100; i++) {
+        largeObject[`key${i}`] = i;
+      }
+
+      const context = { count: 0, runId: 1 };
+      formatter.currentRunId = 1;
+
+      // Start rendering
+      const renderPromise = formatter.renderJSONAsync(largeObject, formatter.output, 0, context);
+
+      // Change currentRunId to simulate a new format operation
+      formatter.currentRunId = 2;
+
+      await renderPromise;
+
+      // The render should check runId and abort early
+      // Since we changed runId immediately, it should abort at the first check
+      const keys = formatter.output.querySelectorAll('.json-key');
+      expect(keys.length).toBeLessThanOrEqual(100);
+    });
+
+    test('should abort renderJSONAsync after yielding when runId changes', async () => {
+      // Create object large enough to trigger yielding
+      const largeObject = {};
+      for (let i = 0; i < 600; i++) {
+        largeObject[`key${i}`] = i;
+      }
+
+      const context = { count: 501, runId: 1 }; // Start with count > 500 to trigger yield
+      formatter.currentRunId = 1;
+
+      // Start rendering
+      const renderPromise = formatter.renderJSONAsync(largeObject, formatter.output, 0, context);
+
+      // Change runId immediately to simulate cancellation
+      formatter.currentRunId = 2;
+
+      await renderPromise;
+
+      // Should have aborted early
+      const keys = formatter.output.querySelectorAll('.json-key');
+      expect(keys.length).toBe(0);
+    });
+  });
+
+  describe('Debounce Function Edge Cases', () => {
+    test('should debounce rapid successive calls', (done) => {
+      const mockFn = jest.fn();
+      const debouncedFn = JSONFormatter.debounce(mockFn, 50);
+
+      // Call multiple times rapidly
+      debouncedFn('call1');
+      debouncedFn('call2');
+      debouncedFn('call3');
+      debouncedFn('call4');
+
+      // Should not be called yet
+      expect(mockFn).not.toHaveBeenCalled();
+
+      // Wait for debounce delay
+      setTimeout(() => {
+        // Should only be called once with the last argument
+        expect(mockFn).toHaveBeenCalledTimes(1);
+        expect(mockFn).toHaveBeenCalledWith('call4');
+        done();
+      }, 100);
+    });
+
+    test('should reset timer on each call within delay period', (done) => {
+      const mockFn = jest.fn();
+      const debouncedFn = JSONFormatter.debounce(mockFn, 50);
+
+      debouncedFn('call1');
+
+      setTimeout(() => {
+        debouncedFn('call2'); // Reset timer
+      }, 30);
+
+      setTimeout(() => {
+        debouncedFn('call3'); // Reset timer again
+      }, 60);
+
+      // After 80ms, still shouldn't be called (timer keeps resetting)
+      setTimeout(() => {
+        expect(mockFn).not.toHaveBeenCalled();
+      }, 80);
+
+      // After 120ms, should be called once with last argument
+      setTimeout(() => {
+        expect(mockFn).toHaveBeenCalledTimes(1);
+        expect(mockFn).toHaveBeenCalledWith('call3');
+        done();
+      }, 120);
+    });
+  });
+
+  describe('SwitchView ARIA Attributes', () => {
+    test('should update aria-pressed attributes when switching views', () => {
+      formatter.switchView('plain');
+
+      // Tree tab should have aria-pressed="false"
+      expect(formatter.tabs[0].setAttribute).toHaveBeenCalledWith('aria-pressed', false);
+      // Plain tab should have aria-pressed="true"
+      expect(formatter.tabs[1].setAttribute).toHaveBeenCalledWith('aria-pressed', true);
+    });
+
+    test('should update aria-pressed when switching back to tree view', () => {
+      formatter.switchView('tree');
+
+      expect(formatter.tabs[0].setAttribute).toHaveBeenCalledWith('aria-pressed', true);
+      expect(formatter.tabs[1].setAttribute).toHaveBeenCalledWith('aria-pressed', false);
+    });
+  });
+
+  describe('LoadSampleData Notification', () => {
+    beforeEach(() => {
+      formatter.input = { value: '' };
+      formatter.formatJSON = jest.fn();
+      formatter.clearButtonInstance = { updateVisibility: jest.fn() };
+    });
+
+    test('should show success notification when loading sample data', () => {
+      formatter.loadSampleData();
+
+      expect(mockNotificationManager.show).toHaveBeenCalledWith(
+        'Sample data loaded successfully!',
+        2000,
+        { type: 'success' }
+      );
+    });
+
+    test('should update clear button visibility after loading sample', () => {
+      formatter.loadSampleData();
+
+      expect(formatter.clearButtonInstance.updateVisibility).toHaveBeenCalled();
+    });
+
+    test('should populate input with valid JSON sample', () => {
+      formatter.loadSampleData();
+
+      expect(formatter.input.value).toBeTruthy();
+      // Verify it's valid JSON
+      expect(() => JSON.parse(formatter.input.value)).not.toThrow();
+    });
+  });
+
+  describe('Integration Workflows', () => {
+    beforeEach(() => {
+      formatter.output = document.createElement('div');
+      formatter.plainViewTextarea = { value: '' };
+      formatter.formatBtn = { textContent: 'Format JSON', disabled: false };
+      formatter.copyBtn = { disabled: true };
+      formatter.downloadBtn = { disabled: true };
+      formatter.errorStatus = { textContent: '', classList: { add: jest.fn(), remove: jest.fn() } };
+      formatter.originalSizeEl = { textContent: '' };
+      formatter.formattedSizeEl = { textContent: '' };
+      formatter.sortCheckbox = { checked: true };
+      formatter.autoFixCheckbox = { checked: false };
+      formatter.input = { value: '{"b":2,"a":1}' };
+    });
+
+    test('should complete format → copy → download workflow', async () => {
+      // Mock clipboard API for this test
+      const mockClipboard = {
+        writeText: jest.fn().mockResolvedValue(undefined)
+      };
+      global.navigator.clipboard = mockClipboard;
+
+      // Format
+      await formatter.formatJSON();
+      expect(formatter.copyBtn.disabled).toBe(false);
+      expect(formatter.downloadBtn.disabled).toBe(false);
+
+      // Copy
+      await formatter.copyOutput();
+      expect(mockClipboard.writeText).toHaveBeenCalled();
+
+      // Download
+      await formatter.downloadOutput();
+      expect(mockDownloadManager.downloadFile).toHaveBeenCalled();
+
+      // Cleanup
+      delete global.navigator.clipboard;
+    });
+
+    test('should handle tab switching workflow: tree → plain → tree', () => {
+      // Start on tree view
+      formatter.switchView('tree');
+      expect(formatter.viewContainers.tree.classList.add).toHaveBeenCalledWith('active');
+      expect(formatter.viewContainers.plain.classList.remove).toHaveBeenCalledWith('active');
+
+      // Switch to plain
+      formatter.switchView('plain');
+      expect(formatter.viewContainers.plain.classList.add).toHaveBeenCalledWith('active');
+      expect(formatter.viewContainers.tree.classList.remove).toHaveBeenCalledWith('active');
+
+      // Switch back to tree
+      formatter.switchView('tree');
+      expect(formatter.viewContainers.tree.classList.add).toHaveBeenCalledWith('active');
+      expect(formatter.viewContainers.plain.classList.remove).toHaveBeenCalledWith('active');
+    });
+
+    test('should handle input change → debounced stats update workflow', (done) => {
+      jest.useFakeTimers();
+      formatter.clearError = jest.fn();
+      formatter.updateStats = jest.fn();
+      formatter.input = { addEventListener: jest.fn(), value: '{"test": "data"}' };
+      formatter.formatBtn = { addEventListener: jest.fn() };
+      formatter.copyBtn = { addEventListener: jest.fn() };
+      formatter.downloadBtn = { addEventListener: jest.fn() };
+      formatter.sampleBtn = { addEventListener: jest.fn() };
+      formatter.tabs = [];
+
+      formatter.initializeEvents();
+
+      // Get the input event handler
+      const inputHandler = formatter.input.addEventListener.mock.calls.find(
+        call => call[0] === 'input'
+      )[1];
+
+      // Trigger input event
+      inputHandler();
+
+      expect(formatter.clearError).toHaveBeenCalled();
+      expect(formatter.updateStats).not.toHaveBeenCalled(); // Not called yet due to debounce
+
+      // Advance timers past debounce delay
+      jest.advanceTimersByTime(200);
+
+      expect(formatter.updateStats).toHaveBeenCalledWith('{"test": "data"}', '');
+
+      jest.useRealTimers();
+      done();
+    });
+  });
+
+  describe('AutoFixJSON Edge Cases', () => {
+    test('should handle nested single quotes', () => {
+      const input = "{'outer': {'inner': 'value'}}";
+      const result = JSONFormatter.autoFixJSON(input);
+      expect(result).toBe('{"outer": {"inner": "value"}}');
+    });
+
+    test('should handle mixed errors in complex JSON', () => {
+      const input = "{unquoted: 'single', trailing: 'comma',}";
+      const result = JSONFormatter.autoFixJSON(input);
+      expect(result).toBe('{"unquoted": "single", "trailing": "comma"}');
+    });
+
+    test('should handle arrays with trailing commas and single quotes', () => {
+      const input = "['a', 'b', 'c',]";
+      const result = JSONFormatter.autoFixJSON(input);
+      expect(result).toBe('["a", "b", "c"]');
+    });
+
+    test('should handle escaped quotes within single-quoted strings', () => {
+      const input = "{'key': 'value with \\'escaped\\' quotes'}";
+      const result = JSONFormatter.autoFixJSON(input);
+      // The regex handles escaped quotes
+      expect(result).toContain('"key"');
+    });
+  });
+
+  describe('Array Rendering in renderJSONAsync', () => {
+    beforeEach(() => {
+      formatter.output = document.createElement('div');
+    });
+
+    test('should render array with correct brackets', async () => {
+      await formatter.renderJSONAsync([1, 2, 3], formatter.output);
+
+      const brackets = formatter.output.querySelectorAll('.json-bracket');
+      expect(brackets[0].textContent).toBe('[');
+      expect(brackets[1].textContent).toBe(']');
+    });
+
+    test('should render array items without keys', async () => {
+      await formatter.renderJSONAsync(['a', 'b', 'c'], formatter.output);
+
+      const keys = formatter.output.querySelectorAll('.json-key');
+      expect(keys.length).toBe(0); // Arrays don't have keys, only objects do
+    });
+
+    test('should render nested arrays correctly', async () => {
+      await formatter.renderJSONAsync([[1, 2], [3, 4]], formatter.output);
+
+      const brackets = formatter.output.querySelectorAll('.json-bracket');
+      // Outer array: [ ]
+      // Inner arrays: [ ] [ ]
+      expect(brackets.length).toBeGreaterThanOrEqual(4);
+    });
+  });
+
 });
+

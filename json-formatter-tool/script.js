@@ -2,9 +2,11 @@ import { NotificationManager } from '../common/notification-manager.js';
 import { formatBytes } from '../common/format-utils.js';
 import DownloadManager from '../common/DownloadManager.js';
 import ClearButton from '../common/clear-button/ClearButton.js';
+import { scheduleTask, nextFrame } from '../common/scheduler-utils.js';
 
 export class JSONFormatter {
   constructor(initDom = true) {
+    this.currentRunId = 0;
     if (initDom) {
       this.downloadManager = new DownloadManager();
       this.input = document.querySelector('.c-input.c-input--textarea');
@@ -71,20 +73,47 @@ export class JSONFormatter {
     }
   }
 
-  formatJSON() {
+
+  async formatJSON() {
+    // Capture current run ID to prevent stale results
+    const runId = ++this.currentRunId;
+
     try {
       let inputValue = this.input.value.trim();
+
+      // UI Feedback: Show loading state
+      const originalBtnText = this.formatBtn.textContent;
+      this.formatBtn.textContent = 'Formatting...';
+      this.formatBtn.disabled = true;
+      this.clearError();
+
+      // Yield to main thread
+      await scheduleTask(20);
+
+      // Abort if a newer run has started
+      if (runId !== this.currentRunId) return;
+
       if (this.autoFixCheckbox.checked) {
         inputValue = this.constructor.autoFixJSON(inputValue);
       }
+
       const parsed = JSON.parse(inputValue);
       const formatted = this.sortCheckbox.checked
         ? this.constructor.sortKeysAlphabetically(parsed)
         : parsed;
 
+      // Clear previous output
+      this.output.replaceChildren();
+
       const fragment = document.createDocumentFragment();
-      this.renderJSON(formatted, fragment);
-      this.output.replaceChildren(fragment);
+
+      // Async render with chunking
+      await this.renderJSONAsync(formatted, fragment, 0, { runId });
+
+      // Abort final UI updates if a newer run has started
+      if (runId !== this.currentRunId) return;
+
+      this.output.appendChild(fragment);
 
       const formattedString = JSON.stringify(formatted, null, 2);
       this.plainViewTextarea.value = formattedString; // Populate plain view
@@ -100,35 +129,31 @@ export class JSONFormatter {
       this.output.replaceChildren();
       this.plainViewTextarea.value = '';
       this.updateStats(this.input.value, '');
+    } finally {
+      // Restore UI state ONLY if this is still the current run
+      if (runId === this.currentRunId) {
+        this.formatBtn.textContent = 'Format JSON';
+        this.formatBtn.disabled = false;
+      }
     }
   }
 
+  // Refactored to be async and chunked
+  async renderJSONAsync(data, parentEl, depth = 0, context = { count: 0, runId: null }) {
+    // Check if a newer run has started
+    if (context.runId !== null && context.runId !== this.currentRunId) return;
 
+    // Check if we need to yield to main thread every ~500 nodes
+    if (context.count > 500) {
+      await nextFrame();
+      // Re-verify after yielding
+      if (context.runId !== null && context.runId !== this.currentRunId) return;
+      context.count = 0;
+    }
+    context.count++;
 
-  switchView(viewName) {
-    // Update tabs
-    this.tabs.forEach(tab => {
-      const isActive = tab.dataset.view === viewName;
-      if (isActive) {
-        tab.classList.add('active');
-      } else {
-        tab.classList.remove('active');
-      }
-      tab.setAttribute('aria-pressed', isActive);
-    });
-
-    // Update views
-    Object.entries(this.viewContainers).forEach(([name, container]) => {
-      if (name === viewName) {
-        container.classList.add('active');
-      } else {
-        container.classList.remove('active');
-      }
-    });
-  }
-
-  renderJSON(data, parentEl, depth = 0, maxDepth = 100) {
-    if (depth > maxDepth) {
+    // Max depth check
+    if (depth > 100) {
       const span = document.createElement('span');
       span.textContent = '...';
       span.title = 'Maximum nesting depth reached';
@@ -153,7 +178,7 @@ export class JSONFormatter {
     if (!isEmpty) {
       const toggle = document.createElement('span');
       toggle.className = 'json-toggle';
-      toggle.textContent = '-'; // Initial state is expanded
+      toggle.textContent = '-';
       toggle.addEventListener('click', () => {
         container.classList.toggle('collapsed');
         toggle.textContent = container.classList.contains('collapsed') ? '+' : '-';
@@ -181,13 +206,14 @@ export class JSONFormatter {
       childrenContainer.className = 'json-children';
 
       if (isArray) {
-        data.forEach((item, i) => {
+        for (const item of data) {
           const itemContainer = document.createElement('div');
-          this.renderJSON(item, itemContainer, depth + 1);
+          await this.renderJSONAsync(item, itemContainer, depth + 1, context);
           childrenContainer.appendChild(itemContainer);
-        });
+        }
       } else {
-        Object.entries(data).forEach(([key, value]) => {
+        const entries = Object.entries(data);
+        for (const [key, value] of entries) {
           const itemContainer = document.createElement('div');
 
           const keySpan = document.createElement('span');
@@ -195,9 +221,9 @@ export class JSONFormatter {
           keySpan.textContent = `"${key}": `;
           itemContainer.appendChild(keySpan);
 
-          this.renderJSON(value, itemContainer, depth + 1);
+          await this.renderJSONAsync(value, itemContainer, depth + 1, context);
           childrenContainer.appendChild(itemContainer);
-        });
+        }
       }
 
       container.appendChild(childrenContainer);
@@ -210,6 +236,32 @@ export class JSONFormatter {
 
     parentEl.appendChild(container);
   }
+
+
+
+  switchView(viewName) {
+    // Update tabs
+    this.tabs.forEach(tab => {
+      const isActive = tab.dataset.view === viewName;
+      if (isActive) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+      tab.setAttribute('aria-pressed', isActive);
+    });
+
+    // Update views
+    Object.entries(this.viewContainers).forEach(([name, container]) => {
+      if (name === viewName) {
+        container.classList.add('active');
+      } else {
+        container.classList.remove('active');
+      }
+    });
+  }
+
+
 
   static sortKeysAlphabetically(obj) {
     if (Array.isArray(obj)) return obj.map(item => this.sortKeysAlphabetically(item)); // 'this' in static method is class
