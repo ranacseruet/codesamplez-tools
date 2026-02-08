@@ -16,8 +16,8 @@ window.isValidCSS = isValidCSS; // Expose for testing
 
 document.addEventListener('DOMContentLoaded', function () {
     // Elements
-    const inputCss = document.getElementById('input-css');
-    const outputCss = document.getElementById('output-css');
+    const inputCss = document.getElementById('css-minifier-input');
+    const outputCss = document.getElementById('css-minifier-output');
     const minifyBtn = document.getElementById('minify-btn');
     const loadSampleBtn = document.getElementById('load-sample');
     const resetOptionsBtn = document.getElementById('reset-options');
@@ -117,24 +117,39 @@ top: 0px;
     resetOptionsBtn.addEventListener('click', resetOptions);
 
     // Initialize ClearButton component
-    const clearButtonInstance = new ClearButton(inputCss);
+    let clearButtonInstance = null;
+    if (inputCss) {
+        clearButtonInstance = new ClearButton(inputCss);
+    } else {
+        console.warn('CSS Minifier: Input element not found. ClearButton initialization skipped.');
+    }
 
     // Initialize CopyButton component
-    const copyButtonInstance = new CopyButton(outputCss);
-    inputCss.addEventListener('textCleared', (e) =>
-        copyButtonInstance.updateVisibility()); {
+    let copyButtonInstance = null;
+    if (outputCss) {
+        copyButtonInstance = new CopyButton(outputCss);
+        
+        outputCss.addEventListener('contentCopied', (e) => {
+            NotificationManager.show('Copied to clipboard!', 2000, { type: 'success' });
+        });
+    } else {
+        console.warn('CSS Minifier: Output element not found. CopyButton initialization skipped.');
     }
-    outputCss.addEventListener('contentCopied', (e) => {
-        NotificationManager.show('Copied to clipboard!', 2000, { type: 'success' });
-    });
+
+    if (inputCss && copyButtonInstance) {
+        inputCss.addEventListener('textCleared', (e) =>
+            copyButtonInstance.updateVisibility());
+    }
 
     // Add event listener to clear output when input is cleared
-    inputCss.addEventListener('input', () => {
-        if (inputCss.value === '') {
-            outputCss.value = '';
-            updateStats('', '');
-        }
-    });
+    if (inputCss && outputCss) {
+        inputCss.addEventListener('input', () => {
+            if (inputCss.value === '') {
+                outputCss.value = '';
+                updateStats('', '');
+            }
+        });
+    }
 
     // Initialize the page
     resetOptions();
@@ -217,10 +232,16 @@ top: 0px;
 
     // UI Helper Functions
     async function loadSample() {
+        if (!inputCss) return;
+        
         inputCss.value = sampleCss;
-        clearButtonInstance.updateVisibility();
+        if (clearButtonInstance) {
+            clearButtonInstance.updateVisibility();
+        }
         await minifyCss();
-        copyButtonInstance.updateVisibility();
+        if (copyButtonInstance) {
+            copyButtonInstance.updateVisibility();
+        }
         NotificationManager.show('Sample CSS loaded and minified', 2000, { type: 'success' });
     }
 

@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CSS Minifier</title>
   <link rel="stylesheet" href="styles.main.css">
 </head>
+
 <body>
   <div class="css-minifier-container tool-container">
     <div class="css-minifier-header o-header">
       <h1>CSS Minifier</h1>
-      <p class="css-minifier-description o-description">Optimize your CSS files by removing unnecessary characters without changing functionality.</p>
+      <p class="css-minifier-description o-description">Optimize your CSS files by removing unnecessary characters
+        without changing functionality.</p>
     </div>
-    
+
     <div class="o-grid-2col">
       <div class="o-panel">
         <div class="o-panel-header">
@@ -20,23 +23,25 @@
           <div class="css-minifier-toolbar o-toolbar">
           </div>
         </div>
-        <textarea id="input-css" class="c-input c-input--textarea" placeholder="Paste your CSS code here..."></textarea>
+        <textarea id="css-minifier-input" class="c-input c-input--textarea"
+          placeholder="Paste your CSS code here..."></textarea>
       </div>
-      
+
       <div class="o-panel">
         <div class="o-panel-header">
           <h2>Minified Output</h2>
           <div class="css-minifier-toolbar o-toolbar"></div>
         </div>
-        <textarea id="output-css" class="c-input c-input--textarea" readonly placeholder="Minified CSS will appear here..."></textarea>
+        <textarea id="css-minifier-output" class="c-input c-input--textarea" readonly
+          placeholder="Minified CSS will appear here..."></textarea>
       </div>
     </div>
-    
+
     <div class="css-minifier-actions" style="text-align: center; margin: 20px 0;">
       <button id="minify-btn" class="c-button">Minify CSS</button>
       <button class="c-button c-button--secondary" id="load-sample">Load Sample</button>
     </div>
-    
+
     <div class="css-minifier-options c-options-panel">
       <h2>Minification Options</h2>
       <div class="c-checkbox-group">
@@ -69,7 +74,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="css-minifier-toolbar o-toolbar">
         <button id="reset-options" class="c-button c-button--secondary">Reset Options</button>
       </div>
@@ -90,13 +95,14 @@
         <span id="saving" class="css-minifier-saving-percentage">0%</span>
       </div>
     </div>
-    
+
     <div class="css-minifier-footer">
       <p>CSS Minifier - Always test minified CSS before deployment.</p>
     </div>
   </div>
-  
+
   <div id="notification" class="c-notification" role="status" aria-live="polite">Copied to clipboard!</div>
   <script src="bundle.main.js"></script>
 </body>
+
 </html>
