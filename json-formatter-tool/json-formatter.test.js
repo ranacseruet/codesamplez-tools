@@ -229,6 +229,43 @@ describe('JSONFormatter', () => {
       await formatter.renderJSONAsync(deepObj, formatter.output);
       expect(formatter.output.textContent).toContain('...');
     });
+
+    test('should add descriptive aria-labels to toggle buttons', async () => {
+      const data = {
+        user: {
+          name: "Alice",
+          roles: ["admin"]
+        }
+      };
+
+      await formatter.renderJSONAsync(data, formatter.output, 0, undefined, 'root');
+
+      const toggles = formatter.output.querySelectorAll('.json-toggle');
+      // Should have toggles for root, user, and roles
+
+      const findToggleByLabel = (label) => Array.from(toggles).find(t => t.getAttribute('aria-label') === label);
+
+      expect(findToggleByLabel('Toggle root')).toBeTruthy();
+      expect(findToggleByLabel('Toggle user')).toBeTruthy();
+      expect(findToggleByLabel('Toggle roles')).toBeTruthy();
+    });
+
+    test('should add indexed labels for array items', async () => {
+      const data = [
+        { id: 1 },
+        { id: 2 }
+      ];
+
+      await formatter.renderJSONAsync(data, formatter.output, 0, undefined, 'root');
+
+      const toggles = formatter.output.querySelectorAll('.json-toggle');
+
+      const findToggleByLabel = (label) => Array.from(toggles).find(t => t.getAttribute('aria-label') === label);
+
+      expect(findToggleByLabel('Toggle root')).toBeTruthy();
+      expect(findToggleByLabel('Toggle item 0')).toBeTruthy();
+      expect(findToggleByLabel('Toggle item 1')).toBeTruthy();
+    });
   });
 
   describe('JSON formatting', () => {

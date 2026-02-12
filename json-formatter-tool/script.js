@@ -108,7 +108,7 @@ export class JSONFormatter {
       const fragment = document.createDocumentFragment();
 
       // Async render with chunking
-      await this.renderJSONAsync(formatted, fragment, 0, { runId });
+      await this.renderJSONAsync(formatted, fragment, 0, { runId }, 'root');
 
       // Abort final UI updates if a newer run has started
       if (runId !== this.currentRunId) return;
@@ -139,7 +139,7 @@ export class JSONFormatter {
   }
 
   // Refactored to be async and chunked
-  async renderJSONAsync(data, parentEl, depth = 0, context = { count: 0, runId: null }) {
+  async renderJSONAsync(data, parentEl, depth = 0, context = { count: 0, runId: null }, keyName = null) {
     // Check if a newer run has started
     if (context.runId !== null && context.runId !== this.currentRunId) return;
 
@@ -179,6 +179,10 @@ export class JSONFormatter {
       const toggle = document.createElement('span');
       toggle.className = 'json-toggle';
       toggle.textContent = '-';
+
+      const ariaLabel = keyName ? `Toggle ${keyName}` : 'Toggle item';
+      toggle.setAttribute('aria-label', ariaLabel);
+
       toggle.addEventListener('click', () => {
         container.classList.toggle('collapsed');
         toggle.textContent = container.classList.contains('collapsed') ? '+' : '-';
@@ -206,9 +210,10 @@ export class JSONFormatter {
       childrenContainer.className = 'json-children';
 
       if (isArray) {
-        for (const item of data) {
+        for (let i = 0; i < data.length; i++) {
+          const item = data[i];
           const itemContainer = document.createElement('div');
-          await this.renderJSONAsync(item, itemContainer, depth + 1, context);
+          await this.renderJSONAsync(item, itemContainer, depth + 1, context, `item ${i}`);
           childrenContainer.appendChild(itemContainer);
         }
       } else {
@@ -221,7 +226,7 @@ export class JSONFormatter {
           keySpan.textContent = `"${key}": `;
           itemContainer.appendChild(keySpan);
 
-          await this.renderJSONAsync(value, itemContainer, depth + 1, context);
+          await this.renderJSONAsync(value, itemContainer, depth + 1, context, key);
           childrenContainer.appendChild(itemContainer);
         }
       }
