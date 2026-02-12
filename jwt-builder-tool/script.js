@@ -10,6 +10,7 @@ if (typeof window !== 'undefined') {
   window.jwtBuilder = jwtBuilder;
 }
 let keyCopyButton = null;
+let claimCounter = 0;
 document.addEventListener('DOMContentLoaded', function() {
   const now = new Date();
   const sixMonthsFromNow = new Date(now);
@@ -55,22 +56,26 @@ export function addClaim() {
   
   const newClaimRow = document.createElement('div');
   newClaimRow.classList.add('c-form-row', 'custom-claim-row'); 
+  claimCounter++;
+  const nameId = `claim-name-${claimCounter}`;
+  const valueId = `claim-value-${claimCounter}`;
+
   newClaimRow.innerHTML = `
     <div class="u-flex u-gap-sm" style="flex: 1; align-items: center;">
-      <label style="flex: 0 0 100px;">
+      <label for="${nameId}" style="flex: 0 0 100px;">
         <span class="c-tooltip-container" title="Name of your custom claim">
           Claim Name:
           <span class="c-tooltip">Enter a unique identifier for your custom claim</span>
         </span>
       </label>
-      <input type="text" name="claimName" class="c-input" placeholder="e.g., role" style="flex: 1;">
-      <label style="flex: 0 0 100px;">
+      <input id="${nameId}" type="text" name="claimName" class="c-input" placeholder="e.g., role" style="flex: 1;">
+      <label for="${valueId}" style="flex: 0 0 100px;">
          <span class="c-tooltip-container" title="Value of your custom claim">
            Claim Value:
            <span class="c-tooltip">Enter the value for your custom claim</span>
          </span>
       </label>
-      <input type="text" name="claimValue" class="c-input" placeholder="e.g., admin" style="flex: 1;">
+      <input id="${valueId}" type="text" name="claimValue" class="c-input" placeholder="e.g., admin" style="flex: 1;">
     </div>
     <button type="button" class="c-button c-button--danger delete-claim" onclick="removeClaim(this)" aria-label="Remove custom claim" title="Remove this claim">x</button>
   `;

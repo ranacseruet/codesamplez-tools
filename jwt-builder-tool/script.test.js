@@ -112,6 +112,25 @@ describe('JWT Builder UI Tests', () => {
       expect(deleteButton.getAttribute('aria-label')).toBe('Remove custom claim');
     });
 
+    test('associates labels with inputs using for/id attributes', () => {
+      scriptModule.addClaim();
+      const customClaimsDiv = document.getElementById('customClaims');
+      const claimRow = customClaimsDiv.querySelector('.custom-claim-row');
+
+      const nameInput = claimRow.querySelector('input[name="claimName"]');
+      const valueInput = claimRow.querySelector('input[name="claimValue"]');
+
+      const labels = claimRow.querySelectorAll('label');
+      const nameLabel = labels[0];
+      const valueLabel = labels[1];
+
+      expect(nameInput.id).toMatch(/claim-name-\d+/);
+      expect(valueInput.id).toMatch(/claim-value-\d+/);
+
+      expect(nameLabel.getAttribute('for')).toBe(nameInput.id);
+      expect(valueLabel.getAttribute('for')).toBe(valueInput.id);
+    });
+
     test('sets focus to new input when claim is added', () => {
       // Mock focus method since JSDOM might not support it fully or we want to verify the call
       const originalCreateElement = document.createElement;
