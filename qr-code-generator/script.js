@@ -50,6 +50,8 @@ export class QRCodeGeneratorUI {
         } else {
           console.log('QR code successfully generated!');
           this.qrCanvas.style.display = 'block';
+          this.qrCanvas.setAttribute('role', 'img');
+          this.qrCanvas.setAttribute('aria-label', `QR Code for ${text}`);
           this.errorMessage.textContent = "";
         }
       });

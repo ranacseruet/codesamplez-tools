@@ -63,7 +63,7 @@ describe('QRCodeGeneratorUI', () => {
     mockQrMargin = { value: '4', addEventListener: jest.fn() };
     mockMarginLabel = { textContent: '', addEventListener: jest.fn() };
     mockErrorCorrection = { value: 'M', addEventListener: jest.fn() };
-    mockQrCanvas = { style: { display: '' }, toDataURL: jest.fn(() => 'data:image/png;base64,mockdata'), addEventListener: jest.fn() };
+    mockQrCanvas = { style: { display: '' }, toDataURL: jest.fn(() => 'data:image/png;base64,mockdata'), addEventListener: jest.fn(), setAttribute: jest.fn() };
     mockDownloadBtn = { addEventListener: jest.fn() };
     mockErrorMessage = { textContent: '' };
 
@@ -236,5 +236,19 @@ describe('QRCodeGeneratorUI', () => {
       expect.stringMatching(/^qrcode-\d+\.png$/),
       'image/png'
     );
+  });
+
+  it('should set accessible attributes on canvas when QR code is generated', async () => {
+    QRCode.toCanvas.mockClear();
+
+    mockQrText.value = 'Accessible QR Code';
+    const inputListener = mockQrText.addEventListener.mock.calls.find(call => call[0] === 'input')[1];
+    inputListener();
+
+    // Wait for debounce
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    expect(mockQrCanvas.setAttribute).toHaveBeenCalledWith('role', 'img');
+    expect(mockQrCanvas.setAttribute).toHaveBeenCalledWith('aria-label', 'QR Code for Accessible QR Code');
   });
 });
