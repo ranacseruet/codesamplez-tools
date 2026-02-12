@@ -42,21 +42,57 @@ class JWTDecoderUI {
     // --- UI Setup ---
     setupTabs() {
         const tabs = document.querySelectorAll('.jwt-decoder-tab');
+        const tabList = document.querySelector('.jwt-decoder-tabs');
+
+        // Handle Click Events
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-
-                const tabPanes = document.querySelectorAll('.jwt-decoder-tab-pane');
-                tabPanes.forEach(pane => pane.classList.remove('active'));
-
-                const tabId = tab.getAttribute('data-tab');
-                const targetPane = document.getElementById(`${tabId}Tab`);
-                if (targetPane) {
-                    targetPane.classList.add('active');
-                }
+                this.activateTab(tab);
             });
         });
+
+        // Handle Keyboard Navigation
+        if (tabList) {
+            tabList.addEventListener('keydown', (e) => {
+                const key = e.key;
+                const direction = key === 'ArrowLeft' ? -1 : key === 'ArrowRight' ? 1 : 0;
+
+                if (direction !== 0) {
+                    e.preventDefault();
+                    const currentTab = document.activeElement;
+                    const index = Array.from(tabs).indexOf(currentTab);
+                    if (index !== -1) {
+                        const newIndex = (index + direction + tabs.length) % tabs.length;
+                        const newTab = tabs[newIndex];
+                        newTab.focus();
+                        this.activateTab(newTab);
+                    }
+                }
+            });
+        }
+    }
+
+    activateTab(tab) {
+        const tabs = document.querySelectorAll('.jwt-decoder-tab');
+
+        tabs.forEach(t => {
+            t.classList.remove('active');
+            t.setAttribute('aria-selected', 'false');
+            t.setAttribute('tabindex', '-1');
+        });
+
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+        tab.setAttribute('tabindex', '0');
+
+        const tabPanes = document.querySelectorAll('.jwt-decoder-tab-pane');
+        tabPanes.forEach(pane => pane.classList.remove('active'));
+
+        const tabId = tab.getAttribute('data-tab');
+        const targetPane = document.getElementById(`${tabId}Tab`);
+        if (targetPane) {
+            targetPane.classList.add('active');
+        }
     }
 
     setupEventListeners() {
