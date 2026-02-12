@@ -53,6 +53,9 @@ export class QRCodeGeneratorUI {
           this.qrCanvas.setAttribute('role', 'img');
           this.qrCanvas.setAttribute('aria-label', `QR Code for ${text}`);
           this.errorMessage.textContent = "";
+
+          const labelText = text.length > 50 ? text.substring(0, 50) + '...' : text;
+          this.qrCanvas.setAttribute('aria-label', `QR code for: ${labelText}`);
         }
       });
     }, 250);

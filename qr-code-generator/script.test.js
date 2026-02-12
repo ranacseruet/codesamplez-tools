@@ -238,17 +238,30 @@ describe('QRCodeGeneratorUI', () => {
     );
   });
 
-  it('should set accessible attributes on canvas when QR code is generated', async () => {
+  it('should update aria-label on canvas when QR code is generated', async () => {
     QRCode.toCanvas.mockClear();
 
-    mockQrText.value = 'Accessible QR Code';
+    const testText = 'Accessible QR Code Test';
+    mockQrText.value = testText;
     const inputListener = mockQrText.addEventListener.mock.calls.find(call => call[0] === 'input')[1];
     inputListener();
 
-    // Wait for debounce
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    expect(mockQrCanvas.setAttribute).toHaveBeenCalledWith('role', 'img');
-    expect(mockQrCanvas.setAttribute).toHaveBeenCalledWith('aria-label', 'QR Code for Accessible QR Code');
+    expect(mockQrCanvas.setAttribute).toHaveBeenCalledWith('aria-label', `QR code for: ${testText}`);
+  });
+
+  it('should truncate aria-label on canvas when text is too long', async () => {
+    QRCode.toCanvas.mockClear();
+
+    const longText = 'This is a very long text that should be truncated for the aria-label to ensure accessibility';
+    mockQrText.value = longText;
+    const inputListener = mockQrText.addEventListener.mock.calls.find(call => call[0] === 'input')[1];
+    inputListener();
+
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    const expectedTruncatedText = longText.substring(0, 50) + '...';
+    expect(mockQrCanvas.setAttribute).toHaveBeenCalledWith('aria-label', `QR code for: ${expectedTruncatedText}`);
   });
 });
