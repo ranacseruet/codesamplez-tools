@@ -121,20 +121,22 @@ describe('DiffDisplay', () => {
       expect(contentSpan.classList.contains('diff-content')).toBe(true);
     });
 
-    it('should apply correct class to content span for added line', () => {
+    it('should create ins element for added line', () => {
       const lineContainer = diffDisplay.createLineElement('added', 'test line', false);
-      const contentSpan = lineContainer.children[1];
-      expect(contentSpan.classList.contains('diff-content')).toBe(true);
-      expect(contentSpan.classList.contains('diff-added')).toBe(true);
-      expect(contentSpan.innerHTML).toContain('test line');
+      const contentElement = lineContainer.children[1];
+      expect(contentElement.tagName.toLowerCase()).toBe('ins');
+      expect(contentElement.classList.contains('diff-content')).toBe(true);
+      expect(contentElement.classList.contains('diff-added')).toBe(true);
+      expect(contentElement.innerHTML).toContain('test line');
     });
 
-    it('should apply correct class to content span for removed line', () => {
+    it('should create del element for removed line', () => {
       const lineContainer = diffDisplay.createLineElement('removed', 'test line', false);
-      const contentSpan = lineContainer.children[1];
-      expect(contentSpan.classList.contains('diff-content')).toBe(true);
-      expect(contentSpan.classList.contains('diff-removed')).toBe(true);
-      expect(contentSpan.innerHTML).toContain('test line');
+      const contentElement = lineContainer.children[1];
+      expect(contentElement.tagName.toLowerCase()).toBe('del');
+      expect(contentElement.classList.contains('diff-content')).toBe(true);
+      expect(contentElement.classList.contains('diff-removed')).toBe(true);
+      expect(contentElement.innerHTML).toContain('test line');
     });
 
     it('should only apply base class to content span for unchanged line', () => {

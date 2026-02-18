@@ -69,6 +69,12 @@
   width: 100%;
 }
 
+/* Reset default styles for ins and del elements used as diff content */
+.tool-container ins.diff-content,
+.tool-container del.diff-content {
+  text-decoration: none;
+}
+
 .tool-container .diff-line:has(.diff-content.diff-added) {
   background-color: rgba(46, 204, 113, 0.1); /* Consider CSS var if this green is common */
   border-left-color: #2ecc71; /* Consider CSS var */

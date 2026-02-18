@@ -89,7 +89,15 @@ class DiffDisplay {
   createLineElement(changeType, lineContent, isCodeContent) {
     const lineContainer = document.createElement('div');
     const lineNumberElement = document.createElement('span');
-    const contentElement = document.createElement('span');
+
+    let contentElement;
+    if (changeType === 'added') {
+      contentElement = document.createElement('ins');
+    } else if (changeType === 'removed') {
+      contentElement = document.createElement('del');
+    } else {
+      contentElement = document.createElement('span');
+    }
 
     const lineNumbersContent = this.getLineNumberText(changeType);
     lineNumberElement.className = 'diff-line-number';
