@@ -198,10 +198,29 @@ export function generateRandomSecret() {
   return null;
 }
 
+export function setExp(hours) {
+  const now = new Date();
+  now.setHours(now.getHours() + hours);
+  const expInput = document.getElementById('exp');
+  if (expInput) {
+    expInput.value = jwtBuilder.getFormattedDate(now);
+  }
+}
+
+export function setNow(elementId) {
+  const now = new Date();
+  const input = document.getElementById(elementId);
+  if (input) {
+    input.value = jwtBuilder.getFormattedDate(now);
+  }
+}
+
 // Add functions to window for HTML use
 if (typeof window !== 'undefined') {
   window.addClaim = addClaim;
   window.removeClaim = removeClaim;
   window.buildJWT = buildJWT;
   window.generateRandomSecret = generateRandomSecret;
+  window.setExp = setExp;
+  window.setNow = setNow;
 }

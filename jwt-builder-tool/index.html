@@ -54,31 +54,48 @@
         <div class="c-form-group">
           <h3 class="c-form-group-header">Timing Claims</h3>
           <div class="c-form-row">
-          <label for="exp" class="required">
-            <span class="c-tooltip-container" title="When the token expires">
-              Expiration Time (exp):
-              <span class="c-tooltip">Required - Identifies the expiration time on or after which the JWT must not be accepted</span>
-            </span>
-          </label>
-          <input type="text" id="exp" class="c-input" placeholder="e.g., 2025-12-31T23:59:59Z or 1678886400">
-        </div>
-        <div class="c-form-row">
-          <label for="iat">
-            <span class="c-tooltip-container" title="When the token was issued">
-              Issued At (iat):
-              <span class="c-tooltip">Optional - Identifies the time at which the JWT was issued</span>
-            </span>
-          </label>
-          <input type="text" id="iat" class="c-input" placeholder="e.g., 2025-01-30T11:24:00Z or 1678886400">
-        </div>
-        <div class="c-form-row">
-          <label for="nbf">
-            <span class="c-tooltip-container" title="When the token starts being valid">
-              Not Before (nbf):
-              <span class="c-tooltip">Optional - Identifies the time before which the JWT must not be accepted</span>
-            </span>
-          </label>
-          <input type="text" id="nbf" class="c-input" placeholder="e.g., 2025-01-30T00:00:00Z or 1678886400">
+            <label for="exp" class="required">
+              <span class="c-tooltip-container" title="When the token expires">
+                Expiration Time (exp):
+                <span class="c-tooltip">Required - Identifies the expiration time on or after which the JWT must not be accepted</span>
+              </span>
+            </label>
+            <div class="u-flex u-flex-column u-gap-xs" style="flex: 1;">
+              <input type="text" id="exp" class="c-input" placeholder="e.g., 2025-12-31T23:59:59Z or 1678886400">
+              <div class="quick-set-buttons">
+                <button type="button" class="c-button c-button--secondary c-button--small" onclick="setExp(1)" aria-label="Set expiration to 1 hour from now">+1h</button>
+                <button type="button" class="c-button c-button--secondary c-button--small" onclick="setExp(24)" aria-label="Set expiration to 24 hours from now">+24h</button>
+                <button type="button" class="c-button c-button--secondary c-button--small" onclick="setExp(168)" aria-label="Set expiration to 7 days from now">+7d</button>
+              </div>
+            </div>
+          </div>
+          <div class="c-form-row">
+            <label for="iat">
+              <span class="c-tooltip-container" title="When the token was issued">
+                Issued At (iat):
+                <span class="c-tooltip">Optional - Identifies the time at which the JWT was issued</span>
+              </span>
+            </label>
+            <div class="u-flex u-flex-column u-gap-xs" style="flex: 1;">
+              <input type="text" id="iat" class="c-input" placeholder="e.g., 2025-01-30T11:24:00Z or 1678886400">
+              <div class="quick-set-buttons">
+                <button type="button" class="c-button c-button--secondary c-button--small" onclick="setNow('iat')" aria-label="Set issued at to now">Now</button>
+              </div>
+            </div>
+          </div>
+          <div class="c-form-row">
+            <label for="nbf">
+              <span class="c-tooltip-container" title="When the token starts being valid">
+                Not Before (nbf):
+                <span class="c-tooltip">Optional - Identifies the time before which the JWT must not be accepted</span>
+              </span>
+            </label>
+            <div class="u-flex u-flex-column u-gap-xs" style="flex: 1;">
+              <input type="text" id="nbf" class="c-input" placeholder="e.g., 2025-01-30T00:00:00Z or 1678886400">
+              <div class="quick-set-buttons">
+                <button type="button" class="c-button c-button--secondary c-button--small" onclick="setNow('nbf')" aria-label="Set not before to now">Now</button>
+              </div>
+            </div>
           </div>
         </div>
 

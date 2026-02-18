@@ -391,4 +391,26 @@ describe('JWT Builder UI Tests', () => {
       expect(result).toBeNull();
     });
   });
+
+  describe('Quick Set Buttons', () => {
+    test('setExp updates exp input with future date', () => {
+      const expInput = document.getElementById('exp');
+      expInput.value = 'old-date';
+
+      scriptModule.setExp(1);
+
+      expect(expInput.value).toBe('2024-01-01T00:00:00Z'); // Mocked return value
+      expect(mockBuilder.getFormattedDate).toHaveBeenCalled();
+    });
+
+    test('setNow updates specified input with current date', () => {
+      const iatInput = document.getElementById('iat');
+      iatInput.value = 'old-date';
+
+      scriptModule.setNow('iat');
+
+      expect(iatInput.value).toBe('2024-01-01T00:00:00Z'); // Mocked return value
+      expect(mockBuilder.getFormattedDate).toHaveBeenCalled();
+    });
+  });
 });

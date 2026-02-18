@@ -171,6 +171,19 @@
   flex: 1; /* Take up available space within wrapper */
 }
 
+/* Quick set buttons */
+.jwt-builder-container .quick-set-buttons {
+  margin-top: 5px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+/* Small gap utility */
+.u-gap-xs {
+  gap: 5px;
+}
+
 /* Adjust for mobile */
 @media (max-width: 768px) {
   .jwt-builder-container .copy-button-wrapper .c-input {
