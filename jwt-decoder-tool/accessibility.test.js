@@ -51,7 +51,13 @@ beforeEach(() => {
   // Set up mock DOM (based on index.html but with minimal structure for tabs)
   document.body.innerHTML = `
     <textarea id="jwtInputToken"></textarea>
-    <textarea id="jwtSecretKey"></textarea>
+    <div class="c-form-row">
+        <textarea id="jwtSecretKey"></textarea>
+        <button type="button" class="c-tooltip-container" aria-label="More info" aria-describedby="jwt-secret-tooltip">
+            ⓘ
+            <span id="jwt-secret-tooltip" class="c-tooltip" role="tooltip">Optional - Enter the secret key to verify the JWT signature</span>
+        </button>
+    </div>
     <textarea id="jwtDecodedOutput" style="display: none;"></textarea>
     <div id="headerJson"></div>
     <div id="payloadJson"></div>
@@ -160,5 +166,19 @@ describe('JWT Decoder Accessibility', () => {
         expect(document.activeElement).toBe(payloadTab);
         expect(payloadTab.classList.contains('active')).toBe(true);
         expect(payloadTab.getAttribute('aria-selected')).toBe('true');
+    });
+
+    it('should have accessible tooltip for secret key', () => {
+        const tooltipButton = document.querySelector('.c-tooltip-container');
+        const tooltipContent = document.getElementById('jwt-secret-tooltip');
+
+        expect(tooltipButton.tagName).toBe('BUTTON');
+        expect(tooltipButton.getAttribute('type')).toBe('button');
+        expect(tooltipButton.getAttribute('aria-describedby')).toBe('jwt-secret-tooltip');
+        expect(tooltipButton.getAttribute('aria-label')).toBe('More info');
+
+        expect(tooltipContent).not.toBeNull();
+        expect(tooltipContent.getAttribute('role')).toBe('tooltip');
+        expect(tooltipContent.textContent).toContain('Optional - Enter the secret key');
     });
 });
