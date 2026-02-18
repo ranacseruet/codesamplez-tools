@@ -17,10 +17,10 @@
       <h2>Signature Options</h2>
       <div class="c-form-group"> <!-- Use shared form group component -->
         <div class="c-form-row"> <!-- Use shared form row component -->
-          <input type="text" id="jwtSecretKey" class="c-input" placeholder="Enter secret key to verify signature"> <!-- Use shared input component -->
-          <div class="c-tooltip-container">ⓘ <!-- Use shared tooltip container -->
-            <span class="c-tooltip">Optional - Enter the secret key to verify the JWT signature</span> <!-- Use shared tooltip component -->
-          </div>
+          <input type="text" id="jwtSecretKey" class="c-input" placeholder="Enter secret key to verify signature" aria-label="Secret Key"> <!-- Use shared input component -->
+          <button type="button" class="c-tooltip-container" aria-label="More information about secret key" aria-describedby="tooltip-secret-key">ⓘ
+            <span id="tooltip-secret-key" class="c-tooltip" role="tooltip">Optional - Enter the secret key to verify the JWT signature</span>
+          </button>
         </div>
         <p class="algorithm-info">
           NOTE: For signature verification, we only support "HS256 (HMAC with SHA-256)" algorithm for now.
@@ -34,7 +34,7 @@
           <h2>JWT Token</h2>
         </div>
         <div class="o-panel-content"> <!-- Add inner wrapper -->
-          <textarea id="jwtInputToken" class="c-input c-input--textarea" placeholder="Paste your JWT token here..."></textarea> <!-- Use shared input components -->
+          <textarea id="jwtInputToken" class="c-input c-input--textarea" placeholder="Paste your JWT token here..." aria-label="JWT Token Input"></textarea> <!-- Use shared input components -->
         </div>
       </div>
       
