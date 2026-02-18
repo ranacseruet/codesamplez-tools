@@ -1,5 +1,6 @@
 import QRCode from 'qrcode';
 import DownloadManager from '../common/DownloadManager';
+import ClearButton from '../common/clear-button/ClearButton.js';
 
 export class QRCodeGeneratorUI {
   constructor(options) {
@@ -13,6 +14,11 @@ export class QRCodeGeneratorUI {
     this.downloadBtn = document.getElementById(options.downloadBtnId);
     this.errorMessage = document.getElementById(options.errorMessageId);
     this.downloadManager = new DownloadManager();
+
+    // Initialize ClearButton
+    if (this.qrText) {
+      this.clearButton = new ClearButton(this.qrText);
+    }
 
     this.debounceTimer = null;
     this.bindEvents();
@@ -64,6 +70,7 @@ export class QRCodeGeneratorUI {
   bindEvents() {
     try {
       this.qrText.addEventListener('input', () => this.generateQRCode());
+      this.qrText.addEventListener('textCleared', () => this.generateQRCode()); // Listen for clear event
       this.qrSize.addEventListener('input', () => {
         this.sizeLabel.textContent = `${this.qrSize.value}px`;
         this.generateQRCode();

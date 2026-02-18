@@ -19,24 +19,17 @@ jest.mock('../common/DownloadManager', () => {
   });
 });
 
-import QRCode from 'qrcode';
-import DownloadManager from '../common/DownloadManager';
-import { QRCodeGeneratorUI } from './script';
-
-// Mock QRCode and DownloadManager before importing the script
-jest.mock('qrcode', () => ({
-  toCanvas: jest.fn((canvas, text, options, callback) => {
-    callback(null); // Simulate successful QR code generation
-  }),
-}));
-
-jest.mock('../common/DownloadManager', () => {
+// Mock ClearButton
+jest.mock('../common/clear-button/ClearButton.js', () => {
   return jest.fn().mockImplementation(() => {
-    return {
-      downloadFile: jest.fn(),
-    };
+    return {};
   });
 });
+
+import QRCode from 'qrcode';
+import DownloadManager from '../common/DownloadManager';
+import ClearButton from '../common/clear-button/ClearButton.js';
+import { QRCodeGeneratorUI } from './script';
 
 let qrCodeGenerator;
 let mockDownloadManagerInstance;
@@ -113,6 +106,11 @@ describe('QRCodeGeneratorUI', () => {
     jest.restoreAllMocks();
   });
 
+  it('should initialize ClearButton', () => {
+    expect(ClearButton).toHaveBeenCalledTimes(1);
+    expect(ClearButton).toHaveBeenCalledWith(mockQrText);
+  });
+
   it('should initialize with correct label text and generate QR code', () => {
     expect(mockSizeLabel.textContent).toBe('256px');
     expect(mockMarginLabel.textContent).toBe('4');
@@ -145,6 +143,21 @@ describe('QRCodeGeneratorUI', () => {
       expect.any(Object),
       expect.any(Function)
     );
+  });
+
+  it('should generate QR code on textCleared event', async () => {
+    QRCode.toCanvas.mockClear();
+
+    mockQrText.value = 'cleared'; // Simulating value change before event
+    const clearListener = mockQrText.addEventListener.mock.calls.find(call => call[0] === 'textCleared')[1];
+
+    expect(clearListener).toBeDefined();
+
+    clearListener();
+
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    expect(QRCode.toCanvas).toHaveBeenCalledTimes(1);
   });
 
   it('should hide canvas and show error if text input is empty', async () => {
