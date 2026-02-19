@@ -30,10 +30,11 @@
   width: 28px; /* Keep specific size */
   height: 28px; /* Keep specific size */
   padding: 0; /* Override shared button padding */
-  font-size: 16px; /* Keep specific size */
-  line-height: 1; /* Ensure 'x' is centered */
   flex-shrink: 0; /* Prevent shrinking */
   align-self: center; /* Align vertically in the flex row */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Placeholder for empty custom claims */
