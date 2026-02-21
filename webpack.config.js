@@ -18,8 +18,10 @@ const tools = [
   'data-format-converter'
 ];
 
+const getWebpackMode = (argv = {}) => argv.mode || process.env.NODE_ENV || 'development';
+
 const baseConfig = {
-  mode: process.env.NODE_ENV || 'development',
+  mode: 'development',
   optimization: {
     minimize: true,
     minimizer: [
@@ -75,8 +77,7 @@ const getToolConfig = (toolName) => ({
     }),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-      'process.platform': JSON.stringify(process.platform),
-      'process.env': JSON.stringify({})
+      'process.platform': JSON.stringify(process.platform)
     }),
     new MiniCssExtractPlugin({
       filename: 'styles.main.css'
@@ -127,8 +128,7 @@ const developmentConfig = {
     }),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-      'process.platform': JSON.stringify(process.platform),
-      'process.env': JSON.stringify({})
+      'process.platform': JSON.stringify(process.platform)
     }),
     new MiniCssExtractPlugin({
       filename: '[name]/styles.main.css'
@@ -176,6 +176,26 @@ const developmentConfig = {
   }
 };
 
-// Export based on environment
-const config = process.env.NODE_ENV === 'development' ? developmentConfig : configs;
-module.exports = config;
+module.exports = (_, argv = {}) => {
+  const mode = getWebpackMode(argv);
+  baseConfig.mode = mode;
+
+  const applyMode = (config) => ({
+    ...config,
+    mode,
+    plugins: config.plugins.map((plugin) => {
+      if (plugin instanceof webpack.DefinePlugin) {
+        return new webpack.DefinePlugin({
+          'process.env': JSON.stringify({ NODE_ENV: mode }),
+          'process.platform': JSON.stringify(process.platform)
+        });
+      }
+      return plugin;
+    })
+  });
+
+  const productionConfigs = tools.map((tool) => applyMode(getToolConfig(tool)));
+  const devConfig = applyMode(developmentConfig);
+
+  return mode === 'development' ? devConfig : productionConfigs;
+};

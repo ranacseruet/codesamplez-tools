@@ -97,9 +97,9 @@ body.standalone-app {
 .tool-container {
   max-width: var(--container-max-width, var(--default-container-max-width));
   margin: 0 auto;
-  background-color: var(--color-bg, var(--default-color-bg));
+  background-color: var(--color-bg, transparent);
   border-radius: var(--border-radius-lg, var(--default-border-radius-lg));
-  box-shadow: var(--box-shadow, var(--default-box-shadow));
+  box-shadow: var(--box-shadow, none);
   padding: var(--spacing-lg, var(--default-spacing-lg));
   font-family: inherit;
   line-height: inherit;
@@ -188,7 +188,7 @@ body.standalone-app {
   height: 300px;
   padding: var(--spacing-md, var(--default-spacing-md));
   font-family: var(--font-family-mono, var(--default-font-family-mono));
-  border: 1px solid var(--color-border, var(--default-color-border));
+  border: 1px solid var(--color-border, rgba(128, 128, 128, 0.3));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   resize: none;
   font-size: var(--font-size-base, var(--default-font-size-base));
@@ -197,10 +197,10 @@ body.standalone-app {
 
 .tool-container select {
   padding: var(--spacing-sm, var(--default-spacing-sm));
-  border: 1px solid var(--color-border, var(--default-color-border));
+  border: 1px solid var(--color-border, rgba(128, 128, 128, 0.3));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   font-size: var(--font-size-base, var(--default-font-size-base));
-  background-color: var(--color-bg, var(--default-color-bg));
+  background-color: var(--color-bg, transparent);
   cursor: pointer;
 }
 
@@ -212,11 +212,11 @@ body.standalone-app {
   text-align: center;
   margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
   padding-bottom: var(--spacing-lg, var(--default-spacing-lg));
-  border-bottom: 1px solid var(--color-border-light, var(--default-color-border-light));
+  border-bottom: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.2));
 }
 
 .o-description {
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  color: var(--color-text-secondary, inherit);
   margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
 }
 
@@ -226,7 +226,7 @@ body.standalone-app {
   gap: var(--spacing-lg, var(--default-spacing-lg));
   margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
   padding: var(--spacing-lg, var(--default-spacing-lg));
-  background-color: var(--color-bg-light, var(--default-color-bg-light));
+  background-color: var(--color-bg-light, transparent);
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
 }
 
@@ -315,7 +315,7 @@ body.standalone-app {
 
 .c-button {
   background-color: var(--color-primary, var(--default-color-primary));
-  color: var(--color-bg, var(--default-color-bg));
+  color: var(--color-bg, #fff);
   border: none;
   padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-lg, var(--default-spacing-lg));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
@@ -362,7 +362,7 @@ body.standalone-app {
   bottom: var(--spacing-lg, var(--default-spacing-lg));
   right: var(--spacing-lg, var(--default-spacing-lg));
   background-color: var(--color-success, var(--default-color-success));
-  color: var(--color-bg, var(--default-color-bg));
+  color: var(--color-bg, #fff);
   padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-lg, var(--default-spacing-lg));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   box-shadow: var(--box-shadow, var(--default-box-shadow));
@@ -385,11 +385,11 @@ body.standalone-app {
   /* flex: 1; */
   /* Removed flex: 1 from base input, rely on specific rules */
   padding: var(--spacing-sm, var(--default-spacing-sm));
-  border: 1px solid var(--color-border, var(--default-color-border));
+  border: 1px solid var(--color-border, rgba(128, 128, 128, 0.3));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   font-size: var(--font-size-base, var(--default-font-size-base));
   transition: border-color 0.2s;
-  background-color: var(--color-bg, var(--default-color-bg));
+  background-color: var(--color-bg, transparent);
   min-width: 0;
   /* Prevents input from overflowing flex containers */
 }
@@ -419,10 +419,10 @@ body.standalone-app {
 }
 
 .c-form-group {
-  background-color: var(--color-bg, var(--default-color-bg));
+  background-color: var(--color-bg, transparent);
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   padding: var(--spacing-lg, var(--default-spacing-lg));
-  border: 1px solid var(--color-border, var(--default-color-border));
+  border: 1px solid var(--color-border, rgba(128, 128, 128, 0.3));
   height: fit-content;
   /* Allow group to size based on content */
 }
@@ -430,9 +430,9 @@ body.standalone-app {
 .c-form-group-header {
   font-size: var(--font-size-h2, var(--default-font-size-h2));
   margin-bottom: var(--spacing-md, var(--default-spacing-md));
-  color: var(--color-text, var(--default-color-text));
+  color: var(--color-text, inherit);
   padding-bottom: var(--spacing-sm, var(--default-spacing-sm));
-  border-bottom: 1px solid var(--color-border-light, var(--default-color-border-light));
+  border-bottom: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.2));
   font-weight: 600;
   display: flex;
   /* Allow alignment of header text and potential actions */
@@ -454,7 +454,7 @@ body.standalone-app {
 .c-form-row label {
   flex: 0 0 200px;
   /* Fixed width for labels, adjust as needed */
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  color: var(--color-text-secondary, inherit);
   font-weight: 500;
   display: flex;
   align-items: flex-start;
@@ -484,7 +484,7 @@ body.standalone-app {
   width: 200px;
   background-color: var(--color-secondary, var(--default-color-secondary));
   /* Darker background */
-  color: var(--color-bg, var(--default-color-bg));
+  color: var(--color-bg, #fff);
   text-align: center;
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   padding: var(--spacing-xs, var(--default-spacing-xs));
@@ -537,15 +537,15 @@ button.c-tooltip-container {
 .c-code-output {
   flex: 1;
   padding: var(--spacing-md, var(--default-spacing-md));
-  background-color: var(--color-bg, var(--default-color-bg));
-  border: 1px solid var(--color-border, var(--default-color-border));
+  background-color: var(--color-bg, transparent);
+  border: 1px solid var(--color-border, rgba(128, 128, 128, 0.3));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   font-family: var(--font-family-mono, var(--default-font-family-mono));
   font-size: var(--font-size-base, var(--default-font-size-base));
   line-height: var(--line-height-tight, var(--default-line-height-tight));
   min-height: 100px;
   /* Default min height */
-  color: var(--color-text, var(--default-color-text));
+  color: var(--color-text, inherit);
   word-break: break-all;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -562,14 +562,14 @@ button.c-tooltip-container {
 .c-code-output:empty::before {
   content: "Output will appear here";
   /* Generic placeholder */
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  color: var(--color-text-secondary, inherit);
   font-style: italic;
 }
 
 
 /* --- Stats Panel (from js-minifier) --- */
 .c-stats-panel {
-  background-color: var(--color-bg-light, var(--default-color-bg-light));
+  background-color: var(--color-bg-light, transparent);
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   padding: var(--spacing-md, var(--default-spacing-md));
   margin-top: var(--spacing-lg, var(--default-spacing-lg));
@@ -583,7 +583,7 @@ button.c-tooltip-container {
 }
 
 .c-stat-row span:first-child {
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  color: var(--color-text-secondary, inherit);
 }
 
 /* --- Checkbox Group (from js-minifier) --- */
@@ -611,7 +611,7 @@ button.c-tooltip-container {
 
 .c-checkbox-item label {
   font-size: var(--font-size-base, var(--default-font-size-base));
-  color: var(--color-text, var(--default-color-text));
+  color: var(--color-text, inherit);
   /* Ensure label text color matches base text */
 }
 
@@ -619,7 +619,7 @@ button.c-tooltip-container {
 .c-options-panel {
   margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
   padding: var(--spacing-lg, var(--default-spacing-lg));
-  background-color: var(--color-bg-light, var(--default-color-bg-light));
+  background-color: var(--color-bg-light, transparent);
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
 }
 
