@@ -4,14 +4,14 @@
 /* Header and description styles */
 .css-minifier-header {
   text-align: center;
-  margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-lg);
-  border-bottom: 1px solid var(--color-border-light);
+  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
+  padding-bottom: var(--spacing-lg, var(--default-spacing-lg));
+  border-bottom: 1px solid var(--color-border-light, var(--default-color-border-light));
 }
 
 .css-minifier-description {
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-lg);
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
 }
 
 /* Toolbar styles */
@@ -20,44 +20,44 @@
   /* Removed margin to prevent height discrepancies */
   flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
   width: 100%; /* Ensure toolbar spans full width */
-  gap: var(--spacing-md); /* Add consistent spacing between buttons */
+  gap: var(--spacing-md, var(--default-spacing-md)); /* Add consistent spacing between buttons */
 }
 
 /* Add padding to the panel header to maintain spacing after removing toolbar margin */
 .css-minifier-container .o-panel-header {
-  padding-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-md, var(--default-spacing-md));
 }
 
 /* Stats panel styles */
 .css-minifier-stats {
   width: 100%; /* Ensure stats panel spans full width */
-  margin-top: var(--spacing-lg);
+  margin-top: var(--spacing-lg, var(--default-spacing-lg));
 }
 
 /* Savings percentage specific styling */
 .css-minifier-saving-percentage {
-  color: var(--color-success);
+  color: var(--color-success, var(--default-color-success));
 }
 
 /* Options panel styles */
 .css-minifier-options {
-  margin: var(--spacing-lg) 0;
+  margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
 }
 
 .c-checkbox-group {
   display: flex;
   flex-direction: column; /* Stack rows vertically */
-  gap: var(--spacing-md); /* Gap between rows */
+  gap: var(--spacing-md, var(--default-spacing-md)); /* Gap between rows */
 }
 
 .c-checkbox-row {
   display: flex;
   flex-wrap: wrap; /* Allow items to wrap within a row if needed */
-  gap: var(--spacing-md); /* Gap between items in a row */
+  gap: var(--spacing-md, var(--default-spacing-md)); /* Gap between items in a row */
 }
 
 .c-checkbox-item {
-  flex: 1 1 calc(33.33% - (2 * var(--spacing-md) / 3)); /* Max 3 items per row, accounting for gap */
+  flex: 1 1 calc(33.33% - (2 * var(--spacing-md, var(--default-spacing-md)) / 3)); /* Max 3 items per row, accounting for gap */
   min-width: 150px; /* Ensure items don't get too small */
 }
 
@@ -65,16 +65,16 @@
 .css-minifier-footer {
   text-align: center;
   margin-top: 30px;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  font-size: var(--font-size-base, var(--default-font-size-base));
 }
 
 /* Grid and panel layout fixes */
 .css-minifier-container .o-grid-2col {
   display: grid;
   grid-template-columns: 1fr 1fr; /* Force 2 columns */
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
   min-height: 350px; /* Set minimum height for the grid */
 }
 
@@ -120,7 +120,7 @@
   
   .css-minifier-toolbar.o-toolbar button {
     width: 100%;
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm, var(--default-spacing-sm));
   }
 }
 
@@ -155,7 +155,7 @@
   padding: 12px 24px;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  background-color: var(--color-success); /* Default green background */
+  background-color: var(--color-success, var(--default-color-success)); /* Default green background */
 }
 
 .c-notification.show {
@@ -164,5 +164,5 @@
 }
 
 .c-notification.error {
-  background-color: var(--color-danger);
+  background-color: var(--color-danger, var(--default-color-danger));
 }

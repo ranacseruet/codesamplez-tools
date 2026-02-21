@@ -5,17 +5,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: var(--spacing-md) 0; /* Add margin consistent with original */
+  margin: var(--spacing-md, var(--default-spacing-md)) 0; /* Add margin consistent with original */
 }
 
 .o-toolbar .primary-actions {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-sm, var(--default-spacing-sm));
   margin: 0 auto; /* Center the primary actions */
 }
 
 .jwt-decoder-status-container {
-  margin-top: var(--spacing-sm); /* Use variable */
+  margin-top: var(--spacing-sm, var(--default-spacing-sm)); /* Use variable */
 }
 
 .jwt-decoder-status {
@@ -89,7 +89,7 @@
 }
 
 .tool-container .jwt-decoder-tab:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--color-primary, var(--default-color-primary));
   outline-offset: -2px;
   background-color: #f0f0f0;
   z-index: 2;
@@ -179,7 +179,7 @@
 
 .tool-container .jwt-decoder-footer {
   text-align: center;
-  margin-top: var(--spacing-lg); /* Use variable */
-  color: var(--color-text-secondary); /* Use variable */
-  font-size: var(--font-size-base); /* Use variable */
+  margin-top: var(--spacing-lg, var(--default-spacing-lg)); /* Use variable */
+  color: var(--color-text-secondary, var(--default-color-text-secondary)); /* Use variable */
+  font-size: var(--font-size-base, var(--default-font-size-base)); /* Use variable */
 }

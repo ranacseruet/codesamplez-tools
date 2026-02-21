@@ -1,31 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text Analyzer</title>
     <link rel="stylesheet" href="styles.main.css">
 </head>
-<body>
+
+<body class="standalone-app">
     <div class="tool-container">
         <div class="o-header">
             <h1>Text Analyzer</h1>
             <p class="o-description">Analyze your text to get word count, character statistics, and more.</p>
         </div>
-        
+
         <div class="text-analyzer-editor-container">
             <div class="text-analyzer-panel"> <!-- Reverted -->
                 <div class="text-analyzer-panel-header"> <!-- Reverted -->
                     <h2>Input Text</h2>
                     <div class="text-analyzer-toolbar"> <!-- Reverted -->
-                        <button class="c-button c-button--secondary" id="load-sample">Load Sample</button> <!-- Keep shared button classes -->
+                        <button class="c-button c-button--secondary" id="load-sample">Load Sample</button>
+                        <!-- Keep shared button classes -->
                     </div>
                 </div>
-                <textarea id="textInput" placeholder="Enter your text here..." aria-label="Input text to analyze"></textarea>
+                <textarea id="textInput" placeholder="Enter your text here..."
+                    aria-label="Input text to analyze"></textarea>
             </div>
         </div>
-        
-        <div class="text-analyzer-stats"> 
+
+        <div class="text-analyzer-stats">
             <div class="text-analyzer-stat-item">
                 <span class="text-analyzer-stat-label">Word Count</span>
                 <span id="wordCount" class="text-analyzer-stat-value">0</span>
@@ -55,7 +59,7 @@
                 <span id="avgSentenceLength" class="text-analyzer-stat-value">0</span>
             </div>
         </div>
-        
+
         <div class="text-analyzer-punctuation">
             <h3>Punctuation Statistics</h3>
             <div class="text-analyzer-checkbox-group">
@@ -80,13 +84,15 @@
 
         <div class="text-analyzer-word-frequency">
             <h3>Word Frequency (Top 5)</h3>
-            <div id="wordFrequencyChart" class="word-frequency-chart" role="list" aria-label="Word Frequency Statistics">
+            <div id="wordFrequencyChart" class="word-frequency-chart" role="list"
+                aria-label="Word Frequency Statistics">
                 <!-- Word frequency bars will be dynamically generated here -->
             </div>
         </div>
     </div>
-    
+
     <div id="notification" class="c-notification" role="status" aria-live="polite">Text analyzed successfully!</div>
     <script src="bundle.main.js" type="module"></script>
 </body>
+
 </html>

@@ -1,7 +1,7 @@
 /* Container for the main input area */
 .text-analyzer-editor-container {
   /* Keep simple block layout */
-  margin-bottom: var(--spacing-lg); 
+  margin-bottom: var(--spacing-lg, var(--default-spacing-lg)); 
 }
 
 /* Restore original panel styles, adapted with variables */
@@ -16,88 +16,88 @@
   display: flex;
   justify-content: space-between; /* Aligns h2 left, toolbar right */
   align-items: center;
-  margin-bottom: var(--spacing-sm); /* Use variable */
+  margin-bottom: var(--spacing-sm, var(--default-spacing-sm)); /* Use variable */
 }
 
 /* Restore original toolbar styles *specifically for the panel header* */
 .text-analyzer-panel-header .text-analyzer-toolbar {
   display: flex;
-  gap: var(--spacing-sm); /* Use variable */
+  gap: var(--spacing-sm, var(--default-spacing-sm)); /* Use variable */
   margin: 0; /* No margin needed here */
 }
 
 /* Tool-specific h3 styling - keep as is */
 h3 {
   font-size: 16px;
-  color: var(--color-text);
-  margin: 0 0 var(--spacing-md) 0;
+  color: var(--color-text, var(--default-color-text));
+  margin: 0 0 var(--spacing-md, var(--default-spacing-md)) 0;
 }
 
 /* Styles for the options/controls section containing the main Analyze button - keep as is */
 .text-analyzer-options {
-  margin: var(--spacing-lg) 0;
-  padding: var(--spacing-lg);
-  background-color: var(--color-bg-light);
-  border-radius: var(--border-radius-sm);
+  margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
+  padding: var(--spacing-lg, var(--default-spacing-lg));
+  background-color: var(--color-bg-light, var(--default-color-bg-light));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
 }
 
 /* Ensure the toolbar within the options section is also styled - keep as is */
 .text-analyzer-options .text-analyzer-toolbar {
   display: flex; /* Add display flex */
-  gap: var(--spacing-sm); /* Add gap */
+  gap: var(--spacing-sm, var(--default-spacing-sm)); /* Add gap */
   margin: 0; 
   justify-content: center; 
 }
 
 
 .text-analyzer-stats { /* Keep as is */
-  /* background-color: var(--color-bg-light); */ /* Removed background */
-  border-radius: var(--border-radius-sm);
-  padding: var(--spacing-md);
-  margin-top: var(--spacing-lg);
+  /* background-color: var(--color-bg-light, var(--default-color-bg-light)); */ /* Removed background */
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  padding: var(--spacing-md, var(--default-spacing-md));
+  margin-top: var(--spacing-lg, var(--default-spacing-lg));
   display: grid;
   grid-template-columns: repeat(3, 1fr); /* Changed to 3 columns */
-  gap: var(--spacing-md);
+  gap: var(--spacing-md, var(--default-spacing-md));
 }
 
 .text-analyzer-punctuation {
-  /* background-color: var(--color-bg-light); */ /* Removed background */
-  border-radius: var(--border-radius-sm);
-  padding: var(--spacing-md);
-  margin-top: var(--spacing-lg);
+  /* background-color: var(--color-bg-light, var(--default-color-bg-light)); */ /* Removed background */
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  padding: var(--spacing-md, var(--default-spacing-md));
+  margin-top: var(--spacing-lg, var(--default-spacing-lg));
 }
 
 .text-analyzer-checkbox-group {
   display: grid; /* Changed to grid */
   grid-template-columns: repeat(3, 1fr); /* Changed to 3 columns */
-  gap: var(--spacing-md);
+  gap: var(--spacing-md, var(--default-spacing-md));
 }
 
 .text-analyzer-word-frequency {
-  border-radius: var(--border-radius-sm);
-  padding: var(--spacing-md);
-  margin-top: var(--spacing-lg);
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  padding: var(--spacing-md, var(--default-spacing-md));
+  margin-top: var(--spacing-lg, var(--default-spacing-lg));
 }
 
 .word-frequency-chart {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-sm, var(--default-spacing-sm));
 }
 
 .word-frequency-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm);
-  background-color: var(--color-bg-light);
-  border-radius: var(--border-radius-sm);
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  padding: var(--spacing-sm, var(--default-spacing-sm));
+  background-color: var(--color-bg-light, var(--default-color-bg-light));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   min-height: 40px;
 }
 
 .word-frequency-label {
-  font-size: var(--font-size-base);
-  color: var(--color-text);
+  font-size: var(--font-size-base, var(--default-font-size-base));
+  color: var(--color-text, var(--default-color-text));
   font-weight: 500;
   min-width: 80px;
   text-align: right;
@@ -106,16 +106,16 @@ h3 {
 .word-frequency-bar-container {
   flex: 1;
   height: 20px;
-  background-color: var(--color-bg);
-  border-radius: var(--border-radius-xs);
+  background-color: var(--color-bg, var(--default-color-bg));
+  border-radius: var(--border-radius-xs, var(--default-border-radius-xs));
   overflow: hidden;
   position: relative;
 }
 
 .word-frequency-bar {
   height: 100%;
-  background-color: var(--color-primary); /* Use a solid primary color for better visibility */
-  border-radius: var(--border-radius-xs);
+  background-color: var(--color-primary, var(--default-color-primary)); /* Use a solid primary color for better visibility */
+  border-radius: var(--border-radius-xs, var(--default-border-radius-xs));
   transition: width 0.3s ease;
   position: relative;
   min-width: 5px; /* Ensure even small bars are visible */
@@ -152,21 +152,21 @@ h3 {
 .text-analyzer-stat-item {
   display: flex;
   flex-direction: column;
-  background-color: var(--color-bg-light); /* Corrected: Use defined light gray background */
-  padding: var(--spacing-md); /* Add padding */
-  border-radius: var(--border-radius-sm); /* Add rounded corners */
+  background-color: var(--color-bg-light, var(--default-color-bg-light)); /* Corrected: Use defined light gray background */
+  padding: var(--spacing-md, var(--default-spacing-md)); /* Add padding */
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm)); /* Add rounded corners */
   text-align: center; /* Center the text */
   flex-grow: 1; /* Allow items to grow and fill space */
   min-width: 100px; /* Ensure a minimum width */
 }
 
 .text-analyzer-stat-label {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
+  font-size: var(--font-size-base, var(--default-font-size-base));
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
 }
 
 .text-analyzer-stat-value {
   font-size: 16px; /* Keep slightly larger for emphasis? */
   font-weight: 600;
-  color: var(--color-text);
+  color: var(--color-text, var(--default-color-text));
 }

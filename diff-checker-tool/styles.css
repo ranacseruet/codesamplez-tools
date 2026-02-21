@@ -11,17 +11,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-sm); /* Use shared variable */
+  margin-bottom: var(--spacing-sm, var(--default-spacing-sm)); /* Use shared variable */
 }
 
 /* Keep .diff-checker-options specific sticky positioning and background */
 .diff-checker-options { /* Extends .o-controls */
   position: sticky;
-  top: var(--sticky-offset-base);
+  top: var(--sticky-offset-base, var(--default-sticky-offset-base));
   z-index: 10;
-  /* background-color is already var(--color-bg-light) from .o-controls */
-  /* padding is already var(--spacing-lg) from .o-controls */
-  /* margin is already var(--spacing-lg) 0 from .o-controls */
+  /* background-color is already var(--color-bg-light, var(--default-color-bg-light)) from .o-controls */
+  /* padding is already var(--spacing-lg, var(--default-spacing-lg)) from .o-controls */
+  /* margin is already var(--spacing-lg, var(--default-spacing-lg)) 0 from .o-controls */
   /* display, justify-content, align-items are handled by .o-controls */
 }
 
@@ -31,11 +31,11 @@
   justify-content: space-between;
   align-items: center;
   position: sticky;
-  top: calc(var(--sticky-offset-base) + var(--options-bar-height));
-  background-color: var(--color-bg-light); /* Use shared variable */
-  padding: var(--spacing-sm) var(--spacing-lg); /* Match horizontal padding of o-controls */
-  margin: 0 0 var(--spacing-md) 0; /* Remove horizontal margin, keep bottom margin */
-  border-bottom: 1px solid var(--color-border); /* Use shared variable */
+  top: calc(var(--sticky-offset-base, var(--default-sticky-offset-base)) + var(--options-bar-height, var(--default-options-bar-height)));
+  background-color: var(--color-bg-light, var(--default-color-bg-light)); /* Use shared variable */
+  padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-lg, var(--default-spacing-lg)); /* Match horizontal padding of o-controls */
+  margin: 0 0 var(--spacing-md, var(--default-spacing-md)) 0; /* Remove horizontal margin, keep bottom margin */
+  border-bottom: 1px solid var(--color-border, var(--default-color-border)); /* Use shared variable */
   z-index: 9;
 }
 
@@ -63,7 +63,7 @@
 .tool-container .diff-content {
   flex-grow: 1;
   padding: 2px 12px;
-  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0; /* Use shared variable */
+  border-radius: 0 var(--border-radius-sm, var(--default-border-radius-sm)) var(--border-radius-sm, var(--default-border-radius-sm)) 0; /* Use shared variable */
   transition: background-color 0.3s ease;
   display: inline-block;
   width: 100%;
@@ -120,10 +120,10 @@
   position: absolute;
   left: -18px;
   top: 2px;
-  color: var(--color-text); /* Use shared variable */
+  color: var(--color-text, var(--default-color-text)); /* Use shared variable */
   opacity: 0.5;
   font-weight: 900;
-  font-size: var(--font-size-base); /* Use shared variable */
+  font-size: var(--font-size-base, var(--default-font-size-base)); /* Use shared variable */
 }
 
 .tool-container .diff-line:has(.diff-content.diff-added)::before {
@@ -141,26 +141,26 @@
   min-width: 50px;
   padding: 2px 6px;
   text-align: right;
-  font-family: var(--font-family-mono); /* Use shared variable */
+  font-family: var(--font-family-mono, var(--default-font-family-mono)); /* Use shared variable */
   font-size: 12px; /* Consider a smaller font-size var if common */
   user-select: none;
   white-space: pre;
   background-color: rgba(0, 0, 0, 0.04); /* Consider a subtle bg var */
-  border-right: 1px solid var(--color-border); /* Use shared variable */
+  border-right: 1px solid var(--color-border, var(--default-color-border)); /* Use shared variable */
   margin-right: 0;
-  line-height: var(--line-height-base); /* Use shared variable */
+  line-height: var(--line-height-base, var(--default-line-height-base)); /* Use shared variable */
 }
 
 /* Styles for the navigation controls container */
 .diff-navigation {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm); /* Use shared variable */
+  gap: var(--spacing-sm, var(--default-spacing-sm)); /* Use shared variable */
 }
 
 #diff-counter {
-  font-size: var(--font-size-base); /* Use shared variable */
-  color: var(--color-text-secondary); /* Use shared variable */
+  font-size: var(--font-size-base, var(--default-font-size-base)); /* Use shared variable */
+  color: var(--color-text-secondary, var(--default-color-text-secondary)); /* Use shared variable */
   min-width: 50px;
   text-align: center;
 }
@@ -169,28 +169,28 @@
 
 /* Style for highlighting the current diff block */
 .tool-container .diff-line.current-diff-single {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--color-primary, var(--default-color-primary));
   outline-offset: -1px;
   background-color: rgba(37, 99, 235, 0.1);
 }
 
 .tool-container .diff-line.current-diff-start {
-  border-top: 2px solid var(--color-primary);
-  border-left: 2px solid var(--color-primary);
-  border-right: 2px solid var(--color-primary);
+  border-top: 2px solid var(--color-primary, var(--default-color-primary));
+  border-left: 2px solid var(--color-primary, var(--default-color-primary));
+  border-right: 2px solid var(--color-primary, var(--default-color-primary));
   background-color: rgba(37, 99, 235, 0.1);
 }
 
 .tool-container .diff-line.current-diff-middle {
-  border-left: 2px solid var(--color-primary);
-  border-right: 2px solid var(--color-primary);
+  border-left: 2px solid var(--color-primary, var(--default-color-primary));
+  border-right: 2px solid var(--color-primary, var(--default-color-primary));
   background-color: rgba(37, 99, 235, 0.1);
 }
 
 .tool-container .diff-line.current-diff-end {
-  border-bottom: 2px solid var(--color-primary);
-  border-left: 2px solid var(--color-primary);
-  border-right: 2px solid var(--color-primary);
+  border-bottom: 2px solid var(--color-primary, var(--default-color-primary));
+  border-left: 2px solid var(--color-primary, var(--default-color-primary));
+  border-right: 2px solid var(--color-primary, var(--default-color-primary));
   background-color: rgba(37, 99, 235, 0.1);
 }
 

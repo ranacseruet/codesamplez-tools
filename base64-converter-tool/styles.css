@@ -13,11 +13,11 @@
     white-space: pre-wrap;
     overflow-y: auto;
     overflow-x: hidden;
-    background-color: var(--color-bg-light);
+    background-color: var(--color-bg-light, var(--default-color-bg-light));
 }
 
 /* Accessibility: Show focus outline on label when hidden file input is focused */
 #base64converter-file:focus + label {
-    outline: 2px solid var(--color-primary);
+    outline: 2px solid var(--color-primary, var(--default-color-primary));
     outline-offset: 2px;
 }

@@ -2,28 +2,28 @@
 
 /* Custom styles specific to Data Format Converter */
 .tool-container {
-  max-width: var(--container-max-width);
+  max-width: var(--container-max-width, var(--default-container-max-width));
   margin: 0 auto;
-  background-color: var(--color-bg);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--box-shadow);
-  padding: var(--spacing-lg);
-  font-family: var(--font-family-base);
-  line-height: var(--line-height-base);
-  color: var(--color-text);
+  background-color: var(--color-bg, var(--default-color-bg));
+  border-radius: var(--border-radius-lg, var(--default-border-radius-lg));
+  box-shadow: var(--box-shadow, var(--default-box-shadow));
+  padding: var(--spacing-lg, var(--default-spacing-lg));
+  font-family: var(--font-family-base, var(--default-font-family-base));
+  line-height: var(--line-height-base, var(--default-line-height-base));
+  color: var(--color-text, var(--default-color-text));
 }
 
 .converter-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
 }
 
 @media (max-width: 768px) {
   .converter-section {
     grid-template-columns: 1fr;
-    gap: var(--spacing-md);
+    gap: var(--spacing-md, var(--default-spacing-md));
   }
   
   .arrow {
@@ -43,7 +43,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: var(--spacing-sm) 0;
+    padding: var(--spacing-sm, var(--default-spacing-sm)) 0;
 }
 
 @media (max-width: 768px) {
@@ -57,62 +57,62 @@
 
 .format-selector {
   display: flex;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  margin-bottom: var(--spacing-md, var(--default-spacing-md));
 }
 
 .format-btn {
-  background-color: var(--color-secondary);
-  color: var(--color-bg);
+  background-color: var(--color-secondary, var(--default-color-secondary));
+  color: var(--color-bg, var(--default-color-bg));
   border: none;
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-lg, var(--default-spacing-lg));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   cursor: pointer;
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-base, var(--default-font-size-base));
   transition: background-color 0.2s;
 }
 
 .format-btn:hover {
-  background-color: var(--color-secondary-hover);
+  background-color: var(--color-secondary-hover, var(--default-color-secondary-hover));
 }
 
 .format-btn.active {
-  background-color: var(--color-primary);
-  color: var(--color-bg);
+  background-color: var(--color-primary, var(--default-color-primary));
+  color: var(--color-bg, var(--default-color-bg));
 }
 
 .text-area {
   width: 100%;
   height: 400px;
-  padding: var(--spacing-md);
-  font-family: var(--font-family-mono);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-md, var(--default-spacing-md));
+  font-family: var(--font-family-mono, var(--default-font-family-mono));
+  border: 1px solid var(--color-border, var(--default-color-border));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   resize: vertical;
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-tight);
+  font-size: var(--font-size-base, var(--default-font-size-base));
+  line-height: var(--line-height-tight, var(--default-line-height-tight));
 }
 
 .text-area:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: var(--color-primary, var(--default-color-primary));
 }
 
 .convert-btn {
-  background-color: var(--color-primary);
-  color: var(--color-bg);
+  background-color: var(--color-primary, var(--default-color-primary));
+  color: var(--color-bg, var(--default-color-bg));
   border: none;
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-md, var(--default-spacing-md)) var(--spacing-lg, var(--default-spacing-lg));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   cursor: pointer;
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-base, var(--default-font-size-base));
   transition: background-color 0.2s;
-  margin: var(--spacing-md) auto;
+  margin: var(--spacing-md, var(--default-spacing-md)) auto;
   display: block;
 }
 
 .convert-btn:hover {
-  background-color: var(--color-primary-hover);
+  background-color: var(--color-primary-hover, var(--default-color-primary-hover));
 }
 
 .arrow-container {
@@ -124,7 +124,7 @@
 
 .arrow {
   font-size: 2em;
-  color: var(--color-primary);
+  color: var(--color-primary, var(--default-color-primary));
   animation: pulse 2s infinite;
 }
 
@@ -135,21 +135,21 @@
 }
 
 .error {
-  color: var(--color-danger);
-  background-color: var(--color-bg-light);
-  border: 1px solid var(--color-border);
-  padding: var(--spacing-md);
-  border-radius: var(--border-radius-sm);
-  margin-top: var(--spacing-sm);
-  font-size: var(--font-size-base);
+  color: var(--color-danger, var(--default-color-danger));
+  background-color: var(--color-bg-light, var(--default-color-bg-light));
+  border: 1px solid var(--color-border, var(--default-color-border));
+  padding: var(--spacing-md, var(--default-spacing-md));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  margin-top: var(--spacing-sm, var(--default-spacing-sm));
+  font-size: var(--font-size-base, var(--default-font-size-base));
 }
 
 .success {
-  color: var(--color-success);
-  background-color: var(--color-bg-light);
-  border: 1px solid var(--color-border);
-  padding: var(--spacing-md);
-  border-radius: var(--border-radius-sm);
-  margin-top: var(--spacing-sm);
-  font-size: var(--font-size-base);
+  color: var(--color-success, var(--default-color-success));
+  background-color: var(--color-bg-light, var(--default-color-bg-light));
+  border: 1px solid var(--color-border, var(--default-color-border));
+  padding: var(--spacing-md, var(--default-spacing-md));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  margin-top: var(--spacing-sm, var(--default-spacing-sm));
+  font-size: var(--font-size-base, var(--default-font-size-base));
 }

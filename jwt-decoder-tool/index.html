@@ -1,89 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JWT Decoder</title>
   <link rel="stylesheet" href="styles.main.css">
 </head>
-<body>
+
+<body class="standalone-app">
   <div class="tool-container"> <!-- Use shared container -->
     <header class="o-header"> <!-- Use shared header object -->
       <h1>JWT Decoder & Validator</h1>
-      <p class="o-description">Decode and validate JSON Web Tokens (JWT) with ease</p> <!-- Use shared description object -->
+      <p class="o-description">Decode and validate JSON Web Tokens (JWT) with ease</p>
+      <!-- Use shared description object -->
     </header>
-    
+
     <div class="c-options-panel"> <!-- Use shared options panel component -->
       <h2>Signature Options</h2>
       <div class="c-form-group"> <!-- Use shared form group component -->
         <div class="c-form-row"> <!-- Use shared form row component -->
-          <input type="text" id="jwtSecretKey" class="c-input" placeholder="Enter secret key to verify signature" aria-label="Secret Key"> <!-- Use shared input component -->
-          <button type="button" class="c-tooltip-container" aria-label="More information about secret key" aria-describedby="tooltip-secret-key">ⓘ
-            <span id="tooltip-secret-key" class="c-tooltip" role="tooltip">Optional - Enter the secret key to verify the JWT signature</span>
+          <input type="text" id="jwtSecretKey" class="c-input" placeholder="Enter secret key to verify signature"
+            aria-label="Secret Key"> <!-- Use shared input component -->
+          <button type="button" class="c-tooltip-container" aria-label="More information about secret key"
+            aria-describedby="tooltip-secret-key">ⓘ
+            <span id="tooltip-secret-key" class="c-tooltip" role="tooltip">Optional - Enter the secret key to verify the
+              JWT signature</span>
           </button>
+
         </div>
         <p class="algorithm-info">
           NOTE: For signature verification, we only support "HS256 (HMAC with SHA-256)" algorithm for now.
         </p>
       </div>
     </div>
-    
+
     <div class="o-grid-2col"> <!-- Use shared 2-column grid object -->
       <div class="o-panel"> <!-- Use shared panel object -->
         <div class="o-panel-header"> <!-- Use shared panel header object -->
           <h2>JWT Token</h2>
         </div>
         <div class="o-panel-content"> <!-- Add inner wrapper -->
-          <textarea id="jwtInputToken" class="c-input c-input--textarea" placeholder="Paste your JWT token here..." aria-label="JWT Token Input"></textarea> <!-- Use shared input components -->
+          <textarea id="jwtInputToken" class="c-input c-input--textarea" placeholder="Paste your JWT token here..."
+            aria-label="JWT Token Input"></textarea> <!-- Use shared input components -->
         </div>
       </div>
-      
+
       <div class="o-panel"> <!-- Use shared panel object -->
         <div class="o-panel-header"> <!-- Use shared panel header object -->
           <h2>Decoded Token</h2>
         </div>
         <div class="o-panel-content"> <!-- Add inner wrapper -->
-          <div id="jwtDecodedContainer" class="jwt-decoder-json-container"> <!-- Keep specific container for tabs/viewer -->
+          <div id="jwtDecodedContainer" class="jwt-decoder-json-container">
+            <!-- Keep specific container for tabs/viewer -->
             <!-- Tab navigation -->
-            <div class="jwt-decoder-tabs" role="tablist">
-              <button id="tab-raw" class="jwt-decoder-tab active" data-tab="raw" role="tab" aria-selected="true" aria-controls="rawTab" tabindex="0">Raw</button>
-              <button id="tab-header" class="jwt-decoder-tab" data-tab="header" role="tab" aria-selected="false" aria-controls="headerTab" tabindex="-1">Header</button>
-              <button id="tab-payload" class="jwt-decoder-tab" data-tab="payload" role="tab" aria-selected="false" aria-controls="payloadTab" tabindex="-1">Payload</button>
-          </div>
-          
-          <!-- Tab content -->
-          <div class="jwt-decoder-tab-content">
-            <div id="rawTab" class="jwt-decoder-tab-pane active" role="tabpanel" aria-labelledby="tab-raw">
-              <div id="rawJsonViewer" class="jwt-decoder-json-viewer"></div>
-              <textarea id="jwtDecodedOutput" readonly placeholder="Decoded token will appear here..." style="display: none;"></textarea>
+            <div class="jwt-decoder-tabs">
+              <button id="tab-raw" class="jwt-decoder-tab active" data-tab="raw" role="tab" aria-selected="true"
+                aria-controls="rawTab" tabindex="0">Raw</button>
+              <button id="tab-header" class="jwt-decoder-tab" data-tab="header" role="tab" aria-selected="false"
+                aria-controls="headerTab" tabindex="-1">Header</button>
+              <button id="tab-payload" class="jwt-decoder-tab" data-tab="payload" role="tab" aria-selected="false"
+                aria-controls="payloadTab" tabindex="-1">Payload</button>
             </div>
-            <div id="headerTab" class="jwt-decoder-tab-pane" role="tabpanel" aria-labelledby="tab-header">
-              <div id="headerJson" class="jwt-decoder-json-viewer"></div>
+
+            <!-- Tab content -->
+            <div class="jwt-decoder-tab-content">
+              <div id="rawTab" class="jwt-decoder-tab-pane active" role="tabpanel" aria-labelledby="tab-raw">
+                <div id="rawJsonViewer" class="jwt-decoder-json-viewer"></div>
+                <textarea id="jwtDecodedOutput" readonly placeholder="Decoded token will appear here..."
+                  style="display: none;"></textarea>
+              </div>
+              <div id="headerTab" class="jwt-decoder-tab-pane" role="tabpanel" aria-labelledby="tab-header">
+                <div id="headerJson" class="jwt-decoder-json-viewer"></div>
+              </div>
+              <div id="payloadTab" class="jwt-decoder-tab-pane" role="tabpanel" aria-labelledby="tab-payload">
+                <div id="payloadJson" class="jwt-decoder-json-viewer"></div>
+              </div>
             </div>
-            <div id="payloadTab" class="jwt-decoder-tab-pane" role="tabpanel" aria-labelledby="tab-payload">
-              <div id="payloadJson" class="jwt-decoder-json-viewer"></div>
-            </div>
-          </div>
-        </div> <!-- Close jwtDecodedContainer -->
-      </div> <!-- Close o-panel-content -->
-    </div> <!-- Close o-panel -->
-  </div> <!-- Close o-grid-2col -->
-    
+          </div> <!-- Close jwtDecodedContainer -->
+        </div> <!-- Close o-panel-content -->
+      </div> <!-- Close o-panel -->
+    </div> <!-- Close o-grid-2col -->
+
     <div class="o-toolbar"> <!-- Use shared toolbar object (removed u-text-center) -->
       <div class="primary-actions">
-        <button id="jwt-decoder-decode-btn" class="c-button c-button--primary">Decode JWT Token</button> <!-- Use shared button components -->
-        <button id="jwt-decoder-validate-btn" class="c-button c-button--primary">Validate Signature</button> <!-- Use shared button components -->
+        <button id="jwt-decoder-decode-btn" class="c-button c-button--primary">Decode JWT Token</button>
+        <!-- Use shared button components -->
+        <button id="jwt-decoder-validate-btn" class="c-button c-button--primary">Validate Signature</button>
+        <!-- Use shared button components -->
       </div>
-      <button id="jwt-decoder-copy-btn" class="c-button c-button--secondary">Copy Decoded</button> <!-- Use shared button components -->
+      <button id="jwt-decoder-copy-btn" class="c-button c-button--secondary">Copy Decoded</button>
+      <!-- Use shared button components -->
     </div>
-    
+
     <div class="c-stats-panel"> <!-- Use shared stats panel component -->
       <h2>Validation Result</h2>
       <div class="jwt-decoder-status-container"> <!-- Keep specific container for status message -->
         <div id="jwtSignatureStatus" class="jwt-decoder-status">Not verified</div> <!-- Keep specific status element -->
       </div>
     </div>
-    
+
     <footer class="jwt-decoder-footer"> <!-- Keep specific footer for now -->
       <p>JWT Decoder - Safely decode and verify your JWT tokens. No tokens are stored or transmitted</p>
     </footer>
@@ -91,4 +107,5 @@
   </div>
   <script src="bundle.main.js"></script>
 </body>
+
 </html>

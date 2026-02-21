@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Base64 Converter</title>
     <link rel="stylesheet" href="/base64-converter-tool/styles.main.css">
 </head>
-<body>
+
+<body class="standalone-app">
     <div class="tool-container">
         <div class="o-header">
             <h1>Base64 Converter</h1>
-            <p class="o-description">Convert text and files to and from Base64 encoding with support for multiple character encodings.</p>
+            <p class="o-description">Convert text and files to and from Base64 encoding with support for multiple
+                character encodings.</p>
         </div>
-        
+
         <div class="o-controls">
             <div class="u-flex u-gap-sm">
                 <select id="base64converter-mode" class="tool-container select" aria-label="Conversion Mode">
@@ -36,20 +39,21 @@
                 <div class="o-panel-header">
                     <h2>Input</h2>
                 </div>
-                <textarea id="base64converter-input" 
-                    placeholder="Enter text to encode or decode..." aria-label="Input text"></textarea>
+                <textarea id="base64converter-input" placeholder="Enter text to encode or decode..."
+                    aria-label="Input text"></textarea>
             </div>
-            
+
             <div class="o-panel">
                 <div class="o-panel-header">
                     <h2>Output</h2>
                 </div>
-                <textarea id="base64converter-result" class="tool-container textarea" readonly aria-label="Output text"></textarea>
+                <textarea id="base64converter-result" class="tool-container textarea" readonly
+                    aria-label="Output text"></textarea>
             </div>
         </div>
 
         <div class="u-flex u-justify-between u-mt-md">
-             <div class="u-flex u-gap-sm">
+            <div class="u-flex u-gap-sm">
                 <input type="file" id="base64converter-file" class="u-visually-hidden">
                 <label class="c-button c-button--secondary" for="base64converter-file">
                     Upload File
@@ -59,18 +63,20 @@
                 <button id="base64converter-convert" class="c-button">Convert</button>
             </div>
             <div>
-                <button id="base64converter-download-decoded" class="c-button c-button--secondary c-button--icon-download" disabled>Download</button>
+                <button id="base64converter-download-decoded"
+                    class="c-button c-button--secondary c-button--icon-download" disabled>Download</button>
             </div>
         </div>
-        </div>
-        
-        <div class="o-controls">
-            <span id="base64converter-status" aria-live="polite"></span>
-            <span id="base64converter-copy-status" aria-live="polite"></span>
-        </div>
+    </div>
+
+    <div class="o-controls">
+        <span id="base64converter-status" aria-live="polite"></span>
+        <span id="base64converter-copy-status" aria-live="polite"></span>
+    </div>
     </div>
 
     <div id="notification" class="c-notification" role="status" aria-live="polite">Copied to clipboard!</div>
     <script src="/base64-converter-tool/bundle.main.js"></script>
 </body>
+
 </html>

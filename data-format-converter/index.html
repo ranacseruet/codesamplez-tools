@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Format Converter</title>
     <link rel="stylesheet" href="styles.main.css">
 </head>
-<body>
+
+<body class="standalone-app">
     <div class="tool-container">
         <div class="o-header">
             <h1>Data Format Converter</h1>
@@ -17,43 +19,44 @@
             <div class="input-section o-panel">
                 <h2>Input Format</h2>
                 <div class="format-selector" role="group" aria-label="Input Format">
-                    <button class="format-btn active c-button c-button--small" data-format="json" aria-pressed="true">JSON</button>
-                    <button class="format-btn c-button c-button--small" data-format="xml" aria-pressed="false">XML</button>
-                    <button class="format-btn c-button c-button--small" data-format="yaml" aria-pressed="false">YAML</button>
-                    <button class="format-btn c-button c-button--small" data-format="properties" aria-pressed="false">Properties</button>
+                    <button class="format-btn active c-button c-button--small" data-format="json"
+                        aria-pressed="true">JSON</button>
+                    <button class="format-btn c-button c-button--small" data-format="xml"
+                        aria-pressed="false">XML</button>
+                    <button class="format-btn c-button c-button--small" data-format="yaml"
+                        aria-pressed="false">YAML</button>
+                    <button class="format-btn c-button c-button--small" data-format="properties"
+                        aria-pressed="false">Properties</button>
                 </div>
-                <textarea 
-                    id="inputText" 
-                    class="text-area c-input c-input--textarea" 
-                    placeholder="Paste your data here..."
-                    aria-label="Input data"
-                ></textarea>
+                <textarea id="inputText" class="text-area c-input c-input--textarea"
+                    placeholder="Paste your data here..." aria-label="Input data"></textarea>
             </div>
 
             <div class="swap-action-container">
-                <button id="swapBtn" class="c-button c-button--small c-button--outline" title="Swap Input and Output" aria-label="Swap Input and Output">Swap ⇄</button>
+                <button id="swapBtn" class="c-button c-button--small c-button--outline" title="Swap Input and Output"
+                    aria-label="Swap Input and Output">Swap ⇄</button>
             </div>
 
             <div class="output-section o-panel">
                 <h2>Output Format</h2>
                 <div class="format-selector" role="group" aria-label="Output Format">
-                    <button class="format-btn c-button c-button--small" data-format="json" aria-pressed="false">JSON</button>
-                    <button class="format-btn active c-button c-button--small" data-format="xml" aria-pressed="true">XML</button>
-                    <button class="format-btn c-button c-button--small" data-format="yaml" aria-pressed="false">YAML</button>
-                    <button class="format-btn c-button c-button--small" data-format="properties" aria-pressed="false">Properties</button>
+                    <button class="format-btn c-button c-button--small" data-format="json"
+                        aria-pressed="false">JSON</button>
+                    <button class="format-btn active c-button c-button--small" data-format="xml"
+                        aria-pressed="true">XML</button>
+                    <button class="format-btn c-button c-button--small" data-format="yaml"
+                        aria-pressed="false">YAML</button>
+                    <button class="format-btn c-button c-button--small" data-format="properties"
+                        aria-pressed="false">Properties</button>
                 </div>
-                <textarea 
-                    id="outputText" 
-                    class="text-area c-input c-input--textarea" 
-                    placeholder="Converted data will appear here..."
-                    readonly
-                    aria-label="Output data"
-                ></textarea>
+                <textarea id="outputText" class="text-area c-input c-input--textarea"
+                    placeholder="Converted data will appear here..." readonly aria-label="Output data"></textarea>
             </div>
 
         </div>
         <div class="u-text-center" style="display: flex; justify-content: center; align-items: center; gap: 20px;">
-            <label class="c-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+            <label class="c-checkbox"
+                style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
                 <input type="checkbox" id="autoConvert" checked>
                 <span>Auto-convert</span>
             </label>
@@ -65,4 +68,5 @@
     </div>
     <script type="module" src="bundle.main.js"></script>
 </body>
+
 </html>

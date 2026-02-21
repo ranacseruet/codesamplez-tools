@@ -39,14 +39,14 @@
 
 /* Placeholder for empty custom claims */
 .jwt-builder-container .empty-claims-message {
-  color: var(--color-text-secondary);
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
   font-style: italic;
-  padding: var(--spacing-sm) 0; /* Add some padding */
+  padding: var(--spacing-sm, var(--default-spacing-sm)) 0; /* Add some padding */
 }
 
 /* Result section specific layout */
 .jwt-builder-container .result-section {
-  margin-top: var(--spacing-lg);
+  margin-top: var(--spacing-lg, var(--default-spacing-lg));
 }
 
 .jwt-builder-container .result-container {
@@ -65,7 +65,7 @@
 }
 
 .jwt-builder-container .jwt-token-output:empty::before {
-  color: var(--color-text-secondary); /* Keep placeholder text normal */
+  color: var(--color-text-secondary, var(--default-color-text-secondary)); /* Keep placeholder text normal */
   font-weight: normal; /* Reset font weight for placeholder */
   letter-spacing: normal; /* Reset letter spacing for placeholder */
 }
@@ -78,13 +78,13 @@
 
 /* Style input fields */
 .jwt-builder-container .c-input {
-  font-family: var(--font-family-mono);
+  font-family: var(--font-family-mono, var(--default-font-family-mono));
   color: #1f2937; /* Modern dark gray for better readability */
   font-weight: 500; /* Slightly bolder for better visibility */
 }
 
 .jwt-builder-container .c-input:focus {
-  border-color: var(--color-primary);
+  border-color: var(--color-primary, var(--default-color-primary));
   color: #111827; /* Even darker for focused state */
   font-weight: 500; /* Maintain weight in focus */
 }
@@ -117,7 +117,7 @@
 
   .jwt-builder-container .custom-claim-row .delete-claim {
     align-self: flex-end; /* Position delete button to the end */
-    margin-top: var(--spacing-sm);
+    margin-top: var(--spacing-sm, var(--default-spacing-sm));
   }
 
   /* Adjust result container layout for mobile */
@@ -132,9 +132,9 @@
 
 /* Style for algorithm information note */
 .jwt-builder-container .algorithm-info {
-  margin-top: var(--spacing-sm);
-  font-size: var(--font-size-small);
-  color: var(--color-text-secondary);
+  margin-top: var(--spacing-sm, var(--default-spacing-sm));
+  font-size: var(--font-size-small, var(--default-font-size-small));
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
 }
 
 /* Style for the refresh secret key button - remove background, just show icon */

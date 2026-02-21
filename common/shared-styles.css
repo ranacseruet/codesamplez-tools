@@ -4,43 +4,90 @@
 
 :root {
   /* Colors */
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-secondary: #6b7280;
-  --color-secondary-hover: #4b5563;
-  --color-text: #333;
-  --color-text-secondary: #666;
-  --color-border: #ddd;
-  --color-border-light: #eee;
-  --color-bg: white;
-  --color-bg-light: #f8f9fa;
-  --color-success: #28a745;
-  --color-danger: #dc3545;
-  --color-danger-hover: #c82333;
-  --color-shadow: rgba(0, 0, 0, 0.1);
+  --default-color-primary: #2563eb;
+  --default-color-primary-hover: #1d4ed8;
+  --default-color-secondary: #6b7280;
+  --default-color-secondary-hover: #4b5563;
+  --default-color-text: #333;
+  --default-color-text-secondary: #666;
+  --default-color-border: #ddd;
+  --default-color-border-light: #eee;
+  --default-color-bg: white;
+  --default-color-bg-light: #f8f9fa;
+  --default-color-success: #28a745;
+  --default-color-danger: #dc3545;
+  --default-color-danger-hover: #c82333;
+  --default-color-shadow: rgba(0, 0, 0, 0.1);
 
   /* Typography */
-  --font-family-base: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  --font-family-mono: monospace;
-  --font-size-base: 14px;
-  --font-size-small: 13px; /* Added for small button */
-  --font-size-h1: 24px;
-  --font-size-h2: 18px;
-  --line-height-base: 1.6;
-  --line-height-tight: 1.5;
+  --default-font-family-base: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --default-font-family-mono: monospace;
+  --default-font-size-base: 14px;
+  --default-font-size-small: 13px;
+  /* Added for small button */
+  --default-font-size-h1: 24px;
+  --default-font-size-h2: 18px;
+  --default-line-height-base: 1.6;
+  --default-line-height-tight: 1.5;
 
   /* Spacing */
-  --spacing-xxs: 6px; /* Added for small button */
-  --spacing-xs: 5px;
-  --spacing-sm: 10px;
-  --spacing-md: 15px;
-  --spacing-lg: 20px;
+  --default-spacing-xxs: 6px;
+  /* Added for small button */
+  --default-spacing-xs: 5px;
+  --default-spacing-sm: 10px;
+  --default-spacing-md: 15px;
+  --default-spacing-lg: 20px;
 
   /* Layout */
-  --container-max-width: 1200px;
-  --border-radius-sm: 4px;
-  --border-radius-lg: 8px;
-  --box-shadow: 0 2px 10px var(--color-shadow);
+  --default-container-max-width: 1280px;
+  --default-border-radius-sm: 4px;
+  --default-border-radius-lg: 8px;
+  --default-box-shadow: 0 2px 10px var(--default-color-shadow);
+}
+
+/* Standalone App Styles */
+body.standalone-app {
+  font-family: var(--default-font-family-base);
+  color: var(--default-color-text);
+  line-height: var(--default-line-height-base);
+  background-color: var(--default-color-bg-light);
+  margin: 0;
+
+  /* Map standard variables to defaults for standalone mode validity */
+  --color-primary: var(--default-color-primary);
+  --color-primary-hover: var(--default-color-primary-hover);
+  --color-secondary: var(--default-color-secondary);
+  --color-secondary-hover: var(--default-color-secondary-hover);
+  --color-text: var(--default-color-text);
+  --color-text-secondary: var(--default-color-text-secondary);
+  --color-border: var(--default-color-border);
+  --color-border-light: var(--default-color-border-light);
+  --color-bg: var(--default-color-bg);
+  --color-bg-light: var(--default-color-bg-light);
+  --color-success: var(--default-color-success);
+  --color-danger: var(--default-color-danger);
+  --color-danger-hover: var(--default-color-danger-hover);
+  --color-shadow: var(--default-color-shadow);
+
+  --font-family-base: var(--default-font-family-base);
+  --font-family-mono: var(--default-font-family-mono);
+  --font-size-base: var(--default-font-size-base);
+  --font-size-small: var(--default-font-size-small);
+  --font-size-h1: var(--default-font-size-h1);
+  --font-size-h2: var(--default-font-size-h2);
+  --line-height-base: var(--default-line-height-base);
+  --line-height-tight: var(--default-line-height-tight);
+
+  --spacing-xxs: var(--default-spacing-xxs);
+  --spacing-xs: var(--default-spacing-xs);
+  --spacing-sm: var(--default-spacing-sm);
+  --spacing-md: var(--default-spacing-md);
+  --spacing-lg: var(--default-spacing-lg);
+
+  --container-max-width: var(--default-container-max-width);
+  --border-radius-sm: var(--default-border-radius-sm);
+  --border-radius-lg: var(--default-border-radius-lg);
+  --box-shadow: var(--default-box-shadow);
 }
 
 /* ==========================================================================
@@ -48,15 +95,15 @@
    ========================================================================== */
 
 .tool-container {
-  max-width: var(--container-max-width);
+  max-width: var(--container-max-width, var(--default-container-max-width));
   margin: 0 auto;
-  background-color: var(--color-bg);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--box-shadow);
-  padding: var(--spacing-lg);
-  font-family: var(--font-family-base);
-  line-height: var(--line-height-base);
-  color: var(--color-text);
+  background-color: var(--color-bg, var(--default-color-bg));
+  border-radius: var(--border-radius-lg, var(--default-border-radius-lg));
+  box-shadow: var(--box-shadow, var(--default-box-shadow));
+  padding: var(--spacing-lg, var(--default-spacing-lg));
+  font-family: inherit;
+  line-height: inherit;
+  color: inherit;
   contain: style layout paint;
 }
 
@@ -66,40 +113,94 @@
   padding: 0;
 }
 
+/* --- Preventative Style Safeguards --- */
+/* Constraints with higher specificity to prevent external host styles from breaking the layout */
+.tool-container .c-button,
+.tool-container button {
+  max-width: 100%;
+  max-height: 60px;
+  line-height: normal;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-indent: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  min-height: 0;
+}
+
+.tool-container .c-button--small {
+  max-height: 40px;
+}
+
+.tool-container .c-input:not(.c-input--textarea),
+.tool-container input:not([type="checkbox"]):not([type="radio"]),
+.tool-container select {
+  max-width: 100%;
+  max-height: 60px;
+  line-height: normal;
+  letter-spacing: normal;
+  text-indent: 0;
+  min-width: 0;
+  min-height: 0;
+}
+
+.tool-container .c-input--textarea,
+.tool-container textarea {
+  max-width: 100%;
+  max-height: 80vh;
+  min-width: 0;
+}
+
+.tool-container h1,
+.tool-container h2,
+.tool-container p,
+.tool-container label,
+.tool-container span {
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+
+.tool-container img {
+  max-width: 100%;
+  height: auto;
+}
+
 /* ==========================================================================
    Elements Layer - HTML Elements
    ========================================================================== */
 
 .tool-container h1 {
-  color: var(--color-primary);
-  margin-bottom: var(--spacing-sm);
-  font-size: var(--font-size-h1);
+  color: var(--color-primary, var(--default-color-primary));
+  margin-bottom: var(--spacing-sm, var(--default-spacing-sm));
+  font-size: var(--font-size-h1, var(--default-font-size-h1));
 }
 
 .tool-container h2 {
-  color: var(--color-text);
-  margin-bottom: var(--spacing-sm);
-  font-size: var(--font-size-h2);
+  color: inherit;
+  margin-bottom: var(--spacing-sm, var(--default-spacing-sm));
+  font-size: var(--font-size-h2, var(--default-font-size-h2));
 }
 
 .tool-container textarea {
   width: 100%;
   height: 300px;
-  padding: var(--spacing-md);
-  font-family: var(--font-family-mono);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-md, var(--default-spacing-md));
+  font-family: var(--font-family-mono, var(--default-font-family-mono));
+  border: 1px solid var(--color-border, var(--default-color-border));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   resize: none;
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-tight);
+  font-size: var(--font-size-base, var(--default-font-size-base));
+  line-height: var(--line-height-tight, var(--default-line-height-tight));
 }
 
 .tool-container select {
-  padding: var(--spacing-sm);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
-  font-size: var(--font-size-base);
-  background-color: var(--color-bg);
+  padding: var(--spacing-sm, var(--default-spacing-sm));
+  border: 1px solid var(--color-border, var(--default-color-border));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  font-size: var(--font-size-base, var(--default-font-size-base));
+  background-color: var(--color-bg, var(--default-color-bg));
   cursor: pointer;
 }
 
@@ -109,32 +210,37 @@
 
 .o-header {
   text-align: center;
-  margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-lg);
-  border-bottom: 1px solid var(--color-border-light);
+  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
+  padding-bottom: var(--spacing-lg, var(--default-spacing-lg));
+  border-bottom: 1px solid var(--color-border-light, var(--default-color-border-light));
 }
 
 .o-description {
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-lg);
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
 }
 
 .o-controls {
   display: flex;
   justify-content: space-between;
-  gap: var(--spacing-lg);
-  margin: var(--spacing-lg) 0;
-  padding: var(--spacing-lg);
-  background-color: var(--color-bg-light);
-  border-radius: var(--border-radius-sm);
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+  margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
+  padding: var(--spacing-lg, var(--default-spacing-lg));
+  background-color: var(--color-bg-light, var(--default-color-bg-light));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
 }
 
 .o-panel {
-  flex: 1; /* Keep for potential use in flex contexts */
-  display: flex; /* Restore display:flex */
-  flex-direction: column; /* Restore flex-direction */
-  min-height: 0; /* Add min-height to help flex sizing within grid */
-  /* height: 100%; */ /* Removed explicit height, rely on grid stretch */
+  flex: 1;
+  /* Keep for potential use in flex contexts */
+  display: flex;
+  /* Restore display:flex */
+  flex-direction: column;
+  /* Restore flex-direction */
+  min-height: 0;
+  /* Add min-height to help flex sizing within grid */
+  /* height: 100%; */
+  /* Removed explicit height, rely on grid stretch */
   /* Panel now acts as a flex container again */
 }
 
@@ -142,12 +248,18 @@
 .o-panel-content {
   display: flex;
   flex-direction: column;
-  flex: 1; /* Allow content wrapper to fill the panel */
-  min-height: 0; /* Crucial for flex sizing within grid/flex parents */
+  flex: 1;
+  /* Allow content wrapper to fill the panel */
+  min-height: 0;
+  /* Crucial for flex sizing within grid/flex parents */
 }
-.o-panel-content .c-input--textarea { /* Apply flex sizing to textarea */
-  flex: 1; /* Allow textarea to grow and fill the panel content area */
-  min-height: 300px; /* Ensure a minimum height for textareas */
+
+.o-panel-content .c-input--textarea {
+  /* Apply flex sizing to textarea */
+  flex: 1;
+  /* Allow textarea to grow and fill the panel content area */
+  min-height: 300px;
+  /* Ensure a minimum height for textareas */
 }
 
 /* Removed .o-panel-content .jwt-decoder-json-container rule from shared styles */
@@ -155,23 +267,27 @@
 /* Removed the duplicated .o-panel block and stray closing brace that were here */
 
 .o-panel-header {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-md, var(--default-spacing-md));
 }
 
 .o-toolbar {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-sm, var(--default-spacing-sm));
 }
 
 /* Generic 2-column grid layout */
 .o-grid-2col {
   display: grid;
-  grid-template-columns: 1fr; /* Default to 1 column */
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg); /* Add some space below the grid */
+  grid-template-columns: 1fr;
+  /* Default to 1 column */
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
+  /* Add some space below the grid */
 }
 
-@media (min-width: 768px) { /* Apply 2 columns on medium screens and up */
+@media (min-width: 768px) {
+
+  /* Apply 2 columns on medium screens and up */
   .o-grid-2col {
     grid-template-columns: 1fr 1fr;
   }
@@ -198,63 +314,65 @@
 }
 
 .c-button {
-  background-color: var(--color-primary);
-  color: var(--color-bg);
+  background-color: var(--color-primary, var(--default-color-primary));
+  color: var(--color-bg, var(--default-color-bg));
   border: none;
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-lg, var(--default-spacing-lg));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   cursor: pointer;
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-base, var(--default-font-size-base));
   transition: background-color 0.2s;
 }
 
 .c-button:hover {
-  background-color: var(--color-primary-hover);
+  background-color: var(--color-primary-hover, var(--default-color-primary-hover));
 }
 
 .c-button:disabled {
-  background-color: var(--color-secondary);
+  background-color: var(--color-secondary, var(--default-color-secondary));
   cursor: not-allowed;
 }
 
 .c-button--secondary {
-  background-color: var(--color-secondary);
+  background-color: var(--color-secondary, var(--default-color-secondary));
 }
 
 .c-button--secondary:hover {
-  background-color: var(--color-secondary-hover);
+  background-color: var(--color-secondary-hover, var(--default-color-secondary-hover));
 }
 
 .c-button--danger {
-  background-color: var(--color-danger);
+  background-color: var(--color-danger, var(--default-color-danger));
 }
 
 .c-button--danger:hover {
-  background-color: var(--color-danger-hover);
+  background-color: var(--color-danger-hover, var(--default-color-danger-hover));
 }
 
 .c-button--small {
-  padding: var(--spacing-xxs) var(--spacing-sm); /* Adjusted padding */
-  font-size: var(--font-size-small);
-  white-space: nowrap; /* Added from jwt-builder styles */
+  padding: var(--spacing-xxs, var(--default-spacing-xxs)) var(--spacing-sm, var(--default-spacing-sm));
+  /* Adjusted padding */
+  font-size: var(--font-size-small, var(--default-font-size-small));
+  white-space: nowrap;
+  /* Added from jwt-builder styles */
 }
 
 .c-notification {
   position: fixed;
-  bottom: var(--spacing-lg);
-  right: var(--spacing-lg);
-  background-color: var(--color-success);
-  color: var(--color-bg);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-radius: var(--border-radius-sm);
-  box-shadow: var(--box-shadow);
+  bottom: var(--spacing-lg, var(--default-spacing-lg));
+  right: var(--spacing-lg, var(--default-spacing-lg));
+  background-color: var(--color-success, var(--default-color-success));
+  color: var(--color-bg, var(--default-color-bg));
+  padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-lg, var(--default-spacing-lg));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  box-shadow: var(--box-shadow, var(--default-box-shadow));
   transform: translateY(100px);
   opacity: 0;
   transition: transform 0.3s, opacity 0.3s;
 }
 
 .c-notification.notification-error {
-  background-color: var(--color-danger);
+  background-color: var(--color-danger, var(--default-color-danger));
 }
 
 .c-notification.show {
@@ -264,114 +382,137 @@
 
 /* --- Form Elements --- */
 .c-input {
-  /* flex: 1; */ /* Removed flex: 1 from base input, rely on specific rules */
-  padding: var(--spacing-sm);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
-  font-size: var(--font-size-base);
+  /* flex: 1; */
+  /* Removed flex: 1 from base input, rely on specific rules */
+  padding: var(--spacing-sm, var(--default-spacing-sm));
+  border: 1px solid var(--color-border, var(--default-color-border));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  font-size: var(--font-size-base, var(--default-font-size-base));
   transition: border-color 0.2s;
-  background-color: var(--color-bg);
-  min-width: 0; /* Prevents input from overflowing flex containers */
+  background-color: var(--color-bg, var(--default-color-bg));
+  min-width: 0;
+  /* Prevents input from overflowing flex containers */
 }
 
 .c-input:hover {
-  border-color: var(--color-secondary); /* Use a slightly darker border on hover */
+  border-color: var(--color-secondary, var(--default-color-secondary));
+  /* Use a slightly darker border on hover */
 }
 
 .c-input:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: var(--color-primary, var(--default-color-primary));
 }
 
 /* Modifier for textarea inputs */
 .c-input--textarea {
-  /* height: 300px; */ /* Remove fixed height, rely on flex: 1 where needed */
-  min-height: 300px; /* Ensure a minimum height */
-  resize: vertical; /* Allow vertical resize */
-  line-height: var(--line-height-tight); /* Match textarea line-height */
-  font-family: var(--font-family-mono); /* Use monospace for code */
+  /* height: 300px; */
+  /* Remove fixed height, rely on flex: 1 where needed */
+  min-height: 300px;
+  /* Ensure a minimum height */
+  resize: vertical;
+  /* Allow vertical resize */
+  line-height: var(--line-height-tight, var(--default-line-height-tight));
+  /* Match textarea line-height */
+  font-family: var(--font-family-mono, var(--default-font-family-mono));
+  /* Use monospace for code */
 }
 
 .c-form-group {
-  background-color: var(--color-bg);
-  border-radius: var(--border-radius-sm);
-  padding: var(--spacing-lg);
-  border: 1px solid var(--color-border);
-  height: fit-content; /* Allow group to size based on content */
+  background-color: var(--color-bg, var(--default-color-bg));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  padding: var(--spacing-lg, var(--default-spacing-lg));
+  border: 1px solid var(--color-border, var(--default-color-border));
+  height: fit-content;
+  /* Allow group to size based on content */
 }
 
 .c-form-group-header {
-  font-size: var(--font-size-h2);
-  margin-bottom: var(--spacing-md);
-  color: var(--color-text);
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--color-border-light);
+  font-size: var(--font-size-h2, var(--default-font-size-h2));
+  margin-bottom: var(--spacing-md, var(--default-spacing-md));
+  color: var(--color-text, var(--default-color-text));
+  padding-bottom: var(--spacing-sm, var(--default-spacing-sm));
+  border-bottom: 1px solid var(--color-border-light, var(--default-color-border-light));
   font-weight: 600;
-  display: flex; /* Allow alignment of header text and potential actions */
+  display: flex;
+  /* Allow alignment of header text and potential actions */
   justify-content: space-between;
   align-items: center;
 }
 
 .c-form-row {
   display: flex;
-  gap: var(--spacing-sm);
-  align-items: flex-start; /* Align label and input top */
-  margin-bottom: var(--spacing-md); /* Consistent spacing between rows */
-  position: relative; /* For tooltip positioning */
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  align-items: flex-start;
+  /* Align label and input top */
+  margin-bottom: var(--spacing-md, var(--default-spacing-md));
+  /* Consistent spacing between rows */
+  position: relative;
+  /* For tooltip positioning */
 }
 
 .c-form-row label {
-  flex: 0 0 200px; /* Fixed width for labels, adjust as needed */
-  color: var(--color-text-secondary);
+  flex: 0 0 200px;
+  /* Fixed width for labels, adjust as needed */
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
   font-weight: 500;
   display: flex;
-  align-items: flex-start; /* Align icon/text within label */
-  gap: var(--spacing-xs);
-  padding-top: var(--spacing-sm); /* Align label text roughly with input text */
+  align-items: flex-start;
+  /* Align icon/text within label */
+  gap: var(--spacing-xs, var(--default-spacing-xs));
+  padding-top: var(--spacing-sm, var(--default-spacing-sm));
+  /* Align label text roughly with input text */
 }
 
 .c-form-row label.required::after {
   content: "*";
-  color: var(--color-danger);
+  color: var(--color-danger, var(--default-color-danger));
   margin-left: 4px;
 }
 
 /* --- Tooltip --- */
-.c-tooltip-container { /* Wrapper for the element that triggers the tooltip */
+.c-tooltip-container {
+  /* Wrapper for the element that triggers the tooltip */
   position: relative;
-  display: inline-block; /* Or block, depending on context */
+  display: inline-block;
+  /* Or block, depending on context */
 }
 
 .c-tooltip {
   position: absolute;
   visibility: hidden;
   width: 200px;
-  background-color: var(--color-secondary); /* Darker background */
-  color: var(--color-bg);
+  background-color: var(--color-secondary, var(--default-color-secondary));
+  /* Darker background */
+  color: var(--color-bg, var(--default-color-bg));
   text-align: center;
-  border-radius: var(--border-radius-sm);
-  padding: var(--spacing-xs);
-  z-index: 10; /* Ensure tooltip is above other elements */
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  padding: var(--spacing-xs, var(--default-spacing-xs));
+  z-index: 10;
+  /* Ensure tooltip is above other elements */
   opacity: 0;
   transition: opacity 0.3s;
-  font-size: var(--font-size-small);
+  font-size: var(--font-size-small, var(--default-font-size-small));
   font-weight: normal;
   /* Default positioning (adjust as needed, e.g., bottom, left) */
-  bottom: 125%; /* Position above the container */
+  bottom: 125%;
+  /* Position above the container */
   left: 50%;
-  margin-left: -100px; /* Center the tooltip */
+  margin-left: -100px;
+  /* Center the tooltip */
 }
 
 /* Arrow for tooltip */
 .c-tooltip::after {
   content: "";
   position: absolute;
-  top: 100%; /* At the bottom of the tooltip */
+  top: 100%;
+  /* At the bottom of the tooltip */
   left: 50%;
   margin-left: -5px;
   border-width: 5px;
   border-style: solid;
-  border-color: var(--color-secondary) transparent transparent transparent;
+  border-color: var(--color-secondary, var(--default-color-secondary)) transparent transparent transparent;
 }
 
 .c-tooltip-container:hover .c-tooltip,
@@ -395,80 +536,91 @@ button.c-tooltip-container {
 /* --- Code Output --- */
 .c-code-output {
   flex: 1;
-  padding: var(--spacing-md);
-  background-color: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-tight);
-  min-height: 100px; /* Default min height */
-  color: var(--color-text);
+  padding: var(--spacing-md, var(--default-spacing-md));
+  background-color: var(--color-bg, var(--default-color-bg));
+  border: 1px solid var(--color-border, var(--default-color-border));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  font-family: var(--font-family-mono, var(--default-font-family-mono));
+  font-size: var(--font-size-base, var(--default-font-size-base));
+  line-height: var(--line-height-tight, var(--default-line-height-tight));
+  min-height: 100px;
+  /* Default min height */
+  color: var(--color-text, var(--default-color-text));
   word-break: break-all;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  white-space: pre-wrap; /* Preserve whitespace and wrap */
-  overflow-x: auto; /* Add horizontal scroll if needed */
-  overflow-y: auto; /* Add vertical scroll if needed */
-  max-width: 100%; /* Ensure container doesn't exceed parent width */
+  white-space: pre-wrap;
+  /* Preserve whitespace and wrap */
+  overflow-x: auto;
+  /* Add horizontal scroll if needed */
+  overflow-y: auto;
+  /* Add vertical scroll if needed */
+  max-width: 100%;
+  /* Ensure container doesn't exceed parent width */
 }
 
 .c-code-output:empty::before {
-  content: "Output will appear here"; /* Generic placeholder */
-  color: var(--color-text-secondary);
+  content: "Output will appear here";
+  /* Generic placeholder */
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
   font-style: italic;
 }
 
 
 /* --- Stats Panel (from js-minifier) --- */
 .c-stats-panel {
-  background-color: var(--color-bg-light);
-  border-radius: var(--border-radius-sm);
-  padding: var(--spacing-md);
-  margin-top: var(--spacing-lg);
+  background-color: var(--color-bg-light, var(--default-color-bg-light));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  padding: var(--spacing-md, var(--default-spacing-md));
+  margin-top: var(--spacing-lg, var(--default-spacing-lg));
 }
 
 .c-stat-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: var(--spacing-xs);
-  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-xs, var(--default-spacing-xs));
+  font-size: var(--font-size-base, var(--default-font-size-base));
 }
 
 .c-stat-row span:first-child {
-  color: var(--color-text-secondary);
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
 }
 
 /* --- Checkbox Group (from js-minifier) --- */
 .c-checkbox-group {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-md); /* Use medium gap */
+  gap: var(--spacing-md, var(--default-spacing-md));
+  /* Use medium gap */
 }
 
 .c-checkbox-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs); /* Use small gap */
+  gap: var(--spacing-xs, var(--default-spacing-xs));
+  /* Use small gap */
 }
 
 .c-checkbox-item input[type="checkbox"] {
-  margin: 0; /* Reset margin */
-  width: 16px; /* Consistent size */
+  margin: 0;
+  /* Reset margin */
+  width: 16px;
+  /* Consistent size */
   height: 16px;
 }
 
 .c-checkbox-item label {
-  font-size: var(--font-size-base);
-  color: var(--color-text); /* Ensure label text color matches base text */
+  font-size: var(--font-size-base, var(--default-font-size-base));
+  color: var(--color-text, var(--default-color-text));
+  /* Ensure label text color matches base text */
 }
 
 /* --- Options Panel (from js-minifier) --- */
 .c-options-panel {
-  margin: var(--spacing-lg) 0;
-  padding: var(--spacing-lg);
-  background-color: var(--color-bg-light);
-  border-radius: var(--border-radius-sm);
+  margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
+  padding: var(--spacing-lg, var(--default-spacing-lg));
+  background-color: var(--color-bg-light, var(--default-color-bg-light));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
 }
 
 /* ==========================================================================
@@ -488,19 +640,19 @@ button.c-tooltip-container {
 }
 
 .u-gap-sm {
-  gap: var(--spacing-sm);
+  gap: var(--spacing-sm, var(--default-spacing-sm));
 }
 
 .u-gap-md {
-  gap: var(--spacing-md);
+  gap: var(--spacing-md, var(--default-spacing-md));
 }
 
 .u-gap-lg {
-  gap: var(--spacing-lg);
+  gap: var(--spacing-lg, var(--default-spacing-lg));
 }
 
 .u-mt-md {
-  margin-top: var(--spacing-md);
+  margin-top: var(--spacing-md, var(--default-spacing-md));
 }
 
 .u-justify-between {
@@ -535,22 +687,25 @@ button.c-tooltip-container {
   .o-controls {
     flex-direction: row;
   }
-  
+
   .o-panel {
-    /* width: 50%; */ /* Remove explicit width, let grid handle it */
-    min-width: 0; /* Keep min-width for flex/grid item safety */
-    /* max-width: 50%; */ /* Remove explicit max-width */
+    /* width: 50%; */
+    /* Remove explicit width, let grid handle it */
+    min-width: 0;
+    /* Keep min-width for flex/grid item safety */
+    /* max-width: 50%; */
+    /* Remove explicit max-width */
   }
 }
 
 @media (max-width: 768px) {
   .tool-container {
-    padding: var(--spacing-md);
+    padding: var(--spacing-md, var(--default-spacing-md));
   }
 
   .u-flex.u-gap-lg {
     flex-direction: column;
-    gap: var(--spacing-md);
+    gap: var(--spacing-md, var(--default-spacing-md));
   }
 
   .o-controls {
@@ -559,7 +714,7 @@ button.c-tooltip-container {
 
   .o-controls .u-flex {
     flex-direction: column;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-sm, var(--default-spacing-sm));
   }
 
   .o-panel {
@@ -568,7 +723,7 @@ button.c-tooltip-container {
 
   .o-toolbar {
     flex-direction: column;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-sm, var(--default-spacing-sm));
   }
 
   .tool-container select {
@@ -578,30 +733,36 @@ button.c-tooltip-container {
   /* Responsive adjustments for form rows */
   .c-form-row {
     flex-direction: column;
-    align-items: stretch; /* Make label and input full width */
-    gap: var(--spacing-xs);
+    align-items: stretch;
+    /* Make label and input full width */
+    gap: var(--spacing-xs, var(--default-spacing-xs));
   }
 
   .c-form-row label {
-    flex: none; /* Reset fixed width */
+    flex: none;
+    /* Reset fixed width */
     width: 100%;
     margin-bottom: 3px;
-    padding-top: 0; /* Reset padding */
+    padding-top: 0;
+    /* Reset padding */
   }
 
   /* Responsive tooltip adjustments */
   .c-tooltip {
     bottom: auto;
-    top: 100%; /* Position below */
+    top: 100%;
+    /* Position below */
     left: 0;
     margin-left: 0;
     width: 100%;
-    margin-top: var(--spacing-xs);
+    margin-top: var(--spacing-xs, var(--default-spacing-xs));
   }
+
   .c-tooltip::after {
-     top: -10px; /* Position arrow at the top */
-     left: 50%;
-     margin-left: -5px;
-     border-color: transparent transparent var(--color-secondary) transparent;
+    top: -10px;
+    /* Position arrow at the top */
+    left: 50%;
+    margin-left: -5px;
+    border-color: transparent transparent var(--color-secondary, var(--default-color-secondary)) transparent;
   }
 }
