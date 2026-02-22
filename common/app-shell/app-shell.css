@@ -1,0 +1,56 @@
+.cst-shell__header {
+  max-width: 1200px;
+  margin: 0 auto 1.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 14px;
+  background: linear-gradient(145deg, #ffffff 0%, var(--md-sys-color-surface-container) 100%);
+}
+
+.cst-shell__header-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cst-shell__brand {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+}
+
+.cst-shell__title {
+  margin: 0;
+  font-size: clamp(1.2rem, 2vw, 1.6rem);
+  color: var(--md-sys-color-on-surface);
+}
+
+.cst-shell__description {
+  margin: 0.15rem 0 0;
+  color: #495353;
+  font-size: 0.92rem;
+}
+
+.cst-shell__footer {
+  max-width: 1200px;
+  margin: 1rem auto 0;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #d6dfde;
+}
+
+.cst-shell__footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #596464;
+  font-size: 0.86rem;
+}
+
+.cst-shell__footer-link {
+  color: var(--md-sys-color-primary);
+}
+

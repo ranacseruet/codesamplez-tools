@@ -6,6 +6,10 @@ export default {
       },
       useBuiltIns: 'usage',
       corejs: 3
+    }],
+    ['@babel/preset-react', {
+      runtime: 'automatic',
+      importSource: 'preact'
     }]
   ]
 };

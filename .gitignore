@@ -50,6 +50,7 @@ yarn.lock
 **/*.temp
 **/.cache/
 verification/
+qa-artifacts/
 
 # AI Code Assistants
 **/memory-bank/

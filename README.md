@@ -105,7 +105,22 @@ Create and sign custom JSON Web Tokens.
 - HTML5
 - CSS3
 - Vanilla JavaScript
-- No external dependencies
+- Minimal runtime dependencies
+
+## UI Migration Architecture (In Progress)
+
+The project is transitioning to a lightweight component-based UI foundation while preserving current deployment behavior.
+
+- Runtime foundation: Preact
+- Design direction: Material Web look-and-feel
+- Migration strategy: one tool at a time, starting with `data-format-converter`
+- Deployment contract remains unchanged: each tool builds to its own directory with standalone `index.html`, `styles.main.css`, and `bundle.main.js`
+
+Architecture boundaries:
+
+- Tool logic modules stay framework-agnostic where possible
+- UI layer can migrate to component-based implementation
+- Shared shell/layout primitives live in `common/` and are reusable across tools
 
 ## Development
 

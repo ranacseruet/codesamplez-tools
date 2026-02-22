@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
-import { DataFormatConverter } from './DataFormatConverter.js';
+import { fireEvent } from '@testing-library/dom';
+import { render as preactRender } from 'preact';
 import { DataFormatConverterUI } from './script.js';
 import { NotificationManager } from '../common/notification-manager.js';
 import DownloadManager from '../common/DownloadManager.js';
@@ -19,28 +20,9 @@ jest.mock('../common/DownloadManager.js', () => ({
     }))
 }));
 
-// We can keep ClearButton/CopyButton mocks or let them run if they don't cause issues.
-// They assume specific DOM structure which we will provide.
-// But they are imported in script.js.
-// To ensure coverage of script.js callbacks, we rely on script.js logic.
-// We can mock them to simplify.
-jest.mock('../common/clear-button/ClearButton.js', () => ({
-    __esModule: true,
-    default: jest.fn().mockImplementation(() => ({
-        clearText: jest.fn(),
-        updateVisibility: jest.fn()
-    }))
-}));
-
-jest.mock('../common/copy-button/CopyButton.js', () => ({
-    __esModule: true,
-    default: jest.fn().mockImplementation(() => ({
-        updateVisibility: jest.fn()
-    }))
-}));
-
 describe('DataFormatConverterUI Integration', () => {
     let ui;
+    const flush = () => Promise.resolve();
 
     beforeEach(() => {
         jest.useFakeTimers();
@@ -48,29 +30,19 @@ describe('DataFormatConverterUI Integration', () => {
 
         // Setup DOM
         document.body.innerHTML = `
-            <div class="tool-container">
-                <div class="input-section">
-                    <button class="format-btn active" data-format="json">JSON</button>
-                    <button class="format-btn" data-format="xml">XML</button>
-                </div>
-                <div class="output-section">
-                    <button class="format-btn" data-format="json">JSON</button>
-                    <button class="format-btn active" data-format="xml">XML</button>
-                </div>
-                <textarea id="inputText"></textarea>
-                <textarea id="outputText"></textarea>
-                <div id="inputError" style="display: none;"></div>
-                <input type="checkbox" id="autoConvert" checked>
-                <button id="convertBtn">Convert</button>
-                <button id="downloadBtn">Download</button>
-                <button id="swapBtn">Swap</button>
-            </div>
+            <div id="data-format-converter-app"></div>
         `;
+
+        Object.defineProperty(window.navigator, 'clipboard', {
+            configurable: true,
+            value: {
+                writeText: jest.fn().mockResolvedValue(undefined)
+            }
+        });
 
         ui = new DataFormatConverterUI();
 
         // Mock converter methods to control behavior
-        // We can spy on the instance created
         jest.spyOn(ui.converter, 'parseInput');
         jest.spyOn(ui.converter, 'formatOutput');
         jest.spyOn(ui.converter, 'detectFormat');
@@ -86,132 +58,308 @@ describe('DataFormatConverterUI Integration', () => {
         expect(jsonBtn.getAttribute('aria-pressed')).toBe('true');
     });
 
-    it('should handle format selection click', () => {
+    it('should handle format selection click', async () => {
+        fireEvent.click(document.querySelector('.input-section .format-btn[data-format="xml"]'));
+        await flush();
         const xmlBtn = document.querySelector('.input-section .format-btn[data-format="xml"]');
-        xmlBtn.click();
 
         expect(xmlBtn.classList.contains('active')).toBe(true);
         expect(xmlBtn.getAttribute('aria-pressed')).toBe('true');
     });
 
-    it('should handle convert button click', () => {
-        document.getElementById('inputText').value = '{"a":1}';
+    it('should handle convert button click', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
 
         ui.converter.parseInput.mockReturnValue({a:1});
         ui.converter.formatOutput.mockReturnValue('<xml></xml>');
 
-        document.getElementById('convertBtn').click();
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
 
         expect(ui.converter.parseInput).toHaveBeenCalled();
         expect(document.getElementById('outputText').value).toBe('<xml></xml>');
     });
 
     it('should handle auto-convert input event', () => {
-        document.getElementById('inputText').value = '{"a":1}';
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
 
         ui.converter.parseInput.mockReturnValue({a:1});
         ui.converter.formatOutput.mockReturnValue('<xml></xml>');
 
         // Trigger input event
-        document.getElementById('inputText').dispatchEvent(new Event('input'));
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
 
         jest.advanceTimersByTime(500);
 
         expect(ui.converter.parseInput).toHaveBeenCalled();
     });
 
-    it('should handle swap button click', () => {
+    it('should skip auto-convert when debounced input is empty after trim', () => {
+        const input = document.getElementById('inputText');
+
+        fireEvent.input(input, { target: { value: '   ' } });
+        jest.advanceTimersByTime(500);
+
+        expect(ui.converter.detectFormat).not.toHaveBeenCalled();
+        expect(ui.converter.parseInput).not.toHaveBeenCalled();
+    });
+
+    it('should handle swap button click', async () => {
         const inputText = document.getElementById('inputText');
         const outputText = document.getElementById('outputText');
 
-        inputText.value = 'in';
-        outputText.value = 'out';
-
-        ui.converter.inputFormat = 'json';
-        ui.converter.outputFormat = 'xml';
-
+        fireEvent.input(inputText, { target: { value: 'in' } });
+        await flush();
         ui.converter.parseInput.mockReturnValue('parsed');
+        ui.converter.formatOutput.mockReturnValue('out');
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+
         ui.converter.formatOutput.mockReturnValue('formatted');
 
-        document.getElementById('swapBtn').click();
+        fireEvent.click(document.getElementById('swapBtn'));
+        await flush();
 
         expect(inputText.value).toBe('out');
         expect(outputText.value).toBe('formatted');
-        expect(ui.converter.inputFormat).toBe('xml');
-        expect(ui.converter.outputFormat).toBe('json');
+        expect(document.querySelector('.input-section .format-btn[data-format="xml"]').getAttribute('aria-pressed')).toBe('true');
+        expect(document.querySelector('.output-section .format-btn[data-format="json"]').getAttribute('aria-pressed')).toBe('true');
     });
 
-    it('should handle download button click', () => {
-        document.getElementById('outputText').value = 'content';
+    it('should handle download button click', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+        ui.converter.parseInput.mockReturnValue({a:1});
+        ui.converter.formatOutput.mockReturnValue('content');
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
 
         const mockDownloadFile = jest.fn();
         DownloadManager.mockImplementation(() => ({
             downloadFile: mockDownloadFile
         }));
 
-        document.getElementById('downloadBtn').click();
+        fireEvent.click(document.getElementById('downloadBtn'));
+        await flush();
 
         expect(DownloadManager).toHaveBeenCalled();
         expect(mockDownloadFile).toHaveBeenCalledWith('content', 'data.xml', 'application/xml');
     });
 
-    // New tests for 100% coverage
-    it('should handle events from custom buttons', () => {
-        document.getElementById('inputText').dispatchEvent(new Event('textCleared'));
+    it('should handle clear and copy actions', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+        fireEvent.click(document.getElementById('clearInputBtn'));
+        await flush();
         expect(NotificationManager.show).toHaveBeenCalledWith("Input cleared", expect.any(Number), expect.any(Object));
 
-        document.getElementById('outputText').dispatchEvent(new Event('contentCopied'));
+        ui.converter.parseInput.mockReturnValue({a:1});
+        ui.converter.formatOutput.mockReturnValue('<xml></xml>');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+
+        NotificationManager.show.mockClear();
+        fireEvent.click(document.getElementById('copyOutputBtn'));
+        await flush();
+        await flush();
+
+        expect(window.navigator.clipboard.writeText).toHaveBeenCalledWith('<xml></xml>');
         expect(NotificationManager.show).toHaveBeenCalledWith("Copied to clipboard!", expect.any(Number), expect.any(Object));
     });
 
-    it('should not auto-convert if checkbox unchecked', () => {
-        document.getElementById('autoConvert').checked = false;
-        document.getElementById('inputText').value = 'data';
-        document.getElementById('inputText').dispatchEvent(new Event('input'));
+    it('should use execCommand clipboard fallback when Clipboard API is unavailable', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+        ui.converter.parseInput.mockReturnValue({ a: 1 });
+        ui.converter.formatOutput.mockReturnValue('<xml></xml>');
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+
+        Object.defineProperty(window.navigator, 'clipboard', {
+            configurable: true,
+            value: undefined
+        });
+        document.execCommand = jest.fn().mockReturnValue(true);
+
+        NotificationManager.show.mockClear();
+        fireEvent.click(document.getElementById('copyOutputBtn'));
+        await flush();
+
+        expect(document.execCommand).toHaveBeenCalledWith('copy');
+        expect(NotificationManager.show).toHaveBeenCalledWith('Copied to clipboard!', expect.any(Number), expect.any(Object));
+    });
+
+    it('should show error when clipboard fallback fails', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+        ui.converter.parseInput.mockReturnValue({ a: 1 });
+        ui.converter.formatOutput.mockReturnValue('<xml></xml>');
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+
+        Object.defineProperty(window.navigator, 'clipboard', {
+            configurable: true,
+            value: undefined
+        });
+        document.execCommand = jest.fn().mockReturnValue(false);
+
+        NotificationManager.show.mockClear();
+        fireEvent.click(document.getElementById('copyOutputBtn'));
+        await flush();
+
+        expect(NotificationManager.show).toHaveBeenCalledWith('Failed to copy output', expect.any(Number), expect.any(Object));
+    });
+
+    it('should not auto-convert if checkbox unchecked', async () => {
+        const autoConvert = document.getElementById('autoConvert');
+        fireEvent.change(autoConvert, { target: { checked: false } });
+        await flush();
+        expect(autoConvert.checked).toBe(false);
+
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: 'data' } });
+        await flush();
         jest.advanceTimersByTime(500);
         expect(ui.converter.parseInput).not.toHaveBeenCalled();
     });
 
     it('should handle format selection with empty input', () => {
-        document.getElementById('inputText').value = '';
-        const btn = document.querySelector('.output-section .format-btn[data-format="json"]');
-        btn.click();
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '' } });
+        fireEvent.click(document.querySelector('.output-section .format-btn[data-format="json"]'));
         // convertData is not called
         expect(ui.converter.parseInput).not.toHaveBeenCalled();
     });
 
-    it('should handle output format selection with populated input', () => {
-        document.getElementById('inputText').value = '{"a":1}';
+    it('should handle output format selection with populated input', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
         ui.converter.parseInput.mockReturnValue({a:1});
-        ui.converter.formatOutput.mockReturnValue('<xml></xml>');
+        ui.converter.formatOutput.mockReturnValue('{\n  "a": 1\n}');
 
-        const btn = document.querySelector('.output-section .format-btn[data-format="xml"]');
-        btn.click();
+        fireEvent.click(document.querySelector('.output-section .format-btn[data-format="json"]'));
+        await flush();
 
         expect(ui.converter.parseInput).toHaveBeenCalled();
-        expect(document.getElementById('outputText').value).toBe('<xml></xml>');
+        expect(document.getElementById('outputText').value).toBe('{\n  "a": 1\n}');
+    });
+
+    it('should auto-detect and switch input format during auto-convert', async () => {
+        const input = document.getElementById('inputText');
+        ui.converter.detectFormat.mockReturnValue('yaml');
+        ui.converter.parseInput.mockReturnValue({ name: 'alex' });
+        ui.converter.formatOutput.mockReturnValue('<name>alex</name>');
+
+        fireEvent.input(input, { target: { value: 'name: alex' } });
+        jest.advanceTimersByTime(500);
+        await flush();
+
+        const detectedInputButton = document.querySelector('.input-section .format-btn[data-format="yaml"]');
+        expect(detectedInputButton.classList.contains('active')).toBe(true);
+    });
+
+    it('should clear previous input when input format changes', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+
+        NotificationManager.show.mockClear();
+        fireEvent.click(document.querySelector('.input-section .format-btn[data-format="xml"]'));
+        await flush();
+
+        expect(document.getElementById('inputText').value).toBe('');
+        expect(NotificationManager.show).toHaveBeenCalledWith('Input cleared', expect.any(Number), expect.any(Object));
     });
 
     it('should show error on convert with empty input', () => {
-        document.getElementById('inputText').value = '';
-        document.getElementById('convertBtn').click();
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '' } });
+        fireEvent.click(document.getElementById('convertBtn'));
         expect(NotificationManager.show).toHaveBeenCalledWith(expect.stringContaining('Please enter some data'), expect.any(Number), expect.any(Object));
     });
 
-    it('should handle conversion error', () => {
-        document.getElementById('inputText').value = 'invalid';
+    it('should handle conversion error', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: 'invalid' } });
+        await flush();
         ui.converter.parseInput.mockImplementation(() => { throw new Error('Parse error'); });
 
-        document.getElementById('convertBtn').click();
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
 
         const errorDiv = document.getElementById('inputError');
         expect(errorDiv.style.display).toBe('block');
         expect(errorDiv.textContent).toContain('Parse error');
     });
 
+    it('should attempt conversion when auto-convert is toggled back on', async () => {
+        const autoConvert = document.getElementById('autoConvert');
+        const input = document.getElementById('inputText');
+
+        fireEvent.change(autoConvert, { target: { checked: false } });
+        await flush();
+
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+
+        ui.converter.parseInput.mockReturnValue({ a: 1 });
+        ui.converter.formatOutput.mockReturnValue('<xml></xml>');
+
+        fireEvent.change(autoConvert, { target: { checked: true } });
+        await flush();
+
+        expect(ui.converter.parseInput).toHaveBeenCalled();
+    });
+
+    it('should unmount cleanly and clear debounce timer on teardown', () => {
+        const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+        const input = document.getElementById('inputText');
+
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        preactRender(null, document.getElementById('data-format-converter-app'));
+
+        expect(clearTimeoutSpy).toHaveBeenCalled();
+    });
+
     it('should show error on download with empty output', () => {
-        document.getElementById('outputText').value = '';
-        document.getElementById('downloadBtn').click();
+        fireEvent.click(document.getElementById('downloadBtn'));
         expect(NotificationManager.show).toHaveBeenCalledWith('No data to download', expect.any(Number), expect.any(Object));
+    });
+
+    it('should throw if no mount root is available', () => {
+        document.body.innerHTML = '';
+        expect(() => new DataFormatConverterUI('#missing-root')).toThrow('Data Format Converter root element not found');
+    });
+
+    it('should fallback to .tool-container when explicit root selector is missing', () => {
+        document.body.innerHTML = '<div class="tool-container"></div>';
+
+        expect(() => new DataFormatConverterUI('#missing-root')).not.toThrow();
+        expect(document.getElementById('convertBtn')).not.toBeNull();
+    });
+
+    it('should bootstrap shell and app on DOMContentLoaded', async () => {
+        document.body.innerHTML = `
+            <div id="app-shell-header"></div>
+            <div id="data-format-converter-app"></div>
+            <div id="app-shell-footer"></div>
+        `;
+
+        document.dispatchEvent(new Event('DOMContentLoaded'));
+        await flush();
+
+        expect(document.querySelector('.cst-shell__title')?.textContent).toBe('Data Format Converter');
+        expect(document.querySelector('.cst-shell__footer-link')?.textContent).toBe('All Tools');
+        expect(document.getElementById('convertBtn')).not.toBeNull();
     });
 });

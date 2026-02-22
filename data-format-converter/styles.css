@@ -144,6 +144,27 @@
   font-size: var(--font-size-base, var(--default-font-size-base));
 }
 
+.textarea-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.dfc-primary-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.dfc-auto-convert-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
 .success {
   color: var(--color-success, var(--default-color-success));
   background-color: var(--color-bg-light, var(--default-color-bg-light));

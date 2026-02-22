@@ -1,274 +1,394 @@
 import { DataFormatConverter } from './DataFormatConverter.js';
 import { NotificationManager } from '../common/notification-manager.js';
 import DownloadManager from '../common/DownloadManager.js';
-import ClearButton from '../common/clear-button/ClearButton.js';
-import CopyButton from '../common/copy-button/CopyButton.js';
+import { hydrate, render } from 'preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { mountToolShell } from '../common/app-shell/mountToolShell.js';
 
-export class DataFormatConverterUI {
-    constructor() {
-        this.converter = new DataFormatConverter();
-        this.debounceTimer = null;
-        this.setupEventListeners();
-        this.initializeCommonButtons();
-        this.initializeAriaAttributes();
+const FORMATS = ['json', 'xml', 'yaml', 'properties'];
+const INPUT_PLACEHOLDERS = {
+    json: 'Paste your JSON data here...\n\nExample:\n{\n  "name": "John",\n  "age": 30,\n  "city": "New York"\n}',
+    xml: 'Paste your XML data here...\n\nExample:\n<person>\n  <name>John</name>\n  <age>30</age>\n  <city>New York</city>\n</person>',
+    yaml: 'Paste your YAML data here...\n\nExample:\nname: John\nage: 30\ncity: New York',
+    properties: 'Paste your Properties data here...\n\nExample:\nname=John\nage=30\ncity=New York'
+};
+const MIME_TYPES = {
+    json: 'application/json',
+    xml: 'application/xml',
+    yaml: 'text/yaml',
+    properties: 'text/plain'
+};
+const EXTENSIONS = {
+    json: 'json',
+    xml: 'xml',
+    yaml: 'yaml',
+    properties: 'properties'
+};
+
+const formatLabel = (format) => format === 'properties' ? 'Properties' : format.toUpperCase();
+
+async function copyToClipboard(text) {
+    if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
     }
 
-    initializeAriaAttributes() {
-        document.querySelectorAll('.format-btn').forEach(btn => {
-            if (btn.classList.contains('active')) {
-                btn.setAttribute('aria-pressed', 'true');
-            } else {
-                btn.setAttribute('aria-pressed', 'false');
-            }
-        });
+    const tempTextArea = document.createElement('textarea');
+    tempTextArea.value = text;
+    tempTextArea.setAttribute('readonly', '');
+    tempTextArea.style.position = 'absolute';
+    tempTextArea.style.left = '-9999px';
+    document.body.appendChild(tempTextArea);
+    tempTextArea.select();
+    const copied = document.execCommand('copy');
+    document.body.removeChild(tempTextArea);
+
+    if (!copied) {
+        throw new Error('Copy failed');
     }
+}
 
-    initializeCommonButtons() {
-        const inputTextArea = document.getElementById('inputText');
-        const outputTextArea = document.getElementById('outputText');
-        
-        this.clearButton = new ClearButton(inputTextArea);
-        this.copyButton = new CopyButton(outputTextArea);
-        
-        // Update the input textarea's clear event to also clear any error messages
-        inputTextArea.addEventListener('textCleared', () => {
-            NotificationManager.show("Input cleared", 3000, { type: 'success' });
-        });
+export function DataFormatConverterApp({ converter }) {
+    const [inputFormat, setInputFormat] = useState(converter.inputFormat);
+    const [outputFormat, setOutputFormat] = useState(converter.outputFormat);
+    const [inputText, setInputText] = useState('');
+    const [outputText, setOutputText] = useState('');
+    const [autoConvert, setAutoConvert] = useState(true);
+    const [errorMessage, setErrorMessage] = useState('');
+    const debounceTimerRef = useRef(null);
+    const stateRef = useRef({ inputFormat, outputFormat, autoConvert });
 
-        // Listen for copy events
-        outputTextArea.addEventListener('contentCopied', (event) => {
-            NotificationManager.show("Copied to clipboard!", 3000, { type: 'success' });
-        });
-    }
+    useEffect(() => {
+        stateRef.current = { inputFormat, outputFormat, autoConvert };
+        converter.inputFormat = inputFormat;
+        converter.outputFormat = outputFormat;
+    }, [inputFormat, outputFormat, autoConvert, converter]);
 
-    setupEventListeners() {
-        // Format selector buttons
-        document.querySelectorAll('.format-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                this.handleFormatSelection(e);
-            });
-        });
-
-        // Convert button
-        document.getElementById('convertBtn').addEventListener('click', () => {
-            this.convertData();
-        });
-
-        // Download button
-        document.getElementById('downloadBtn').addEventListener('click', () => {
-            this.downloadOutput();
-        });
-
-        // Real-time conversion on input
-        document.getElementById('inputText').addEventListener('input', () => {
-            this.handleAutoConvert();
-        });
-
-        // Auto-convert checkbox
-        document.getElementById('autoConvert').addEventListener('change', () => {
-            if (document.getElementById('autoConvert').checked) {
-                this.convertData(true);
-            }
-        });
-
-        // Swap button
-        document.getElementById('swapBtn').addEventListener('click', () => {
-            this.swapContent();
-        });
-    }
-
-    handleAutoConvert() {
-        if (!document.getElementById('autoConvert').checked) return;
-
-        clearTimeout(this.debounceTimer);
-        this.debounceTimer = setTimeout(() => {
-            const inputText = document.getElementById('inputText').value.trim();
-            if (inputText) {
-                const detectedFormat = this.converter.detectFormat(inputText);
-                if (detectedFormat && detectedFormat !== this.converter.inputFormat) {
-                    this.converter.inputFormat = detectedFormat;
-                    this.updateFormatButtons('input-section', detectedFormat);
-                    // Don't update placeholder or clear text as user is typing
-                }
-
-                // Suppress success notification for auto-convert to avoid spam
-                this.convertData(true);
-            }
-        }, 500); // 500ms debounce
-    }
-
-    handleFormatSelection(event) {
-        const button = event.target;
-        const format = button.getAttribute('data-format');
-        const section = button.closest('.input-section, .output-section');
-
-        // Remove active class from siblings
-        section.querySelectorAll('.format-btn').forEach(btn => {
-            btn.classList.remove('active');
-            btn.setAttribute('aria-pressed', 'false');
-        });
-
-        // Add active class to clicked button
-        button.classList.add('active');
-        button.setAttribute('aria-pressed', 'true');
-
-        // Update format selection
-        if (section.classList.contains('input-section')) {
-            this.converter.inputFormat = format;
-            this.updateInputPlaceholder();
-            this.clearButton.clearText(); // Only clear input when INPUT format changes
-        } else {
-            this.converter.outputFormat = format;
-            // If there's input data, trigger conversion when output format changes
-            const inputText = document.getElementById('inputText').value.trim();
-            if (inputText) {
-                this.convertData(document.getElementById('autoConvert').checked);
-            }
-        }
-    }
-
-    updateInputPlaceholder() {
-        const inputText = document.getElementById('inputText');
-        const placeholders = {
-            json: 'Paste your JSON data here...\n\nExample:\n{\n  "name": "John",\n  "age": 30,\n  "city": "New York"\n}',
-            xml: 'Paste your XML data here...\n\nExample:\n<person>\n  <name>John</name>\n  <age>30</age>\n  <city>New York</city>\n</person>',
-            yaml: 'Paste your YAML data here...\n\nExample:\nname: John\nage: 30\ncity: New York',
-            properties: 'Paste your Properties data here...\n\nExample:\nname=John\nage=30\ncity=New York'
+    useEffect(() => {
+        return () => {
+            clearTimeout(debounceTimerRef.current);
         };
-        inputText.placeholder = placeholders[this.converter.inputFormat];
-    }
+    }, []);
 
-    convertData(silent = false) {
-        const inputText = document.getElementById('inputText').value.trim();
-        
-        if (!inputText) {
-            // Only show error if clicked manually. Auto-convert shouldn't nag if empty.
+    const showError = (message, silent = false) => {
+        if (!silent) {
+            NotificationManager.show(message, 3000, { type: 'error' });
+        }
+        setErrorMessage(message);
+    };
+
+    const showSuccess = (message) => {
+        NotificationManager.show(message, 3000, { type: 'success' });
+        setErrorMessage('');
+    };
+
+    const convertData = ({
+        silent = false,
+        nextInput = inputText,
+        nextInputFormat = stateRef.current.inputFormat,
+        nextOutputFormat = stateRef.current.outputFormat
+    } = {}) => {
+        const trimmedInput = nextInput.trim();
+        if (!trimmedInput) {
             if (!silent) {
-                 this.showError('Please enter some data to convert.');
+                showError('Please enter some data to convert.');
             }
             return;
         }
 
         try {
-            // Parse input to internal format
-            const internalData = this.converter.parseInput(inputText, this.converter.inputFormat);
-            
-            // Convert to output format
-            const outputData = this.converter.formatOutput(internalData, this.converter.outputFormat);
-            
-            // Display result
-            document.getElementById('outputText').value = outputData;
-            this.copyButton.updateVisibility();
+            converter.inputFormat = nextInputFormat;
+            converter.outputFormat = nextOutputFormat;
+            const internalData = converter.parseInput(trimmedInput, nextInputFormat);
+            const converted = converter.formatOutput(internalData, nextOutputFormat);
+            setOutputText(converted);
 
             if (!silent) {
-                this.showSuccess(`Successfully converted from ${this.converter.inputFormat.toUpperCase()} to ${this.converter.outputFormat.toUpperCase()}`);
+                showSuccess(`Successfully converted from ${nextInputFormat.toUpperCase()} to ${nextOutputFormat.toUpperCase()}`);
             } else {
-                document.getElementById('inputError').style.display = 'none';
+                setErrorMessage('');
             }
-            
         } catch (error) {
-            this.showError(`Conversion failed: ${error.message}`, silent);
+            showError(`Conversion failed: ${error.message}`, silent);
         }
-    }
+    };
 
-    swapContent() {
-         const oldInputFormat = this.converter.inputFormat;
-         const oldOutputFormat = this.converter.outputFormat;
+    const handleInputChange = (event) => {
+        const value = event.target.value;
+        setInputText(value);
 
-         // Swap internal formats
-         this.converter.inputFormat = oldOutputFormat;
-         this.converter.outputFormat = oldInputFormat;
-
-         // Update UI buttons
-         this.updateFormatButtons('input-section', oldOutputFormat);
-         this.updateFormatButtons('output-section', oldInputFormat);
-
-         // Swap textarea content
-         const inputText = document.getElementById('inputText');
-         const outputText = document.getElementById('outputText');
-
-         const newInputValue = outputText.value;
-         // We don't necessarily swap output to input if output was generated.
-         // But "Swap" usually means "I want to take what I generated and use it as input for next step".
-         // The old input becomes... well, discarded or put in output?
-         // Usually swapping just moves Output -> Input. What happens to Input?
-         // It can move to Output, but if formats are swapped, the old Input (in old InputFormat) might not match new OutputFormat (old InputFormat).
-         // Actually, Old Input (Format A) -> Old Output (Format B).
-         // New Input (Format B) -> New Output (Format A).
-         // So if we move Old Input to New Output, it matches the format!
-         // So yes, full swap is safe format-wise.
-
-         const temp = inputText.value;
-         inputText.value = newInputValue;
-         outputText.value = temp;
-
-         this.updateInputPlaceholder();
-
-         // Trigger conversion
-         if (inputText.value.trim()) {
-             this.convertData(true);
-         }
-    }
-
-    updateFormatButtons(sectionClass, format) {
-        const section = document.querySelector('.' + sectionClass);
-        section.querySelectorAll('.format-btn').forEach(btn => {
-            if (btn.getAttribute('data-format') === format) {
-                btn.classList.add('active');
-                btn.setAttribute('aria-pressed', 'true');
-            } else {
-                btn.classList.remove('active');
-                btn.setAttribute('aria-pressed', 'false');
-            }
-        });
-    }
-
-    showError(message, silent = false) {
-        if (!silent) {
-            NotificationManager.show(message, 3000, { type: 'error' });
-        }
-        const errorDiv = document.getElementById('inputError');
-        errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
-    }
-
-    showSuccess(message) {
-        NotificationManager.show(message, 3000, { type: 'success' });
-        document.getElementById('inputError').style.display = 'none';
-    }
-
-    downloadOutput() {
-        const outputText = document.getElementById('outputText').value;
-        if (!outputText) {
-            this.showError('No data to download');
+        const autoConvertElement = document.getElementById('autoConvert');
+        const shouldAutoConvert = autoConvertElement ? autoConvertElement.checked : stateRef.current.autoConvert;
+        if (!shouldAutoConvert) {
             return;
         }
 
-        const format = this.converter.outputFormat;
-        const mimeTypes = {
-            json: 'application/json',
-            xml: 'application/xml',
-            yaml: 'text/yaml',
-            properties: 'text/plain'
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = setTimeout(() => {
+            const trimmed = value.trim();
+            if (!trimmed) {
+                return;
+            }
+
+            let detectedInputFormat = stateRef.current.inputFormat;
+            const detected = converter.detectFormat(trimmed);
+            if (detected && detected !== stateRef.current.inputFormat) {
+                detectedInputFormat = detected;
+                setInputFormat(detected);
+            }
+
+            convertData({
+                silent: true,
+                nextInput: trimmed,
+                nextInputFormat: detectedInputFormat,
+                nextOutputFormat: stateRef.current.outputFormat
+            });
+        }, 500);
+    };
+
+    const handleInputFormatChange = (nextFormat) => {
+        stateRef.current = {
+            ...stateRef.current,
+            inputFormat: nextFormat
         };
-        const extensions = {
-            json: 'json',
-            xml: 'xml',
-            yaml: 'yaml',
-            properties: 'properties'
+        setInputFormat(nextFormat);
+        setErrorMessage('');
+
+        if (inputText) {
+            setInputText('');
+            NotificationManager.show('Input cleared', 3000, { type: 'success' });
+        }
+    };
+
+    const handleOutputFormatChange = (nextFormat) => {
+        stateRef.current = {
+            ...stateRef.current,
+            outputFormat: nextFormat
         };
+        setOutputFormat(nextFormat);
+        if (inputText.trim()) {
+            convertData({
+                silent: stateRef.current.autoConvert,
+                nextInput: inputText,
+                nextInputFormat: stateRef.current.inputFormat,
+                nextOutputFormat: nextFormat
+            });
+        }
+    };
+
+    const handleAutoConvertToggle = (event) => {
+        const checked = event.target.checked;
+        stateRef.current = {
+            ...stateRef.current,
+            autoConvert: checked
+        };
+        setAutoConvert(checked);
+
+        if (checked) {
+            convertData({
+                silent: true,
+                nextInput: inputText,
+                nextInputFormat: inputFormat,
+                nextOutputFormat: outputFormat
+            });
+        }
+    };
+
+    const handleSwap = () => {
+        const swappedInputFormat = outputFormat;
+        const swappedOutputFormat = inputFormat;
+        const swappedInputText = outputText;
+        const swappedOutputText = inputText;
+
+        setInputFormat(swappedInputFormat);
+        setOutputFormat(swappedOutputFormat);
+        setInputText(swappedInputText);
+        setOutputText(swappedOutputText);
+        setErrorMessage('');
+
+        if (swappedInputText.trim()) {
+            convertData({
+                silent: true,
+                nextInput: swappedInputText,
+                nextInputFormat: swappedInputFormat,
+                nextOutputFormat: swappedOutputFormat
+            });
+        }
+    };
+
+    const handleClearInput = () => {
+        setInputText('');
+        setErrorMessage('');
+        NotificationManager.show('Input cleared', 3000, { type: 'success' });
+    };
+
+    const handleCopyOutput = async () => {
+        if (!outputText) {
+            showError('No output to copy');
+            return;
+        }
+
+        try {
+            await copyToClipboard(outputText);
+            NotificationManager.show('Copied to clipboard!', 3000, { type: 'success' });
+        } catch (_error) {
+            showError('Failed to copy output');
+        }
+    };
+
+    const handleDownload = () => {
+        if (!outputText) {
+            showError('No data to download');
+            return;
+        }
 
         const downloadManager = new DownloadManager();
         downloadManager.downloadFile(
             outputText,
-            `data.${extensions[format]}`,
-            mimeTypes[format]
+            `data.${EXTENSIONS[outputFormat]}`,
+            MIME_TYPES[outputFormat]
         );
-        this.showSuccess('Download started!');
+        showSuccess('Download started!');
+    };
+
+    return (
+        <div className="tool-container">
+            <div className="converter-section o-grid-2col swap-container-wrapper">
+                <div className="input-section o-panel">
+                    <h2>Input Format</h2>
+                    <div className="format-selector" role="group" aria-label="Input Format">
+                        {FORMATS.map((format) => (
+                            <button
+                                key={`input-${format}`}
+                                className={`format-btn c-button c-button--small ${inputFormat === format ? 'active' : ''}`}
+                                data-format={format}
+                                aria-pressed={inputFormat === format ? 'true' : 'false'}
+                                onClick={() => handleInputFormatChange(format)}
+                            >
+                                {formatLabel(format)}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="textarea-actions">
+                        <button
+                            id="clearInputBtn"
+                            className="c-button c-button--small c-button--outline"
+                            onClick={handleClearInput}
+                        >
+                            Clear
+                        </button>
+                    </div>
+                    <textarea
+                        id="inputText"
+                        className="text-area c-input c-input--textarea"
+                        placeholder={INPUT_PLACEHOLDERS[inputFormat]}
+                        aria-label="Input data"
+                        value={inputText}
+                        onInput={handleInputChange}
+                    />
+                </div>
+
+                <div className="swap-action-container">
+                    <button
+                        id="swapBtn"
+                        className="c-button c-button--small c-button--outline"
+                        title="Swap Input and Output"
+                        aria-label="Swap Input and Output"
+                        onClick={handleSwap}
+                    >
+                        Swap ⇄
+                    </button>
+                </div>
+
+                <div className="output-section o-panel">
+                    <h2>Output Format</h2>
+                    <div className="format-selector" role="group" aria-label="Output Format">
+                        {FORMATS.map((format) => (
+                            <button
+                                key={`output-${format}`}
+                                className={`format-btn c-button c-button--small ${outputFormat === format ? 'active' : ''}`}
+                                data-format={format}
+                                aria-pressed={outputFormat === format ? 'true' : 'false'}
+                                onClick={() => handleOutputFormatChange(format)}
+                            >
+                                {formatLabel(format)}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="textarea-actions">
+                        <button
+                            id="copyOutputBtn"
+                            className="c-button c-button--small c-button--outline"
+                            onClick={handleCopyOutput}
+                        >
+                            Copy
+                        </button>
+                    </div>
+                    <textarea
+                        id="outputText"
+                        className="text-area c-input c-input--textarea"
+                        placeholder="Converted data will appear here..."
+                        readOnly
+                        aria-label="Output data"
+                        value={outputText}
+                    />
+                </div>
+            </div>
+
+            <div className="u-text-center dfc-primary-actions">
+                <label className="c-checkbox dfc-auto-convert-label">
+                    <input
+                        type="checkbox"
+                        id="autoConvert"
+                        checked={autoConvert}
+                        onChange={handleAutoConvertToggle}
+                    />
+                    <span>Auto-convert</span>
+                </label>
+                <button id="convertBtn" className="convert-btn c-button" onClick={() => convertData()}>
+                    Convert Data
+                </button>
+                <button
+                    id="downloadBtn"
+                    className="c-button c-button--small c-button--icon-download"
+                    onClick={handleDownload}
+                >
+                    Download
+                </button>
+            </div>
+
+            <div
+                id="inputError"
+                className="error"
+                style={{ display: errorMessage ? 'block' : 'none' }}
+            >
+                {errorMessage}
+            </div>
+            <div id="notification" className="c-notification" role="status" aria-live="polite" />
+        </div>
+    );
+}
+
+export class DataFormatConverterUI {
+    constructor(rootSelector = '#data-format-converter-app') {
+        this.converter = new DataFormatConverter();
+        const root = document.querySelector(rootSelector) || document.querySelector('.tool-container');
+        if (!root) {
+            throw new Error('Data Format Converter root element not found');
+        }
+        const mount = root.hasChildNodes() ? hydrate : render;
+        mount(<DataFormatConverterApp converter={this.converter} />, root);
     }
 }
 
 // Initialize the converter when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    new DataFormatConverterUI();
-});
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        mountToolShell({
+            title: 'Data Format Converter',
+            description: 'Convert JSON, XML, YAML, and Properties formats',
+            homeHref: '/'
+        });
+        new DataFormatConverterUI();
+    });
+}

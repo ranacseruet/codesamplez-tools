@@ -5,6 +5,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const { injectToolPrerender } = require('./scripts/prerender-tool');
 const tools = [
   'base64-converter-tool',
   'css-minifier-tool',
@@ -19,6 +20,9 @@ const tools = [
 ];
 
 const getWebpackMode = (argv = {}) => argv.mode || process.env.NODE_ENV || 'development';
+const transformToolHtml = (toolName, htmlContent) => {
+  return injectToolPrerender(toolName, htmlContent.toString());
+};
 
 const baseConfig = {
   mode: 'development',
@@ -30,12 +34,13 @@ const baseConfig = {
     ]
   },
   resolve: {
+    extensions: ['.js', '.jsx'],
     fallback: { "crypto": false }
   },
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader'
@@ -61,6 +66,8 @@ const getToolConfig = (toolName) => ({
   name: toolName,
   entry: {
     main: [
+      './common/material-theme.css',
+      './common/app-shell/app-shell.css',
       './common/shared-styles.css',
       `./${toolName}/script.js`,
       `./${toolName}/styles.css`
@@ -86,7 +93,10 @@ const getToolConfig = (toolName) => ({
       patterns: [
         {
           from: path.join(__dirname, toolName, 'index.html'),
-          to: path.join(__dirname, 'build', toolName, 'index.html')
+          to: path.join(__dirname, 'build', toolName, 'index.html'),
+          transform(content) {
+            return transformToolHtml(toolName, content);
+          }
         },
         {
           from: path.join(__dirname, toolName, 'images'),
@@ -111,6 +121,8 @@ const developmentConfig = {
   entry: tools.reduce((entries, tool) => {
     const toolName = tool.name || tool;
     entries[toolName] = [
+      './common/material-theme.css',
+      './common/app-shell/app-shell.css',
       './common/shared-styles.css',
       `./${toolName}/script.js`,
       `./${toolName}/styles.css`
@@ -148,7 +160,10 @@ const developmentConfig = {
           return patterns.concat([
             {
               from: path.join(__dirname, toolName, 'index.html'),
-              to: path.join(__dirname, 'build', toolName, 'index.html')
+              to: path.join(__dirname, 'build', toolName, 'index.html'),
+              transform(content) {
+                return transformToolHtml(toolName, content);
+              }
             },
             {
               from: path.join(__dirname, toolName, 'images'),
