@@ -34,6 +34,22 @@ const TOOL_PRERENDER_REGISTRY = {
             });
         }
     },
+    'css-minifier-tool': {
+        rootId: 'css-minifier-app',
+        createAppNode: () => {
+            const { h } = require('preact');
+            const { CssMinifierApp } = require(path.resolve(__dirname, '../css-minifier-tool/script.js'));
+            return h(CssMinifierApp, {});
+        }
+    },
+    'json-formatter-tool': {
+        rootId: 'json-formatter-app',
+        createAppNode: () => {
+            const { h } = require('preact');
+            const { JsonFormatterApp } = require(path.resolve(__dirname, '../json-formatter-tool/script.js'));
+            return h(JsonFormatterApp, {});
+        }
+    },
     'text-analyzer-tool': {
         rootId: 'text-analyzer-app',
         createAppNode: () => {

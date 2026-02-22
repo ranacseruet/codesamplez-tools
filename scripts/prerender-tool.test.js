@@ -19,7 +19,7 @@ describe('generic tool prerender helpers', () => {
     });
 
     it('returns null for tools without prerender config', () => {
-        expect(getPrerenderConfig('json-formatter-tool')).toBeNull();
+        expect(getPrerenderConfig('base64-converter-tool')).toBeNull();
     });
 
     it('renders converter app markup to string for server-side prerender', () => {
@@ -50,15 +50,23 @@ describe('generic tool prerender helpers', () => {
     });
 
     it('leaves html unchanged for tools without prerender support', () => {
-        const htmlTemplate = '<html><body><div id="json-formatter-tool-app"></div></body></html>';
+        const htmlTemplate = '<html><body><div id="base64-converter-tool-app"></div></body></html>';
 
-        const injected = injectToolPrerender('json-formatter-tool', htmlTemplate);
+        const injected = injectToolPrerender('base64-converter-tool', htmlTemplate);
 
         expect(injected).toBe(htmlTemplate);
     });
 
     it('throws when attempting to render a tool without prerender config', () => {
-        expect(() => renderToolPrerenderMarkup('json-formatter-tool'))
-            .toThrow('No prerender config found for tool: json-formatter-tool');
+        expect(() => renderToolPrerenderMarkup('base64-converter-tool'))
+            .toThrow('No prerender config found for tool: base64-converter-tool');
+    });
+
+    it('renders json-formatter app markup for server-side prerender', () => {
+        const markup = renderToolPrerenderMarkup('json-formatter-tool');
+
+        expect(markup).toContain('id="formatJsonBtn"');
+        expect(markup).toContain('id="jsonErrorStatus"');
+        expect(markup).toContain('id="treeView"');
     });
 });

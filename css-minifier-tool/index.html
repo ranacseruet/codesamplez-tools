@@ -9,100 +9,10 @@
 </head>
 
 <body class="standalone-app">
-  <div class="css-minifier-container tool-container">
-    <div class="css-minifier-header o-header">
-      <h1>CSS Minifier</h1>
-      <p class="css-minifier-description o-description">Optimize your CSS files by removing unnecessary characters
-        without changing functionality.</p>
-    </div>
-
-    <div class="o-grid-2col">
-      <div class="o-panel">
-        <div class="o-panel-header">
-          <h2>Input CSS</h2>
-          <div class="css-minifier-toolbar o-toolbar">
-          </div>
-        </div>
-        <textarea id="css-minifier-input" class="c-input c-input--textarea"
-          placeholder="Paste your CSS code here..." aria-label="Input CSS"></textarea>
-      </div>
-
-      <div class="o-panel">
-        <div class="o-panel-header">
-          <h2>Minified Output</h2>
-          <div class="css-minifier-toolbar o-toolbar"></div>
-        </div>
-        <textarea id="css-minifier-output" class="c-input c-input--textarea" readonly
-          placeholder="Minified CSS will appear here..." aria-label="Minified Output"></textarea>
-      </div>
-    </div>
-
-    <div class="css-minifier-actions" style="text-align: center; margin: 20px 0;">
-      <button id="minify-btn" class="c-button">Minify CSS</button>
-      <button class="c-button c-button--secondary" id="load-sample">Load Sample</button>
-    </div>
-
-    <div class="css-minifier-options c-options-panel">
-      <h2>Minification Options</h2>
-      <div class="c-checkbox-group">
-        <div class="c-checkbox-row">
-          <div class="c-checkbox-item">
-            <input type="checkbox" id="remove-comments" checked>
-            <label for="remove-comments">Remove comments</label>
-          </div>
-          <div class="c-checkbox-item">
-            <input type="checkbox" id="remove-whitespace" checked>
-            <label for="remove-whitespace">Remove whitespace</label>
-          </div>
-          <div class="c-checkbox-item">
-            <input type="checkbox" id="combine-selectors" checked>
-            <label for="combine-selectors">Combine duplicate selectors</label>
-          </div>
-        </div>
-        <div class="c-checkbox-row">
-          <div class="c-checkbox-item">
-            <input type="checkbox" id="shorten-colors" checked>
-            <label for="shorten-colors">Shorten color values</label>
-          </div>
-          <div class="c-checkbox-item">
-            <input type="checkbox" id="remove-units" checked>
-            <label for="remove-units">Remove unnecessary units</label>
-          </div>
-          <div class="c-checkbox-item">
-            <input type="checkbox" id="remove-last-semicolons" checked>
-            <label for="remove-last-semicolons">Remove last semicolons</label>
-          </div>
-        </div>
-      </div>
-
-      <div class="css-minifier-toolbar o-toolbar">
-        <button id="reset-options" class="c-button c-button--secondary">Reset Options</button>
-      </div>
-    </div>
-
-    <div class="css-minifier-stats c-stats-panel">
-      <h2>Statistics</h2>
-      <div class="c-stat-row">
-        <span>Original Size</span>
-        <span id="original-size">0 bytes</span>
-      </div>
-      <div class="c-stat-row">
-        <span>Minified Size</span>
-        <span id="minified-size">0 bytes</span>
-      </div>
-      <div class="c-stat-row">
-        <span>Savings</span>
-        <span id="saving" class="css-minifier-saving-percentage">0%</span>
-      </div>
-    </div>
-
-    <div class="css-minifier-footer">
-      <p>CSS Minifier - Always test minified CSS before deployment.</p>
-    </div>
-  </div>
-
-  <div id="notification" class="c-notification" role="status" aria-live="polite">Copied to clipboard!</div>
-  <script src="bundle.main.js"></script>
+  <div id="app-shell-header"></div>
+  <div id="css-minifier-app"></div>
+  <div id="app-shell-footer"></div>
+  <script type="module" src="bundle.main.js"></script>
 </body>
 
 </html>

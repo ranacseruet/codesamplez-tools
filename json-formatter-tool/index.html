@@ -9,87 +9,10 @@
 </head>
 
 <body class="standalone-app">
-    <div class="tool-container"> <!-- Replaced jsonf-container -->
-        <div class="o-header"> <!-- Replaced jsonf-header -->
-            <h1>JSON Formatter</h1> <!-- Removed jsonf-title class -->
-            <p class="o-description">Format, validate, and beautify your JSON with this easy-to-use tool</p>
-            <!-- Replaced jsonf-description -->
-        </div>
-
-        <!-- Input Panel -->
-        <div class="o-panel"> <!-- Replaced jsonf-panel -->
-            <h3>Input JSON</h3>
-            <div class="o-panel-content">
-                <textarea class="c-input c-input--textarea" placeholder="Paste your JSON here..."
-                    aria-label="Input JSON"></textarea>
-                <!-- Replaced jsonf-input -->
-            </div>
-            <div class="o-panel-content">
-                <div class="c-input-status" id="jsonErrorStatus"></div>
-            </div>
-        </div>
-
-        <!-- Controls -->
-        <div class="o-toolbar jsonf-controls-custom"> <!-- Replaced jsonf-controls, added custom class for centering -->
-            <button class="c-button" id="formatJsonBtn">Format JSON</button> <!-- Replaced jsonf-button, added ID -->
-            <button class="c-button c-button--secondary" id="loadSampleBtn">Load Sample</button>
-            <!-- Replaced jsonf-button jsonf-sample with c-button--secondary, added ID -->
-            <div class="c-checkbox-item"> <!-- Replaced jsonf-checkbox-container -->
-                <input type="checkbox" id="sortKeys" checked> <!-- Removed jsonf-checkbox class -->
-                <label for="sortKeys">Sort keys</label> <!-- Removed jsonf-checkbox-label class -->
-            </div>
-            <div class="c-checkbox-item">
-                <input type="checkbox" id="autoFix" checked>
-                <label for="autoFix">Auto fix</label>
-            </div>
-        </div>
-
-        <!-- Output Panel -->
-        <div class="o-panel"> <!-- Replaced jsonf-panel -->
-            <h3>Formatted Output</h3>
-            <div class="o-panel-header jsonf-panel-header">
-                <button class="c-button c-button--secondary" id="copyOutputBtn" disabled>Copy Output</button>
-                <button class="c-button c-button--secondary c-button--icon-download jsonf-download-btn"
-                    id="downloadOutputBtn" disabled>Download</button>
-            </div>
-
-            <!-- Output Tabs -->
-            <div class="jsonf-tabs" role="group" aria-label="Output View">
-                <button class="jsonf-tab active" data-view="tree" aria-pressed="true">Tree View</button>
-                <button class="jsonf-tab" data-view="plain" aria-pressed="false">Plain View</button>
-            </div>
-
-            <div class="o-panel-content"> <!-- Added o-panel-content -->
-                <div id="treeView" class="view-container active">
-                    <pre class="c-code-output"><code></code></pre>
-                    <!-- Replaced jsonf-output-container and jsonf-output -->
-                </div>
-                <div id="plainView" class="view-container">
-                    <textarea class="c-input c-input--textarea" readonly
-                        placeholder="Formatted JSON will appear here..." aria-label="Formatted JSON Output"></textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- Stats -->
-        <div class="c-stats-panel"> <!-- Replaced jsonf-stats -->
-            <div class="c-stat-row"> <!-- Replaced jsonf-stat-row -->
-                <span>Original Size:</span>
-                <span class="jsonf-original-size">0 bytes</span> <!-- Kept specific class for JS targeting -->
-            </div>
-            <div class="c-stat-row"> <!-- Replaced jsonf-stat-row -->
-                <span>Formatted Size:</span>
-                <span class="jsonf-formatted-size">0 bytes</span> <!-- Kept specific class for JS targeting -->
-            </div>
-        </div>
-
-        <div id="notification" class="c-notification" role="status" aria-live="polite"></div>
-        <!-- Notification element for shared NotificationManager -->
-        <div class="jsonf-footer"> <!-- Kept tool-specific footer -->
-            Made by Developer, for developers with ❤️
-        </div>
-    </div>
-    <script src="bundle.main.js"></script>
+    <div id="app-shell-header"></div>
+    <div id="json-formatter-app"></div>
+    <div id="app-shell-footer"></div>
+    <script type="module" src="bundle.main.js"></script>
 </body>
 
 </html>

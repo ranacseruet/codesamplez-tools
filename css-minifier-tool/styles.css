@@ -44,6 +44,16 @@
   margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
 }
 
+/* Primary action row */
+.css-minifier-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-md, var(--default-spacing-md));
+  margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
+}
+
 .c-checkbox-group {
   display: flex;
   flex-direction: column; /* Stack rows vertically */

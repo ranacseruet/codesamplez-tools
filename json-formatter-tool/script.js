@@ -3,6 +3,89 @@ import { formatBytes } from '../common/format-utils.js';
 import DownloadManager from '../common/DownloadManager.js';
 import ClearButton from '../common/clear-button/ClearButton.js';
 import { scheduleTask, nextFrame } from '../common/scheduler-utils.js';
+import { hydrate, render } from 'preact';
+import { mountToolShell } from '../common/app-shell/mountToolShell.js';
+
+export function JsonFormatterApp() {
+  return (
+    <div id="json-formatter-tool" className="tool-container">
+      <div className="o-panel">
+        <h3>Input JSON</h3>
+        <div className="o-panel-content">
+          <textarea
+            className="c-input c-input--textarea"
+            placeholder="Paste your JSON here..."
+            aria-label="Input JSON"
+          />
+        </div>
+        <div className="o-panel-content">
+          <div className="c-input-status" id="jsonErrorStatus" />
+        </div>
+      </div>
+
+      <div className="o-toolbar jsonf-controls-custom">
+        <button className="c-button" id="formatJsonBtn" type="button">Format JSON</button>
+        <button className="c-button c-button--secondary" id="loadSampleBtn" type="button">Load Sample</button>
+        <div className="c-checkbox-item">
+          <input type="checkbox" id="sortKeys" defaultChecked />
+          <label htmlFor="sortKeys">Sort keys</label>
+        </div>
+        <div className="c-checkbox-item">
+          <input type="checkbox" id="autoFix" defaultChecked />
+          <label htmlFor="autoFix">Auto fix</label>
+        </div>
+      </div>
+
+      <div className="o-panel">
+        <h3>Formatted Output</h3>
+        <div className="o-panel-header jsonf-panel-header">
+          <button className="c-button c-button--secondary" id="copyOutputBtn" type="button" disabled>Copy Output</button>
+          <button
+            className="c-button c-button--secondary c-button--icon-download jsonf-download-btn"
+            id="downloadOutputBtn"
+            type="button"
+            disabled
+          >
+            Download
+          </button>
+        </div>
+
+        <div className="jsonf-tabs" role="group" aria-label="Output View">
+          <button className="jsonf-tab active" data-view="tree" aria-pressed="true" type="button">Tree View</button>
+          <button className="jsonf-tab" data-view="plain" aria-pressed="false" type="button">Plain View</button>
+        </div>
+
+        <div className="o-panel-content">
+          <div id="treeView" className="view-container active">
+            <pre className="c-code-output"><code /></pre>
+          </div>
+          <div id="plainView" className="view-container">
+            <textarea
+              className="c-input c-input--textarea"
+              readOnly
+              placeholder="Formatted JSON will appear here..."
+              aria-label="Formatted JSON Output"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="c-stats-panel">
+        <div className="c-stat-row">
+          <span>Original Size:</span>
+          <span className="jsonf-original-size">0 bytes</span>
+        </div>
+        <div className="c-stat-row">
+          <span>Formatted Size:</span>
+          <span className="jsonf-formatted-size">0 bytes</span>
+        </div>
+      </div>
+
+      <div id="notification" className="c-notification" role="status" aria-live="polite" />
+      <div className="jsonf-footer">Made by Developer, for developers with ❤️</div>
+    </div>
+  );
+}
 
 export class JSONFormatter {
   constructor(initDom = true) {
@@ -442,5 +525,30 @@ export class JSONFormatter {
   }
 }
 
-// Initialize tool when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => new JSONFormatter());
+export class JSONFormatterToolUI {
+  constructor(rootSelector = '#json-formatter-app') {
+    const root = document.querySelector(rootSelector) || document.querySelector('#json-formatter-tool');
+    if (!root) {
+      throw new Error('JSON Formatter root element not found');
+    }
+
+    const mount = root.hasChildNodes() ? hydrate : render;
+    mount(<JsonFormatterApp />, root);
+    this.formatter = new JSONFormatter(true);
+  }
+}
+
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+  document.addEventListener('DOMContentLoaded', () => {
+    mountToolShell({
+      title: 'JSON Formatter',
+      description: 'Format, validate, and beautify JSON with tree and plain views.',
+      homeHref: '/'
+    });
+
+    const tool = new JSONFormatterToolUI();
+    if (typeof window !== 'undefined') {
+      window.jsonFormatter = tool.formatter;
+    }
+  });
+}
