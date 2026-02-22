@@ -11,58 +11,9 @@
 </head>
 
 <body class="standalone-app">
-    <div id="qr-code-generator-tool" class="qr-tool">
-        <header class="qr-tool__header">
-            <h1 class="qr-tool__title">QR Code Generator</h1>
-            <p class="qr-tool__subtitle">Create and customize your QR codes instantly.</p>
-        </header>
-
-        <main class="qr-tool__main-content">
-            <div class="qr-tool__controls">
-                <h2 class="qr-tool__section-title">Configuration</h2>
-
-                <div class="qr-tool__form-group">
-                    <label for="qr-text" class="qr-tool__label">Text or URL</label>
-                    <textarea id="qr-text" rows="4" class="qr-tool__textarea"
-                        placeholder="e.g. https://codesamplez.com">https://codesamplez.com</textarea>
-                </div>
-
-                <div class="qr-tool__form-group">
-                    <label for="qr-size" class="qr-tool__label">Size: <span id="size-label">256px</span></label>
-                    <input id="qr-size" type="range" min="128" max="600" step="16" value="256" class="qr-tool__slider">
-                </div>
-
-                <div class="qr-tool__form-group">
-                    <label for="qr-margin" class="qr-tool__label">Quiet Zone (Margin): <span
-                            id="margin-label">2</span></label>
-                    <input id="qr-margin" type="range" min="0" max="10" step="1" value="2" class="qr-tool__slider">
-                </div>
-
-                <div class="qr-tool__form-group">
-                    <label for="error-correction" class="qr-tool__label">Error Correction</label>
-                    <select id="error-correction" class="qr-tool__select">
-                        <option value="L">Low (L) - ~7%</option>
-                        <option value="M" selected>Medium (M) - ~15%</option>
-                        <option value="Q">Quartile (Q) - ~25%</option>
-                        <option value="H">High (H) - ~30%</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="qr-tool__preview">
-                <div id="qr-code-container" class="qr-tool__qr-container">
-                    <canvas id="qr-canvas" role="img" aria-label="QR Code"></canvas>
-                </div>
-                <button id="download-btn" class="qr-tool__button">
-                    <span class="c-button--icon-download">Download PNG</span>
-                </button>
-                <p id="error-message" class="qr-tool__error-message" role="alert" aria-live="assertive"></p>
-            </div>
-        </main>
-
-        <footer class="qr-tool__footer">
-        </footer>
-    </div>
+    <div id="app-shell-header"></div>
+    <div id="qr-code-generator-app"></div>
+    <div id="app-shell-footer"></div>
 
     <script src="bundle.main.js"></script>
 </body>

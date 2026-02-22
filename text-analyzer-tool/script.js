@@ -1,3 +1,9 @@
+import { hydrate, render } from 'preact';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { NotificationManager } from '../common/notification-manager.js';
+import ClearButton from '../common/clear-button/ClearButton.js';
+import { mountToolShell } from '../common/app-shell/mountToolShell.js';
+
 function analyzeText(text = '') {
     // Convert null/undefined to empty string and ensure we're working with a string
     text = String(text);
@@ -115,17 +121,187 @@ function analyzeText(text = '') {
     };
 }
 
+const SAMPLE_TEXT = "This is a sample text for analysis. It has multiple sentences and paragraphs.\n\nLet's see how well it works!";
+
+const PRIMARY_STATS = [
+    ['wordCount', 'Word Count'],
+    ['charCount', 'Character Count'],
+    ['paragraphCount', 'Paragraph Count'],
+    ['sentenceCount', 'Sentence Count'],
+    ['lineCount', 'Lines Counter'],
+    ['avgWordLength', 'Average Word Length'],
+    ['avgSentenceLength', 'Average Sentence Length']
+];
+
+const PUNCTUATION_STATS = [
+    ['periodCount', 'Periods'],
+    ['commaCount', 'Commas'],
+    ['questionCount', 'Question Marks'],
+    ['exclamationCount', 'Exclamation Marks']
+];
+
+export function TextAnalyzerApp() {
+    const [text, setText] = useState('');
+    const textAreaRef = useRef(null);
+    const clearButtonRef = useRef(null);
+    const result = useMemo(() => analyzeText(text), [text]);
+
+    useEffect(() => {
+        if (!(textAreaRef.current instanceof HTMLTextAreaElement)) {
+            return undefined;
+        }
+
+        const textArea = textAreaRef.current;
+        clearButtonRef.current = new ClearButton(textArea);
+
+        const handleTextCleared = () => {
+            setText(textArea.value);
+            NotificationManager.show('Text cleared', 3000, { type: 'success' });
+        };
+
+        textArea.addEventListener('textCleared', handleTextCleared);
+        return () => {
+            textArea.removeEventListener('textCleared', handleTextCleared);
+            clearButtonRef.current?.disconnect?.();
+        };
+    }, []);
+
+    useEffect(() => {
+        clearButtonRef.current?.updateVisibility?.();
+    }, [text]);
+
+    const handleLoadSample = () => {
+        setText(SAMPLE_TEXT);
+        NotificationManager.show('Sample text loaded', 3000, { type: 'success' });
+    };
+
+    const renderWordFrequency = () => {
+        const wordFrequency = result.wordFrequency;
+        if (!wordFrequency || wordFrequency.length === 0) {
+            return (
+                <div
+                    className="word-frequency-empty"
+                    style={{
+                        textAlign: 'center',
+                        color: 'var(--color-text-secondary)',
+                        fontStyle: 'italic',
+                        padding: 'var(--spacing-md)'
+                    }}
+                >
+                    No words to analyze
+                </div>
+            );
+        }
+
+        const maxCount = Math.max(...wordFrequency.map((item) => item.count), 0);
+        return wordFrequency.map((item) => {
+            const percentage = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
+            return (
+                <div key={item.word} className="word-frequency-item" role="listitem">
+                    <span className="word-frequency-label">{item.word}</span>
+                    <div className="word-frequency-bar-container" aria-hidden="true">
+                        <div
+                            className="word-frequency-bar"
+                            data-count={item.count}
+                            style={{ width: `${percentage}%` }}
+                        />
+                    </div>
+                    <span className="word-frequency-count sr-only">{item.count} occurrences</span>
+                </div>
+            );
+        });
+    };
+
+    return (
+        <div className="tool-container">
+            <div className="text-analyzer-editor-container">
+                <div className="text-analyzer-panel">
+                    <div className="text-analyzer-panel-header">
+                        <h2>Input Text</h2>
+                        <div className="text-analyzer-toolbar">
+                            <button
+                                className="c-button c-button--secondary"
+                                id="load-sample"
+                                onClick={handleLoadSample}
+                            >
+                                Load Sample
+                            </button>
+                        </div>
+                    </div>
+                    <textarea
+                        id="textInput"
+                        ref={textAreaRef}
+                        placeholder="Enter your text here..."
+                        aria-label="Input text to analyze"
+                        value={text}
+                        onInput={(event) => setText(event.target.value)}
+                    />
+                </div>
+            </div>
+
+            <div className="text-analyzer-stats">
+                {PRIMARY_STATS.map(([key, label]) => (
+                    <div key={key} className="text-analyzer-stat-item">
+                        <span className="text-analyzer-stat-label">{label}</span>
+                        <span id={key} className="text-analyzer-stat-value">{String(result[key])}</span>
+                    </div>
+                ))}
+            </div>
+
+            <div className="text-analyzer-punctuation">
+                <h3>Punctuation Statistics</h3>
+                <div className="text-analyzer-checkbox-group">
+                    {PUNCTUATION_STATS.map(([key, label]) => (
+                        <div key={key} className="text-analyzer-stat-item">
+                            <span className="text-analyzer-stat-label">{label}</span>
+                            <span id={key} className="text-analyzer-stat-value">{String(result[key])}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="text-analyzer-word-frequency">
+                <h3>Word Frequency (Top 5)</h3>
+                <div
+                    id="wordFrequencyChart"
+                    className="word-frequency-chart"
+                    role="list"
+                    aria-label="Word Frequency Statistics"
+                >
+                    {renderWordFrequency()}
+                </div>
+            </div>
+
+            <div id="notification" className="c-notification" role="status" aria-live="polite" />
+        </div>
+    );
+}
+
+export class TextAnalyzerToolUI {
+    constructor(rootSelector = '#text-analyzer-app') {
+        const root = document.querySelector(rootSelector) || document.querySelector('.tool-container');
+        if (!root) {
+            throw new Error('Text Analyzer root element not found');
+        }
+
+        const mount = root.hasChildNodes() ? hydrate : render;
+        mount(<TextAnalyzerApp />, root);
+    }
+}
+
 // Export for both ES modules and CommonJS
 export { analyzeText };
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { analyzeText };
+    module.exports = { analyzeText, TextAnalyzerApp, TextAnalyzerToolUI };
 }
 
-import { TextAnalyzerUI } from './TextAnalyzerUI.js';
-
-// Browser event handling
-if (typeof window !== 'undefined') {
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
     document.addEventListener('DOMContentLoaded', () => {
-        new TextAnalyzerUI();
+        mountToolShell({
+            title: 'Text Analyzer',
+            description: 'Analyze your text to get word count, character statistics, and more.',
+            homeHref: '/'
+        });
+        new TextAnalyzerToolUI();
     });
 }

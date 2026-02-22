@@ -172,6 +172,21 @@ describe('QRCodeGeneratorUI', () => {
     expect(mockErrorMessage.textContent).toBe('Please enter text or a URL to generate a QR code.');
   });
 
+  it('should handle QR library errors and hide canvas', async () => {
+    QRCode.toCanvas.mockImplementationOnce((canvas, text, options, callback) => {
+      callback(new Error('QR generation failed'));
+    });
+
+    mockQrText.value = 'trigger error';
+    const inputListener = mockQrText.addEventListener.mock.calls.find(call => call[0] === 'input')[1];
+    inputListener();
+
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    expect(mockQrCanvas.style.display).toBe('none');
+    expect(mockErrorMessage.textContent).toContain('Input data is too long');
+  });
+
   it('should update size label and regenerate QR code on size input', async () => {
     QRCode.toCanvas.mockClear(); // Clear initial call
 

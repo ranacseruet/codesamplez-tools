@@ -33,6 +33,22 @@ const TOOL_PRERENDER_REGISTRY = {
                 converter: new DataFormatConverter()
             });
         }
+    },
+    'text-analyzer-tool': {
+        rootId: 'text-analyzer-app',
+        createAppNode: () => {
+            const { h } = require('preact');
+            const { TextAnalyzerApp } = require(path.resolve(__dirname, '../text-analyzer-tool/script.js'));
+            return h(TextAnalyzerApp, {});
+        }
+    },
+    'qr-code-generator': {
+        rootId: 'qr-code-generator-app',
+        createAppNode: () => {
+            const { h } = require('preact');
+            const { QRCodeGeneratorApp } = require(path.resolve(__dirname, '../qr-code-generator/script.js'));
+            return h(QRCodeGeneratorApp, {});
+        }
     }
 };
 
