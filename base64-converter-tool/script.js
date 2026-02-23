@@ -7,6 +7,8 @@ import CopyButton from '../common/copy-button/CopyButton.js';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell.js';
 
+const BASE64_DATA_URL_REGEX = /^data:([a-zA-Z0-9/\-+.-\w]+)?(?:;charset=([a-zA-Z0-9/\-+.-\w]+))?;base64,(.*)$/;
+
 function normalizeEncodingValue(value) {
     const encoding = String(value || '').trim();
     switch (encoding) {
@@ -26,6 +28,30 @@ function normalizeEncodingValue(value) {
             return encoding || 'utf8';
     }
 }
+
+function parseBase64DataUrl(value) {
+    const parts = String(value || '').match(BASE64_DATA_URL_REGEX);
+    if (!parts || typeof parts[3] !== 'string') {
+        return null;
+    }
+
+    return {
+        mimeType: parts[1] || null,
+        base64Payload: parts[3].trim()
+    };
+}
+
+const BASE64_CONVERTER_ELEMENT_IDS = {
+    input: 'base64converter-input',
+    result: 'base64converter-result',
+    status: 'base64converter-status',
+    copyStatus: 'base64converter-copy-status',
+    mode: 'base64converter-mode',
+    encoding: 'base64converter-encoding',
+    fileInput: 'base64converter-file',
+    convertButton: 'base64converter-convert',
+    downloadDecodedButton: 'base64converter-download-decoded'
+};
 
 // Converter factory function
 const createConverter = () => {
@@ -61,10 +87,10 @@ const createConverter = () => {
             let detectedMimeType = null; // MIME type from Data URI, if present
 
             if (rawInput.startsWith('data:')) {
-                const parts = rawInput.match(/^data:([a-zA-Z0-9/\-+.-\w]+)?(?:;charset=([a-zA-Z0-9/\-+.-\w]+))?;base64,(.*)$/);
-                if (parts && typeof parts[3] === 'string') { // parts[3] is the payload
-                    detectedMimeType = parts[1] || null; // e.g., 'image/png', 'text/plain'
-                    base64Payload = parts[3].trim(); // Trim the extracted base64 payload
+                const parsedDataUrl = parseBase64DataUrl(rawInput);
+                if (parsedDataUrl) {
+                    detectedMimeType = parsedDataUrl.mimeType; // e.g., 'image/png', 'text/plain'
+                    base64Payload = parsedDataUrl.base64Payload;
                     this.currentMimeType = detectedMimeType; // Persist for download
                 } else {
                     this.elements.result.textContent = '';
@@ -206,9 +232,9 @@ const createConverter = () => {
                     let base64Payload = rawInputValue;
 
                     if (rawInputValue.startsWith('data:')) {
-                        const parts = rawInputValue.match(/^data:([a-zA-Z0-9/\-+.-\w]+)?(?:;charset=([a-zA-Z0-9/\-+.-\w]+))?;base64,(.*)$/);
-                        if (parts && typeof parts[3] === 'string') {
-                            base64Payload = parts[3].trim();
+                        const parsedDataUrl = parseBase64DataUrl(rawInputValue);
+                        if (parsedDataUrl) {
+                            base64Payload = parsedDataUrl.base64Payload;
                         } else {
                             NotificationManager.show('Invalid Data URI format for download', 3000, { type: 'error' });
                             return;
@@ -253,10 +279,10 @@ const createConverter = () => {
                     let mimeType;
 
                     if (dataUrl.startsWith('data:')) {
-                        const parts = dataUrl.match(/^data:([a-zA-Z0-9/\-+.-\w]+)?(?:;charset=([a-zA-Z0-9/\-+.-\w]+))?;base64,(.*)$/);
-                        if (parts && typeof parts[3] === 'string') {
-                            mimeType = parts[1] || 'application/octet-stream';
-                            base64String = parts[3].trim();
+                        const parsedDataUrl = parseBase64DataUrl(dataUrl);
+                        if (parsedDataUrl) {
+                            mimeType = parsedDataUrl.mimeType || 'application/octet-stream';
+                            base64String = parsedDataUrl.base64Payload;
                         } else {
                             throw new Error('Invalid Data URI format');
                         }
@@ -424,30 +450,15 @@ function initializeBase64ConverterDom() {
         }
     }
 
-    const elements = {
-        input: document.getElementById('base64converter-input'),
-        result: document.getElementById('base64converter-result'),
-        status: document.getElementById('base64converter-status'),
-        copyStatus: document.getElementById('base64converter-copy-status'),
-        mode: document.getElementById('base64converter-mode'),
-        encoding: document.getElementById('base64converter-encoding'),
-        fileInput: document.getElementById('base64converter-file'),
-        convertButton: document.getElementById('base64converter-convert'),
-        downloadDecodedButton: document.getElementById('base64converter-download-decoded')
-    };
-
-    const requiredElementIds = [
-        'base64converter-input', 'base64converter-result', 'base64converter-status',
-        'base64converter-copy-status', 'base64converter-mode', 'base64converter-encoding',
-        'base64converter-file', 'base64converter-convert',
-        'base64converter-download-decoded'
-    ];
-
+    const elements = {};
     const missingElements = [];
-    for (const id of requiredElementIds) {
-        if (!document.getElementById(id)) {
+    for (const [key, id] of Object.entries(BASE64_CONVERTER_ELEMENT_IDS)) {
+        const element = document.getElementById(id);
+        if (!element) {
             missingElements.push(id);
+            continue;
         }
+        elements[key] = element;
     }
 
     if (missingElements.length > 0) {
@@ -455,16 +466,6 @@ function initializeBase64ConverterDom() {
         NotificationManager.show('Required elements not found - tool may not function properly', 3000, { type: 'error' });
         return null;
     }
-
-    elements.input = document.getElementById('base64converter-input');
-    elements.result = document.getElementById('base64converter-result');
-    elements.status = document.getElementById('base64converter-status');
-    elements.copyStatus = document.getElementById('base64converter-copy-status');
-    elements.mode = document.getElementById('base64converter-mode');
-    elements.encoding = document.getElementById('base64converter-encoding');
-    elements.fileInput = document.getElementById('base64converter-file');
-    elements.convertButton = document.getElementById('base64converter-convert');
-    elements.downloadDecodedButton = document.getElementById('base64converter-download-decoded');
 
     converter.elements = elements;
 

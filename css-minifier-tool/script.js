@@ -27,75 +27,35 @@ const DEFAULT_OPTIONS = {
 
 const SAMPLE_CSS = `/* Basic styles for a simple page */
 body {
-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-font-size: 16px;
-line-height: 1.5;
-color: #333333;
-background-color: #ffffff;
-margin: 0px;
-padding: 0px;
-}
-
-/* Header styling */
-.header {
-background-color: #4a90e2;
-padding: 20px;
-color: white;
-box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.header h1 {
-margin: 0px;
-font-size: 28px;
-}
-
-/* Container for content */
-.container {
-max-width: 1200px;
-margin: 0 auto;
-padding: 20px;
-}
-
-/* Button styles */
-.button {
-display: inline-block;
-padding: 10px 20px;
-background-color: #4a90e2;
-color: #ffffff;
-border: none;
-border-radius: 4px;
-cursor: pointer;
-transition: background-color 0.3s ease;
-}
-
-.button:hover {
-background-color: #3a80d2;
+  color: #333333;
+  background-color: #ffffff;
+  margin: 0px;
 }
 
 /* Duplicate rule to demonstrate combining */
 .button {
-font-weight: bold;
-text-transform: uppercase;
+  background-color: #4a90e2;
+  color: #ffffff;
+  padding: 10px 20px;
 }
-
-/* Empty rule to demonstrate cleaning */
-.unused {
+.button {
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
 /* Colors to demonstrate shortening */
 .color-examples {
-color: #ffffff;
-background-color: #000000;
-border-color: #ff0000;
-box-shadow: 0px 0px 5px #aabbcc;
+  background-color: #000000;
+  border-color: #ff0000;
+  box-shadow: 0px 0px 5px #aabbcc;
 }
 
 /* Zero values to demonstrate unit removal */
 .spacing {
-margin: 0px;
-padding: 0px;
-border-width: 0px;
-top: 0px;
+  margin: 0px;
+  padding: 0px;
+  border-width: 0px;
+  top: 0px;
 }`;
 
 function createDefaultOptions() {

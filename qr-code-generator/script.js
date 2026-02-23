@@ -5,6 +5,9 @@ import { hydrate, render } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell.js';
 
+const QR_EMPTY_INPUT_MESSAGE = 'Please enter text or a URL to generate a QR code.';
+const QR_TOO_LONG_ERROR_MESSAGE = 'Error: Input data is too long for the selected error correction level. Try reducing data or increasing error correction.';
+
 export class QRCodeGeneratorUI {
   constructor(options) {
     this.qrText = document.getElementById(options.qrTextId);
@@ -34,7 +37,7 @@ export class QRCodeGeneratorUI {
       const text = this.qrText.value;
       if (!text) {
         this.qrCanvas.style.display = 'none';
-        this.errorMessage.textContent = 'Please enter text or a URL to generate a QR code.';
+        this.errorMessage.textContent = QR_EMPTY_INPUT_MESSAGE;
         return;
       }
 
@@ -54,17 +57,13 @@ export class QRCodeGeneratorUI {
       QRCode.toCanvas(this.qrCanvas, text, options, (error) => {
         if (error) {
           console.error(error);
-          this.errorMessage.textContent = "Error: Input data is too long for the selected error correction level. Try reducing data or increasing error correction.";
+          this.errorMessage.textContent = QR_TOO_LONG_ERROR_MESSAGE;
           this.qrCanvas.style.display = 'none';
         } else {
-          console.log('QR code successfully generated!');
           this.qrCanvas.style.display = 'block';
           this.qrCanvas.setAttribute('role', 'img');
-          this.qrCanvas.setAttribute('aria-label', `QR Code for ${text}`);
-          this.errorMessage.textContent = "";
-
-          const labelText = text.length > 50 ? text.substring(0, 50) + '...' : text;
-          this.qrCanvas.setAttribute('aria-label', `QR code for: ${labelText}`);
+          this.qrCanvas.setAttribute('aria-label', getQrCanvasAriaLabel(text));
+          this.errorMessage.textContent = '';
         }
       });
     }, 250);
@@ -111,7 +110,6 @@ const DEFAULT_QR_STATE = {
 
 function createQrCanvasOptions({ text, size, margin, errorCorrection }) {
   return {
-    text,
     width: size,
     height: size,
     colorDark: '#000000',
@@ -172,7 +170,7 @@ export function QRCodeGeneratorApp() {
 
       if (!text) {
         setCanvasVisible(false);
-        setErrorMessage('Please enter text or a URL to generate a QR code.');
+        setErrorMessage(QR_EMPTY_INPUT_MESSAGE);
         return;
       }
 
@@ -184,11 +182,10 @@ export function QRCodeGeneratorApp() {
         if (error) {
           console.error(error);
           setCanvasVisible(false);
-          setErrorMessage('Error: Input data is too long for the selected error correction level. Try reducing data or increasing error correction.');
+          setErrorMessage(QR_TOO_LONG_ERROR_MESSAGE);
           return;
         }
 
-        console.log('QR code successfully generated!');
         setCanvasVisible(true);
         setErrorMessage('');
         setCanvasAriaLabel(getQrCanvasAriaLabel(text));

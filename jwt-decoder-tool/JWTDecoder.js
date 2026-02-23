@@ -189,12 +189,8 @@ export class JWTDecoder {
             // Generate the expected signature
             const expectedSignatureBytes = await hmacFunc(signatureInput, secret);
 
-            // Convert expected signature ArrayBuffer to base64url
-            const expectedByteArray = new Uint8Array(expectedSignatureBytes);
-            const expectedBase64Url = btoa(String.fromCharCode(...expectedByteArray))
-                .replace(/\+/g, '-')
-                .replace(/\//g, '_')
-                .replace(/=+$/, '');
+            // Reuse the shared codec already bundled for payload/header decoding.
+            const expectedBase64Url = this.#codec.encodeBase64Url(expectedSignatureBytes);
 
             // Constant-time comparison
             const providedSignature = this.#signature;

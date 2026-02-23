@@ -176,14 +176,7 @@ export class JSONFormatter {
       // Abort if a newer run has started
       if (runId !== this.currentRunId) return;
 
-      if (this.autoFixCheckbox.checked) {
-        inputValue = this.constructor.autoFixJSON(inputValue);
-      }
-
-      const parsed = JSON.parse(inputValue);
-      const formatted = this.sortCheckbox.checked
-        ? this.constructor.sortKeysAlphabetically(parsed)
-        : parsed;
+      const [formatted, formattedString] = this.prepareFormattedJson();
 
       // Clear previous output
       this.output.replaceChildren();
@@ -198,7 +191,6 @@ export class JSONFormatter {
 
       this.output.appendChild(fragment);
 
-      const formattedString = JSON.stringify(formatted, null, 2);
       this.plainViewTextarea.value = formattedString; // Populate plain view
 
       this.copyBtn.disabled = false;
@@ -395,17 +387,23 @@ export class JSONFormatter {
     return fixedJson;
   }
 
-  getFormattedOutput() {
+  prepareFormattedJson() {
     let inputValue = this.input.value.trim();
     if (this.autoFixCheckbox.checked) {
       inputValue = this.constructor.autoFixJSON(inputValue);
     }
+
+    const parsed = JSON.parse(inputValue);
+    const formatted = this.sortCheckbox.checked
+      ? this.constructor.sortKeysAlphabetically(parsed)
+      : parsed;
+
+    return [formatted, JSON.stringify(formatted, null, 2)];
+  }
+
+  getFormattedOutput() {
     try {
-      const parsed = JSON.parse(inputValue);
-      const formatted = this.sortCheckbox.checked
-        ? this.constructor.sortKeysAlphabetically(parsed)
-        : parsed;
-      return JSON.stringify(formatted, null, 2);
+      return this.prepareFormattedJson()[1];
     } catch (error) {
       // If parsing fails, fall back to the original input value
       return this.input.value.trim();

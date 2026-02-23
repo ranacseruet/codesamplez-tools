@@ -4,6 +4,8 @@ import { NotificationManager } from '../common/notification-manager.js';
 import ClearButton from '../common/clear-button/ClearButton.js';
 import { mountToolShell } from '../common/app-shell/mountToolShell.js';
 
+const STOP_WORDS = new Set('a an the and or but in on at to for of with by from as is are was were be been being have has had do does did will would could should may might must can shall this that these those i me my myself we our ours you your yours he him his she her hers it its they them their theirs up down out about into through during before after above below between among under over again further then once here there when where why how all any both each few more most other some such no nor not only own same so than too very s t just don now d ll m o re ve y ain aren couldn didn doesn hadn hasn haven isn ma mightn mustn needn shan shouldn wasn weren won wouldn'.split(' '));
+
 function analyzeText(text = '') {
     // Convert null/undefined to empty string and ensure we're working with a string
     text = String(text);
@@ -87,13 +89,12 @@ function analyzeText(text = '') {
     }
 
     // Word Frequency Analysis
-    const stopWords = new Set(['a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'as', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'shall', 'this', 'that', 'these', 'those', 'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'you', 'your', 'yours', 'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them', 'their', 'theirs', 'up', 'down', 'out', 'about', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between', 'among', 'under', 'over', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'just', 'don', 'now', 'd', 'll', 'm', 'o', 're', 've', 'y', 'ain', 'aren', 'couldn', 'didn', 'doesn', 'hadn', 'hasn', 'haven', 'isn', 'ma', 'mightn', 'mustn', 'needn', 'shan', 'shouldn', 'wasn', 'weren', 'won', 'wouldn']);
     const wordFrequency = {};
     if (words.length > 0) {
         words.forEach(word => {
             // Clean word: remove punctuation and convert to lowercase
             const cleanWord = word.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
-            if (cleanWord && cleanWord.length > 0 && !stopWords.has(cleanWord)) {
+            if (cleanWord && cleanWord.length > 0 && !STOP_WORDS.has(cleanWord)) {
                 wordFrequency[cleanWord] = (wordFrequency[cleanWord] || 0) + 1;
             }
         });
