@@ -58,8 +58,11 @@ class DiffDisplay {
           parts.push(this.escapeHtml(textBefore));
         }
 
-        // Add the span itself (unescaped)
-        parts.push(match[0]);
+        // Preserve the diff span wrapper but escape its inner content so code/HTML
+        // inside word-level diffs is displayed as text instead of becoming live DOM.
+        const diffType = match[2];
+        const spanContent = match[3];
+        parts.push(`<span class="word-${diffType}">${this.escapeHtml(spanContent)}</span>`);
 
         // Update the current index
         currentIndex = match.index + match[0].length;
@@ -158,23 +161,7 @@ class DiffDisplay {
   }
 
   createLineNumberHTML(changeType) {
-    const maxDigits = Math.max(
-      this.originalLineNumber.toString().length,
-      this.modifiedLineNumber.toString().length
-    );
-
-    let lineNumbers = '';
-    switch (changeType) {
-      case 'added':
-        lineNumbers = this.formatLineNumbers('', this.modifiedLineNumber++, maxDigits);
-        break;
-      case 'removed':
-        lineNumbers = this.formatLineNumbers(this.originalLineNumber++, '', maxDigits);
-        break;
-      default:
-        lineNumbers = this.formatLineNumbers(this.originalLineNumber++, this.modifiedLineNumber++, maxDigits);
-    }
-    return lineNumbers;
+    return this.getLineNumberText(changeType, 0);
   }
 
   formatLineNumbers(originalNum, modifiedNum, maxDigits) {
@@ -189,13 +176,13 @@ class DiffDisplay {
   }
 
   // Renamed from createLineNumberHTML to getLineNumberText to reflect it returns text
-  getLineNumberText(changeType) {
+  getLineNumberText(changeType, minDigits = 3) {
     // Ensure minimum width for alignment, calculate max digits needed
     // This calculation might need refinement based on total lines, but is a start
     const maxDigits = Math.max(
       this.originalLineNumber.toString().length,
       this.modifiedLineNumber.toString().length,
-      3 // Ensure a minimum width visually
+      minDigits // Ensure a minimum width visually
     );
 
     let lineNumbersContent = '';

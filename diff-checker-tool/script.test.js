@@ -99,6 +99,12 @@ describe('DiffDisplay', () => {
       const html = '<span class="word-removed">Hello</span><span class="word-added">world</span>';
       expect(diffDisplay.escapeHtmlPreserveDiff(html)).toBe(html);
     });
+
+    it('should escape HTML inside word-level diff spans', () => {
+      const html = '<span class="word-added"><div id="app-shell-footer"></div></span>';
+      const expected = '<span class="word-added">&lt;div id=&quot;app-shell-footer&quot;&gt;&lt;/div&gt;</span>';
+      expect(diffDisplay.escapeHtmlPreserveDiff(html)).toBe(expected);
+    });
   });
 
   describe('createLineElement', () => {
@@ -159,6 +165,18 @@ describe('DiffDisplay', () => {
       const lineContainer = diffDisplay.createLineElement('removed', htmlWithDiff, false);
       const contentSpan = lineContainer.children[1];
       expect(contentSpan.innerHTML).toBe('&lt;div&gt;Hello <span class="word-removed">world</span>&lt;/div&gt;\n');
+    });
+
+    it('should render HTML inside word-level added spans as text, not live elements', () => {
+      const footerAsWordAdded = '<span class="word-added"><div id="app-shell-footer"></div></span>';
+      const lineContainer = diffDisplay.createLineElement('added', footerAsWordAdded, false);
+      const contentElement = lineContainer.children[1];
+
+      expect(contentElement.innerHTML).toBe(
+        '<span class="word-added">&lt;div id="app-shell-footer"&gt;&lt;/div&gt;</span>\n'
+      );
+      expect(contentElement.textContent).toBe('<div id=\"app-shell-footer\"></div>\n');
+      expect(contentElement.querySelector('#app-shell-footer')).toBeNull();
     });
 
     it('should include correct line numbers text in the line number span', () => {
