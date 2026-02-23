@@ -198,6 +198,8 @@ module.exports = (_, argv = {}) => {
   const applyMode = (config) => ({
     ...config,
     mode,
+    // Explicit source-map policy: disable in production bundles, keep fast maps for local development.
+    devtool: mode === 'development' ? 'eval-cheap-module-source-map' : false,
     plugins: config.plugins.map((plugin) => {
       if (plugin instanceof webpack.DefinePlugin) {
         return new webpack.DefinePlugin({

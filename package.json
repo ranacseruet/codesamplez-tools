@@ -2,6 +2,16 @@
   "name": "codesamplez-tools",
   "version": "1.0.0",
   "description": "A collection of utility tools",
+  "browserslist": [
+    "last 2 Chrome major versions",
+    "last 2 Edge major versions",
+    "last 2 Firefox major versions",
+    "last 2 Safari major versions",
+    "last 2 iOS major versions",
+    "last 2 ChromeAndroid major versions",
+    "not dead",
+    "not ie <= 11"
+  ],
   "scripts": {
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "start": "http-server build -c-1 -p 8080",

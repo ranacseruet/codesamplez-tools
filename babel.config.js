@@ -1,9 +1,7 @@
 export default {
   presets: [
     ['@babel/preset-env', {
-      targets: {
-        browsers: ['>0.25%', 'not ie 11', 'not op_mini all']
-      },
+      // Use the repo-level browserslist policy (package.json) as the single source of truth.
       useBuiltIns: 'usage',
       corejs: 3
     }],
