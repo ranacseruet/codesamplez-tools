@@ -134,6 +134,31 @@ describe('Base64Converter UI (script.js)', () => {
             expect(elements.result.textContent).toBe('SABlAGwAbABvAA==');
         });
 
+        test('should support ASCII and ISO-8859-1 encoding aliases plus empty fallback', () => {
+            elements.mode.value = 'encode';
+
+            elements.input.value = 'Hello';
+            elements.encoding.innerHTML = `
+              <option value="ASCII">ASCII</option>
+              <option value="ISO-8859-1">ISO-8859-1</option>
+              <option value="">(empty)</option>
+            `;
+
+            elements.encoding.value = 'ASCII';
+            converter.processInput();
+            expect(elements.result.textContent).toBe('SGVsbG8=');
+
+            elements.input.value = 'Hé';
+            elements.encoding.value = 'ISO-8859-1';
+            converter.processInput();
+            expect(elements.result.textContent).toBe('SOk=');
+
+            elements.input.value = 'Hi';
+            elements.encoding.value = '';
+            converter.processInput();
+            expect(elements.result.textContent).toBe('SGk=');
+        });
+
         test('should decode text in decode mode', () => {
             elements.input.value = 'SGVsbG8gV29ybGQ=';
             elements.mode.value = 'decode';
@@ -235,6 +260,19 @@ describe('Base64Converter UI (script.js)', () => {
             // expect(NotificationManager.show).toHaveBeenCalledWith('Error processing file: Invalid Data URI format', 3000, expect.objectContaining({ type: 'error' }));
             expect(elements.downloadDecodedButton.disabled).toBe(true);
         });
+
+        test('should handle file upload when FileReader returns raw base64 (non-Data URI)', () => {
+            const mockFile = new File(['Test'], 'raw.bin', { type: 'application/octet-stream' });
+            const event = { target: { files: [mockFile], value: 'x' } };
+
+            converter.handleFileUpload(event);
+
+            mockFileReaderInstance.result = 'U29tZUJhc2U2NA==';
+            mockFileReaderInstance.onload();
+
+            expect(elements.input.value).toContain('[File: raw.bin uploaded');
+            expect(elements.result.textContent).toBe('U29tZUJhc2U2NA==');
+        });
     });
 
     describe('Error Handling', () => {
@@ -295,6 +333,7 @@ describe('Base64Converter UI (script.js)', () => {
             expect(elements.status.textContent).toBe('Invalid UCS-2 sequence - Input may be corrupted or not UCS-2 text.');
             expect(elements.downloadDecodedButton.disabled).toBe(true);
         });
+
     });
 
     describe('Download Functionality', () => {
@@ -380,6 +419,18 @@ describe('Base64Converter UI (script.js)', () => {
             // Temporarily comment out failing expectation for NotificationManager.show
             // expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.bin"', 2000, expect.objectContaining({ type: 'success' }));
         });
+
+        test('should show error when download manager throws', async () => {
+            elements.result.textContent = 'Hello World';
+            converter.downloadManager.downloadFile.mockImplementationOnce(() => {
+                throw new Error('Disk full');
+            });
+
+            await converter.handleDownload();
+
+            expect(require('../common/notification-manager.js').NotificationManager.show)
+                .toHaveBeenCalledWith('Error downloading content: Disk full', 3000, { type: 'error' });
+        });
     });
 
     describe('Data URI and Binary Content Handling', () => {
@@ -415,6 +466,22 @@ describe('Base64Converter UI (script.js)', () => {
             expect(elements.status.textContent).toContain('Invalid UTF-8 sequence');
             expect(elements.downloadDecodedButton.disabled).toBe(true);
         });
+
+        test('should mark auto-decoded content as likely binary when decode fails for selected encoding', () => {
+            elements.input.value = '77+9'; // produces invalid UTF-8 replacement behavior on decode
+            elements.mode.value = 'auto';
+            elements.encoding.value = 'UTF-16';
+            converter.processInput();
+
+            expect(elements.result.textContent).toContain('[Decoded content (likely binary');
+            expect(elements.downloadDecodedButton.disabled).toBe(false);
+            expect(require('../common/notification-manager.js').NotificationManager.show).toHaveBeenCalledWith(
+                'Decoded. Selected encoding (UTF-16) failed for display. Use Download.',
+                2000,
+                { type: 'success' }
+            );
+        });
+
     });
 
     describe('DOM Integration', () => {
@@ -681,5 +748,6 @@ describe('Base64Converter UI (script.js)', () => {
             consoleErrorSpy.mockRestore();
             global.decodeURIComponent = originalDecodeURIComponent;
         });
+
     });
 });

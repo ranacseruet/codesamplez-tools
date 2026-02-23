@@ -2,8 +2,10 @@ import { JWTDecoder } from './JWTDecoder.js';
 import { JsonTreeViewRenderer } from './JsonTreeViewRenderer.js';
 import { NotificationManager } from '../common/notification-manager.js';
 import ClearButton from '../common/clear-button/ClearButton.js';
+import { hydrate, render } from 'preact';
+import { mountToolShell } from '../common/app-shell/mountToolShell.js';
 
-class JWTDecoderUI {
+export class JWTDecoderUI {
     constructor() {
         // Instantiate the renderer within the class
         this.jsonRenderer = new JsonTreeViewRenderer();
@@ -308,13 +310,181 @@ class JWTDecoderUI {
     }
 }
 
-// Initialize the UI when the DOM is loaded
-if (typeof document !== 'undefined') {
-    document.addEventListener('DOMContentLoaded', () => {
-        const jwtDecoderApp = new JWTDecoderUI();
-        jwtDecoderApp.initialize();
-        
-        // Expose instance globally for testing
+export function JwtDecoderApp() {
+    return (
+        <div id="jwt-decoder-tool" className="tool-container">
+            <div className="c-options-panel">
+                <h2>Signature Options</h2>
+                <div className="c-form-group">
+                    <div className="c-form-row">
+                        <input
+                            type="text"
+                            id="jwtSecretKey"
+                            className="c-input"
+                            placeholder="Enter secret key to verify signature"
+                            aria-label="Secret Key"
+                        />
+                        <button
+                            type="button"
+                            className="c-tooltip-container"
+                            aria-label="More information about secret key"
+                            aria-describedby="tooltip-secret-key"
+                        >
+                            ⓘ
+                            <span id="tooltip-secret-key" className="c-tooltip" role="tooltip">
+                                Optional - Enter the secret key to verify the JWT signature
+                            </span>
+                        </button>
+                    </div>
+                    <p className="algorithm-info">
+                        NOTE: For signature verification, we only support "HS256 (HMAC with SHA-256)" algorithm for now.
+                    </p>
+                </div>
+            </div>
+
+            <div className="o-grid-2col">
+                <div className="o-panel">
+                    <div className="o-panel-header">
+                        <h2>JWT Token</h2>
+                    </div>
+                    <div className="o-panel-content">
+                        <textarea
+                            id="jwtInputToken"
+                            className="c-input c-input--textarea"
+                            placeholder="Paste your JWT token here..."
+                            aria-label="JWT Token Input"
+                        />
+                    </div>
+                </div>
+
+                <div className="o-panel">
+                    <div className="o-panel-header">
+                        <h2>Decoded Token</h2>
+                    </div>
+                    <div className="o-panel-content">
+                        <div id="jwtDecodedContainer" className="jwt-decoder-json-container">
+                            <div className="jwt-decoder-tabs" role="tablist">
+                                <button
+                                    id="tab-raw"
+                                    className="jwt-decoder-tab active"
+                                    data-tab="raw"
+                                    role="tab"
+                                    aria-selected="true"
+                                    aria-controls="rawTab"
+                                    tabIndex="0"
+                                >
+                                    Raw
+                                </button>
+                                <button
+                                    id="tab-header"
+                                    className="jwt-decoder-tab"
+                                    data-tab="header"
+                                    role="tab"
+                                    aria-selected="false"
+                                    aria-controls="headerTab"
+                                    tabIndex="-1"
+                                >
+                                    Header
+                                </button>
+                                <button
+                                    id="tab-payload"
+                                    className="jwt-decoder-tab"
+                                    data-tab="payload"
+                                    role="tab"
+                                    aria-selected="false"
+                                    aria-controls="payloadTab"
+                                    tabIndex="-1"
+                                >
+                                    Payload
+                                </button>
+                            </div>
+
+                            <div className="jwt-decoder-tab-content">
+                                <div id="rawTab" className="jwt-decoder-tab-pane active" role="tabpanel" aria-labelledby="tab-raw">
+                                    <div id="rawJsonViewer" className="jwt-decoder-json-viewer" />
+                                    <textarea id="jwtDecodedOutput" readOnly placeholder="Decoded token will appear here..." style={{ display: 'none' }} />
+                                </div>
+                                <div id="headerTab" className="jwt-decoder-tab-pane" role="tabpanel" aria-labelledby="tab-header">
+                                    <div id="headerJson" className="jwt-decoder-json-viewer" />
+                                </div>
+                                <div id="payloadTab" className="jwt-decoder-tab-pane" role="tabpanel" aria-labelledby="tab-payload">
+                                    <div id="payloadJson" className="jwt-decoder-json-viewer" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="o-toolbar">
+                <div className="primary-actions">
+                    <button id="jwt-decoder-decode-btn" className="c-button c-button--primary">Decode JWT Token</button>
+                    <button id="jwt-decoder-validate-btn" className="c-button c-button--primary">Validate Signature</button>
+                </div>
+                <button id="jwt-decoder-copy-btn" className="c-button c-button--secondary">Copy Decoded</button>
+            </div>
+
+            <div className="c-stats-panel">
+                <h2>Validation Result</h2>
+                <div className="jwt-decoder-status-container">
+                    <div id="jwtSignatureStatus" className="jwt-decoder-status">Not verified</div>
+                </div>
+            </div>
+
+            <footer className="jwt-decoder-footer">
+                <p>JWT Decoder - Safely decode and verify your JWT tokens. No tokens are stored or transmitted</p>
+            </footer>
+
+            <div id="notification" className="c-notification" role="status" aria-live="polite" />
+        </div>
+    );
+}
+
+function initializeJwtDecoderDom() {
+    const jwtDecoderApp = new JWTDecoderUI();
+    jwtDecoderApp.initialize();
+
+    if (typeof window !== 'undefined') {
         window.jwtDecoderApp = jwtDecoderApp;
+    }
+
+    return jwtDecoderApp;
+}
+
+export class JWTDecoderToolUI {
+    constructor(rootSelector = '#jwt-decoder-app') {
+        const root = document.querySelector(rootSelector) || document.querySelector('#jwt-decoder-tool');
+        if (!root) {
+            throw new Error('JWT Decoder root element not found');
+        }
+
+        const mount = root.hasChildNodes() ? hydrate : render;
+        mount(<JwtDecoderApp />, root);
+        this.app = initializeJwtDecoderDom();
+    }
+}
+
+function bootstrapJwtDecoderPage() {
+    mountToolShell({
+        title: 'JWT Decoder & Validator',
+        description: 'Decode and validate JWT tokens locally in your browser.',
+        homeHref: '/'
     });
+
+    const hasAppRoot = Boolean(document.getElementById('jwt-decoder-app') || document.getElementById('jwt-decoder-tool'));
+    if (hasAppRoot) {
+        try {
+            new JWTDecoderToolUI();
+            return;
+        } catch (error) {
+            console.error('JWT decoder UI bootstrap failed:', error);
+        }
+    }
+
+    initializeJwtDecoderDom();
+}
+
+// Initialize the UI when the DOM is loaded
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    document.addEventListener('DOMContentLoaded', bootstrapJwtDecoderPage);
 }

@@ -99,6 +99,12 @@ describe('JWT Builder UI Tests', () => {
   });
 
   describe('Custom Claims Management', () => {
+    test('returns early when custom claims container is missing', () => {
+      document.getElementById('customClaims').remove();
+      expect(() => scriptModule.addClaim()).not.toThrow();
+      expect(document.querySelector('.custom-claim-row')).toBeNull();
+    });
+
     test('adds new custom claim row with accessible delete button', () => {
       scriptModule.addClaim();
       const customClaimsDiv = document.getElementById('customClaims');
@@ -191,6 +197,11 @@ describe('JWT Builder UI Tests', () => {
       expect(customClaimsDiv.querySelector('.empty-claims-message')).toBeTruthy();
       expect(customClaimsDiv.querySelector('.empty-claims-message').textContent).toBe('No custom claims added yet');
     });
+
+    test('removeClaim is a no-op for invalid button input', () => {
+      expect(() => scriptModule.removeClaim(null)).not.toThrow();
+      expect(() => scriptModule.removeClaim(document.createElement('button'))).not.toThrow();
+    });
   });
 
   describe('JWT Building', () => {
@@ -249,6 +260,22 @@ describe('JWT Builder UI Tests', () => {
       );
 
       expect(jwt).toBe('mocked.jwt.token');
+    });
+
+    test('falls back to string when custom claim JSON parsing fails', async () => {
+      scriptModule.addClaim();
+      const claimRow = document.querySelector('.custom-claim-row');
+      claimRow.querySelector('input[name="claimName"]').value = 'payload';
+      claimRow.querySelector('input[name="claimValue"]').value = '{"broken": true';
+
+      await scriptModule.buildJWT();
+
+      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payload: '{"broken": true'
+        }),
+        expect.any(String)
+      );
     });
 
     test('ignores custom claims with empty name or value', async () => {
@@ -315,6 +342,13 @@ describe('JWT Builder UI Tests', () => {
       expect(document.getElementById('result').textContent).toBe('');
       expect(NotificationManager.show).toHaveBeenCalledWith('Error: Expiration Time (exp) is required for JWT', 3000, { type: 'error' });
       expect(jwt).toBeNull();
+    });
+
+    test('returns null when result output element is missing', async () => {
+      document.getElementById('result').remove();
+      const jwt = await scriptModule.buildJWT();
+      expect(jwt).toBeNull();
+      expect(mockBuilder.buildJWT).not.toHaveBeenCalled();
     });
   });
 

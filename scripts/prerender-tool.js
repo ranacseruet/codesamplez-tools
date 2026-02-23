@@ -22,6 +22,14 @@ function ensureBabelRegister() {
 }
 
 const TOOL_PRERENDER_REGISTRY = {
+    'base64-converter-tool': {
+        rootId: 'base64converter-app',
+        createAppNode: () => {
+            const { h } = require('preact');
+            const { Base64ConverterApp } = require(path.resolve(__dirname, '../base64-converter-tool/script.js'));
+            return h(Base64ConverterApp, {});
+        }
+    },
     'data-format-converter': {
         rootId: 'data-format-converter-app',
         createAppNode: () => {
@@ -48,6 +56,30 @@ const TOOL_PRERENDER_REGISTRY = {
             const { h } = require('preact');
             const { JsonFormatterApp } = require(path.resolve(__dirname, '../json-formatter-tool/script.js'));
             return h(JsonFormatterApp, {});
+        }
+    },
+    'js-minifier-tool': {
+        rootId: 'js-minifier-app',
+        createAppNode: () => {
+            const { h } = require('preact');
+            const { JSMinifierApp } = require(path.resolve(__dirname, '../js-minifier-tool/script.js'));
+            return h(JSMinifierApp, {});
+        }
+    },
+    'jwt-builder-tool': {
+        rootId: 'jwt-builder-app',
+        createAppNode: () => {
+            const { h } = require('preact');
+            const { JwtBuilderApp } = require(path.resolve(__dirname, '../jwt-builder-tool/script.js'));
+            return h(JwtBuilderApp, {});
+        }
+    },
+    'jwt-decoder-tool': {
+        rootId: 'jwt-decoder-app',
+        createAppNode: () => {
+            const { h } = require('preact');
+            const { JwtDecoderApp } = require(path.resolve(__dirname, '../jwt-decoder-tool/script.js'));
+            return h(JwtDecoderApp, {});
         }
     },
     'text-analyzer-tool': {

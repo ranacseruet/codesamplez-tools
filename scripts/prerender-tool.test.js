@@ -19,7 +19,7 @@ describe('generic tool prerender helpers', () => {
     });
 
     it('returns null for tools without prerender config', () => {
-        expect(getPrerenderConfig('base64-converter-tool')).toBeNull();
+        expect(getPrerenderConfig('diff-checker-tool')).toBeNull();
     });
 
     it('renders converter app markup to string for server-side prerender', () => {
@@ -50,16 +50,24 @@ describe('generic tool prerender helpers', () => {
     });
 
     it('leaves html unchanged for tools without prerender support', () => {
-        const htmlTemplate = '<html><body><div id="base64-converter-tool-app"></div></body></html>';
+        const htmlTemplate = '<html><body><div id="diff-checker-tool-app"></div></body></html>';
 
-        const injected = injectToolPrerender('base64-converter-tool', htmlTemplate);
+        const injected = injectToolPrerender('diff-checker-tool', htmlTemplate);
 
         expect(injected).toBe(htmlTemplate);
     });
 
     it('throws when attempting to render a tool without prerender config', () => {
-        expect(() => renderToolPrerenderMarkup('base64-converter-tool'))
-            .toThrow('No prerender config found for tool: base64-converter-tool');
+        expect(() => renderToolPrerenderMarkup('diff-checker-tool'))
+            .toThrow('No prerender config found for tool: diff-checker-tool');
+    });
+
+    it('renders base64-converter app markup for server-side prerender', () => {
+        const markup = renderToolPrerenderMarkup('base64-converter-tool');
+
+        expect(markup).toContain('id="base64converter-mode"');
+        expect(markup).toContain('id="base64converter-input"');
+        expect(markup).toContain('id="base64converter-convert"');
     });
 
     it('renders json-formatter app markup for server-side prerender', () => {
@@ -68,5 +76,29 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="formatJsonBtn"');
         expect(markup).toContain('id="jsonErrorStatus"');
         expect(markup).toContain('id="treeView"');
+    });
+
+    it('renders js-minifier app markup for server-side prerender', () => {
+        const markup = renderToolPrerenderMarkup('js-minifier-tool');
+
+        expect(markup).toContain('id="js-minifier-minify-btn"');
+        expect(markup).toContain('id="js-minifier-input"');
+        expect(markup).toContain('id="js-minifier-remove-comments"');
+    });
+
+    it('renders jwt-decoder app markup for server-side prerender', () => {
+        const markup = renderToolPrerenderMarkup('jwt-decoder-tool');
+
+        expect(markup).toContain('id="jwtInputToken"');
+        expect(markup).toContain('id="jwt-decoder-validate-btn"');
+        expect(markup).toContain('id="jwtSignatureStatus"');
+    });
+
+    it('renders jwt-builder app markup for server-side prerender', () => {
+        const markup = renderToolPrerenderMarkup('jwt-builder-tool');
+
+        expect(markup).toContain('id="jwtForm"');
+        expect(markup).toContain('id="buildJwtBtn"');
+        expect(markup).toContain('id="customClaims"');
     });
 });

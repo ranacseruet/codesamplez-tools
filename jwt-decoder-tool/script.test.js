@@ -235,6 +235,25 @@ describe('JWT Decoder UI Interactions', () => {
         .toHaveBeenCalledWith('Cannot copy error content', 2000, expect.objectContaining({ type: 'error' }));
   });
 
+  it('should show error when clipboard copy fails', async () => {
+    const copyBtn = document.getElementById('jwt-decoder-copy-btn');
+    const decodedOutput = document.getElementById('jwtDecodedOutput');
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    decodedOutput.value = '{"header":{"alg":"HS256"}}';
+    navigator.clipboard.writeText.mockRejectedValueOnce(new Error('clipboard denied'));
+
+    copyBtn.click();
+    await jest.runAllTimersAsync();
+
+    expect(require('../common/notification-manager.js').NotificationManager.show)
+      .toHaveBeenCalledWith('Failed to copy to clipboard', 2000, expect.objectContaining({ type: 'error' }));
+    expect(copyBtn.getAttribute('title')).toBe('Failed to copy to clipboard');
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to copy:', expect.any(Error));
+
+    consoleErrorSpy.mockRestore();
+  });
+
   it('should switch tabs when a different tab is clicked', async () => {
     const rawTab = document.querySelector('.jwt-decoder-tab[data-tab="raw"]');
     const headerTab = document.querySelector('.jwt-decoder-tab[data-tab="header"]');
@@ -363,6 +382,42 @@ describe('JWT Decoder UI Interactions', () => {
         .toHaveBeenCalledWith('Enter a JWT token.', 2000, expect.objectContaining({ type: 'default' }));
   });
 
+  it('should handle direct decode call with empty token', async () => {
+    const app = window.jwtDecoderApp;
+    const statusOutput = document.getElementById('jwtSignatureStatus');
+
+    document.getElementById('jwtInputToken').value = '';
+    await app.decodeAndRenderWithAutoVerify(false, false);
+
+    expect(statusOutput.textContent).toBe('Enter a JWT token.');
+    expect(statusOutput.classList.contains('status-default')).toBe(true);
+  });
+
+  it('should show auto verify warning when secret is missing', async () => {
+    const app = window.jwtDecoderApp;
+    const jwtInput = document.getElementById('jwtInputToken');
+    const statusOutput = document.getElementById('jwtSignatureStatus');
+
+    jwtInput.value = 'valid.token.sig';
+    document.getElementById('jwtSecretKey').value = '';
+    await app.decodeAndRenderWithAutoVerify(true, true);
+
+    expect(statusOutput.textContent).toBe('Decoded successfully. Secret key required for verification.');
+    expect(statusOutput.classList.contains('status-warning')).toBe(true);
+  });
+
+  it('should show auto decode warning when signature is not verified', async () => {
+    const app = window.jwtDecoderApp;
+    const jwtInput = document.getElementById('jwtInputToken');
+    const statusOutput = document.getElementById('jwtSignatureStatus');
+
+    jwtInput.value = 'valid.token.sig';
+    await app.decodeAndRenderWithAutoVerify(false, true);
+
+    expect(statusOutput.textContent).toBe('Decoded successfully. Signature not verified.');
+    expect(statusOutput.classList.contains('status-warning')).toBe(true);
+  });
+
   it('should switch to raw tab after decoding', async () => {
     const jwtInput = document.getElementById('jwtInputToken');
     const rawTab = document.querySelector('.jwt-decoder-tab[data-tab="raw"]');
@@ -403,6 +458,36 @@ describe('JWT Decoder UI Interactions', () => {
     expect(statusOutput.classList.contains('status-success')).toBe(true);
     expect(require('../common/notification-manager.js').NotificationManager.show)
         .toHaveBeenLastCalledWith('Decoded successfully.', 2000, expect.objectContaining({ type: 'success' }));
+  });
+
+  it('should clear all fields and reset output/status', () => {
+    const app = window.jwtDecoderApp;
+    const jwtInput = document.getElementById('jwtInputToken');
+    const secretInput = document.getElementById('jwtSecretKey');
+    const decodedOutput = document.getElementById('jwtDecodedOutput');
+    const headerJson = document.getElementById('headerJson');
+    const payloadJson = document.getElementById('payloadJson');
+    const rawJsonViewer = document.getElementById('rawJsonViewer');
+    const statusOutput = document.getElementById('jwtSignatureStatus');
+
+    jwtInput.value = 'valid.token.sig';
+    secretInput.value = 'secret';
+    decodedOutput.value = '{"header":{}}';
+    headerJson.innerHTML = '<pre>header</pre>';
+    payloadJson.innerHTML = '<pre>payload</pre>';
+    rawJsonViewer.innerHTML = '<pre>raw</pre>';
+
+    app.clearAll();
+
+    expect(jwtInput.value).toBe('');
+    expect(secretInput.value).toBe('');
+    expect(decodedOutput.value).toBe('');
+    expect(headerJson.innerHTML).toBe('');
+    expect(payloadJson.innerHTML).toBe('');
+    expect(rawJsonViewer.innerHTML).toBe('');
+    expect(statusOutput.textContent).toBe('Enter a JWT token.');
+    expect(require('../common/notification-manager.js').NotificationManager.show)
+      .toHaveBeenCalledWith('All fields cleared.', 2000, expect.objectContaining({ type: 'success' }));
   });
 
   // Clean up timers after tests

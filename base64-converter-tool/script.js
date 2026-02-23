@@ -4,6 +4,28 @@ import { NotificationManager } from '../common/notification-manager.js';
 import DownloadManager from '../common/DownloadManager.js';
 import ClearButton from '../common/clear-button/ClearButton.js';
 import CopyButton from '../common/copy-button/CopyButton.js';
+import { hydrate, render } from 'preact';
+import { mountToolShell } from '../common/app-shell/mountToolShell.js';
+
+function normalizeEncodingValue(value) {
+    const encoding = String(value || '').trim();
+    switch (encoding) {
+        case 'UTF-8':
+        case 'utf8':
+            return 'utf8';
+        case 'UTF-16':
+        case 'ucs2':
+            return 'ucs2';
+        case 'ASCII':
+        case 'ascii':
+            return 'ascii';
+        case 'ISO-8859-1':
+        case 'iso88591':
+            return 'iso88591';
+        default:
+            return encoding || 'utf8';
+    }
+}
 
 // Converter factory function
 const createConverter = () => {
@@ -52,14 +74,7 @@ const createConverter = () => {
             }
             
             const mode = this.elements.mode.value;
-            let encoding = this.elements.encoding.value; // For text decoding
-
-            // Map UI encoding names to Base64Codec expected names
-            if (encoding === 'UTF-8') {
-                encoding = 'utf8';
-            } else if (encoding === 'UTF-16') {
-                encoding = 'ucs2';
-            }
+            let encoding = normalizeEncodingValue(this.elements.encoding.value); // For text decoding
 
             try {
                 let resultText;
@@ -286,128 +301,243 @@ const createConverter = () => {
 // Export the factory function
 export default createConverter;
 
-// Initialize when DOM is loaded
-if (typeof window !== 'undefined') {
-    document.addEventListener('DOMContentLoaded', () => {
+export function Base64ConverterApp() {
+    return (
+        <div id="base64converter-tool" className="tool-container">
+            <div className="o-header">
+                <h1>Base64 Converter</h1>
+                <p className="o-description">
+                    Convert text and files to and from Base64 encoding with support for multiple character encodings.
+                </p>
+            </div>
+
+            <div className="o-controls">
+                <div className="u-flex u-gap-sm">
+                    <select id="base64converter-mode" className="tool-container select" aria-label="Conversion Mode" defaultValue="auto">
+                        <option value="auto">Auto Detect</option>
+                        <option value="encode">Encode</option>
+                        <option value="decode">Decode</option>
+                    </select>
+
+                    <select id="base64converter-encoding" className="tool-container select" aria-label="Character Encoding" defaultValue="utf8">
+                        <option value="utf8">UTF-8</option>
+                        <option value="ascii">ASCII</option>
+                        <option value="iso88591">ISO-8859-1</option>
+                        <option value="ucs2">UCS-2</option>
+                    </select>
+                </div>
+            </div>
+
+            <div className="u-flex u-gap-lg">
+                <div className="o-panel">
+                    <div className="o-panel-header">
+                        <h2>Input</h2>
+                    </div>
+                    <textarea
+                        id="base64converter-input"
+                        placeholder="Enter text to encode or decode..."
+                        aria-label="Input text"
+                    />
+                </div>
+
+                <div className="o-panel">
+                    <div className="o-panel-header">
+                        <h2>Output</h2>
+                    </div>
+                    <textarea
+                        id="base64converter-result"
+                        className="tool-container textarea"
+                        readOnly
+                        aria-label="Output text"
+                    />
+                </div>
+            </div>
+
+            <div className="u-flex u-justify-between u-mt-md">
+                <div className="u-flex u-gap-sm">
+                    <input type="file" id="base64converter-file" className="u-visually-hidden" />
+                    <label className="c-button c-button--secondary" htmlFor="base64converter-file">
+                        Upload File
+                    </label>
+                </div>
+                <div className="u-flex u-justify-center" style={{ flex: 1 }}>
+                    <button id="base64converter-convert" className="c-button">Convert</button>
+                </div>
+                <div>
+                    <button
+                        id="base64converter-download-decoded"
+                        className="c-button c-button--secondary c-button--icon-download"
+                        disabled
+                    >
+                        Download
+                    </button>
+                </div>
+            </div>
+
+            <div className="o-controls">
+                <span id="base64converter-status" aria-live="polite" />
+                <span id="base64converter-copy-status" aria-live="polite" />
+            </div>
+
+            <div id="notification" className="c-notification" role="status" aria-live="polite">
+                Copied to clipboard!
+            </div>
+        </div>
+    );
+}
+
+function initializeBase64ConverterDom() {
+    if (typeof window !== 'undefined') {
         window.Base64Converter = createConverter;
-        const converter = createConverter();
+    }
+    const converter = createConverter();
 
-        // Handle URL parameters for external linking
-        const urlParams = new URLSearchParams(window.location.search);
-        const dataParam = urlParams.get('data');
+    // Handle URL parameters for external linking
+    const urlParams = new URLSearchParams(window.location.search);
+    const dataParam = urlParams.get('data');
 
-        let dataFromUrl = null;
-        let shouldAutoConvert = false;
+    let dataFromUrl = null;
+    let shouldAutoConvert = false;
 
-        if (dataParam) {
+    if (dataParam) {
+        try {
+            // Decode the URL parameter value
+            dataFromUrl = decodeURIComponent(dataParam);
+
+            // Additional validation: check if re-encoding matches original to detect malformed input
+            if (encodeURIComponent(dataFromUrl) !== dataParam) {
+                throw new Error('URL parameter contains invalid encoding');
+            }
+            // eslint-disable-next-line
+            shouldAutoConvert = true;
+        } catch (urlDecodeError) {
+            // If URL decoding fails, try with malformed URI handling
             try {
-                // Decode the URL parameter value
-                dataFromUrl = decodeURIComponent(dataParam);
-
-                // Additional validation: check if re-encoding matches original to detect malformed input
-                if (encodeURIComponent(dataFromUrl) !== dataParam) {
-                    throw new Error('URL parameter contains invalid encoding');
-                }
-                // eslint-disable-next-line
+                dataFromUrl = decodeURIComponent(dataParam.replace(/%(?![0-9a-fA-F][0-9a-fA-F])/g, '%25'));
                 shouldAutoConvert = true;
-            } catch (urlDecodeError) {
-                // If URL decoding fails, try with malformed URI handling
-                try {
-                    dataFromUrl = decodeURIComponent(dataParam.replace(/%(?![0-9a-fA-F][0-9a-fA-F])/g, '%25'));
-                    shouldAutoConvert = true;
-                } catch (secondError) {
-                    console.error('Failed to decode URL parameter:', urlDecodeError);
-                    NotificationManager.show('Invalid data parameter in URL', 3000, { type: 'error' });
-                    // Fall back to empty string and disable auto-convert to avoid processing invalid data
-                    dataFromUrl = '';
-                    shouldAutoConvert = false;
-                }
+            } catch (secondError) {
+                console.error('Failed to decode URL parameter:', urlDecodeError);
+                NotificationManager.show('Invalid data parameter in URL', 3000, { type: 'error' });
+                // Fall back to empty string and disable auto-convert to avoid processing invalid data
+                dataFromUrl = '';
+                shouldAutoConvert = false;
             }
         }
+    }
 
-        const elements = {
-            input: document.getElementById('base64converter-input'),
-            result: document.getElementById('base64converter-result'),
-            status: document.getElementById('base64converter-status'),
-            copyStatus: document.getElementById('base64converter-copy-status'),
-            mode: document.getElementById('base64converter-mode'),
-            encoding: document.getElementById('base64converter-encoding'),
-            // CopyButton is initialized directly on the result textarea
-            fileInput: document.getElementById('base64converter-file'),
-            convertButton: document.getElementById('base64converter-convert'),
-            downloadDecodedButton: document.getElementById('base64converter-download-decoded')
-        };
-        
-        // Check all elements, including new ones
-        const requiredElementIds = [
-            'base64converter-input', 'base64converter-result', 'base64converter-status',
-            'base64converter-copy-status', 'base64converter-mode', 'base64converter-encoding',
-            'base64converter-file', 'base64converter-convert',
-            'base64converter-download-decoded'
-        ];
+    const elements = {
+        input: document.getElementById('base64converter-input'),
+        result: document.getElementById('base64converter-result'),
+        status: document.getElementById('base64converter-status'),
+        copyStatus: document.getElementById('base64converter-copy-status'),
+        mode: document.getElementById('base64converter-mode'),
+        encoding: document.getElementById('base64converter-encoding'),
+        fileInput: document.getElementById('base64converter-file'),
+        convertButton: document.getElementById('base64converter-convert'),
+        downloadDecodedButton: document.getElementById('base64converter-download-decoded')
+    };
 
-        let missingElements = [];
-        for (const id of requiredElementIds) {
-            if (!document.getElementById(id)) {
-                missingElements.push(id);
-            }
+    const requiredElementIds = [
+        'base64converter-input', 'base64converter-result', 'base64converter-status',
+        'base64converter-copy-status', 'base64converter-mode', 'base64converter-encoding',
+        'base64converter-file', 'base64converter-convert',
+        'base64converter-download-decoded'
+    ];
+
+    const missingElements = [];
+    for (const id of requiredElementIds) {
+        if (!document.getElementById(id)) {
+            missingElements.push(id);
         }
+    }
 
-        if (missingElements.length > 0) {
-            console.error('Missing required elements:', missingElements);
-            NotificationManager.show('Required elements not found - tool may not function properly', 3000, { type: 'error' });
-            return;
-        }
-        // Re-assign elements to ensure all are captured if some were missed by the initial simple check
-        elements.input = document.getElementById('base64converter-input');
-        elements.result = document.getElementById('base64converter-result');
-        elements.status = document.getElementById('base64converter-status');
-        elements.copyStatus = document.getElementById('base64converter-copy-status');
-        elements.mode = document.getElementById('base64converter-mode');
-        elements.encoding = document.getElementById('base64converter-encoding');
-        elements.fileInput = document.getElementById('base64converter-file');
-        elements.convertButton = document.getElementById('base64converter-convert');
-        elements.downloadDecodedButton = document.getElementById('base64converter-download-decoded');
+    if (missingElements.length > 0) {
+        console.error('Missing required elements:', missingElements);
+        NotificationManager.show('Required elements not found - tool may not function properly', 3000, { type: 'error' });
+        return null;
+    }
 
-        // Assign elements to converter
-        converter.elements = elements;
+    elements.input = document.getElementById('base64converter-input');
+    elements.result = document.getElementById('base64converter-result');
+    elements.status = document.getElementById('base64converter-status');
+    elements.copyStatus = document.getElementById('base64converter-copy-status');
+    elements.mode = document.getElementById('base64converter-mode');
+    elements.encoding = document.getElementById('base64converter-encoding');
+    elements.fileInput = document.getElementById('base64converter-file');
+    elements.convertButton = document.getElementById('base64converter-convert');
+    elements.downloadDecodedButton = document.getElementById('base64converter-download-decoded');
 
-        // Handle URL parameter data if present (for external linking)
-        if (dataFromUrl) {
-            elements.input.value = dataFromUrl;
-            elements.mode.value = 'auto'; // Use auto-detect mode for external links
-        }
+    converter.elements = elements;
 
-        // Initialize ClearButton component
-        const clearButtonInstance = new ClearButton(elements.input);
+    if (dataFromUrl) {
+        elements.input.value = dataFromUrl;
+        elements.mode.value = 'auto';
+    }
 
-        // Expose the initialized instance for testing/debugging if needed
+    converter.clearButtonInstance = new ClearButton(elements.input);
+    converter.copyButtonInstance = new CopyButton(elements.result);
+
+    if (typeof window !== 'undefined') {
         window.base64ConverterInstance = converter;
+    }
 
-        // Set up event listeners
-        const convertHandler = () => {
-            if (!converter.elements.input.value.trim()) {
-                NotificationManager.show('Please enter some text or upload a file to convert', 3000, { type: 'error' });
-            }
-            converter.processInput();
-        };
-        elements.convertButton.addEventListener('click', convertHandler);
-
-        // Initialize CopyButton component on result textarea and store reference
-        converter.copyButtonInstance = new CopyButton(elements.result);
-
-        const fileUploadHandler = (e) => converter.handleFileUpload(e);
-        elements.fileInput.addEventListener('change', fileUploadHandler);
-
-        const downloadHandler = () => converter.handleDownload();
-        elements.downloadDecodedButton.addEventListener('click', downloadHandler);
-
-        // Auto-convert if data was provided via URL parameter (for external linking)
-        if (shouldAutoConvert && dataFromUrl && typeof converter.processInput === 'function') {
-            // Use setTimeout to ensure DOM is fully ready
-            setTimeout(() => {
-                converter.processInput();
-            }, 100);
+    const convertHandler = () => {
+        if (!converter.elements.input.value.trim()) {
+            NotificationManager.show('Please enter some text or upload a file to convert', 3000, { type: 'error' });
         }
+        converter.processInput();
+    };
+    elements.convertButton.addEventListener('click', convertHandler);
+
+    const fileUploadHandler = (e) => converter.handleFileUpload(e);
+    elements.fileInput.addEventListener('change', fileUploadHandler);
+
+    const downloadHandler = () => converter.handleDownload();
+    elements.downloadDecodedButton.addEventListener('click', downloadHandler);
+
+    if (shouldAutoConvert && dataFromUrl && typeof converter.processInput === 'function') {
+        setTimeout(() => {
+            converter.processInput();
+        }, 100);
+    }
+
+    return converter;
+}
+
+export class Base64ConverterToolUI {
+    constructor(rootSelector = '#base64converter-app') {
+        const root = document.querySelector(rootSelector) || document.querySelector('#base64converter-tool');
+        if (!root) {
+            throw new Error('Base64 Converter root element not found');
+        }
+
+        const mount = root.hasChildNodes() ? hydrate : render;
+        mount(<Base64ConverterApp />, root);
+        this.converter = initializeBase64ConverterDom();
+    }
+}
+
+function bootstrapBase64ConverterPage() {
+    mountToolShell({
+        title: 'Base64 Converter',
+        description: 'Convert text and files to and from Base64 with multiple encoding options.',
+        homeHref: '/'
     });
+
+    const hasAppRoot = Boolean(document.getElementById('base64converter-app') || document.getElementById('base64converter-tool'));
+    if (hasAppRoot) {
+        try {
+            new Base64ConverterToolUI();
+            return;
+        } catch (error) {
+            console.error('Base64 converter UI bootstrap failed:', error);
+        }
+    }
+
+    initializeBase64ConverterDom();
+}
+
+// Initialize when DOM is loaded
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    document.addEventListener('DOMContentLoaded', bootstrapBase64ConverterPage);
 }
