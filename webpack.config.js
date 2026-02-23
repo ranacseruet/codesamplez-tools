@@ -20,6 +20,27 @@ const tools = [
 ];
 
 const getWebpackMode = (argv = {}) => argv.mode || process.env.NODE_ENV || 'development';
+const createTerserMinimizer = (toolName) => {
+  if (toolName !== 'js-minifier-tool') {
+    return new TerserPlugin();
+  }
+
+  // `js-minifier-tool` is dependency-heavy; a second compress pass is a low-risk
+  // way to squeeze more bytes out of the large Babel-derived payload.
+  return new TerserPlugin({
+    terserOptions: {
+      ecma: 2020,
+      compress: {
+        ecma: 2020,
+        passes: 2
+      },
+      format: {
+        ecma: 2020,
+        comments: false
+      }
+    }
+  });
+};
 const transformToolHtml = (toolName, htmlContent) => {
   return injectToolPrerender(toolName, htmlContent.toString());
 };
@@ -29,7 +50,7 @@ const baseConfig = {
   optimization: {
     minimize: true,
     minimizer: [
-      new TerserPlugin(),
+      createTerserMinimizer(),
       new CssMinimizerPlugin()
     ]
   },
@@ -64,6 +85,13 @@ const baseConfig = {
 const getToolConfig = (toolName) => ({
   ...baseConfig,
   name: toolName,
+  optimization: {
+    ...baseConfig.optimization,
+    minimizer: [
+      createTerserMinimizer(toolName),
+      new CssMinimizerPlugin()
+    ]
+  },
   entry: {
     main: [
       './common/material-theme.css',
