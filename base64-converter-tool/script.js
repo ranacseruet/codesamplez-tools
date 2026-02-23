@@ -305,7 +305,6 @@ export function Base64ConverterApp() {
     return (
         <div id="base64converter-tool" className="tool-container">
             <div className="o-header">
-                <h1>Base64 Converter</h1>
                 <p className="o-description">
                     Convert text and files to and from Base64 encoding with support for multiple character encodings.
                 </p>

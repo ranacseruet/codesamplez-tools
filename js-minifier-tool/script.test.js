@@ -93,6 +93,7 @@ describe('JavaScript Minifier Preact runtime', () => {
     expect(document.getElementById('js-minifier-shorten-variables')?.checked).toBe(false);
     expect(document.getElementById('js-minifier-mangle-properties')?.checked).toBe(false);
     expect(document.getElementById('js-minifier-compression-ratio')?.textContent).toBe('0.00%');
+    expect(document.querySelectorAll('#js-minifier-tool h1')).toHaveLength(0);
   });
 
   it('minifies valid input and updates output/stats', async () => {

@@ -50,6 +50,14 @@ const TOOL_PRERENDER_REGISTRY = {
             return h(CssMinifierApp, {});
         }
     },
+    'diff-checker-tool': {
+        rootId: 'diff-checker-app',
+        createAppNode: () => {
+            const { h } = require('preact');
+            const { DiffCheckerApp } = require(path.resolve(__dirname, '../diff-checker-tool/script.js'));
+            return h(DiffCheckerApp, {});
+        }
+    },
     'json-formatter-tool': {
         rootId: 'json-formatter-app',
         createAppNode: () => {

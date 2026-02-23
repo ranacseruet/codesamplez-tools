@@ -75,6 +75,7 @@ describe('Base64 Converter Preact runtime', () => {
     expect(document.getElementById('base64converter-mode')?.value).toBe('auto');
     expect(document.getElementById('base64converter-encoding')?.value).toBe('utf8');
     expect(document.getElementById('base64converter-download-decoded')?.disabled).toBe(true);
+    expect(document.querySelectorAll('#base64converter-tool h1')).toHaveLength(0);
     expect(window.base64ConverterInstance).toBe(ui.converter);
   });
 

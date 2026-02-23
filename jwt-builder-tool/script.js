@@ -236,7 +236,6 @@ export function JwtBuilderApp() {
     <div id="jwt-builder-tool" className="tool-container jwt-builder-container">
       <div id="notification" className="c-notification" role="status" aria-live="polite" />
       <div className="o-header jwt-builder-header">
-        <h1>JWT Builder</h1>
         <p className="o-description jwt-builder-description">Create and sign JSON Web Tokens with standard and custom claims</p>
       </div>
 

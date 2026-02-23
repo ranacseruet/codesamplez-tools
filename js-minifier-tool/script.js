@@ -176,7 +176,6 @@ export function JSMinifierApp() {
   return (
     <div id="js-minifier-tool" className="js-minifier-container tool-container">
       <header className="js-minifier-header">
-        <h1>JavaScript Minifier</h1>
         <p className="js-minifier-description">Minify your JavaScript code to reduce file size and improve load times</p>
       </header>
 

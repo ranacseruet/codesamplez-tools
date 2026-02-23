@@ -79,6 +79,7 @@ describe('JWT Builder Preact runtime', () => {
     expect(document.getElementById('sub')?.value).toBe('your-subject');
     expect(document.getElementById('aud')?.value).toBe('your-audience');
     expect(document.getElementById('jti')?.value).toBe('your-indentifier');
+    expect(document.querySelectorAll('#jwt-builder-tool h1')).toHaveLength(0);
     expect(CopyButton).toHaveBeenCalledTimes(2);
   });
 

@@ -19,7 +19,7 @@ describe('generic tool prerender helpers', () => {
     });
 
     it('returns null for tools without prerender config', () => {
-        expect(getPrerenderConfig('diff-checker-tool')).toBeNull();
+        expect(getPrerenderConfig('non-existent-tool')).toBeNull();
     });
 
     it('renders converter app markup to string for server-side prerender', () => {
@@ -50,16 +50,16 @@ describe('generic tool prerender helpers', () => {
     });
 
     it('leaves html unchanged for tools without prerender support', () => {
-        const htmlTemplate = '<html><body><div id="diff-checker-tool-app"></div></body></html>';
+        const htmlTemplate = '<html><body><div id="unknown-tool-app"></div></body></html>';
 
-        const injected = injectToolPrerender('diff-checker-tool', htmlTemplate);
+        const injected = injectToolPrerender('non-existent-tool', htmlTemplate);
 
         expect(injected).toBe(htmlTemplate);
     });
 
     it('throws when attempting to render a tool without prerender config', () => {
-        expect(() => renderToolPrerenderMarkup('diff-checker-tool'))
-            .toThrow('No prerender config found for tool: diff-checker-tool');
+        expect(() => renderToolPrerenderMarkup('non-existent-tool'))
+            .toThrow('No prerender config found for tool: non-existent-tool');
     });
 
     it('renders base64-converter app markup for server-side prerender', () => {
@@ -100,5 +100,14 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="jwtForm"');
         expect(markup).toContain('id="buildJwtBtn"');
         expect(markup).toContain('id="customClaims"');
+    });
+
+    it('renders diff-checker app markup for server-side prerender', () => {
+        const markup = renderToolPrerenderMarkup('diff-checker-tool');
+
+        expect(markup).toContain('id="text1"');
+        expect(markup).toContain('id="text2"');
+        expect(markup).toContain('id="compare-button"');
+        expect(markup).toContain('id="diff-result"');
     });
 });

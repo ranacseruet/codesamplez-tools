@@ -1,6 +1,10 @@
 // Import shared components and styles
 import { computeDiff } from './diff';
 import ClearButton from '../common/clear-button/ClearButton';
+import { NotificationManager } from '../common/notification-manager.js';
+import { scheduleTask } from '../common/scheduler-utils.js';
+import { hydrate, render } from 'preact';
+import { mountToolShell } from '../common/app-shell/mountToolShell.js';
 
 // Class to detect if content is code (used for syntax highlighting)
 class CodeDetector {
@@ -208,11 +212,6 @@ class DiffDisplay {
     return lineNumbersContent;
   }
 }
-
-// Import shared notification manager
-// Import shared notification manager
-import { NotificationManager } from '../common/notification-manager.js';
-import { scheduleTask } from '../common/scheduler-utils.js';
 
 // Class to handle diff navigation
 class DiffNavigator {
@@ -422,11 +421,138 @@ export function initializeDiffChecker() {
 
   // Export cleanup function for testing
   window.diffCheckerCleanup = cleanup;
+  return { cleanup };
 }
 
-// Auto-initialize if document exists
-if (typeof document !== 'undefined') {
-  initializeDiffChecker();
+export function DiffCheckerApp() {
+  return (
+    <div id="diff-checker-tool" className="tool-container">
+      <div className="o-header">
+        <p className="o-description">Compare two texts or code snippets and highlight the differences between them.</p>
+      </div>
+
+      <div className="o-grid-2col">
+        <div className="o-panel">
+          <div className="diff-checker-panel-header">
+            <h2>Original Text</h2>
+            <div className="o-toolbar" />
+          </div>
+          <div className="o-panel-content">
+            <textarea
+              id="text1"
+              className="c-input c-input--textarea"
+              placeholder="Paste your first text here..."
+              title="Enter your original text or code here"
+              aria-label="Original text input"
+            />
+          </div>
+        </div>
+
+        <div className="o-panel">
+          <div className="diff-checker-panel-header">
+            <h2>Modified Text</h2>
+            <div className="o-toolbar" />
+          </div>
+          <div className="o-panel-content">
+            <textarea
+              id="text2"
+              className="c-input c-input--textarea"
+              placeholder="Paste your second text here..."
+              title="Enter your modified text or code here"
+              aria-label="Modified text input"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="o-controls diff-checker-options">
+        <div className="c-checkbox-group">
+          <div className="c-checkbox-item">
+            <input type="checkbox" id="ignore-whitespace" defaultChecked />
+            <label htmlFor="ignore-whitespace">Ignore whitespace differences</label>
+          </div>
+        </div>
+
+        <div className="o-toolbar">
+          <button id="compare-button" className="c-button" type="button">Compare</button>
+        </div>
+      </div>
+
+      <div id="diff-result-container" className="o-panel">
+        <div className="diff-result-header">
+          <h2>Differences</h2>
+          <div className="diff-navigation">
+            <button
+              id="prev-diff-button"
+              className="c-button c-button--secondary c-button--small"
+              type="button"
+              disabled
+              aria-label="Go to previous difference"
+            >
+              {'< Prev'}
+            </button>
+            <span id="diff-counter" aria-live="polite" aria-atomic="true">0 of 0</span>
+            <button
+              id="next-diff-button"
+              className="c-button c-button--secondary c-button--small"
+              type="button"
+              disabled
+              aria-label="Go to next difference"
+            >
+              {'Next >'}
+            </button>
+          </div>
+        </div>
+        <div className="o-panel-content">
+          <pre id="diff-result" className="c-code-output" />
+        </div>
+      </div>
+
+      <div id="notification" className="c-notification" role="status" aria-live="polite">Copied to clipboard!</div>
+    </div>
+  );
+}
+
+function initializeDiffCheckerDom() {
+  return initializeDiffChecker();
+}
+
+export class DiffCheckerToolUI {
+  constructor(rootSelector = '#diff-checker-app') {
+    const root = document.querySelector(rootSelector) || document.querySelector('#diff-checker-tool');
+    if (!root) {
+      throw new Error('Diff Checker root element not found');
+    }
+
+    const mount = root.hasChildNodes() ? hydrate : render;
+    mount(<DiffCheckerApp />, root);
+    this.instance = initializeDiffCheckerDom();
+  }
+}
+
+function bootstrapDiffCheckerPage() {
+  mountToolShell({
+    title: 'Diff Checker',
+    description: 'Compare two texts or code snippets and highlight the differences between them.',
+    homeHref: '/'
+  });
+
+  const hasAppRoot = Boolean(document.getElementById('diff-checker-app') || document.getElementById('diff-checker-tool'));
+  if (hasAppRoot) {
+    try {
+      new DiffCheckerToolUI();
+      return;
+    } catch (error) {
+      console.error('Diff checker UI bootstrap failed:', error);
+    }
+  }
+
+  initializeDiffCheckerDom();
+}
+
+// Auto-initialize when DOM is ready
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+  document.addEventListener('DOMContentLoaded', bootstrapDiffCheckerPage);
 }
 
 // Export classes/functions needed for testing or potentially other modules

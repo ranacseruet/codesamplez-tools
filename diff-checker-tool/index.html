@@ -10,69 +10,11 @@
 </head>
 
 <body class="standalone-app">
-  <div class="tool-container">
-    <div class="o-header">
-      <h1>Diff Checker Tool</h1>
-      <p class="o-description">Compare two texts or code snippets and highlight the differences between them.</p>
-    </div>
-
-    <div class="o-grid-2col">
-      <div class="o-panel">
-        <div class="diff-checker-panel-header">
-          <h2>Original Text</h2>
-          <div class="o-toolbar"></div>
-        </div>
-        <div class="o-panel-content">
-          <textarea id="text1" class="c-input c-input--textarea" placeholder="Paste your first text here..."
-            title="Enter your original text or code here" aria-label="Original text input"></textarea>
-        </div>
-      </div>
-
-      <div class="o-panel">
-        <div class="diff-checker-panel-header">
-          <h2>Modified Text</h2>
-          <div class="o-toolbar"></div>
-        </div>
-        <div class="o-panel-content">
-          <textarea id="text2" class="c-input c-input--textarea" placeholder="Paste your second text here..."
-            title="Enter your modified text or code here" aria-label="Modified text input"></textarea>
-        </div>
-      </div>
-    </div>
-
-    <div class="o-controls diff-checker-options">
-      <div class="c-checkbox-group">
-        <div class="c-checkbox-item">
-          <input type="checkbox" id="ignore-whitespace" checked>
-          <label for="ignore-whitespace">Ignore whitespace differences</label>
-        </div>
-      </div>
-
-      <div class="o-toolbar">
-        <button id="compare-button" class="c-button">Compare</button>
-      </div>
-    </div>
-
-    <div id="diff-result-container" class="o-panel">
-      <div class="diff-result-header">
-        <h2>Differences</h2>
-        <div class="diff-navigation">
-          <button id="prev-diff-button" class="c-button c-button--secondary c-button--small" disabled
-            aria-label="Go to previous difference">
-            < Prev</button>
-              <span id="diff-counter" aria-live="polite" aria-atomic="true">0 of 0</span>
-              <button id="next-diff-button" class="c-button c-button--secondary c-button--small" disabled
-                aria-label="Go to next difference">Next ></button>
-        </div>
-      </div>
-      <div class="o-panel-content">
-        <pre id="diff-result" class="c-code-output"></pre>
-      </div>
-    </div>
-  </div>
-  <div id="notification" class="c-notification" role="status" aria-live="polite">Copied to clipboard!</div>
+  <div id="app-shell-header"></div>
+  <div id="diff-checker-app"></div>
+  <div id="app-shell-footer"></div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-  <script src="bundle.main.js"></script>
+  <script type="module" src="bundle.main.js"></script>
 </body>
 
 </html>
