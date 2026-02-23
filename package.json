@@ -19,13 +19,17 @@
     "build": "webpack --mode production",
     "build:dev": "webpack --mode development",
     "verify-build": "node scripts/build-verification.js",
-    "bundle-metrics": "node scripts/measure-bundles.js --format markdown --write-default-json"
+    "bundle-metrics": "node scripts/measure-bundles.js --format markdown --write-default-json",
+    "qa:visual-baseline:foundation": "node scripts/visual-baseline-ui-foundation.mjs",
+    "qa:a11y:foundation": "node scripts/a11y-baseline-ui-foundation.mjs"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
     "@babel/core": "^7.23.3",
     "@babel/preset-env": "^7.23.3",
     "@babel/preset-react": "^7.28.5",
     "@babel/register": "^7.28.6",
+    "@axe-core/playwright": "^4.10.2",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "babel-jest": "^29.7.0",

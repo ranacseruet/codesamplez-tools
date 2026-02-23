@@ -17,32 +17,36 @@
     padding: 0;
     display: none;
     z-index: 10;
-    width: 28px;
-    height: 28px;
+    width: var(--cst-icon-button-size, 28px);
+    height: var(--cst-icon-button-size, 28px);
     border-radius: 50%;
     font-weight: 600;
     text-align: center;
     line-height: 28px;
     font-size: 14px;
-    box-shadow: 0 3px 12px rgba(220, 53, 69, 0.4), 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 3px 12px rgba(186, 26, 26, 0.28), 0 1px 3px rgba(15, 23, 42, 0.08);
+    transition:
+        background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+        transform var(--cst-motion-fast, 140ms) var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+        box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
     overflow: hidden;
 }
 
 .clear-button:hover {
     background: linear-gradient(135deg, var(--color-danger-hover, #c82333) 0%, #a02329 100%);
     transform: translateY(-2px) scale(1.08);
-    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5), 0 3px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 20px rgba(186, 26, 26, 0.35), 0 3px 8px rgba(15, 23, 42, 0.12);
 }
 
 .clear-button:focus {
-    outline: 2px solid var(--color-primary, #2563eb);
-    outline-offset: 2px;
+    outline: none;
 }
 
 .clear-button:active {
     transform: translateY(-1px) scale(1.02);
-    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+        transform 0.1s var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+        box-shadow 0.1s var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 /* Enhanced trash can icon using CSS */
@@ -83,7 +87,7 @@
 /* Clear success animation */
 .clear-button.clear-success {
     background: linear-gradient(135deg, var(--color-success, #28a745) 0%, #1e7e34 100%);
-    animation: clearSuccess 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: clearSuccess 0.8s var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .clear-button.clear-success::before {
@@ -159,7 +163,7 @@
 
 /* Sweep animation on clear */
 .clear-button.clearing {
-    animation: sweep 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: sweep 0.6s var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 @keyframes sweep {
@@ -266,8 +270,8 @@
 
 /* Enhanced focus styles for better accessibility */
 .clear-button:focus-visible {
-    outline: 3px solid var(--color-primary, #2563eb);
-    outline-offset: 3px;
+    outline: none;
+    box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.22)), 0 6px 20px rgba(186, 26, 26, 0.35);
 }
 
 /* Loading state (if needed for async operations) */

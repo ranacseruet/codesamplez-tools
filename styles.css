@@ -1,46 +1,264 @@
 /* ==========================================================================
+   Shared Theme Tokens (inlined for root index build output)
+   Mirrors common/material-theme.css so root index does not depend on /common/*
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  --md-sys-color-primary: #005f73;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #bcecf2;
+  --md-sys-color-on-primary-container: #001f27;
+  --md-sys-color-secondary: #445f66;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #c7e7ef;
+  --md-sys-color-on-secondary-container: #001f26;
+  --md-sys-color-tertiary: #5c567f;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-tertiary-container: #e4deff;
+  --md-sys-color-on-tertiary-container: #191334;
+  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: #ffdad6;
+  --md-sys-color-on-error-container: #410002;
+
+  --md-sys-color-surface: #f4f7f8;
+  --md-sys-color-surface-dim: #dbe0e2;
+  --md-sys-color-surface-bright: #f9fbfc;
+  --md-sys-color-surface-container-low: #eef3f4;
+  --md-sys-color-surface-container: #e6ecee;
+  --md-sys-color-surface-container-high: #dde4e6;
+  --md-sys-color-surface-container-highest: #d3dbdd;
+  --md-sys-color-on-surface: #141c1e;
+  --md-sys-color-on-surface-variant: #3f494c;
+  --md-sys-color-outline: #6f797d;
+  --md-sys-color-outline-variant: #bfc9cd;
+  --md-sys-color-inverse-surface: #2a3133;
+  --md-sys-color-inverse-on-surface: #ecf2f3;
+
+  --cst-color-primary-hover: #004d5d;
+  --cst-color-secondary-hover: #354c52;
+  --cst-color-danger-hover: #981b1b;
+  --cst-color-success: #1d7f4f;
+  --cst-color-success-hover: #15643d;
+  --cst-color-shadow: rgba(15, 23, 42, 0.12);
+  --cst-color-shadow-strong: rgba(15, 23, 42, 0.2);
+  --cst-color-focus-ring: rgba(0, 95, 115, 0.22);
+
+  --cst-font-family-base: "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --cst-font-family-display: "Trebuchet MS", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --cst-font-family-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  --cst-font-size-1: 0.8125rem;
+  --cst-font-size-2: 0.875rem;
+  --cst-font-size-3: 1rem;
+  --cst-font-size-4: 1.125rem;
+  --cst-font-size-5: 1.5rem;
+  --cst-font-size-6: 1.875rem;
+  --cst-line-height-tight: 1.35;
+  --cst-line-height-base: 1.55;
+
+  --cst-space-1: 0.25rem;
+  --cst-space-2: 0.375rem;
+  --cst-space-3: 0.5rem;
+  --cst-space-4: 0.75rem;
+  --cst-space-5: 1rem;
+  --cst-space-6: 1.25rem;
+  --cst-space-7: 1.5rem;
+  --cst-space-8: 2rem;
+
+  --cst-radius-sm: 0.5rem;
+  --cst-radius-md: 0.75rem;
+  --cst-radius-lg: 1rem;
+  --cst-radius-xl: 1.25rem;
+  --cst-shadow-1: 0 1px 2px rgba(15, 23, 42, 0.08), 0 4px 14px rgba(15, 23, 42, 0.04);
+  --cst-shadow-2: 0 6px 20px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.06);
+  --cst-shadow-3: 0 12px 28px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(15, 23, 42, 0.08);
+  --cst-focus-ring-width: 3px;
+  --cst-focus-ring: 0 0 0 var(--cst-focus-ring-width) var(--cst-color-focus-ring);
+
+  --cst-motion-fast: 140ms;
+  --cst-motion-medium: 220ms;
+  --cst-motion-slow: 320ms;
+  --cst-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --cst-ease-emphasized: cubic-bezier(0.2, 0.9, 0.2, 1);
+
+  --cst-control-height: 2.5rem;
+  --cst-control-height-compact: 2rem;
+  --cst-icon-button-size: 1.875rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --cst-motion-fast: 1ms;
+    --cst-motion-medium: 1ms;
+    --cst-motion-slow: 1ms;
+  }
+}
+
+/* ==========================================================================
    Settings Layer - Variables (copied from shared-styles.css)
    ========================================================================== */
 
 :root {
   /* Colors */
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-secondary: #6b7280;
-  --color-secondary-hover: #4b5563;
-  --color-text: #333;
-  --color-text-secondary: #666;
-  --color-border: #ddd;
-  --color-border-light: #eee;
-  --color-bg: white;
-  --color-bg-light: #f8f9fa;
-  --color-success: #28a745;
-  --color-danger: #dc3545;
-  --color-danger-hover: #c82333;
-  --color-shadow: rgba(0, 0, 0, 0.1);
+  --color-primary: var(--md-sys-color-primary, #2563eb);
+  --color-primary-hover: var(--cst-color-primary-hover, #1d4ed8);
+  --color-secondary: var(--md-sys-color-secondary, #6b7280);
+  --color-secondary-hover: var(--cst-color-secondary-hover, #4b5563);
+  --color-text: var(--md-sys-color-on-surface, #333);
+  --color-text-secondary: var(--md-sys-color-on-surface-variant, #666);
+  --color-border: var(--md-sys-color-outline-variant, #ddd);
+  --color-border-light: var(--md-sys-color-outline-variant, #eee);
+  --color-bg: var(--md-sys-color-surface-bright, white);
+  --color-bg-light: var(--md-sys-color-surface-container-low, #f8f9fa);
+  --color-success: var(--cst-color-success, #28a745);
+  --color-danger: var(--md-sys-color-error, #dc3545);
+  --color-danger-hover: var(--cst-color-danger-hover, #c82333);
+  --color-shadow: var(--cst-color-shadow, rgba(0, 0, 0, 0.1));
 
   /* Typography */
-  --font-family-base: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  --font-family-mono: monospace;
-  --font-size-base: 14px;
-  --font-size-small: 13px;
-  --font-size-h1: 24px;
-  --font-size-h2: 18px;
-  --line-height-base: 1.6;
-  --line-height-tight: 1.5;
+  --font-family-base: var(--cst-font-family-base, system-ui, sans-serif);
+  --font-family-display: var(--cst-font-family-display, var(--font-family-base));
+  --font-family-mono: var(--cst-font-family-mono, monospace);
+  --font-size-base: var(--cst-font-size-2, 14px);
+  --font-size-small: var(--cst-font-size-1, 13px);
+  --font-size-h1: var(--cst-font-size-5, 24px);
+  --font-size-h2: var(--cst-font-size-4, 18px);
+  --line-height-base: var(--cst-line-height-base, 1.6);
+  --line-height-tight: var(--cst-line-height-tight, 1.5);
 
   /* Spacing */
-  --spacing-xxs: 6px;
-  --spacing-xs: 5px;
-  --spacing-sm: 10px;
-  --spacing-md: 15px;
-  --spacing-lg: 20px;
+  --spacing-xxs: var(--cst-space-2, 6px);
+  --spacing-xs: var(--cst-space-2, 5px);
+  --spacing-sm: var(--cst-space-4, 10px);
+  --spacing-md: var(--cst-space-5, 15px);
+  --spacing-lg: var(--cst-space-6, 20px);
 
   /* Layout */
   --container-max-width: 1280px;
-  --border-radius-sm: 4px;
-  --border-radius-lg: 8px;
-  --box-shadow: 0 2px 10px var(--color-shadow);
+  --border-radius-sm: var(--cst-radius-sm, 4px);
+  --border-radius-lg: var(--cst-radius-lg, 8px);
+  --box-shadow: var(--cst-shadow-2, 0 2px 10px var(--color-shadow));
+}
+
+.landing-page {
+  margin: 0;
+  font-family: var(--font-family-base);
+  color: var(--color-text);
+  line-height: var(--line-height-base);
+  padding: var(--spacing-lg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  background:
+    radial-gradient(circle at top right, rgba(188, 236, 242, 0.55), transparent 45%),
+    radial-gradient(circle at top left, rgba(228, 222, 255, 0.4), transparent 40%),
+    var(--color-bg-light);
+}
+
+body {
+  margin: 0;
+}
+
+/* ==========================================================================
+   Shared Shell Styles (inlined for root index build output)
+   Mirrors common/app-shell/app-shell.css for the root landing page
+   ========================================================================== */
+
+.cst-shell__header {
+  max-width: var(--container-max-width, var(--default-container-max-width, 1280px));
+  width: 100%;
+  margin: 0 auto;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--md-sys-color-outline-variant, var(--md-sys-color-outline));
+  border-radius: var(--cst-radius-xl, 14px);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(188, 236, 242, 0.45), transparent 50%),
+    linear-gradient(145deg, #ffffff 0%, var(--md-sys-color-surface-container) 100%);
+  box-shadow: var(--cst-shadow-2, none);
+}
+
+.cst-shell__header-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cst-shell__brand {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.85rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(0, 95, 115, 0.08);
+  border: 1px solid rgba(0, 95, 115, 0.14);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+  transition:
+    background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+.cst-shell__brand:hover {
+  background: rgba(0, 95, 115, 0.12);
+}
+
+.cst-shell__brand:focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, none);
+}
+
+.cst-shell__title {
+  margin: 0;
+  font-family: var(--cst-font-family-display, inherit);
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  line-height: var(--cst-line-height-tight, 1.35);
+  letter-spacing: -0.02em;
+  color: var(--md-sys-color-on-surface);
+}
+
+.cst-shell__description {
+  margin: 0.2rem 0 0;
+  color: var(--md-sys-color-on-surface-variant, #495353);
+  font-size: 0.95rem;
+  line-height: var(--cst-line-height-base, 1.55);
+}
+
+.cst-shell__footer {
+  max-width: var(--container-max-width, var(--default-container-max-width, 1280px));
+  width: 100%;
+  margin: 0 auto;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--md-sys-color-outline-variant, #d6dfde);
+  border-radius: var(--cst-radius-lg, 12px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(238, 243, 244, 0.9));
+}
+
+.cst-shell__footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--md-sys-color-on-surface-variant, #596464);
+  font-size: 0.86rem;
+}
+
+.cst-shell__footer-link {
+  color: var(--md-sys-color-primary);
+  text-underline-offset: 0.16em;
+}
+
+.cst-shell__footer-link:focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, none);
+  border-radius: 4px;
 }
 
 /* ==========================================================================
@@ -49,13 +267,20 @@
 
 .main-container {
   font-family: var(--font-family-base);
-  background-color: var(--color-bg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.86)),
+    var(--color-bg);
   color: var(--color-text);
   line-height: var(--line-height-base);
-  max-width: var(--container-max-width);
+  /* Match the shared shell outer width (max-width + shell horizontal padding + border). */
+  max-width: calc(var(--container-max-width) + 2rem + 2px);
+  width: 100%;
   margin: 0 auto;
-  padding: var(--spacing-lg);
+  padding: clamp(1rem, 2vw, var(--spacing-lg));
   box-sizing: border-box;
+  border: 1px solid rgba(191, 201, 205, 0.7);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow);
 }
 
 .main-container * {
@@ -66,16 +291,21 @@
   text-align: center;
   color: var(--color-primary);
   margin-bottom: calc(var(--spacing-lg) * 2);
-  font-size: 2.5rem;
+  font-family: var(--font-family-display);
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
   font-weight: bold;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .main-container .section-title {
   margin-top: calc(var(--spacing-lg) * 2);
   margin-bottom: var(--spacing-lg);
   color: var(--color-text);
-  font-size: var(--font-size-h1);
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
   font-weight: 600;
+  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: var(--spacing-sm);
 }
 
 .main-container .section-title:first-of-type {
@@ -90,11 +320,15 @@
 }
 
 .main-container .tool-card {
-  background: var(--color-bg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, var(--color-bg) 100%);
   border-radius: var(--border-radius-lg);
   overflow: hidden;
   box-shadow: var(--box-shadow);
-  transition: transform 0.2s ease-in-out;
+  transition:
+    transform var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
   color: var(--color-text);
   display: flex;
   flex-direction: column;
@@ -102,13 +336,20 @@
 }
 
 .main-container .tool-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-3px);
+  box-shadow: var(--cst-shadow-3, var(--box-shadow));
+  border-color: rgba(0, 95, 115, 0.18);
+}
+
+.main-container .tool-card:focus-within {
+  box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(0, 95, 115, 0.2)), var(--cst-shadow-3, var(--box-shadow));
 }
 
 .main-container .tool-thumbnail {
   width: 100%;
   height: 200px;
-  background-color: var(--color-bg-light);
+  background:
+    linear-gradient(180deg, var(--md-sys-color-surface-container-low, #f4f6f8), var(--md-sys-color-surface-container, #eceff1));
   overflow: hidden;
   position: relative;
   display: flex;
@@ -131,8 +372,9 @@
 
 .main-container .tool-name {
   margin: 0 0 var(--spacing-sm) 0;
-  font-size: var(--font-size-h1);
+  font-size: clamp(1.1rem, 1.6vw, 1.3rem);
   color: var(--color-primary);
+  line-height: var(--line-height-tight);
 }
 
 .main-container .tool-description {
@@ -144,30 +386,47 @@
 
 .main-container .tool-description a {
   color: var(--color-primary);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-color: rgba(0, 95, 115, 0.3);
+  text-underline-offset: 0.16em;
 }
 
 .main-container .tool-description a:hover {
-  text-decoration: underline;
+  text-decoration-color: currentColor;
 }
 
 .main-container .cta-button {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background-color: var(--color-primary);
   color: var(--color-bg);
   padding: var(--spacing-sm) var(--spacing-lg);
   border-radius: var(--border-radius-sm);
+  border: 1px solid transparent;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   text-align: center;
-  transition: background-color 0.2s ease-in-out;
+  transition:
+    background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    transform var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
   margin-top: auto;
   font-size: var(--font-size-base);
+  min-height: var(--cst-control-height, 40px);
+  box-shadow: var(--cst-shadow-1, none);
 }
 
 .main-container .cta-button:hover {
   background-color: var(--color-primary-hover);
   color: var(--color-bg);
+  transform: translateY(-1px);
+  box-shadow: var(--cst-shadow-2, none);
+}
+
+.main-container .cta-button:focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(0, 95, 115, 0.22)), var(--cst-shadow-2, none);
 }
 
 .main-container .faqs {
@@ -202,11 +461,42 @@
 }
 
 @media (max-width: 768px) {
-  .main-container .tools-grid {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  .cst-shell__header {
+    padding: 0.8rem 0.85rem;
+  }
+
+  .cst-shell__footer-inner {
+    flex-wrap: wrap;
+    gap: 0.35rem 0.6rem;
   }
 
   .main-container {
     padding: var(--spacing-md);
+    border-radius: calc(var(--border-radius-lg) - 2px);
+  }
+
+  .main-container .tools-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+
+  .main-container .cta-button {
+    width: 100%;
+  }
+
+  .landing-page {
+    padding: var(--spacing-md);
+    gap: var(--spacing-md);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-container .tool-card,
+  .main-container .cta-button {
+    transition: none;
+  }
+
+  .main-container .tool-card:hover,
+  .main-container .cta-button:hover {
+    transform: none;
   }
 }

@@ -155,6 +155,18 @@ const getToolConfig = (toolName) => ({
       : []),
     new CopyPlugin({
       patterns: [
+        ...(toolName === tools[0]
+          ? [
+              {
+                from: 'index.html',
+                to: path.join(__dirname, 'build', 'index.html')
+              },
+              {
+                from: 'styles.css',
+                to: path.join(__dirname, 'build', 'styles.css')
+              }
+            ]
+          : []),
         {
           from: path.join(__dirname, toolName, 'index.html'),
           to: path.join(__dirname, 'build', toolName, 'index.html'),

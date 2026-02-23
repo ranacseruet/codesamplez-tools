@@ -4,45 +4,45 @@
 
 :root {
   /* Colors */
-  --default-color-primary: #2563eb;
-  --default-color-primary-hover: #1d4ed8;
-  --default-color-secondary: #6b7280;
-  --default-color-secondary-hover: #4b5563;
-  --default-color-text: #333;
-  --default-color-text-secondary: #666;
-  --default-color-border: #ddd;
-  --default-color-border-light: #eee;
-  --default-color-bg: white;
-  --default-color-bg-light: #f8f9fa;
-  --default-color-success: #28a745;
-  --default-color-danger: #dc3545;
-  --default-color-danger-hover: #c82333;
-  --default-color-shadow: rgba(0, 0, 0, 0.1);
+  --default-color-primary: var(--md-sys-color-primary, #2563eb);
+  --default-color-primary-hover: var(--cst-color-primary-hover, #1d4ed8);
+  --default-color-secondary: var(--md-sys-color-secondary, #6b7280);
+  --default-color-secondary-hover: var(--cst-color-secondary-hover, #4b5563);
+  --default-color-text: var(--md-sys-color-on-surface, #333);
+  --default-color-text-secondary: var(--md-sys-color-on-surface-variant, #666);
+  --default-color-border: var(--md-sys-color-outline-variant, #ddd);
+  --default-color-border-light: var(--md-sys-color-outline-variant, #eee);
+  --default-color-bg: var(--md-sys-color-surface-bright, white);
+  --default-color-bg-light: var(--md-sys-color-surface-container-low, #f8f9fa);
+  --default-color-success: var(--cst-color-success, #28a745);
+  --default-color-danger: var(--md-sys-color-error, #dc3545);
+  --default-color-danger-hover: var(--cst-color-danger-hover, #c82333);
+  --default-color-shadow: var(--cst-color-shadow, rgba(0, 0, 0, 0.1));
 
   /* Typography */
-  --default-font-family-base: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  --default-font-family-mono: monospace;
-  --default-font-size-base: 14px;
-  --default-font-size-small: 13px;
+  --default-font-family-base: var(--cst-font-family-base, system-ui, sans-serif);
+  --default-font-family-mono: var(--cst-font-family-mono, monospace);
+  --default-font-size-base: var(--cst-font-size-2, 14px);
+  --default-font-size-small: var(--cst-font-size-1, 13px);
   /* Added for small button */
-  --default-font-size-h1: 24px;
-  --default-font-size-h2: 18px;
-  --default-line-height-base: 1.6;
-  --default-line-height-tight: 1.5;
+  --default-font-size-h1: var(--cst-font-size-5, 24px);
+  --default-font-size-h2: var(--cst-font-size-4, 18px);
+  --default-line-height-base: var(--cst-line-height-base, 1.6);
+  --default-line-height-tight: var(--cst-line-height-tight, 1.5);
 
   /* Spacing */
-  --default-spacing-xxs: 6px;
+  --default-spacing-xxs: var(--cst-space-2, 6px);
   /* Added for small button */
-  --default-spacing-xs: 5px;
-  --default-spacing-sm: 10px;
-  --default-spacing-md: 15px;
-  --default-spacing-lg: 20px;
+  --default-spacing-xs: var(--cst-space-2, 5px);
+  --default-spacing-sm: var(--cst-space-4, 10px);
+  --default-spacing-md: var(--cst-space-5, 15px);
+  --default-spacing-lg: var(--cst-space-6, 20px);
 
   /* Layout */
   --default-container-max-width: 1280px;
-  --default-border-radius-sm: 4px;
-  --default-border-radius-lg: 8px;
-  --default-box-shadow: 0 2px 10px var(--default-color-shadow);
+  --default-border-radius-sm: var(--cst-radius-sm, 4px);
+  --default-border-radius-lg: var(--cst-radius-lg, 8px);
+  --default-box-shadow: var(--cst-shadow-2, 0 2px 10px var(--default-color-shadow));
 }
 
 /* Standalone App Styles */
@@ -50,7 +50,10 @@ body.standalone-app {
   font-family: var(--default-font-family-base);
   color: var(--default-color-text);
   line-height: var(--default-line-height-base);
-  background-color: var(--default-color-bg-light);
+  background:
+    radial-gradient(circle at top right, rgba(188, 236, 242, 0.55), transparent 45%),
+    radial-gradient(circle at top left, rgba(228, 222, 255, 0.4), transparent 40%),
+    var(--default-color-bg-light);
   margin: 0;
 
   /* Map standard variables to defaults for standalone mode validity */
@@ -97,10 +100,13 @@ body.standalone-app {
 .tool-container {
   max-width: var(--container-max-width, var(--default-container-max-width));
   margin: 0 auto;
-  background-color: var(--color-bg, transparent);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.82)),
+    var(--color-bg, transparent);
+  border: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.18));
   border-radius: var(--border-radius-lg, var(--default-border-radius-lg));
   box-shadow: var(--box-shadow, none);
-  padding: var(--spacing-lg, var(--default-spacing-lg));
+  padding: clamp(1rem, 2vw, var(--spacing-lg, var(--default-spacing-lg)));
   font-family: inherit;
   line-height: inherit;
   color: inherit;
@@ -167,6 +173,11 @@ body.standalone-app {
   height: auto;
 }
 
+.tool-container :is(button, a, input, select, textarea):focus-visible {
+  outline: var(--cst-focus-ring-width, 3px) solid var(--color-primary, var(--default-color-primary));
+  outline-offset: 2px;
+}
+
 /* ==========================================================================
    Elements Layer - HTML Elements
    ========================================================================== */
@@ -193,6 +204,12 @@ body.standalone-app {
   resize: none;
   font-size: var(--font-size-base, var(--default-font-size-base));
   line-height: var(--line-height-tight, var(--default-line-height-tight));
+  background-color: var(--color-bg, #fff);
+  color: var(--color-text, inherit);
+  transition:
+    border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
 }
 
 .tool-container select {
@@ -200,8 +217,12 @@ body.standalone-app {
   border: 1px solid var(--color-border, rgba(128, 128, 128, 0.3));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   font-size: var(--font-size-base, var(--default-font-size-base));
-  background-color: var(--color-bg, transparent);
+  background-color: var(--color-bg, #fff);
+  color: var(--color-text, inherit);
   cursor: pointer;
+  transition:
+    border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
 }
 
 /* ==========================================================================
@@ -226,8 +247,14 @@ body.standalone-app {
   gap: var(--spacing-lg, var(--default-spacing-lg));
   margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
   padding: var(--spacing-lg, var(--default-spacing-lg));
-  background-color: var(--color-bg-light, transparent);
+  background: linear-gradient(
+    180deg,
+    var(--md-sys-color-surface-container-low, #f4f6f8) 0%,
+    var(--color-bg-light, #f0f2f4) 100%
+  );
+  border: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.2));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  box-shadow: var(--cst-shadow-1, none);
 }
 
 .o-panel {
@@ -314,23 +341,47 @@ body.standalone-app {
 }
 
 .c-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs, var(--default-spacing-xs));
+  min-height: var(--cst-control-height, 40px);
   background-color: var(--color-primary, var(--default-color-primary));
   color: var(--color-bg, #fff);
-  border: none;
+  border: 1px solid transparent;
   padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-lg, var(--default-spacing-lg));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   cursor: pointer;
   font-size: var(--font-size-base, var(--default-font-size-base));
-  transition: background-color 0.2s;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: var(--cst-shadow-1, none);
+  transition:
+    background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    transform var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
 }
 
 .c-button:hover {
   background-color: var(--color-primary-hover, var(--default-color-primary-hover));
+  transform: translateY(-1px);
+  box-shadow: var(--cst-shadow-2, none);
+}
+
+.c-button:active {
+  transform: translateY(0);
+  box-shadow: var(--cst-shadow-1, none);
 }
 
 .c-button:disabled {
   background-color: var(--color-secondary, var(--default-color-secondary));
   cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.c-button:focus-visible {
+  box-shadow: var(--cst-focus-ring, none), var(--cst-shadow-2, none);
 }
 
 .c-button--secondary {
@@ -350,6 +401,7 @@ body.standalone-app {
 }
 
 .c-button--small {
+  min-height: var(--cst-control-height-compact, 32px);
   padding: var(--spacing-xxs, var(--default-spacing-xxs)) var(--spacing-sm, var(--default-spacing-sm));
   /* Adjusted padding */
   font-size: var(--font-size-small, var(--default-font-size-small));
@@ -361,18 +413,21 @@ body.standalone-app {
   position: fixed;
   bottom: var(--spacing-lg, var(--default-spacing-lg));
   right: var(--spacing-lg, var(--default-spacing-lg));
-  background-color: var(--color-success, var(--default-color-success));
+  background: linear-gradient(135deg, var(--color-success, var(--default-color-success)) 0%, var(--cst-color-success-hover, #1b6b45) 100%);
   color: var(--color-bg, #fff);
   padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-lg, var(--default-spacing-lg));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
-  box-shadow: var(--box-shadow, var(--default-box-shadow));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: var(--cst-shadow-3, var(--box-shadow, var(--default-box-shadow)));
   transform: translateY(100px);
   opacity: 0;
-  transition: transform 0.3s, opacity 0.3s;
+  transition:
+    transform var(--cst-motion-medium, 220ms) var(--cst-ease-emphasized, ease),
+    opacity var(--cst-motion-medium, 220ms) var(--cst-ease-standard, ease);
 }
 
 .c-notification.notification-error {
-  background-color: var(--color-danger, var(--default-color-danger));
+  background: linear-gradient(135deg, var(--color-danger, var(--default-color-danger)) 0%, var(--color-danger-hover, var(--default-color-danger-hover)) 100%);
 }
 
 .c-notification.show {
@@ -388,8 +443,12 @@ body.standalone-app {
   border: 1px solid var(--color-border, rgba(128, 128, 128, 0.3));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   font-size: var(--font-size-base, var(--default-font-size-base));
-  transition: border-color 0.2s;
-  background-color: var(--color-bg, transparent);
+  transition:
+    border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+  background-color: var(--color-bg, #fff);
+  color: var(--color-text, inherit);
   min-width: 0;
   /* Prevents input from overflowing flex containers */
 }
@@ -402,6 +461,13 @@ body.standalone-app {
 .c-input:focus {
   outline: none;
   border-color: var(--color-primary, var(--default-color-primary));
+}
+
+.c-input:focus-visible,
+.tool-container textarea:focus-visible,
+.tool-container select:focus-visible {
+  border-color: var(--color-primary, var(--default-color-primary));
+  box-shadow: var(--cst-focus-ring, none);
 }
 
 /* Modifier for textarea inputs */
@@ -419,12 +485,17 @@ body.standalone-app {
 }
 
 .c-form-group {
-  background-color: var(--color-bg, transparent);
+  background: linear-gradient(
+    180deg,
+    var(--color-bg, #fff) 0%,
+    var(--md-sys-color-surface-container-low, #f4f6f8) 100%
+  );
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   padding: var(--spacing-lg, var(--default-spacing-lg));
   border: 1px solid var(--color-border, rgba(128, 128, 128, 0.3));
   height: fit-content;
   /* Allow group to size based on content */
+  box-shadow: var(--cst-shadow-1, none);
 }
 
 .c-form-group-header {
@@ -537,7 +608,7 @@ button.c-tooltip-container {
 .c-code-output {
   flex: 1;
   padding: var(--spacing-md, var(--default-spacing-md));
-  background-color: var(--color-bg, transparent);
+  background-color: var(--color-bg, #fff);
   border: 1px solid var(--color-border, rgba(128, 128, 128, 0.3));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   font-family: var(--font-family-mono, var(--default-font-family-mono));
@@ -569,7 +640,8 @@ button.c-tooltip-container {
 
 /* --- Stats Panel (from js-minifier) --- */
 .c-stats-panel {
-  background-color: var(--color-bg-light, transparent);
+  background-color: var(--md-sys-color-surface-container-low, var(--color-bg-light, transparent));
+  border: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.2));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   padding: var(--spacing-md, var(--default-spacing-md));
   margin-top: var(--spacing-lg, var(--default-spacing-lg));
@@ -619,7 +691,8 @@ button.c-tooltip-container {
 .c-options-panel {
   margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
   padding: var(--spacing-lg, var(--default-spacing-lg));
-  background-color: var(--color-bg-light, transparent);
+  background-color: var(--md-sys-color-surface-container-low, var(--color-bg-light, transparent));
+  border: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.2));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
 }
 
@@ -679,6 +752,22 @@ button.c-tooltip-container {
   border: 0;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .c-button,
+  .c-input,
+  .tool-container textarea,
+  .tool-container select,
+  .c-notification,
+  .c-tooltip {
+    transition: none;
+  }
+
+  .c-button:hover,
+  .c-button:active {
+    transform: none;
+  }
+}
+
 /* ==========================================================================
    Media Queries
    ========================================================================== */
@@ -701,6 +790,7 @@ button.c-tooltip-container {
 @media (max-width: 768px) {
   .tool-container {
     padding: var(--spacing-md, var(--default-spacing-md));
+    border-radius: calc(var(--border-radius-lg, var(--default-border-radius-lg)) - 2px);
   }
 
   .u-flex.u-gap-lg {
@@ -710,6 +800,7 @@ button.c-tooltip-container {
 
   .o-controls {
     flex-direction: column;
+    padding: var(--spacing-md, var(--default-spacing-md));
   }
 
   .o-controls .u-flex {
@@ -724,6 +815,15 @@ button.c-tooltip-container {
   .o-toolbar {
     flex-direction: column;
     gap: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .c-button {
+    width: 100%;
+  }
+
+  .o-toolbar .c-button,
+  .o-controls .c-button--small {
+    width: 100%;
   }
 
   .tool-container select {
