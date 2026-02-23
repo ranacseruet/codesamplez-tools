@@ -92,6 +92,21 @@ const getToolConfig = (toolName) => ({
       new CssMinimizerPlugin()
     ]
   },
+  resolve: {
+    ...baseConfig.resolve,
+    alias: {
+      ...(baseConfig.resolve.alias || {}),
+      ...(toolName === 'js-minifier-tool'
+        ? {
+            debug: path.resolve(__dirname, 'common/shims/debug-noop.js'),
+            '@babel/code-frame': path.resolve(__dirname, 'common/shims/babel-code-frame-noop.js'),
+            '@jridgewell/gen-mapping': path.resolve(__dirname, 'common/shims/jridgewell-gen-mapping-noop.js'),
+            '@jridgewell/trace-mapping': path.resolve(__dirname, 'common/shims/jridgewell-trace-mapping-noop.js'),
+            jsesc: path.resolve(__dirname, 'common/shims/jsesc-lite.js')
+          }
+        : {})
+    }
+  },
   entry: {
     main: [
       './common/material-theme.css',
@@ -117,6 +132,27 @@ const getToolConfig = (toolName) => ({
     new MiniCssExtractPlugin({
       filename: 'styles.main.css'
     }),
+    ...(toolName === 'data-format-converter'
+      ? [
+          // `fast-xml-parser`'s validator is sizable. The tool only needs a
+          // boolean/error-shape validity check, so replace it with a smaller
+          // DOMParser-based validator in production bundles for this tool.
+          new webpack.NormalModuleReplacementPlugin(/\.\/validator\.js$/, (resource) => {
+            const fxpSrcPath = `${path.sep}node_modules${path.sep}fast-xml-parser${path.sep}src`;
+            if (resource.context && resource.context.includes(fxpSrcPath)) {
+              resource.request = path.resolve(__dirname, 'common/shims/fast-xml-parser-validator-dom.js');
+            }
+          }),
+          // DTD/DOCTYPE entity parsing is not a required feature for this tool.
+          // Replace the parser's DOCTYPE reader with a no-entity stub to trim bundle size.
+          new webpack.NormalModuleReplacementPlugin(/\.\/DocTypeReader\.js$/, (resource) => {
+            const fxpXmlParserPath = `${path.sep}node_modules${path.sep}fast-xml-parser${path.sep}src${path.sep}xmlparser`;
+            if (resource.context && resource.context.includes(fxpXmlParserPath)) {
+              resource.request = path.resolve(__dirname, 'common/shims/fast-xml-parser-doctype-reader-noop.js');
+            }
+          })
+        ]
+      : []),
     new CopyPlugin({
       patterns: [
         {
