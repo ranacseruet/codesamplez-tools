@@ -51,6 +51,7 @@ yarn.lock
 **/.cache/
 verification/
 qa-artifacts/
+reports/bundle-metrics/latest.json
 
 # AI Code Assistants
 **/memory-bank/

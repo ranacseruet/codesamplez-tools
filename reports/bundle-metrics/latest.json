@@ -1,0 +1,174 @@
+{
+  "generatedAt": "2026-02-23T03:08:41.103Z",
+  "buildDir": "/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/build",
+  "toolCount": 10,
+  "summary": {
+    "jsRawBytes": 1603764,
+    "jsGzipBytes": 482704,
+    "cssRawBytes": 258179,
+    "cssGzipBytes": 50609,
+    "htmlRawBytes": 32595
+  },
+  "tools": [
+    {
+      "tool": "base64-converter-tool",
+      "files": {
+        "js": {
+          "rawBytes": 100367,
+          "gzipBytes": 35221
+        },
+        "css": {
+          "rawBytes": 23346,
+          "gzipBytes": 4727
+        },
+        "html": {
+          "rawBytes": 2438
+        }
+      }
+    },
+    {
+      "tool": "css-minifier-tool",
+      "files": {
+        "js": {
+          "rawBytes": 61713,
+          "gzipBytes": 21687
+        },
+        "css": {
+          "rawBytes": 25420,
+          "gzipBytes": 4969
+        },
+        "html": {
+          "rawBytes": 3105
+        }
+      }
+    },
+    {
+      "tool": "data-format-converter",
+      "files": {
+        "js": {
+          "rawBytes": 144312,
+          "gzipBytes": 49388
+        },
+        "css": {
+          "rawBytes": 27242,
+          "gzipBytes": 5064
+        },
+        "html": {
+          "rawBytes": 3112
+        }
+      }
+    },
+    {
+      "tool": "diff-checker-tool",
+      "files": {
+        "js": {
+          "rawBytes": 60599,
+          "gzipBytes": 21443
+        },
+        "css": {
+          "rawBytes": 27049,
+          "gzipBytes": 5282
+        },
+        "html": {
+          "rawBytes": 2634
+        }
+      }
+    },
+    {
+      "tool": "js-minifier-tool",
+      "files": {
+        "js": {
+          "rawBytes": 857058,
+          "gzipBytes": 218837
+        },
+        "css": {
+          "rawBytes": 24788,
+          "gzipBytes": 4840
+        },
+        "html": {
+          "rawBytes": 3407
+        }
+      }
+    },
+    {
+      "tool": "json-formatter-tool",
+      "files": {
+        "js": {
+          "rawBytes": 79715,
+          "gzipBytes": 28771
+        },
+        "css": {
+          "rawBytes": 25829,
+          "gzipBytes": 5111
+        },
+        "html": {
+          "rawBytes": 2639
+        }
+      }
+    },
+    {
+      "tool": "jwt-builder-tool",
+      "files": {
+        "js": {
+          "rawBytes": 77707,
+          "gzipBytes": 27194
+        },
+        "css": {
+          "rawBytes": 25830,
+          "gzipBytes": 5144
+        },
+        "html": {
+          "rawBytes": 6166
+        }
+      }
+    },
+    {
+      "tool": "jwt-decoder-tool",
+      "files": {
+        "js": {
+          "rawBytes": 78448,
+          "gzipBytes": 27142
+        },
+        "css": {
+          "rawBytes": 25927,
+          "gzipBytes": 5195
+        },
+        "html": {
+          "rawBytes": 3554
+        }
+      }
+    },
+    {
+      "tool": "qr-code-generator",
+      "files": {
+        "js": {
+          "rawBytes": 91896,
+          "gzipBytes": 33222
+        },
+        "css": {
+          "rawBytes": 26270,
+          "gzipBytes": 5233
+        },
+        "html": {
+          "rawBytes": 2204
+        }
+      }
+    },
+    {
+      "tool": "text-analyzer-tool",
+      "files": {
+        "js": {
+          "rawBytes": 51949,
+          "gzipBytes": 19799
+        },
+        "css": {
+          "rawBytes": 26478,
+          "gzipBytes": 5044
+        },
+        "html": {
+          "rawBytes": 3336
+        }
+      }
+    }
+  ]
+}
