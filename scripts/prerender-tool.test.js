@@ -25,7 +25,7 @@ describe('generic tool prerender helpers', () => {
     it('renders converter app markup to string for server-side prerender', () => {
         const markup = renderToolPrerenderMarkup('data-format-converter');
 
-        expect(markup).toContain('class="tool-container"');
+        expect(markup).toMatch(/class="[^"]*\btool-container\b[^"]*"/);
         expect(markup).toContain('id="inputText"');
         expect(markup).toContain('id="outputText"');
         expect(markup).toContain('Convert Data');

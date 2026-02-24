@@ -65,21 +65,21 @@ export function addClaim() {
   const valueId = `claim-value-${claimCounter}`;
 
   newClaimRow.innerHTML = `
-    <div class="u-flex u-gap-sm" style="flex: 1; align-items: center;">
-      <label for="${nameId}" style="flex: 0 0 100px;">
+    <div class="u-flex u-gap-sm jwt-builder-custom-claim-fields" style="flex: 1; align-items: center;">
+      <label for="${nameId}" class="jwt-builder-custom-claim-label" style="flex: 0 0 100px;">
         <span class="c-tooltip-container" title="Name of your custom claim">
           Claim Name:
           <span class="c-tooltip">Enter a unique identifier for your custom claim</span>
         </span>
       </label>
-      <input id="${nameId}" type="text" name="claimName" class="c-input" placeholder="e.g., role" style="flex: 1;">
-      <label for="${valueId}" style="flex: 0 0 100px;">
+      <input id="${nameId}" type="text" name="claimName" class="c-input jwt-builder-custom-claim-input" placeholder="e.g., role" style="flex: 1;">
+      <label for="${valueId}" class="jwt-builder-custom-claim-label" style="flex: 0 0 100px;">
          <span class="c-tooltip-container" title="Value of your custom claim">
            Claim Value:
            <span class="c-tooltip">Enter the value for your custom claim</span>
          </span>
       </label>
-      <input id="${valueId}" type="text" name="claimValue" class="c-input" placeholder="e.g., admin" style="flex: 1;">
+      <input id="${valueId}" type="text" name="claimValue" class="c-input jwt-builder-custom-claim-input" placeholder="e.g., admin" style="flex: 1;">
     </div>
     <button type="button" class="c-button c-button--danger delete-claim" onclick="removeClaim(this)" aria-label="Remove custom claim" title="Remove this claim">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -239,9 +239,9 @@ export function JwtBuilderApp() {
         <p className="o-description jwt-builder-description">Create and sign JSON Web Tokens with standard and custom claims</p>
       </div>
 
-      <form id="jwtForm" className="u-flex u-flex-column u-gap-lg" onSubmit={(e) => e.preventDefault()}>
-        <div className="o-grid-2col">
-          <div className="c-form-group">
+      <form id="jwtForm" className="u-flex u-flex-column u-gap-lg jwt-builder-form" onSubmit={(e) => e.preventDefault()}>
+        <div className="o-grid-2col jwt-builder-grid">
+          <div className="c-form-group jwt-builder-section jwt-builder-section--identity">
             <h3 className="c-form-group-header">Identity Claims</h3>
             <div className="c-form-row">
               <label htmlFor="iss" className="required">
@@ -272,7 +272,7 @@ export function JwtBuilderApp() {
             </div>
           </div>
 
-          <div className="c-form-group">
+          <div className="c-form-group jwt-builder-section jwt-builder-section--timing">
             <h3 className="c-form-group-header">Timing Claims</h3>
             <div className="c-form-row">
               <label htmlFor="exp" className="required">
@@ -281,12 +281,12 @@ export function JwtBuilderApp() {
                   <span className="c-tooltip">Required - Identifies the expiration time on or after which the JWT must not be accepted</span>
                 </span>
               </label>
-              <div className="u-flex u-flex-column u-gap-xs" style={{ flex: 1 }}>
+              <div className="u-flex u-flex-column u-gap-xs jwt-builder-inline-actions" style={{ flex: 1 }}>
                 <input type="text" id="exp" className="c-input" placeholder="e.g., 2025-12-31T23:59:59Z or 1678886400" />
-                <div className="quick-set-buttons">
-                  <button type="button" className="c-button c-button--secondary c-button--small" onClick={() => setExp(1)} aria-label="Set expiration to 1 hour from now">+1h</button>
-                  <button type="button" className="c-button c-button--secondary c-button--small" onClick={() => setExp(24)} aria-label="Set expiration to 24 hours from now">+24h</button>
-                  <button type="button" className="c-button c-button--secondary c-button--small" onClick={() => setExp(168)} aria-label="Set expiration to 7 days from now">+7d</button>
+                <div className="quick-set-buttons jwt-builder-quick-set-buttons">
+                  <button type="button" className="c-button c-button--secondary c-button--small jwt-builder-quick-set-btn" onClick={() => setExp(1)} aria-label="Set expiration to 1 hour from now">+1h</button>
+                  <button type="button" className="c-button c-button--secondary c-button--small jwt-builder-quick-set-btn" onClick={() => setExp(24)} aria-label="Set expiration to 24 hours from now">+24h</button>
+                  <button type="button" className="c-button c-button--secondary c-button--small jwt-builder-quick-set-btn" onClick={() => setExp(168)} aria-label="Set expiration to 7 days from now">+7d</button>
                 </div>
               </div>
             </div>
@@ -297,10 +297,10 @@ export function JwtBuilderApp() {
                   <span className="c-tooltip">Optional - Identifies the time at which the JWT was issued</span>
                 </span>
               </label>
-              <div className="u-flex u-flex-column u-gap-xs" style={{ flex: 1 }}>
+              <div className="u-flex u-flex-column u-gap-xs jwt-builder-inline-actions" style={{ flex: 1 }}>
                 <input type="text" id="iat" className="c-input" placeholder="e.g., 2025-01-30T11:24:00Z or 1678886400" />
-                <div className="quick-set-buttons">
-                  <button type="button" className="c-button c-button--secondary c-button--small" onClick={() => setNow('iat')} aria-label="Set issued at to now">Now</button>
+                <div className="quick-set-buttons jwt-builder-quick-set-buttons">
+                  <button type="button" className="c-button c-button--secondary c-button--small jwt-builder-quick-set-btn" onClick={() => setNow('iat')} aria-label="Set issued at to now">Now</button>
                 </div>
               </div>
             </div>
@@ -311,16 +311,16 @@ export function JwtBuilderApp() {
                   <span className="c-tooltip">Optional - Identifies the time before which the JWT must not be accepted</span>
                 </span>
               </label>
-              <div className="u-flex u-flex-column u-gap-xs" style={{ flex: 1 }}>
+              <div className="u-flex u-flex-column u-gap-xs jwt-builder-inline-actions" style={{ flex: 1 }}>
                 <input type="text" id="nbf" className="c-input" placeholder="e.g., 2025-01-30T00:00:00Z or 1678886400" />
-                <div className="quick-set-buttons">
-                  <button type="button" className="c-button c-button--secondary c-button--small" onClick={() => setNow('nbf')} aria-label="Set not before to now">Now</button>
+                <div className="quick-set-buttons jwt-builder-quick-set-buttons">
+                  <button type="button" className="c-button c-button--secondary c-button--small jwt-builder-quick-set-btn" onClick={() => setNow('nbf')} aria-label="Set not before to now">Now</button>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="c-form-group">
+          <div className="c-form-group jwt-builder-section jwt-builder-section--metadata">
             <h3 className="c-form-group-header">Metadata Claims</h3>
             <div className="c-form-row">
               <label htmlFor="jti">
@@ -333,9 +333,9 @@ export function JwtBuilderApp() {
             </div>
           </div>
 
-          <div className="c-form-group">
+          <div className="c-form-group jwt-builder-section jwt-builder-section--signature">
             <h3 className="c-form-group-header">Signature</h3>
-            <div className="c-form-row">
+            <div className="c-form-row jwt-builder-secret-row">
               <label htmlFor="key" className="required">
                 <span className="c-tooltip-container" title="Secret key for signing the JWT">
                   Signature Key:
@@ -345,7 +345,7 @@ export function JwtBuilderApp() {
               <input type="text" id="key" className="c-input" value="your-jwt-secret-key" placeholder="Your secret key" />
               <button
                 type="button"
-                className="c-button c-button--secondary c-button--small"
+                className="c-button c-button--secondary c-button--small jwt-builder-secret-generate"
                 onClick={() => generateRandomSecret()}
                 aria-label="Generate a random secret key"
                 title="Generate a random secret key"
@@ -358,11 +358,11 @@ export function JwtBuilderApp() {
           </div>
         </div>
 
-        <div className="c-form-group">
+        <div className="c-form-group jwt-builder-algorithm-panel">
           <p className="algorithm-info">NOTE: For signature key signing, we only support "HS256 (HMAC with SHA-256)" algorithm for now.</p>
         </div>
 
-        <div className="c-form-group">
+        <div className="c-form-group jwt-builder-section jwt-builder-section--custom-claims">
           <h3 className="c-form-group-header">
             <span>Custom Claims</span>
             <button type="button" className="c-button c-button--secondary c-button--small add-claim" onClick={() => addClaim()} title="Add a custom claim">
@@ -374,12 +374,12 @@ export function JwtBuilderApp() {
           </div>
         </div>
 
-        <button type="button" id="buildJwtBtn" className="c-button" onClick={() => void buildJWT()}>Build JWT</button>
+        <button type="button" id="buildJwtBtn" className="c-button jwt-builder-build-btn" onClick={() => void buildJWT()}>Build JWT</button>
       </form>
 
-      <div className="c-form-group result-section">
+      <div className="c-form-group result-section jwt-builder-result-panel">
         <h3 className="c-form-group-header">Generated JWT</h3>
-        <div className="u-flex u-gap-sm result-container">
+        <div className="u-flex u-gap-sm result-container jwt-builder-result-container">
           <pre id="result" className="c-code-output jwt-token-output" title="Generated JWT token" />
         </div>
       </div>

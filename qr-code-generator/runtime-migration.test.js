@@ -36,6 +36,15 @@ import ClearButton from '../common/clear-button/ClearButton.js';
 describe('QRCodeGenerator Preact runtime', () => {
     const flush = () => Promise.resolve();
     const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const waitFor = async (predicate, timeoutMs = 1000) => {
+        const start = Date.now();
+        while (!predicate()) {
+            if (Date.now() - start > timeoutMs) {
+                throw new Error('Timed out waiting for condition');
+            }
+            await wait(20);
+        }
+    };
     const flushEffects = async () => {
         await flush();
         await flush();
@@ -54,7 +63,7 @@ describe('QRCodeGenerator Preact runtime', () => {
     it('renders defaults and generates QR after debounce', async () => {
         new QRCodeGeneratorToolUI();
         await flushEffects();
-        await wait(300);
+        await waitFor(() => QRCode.toCanvas.mock.calls.length >= 1);
         await flushEffects();
 
         expect(document.getElementById('qr-text')?.value).toBe('https://codesamplez.com');

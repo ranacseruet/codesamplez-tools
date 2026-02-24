@@ -413,21 +413,21 @@ export function initializeDiffChecker() {
 
 export function DiffCheckerApp() {
   return (
-    <div id="diff-checker-tool" className="tool-container">
+    <div id="diff-checker-tool" className="tool-container diffc-tool">
       <div className="o-header">
         <p className="o-description">Compare two texts or code snippets and highlight the differences between them.</p>
       </div>
 
-      <div className="o-grid-2col">
-        <div className="o-panel">
-          <div className="diff-checker-panel-header">
-            <h2>Original Text</h2>
-            <div className="o-toolbar" />
+      <div className="o-grid-2col diffc-grid">
+        <div className="o-panel diffc-panel">
+          <div className="diff-checker-panel-header diffc-panel-header">
+            <h3>Original Text</h3>
+            <div className="o-toolbar diffc-panel-toolbar" />
           </div>
-          <div className="o-panel-content">
+          <div className="o-panel-content diffc-panel-content">
             <textarea
               id="text1"
-              className="c-input c-input--textarea"
+              className="c-input c-input--textarea diffc-textarea diffc-textarea--original"
               placeholder="Paste your first text here..."
               title="Enter your original text or code here"
               aria-label="Original text input"
@@ -435,15 +435,15 @@ export function DiffCheckerApp() {
           </div>
         </div>
 
-        <div className="o-panel">
-          <div className="diff-checker-panel-header">
-            <h2>Modified Text</h2>
-            <div className="o-toolbar" />
+        <div className="o-panel diffc-panel">
+          <div className="diff-checker-panel-header diffc-panel-header">
+            <h3>Modified Text</h3>
+            <div className="o-toolbar diffc-panel-toolbar" />
           </div>
-          <div className="o-panel-content">
+          <div className="o-panel-content diffc-panel-content">
             <textarea
               id="text2"
-              className="c-input c-input--textarea"
+              className="c-input c-input--textarea diffc-textarea diffc-textarea--modified"
               placeholder="Paste your second text here..."
               title="Enter your modified text or code here"
               aria-label="Modified text input"
@@ -452,23 +452,23 @@ export function DiffCheckerApp() {
         </div>
       </div>
 
-      <div className="o-controls diff-checker-options">
-        <div className="c-checkbox-group">
-          <div className="c-checkbox-item">
+      <div className="o-controls diff-checker-options diffc-options">
+        <div className="c-checkbox-group diffc-checkbox-group">
+          <div className="c-checkbox-item diffc-checkbox-item">
             <input type="checkbox" id="ignore-whitespace" defaultChecked />
             <label htmlFor="ignore-whitespace">Ignore whitespace differences</label>
           </div>
         </div>
 
-        <div className="o-toolbar">
-          <button id="compare-button" className="c-button" type="button">Compare</button>
+        <div className="o-toolbar diffc-options-toolbar">
+          <button id="compare-button" className="c-button diffc-compare-button" type="button">Compare</button>
         </div>
       </div>
 
-      <div id="diff-result-container" className="o-panel">
-        <div className="diff-result-header">
-          <h2>Differences</h2>
-          <div className="diff-navigation">
+      <div id="diff-result-container" className="o-panel diffc-result-panel">
+        <div className="diff-result-header diffc-result-header">
+          <h3>Differences</h3>
+          <div className="diff-navigation diffc-navigation">
             <button
               id="prev-diff-button"
               className="c-button c-button--secondary c-button--small"
@@ -490,8 +490,12 @@ export function DiffCheckerApp() {
             </button>
           </div>
         </div>
-        <div className="o-panel-content">
-          <pre id="diff-result" className="c-code-output" />
+        <div className="o-panel-content diffc-result-panel-content">
+          <pre
+            id="diff-result"
+            className="c-code-output diffc-result-output"
+            tabIndex="0"
+          />
         </div>
       </div>
 

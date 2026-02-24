@@ -1,23 +1,272 @@
-/* Base64 Converter specific styles */
+/* Base64 Converter - Phase E UI modernization (tool-scoped) */
 
-/* Make encoding select wider than default */
-#base64converter-encoding {
-    min-width: 120px;
+.b64-tool {
+  --b64-accent: var(--color-primary, #005f73);
+  --b64-surface-soft: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 90%, white 10%);
+  --b64-border-soft: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 78%, white 22%);
 }
 
-/* Output area specific styles */
-#base64converter-result {
-    min-height: 300px;
-    max-height: 300px;
-    word-wrap: break-word;
-    white-space: pre-wrap;
-    overflow-y: auto;
-    overflow-x: hidden;
-    background-color: var(--color-bg-light, var(--default-color-bg-light));
+.b64-header.o-header {
+  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
+  padding: var(--spacing-md, var(--default-spacing-md));
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  border: 1px solid var(--b64-border-soft);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 95%, var(--b64-accent) 5%) 0%,
+      var(--b64-surface-soft) 100%
+    );
+  box-shadow: var(--cst-shadow-1, none);
+}
+
+.b64-description.o-description {
+  margin: 0;
+  max-width: 72ch;
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  line-height: 1.55;
+}
+
+.b64-settings-panel.o-controls {
+  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
+  padding: var(--spacing-md, var(--default-spacing-md));
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  border: 1px solid var(--b64-border-soft);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 97%, var(--b64-accent) 3%) 0%,
+      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 95%, white 5%) 100%
+    );
+}
+
+.b64-settings-row {
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.b64-select.c-input,
+.b64-tool select.b64-select {
+  min-width: 0;
+  height: var(--cst-control-height, 40px);
+  flex: 1 1 13rem;
+  background-color: var(--color-bg, #fff);
+  border-color: var(--b64-border-soft);
+  color: var(--color-text, var(--default-color-text));
+}
+
+#base64converter-encoding.b64-select {
+  min-width: 9rem;
+}
+
+.b64-panels {
+  align-items: stretch;
+}
+
+.b64-tool .b64-panel.o-panel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  padding: clamp(0.95rem, 1.1vw, 1.15rem);
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  border-color: var(--b64-border-soft);
+  box-shadow: var(--cst-shadow-1, none);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 95%, var(--b64-accent) 5%) 0%,
+      var(--b64-surface-soft) 100%
+    );
+}
+
+.b64-panel-header.o-panel-header {
+  margin-bottom: 0;
+  padding-bottom: var(--spacing-sm, var(--default-spacing-sm));
+  border-bottom: 1px solid color-mix(in srgb, var(--b64-accent) 10%, var(--b64-border-soft));
+}
+
+.b64-panel-header.o-panel-header :is(h2, h3) {
+  margin: 0;
+  font-size: clamp(1rem, 0.96rem + 0.2vw, 1.1rem);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.b64-tool .clear-button-wrapper,
+.b64-tool .copy-button-wrapper {
+  display: block;
+  width: 100%;
+  flex: 1;
+}
+
+.b64-textarea.c-input.c-input--textarea,
+.b64-tool textarea.b64-textarea {
+  width: 100%;
+  flex: 1;
+  min-height: clamp(17rem, 35vh, 22rem);
+  margin: 0;
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  border-color: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 82%, white 18%);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 98%, var(--b64-accent) 2%) 0%,
+      var(--color-bg, #fff) 100%
+    );
+  box-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.03);
+  line-height: var(--line-height-tight, var(--default-line-height-tight));
+}
+
+.b64-textarea::placeholder {
+  color: color-mix(in srgb, var(--color-text-secondary, #54616f) 88%, white 12%);
+}
+
+#base64converter-result.b64-output {
+  min-height: clamp(17rem, 35vh, 22rem);
+  max-height: clamp(17rem, 35vh, 22rem);
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background:
+    linear-gradient(
+      180deg,
+      var(--md-sys-color-surface-container-low, #f5f7f9) 0%,
+      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 88%, white 12%) 100%
+    );
+}
+
+.b64-action-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  align-items: center;
+  margin-top: 0;
+  padding: var(--spacing-sm, var(--default-spacing-sm));
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  border: 1px solid var(--b64-border-soft);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 94%, var(--b64-accent) 6%) 0%,
+      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 92%, white 8%) 100%
+    );
+}
+
+.b64-file-action,
+.b64-convert-action,
+.b64-download-action {
+  min-width: 0;
+}
+
+.b64-convert-action {
+  justify-content: center;
+}
+
+.b64-upload-button,
+.b64-convert-button,
+.b64-download-button {
+  min-width: max-content;
+}
+
+.b64-convert-button {
+  min-width: 10rem;
+  font-weight: 700;
+}
+
+.b64-status-panel.o-controls {
+  margin-top: var(--spacing-md, var(--default-spacing-md));
+  padding: var(--spacing-sm, var(--default-spacing-sm));
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs, var(--default-spacing-xs));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  border: 1px dashed color-mix(in srgb, var(--b64-accent) 18%, transparent);
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 94%, white 6%);
+  min-height: 2.5rem;
+  align-items: center;
+}
+
+.b64-status-text {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.9rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: var(--font-size-small, var(--default-font-size-small));
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  background: color-mix(in srgb, var(--color-bg, #fff) 92%, var(--b64-accent) 8%);
+  border: 1px solid color-mix(in srgb, var(--b64-accent) 10%, transparent);
+}
+
+.b64-status-text:empty {
+  display: none;
 }
 
 /* Accessibility: Show focus outline on label when hidden file input is focused */
-#base64converter-file:focus + label {
-    outline: 2px solid var(--color-primary, var(--default-color-primary));
-    outline-offset: 2px;
+#base64converter-file:focus + label,
+#base64converter-file:focus-visible + label {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(0, 95, 115, 0.2));
+}
+
+@media (max-width: 768px) {
+  .b64-header.o-header,
+  .b64-settings-panel.o-controls {
+    margin-bottom: var(--spacing-md, var(--default-spacing-md));
+    padding: var(--spacing-md, var(--default-spacing-md));
+  }
+
+  .b64-settings-row {
+    flex-direction: column;
+    gap: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .b64-select.c-input,
+  .b64-tool select.b64-select {
+    width: 100%;
+    flex: none;
+  }
+
+  .b64-panels {
+    flex-direction: column;
+    gap: var(--spacing-md, var(--default-spacing-md));
+  }
+
+  .b64-tool .b64-panel.o-panel {
+    width: 100%;
+    padding: var(--spacing-md, var(--default-spacing-md));
+  }
+
+  .b64-textarea.c-input.c-input--textarea,
+  .b64-tool textarea.b64-textarea,
+  #base64converter-result.b64-output {
+    min-height: 14rem;
+    max-height: none;
+  }
+
+  .b64-action-row {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xs, var(--default-spacing-xs));
+    padding: var(--spacing-xs, var(--default-spacing-xs));
+  }
+
+  .b64-file-action,
+  .b64-convert-action,
+  .b64-download-action {
+    width: 100%;
+  }
+
+  .b64-upload-button,
+  .b64-convert-button,
+  .b64-download-button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .b64-convert-action {
+    justify-content: stretch;
+  }
 }

@@ -329,22 +329,32 @@ export default createConverter;
 
 export function Base64ConverterApp() {
     return (
-        <div id="base64converter-tool" className="tool-container">
-            <div className="o-header">
-                <p className="o-description">
+        <div id="base64converter-tool" className="tool-container b64-tool">
+            <div className="o-header b64-header">
+                <p className="o-description b64-description">
                     Convert text and files to and from Base64 encoding with support for multiple character encodings.
                 </p>
             </div>
 
-            <div className="o-controls">
-                <div className="u-flex u-gap-sm">
-                    <select id="base64converter-mode" className="tool-container select" aria-label="Conversion Mode" defaultValue="auto">
+            <div className="o-controls b64-settings-panel">
+                <div className="u-flex u-gap-sm b64-settings-row">
+                    <select
+                        id="base64converter-mode"
+                        className="tool-container select c-input b64-select"
+                        aria-label="Conversion Mode"
+                        defaultValue="auto"
+                    >
                         <option value="auto">Auto Detect</option>
                         <option value="encode">Encode</option>
                         <option value="decode">Decode</option>
                     </select>
 
-                    <select id="base64converter-encoding" className="tool-container select" aria-label="Character Encoding" defaultValue="utf8">
+                    <select
+                        id="base64converter-encoding"
+                        className="tool-container select c-input b64-select"
+                        aria-label="Character Encoding"
+                        defaultValue="utf8"
+                    >
                         <option value="utf8">UTF-8</option>
                         <option value="ascii">ASCII</option>
                         <option value="iso88591">ISO-8859-1</option>
@@ -353,45 +363,46 @@ export function Base64ConverterApp() {
                 </div>
             </div>
 
-            <div className="u-flex u-gap-lg">
-                <div className="o-panel">
-                    <div className="o-panel-header">
-                        <h2>Input</h2>
+            <div className="u-flex u-gap-lg b64-panels">
+                <div className="o-panel b64-panel">
+                    <div className="o-panel-header b64-panel-header">
+                        <h3>Input</h3>
                     </div>
                     <textarea
                         id="base64converter-input"
+                        className="c-input c-input--textarea b64-textarea b64-input"
                         placeholder="Enter text to encode or decode..."
                         aria-label="Input text"
                     />
                 </div>
 
-                <div className="o-panel">
-                    <div className="o-panel-header">
-                        <h2>Output</h2>
+                <div className="o-panel b64-panel">
+                    <div className="o-panel-header b64-panel-header">
+                        <h3>Output</h3>
                     </div>
                     <textarea
                         id="base64converter-result"
-                        className="tool-container textarea"
+                        className="c-input c-input--textarea b64-textarea b64-output"
                         readOnly
                         aria-label="Output text"
                     />
                 </div>
             </div>
 
-            <div className="u-flex u-justify-between u-mt-md">
-                <div className="u-flex u-gap-sm">
+            <div className="u-flex u-justify-between u-mt-md b64-action-row">
+                <div className="u-flex u-gap-sm b64-file-action">
                     <input type="file" id="base64converter-file" className="u-visually-hidden" />
-                    <label className="c-button c-button--secondary" htmlFor="base64converter-file">
+                    <label className="c-button c-button--secondary b64-upload-button" htmlFor="base64converter-file">
                         Upload File
                     </label>
                 </div>
-                <div className="u-flex u-justify-center" style={{ flex: 1 }}>
-                    <button id="base64converter-convert" className="c-button">Convert</button>
+                <div className="u-flex u-justify-center b64-convert-action">
+                    <button id="base64converter-convert" className="c-button b64-convert-button">Convert</button>
                 </div>
-                <div>
+                <div className="b64-download-action">
                     <button
                         id="base64converter-download-decoded"
-                        className="c-button c-button--secondary c-button--icon-download"
+                        className="c-button c-button--secondary c-button--icon-download b64-download-button"
                         disabled
                     >
                         Download
@@ -399,9 +410,9 @@ export function Base64ConverterApp() {
                 </div>
             </div>
 
-            <div className="o-controls">
-                <span id="base64converter-status" aria-live="polite" />
-                <span id="base64converter-copy-status" aria-live="polite" />
+            <div className="o-controls b64-status-panel">
+                <span id="base64converter-status" className="b64-status-text" aria-live="polite" />
+                <span id="base64converter-copy-status" className="b64-status-text" aria-live="polite" />
             </div>
 
             <div id="notification" className="c-notification" role="status" aria-live="polite">

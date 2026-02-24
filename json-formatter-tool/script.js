@@ -8,38 +8,38 @@ import { mountToolShell } from '../common/app-shell/mountToolShell.js';
 
 export function JsonFormatterApp() {
   return (
-    <div id="json-formatter-tool" className="tool-container">
-      <div className="o-panel">
+    <div id="json-formatter-tool" className="tool-container jsonf-tool">
+      <div className="o-panel jsonf-panel jsonf-input-panel">
         <h3>Input JSON</h3>
-        <div className="o-panel-content">
+        <div className="o-panel-content jsonf-panel-content">
           <textarea
-            className="c-input c-input--textarea"
+            className="c-input c-input--textarea jsonf-input-textarea"
             placeholder="Paste your JSON here..."
             aria-label="Input JSON"
           />
         </div>
-        <div className="o-panel-content">
-          <div className="c-input-status" id="jsonErrorStatus" />
+        <div className="o-panel-content jsonf-panel-content jsonf-status-content">
+          <div className="c-input-status jsonf-input-status" id="jsonErrorStatus" />
         </div>
       </div>
 
-      <div className="o-toolbar jsonf-controls-custom">
-        <button className="c-button" id="formatJsonBtn" type="button">Format JSON</button>
-        <button className="c-button c-button--secondary" id="loadSampleBtn" type="button">Load Sample</button>
-        <div className="c-checkbox-item">
+      <div className="o-toolbar jsonf-controls-custom jsonf-toolbar">
+        <button className="c-button jsonf-format-btn" id="formatJsonBtn" type="button">Format JSON</button>
+        <button className="c-button c-button--secondary jsonf-sample-btn" id="loadSampleBtn" type="button">Load Sample</button>
+        <div className="c-checkbox-item jsonf-checkbox-item">
           <input type="checkbox" id="sortKeys" defaultChecked />
           <label htmlFor="sortKeys">Sort keys</label>
         </div>
-        <div className="c-checkbox-item">
+        <div className="c-checkbox-item jsonf-checkbox-item">
           <input type="checkbox" id="autoFix" defaultChecked />
           <label htmlFor="autoFix">Auto fix</label>
         </div>
       </div>
 
-      <div className="o-panel">
+      <div className="o-panel jsonf-panel jsonf-output-panel">
         <h3>Formatted Output</h3>
         <div className="o-panel-header jsonf-panel-header">
-          <button className="c-button c-button--secondary" id="copyOutputBtn" type="button" disabled>Copy Output</button>
+          <button className="c-button c-button--secondary jsonf-copy-btn" id="copyOutputBtn" type="button" disabled>Copy Output</button>
           <button
             className="c-button c-button--secondary c-button--icon-download jsonf-download-btn"
             id="downloadOutputBtn"
@@ -55,13 +55,13 @@ export function JsonFormatterApp() {
           <button className="jsonf-tab" data-view="plain" aria-pressed="false" type="button">Plain View</button>
         </div>
 
-        <div className="o-panel-content">
+        <div className="o-panel-content jsonf-panel-content jsonf-output-content">
           <div id="treeView" className="view-container active">
-            <pre className="c-code-output"><code /></pre>
+            <pre className="c-code-output jsonf-code-output" tabIndex="0"><code /></pre>
           </div>
           <div id="plainView" className="view-container">
             <textarea
-              className="c-input c-input--textarea"
+              className="c-input c-input--textarea jsonf-plain-textarea"
               readOnly
               placeholder="Formatted JSON will appear here..."
               aria-label="Formatted JSON Output"
@@ -70,7 +70,7 @@ export function JsonFormatterApp() {
         </div>
       </div>
 
-      <div className="c-stats-panel">
+      <div className="c-stats-panel jsonf-stats-panel">
         <div className="c-stat-row">
           <span>Original Size:</span>
           <span className="jsonf-original-size">0 bytes</span>

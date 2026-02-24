@@ -180,7 +180,7 @@ export function JSMinifierApp() {
       </header>
 
       <div className="js-minifier-options c-options-panel">
-        <h2>Minification Options</h2>
+        <h3>Minification Options</h3>
         <div className="c-checkbox-group">
           <div className="c-checkbox-item">
             <input
@@ -245,7 +245,7 @@ export function JSMinifierApp() {
 
       <div className="o-grid-2col">
         <div className="o-panel">
-          <h2>Original JavaScript</h2>
+          <h3>Original JavaScript</h3>
           <textarea
             id="js-minifier-input"
             ref={inputRef}
@@ -258,7 +258,7 @@ export function JSMinifierApp() {
         </div>
 
         <div className="o-panel">
-          <h2>Minified JavaScript</h2>
+          <h3>Minified JavaScript</h3>
           <textarea
             id="js-minifier-output"
             ref={outputRef}
@@ -281,7 +281,7 @@ export function JSMinifierApp() {
       </div>
 
       <div className="js-minifier-stats c-stats-panel">
-        <h2>Statistics</h2>
+        <h3>Statistics</h3>
         <div className="c-stat-row js-minifier-stat-row">
           <span>Original Size:</span>
           <span id="js-minifier-original-size">{stats.originalSizeLabel}</span>

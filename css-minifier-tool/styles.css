@@ -1,178 +1,295 @@
-/* css-minifier-tool/styles.css */
-/* Specific styles for the CSS Minifier tool */
+/* Phase E tool-scoped styles for CSS Minifier */
 
-/* Header and description styles */
-.css-minifier-header {
-  text-align: center;
-  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
-  padding-bottom: var(--spacing-lg, var(--default-spacing-lg));
-  border-bottom: 1px solid var(--color-border-light, var(--default-color-border-light));
+.cssm-tool {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg, var(--default-spacing-lg));
 }
 
-.css-minifier-description {
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
-  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
+.cssm-tool .cssm-grid {
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+  align-items: stretch;
 }
 
-/* Toolbar styles */
-.css-minifier-toolbar.o-toolbar {
-  justify-content: flex-end; /* Align buttons to the right */
-  /* Removed margin to prevent height discrepancies */
-  flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
-  width: 100%; /* Ensure toolbar spans full width */
-  gap: var(--spacing-md, var(--default-spacing-md)); /* Add consistent spacing between buttons */
+.cssm-tool .cssm-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 22rem;
+  border-radius: var(--radius-lg, 14px);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
+  background: var(--color-surface, #fff);
 }
 
-/* Add padding to the panel header to maintain spacing after removing toolbar margin */
-.css-minifier-container .o-panel-header {
-  padding-bottom: var(--spacing-md, var(--default-spacing-md));
+.cssm-tool .cssm-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, white);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 52%, white),
+      color-mix(in srgb, white 92%, var(--color-primary-soft, #e9f3fb))
+    );
 }
 
-/* Stats panel styles */
-.css-minifier-stats {
-  width: 100%; /* Ensure stats panel spans full width */
-  margin-top: var(--spacing-lg, var(--default-spacing-lg));
+.cssm-tool .cssm-panel-header :is(h2, h3) {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
 }
 
-/* Savings percentage specific styling */
-.css-minifier-saving-percentage {
-  color: var(--color-success, var(--default-color-success));
+.cssm-tool .cssm-panel-toolbar {
+  margin: 0;
+  min-height: 0;
+  gap: 0;
 }
 
-/* Options panel styles */
-.css-minifier-options {
-  margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
+.cssm-tool .cssm-panel-toolbar:empty {
+  display: none;
 }
 
-/* Primary action row */
-.css-minifier-actions {
+/* Overlay wrappers are inserted dynamically by shared Clear/Copy button components */
+.cssm-tool .cssm-panel > .clear-button-wrapper,
+.cssm-tool .cssm-panel > .copy-button-wrapper {
+  flex: 1;
+  display: flex;
+  width: 100%;
+}
+
+.cssm-tool .cssm-panel > .clear-button-wrapper > .cssm-textarea,
+.cssm-tool .cssm-panel > .copy-button-wrapper > .cssm-textarea {
+  flex: 1;
+}
+
+.cssm-tool .cssm-textarea {
+  flex: 1;
+  min-height: 19rem;
+  width: 100%;
+  max-width: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  resize: vertical;
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  line-height: 1.5;
+  background: var(--color-surface, #fff);
+}
+
+.cssm-tool .cssm-textarea:focus {
+  position: relative;
+  z-index: 1;
+}
+
+.cssm-tool .cssm-input-textarea {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 62%, white),
+      white 40%
+    );
+}
+
+.cssm-tool .cssm-output-textarea {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white 88%, var(--color-surface-subtle, #f5f7fa)),
+      var(--color-surface, #fff)
+    );
+}
+
+.cssm-tool .cssm-output-textarea.processing {
+  background-image:
+    linear-gradient(
+      110deg,
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 70%, white) 25%,
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 55%, white) 42%,
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 70%, white) 60%
+    );
+  background-size: 220% 100%;
+  animation: cssm-processing-shimmer 1.15s linear infinite;
+}
+
+.cssm-tool .cssm-actions {
+  margin: 0;
+  padding: var(--spacing-md, var(--default-spacing-md));
   display: flex;
   justify-content: center;
-  align-items: center;
   flex-wrap: wrap;
-  gap: var(--spacing-md, var(--default-spacing-md));
-  margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  align-items: center;
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 10%, transparent), transparent 58%),
+    linear-gradient(180deg, color-mix(in srgb, white 88%, var(--color-primary-soft, #e9f3fb)), white);
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
 }
 
-.c-checkbox-group {
-  display: flex;
-  flex-direction: column; /* Stack rows vertically */
-  gap: var(--spacing-md, var(--default-spacing-md)); /* Gap between rows */
+.cssm-tool .cssm-minify-btn,
+.cssm-tool .cssm-load-sample-btn {
+  width: auto;
 }
 
-.c-checkbox-row {
-  display: flex;
-  flex-wrap: wrap; /* Allow items to wrap within a row if needed */
-  gap: var(--spacing-md, var(--default-spacing-md)); /* Gap between items in a row */
+.cssm-tool .cssm-options-panel {
+  margin: 0;
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
+  background: var(--color-surface, #fff);
 }
 
-.c-checkbox-item {
-  flex: 1 1 calc(33.33% - (2 * var(--spacing-md, var(--default-spacing-md)) / 3)); /* Max 3 items per row, accounting for gap */
-  min-width: 150px; /* Ensure items don't get too small */
+.cssm-tool .cssm-options-panel > :is(h2, h3) {
+  margin-bottom: var(--spacing-md, var(--default-spacing-md));
 }
 
-/* Footer styles */
-.css-minifier-footer {
-  text-align: center;
-  margin-top: 30px;
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
-  font-size: var(--font-size-base, var(--default-font-size-base));
+.cssm-tool .cssm-checkbox-group {
+  gap: var(--spacing-sm, var(--default-spacing-sm));
 }
 
-/* Grid and panel layout fixes */
-.css-minifier-container .o-grid-2col {
+.cssm-tool .cssm-checkbox-row {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Force 2 columns */
-  gap: var(--spacing-lg, var(--default-spacing-lg));
-  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
-  min-height: 350px; /* Set minimum height for the grid */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-sm, var(--default-spacing-sm));
 }
 
-/* Force panel flex layout specifically within this tool */
-.css-minifier-container .o-panel {
-  display: flex;
-  flex-direction: column;
-  min-height: 350px; /* Set minimum height for panels */
-  box-sizing: border-box;
+.cssm-tool .cssm-checkbox-item {
+  min-width: 0;
+  margin: 0;
+  padding: 0.75rem 0.8rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white 92%, var(--color-surface-subtle, #f5f7fa)),
+      var(--color-surface, #fff)
+    );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  align-items: flex-start;
 }
 
-/* Fix textarea sizing - Ensure both textareas have equal height */
-.css-minifier-container .o-panel {
-  display: flex;
-  flex-direction: column;
+.cssm-tool .cssm-checkbox-item label {
+  color: var(--color-text, #1f2937);
+  line-height: 1.35;
+  font-weight: 500;
 }
 
-.css-minifier-container .c-input--textarea {
-  flex: 1;
-  min-height: 300px;
-  box-sizing: border-box;
+.cssm-tool .cssm-checkbox-item input:checked + label {
+  color: var(--color-primary, #1d70b8);
+}
+
+.cssm-tool .cssm-checkbox-item:has(input:checked) {
+  border-color: color-mix(in srgb, var(--color-primary, #1d70b8) 26%, var(--color-border, #d7dde4));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 62%, white),
+      color-mix(in srgb, white 94%, var(--color-primary-soft, #e9f3fb))
+    );
+}
+
+.cssm-tool .cssm-options-toolbar {
+  margin: var(--spacing-md, var(--default-spacing-md)) 0 0;
+  justify-content: flex-end;
   width: 100%;
-  max-width: 100%;
-  resize: vertical;
 }
 
-/* Ensure panels take full width in their grid cells */
-.css-minifier-container .o-panel {
-  width: 100%;
-  max-width: 100%;
+.cssm-tool .cssm-stats-panel {
+  margin: 0;
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
+  background: color-mix(in srgb, white 90%, var(--color-surface-subtle, #f5f7fa));
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .css-minifier-container .o-grid-2col {
-    grid-template-columns: 1fr; /* Single column on mobile */
+.cssm-tool .cssm-stats-panel :is(h2, h3) {
+  margin-bottom: 0.55rem;
+}
+
+.cssm-tool .cssm-stat-row {
+  align-items: center;
+}
+
+.cssm-tool .cssm-stat-value,
+.cssm-tool .css-minifier-saving-percentage {
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+.cssm-tool .css-minifier-saving-percentage {
+  color: #166534;
+  font-weight: 700;
+}
+
+.cssm-tool .cssm-footer {
+  margin-top: 0;
+  padding: 0.2rem 0.25rem 0;
+  text-align: center;
+  color: var(--color-text-secondary, #4b5563);
+  font-size: 0.92rem;
+}
+
+.cssm-tool .cssm-footer p {
+  margin: 0;
+}
+
+@keyframes cssm-processing-shimmer {
+  from {
+    background-position: 0% 0;
   }
-  
-  .css-minifier-toolbar.o-toolbar {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .css-minifier-toolbar.o-toolbar button {
-    width: 100%;
-    margin-bottom: var(--spacing-sm, var(--default-spacing-sm));
+  to {
+    background-position: 100% 0;
   }
 }
 
-/*
-  Styles removed as they are covered by common/shared-styles.css:
-  - .css-minifier-container (covered by .tool-container)
-  - .css-minifier-container * (covered by .tool-container *)
-  - .css-minifier-container h1 (covered by .tool-container h1)
-  - .css-minifier-container h2 (covered by .tool-container h2)
-  - .css-minifier-editor-container (covered by .o-grid-2col)
-  - .css-minifier-panel base styles (covered by .o-panel)
-  - .css-minifier-panel-header (covered by .o-panel-header)
-  - .css-minifier-container textarea (covered by .c-input, .c-input--textarea)
-  - .css-minifier-toolbar base styles (covered by .o-toolbar)
-  - .css-minifier-container button styles (covered by .c-button, .c-button--secondary)
-  - .css-minifier-options base styles (covered by .c-options-panel)
-  - .css-minifier-checkbox-group (covered by .c-checkbox-group)
-  - .css-minifier-checkbox-item (covered by .c-checkbox-item)
-  - .css-minifier-container input[type="checkbox"] (covered by .c-checkbox-item input)
-  - .css-minifier-container label (covered by .c-checkbox-item label)
-  - .css-minifier-stats base styles (covered by .c-stats-panel)
-  - .css-minifier-stat-item (covered by .c-stat-row)
-  - .css-minifier-notification (covered by .c-notification)
-*/
+@media (max-width: 900px) {
+  .cssm-tool .cssm-actions {
+    justify-content: stretch;
+  }
 
-/* Notification styles */
-.c-notification {
-  z-index: 1000;
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  padding: 12px 24px;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  background-color: var(--color-success, var(--default-color-success)); /* Default green background */
+  .cssm-tool .cssm-checkbox-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cssm-tool .cssm-minify-btn,
+  .cssm-tool .cssm-load-sample-btn {
+    flex: 1 1 12rem;
+  }
 }
 
-.c-notification.show {
-  opacity: 1;
-  transform: translateY(0);
+@media (max-width: 640px) {
+  .cssm-tool {
+    gap: var(--spacing-md, var(--default-spacing-md));
+  }
+
+  .cssm-tool .cssm-panel-header {
+    padding: 0.8rem 0.9rem;
+  }
+
+  .cssm-tool .cssm-actions {
+    padding: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .cssm-tool .cssm-options-panel {
+    padding: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .cssm-tool .cssm-checkbox-row {
+    grid-template-columns: 1fr;
+  }
+
+  .cssm-tool .cssm-textarea {
+    min-height: 16.5rem;
+  }
 }
 
-.c-notification.error {
-  background-color: var(--color-danger, var(--default-color-danger));
+@media (prefers-reduced-motion: reduce) {
+  .cssm-tool .cssm-output-textarea.processing {
+    animation: none;
+  }
 }

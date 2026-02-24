@@ -1,175 +1,336 @@
-/* Tool-specific styles for JSON Formatter */
+/* Phase E tool-scoped styles for JSON Formatter */
 
-/* Custom styles for panel headers with right-aligned buttons */
-.jsonf-panel-header {
+.jsonf-tool {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+}
+
+.jsonf-tool .jsonf-panel {
+  border-radius: var(--radius-lg, 14px);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
+  background: var(--color-surface, #fff);
+}
+
+.jsonf-tool .jsonf-panel > :is(h2, h3) {
+  margin: 0;
+  padding: 0.95rem 1rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, white);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 52%, white),
+      color-mix(in srgb, white 92%, var(--color-primary-soft, #e9f3fb))
+    );
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
+.jsonf-tool .jsonf-panel-content {
+  padding: var(--spacing-md, var(--default-spacing-md));
+}
+
+.jsonf-tool .jsonf-status-content {
+  padding-top: 0;
+}
+
+.jsonf-tool .jsonf-input-textarea,
+.jsonf-tool .jsonf-plain-textarea {
+  min-height: 20rem;
+  height: 20rem;
+  flex: none;
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  line-height: 1.5;
+}
+
+.jsonf-tool .jsonf-input-textarea {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 62%, white),
+      white 40%
+    );
+}
+
+.jsonf-tool .jsonf-toolbar {
+  margin: 0;
+  padding: var(--spacing-md, var(--default-spacing-md));
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 10%, transparent), transparent 58%),
+    linear-gradient(180deg, color-mix(in srgb, white 88%, var(--color-primary-soft, #e9f3fb)), white);
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
+}
+
+.jsonf-tool .jsonf-format-btn {
+  min-width: 8.5rem;
+}
+
+.jsonf-tool .jsonf-checkbox-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  background: color-mix(in srgb, var(--color-surface, #fff) 92%, var(--color-surface-subtle, #f5f7fa));
+}
+
+.jsonf-tool .jsonf-checkbox-item label {
+  color: var(--color-text-secondary, #4b5563);
+  font-weight: 500;
+}
+
+.jsonf-tool .jsonf-output-panel .jsonf-panel-header {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: var(--spacing-sm, var(--default-spacing-sm));
-  /* 10px */
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  margin: 0;
+  padding: var(--spacing-md, var(--default-spacing-md)) var(--spacing-md, var(--default-spacing-md)) 0;
+  background: transparent;
 }
 
-/* Custom styles for the controls toolbar */
-.jsonf-controls-custom {
-  margin: var(--spacing-md, var(--default-spacing-md)) 0;
-  /* 15px */
-  justify-content: center;
-  flex-wrap: wrap;
-  /* gap is inherited from .o-toolbar (var(--spacing-sm, var(--default-spacing-sm)) = 10px) */
+.jsonf-tool .jsonf-download-btn {
+  margin-left: 0;
 }
 
-/* Tabs Styles */
-.jsonf-tabs {
+.jsonf-tool .jsonf-tabs {
   display: flex;
-  margin-bottom: var(--spacing-sm, var(--default-spacing-sm));
-  border-bottom: 2px solid var(--color-border, var(--default-color-border));
+  gap: 0.35rem;
+  margin: 0 var(--spacing-md, var(--default-spacing-md));
+  padding-top: 0.2rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
 }
 
-.jsonf-tab {
+.jsonf-tool .jsonf-tab {
+  appearance: none;
+  border: 1px solid transparent;
+  border-bottom: none;
   background: none;
-  border: none;
-  padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-md, var(--default-spacing-md));
+  color: var(--color-text-secondary, #4b5563);
+  padding: 0.65rem 0.85rem;
+  margin-bottom: -1px;
+  border-radius: 0.65rem 0.65rem 0 0;
   cursor: pointer;
-  font-size: var(--font-size-base, var(--default-font-size-base));
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  /* Overlap border */
-  transition: color 0.2s, border-color 0.2s;
+  font: inherit;
+  font-weight: 600;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease;
 }
 
-.jsonf-tab:hover {
-  color: var(--color-text, var(--default-color-text));
+.jsonf-tool .jsonf-tab:hover {
+  color: var(--color-primary, #1d70b8);
+  background: color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 70%, white);
 }
 
-.jsonf-tab.active {
-  color: var(--color-primary, var(--default-color-primary));
-  border-bottom-color: var(--color-primary, var(--default-color-primary));
-  font-weight: bold;
+.jsonf-tool .jsonf-tab.active {
+  color: var(--color-primary, #1d70b8);
+  background: var(--color-surface, #fff);
+  border-color: color-mix(in srgb, var(--color-primary, #1d70b8) 24%, var(--color-border, #d7dde4));
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--color-primary, #1d70b8) 28%, white);
 }
 
-.view-container {
+.jsonf-tool .jsonf-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring, 0 0 0 3px rgba(29, 112, 184, 0.2));
+  position: relative;
+  z-index: 1;
+}
+
+.jsonf-tool .view-container {
   display: none;
 }
 
-.view-container.active {
+.jsonf-tool .view-container.active {
   display: block;
 }
 
-/* Ensure textarea in plain view fits well */
-#plainView .c-input--textarea {
-  min-height: 400px;
-  font-family: monospace;
+.jsonf-tool .jsonf-output-content {
+  padding-top: var(--spacing-sm, var(--default-spacing-sm));
 }
 
-/* Generous max-height for tree view */
-#treeView .c-code-output {
-  max-height: 800px;
+.jsonf-tool #treeView .jsonf-code-output {
+  width: 100%;
+  min-height: 20rem;
+  max-height: 32rem;
+  margin: 0;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white 88%, var(--color-surface-subtle, #f5f7fa)),
+      var(--color-surface, #fff)
+    );
+  overflow-x: auto;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* JSON Tree View Styles */
-.json-node {
+.jsonf-tool #treeView .jsonf-code-output:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring, 0 0 0 3px rgba(29, 112, 184, 0.2));
+}
+
+.jsonf-tool .jsonf-code-output code {
+  display: block;
+  min-width: max-content;
+  white-space: pre;
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.jsonf-tool .json-node {
   position: relative;
-  margin: 2px 0;
+  margin: 0.12rem 0;
 }
 
-.json-toggle {
+.jsonf-tool .json-toggle {
   cursor: pointer;
   margin-right: var(--spacing-xs, var(--default-spacing-xs));
-  /* 5px */
-  color: var(--color-text, var(--default-color-text));
+  color: var(--color-text-secondary, #4b5563);
   user-select: none;
-  font-weight: bold;
+  font-weight: 700;
 }
 
-.json-toggle:hover {
-  color: var(--color-primary, var(--default-color-primary));
+.jsonf-tool .json-toggle:hover {
+  color: var(--color-primary, #1d70b8);
 }
 
-.json-children {
+.jsonf-tool .json-children {
   margin-left: var(--spacing-md, var(--default-spacing-md));
-  /* 15px */
 }
 
-.json-node.collapsed .json-children {
+.jsonf-tool .json-node.collapsed .json-children {
   display: none;
 }
 
-.json-key {
-  color: var(--color-primary, var(--default-color-primary));
-  /* Uses theme primary color */
+.jsonf-tool .json-key {
+  color: #0550ae;
+  font-weight: 600;
 }
 
-.json-bracket {
-  color: var(--color-primary, var(--default-color-primary));
-  font-weight: bold;
+.jsonf-tool .json-bracket {
+  color: var(--color-primary, #1d70b8);
+  font-weight: 700;
 }
 
-/* Error Message Styles */
-.c-input-status {
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
-  margin-top: var(--spacing-sm, var(--default-spacing-sm));
-  /* 10px */
-  padding: var(--spacing-xs, var(--default-spacing-xs));
-  /* 5px */
-  font-size: var(--font-size-sm, var(--default-font-size-sm));
-  /* 12px */
-  min-height: 20px;
+.jsonf-tool .jsonf-input-status {
+  min-height: 2.25rem;
+  margin-top: 0;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary, #4b5563);
 }
 
-.c-input-status.error {
-  color: var(--color-danger, var(--default-color-danger));
-  background-color: #fef2f2;
-  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
-  /* 4px */
-  padding: var(--spacing-sm, var(--default-spacing-sm));
-  /* 10px */
+.jsonf-tool .jsonf-input-status.error {
+  color: #b42318;
+  background: #fff1f3;
+  border: 1px solid #f2c7ce;
+  border-radius: var(--radius-sm, 8px);
+  padding: 0.6rem 0.75rem;
 }
 
-/* Download button margin */
-.jsonf-download-btn {
-  margin-left: var(--spacing-sm, var(--default-spacing-sm));
+.jsonf-tool .jsonf-stats-panel {
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
+  background: color-mix(in srgb, white 90%, var(--color-surface-subtle, #f5f7fa));
 }
 
+.jsonf-tool .jsonf-stats-panel .c-stat-row {
+  align-items: center;
+}
 
+.jsonf-tool .jsonf-original-size,
+.jsonf-tool .jsonf-formatted-size {
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  color: var(--color-text, #1f2937);
+}
 
-/* Footer Styles */
-.jsonf-footer {
+.jsonf-tool .jsonf-footer {
+  margin-top: 0;
+  padding: 0.35rem 0.2rem 0;
   text-align: center;
-  margin-top: calc(var(--spacing-lg, var(--default-spacing-lg)) + var(--spacing-sm, var(--default-spacing-sm)));
-  /* 30px */
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
-  font-size: var(--font-size-base, var(--default-font-size-base));
-  /* 14px */
+  color: var(--color-text-secondary, #4b5563);
+  font-size: 0.92rem;
 }
 
-/* Ensure the output container can scroll horizontally */
-.tool-container .c-code-output {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.tool-container .c-code-output code {
-  display: block;
-  /* Make code block level to contain the tree */
-  min-width: max-content;
-  /* Allow content to expand to its natural width */
-  white-space: pre;
-  /* Preserve whitespace and formatting */
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-
-  /* Apply specific height to input/output areas on smaller screens */
-  .tool-container .c-input--textarea,
-  .tool-container .c-code-output {
-    height: 350px;
+@media (max-width: 900px) {
+  .jsonf-tool .jsonf-toolbar {
+    justify-content: stretch;
   }
 
-  /* Ensure horizontal scrolling works on mobile */
-  .tool-container .c-code-output {
-    -webkit-overflow-scrolling: touch;
-    /* Smooth scrolling on iOS */
+  .jsonf-tool .jsonf-format-btn,
+  .jsonf-tool .jsonf-sample-btn {
+    flex: 1 1 12rem;
+  }
+
+  .jsonf-tool .jsonf-checkbox-item {
+    flex: 1 1 10rem;
+    justify-content: center;
+  }
+
+  .jsonf-tool .jsonf-output-panel .jsonf-panel-header {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .jsonf-tool .jsonf-output-panel .jsonf-panel-header > .c-button {
+    flex: 1 1 12rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .jsonf-tool {
+    gap: var(--spacing-md, var(--default-spacing-md));
+  }
+
+  .jsonf-tool .jsonf-panel-content,
+  .jsonf-tool .jsonf-toolbar {
+    padding: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .jsonf-tool .jsonf-panel > :is(h2, h3) {
+    padding: 0.85rem 0.9rem 0.75rem;
+  }
+
+  .jsonf-tool .jsonf-tabs {
+    margin: 0 var(--spacing-sm, var(--default-spacing-sm));
+    gap: 0.25rem;
+  }
+
+  .jsonf-tool .jsonf-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    text-align: center;
+    padding: 0.6rem 0.45rem;
+    font-size: 0.86rem;
+  }
+
+  .jsonf-tool .jsonf-input-textarea,
+  .jsonf-tool .jsonf-plain-textarea,
+  .jsonf-tool #treeView .jsonf-code-output {
+    min-height: 17.5rem;
+    height: 17.5rem;
+    max-height: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jsonf-tool .jsonf-tab {
+    transition: none;
   }
 }

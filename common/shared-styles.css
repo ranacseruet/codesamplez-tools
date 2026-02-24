@@ -110,7 +110,9 @@ body.standalone-app {
   font-family: inherit;
   line-height: inherit;
   color: inherit;
-  contain: style layout paint;
+  /* Avoid layout/paint containment so fixed-position overlays (notifications/tooltips)
+     remain viewport-anchored instead of being trapped inside the tool container. */
+  contain: style;
 }
 
 .tool-container * {

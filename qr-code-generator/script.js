@@ -210,10 +210,10 @@ export function QRCodeGeneratorApp() {
   };
 
   return (
-    <div id="qr-code-generator-tool" className="qr-tool">
+    <div id="qr-code-generator-tool" className="tool-container qr-tool">
       <main className="qr-tool__main-content">
         <div className="qr-tool__controls">
-          <h2 className="qr-tool__section-title">Configuration</h2>
+          <h3 className="qr-tool__section-title">Configuration</h3>
 
           <div className="qr-tool__form-group">
             <label htmlFor="qr-text" className="qr-tool__label">Text or URL</label>
@@ -221,7 +221,7 @@ export function QRCodeGeneratorApp() {
               id="qr-text"
               ref={textAreaRef}
               rows="4"
-              className="qr-tool__textarea"
+              className="qr-tool__textarea c-input c-input--textarea"
               placeholder="e.g. https://codesamplez.com"
               value={text}
               onInput={(event) => setText(event.target.value)}
@@ -264,7 +264,7 @@ export function QRCodeGeneratorApp() {
             <label htmlFor="error-correction" className="qr-tool__label">Error Correction</label>
             <select
               id="error-correction"
-              className="qr-tool__select"
+              className="qr-tool__select c-input"
               value={errorCorrection}
               onChange={(event) => setErrorCorrection(event.target.value)}
             >
@@ -286,7 +286,7 @@ export function QRCodeGeneratorApp() {
               style={{ display: canvasVisible ? 'block' : 'none' }}
             />
           </div>
-          <button id="download-btn" className="qr-tool__button" onClick={handleDownload}>
+          <button id="download-btn" className="qr-tool__button c-button" onClick={handleDownload}>
             <span className="c-button--icon-download">Download PNG</span>
           </button>
           <p id="error-message" className="qr-tool__error-message" role="alert" aria-live="assertive">

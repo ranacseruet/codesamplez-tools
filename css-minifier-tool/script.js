@@ -233,17 +233,17 @@ export function CssMinifierApp() {
   };
 
   return (
-    <div id="css-minifier-tool" className="css-minifier-container tool-container">
-      <div className="o-grid-2col">
-        <div className="o-panel">
-          <div className="o-panel-header">
-            <h2>Input CSS</h2>
-            <div className="css-minifier-toolbar o-toolbar" />
+    <div id="css-minifier-tool" className="css-minifier-container tool-container cssm-tool">
+      <div className="o-grid-2col cssm-grid">
+        <div className="o-panel cssm-panel cssm-input-panel">
+          <div className="o-panel-header cssm-panel-header">
+            <h3>Input CSS</h3>
+            <div className="css-minifier-toolbar o-toolbar cssm-panel-toolbar" />
           </div>
           <textarea
             id="css-minifier-input"
             ref={inputRef}
-            className="c-input c-input--textarea"
+            className="c-input c-input--textarea cssm-textarea cssm-input-textarea"
             placeholder="Paste your CSS code here..."
             aria-label="Input CSS"
             value={inputCss}
@@ -251,15 +251,15 @@ export function CssMinifierApp() {
           />
         </div>
 
-        <div className="o-panel">
-          <div className="o-panel-header">
-            <h2>Minified Output</h2>
-            <div className="css-minifier-toolbar o-toolbar" />
+        <div className="o-panel cssm-panel cssm-output-panel">
+          <div className="o-panel-header cssm-panel-header">
+            <h3>Minified Output</h3>
+            <div className="css-minifier-toolbar o-toolbar cssm-panel-toolbar" />
           </div>
           <textarea
             id="css-minifier-output"
             ref={outputRef}
-            className={`c-input c-input--textarea${isProcessing ? ' processing' : ''}`}
+            className={`c-input c-input--textarea cssm-textarea cssm-output-textarea${isProcessing ? ' processing' : ''}`}
             readOnly
             placeholder="Minified CSS will appear here..."
             aria-label="Minified Output"
@@ -268,72 +268,72 @@ export function CssMinifierApp() {
         </div>
       </div>
 
-      <div className="css-minifier-actions">
-        <button id="minify-btn" className="c-button" onClick={() => void runMinify()} disabled={isProcessing}>
+      <div className="css-minifier-actions cssm-actions">
+        <button id="minify-btn" className="c-button cssm-minify-btn" onClick={() => void runMinify()} disabled={isProcessing}>
           {isProcessing ? 'Minifying...' : 'Minify CSS'}
         </button>
-        <button className="c-button c-button--secondary" id="load-sample" onClick={() => void handleLoadSample()}>
+        <button className="c-button c-button--secondary cssm-load-sample-btn" id="load-sample" onClick={() => void handleLoadSample()}>
           Load Sample
         </button>
       </div>
 
-      <div className="css-minifier-options c-options-panel">
-        <h2>Minification Options</h2>
-        <div className="c-checkbox-group">
-          <div className="c-checkbox-row">
-            <div className="c-checkbox-item">
+      <div className="css-minifier-options c-options-panel cssm-options-panel">
+        <h3>Minification Options</h3>
+        <div className="c-checkbox-group cssm-checkbox-group">
+          <div className="c-checkbox-row cssm-checkbox-row">
+            <div className="c-checkbox-item cssm-checkbox-item">
               <input type="checkbox" id="remove-comments" checked={options.removeComments} onChange={updateOption('removeComments')} />
               <label htmlFor="remove-comments">Remove comments</label>
             </div>
-            <div className="c-checkbox-item">
+            <div className="c-checkbox-item cssm-checkbox-item">
               <input type="checkbox" id="remove-whitespace" checked={options.removeWhitespace} onChange={updateOption('removeWhitespace')} />
               <label htmlFor="remove-whitespace">Remove whitespace</label>
             </div>
-            <div className="c-checkbox-item">
+            <div className="c-checkbox-item cssm-checkbox-item">
               <input type="checkbox" id="combine-selectors" checked={options.combineSelectors} onChange={updateOption('combineSelectors')} />
               <label htmlFor="combine-selectors">Combine duplicate selectors</label>
             </div>
           </div>
-          <div className="c-checkbox-row">
-            <div className="c-checkbox-item">
+          <div className="c-checkbox-row cssm-checkbox-row">
+            <div className="c-checkbox-item cssm-checkbox-item">
               <input type="checkbox" id="shorten-colors" checked={options.shortenColors} onChange={updateOption('shortenColors')} />
               <label htmlFor="shorten-colors">Shorten color values</label>
             </div>
-            <div className="c-checkbox-item">
+            <div className="c-checkbox-item cssm-checkbox-item">
               <input type="checkbox" id="remove-units" checked={options.removeUnits} onChange={updateOption('removeUnits')} />
               <label htmlFor="remove-units">Remove unnecessary units</label>
             </div>
-            <div className="c-checkbox-item">
+            <div className="c-checkbox-item cssm-checkbox-item">
               <input type="checkbox" id="remove-last-semicolons" checked={options.removeLastSemicolons} onChange={updateOption('removeLastSemicolons')} />
               <label htmlFor="remove-last-semicolons">Remove last semicolons</label>
             </div>
           </div>
         </div>
 
-        <div className="css-minifier-toolbar o-toolbar">
-          <button id="reset-options" className="c-button c-button--secondary" onClick={resetOptions}>
+        <div className="css-minifier-toolbar o-toolbar cssm-options-toolbar">
+          <button id="reset-options" className="c-button c-button--secondary cssm-reset-btn" onClick={resetOptions}>
             Reset Options
           </button>
         </div>
       </div>
 
-      <div className="css-minifier-stats c-stats-panel">
-        <h2>Statistics</h2>
-        <div className="c-stat-row">
+      <div className="css-minifier-stats c-stats-panel cssm-stats-panel">
+        <h3>Statistics</h3>
+        <div className="c-stat-row cssm-stat-row">
           <span>Original Size</span>
-          <span id="original-size">{stats.originalSizeLabel}</span>
+          <span id="original-size" className="cssm-stat-value">{stats.originalSizeLabel}</span>
         </div>
-        <div className="c-stat-row">
+        <div className="c-stat-row cssm-stat-row">
           <span>Minified Size</span>
-          <span id="minified-size">{stats.minifiedSizeLabel}</span>
+          <span id="minified-size" className="cssm-stat-value">{stats.minifiedSizeLabel}</span>
         </div>
-        <div className="c-stat-row">
+        <div className="c-stat-row cssm-stat-row">
           <span>Savings</span>
           <span id="saving" className="css-minifier-saving-percentage">{stats.savingsLabel}</span>
         </div>
       </div>
 
-      <div className="css-minifier-footer">
+      <div className="css-minifier-footer cssm-footer">
         <p>CSS Minifier - Always test minified CSS before deployment.</p>
       </div>
 

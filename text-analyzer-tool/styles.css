@@ -1,143 +1,242 @@
-/* Container for the main input area */
-.text-analyzer-editor-container {
-  /* Keep simple block layout */
-  margin-bottom: var(--spacing-lg, var(--default-spacing-lg)); 
-}
+/* Phase E tool-scoped styles for Text Analyzer */
 
-/* Restore original panel styles, adapted with variables */
-.text-analyzer-panel {
-  /* flex: 1; Might not be needed if container isn't flex */
+.text-analyzer-tool {
   display: flex;
   flex-direction: column;
-  width: 100%; /* Ensure full width */
+  gap: var(--spacing-lg, var(--default-spacing-lg));
 }
 
-.text-analyzer-panel-header {
-  display: flex;
-  justify-content: space-between; /* Aligns h2 left, toolbar right */
-  align-items: center;
-  margin-bottom: var(--spacing-sm, var(--default-spacing-sm)); /* Use variable */
+.text-analyzer-tool .ta-editor-container {
+  margin: 0;
 }
 
-/* Restore original toolbar styles *specifically for the panel header* */
-.text-analyzer-panel-header .text-analyzer-toolbar {
-  display: flex;
-  gap: var(--spacing-sm, var(--default-spacing-sm)); /* Use variable */
-  margin: 0; /* No margin needed here */
-}
-
-/* Tool-specific h3 styling - keep as is */
-h3 {
-  font-size: 16px;
-  color: var(--color-text, var(--default-color-text));
-  margin: 0 0 var(--spacing-md, var(--default-spacing-md)) 0;
-}
-
-/* Styles for the options/controls section containing the main Analyze button - keep as is */
-.text-analyzer-options {
-  margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
-  padding: var(--spacing-lg, var(--default-spacing-lg));
-  background-color: var(--color-bg-light, var(--default-color-bg-light));
-  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
-}
-
-/* Ensure the toolbar within the options section is also styled - keep as is */
-.text-analyzer-options .text-analyzer-toolbar {
-  display: flex; /* Add display flex */
-  gap: var(--spacing-sm, var(--default-spacing-sm)); /* Add gap */
-  margin: 0; 
-  justify-content: center; 
-}
-
-
-.text-analyzer-stats { /* Keep as is */
-  /* background-color: var(--color-bg-light, var(--default-color-bg-light)); */ /* Removed background */
-  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
-  padding: var(--spacing-md, var(--default-spacing-md));
-  margin-top: var(--spacing-lg, var(--default-spacing-lg));
-  display: grid;
-  grid-template-columns: repeat(3, 1fr); /* Changed to 3 columns */
-  gap: var(--spacing-md, var(--default-spacing-md));
-}
-
-.text-analyzer-punctuation {
-  /* background-color: var(--color-bg-light, var(--default-color-bg-light)); */ /* Removed background */
-  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
-  padding: var(--spacing-md, var(--default-spacing-md));
-  margin-top: var(--spacing-lg, var(--default-spacing-lg));
-}
-
-.text-analyzer-checkbox-group {
-  display: grid; /* Changed to grid */
-  grid-template-columns: repeat(3, 1fr); /* Changed to 3 columns */
-  gap: var(--spacing-md, var(--default-spacing-md));
-}
-
-.text-analyzer-word-frequency {
-  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
-  padding: var(--spacing-md, var(--default-spacing-md));
-  margin-top: var(--spacing-lg, var(--default-spacing-lg));
-}
-
-.word-frequency-chart {
+.text-analyzer-tool .ta-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm, var(--default-spacing-sm));
+  min-height: 21rem;
+  border-radius: var(--radius-lg, 14px);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
+  background: var(--color-surface, #fff);
 }
 
-.word-frequency-item {
+.text-analyzer-tool .ta-panel-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, white);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 52%, white),
+      color-mix(in srgb, white 92%, var(--color-primary-soft, #e9f3fb))
+    );
+}
+
+.text-analyzer-tool .ta-panel-header :is(h2, h3) {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
+.text-analyzer-tool .ta-toolbar {
+  display: flex;
   gap: var(--spacing-sm, var(--default-spacing-sm));
-  padding: var(--spacing-sm, var(--default-spacing-sm));
-  background-color: var(--color-bg-light, var(--default-color-bg-light));
-  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
-  min-height: 40px;
+  margin: 0;
 }
 
-.word-frequency-label {
-  font-size: var(--font-size-base, var(--default-font-size-base));
-  color: var(--color-text, var(--default-color-text));
-  font-weight: 500;
-  min-width: 80px;
-  text-align: right;
+.text-analyzer-tool .ta-load-sample-btn {
+  white-space: nowrap;
 }
 
-.word-frequency-bar-container {
+/* Shared ClearButton wraps the textarea dynamically */
+.text-analyzer-tool .ta-panel > .clear-button-wrapper {
   flex: 1;
-  height: 20px;
-  background-color: var(--color-bg, var(--default-color-bg));
-  border-radius: var(--border-radius-xs, var(--default-border-radius-xs));
+  display: flex;
+  width: 100%;
+}
+
+.text-analyzer-tool .ta-panel > .clear-button-wrapper > .ta-input-textarea {
+  flex: 1;
+}
+
+.text-analyzer-tool .ta-input-textarea {
+  flex: 1;
+  min-height: 19rem;
+  width: 100%;
+  max-width: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  resize: vertical;
+  line-height: 1.55;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 62%, white),
+      white 42%
+    );
+}
+
+.text-analyzer-tool .ta-input-textarea:focus {
+  position: relative;
+  z-index: 1;
+}
+
+.text-analyzer-tool .ta-stats-panel,
+.text-analyzer-tool .ta-punctuation-panel,
+.text-analyzer-tool .ta-word-frequency-panel {
+  margin: 0;
+  padding: var(--spacing-md, var(--default-spacing-md));
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
+  background: var(--color-surface, #fff);
+}
+
+.text-analyzer-tool .ta-stats-panel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white 90%, var(--color-surface-subtle, #f5f7fa)),
+      var(--color-surface, #fff)
+    );
+}
+
+.text-analyzer-tool .ta-punctuation-panel :is(h3, h4),
+.text-analyzer-tool .ta-word-frequency-panel :is(h3, h4) {
+  margin: 0 0 var(--spacing-md, var(--default-spacing-md));
+  font-size: 1rem;
+  color: var(--color-text, #1f2937);
+}
+
+.text-analyzer-tool .ta-punctuation-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.text-analyzer-tool .ta-stat-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.8rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, white);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white 92%, var(--color-surface-subtle, #f5f7fa)),
+      var(--color-surface, #fff)
+    );
+  text-align: center;
+}
+
+.text-analyzer-tool .text-analyzer-stat-label {
+  font-size: 0.86rem;
+  color: var(--color-text-secondary, #4b5563);
+  line-height: 1.3;
+}
+
+.text-analyzer-tool .text-analyzer-stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text, #1f2937);
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+.text-analyzer-tool .ta-word-frequency-chart,
+.text-analyzer-tool .word-frequency-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.text-analyzer-tool .word-frequency-empty {
+  text-align: center;
+  color: var(--color-text-secondary, #4b5563);
+  font-style: italic;
+  padding: var(--spacing-md, var(--default-spacing-md));
+  border-radius: var(--radius-md, 10px);
+  border: 1px dashed color-mix(in srgb, var(--color-border, #d7dde4) 82%, white);
+  background: color-mix(in srgb, white 88%, var(--color-surface-subtle, #f5f7fa));
+}
+
+.text-analyzer-tool .word-frequency-item {
+  display: grid;
+  grid-template-columns: minmax(70px, auto) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, white);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white 92%, var(--color-surface-subtle, #f5f7fa)),
+      var(--color-surface, #fff)
+    );
+  min-height: 44px;
+}
+
+.text-analyzer-tool .word-frequency-label {
+  font-size: 0.9rem;
+  color: var(--color-text, #1f2937);
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.text-analyzer-tool .word-frequency-bar-container {
+  flex: 1;
+  height: 22px;
+  background: color-mix(in srgb, white 65%, var(--color-surface-subtle, #f5f7fa));
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border-radius: 999px;
   overflow: hidden;
   position: relative;
 }
 
-.word-frequency-bar {
+.text-analyzer-tool .word-frequency-bar {
   height: 100%;
-  background-color: var(--color-primary, var(--default-color-primary)); /* Use a solid primary color for better visibility */
-  border-radius: var(--border-radius-xs, var(--default-border-radius-xs));
-  transition: width 0.3s ease;
+  min-width: 8px;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-primary, #1d70b8) 86%, #0ea5a0),
+      var(--color-primary, #1d70b8)
+    );
+  border-radius: 999px;
+  transition: width 220ms ease;
   position: relative;
-  min-width: 5px; /* Ensure even small bars are visible */
 }
 
-.word-frequency-bar::after {
+.text-analyzer-tool .word-frequency-bar::after {
   content: attr(data-count);
   position: absolute;
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 12px;
-  font-weight: 600;
-  color: white; /* White color for better visibility inside blue bars */
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
-.word-frequency-count {
-  /* display: none; Removed to allow sr-only usage */
+.text-analyzer-tool .word-frequency-count {
+  min-width: 1px;
 }
 
-.sr-only {
+.text-analyzer-tool .sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -149,24 +248,67 @@ h3 {
   border: 0;
 }
 
-.text-analyzer-stat-item {
-  display: flex;
-  flex-direction: column;
-  background-color: var(--color-bg-light, var(--default-color-bg-light)); /* Corrected: Use defined light gray background */
-  padding: var(--spacing-md, var(--default-spacing-md)); /* Add padding */
-  border-radius: var(--border-radius-sm, var(--default-border-radius-sm)); /* Add rounded corners */
-  text-align: center; /* Center the text */
-  flex-grow: 1; /* Allow items to grow and fill space */
-  min-width: 100px; /* Ensure a minimum width */
+@media (max-width: 900px) {
+  .text-analyzer-tool .ta-stats-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .text-analyzer-tool .ta-punctuation-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-.text-analyzer-stat-label {
-  font-size: var(--font-size-base, var(--default-font-size-base));
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
+@media (max-width: 640px) {
+  .text-analyzer-tool {
+    gap: var(--spacing-md, var(--default-spacing-md));
+  }
+
+  .text-analyzer-tool .ta-panel-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.8rem 0.9rem;
+  }
+
+  .text-analyzer-tool .ta-toolbar {
+    width: 100%;
+  }
+
+  .text-analyzer-tool .ta-load-sample-btn {
+    width: 100%;
+  }
+
+  .text-analyzer-tool .ta-input-textarea {
+    min-height: 16.5rem;
+  }
+
+  .text-analyzer-tool .ta-stats-panel,
+  .text-analyzer-tool .ta-punctuation-panel,
+  .text-analyzer-tool .ta-word-frequency-panel {
+    padding: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .text-analyzer-tool .ta-stats-panel,
+  .text-analyzer-tool .ta-punctuation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .text-analyzer-tool .word-frequency-item {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 0.45rem;
+  }
+
+  .text-analyzer-tool .word-frequency-label {
+    text-align: left;
+  }
+
+  .text-analyzer-tool .word-frequency-bar-container {
+    height: 20px;
+  }
 }
 
-.text-analyzer-stat-value {
-  font-size: 16px; /* Keep slightly larger for emphasis? */
-  font-weight: 600;
-  color: var(--color-text, var(--default-color-text));
+@media (prefers-reduced-motion: reduce) {
+  .text-analyzer-tool .word-frequency-bar {
+    transition: none;
+  }
 }

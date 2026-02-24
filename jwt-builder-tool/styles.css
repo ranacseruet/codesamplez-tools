@@ -1,192 +1,315 @@
-/* Inherits base styles from .tool-container in shared-styles.css */
+/* JWT Builder - Phase E UI modernization (tool-scoped) */
+
 .jwt-builder-container {
-  /* Tool-specific overrides or additions can go here if needed */
+  --jwtb-accent: var(--color-primary, #005f73);
+  --jwtb-surface-soft: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 90%, white 10%);
+  --jwtb-border-soft: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 78%, white 22%);
+  --jwtb-success: color-mix(in srgb, var(--color-success, #1f7a4d) 88%, #0f5132 12%);
 }
 
-/* Most styles previously here are now handled by shared components:
-   - .c-input
-   - .c-form-group
-   - .c-form-row
-   - .c-form-group-header
-   - .c-tooltip / .c-tooltip-container
-   - .c-code-output
-   - .c-button and its modifiers (--small, --danger)
-   - Layout utilities (.u-flex, .u-gap-*, etc.)
-*/
-
-/* Specific styles for the custom claim row layout, if needed */
-.jwt-builder-container .custom-claim-row .c-input[name="claimName"] {
-  /* Example: Keep specific flex basis if required */
-  /* flex: 0 0 40%; */
+.jwt-builder-header.o-header {
+  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
+  padding: var(--spacing-md, var(--default-spacing-md));
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  border: 1px solid var(--jwtb-border-soft);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 95%, var(--jwtb-accent) 5%) 0%,
+      var(--jwtb-surface-soft) 100%
+    );
+  box-shadow: var(--cst-shadow-1, none);
 }
 
-.jwt-builder-container .custom-claim-row .c-input[name="claimValue"] {
-  /* Example: Keep specific flex basis if required */
-  /* flex: 0 0 60%; */
-}
-
-/* Specific overrides for the delete button size/alignment within the custom row */
-.jwt-builder-container .custom-claim-row .delete-claim {
-  width: 28px; /* Keep specific size */
-  height: 28px; /* Keep specific size */
-  padding: 0; /* Override shared button padding */
-  flex-shrink: 0; /* Prevent shrinking */
-  align-self: center; /* Align vertically in the flex row */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Placeholder for empty custom claims */
-.jwt-builder-container .empty-claims-message {
+.jwt-builder-description.o-description {
+  margin: 0;
   color: var(--color-text-secondary, var(--default-color-text-secondary));
-  font-style: italic;
-  padding: var(--spacing-sm, var(--default-spacing-sm)) 0; /* Add some padding */
+  line-height: 1.55;
+  max-width: 72ch;
 }
 
-/* Result section specific layout */
-.jwt-builder-container .result-section {
-  margin-top: var(--spacing-lg, var(--default-spacing-lg));
+.jwt-builder-form {
+  gap: var(--spacing-md, var(--default-spacing-md));
 }
 
-.jwt-builder-container .result-container {
-  align-items: flex-start; /* Align button top */
+.jwt-builder-grid.o-grid-2col {
+  gap: var(--spacing-md, var(--default-spacing-md));
+  margin-bottom: 0;
 }
 
-/* JWT Token Output Styling */
-.jwt-builder-container .jwt-token-output {
-  font-size: 16px; /* Increased from default 14px */
-  font-weight: 500; /* Slightly bolder */
-  color: #059669; /* Awesome emerald green color */
-  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); /* Subtle green gradient background */
-  border: 2px solid #10b981; /* Green border to match the color theme */
-  line-height: 1.6; /* Better readability */
-  letter-spacing: 0.5px; /* Slight letter spacing for better readability */
+.jwt-builder-container .jwt-builder-section.c-form-group {
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  border-color: var(--jwtb-border-soft);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 96%, var(--jwtb-accent) 4%) 0%,
+      var(--jwtb-surface-soft) 100%
+    );
+  box-shadow: var(--cst-shadow-1, none);
 }
 
-.jwt-builder-container .jwt-token-output:empty::before {
-  color: var(--color-text-secondary, var(--default-color-text-secondary)); /* Keep placeholder text normal */
-  font-weight: normal; /* Reset font weight for placeholder */
-  letter-spacing: normal; /* Reset letter spacing for placeholder */
+.jwt-builder-container .c-form-group-header {
+  gap: var(--spacing-sm, var(--default-spacing-sm));
 }
 
-/* Center the Build JWT button */
-.jwt-builder-container #buildJwtBtn {
-  align-self: center;
-  min-width: 180px;
+.jwt-builder-container .c-form-group-header :is(h2, h3),
+.jwt-builder-container .c-form-group > :is(h2, h3).c-form-group-header {
+  letter-spacing: 0.01em;
 }
 
-/* Style input fields */
+.jwt-builder-container .c-form-row {
+  padding: 0.2rem 0;
+}
+
+.jwt-builder-container .c-form-row label {
+  font-weight: 600;
+}
+
 .jwt-builder-container .c-input {
   font-family: var(--font-family-mono, var(--default-font-family-mono));
-  color: #1f2937; /* Modern dark gray for better readability */
-  font-weight: 500; /* Slightly bolder for better visibility */
+  color: color-mix(in srgb, var(--color-text, #111827) 92%, black 8%);
+  font-weight: 500;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 98%, var(--jwtb-accent) 2%) 0%,
+      var(--color-bg, #fff) 100%
+    );
+  border-color: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 82%, white 18%);
 }
 
 .jwt-builder-container .c-input:focus {
-  border-color: var(--color-primary, var(--default-color-primary));
-  color: #111827; /* Even darker for focused state */
-  font-weight: 500; /* Maintain weight in focus */
+  color: color-mix(in srgb, var(--color-text, #111827) 96%, black 4%);
 }
 
 .jwt-builder-container .c-input::placeholder {
-  color: #9ca3af; /* Modern light gray for placeholders */
-  opacity: 1; /* Full opacity for better visibility */
-  font-weight: 400; /* Normal weight for placeholders */
+  color: color-mix(in srgb, var(--color-text-secondary, #6b7280) 84%, white 16%);
+  opacity: 1;
+  font-weight: 400;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  /* Adjust custom claim row layout for mobile */
-  .jwt-builder-container .custom-claim-row > div.u-flex { /* Target the inner flex wrapper */
-    flex-direction: column;
-    align-items: stretch; /* Make inputs full width */
-    width: 100%; /* Ensure wrapper takes full width */
-  }
-
-  .jwt-builder-container .custom-claim-row label {
-     flex-basis: auto; /* Reset flex basis */
-     width: 100%;
-     margin-bottom: 3px;
-     padding-top: 0;
-  }
-
-   .jwt-builder-container .custom-claim-row .c-input {
-     width: 100%;
-   }
-
-  .jwt-builder-container .custom-claim-row .delete-claim {
-    align-self: flex-end; /* Position delete button to the end */
-    margin-top: var(--spacing-sm, var(--default-spacing-sm));
-  }
-
-  /* Adjust result container layout for mobile */
-  .jwt-builder-container .result-container {
-    flex-direction: column;
-    align-items: stretch; /* Make items full width */
-  }
-
-  /* Redundant rule removed from here, now applied globally above */
-  /* .jwt-builder-container #buildJwtBtn { ... } */
+.jwt-builder-inline-actions {
+  min-width: 0;
 }
 
-/* Style for algorithm information note */
-.jwt-builder-container .algorithm-info {
-  margin-top: var(--spacing-sm, var(--default-spacing-sm));
-  font-size: var(--font-size-small, var(--default-font-size-small));
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
+.jwt-builder-quick-set-buttons.quick-set-buttons {
+  margin-top: var(--spacing-xs, var(--default-spacing-xs));
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs, var(--default-spacing-xs));
 }
 
-/* Style for the refresh secret key button - remove background, just show icon */
-.jwt-builder-container button[onclick="generateRandomSecret()"] {
-  background: none !important;
-  border: none !important;
-  padding: 4px !important;
-  margin: 0 !important;
-  cursor: pointer;
-  display: inline-flex;
+.jwt-builder-quick-set-btn {
+  min-width: 0;
+}
+
+.jwt-builder-container .jwt-builder-secret-row {
   align-items: center;
-  justify-content: center;
-  color: #374151; /* Dark gray color for the icon */
-  transition: color 0.2s ease;
 }
 
-.jwt-builder-container button[onclick="generateRandomSecret()"]:hover {
-  color: #111827; /* Darker on hover */
+.jwt-builder-secret-generate {
+  background: color-mix(in srgb, var(--color-bg, #fff) 90%, var(--jwtb-accent) 10%) !important;
+  border: 1px solid color-mix(in srgb, var(--jwtb-accent) 20%, transparent) !important;
+  color: var(--jwtb-accent) !important;
+  padding: 0.35rem !important;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  box-shadow: none !important;
 }
 
-.jwt-builder-container button[onclick="generateRandomSecret()"] svg {
-  width: 22px;
-  height: 22px;
+.jwt-builder-secret-generate:hover {
+  background: color-mix(in srgb, var(--color-bg, #fff) 82%, var(--jwtb-accent) 18%) !important;
+  color: var(--color-primary-hover, var(--default-color-primary-hover)) !important;
+  transform: translateY(-1px);
 }
 
-/* Ensure signature key input has proper padding for copy button */
+.jwt-builder-secret-generate svg {
+  width: 18px;
+  height: 18px;
+}
+
 .jwt-builder-container .copy-button-wrapper {
-  flex: 1; /* Take up available space in flex container */
-  display: flex; /* Use flex instead of inline-block */
-  position: relative; /* Maintain relative positioning for absolute copy button */
+  flex: 1;
+  display: flex;
+  position: relative;
+  min-width: 0;
 }
 
 .jwt-builder-container .copy-button-wrapper .c-input {
-  padding-right: 45px; /* Make room for copy button */
-  flex: 1; /* Take up available space within wrapper */
+  padding-right: 45px;
+  flex: 1;
 }
 
-/* Quick set buttons */
-.jwt-builder-container .quick-set-buttons {
-  margin-top: 5px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
+.jwt-builder-algorithm-panel.c-form-group {
+  margin-top: 0;
+  padding-block: var(--spacing-md, var(--default-spacing-md));
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  border: 1px dashed color-mix(in srgb, var(--jwtb-accent) 22%, transparent);
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 95%, white 5%);
+  box-shadow: none;
 }
 
-/* Small gap utility */
+.jwt-builder-container .algorithm-info {
+  margin: 0;
+  font-size: var(--font-size-small, var(--default-font-size-small));
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  line-height: 1.45;
+}
+
+.jwt-builder-container .add-claim {
+  white-space: nowrap;
+}
+
+.jwt-builder-container .custom-claim-row {
+  padding: var(--spacing-sm, var(--default-spacing-sm));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  border: 1px solid color-mix(in srgb, var(--jwtb-accent) 12%, var(--jwtb-border-soft));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 96%, var(--jwtb-accent) 4%) 0%,
+      color-mix(in srgb, var(--color-bg, #fff) 99%, var(--jwtb-accent) 1%) 100%
+    );
+}
+
+.jwt-builder-custom-claim-fields {
+  min-width: 0;
+  flex: 1;
+}
+
+.jwt-builder-custom-claim-label {
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  font-weight: 600;
+}
+
+.jwt-builder-custom-claim-input {
+  min-width: 0;
+}
+
+.jwt-builder-container .custom-claim-row .delete-claim {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  flex-shrink: 0;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jwt-builder-container .empty-claims-message {
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  font-style: italic;
+  padding: var(--spacing-sm, var(--default-spacing-sm)) 0;
+}
+
+.jwt-builder-build-btn#buildJwtBtn {
+  align-self: center;
+  min-width: 11.5rem;
+  font-weight: 700;
+}
+
+.jwt-builder-container .result-section.jwt-builder-result-panel {
+  margin-top: var(--spacing-md, var(--default-spacing-md));
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  border-color: var(--jwtb-border-soft);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 96%, var(--jwtb-accent) 4%) 0%,
+      var(--jwtb-surface-soft) 100%
+    );
+}
+
+.jwt-builder-result-container.result-container {
+  align-items: flex-start;
+}
+
+.jwt-builder-container .jwt-token-output {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--jwtb-success);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-success, #198754) 8%, white 92%) 0%,
+      color-mix(in srgb, var(--color-success, #198754) 4%, white 96%) 100%
+    );
+  border: 1px solid color-mix(in srgb, var(--color-success, #198754) 24%, transparent);
+  line-height: 1.65;
+  letter-spacing: 0.02em;
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.jwt-builder-container .jwt-token-output:empty::before {
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  font-weight: 400;
+  letter-spacing: normal;
+}
+
+/* Shared utility patch retained for legacy usage in this tool */
 .u-gap-xs {
-  gap: 5px;
+  gap: var(--spacing-xs, var(--default-spacing-xs));
 }
 
-/* Adjust for mobile */
 @media (max-width: 768px) {
+  .jwt-builder-form {
+    gap: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .jwt-builder-container .c-form-group {
+    padding: var(--spacing-md, var(--default-spacing-md));
+  }
+
+  .jwt-builder-container .c-form-group-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .jwt-builder-container .custom-claim-row {
+    padding: var(--spacing-xs, var(--default-spacing-xs));
+  }
+
+  .jwt-builder-container .custom-claim-row > .jwt-builder-custom-claim-fields,
+  .jwt-builder-container .custom-claim-row > div.u-flex {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: var(--spacing-xs, var(--default-spacing-xs));
+  }
+
+  .jwt-builder-container .custom-claim-row .jwt-builder-custom-claim-label,
+  .jwt-builder-container .custom-claim-row label {
+    flex-basis: auto;
+    width: 100%;
+    margin-bottom: 0;
+    padding-top: 0;
+  }
+
+  .jwt-builder-container .custom-claim-row .c-input {
+    width: 100%;
+  }
+
+  .jwt-builder-container .custom-claim-row .delete-claim {
+    align-self: flex-end;
+    margin-top: var(--spacing-xs, var(--default-spacing-xs));
+  }
+
+  .jwt-builder-result-container.result-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .jwt-builder-build-btn#buildJwtBtn {
+    width: 100%;
+    min-width: 0;
+    align-self: stretch;
+  }
+
   .jwt-builder-container .copy-button-wrapper .c-input {
     padding-right: 50px;
   }

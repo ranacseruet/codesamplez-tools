@@ -1,9 +1,39 @@
 import { jest } from '@jest/globals';
 import { fireEvent } from '@testing-library/dom';
 import { render as preactRender } from 'preact';
+
+const mockClearButtonInstances = [];
+const mockCopyButtonInstances = [];
+
+jest.mock('../common/clear-button/ClearButton.js', () => ({
+    __esModule: true,
+    default: jest.fn().mockImplementation(() => {
+        const instance = {
+            updateVisibility: jest.fn(),
+            disconnect: jest.fn()
+        };
+        mockClearButtonInstances.push(instance);
+        return instance;
+    })
+}));
+
+jest.mock('../common/copy-button/CopyButton.js', () => ({
+    __esModule: true,
+    default: jest.fn().mockImplementation(() => {
+        const instance = {
+            updateVisibility: jest.fn(),
+            disconnect: jest.fn()
+        };
+        mockCopyButtonInstances.push(instance);
+        return instance;
+    })
+}));
+
 import { DataFormatConverterUI } from './script.js';
 import { NotificationManager } from '../common/notification-manager.js';
 import DownloadManager from '../common/DownloadManager.js';
+import ClearButton from '../common/clear-button/ClearButton.js';
+import CopyButton from '../common/copy-button/CopyButton.js';
 
 // Mock the NotificationManager
 jest.mock('../common/notification-manager.js', () => ({
@@ -24,9 +54,11 @@ describe('DataFormatConverterUI Integration', () => {
     let ui;
     const flush = () => Promise.resolve();
 
-    beforeEach(() => {
+    beforeEach(async () => {
         jest.useFakeTimers();
         jest.clearAllMocks();
+        mockClearButtonInstances.length = 0;
+        mockCopyButtonInstances.length = 0;
 
         // Setup DOM
         document.body.innerHTML = `
@@ -41,6 +73,8 @@ describe('DataFormatConverterUI Integration', () => {
         });
 
         ui = new DataFormatConverterUI();
+        await flush();
+        await flush();
 
         // Mock converter methods to control behavior
         jest.spyOn(ui.converter, 'parseInput');
@@ -51,6 +85,13 @@ describe('DataFormatConverterUI Integration', () => {
     afterEach(() => {
         jest.restoreAllMocks();
         jest.useRealTimers();
+    });
+
+    it('initializes shared clear/copy overlay buttons for the textareas', () => {
+        expect(ClearButton).toHaveBeenCalledWith(document.getElementById('inputText'));
+        expect(CopyButton).toHaveBeenCalledWith(document.getElementById('outputText'));
+        expect(mockClearButtonInstances).toHaveLength(1);
+        expect(mockCopyButtonInstances).toHaveLength(1);
     });
 
     it('should initialize aria attributes', () => {
@@ -174,6 +215,35 @@ describe('DataFormatConverterUI Integration', () => {
         expect(NotificationManager.show).toHaveBeenCalledWith("Copied to clipboard!", expect.any(Number), expect.any(Object));
     });
 
+    it('should react to shared overlay custom events', async () => {
+        const input = document.getElementById('inputText');
+        const output = document.getElementById('outputText');
+        const errorDiv = document.getElementById('inputError');
+
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+        expect(errorDiv.style.display).toBe('block');
+
+        NotificationManager.show.mockClear();
+        input.value = '';
+        input.dispatchEvent(new CustomEvent('textCleared', { bubbles: true }));
+        await flush();
+
+        expect(errorDiv.style.display).toBe('none');
+        expect(NotificationManager.show).toHaveBeenCalledWith('Input cleared', expect.any(Number), expect.any(Object));
+
+        NotificationManager.show.mockClear();
+        fireEvent.click(document.getElementById('downloadBtn'));
+        await flush();
+        expect(errorDiv.style.display).toBe('block');
+
+        output.dispatchEvent(new CustomEvent('contentCopied', { bubbles: true }));
+        await flush();
+
+        expect(errorDiv.style.display).toBe('none');
+        expect(NotificationManager.show).toHaveBeenCalledWith('Copied to clipboard!', expect.any(Number), expect.any(Object));
+    });
+
     it('should use execCommand clipboard fallback when Clipboard API is unavailable', async () => {
         const input = document.getElementById('inputText');
         fireEvent.input(input, { target: { value: '{"a":1}' } });
@@ -217,6 +287,13 @@ describe('DataFormatConverterUI Integration', () => {
         await flush();
 
         expect(NotificationManager.show).toHaveBeenCalledWith('Failed to copy output', expect.any(Number), expect.any(Object));
+    });
+
+    it('should show error when copy is requested with empty output', async () => {
+        fireEvent.click(document.getElementById('copyOutputBtn'));
+        await flush();
+
+        expect(NotificationManager.show).toHaveBeenCalledWith('No output to copy', expect.any(Number), expect.any(Object));
     });
 
     it('should not auto-convert if checkbox unchecked', async () => {
@@ -329,6 +406,8 @@ describe('DataFormatConverterUI Integration', () => {
         preactRender(null, document.getElementById('data-format-converter-app'));
 
         expect(clearTimeoutSpy).toHaveBeenCalled();
+        expect(mockClearButtonInstances.at(-1)?.disconnect).toHaveBeenCalled();
+        expect(mockCopyButtonInstances.at(-1)?.disconnect).toHaveBeenCalled();
     });
 
     it('should show error on download with empty output', () => {

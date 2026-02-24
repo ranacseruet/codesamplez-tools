@@ -180,15 +180,7 @@ export function TextAnalyzerApp() {
         const wordFrequency = result.wordFrequency;
         if (!wordFrequency || wordFrequency.length === 0) {
             return (
-                <div
-                    className="word-frequency-empty"
-                    style={{
-                        textAlign: 'center',
-                        color: 'var(--color-text-secondary)',
-                        fontStyle: 'italic',
-                        padding: 'var(--spacing-md)'
-                    }}
-                >
+                <div className="word-frequency-empty" role="listitem">
                     No words to analyze
                 </div>
             );
@@ -214,14 +206,14 @@ export function TextAnalyzerApp() {
     };
 
     return (
-        <div className="tool-container">
-            <div className="text-analyzer-editor-container">
-                <div className="text-analyzer-panel">
-                    <div className="text-analyzer-panel-header">
-                        <h2>Input Text</h2>
-                        <div className="text-analyzer-toolbar">
+        <div className="tool-container text-analyzer-tool">
+            <div className="text-analyzer-editor-container ta-editor-container">
+                <div className="text-analyzer-panel ta-panel ta-input-panel">
+                    <div className="text-analyzer-panel-header ta-panel-header">
+                        <h3>Input Text</h3>
+                        <div className="text-analyzer-toolbar ta-toolbar">
                             <button
-                                className="c-button c-button--secondary"
+                                className="c-button c-button--secondary ta-load-sample-btn"
                                 id="load-sample"
                                 onClick={handleLoadSample}
                             >
@@ -232,6 +224,7 @@ export function TextAnalyzerApp() {
                     <textarea
                         id="textInput"
                         ref={textAreaRef}
+                        className="c-input c-input--textarea ta-input-textarea"
                         placeholder="Enter your text here..."
                         aria-label="Input text to analyze"
                         value={text}
@@ -240,20 +233,20 @@ export function TextAnalyzerApp() {
                 </div>
             </div>
 
-            <div className="text-analyzer-stats">
+            <div className="text-analyzer-stats ta-stats-panel">
                 {PRIMARY_STATS.map(([key, label]) => (
-                    <div key={key} className="text-analyzer-stat-item">
+                    <div key={key} className="text-analyzer-stat-item ta-stat-item">
                         <span className="text-analyzer-stat-label">{label}</span>
                         <span id={key} className="text-analyzer-stat-value">{String(result[key])}</span>
                     </div>
                 ))}
             </div>
 
-            <div className="text-analyzer-punctuation">
-                <h3>Punctuation Statistics</h3>
-                <div className="text-analyzer-checkbox-group">
+            <div className="text-analyzer-punctuation ta-punctuation-panel">
+                <h4>Punctuation Statistics</h4>
+                <div className="text-analyzer-checkbox-group ta-punctuation-grid">
                     {PUNCTUATION_STATS.map(([key, label]) => (
-                        <div key={key} className="text-analyzer-stat-item">
+                        <div key={key} className="text-analyzer-stat-item ta-stat-item">
                             <span className="text-analyzer-stat-label">{label}</span>
                             <span id={key} className="text-analyzer-stat-value">{String(result[key])}</span>
                         </div>
@@ -261,11 +254,11 @@ export function TextAnalyzerApp() {
                 </div>
             </div>
 
-            <div className="text-analyzer-word-frequency">
-                <h3>Word Frequency (Top 5)</h3>
+            <div className="text-analyzer-word-frequency ta-word-frequency-panel">
+                <h4>Word Frequency (Top 5)</h4>
                 <div
                     id="wordFrequencyChart"
-                    className="word-frequency-chart"
+                    className="word-frequency-chart ta-word-frequency-chart"
                     role="list"
                     aria-label="Word Frequency Statistics"
                 >

@@ -1,200 +1,476 @@
-/* diff-checker-tool/styles.css */
+/* Phase E tool-scoped styles for Diff Checker */
 
-/* Retain tool-specific variables if needed, or rely on shared ones */
-.tool-container { /* Inherits from shared-styles.css */
-  --sticky-offset-base: 58px; 
-  --options-bar-height: 60px; /* Adjusted estimated height of the options bar */
+.diffc-tool {
+  --sticky-offset-base: 58px;
+  --diffc-options-height: 68px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg, var(--default-spacing-lg));
 }
 
-/* Tool-specific overrides or additions */
-.diff-checker-panel-header {
+.diffc-tool .diffc-grid {
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+  align-items: stretch;
+}
+
+.diffc-tool .diffc-panel,
+.diffc-tool .diffc-result-panel {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  margin: 0;
+  border-radius: var(--radius-lg, 14px);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
+  background: var(--color-surface, #fff);
+}
+
+.diffc-tool .diffc-panel {
+  min-height: 22rem;
+}
+
+.diffc-tool .diffc-panel-header {
+  display: flex;
   align-items: center;
-  margin-bottom: var(--spacing-sm, var(--default-spacing-sm)); /* Use shared variable */
-}
-
-/* Keep .diff-checker-options specific sticky positioning and background */
-.diff-checker-options { /* Extends .o-controls */
-  position: sticky;
-  top: var(--sticky-offset-base, var(--default-sticky-offset-base));
-  z-index: 10;
-  /* background-color is already var(--color-bg-light, var(--default-color-bg-light)) from .o-controls */
-  /* padding is already var(--spacing-lg, var(--default-spacing-lg)) from .o-controls */
-  /* margin is already var(--spacing-lg, var(--default-spacing-lg)) 0 from .o-controls */
-  /* display, justify-content, align-items are handled by .o-controls */
-}
-
-/* Styles for the diff result header containing title and navigation */
-.diff-result-header {
-  display: flex;
   justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: calc(var(--sticky-offset-base, var(--default-sticky-offset-base)) + var(--options-bar-height, var(--default-options-bar-height)));
-  background-color: var(--color-bg-light, var(--default-color-bg-light)); /* Use shared variable */
-  padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-lg, var(--default-spacing-lg)); /* Match horizontal padding of o-controls */
-  margin: 0 0 var(--spacing-md, var(--default-spacing-md)) 0; /* Remove horizontal margin, keep bottom margin */
-  border-bottom: 1px solid var(--color-border, var(--default-color-border)); /* Use shared variable */
-  z-index: 9;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, white);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 52%, white),
+      color-mix(in srgb, white 92%, var(--color-primary-soft, #e9f3fb))
+    );
 }
 
-.diff-result-header h2 {
-  margin-bottom: 0 !important; /* Override default margin */
+.diffc-tool .diffc-panel-header :is(h2, h3),
+.diffc-tool .diffc-result-header :is(h2, h3) {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
 }
 
-/* Diff-specific styles for the output area */
-#diff-result.c-code-output { /* Extends .c-code-output */
-  /* white-space, font-family, font-size, line-height, background-color are from .c-code-output */
-  /* border, border-radius, padding are from .c-code-output */
-  /* min-height is from .c-code-output */
-  /* overflow-y: auto; - Handled by .o-panel-content or specific needs */
-  /* max-height: calc(100vh - 340px); - Remove, let flexbox handle height */
+.diffc-tool .diffc-panel-toolbar {
+  margin: 0;
+  min-height: 0;
+  gap: 0;
 }
 
-/* Diff line presentation */
-.tool-container .diff-line {
+.diffc-tool .diffc-panel-toolbar:empty {
+  display: none;
+}
+
+.diffc-tool .diffc-panel-content {
+  flex: 1;
   display: flex;
-  margin: 2px 0;
-  position: relative;
-  border-left: 4px solid transparent;
+  padding: 0;
+  min-height: 0;
 }
 
-.tool-container .diff-content {
-  flex-grow: 1;
-  padding: 2px 12px;
-  border-radius: 0 var(--border-radius-sm, var(--default-border-radius-sm)) var(--border-radius-sm, var(--default-border-radius-sm)) 0; /* Use shared variable */
-  transition: background-color 0.3s ease;
-  display: inline-block;
+/* Shared ClearButton wraps textareas dynamically. */
+.diffc-tool .diffc-panel-content > .clear-button-wrapper {
+  flex: 1;
+  display: flex;
   width: 100%;
 }
 
-/* Reset default styles for ins and del elements used as diff content */
-.tool-container ins.diff-content,
-.tool-container del.diff-content {
+.diffc-tool .diffc-panel-content > .clear-button-wrapper > .diffc-textarea {
+  flex: 1;
+}
+
+.diffc-tool .diffc-textarea {
+  flex: 1;
+  min-height: 19rem;
+  width: 100%;
+  max-width: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  resize: vertical;
+  line-height: 1.55;
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  background: var(--color-surface, #fff);
+}
+
+.diffc-tool .diffc-textarea:focus {
+  position: relative;
+  z-index: 1;
+}
+
+.diffc-tool .diffc-textarea--original {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 62%, white),
+      white 42%
+    );
+}
+
+.diffc-tool .diffc-textarea--modified {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white 90%, var(--color-primary-soft, #e9f3fb)),
+      var(--color-surface, #fff)
+    );
+}
+
+.diffc-tool .diffc-options {
+  position: sticky;
+  top: var(--sticky-offset-base, 80px);
+  z-index: 10;
+  margin: 0;
+  padding: var(--spacing-md, var(--default-spacing-md));
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 10%, transparent), transparent 58%),
+    linear-gradient(180deg, color-mix(in srgb, white 90%, var(--color-surface-subtle, #f5f7fa)), white);
+}
+
+.diffc-tool .diffc-checkbox-group {
+  gap: 0;
+  margin: 0;
+}
+
+.diffc-tool .diffc-checkbox-item {
+  margin: 0;
+  padding: 0.8rem 0.95rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white 93%, var(--color-surface-subtle, #f5f7fa)),
+      var(--color-surface, #fff)
+    );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.diffc-tool .diffc-checkbox-item label {
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.diffc-tool .diffc-checkbox-item:has(input:checked) {
+  border-color: color-mix(in srgb, var(--color-primary, #1d70b8) 26%, var(--color-border, #d7dde4));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 60%, white),
+      color-mix(in srgb, white 94%, var(--color-primary-soft, #e9f3fb))
+    );
+}
+
+.diffc-tool .diffc-checkbox-item input:checked + label {
+  color: var(--color-primary, #1d70b8);
+}
+
+.diffc-tool .diffc-options-toolbar {
+  margin: 0;
+  min-height: 0;
+}
+
+.diffc-tool .diffc-compare-button {
+  min-width: 10rem;
+  width: auto;
+}
+
+.diffc-tool .diffc-result-panel {
+  min-height: 28rem;
+  overflow: visible;
+}
+
+.diffc-tool .diffc-result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.9rem;
+  position: sticky;
+  top: calc(var(--sticky-offset-base, 58px) + var(--diffc-options-height, 68px));
+  z-index: 9;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, white);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white 82%, var(--color-primary-soft, #e9f3fb)),
+      color-mix(in srgb, white 94%, var(--color-surface-subtle, #f5f7fa))
+    );
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+}
+
+.diffc-tool .diffc-navigation {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.diffc-tool #diff-counter {
+  min-width: 4.5rem;
+  text-align: center;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.diffc-tool .diffc-result-panel-content {
+  flex: 1;
+  min-height: 0;
+  padding: 0.5rem;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white 94%, var(--color-surface-subtle, #f5f7fa)),
+      var(--color-surface, #fff)
+    );
+}
+
+.diffc-tool .diffc-result-output {
+  margin: 0;
+  min-height: 24rem;
+  width: 100%;
+  padding: 0.3rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, white);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+  background: var(--color-surface, #fff);
+  overflow: auto;
+  line-height: 1.45;
+}
+
+.diffc-tool .diffc-result-output:focus-visible {
+  outline: var(--cst-focus-ring, 3px solid rgba(37, 99, 235, 0.35));
+  outline-offset: 2px;
+}
+
+.diffc-tool .diff-line {
+  display: flex;
+  margin: 1px 0;
+  position: relative;
+  border-left: 4px solid transparent;
+  border-radius: 6px;
+}
+
+.diffc-tool .diff-content {
+  flex-grow: 1;
+  padding: 2px 12px;
+  border-radius: 0 6px 6px 0;
+  transition: background-color 140ms ease;
+  display: inline-block;
+  width: 100%;
+  color: var(--color-text, #1f2937);
+}
+
+.diffc-tool ins.diff-content,
+.diffc-tool del.diff-content {
   text-decoration: none;
 }
 
-.tool-container .diff-line:has(.diff-content.diff-added) {
-  background-color: rgba(46, 204, 113, 0.1); /* Consider CSS var if this green is common */
-  border-left-color: #2ecc71; /* Consider CSS var */
-}
-.tool-container .diff-line:has(.diff-content.diff-removed) {
-  background-color: rgba(231, 76, 60, 0.1); /* Consider CSS var if this red is common */
-  border-left-color: #e74c3c; /* Consider CSS var */
+.diffc-tool .diff-line:has(.diff-content.diff-added) {
+  background-color: color-mix(in srgb, #16a34a 10%, white);
+  border-left-color: #16a34a;
 }
 
-.tool-container .diff-content.diff-added {
-  color: #27ae60; /* Consider CSS var */
+.diffc-tool .diff-line:has(.diff-content.diff-removed) {
+  background-color: color-mix(in srgb, #dc2626 10%, white);
+  border-left-color: #dc2626;
 }
 
-.tool-container .diff-content.diff-removed {
-  color: #c0392b; /* Consider CSS var */
+.diffc-tool .diff-content.diff-added {
+  color: #166534;
 }
 
-/* Word-level diff highlighting */
-.tool-container .word-added {
-  background-color: rgba(46, 204, 113, 0.3);
+.diffc-tool .diff-content.diff-removed {
+  color: #991b1b;
+}
+
+.diffc-tool .word-added {
+  background-color: color-mix(in srgb, #16a34a 36%, white);
   padding: 1px 2px;
-  border-radius: 2px; /* Could be a smaller radius var */
-  box-shadow: 0 0 0 1px rgba(46, 204, 113, 0.5);
+  border-radius: 3px;
+  color: #14532d;
+  font-weight: 600;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #16a34a 52%, white),
+    inset 0 -1px 0 color-mix(in srgb, #14532d 22%, transparent);
 }
 
-.tool-container .word-removed {
-  background-color: rgba(231, 76, 60, 0.3);
+.diffc-tool .word-removed {
+  background-color: color-mix(in srgb, #dc2626 34%, white);
   text-decoration: line-through;
   padding: 1px 2px;
-  border-radius: 2px;
-  box-shadow: 0 0 0 1px rgba(231, 76, 60, 0.5);
+  border-radius: 3px;
+  color: #7f1d1d;
+  font-weight: 600;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #dc2626 48%, white),
+    inset 0 -1px 0 color-mix(in srgb, #7f1d1d 18%, transparent);
 }
 
-.tool-container .diff-line:has(.diff-content.diff-added):hover {
-  background-color: rgba(46, 204, 113, 0.15);
+.diffc-tool .diff-line:has(.diff-content.diff-added):hover {
+  background-color: color-mix(in srgb, #16a34a 14%, white);
 }
 
-.tool-container .diff-line:has(.diff-content.diff-removed):hover {
-  background-color: rgba(231, 76, 60, 0.15);
+.diffc-tool .diff-line:has(.diff-content.diff-removed):hover {
+  background-color: color-mix(in srgb, #dc2626 14%, white);
 }
 
-.tool-container .diff-line::before {
+.diffc-tool .diff-line::before {
   position: absolute;
-  left: -18px;
+  left: -14px;
   top: 2px;
-  color: var(--color-text, var(--default-color-text)); /* Use shared variable */
-  opacity: 0.5;
+  color: var(--color-text, #1f2937);
+  opacity: 0.42;
   font-weight: 900;
-  font-size: var(--font-size-base, var(--default-font-size-base)); /* Use shared variable */
+  font-size: 0.9rem;
+  line-height: 1;
 }
 
-.tool-container .diff-line:has(.diff-content.diff-added)::before {
+.diffc-tool .diff-line:has(.diff-content.diff-added)::before {
   content: '+';
 }
 
-.tool-container .diff-line:has(.diff-content.diff-removed)::before {
+.diffc-tool .diff-line:has(.diff-content.diff-removed)::before {
   content: '-';
 }
 
-.tool-container .diff-line-number {
-  opacity: 0.6;
+.diffc-tool .diff-line-number {
+  opacity: 0.72;
   display: inline-block;
   flex-shrink: 0;
-  min-width: 50px;
+  min-width: 62px;
   padding: 2px 6px;
   text-align: right;
-  font-family: var(--font-family-mono, var(--default-font-family-mono)); /* Use shared variable */
-  font-size: 12px; /* Consider a smaller font-size var if common */
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12px;
   user-select: none;
   white-space: pre;
-  background-color: rgba(0, 0, 0, 0.04); /* Consider a subtle bg var */
-  border-right: 1px solid var(--color-border, var(--default-color-border)); /* Use shared variable */
-  margin-right: 0;
-  line-height: var(--line-height-base, var(--default-line-height-base)); /* Use shared variable */
+  background-color: color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 76%, white);
+  border-right: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, white);
+  line-height: 1.45;
+  color: var(--color-text-secondary, #4b5563);
 }
 
-/* Styles for the navigation controls container */
-.diff-navigation {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm, var(--default-spacing-sm)); /* Use shared variable */
-}
-
-#diff-counter {
-  font-size: var(--font-size-base, var(--default-font-size-base)); /* Use shared variable */
-  color: var(--color-text-secondary, var(--default-color-text-secondary)); /* Use shared variable */
-  min-width: 50px;
-  text-align: center;
-}
-
-/* Navigation buttons use .c-button, .c-button--secondary, .c-button--small from shared */
-
-/* Style for highlighting the current diff block */
-.tool-container .diff-line.current-diff-single {
-  outline: 2px solid var(--color-primary, var(--default-color-primary));
+.diffc-tool .diff-line.current-diff-single {
+  outline: 2px solid var(--color-primary, #1d70b8);
   outline-offset: -1px;
-  background-color: rgba(37, 99, 235, 0.1);
+  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, white);
 }
 
-.tool-container .diff-line.current-diff-start {
-  border-top: 2px solid var(--color-primary, var(--default-color-primary));
-  border-left: 2px solid var(--color-primary, var(--default-color-primary));
-  border-right: 2px solid var(--color-primary, var(--default-color-primary));
-  background-color: rgba(37, 99, 235, 0.1);
+.diffc-tool .diff-line.current-diff-start {
+  border-top: 2px solid var(--color-primary, #1d70b8);
+  border-left: 2px solid var(--color-primary, #1d70b8);
+  border-right: 2px solid var(--color-primary, #1d70b8);
+  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, white);
 }
 
-.tool-container .diff-line.current-diff-middle {
-  border-left: 2px solid var(--color-primary, var(--default-color-primary));
-  border-right: 2px solid var(--color-primary, var(--default-color-primary));
-  background-color: rgba(37, 99, 235, 0.1);
+.diffc-tool .diff-line.current-diff-middle {
+  border-left: 2px solid var(--color-primary, #1d70b8);
+  border-right: 2px solid var(--color-primary, #1d70b8);
+  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, white);
 }
 
-.tool-container .diff-line.current-diff-end {
-  border-bottom: 2px solid var(--color-primary, var(--default-color-primary));
-  border-left: 2px solid var(--color-primary, var(--default-color-primary));
-  border-right: 2px solid var(--color-primary, var(--default-color-primary));
-  background-color: rgba(37, 99, 235, 0.1);
+.diffc-tool .diff-line.current-diff-end {
+  border-bottom: 2px solid var(--color-primary, #1d70b8);
+  border-left: 2px solid var(--color-primary, #1d70b8);
+  border-right: 2px solid var(--color-primary, #1d70b8);
+  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, white);
 }
 
-/* Ensure panel headers within this tool have no margin on h2 if it's from shared */
-.diff-checker-panel-header h2 {
-    margin-bottom: 0; /* Override if shared h2 has margin */
+@media (max-width: 900px) {
+  .diffc-tool {
+    --diffc-options-height: 78px;
+  }
+
+  .diffc-tool .diffc-options {
+    align-items: stretch;
+  }
+
+  .diffc-tool .diffc-options-toolbar {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .diffc-tool .diffc-compare-button {
+    flex: 1 1 12rem;
+    width: 100%;
+  }
+
+  .diffc-tool .diffc-result-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .diffc-tool .diffc-navigation {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 640px) {
+  .diffc-tool {
+    --diffc-options-height: 118px;
+    gap: var(--spacing-md, var(--default-spacing-md));
+  }
+
+  .diffc-tool .diffc-panel {
+    min-height: 19rem;
+  }
+
+  .diffc-tool .diffc-panel-header,
+  .diffc-tool .diffc-result-header {
+    padding: 0.8rem 0.9rem;
+  }
+
+  .diffc-tool .diffc-options {
+    padding: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .diffc-tool .diffc-checkbox-item {
+    width: 100%;
+  }
+
+  .diffc-tool .diffc-navigation {
+    gap: 0.4rem;
+  }
+
+  .diffc-tool .diffc-navigation .c-button {
+    flex: 1 1 0;
+  }
+
+  .diffc-tool #diff-counter {
+    min-width: 100%;
+    order: 3;
+  }
+
+  .diffc-tool .diffc-result-panel-content {
+    padding: 0.35rem;
+  }
+
+  .diffc-tool .diffc-result-output {
+    min-height: 18rem;
+  }
+
+  .diffc-tool .diff-content {
+    padding: 2px 8px;
+  }
+
+  .diffc-tool .diff-line-number {
+    min-width: 54px;
+    font-size: 11px;
+    padding: 2px 4px;
+  }
+
+  .diffc-tool .diff-line::before {
+    display: none;
+  }
 }

@@ -1,185 +1,382 @@
-/* Styles specific to JWT Decoder Tool */
+/* Phase E tool-scoped styles for JWT Decoder */
 
-/* Center the toolbar buttons */
-.o-toolbar {
+.jwt-decoder-tool {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: var(--spacing-md, var(--default-spacing-md)) 0; /* Add margin consistent with original */
+  flex-direction: column;
+  gap: var(--spacing-lg, var(--default-spacing-lg));
 }
 
-.o-toolbar .primary-actions {
+.jwt-decoder-tool .jwt-decoder-options-panel {
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 86%, white);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 12%, transparent), transparent 60%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface, #fff) 82%, var(--color-primary-soft, #e9f3fb)),
+      var(--color-surface, #fff)
+    );
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
+}
+
+.jwt-decoder-tool .jwt-decoder-options-panel :is(h2, h3) {
+  margin: 0 0 var(--spacing-sm, var(--default-spacing-sm));
+  font-size: clamp(1rem, 0.9rem + 0.35vw, 1.15rem);
+}
+
+.jwt-decoder-tool .jwt-decoder-options-group {
   display: flex;
+  flex-direction: column;
   gap: var(--spacing-sm, var(--default-spacing-sm));
-  margin: 0 auto; /* Center the primary actions */
 }
 
-.jwt-decoder-status-container {
-  margin-top: var(--spacing-sm, var(--default-spacing-sm)); /* Use variable */
+.jwt-decoder-tool .jwt-decoder-secret-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  align-items: stretch;
 }
 
-.jwt-decoder-status {
-  padding: 10px;
-  border-radius: 4px;
-  font-family: monospace;
-  background-color: #fff;
-  border: 1px solid #ddd;
-  color: rgb(102, 102, 102); /* Default color */
+.jwt-decoder-tool .jwt-decoder-secret-input {
+  min-height: 44px;
 }
 
-/* Status Message Styles */
-.jwt-decoder-status.status-success {
-  color: rgb(40, 167, 69);
-  border-color: #c3e6cb;
-  background-color: #d4edda;
-}
-.jwt-decoder-status.status-error {
-  color: rgb(220, 53, 69);
-  border-color: #f5c6cb;
-  background-color: #f8d7da;
-}
-.jwt-decoder-status.status-warning {
-  color: rgb(133, 100, 4); /* Darker yellow for better contrast */
-  border-color: #ffeeba;
-  background-color: #fff3cd;
-}
-.jwt-decoder-status.status-default {
-  color: rgb(102, 102, 102);
-  border-color: #ddd; /* Restore specific color */
-  background-color: #fff; /* Restore specific color */
+.jwt-decoder-tool .jwt-decoder-secret-help {
+  align-self: stretch;
+  min-width: 42px;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  background: color-mix(in srgb, var(--color-surface, #fff) 88%, var(--color-surface-subtle, #f5f7fa));
+  color: var(--color-text-secondary, #4b5563);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
-/* Tab Navigation (Increased Specificity) */
-.tool-container .jwt-decoder-tabs {
+.jwt-decoder-tool .jwt-decoder-secret-help:hover {
+  background: color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 70%, white);
+  color: var(--color-primary, #1d70b8);
+}
+
+.jwt-decoder-tool .jwt-decoder-secret-help:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring, 0 0 0 3px rgba(29, 112, 184, 0.2));
+}
+
+.jwt-decoder-tool .jwt-decoder-algorithm-info {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, #f0c86a 55%, white);
+  background: color-mix(in srgb, #fff3cd 72%, white);
+  color: #6b5300;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.jwt-decoder-tool .jwt-decoder-layout-grid {
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+}
+
+.jwt-decoder-tool .jwt-decoder-panel {
+  border-radius: var(--radius-lg, 14px);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  background: var(--color-surface, #fff);
+}
+
+.jwt-decoder-tool .jwt-decoder-panel-header {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 54%, white),
+      color-mix(in srgb, var(--color-surface, #fff) 92%, var(--color-primary-soft, #e9f3fb))
+    );
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+}
+
+.jwt-decoder-tool .jwt-decoder-panel-header :is(h2, h3) {
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
+.jwt-decoder-tool .jwt-decoder-panel-content {
+  padding: var(--spacing-md, var(--default-spacing-md));
+}
+
+.jwt-decoder-tool .jwt-decoder-panel-content .c-input--textarea {
+  min-height: 20rem;
+  height: 20rem;
+  flex: none;
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  line-height: 1.5;
+  border-radius: var(--radius-md, 10px);
+}
+
+.jwt-decoder-tool .jwt-decoder-token-input {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 65%, white),
+      white 38%
+    );
+}
+
+.jwt-decoder-tool .jwt-decoder-json-container {
+  min-height: 20rem;
+  height: 20rem;
   display: flex;
-  border-bottom: 1px solid #ddd; /* Restore specific color */
-  margin-bottom: 10px; /* Restore specific margin */
-  gap: 4px; /* Keep specific gap */
+  flex-direction: column;
+  border-radius: var(--radius-md, 10px);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-surface, #fff) 90%, var(--color-surface-subtle, #f5f7fa));
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
 }
 
-.tool-container .jwt-decoder-tab {
-  /* Reset potential inherited button styles */
-  background-color: #f5f5f5; /* Explicit background */
-  border: 1px solid #ddd; /* Explicit border */
-  color: #666; /* Explicit color */
-  padding: 8px 16px; /* Explicit padding */
-  border-bottom: none; /* Ensure no bottom border */
-  border-radius: 4px 4px 0 0; /* Explicit radius */
+.jwt-decoder-tool .jwt-decoder-tabs {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.55rem 0.55rem 0;
+  background: color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 75%, white);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+}
+
+.jwt-decoder-tool .jwt-decoder-tab {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border-bottom: none;
+  background: color-mix(in srgb, white 78%, var(--color-surface-subtle, #f5f7fa));
+  color: var(--color-text-secondary, #4b5563);
+  border-radius: 0.7rem 0.7rem 0 0;
+  padding: 0.6rem 0.8rem;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.1;
   cursor: pointer;
-  font-weight: 500; /* Explicit font weight */
-  font-size: inherit; /* Inherit font size from container, not c-button */
-  line-height: inherit; /* Inherit line height */
-  text-align: center; /* Ensure text is centered if needed */
   margin-bottom: -1px;
-  transition: all 0.2s ease;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
 }
 
-.tool-container .jwt-decoder-tab:hover {
-  background: #e9e9e9; /* Restore specific hover background */
-  color: #2563eb; /* Restore specific hover color */
+.jwt-decoder-tool .jwt-decoder-tab:hover {
+  background: color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 72%, white);
+  color: var(--color-primary, #1d70b8);
 }
 
-.tool-container .jwt-decoder-tab.active {
-  background: #fff; /* Restore specific active background */
-  color: #2563eb; /* Restore specific active color */
-  border-bottom: 1px solid #fff; /* Restore specific active border */
+.jwt-decoder-tool .jwt-decoder-tab.active {
+  background: var(--color-surface, #fff);
+  color: var(--color-primary, #1d70b8);
+  border-color: color-mix(in srgb, var(--color-primary, #1d70b8) 24%, var(--color-border, #d7dde4));
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--color-primary, #1d70b8) 28%, white);
+}
+
+.jwt-decoder-tool .jwt-decoder-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring, 0 0 0 3px rgba(29, 112, 184, 0.2));
   position: relative;
   z-index: 1;
-  box-shadow: 0 -2px 3px rgba(0, 0, 0, 0.05); /* Keep specific shadow */
 }
 
-.tool-container .jwt-decoder-tab:focus-visible {
-  outline: 2px solid var(--color-primary, var(--default-color-primary));
-  outline-offset: -2px;
-  background-color: #f0f0f0;
-  z-index: 2;
+.jwt-decoder-tool .jwt-decoder-tab-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface, #fff);
 }
 
-/* Tab Content (Increased Specificity) */
-.tool-container .jwt-decoder-tab-pane {
+.jwt-decoder-tool .jwt-decoder-tab-pane {
   display: none;
-  height: 100%;
-  flex: 1; /* Allow tab pane to fill available space */
+  flex: 1;
+  min-height: 0;
 }
 
-.tool-container .jwt-decoder-tab-pane.active {
-  display: flex; /* Change from block to flex to enable flex sizing */
-  flex-direction: column; /* Stack content vertically */
+.jwt-decoder-tool .jwt-decoder-tab-pane.active {
+  display: flex;
+  flex-direction: column;
 }
 
-.tool-container .jwt-decoder-tab-content {
-  border: 1px solid #ddd; /* Restore specific border */
-  border-top: none;
-  border-radius: 0 0 4px 4px; /* Restore specific radius */
-  background: #fff; /* Restore specific background */
-  padding: 0;
-  position: relative;
-  z-index: 0;
-  flex: 1; /* Allow tab content to fill remaining space */
-  display: flex; /* Make tab content a flex container */
-  flex-direction: column; /* Stack tab panes vertically */
-}
-
-/* JSON Viewer (Increased Specificity) */
-/* Sizing (flex: 1, min-height) is now handled by shared .o-panel-content rule */
-.tool-container .jwt-decoder-json-container {
-  height: 300px; /* Set fixed height to match textarea */
-  display: flex; /* Keep for internal tab/viewer layout */
-  flex-direction: column; /* Keep for internal tab/viewer layout */
-  overflow: hidden;
-  /* Remove flex: 1 to use fixed height instead */
-}
-
-/* No change needed for .jwt-decoder-tab-content flex rule */
-
-.tool-container .jwt-decoder-json-viewer {
-  font-family: monospace; /* Restore specific font */
-  font-size: 14px; /* Restore specific size */
-  line-height: 1.5; /* Restore specific line height */
-  padding: 15px; /* Restore specific padding */
-  min-height: 250px; /* Reduce to account for tab height (~50px) */
-  flex: 1; /* Allow viewer to fill available space in tab pane */
+.jwt-decoder-tool .jwt-decoder-json-viewer {
+  flex: 1;
+  min-height: 0;
   overflow: auto;
-  background-color: #fff; /* Restore specific background */
-  border-radius: 0 0 4px 4px; /* Restore specific radius */
-  white-space: pre-wrap; /* Preserve whitespace and allow wrapping */
+  padding: 0.95rem 1rem 1rem;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface, #fff) 90%, var(--color-surface-subtle, #f5f7fa)),
+      var(--color-surface, #fff)
+    );
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 
-/* JSON Styling (Increased Specificity) */
-.tool-container .jwt-decoder-json-key {
-  color: #0550ae; /* Keep specific color */
-  font-weight: bold;
+.jwt-decoder-tool .jwt-decoder-json-key {
+  color: #0550ae;
+  font-weight: 700;
 }
 
-.tool-container .jwt-decoder-json-string {
-  color: #42862a; /* Keep specific color */
+.jwt-decoder-tool .jwt-decoder-json-string {
+  color: #2f7d32;
 }
 
-.tool-container .jwt-decoder-json-number,
-.tool-container .jwt-decoder-json-boolean {
-  color: #b83814; /* Keep specific color */
+.jwt-decoder-tool .jwt-decoder-json-number,
+.jwt-decoder-tool .jwt-decoder-json-boolean {
+  color: #b83814;
 }
 
-.tool-container .jwt-decoder-json-null {
-  color: #999; /* Restore specific color */
+.jwt-decoder-tool .jwt-decoder-json-null {
+  color: #6b7280;
   font-style: italic;
 }
 
-/* JSON key-value styling (Increased Specificity) */
-.tool-container .jwt-decoder-json-key-value {
+.jwt-decoder-tool .jwt-decoder-json-key-value {
   position: relative;
 }
 
-/* Override shared textarea styles for consistent height */
-.tool-container .o-panel-content .c-input--textarea {
-  height: 300px; /* Match the JSON container height */
-  min-height: 300px; /* Ensure minimum height */
-  flex: none; /* Override flex: 1 from shared styles */
+.jwt-decoder-tool .jwt-decoder-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--spacing-md, var(--default-spacing-md));
+  align-items: center;
+  margin: 0;
 }
 
-.tool-container .jwt-decoder-footer {
+.jwt-decoder-tool .jwt-decoder-primary-actions {
+  display: flex;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  flex-wrap: wrap;
+}
+
+.jwt-decoder-tool .jwt-decoder-action-btn {
+  flex: 1 1 13.5rem;
+}
+
+.jwt-decoder-tool .jwt-decoder-copy-btn {
+  justify-self: end;
+  white-space: nowrap;
+}
+
+.jwt-decoder-tool .jwt-decoder-result-panel {
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 88%, white);
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
+}
+
+.jwt-decoder-tool .jwt-decoder-result-panel :is(h2, h3) {
+  margin-bottom: 0.35rem;
+}
+
+.jwt-decoder-tool .jwt-decoder-status-container {
+  margin-top: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.jwt-decoder-tool .jwt-decoder-status {
+  min-height: 44px;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  background: color-mix(in srgb, var(--color-surface, #fff) 90%, var(--color-surface-subtle, #f5f7fa));
+  color: var(--color-text-secondary, #4b5563);
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  display: flex;
+  align-items: center;
+}
+
+.jwt-decoder-tool .jwt-decoder-status.status-success {
+  color: #166534;
+  border-color: #b7e4c7;
+  background: #eafaf0;
+}
+
+.jwt-decoder-tool .jwt-decoder-status.status-error {
+  color: #b42318;
+  border-color: #f1c0c7;
+  background: #fff0f2;
+}
+
+.jwt-decoder-tool .jwt-decoder-status.status-warning {
+  color: #8a5a00;
+  border-color: #f3dd9b;
+  background: #fff7de;
+}
+
+.jwt-decoder-tool .jwt-decoder-status.status-default {
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.jwt-decoder-tool .jwt-decoder-footer {
+  margin-top: 0;
+  padding: 0.75rem 0.25rem 0;
   text-align: center;
-  margin-top: var(--spacing-lg, var(--default-spacing-lg)); /* Use variable */
-  color: var(--color-text-secondary, var(--default-color-text-secondary)); /* Use variable */
-  font-size: var(--font-size-base, var(--default-font-size-base)); /* Use variable */
+  color: var(--color-text-secondary, #4b5563);
+  font-size: 0.92rem;
+}
+
+.jwt-decoder-tool .jwt-decoder-footer p {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .jwt-decoder-tool .jwt-decoder-toolbar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .jwt-decoder-tool .jwt-decoder-copy-btn {
+    justify-self: stretch;
+  }
+}
+
+@media (max-width: 640px) {
+  .jwt-decoder-tool {
+    gap: var(--spacing-md, var(--default-spacing-md));
+  }
+
+  .jwt-decoder-tool .jwt-decoder-secret-row {
+    grid-template-columns: 1fr;
+  }
+
+  .jwt-decoder-tool .jwt-decoder-secret-help {
+    min-height: 42px;
+    width: 100%;
+  }
+
+  .jwt-decoder-tool .jwt-decoder-tabs {
+    gap: 0.25rem;
+    padding: 0.45rem 0.45rem 0;
+  }
+
+  .jwt-decoder-tool .jwt-decoder-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.55rem 0.45rem;
+    font-size: 0.86rem;
+  }
+
+  .jwt-decoder-tool .jwt-decoder-panel-content .c-input--textarea,
+  .jwt-decoder-tool .jwt-decoder-json-container {
+    min-height: 17.5rem;
+    height: 17.5rem;
+  }
+
+  .jwt-decoder-tool .jwt-decoder-action-btn {
+    flex-basis: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jwt-decoder-tool .jwt-decoder-tab,
+  .jwt-decoder-tool .jwt-decoder-secret-help {
+    transition: none;
+  }
 }

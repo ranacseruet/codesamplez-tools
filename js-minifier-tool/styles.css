@@ -1,120 +1,347 @@
-/* js-minifier-tool/styles.css */
-/* Specific styles for the JavaScript Minifier tool */
+/* JavaScript Minifier - Phase E UI modernization (tool-scoped) */
 
-/* Header and description styles */
+.js-minifier-container {
+  --jsm-accent: var(--color-primary, #005f73);
+  --jsm-surface-soft: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 88%, white 12%);
+  --jsm-border-soft: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 72%, white 28%);
+}
+
 .js-minifier-header {
   text-align: center;
   margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
-  padding-bottom: var(--spacing-lg, var(--default-spacing-lg));
-  border-bottom: 1px solid var(--color-border-light, var(--default-color-border-light));
+  padding: var(--spacing-md, var(--default-spacing-md)) var(--spacing-md, var(--default-spacing-md))
+    var(--spacing-lg, var(--default-spacing-lg));
+  border-bottom: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.2));
 }
 
 .js-minifier-description {
+  margin: 0;
   color: var(--color-text-secondary, var(--default-color-text-secondary));
-  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
+  font-size: clamp(0.95rem, 0.92rem + 0.15vw, 1rem);
+  line-height: 1.55;
+  max-width: 62ch;
+  margin-inline: auto;
 }
 
-/* Toolbar styles */
-.js-minifier-toolbar.o-toolbar {
-  justify-content: center; /* Center buttons within the toolbar */
-  margin-top: var(--spacing-lg, var(--default-spacing-lg));
-  flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
-  width: 100%; /* Ensure toolbar spans full width */
-  gap: var(--spacing-md, var(--default-spacing-md)); /* Add consistent spacing between buttons */
+.js-minifier-options.c-options-panel {
+  margin: 0 0 var(--spacing-lg, var(--default-spacing-lg));
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  border-color: var(--jsm-border-soft);
+  box-shadow: var(--cst-shadow-1, none);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 96%, var(--jsm-accent) 4%) 0%,
+      var(--jsm-surface-soft) 100%
+    );
 }
 
-/* Stats panel styles */
-.js-minifier-stats {
-  width: 100%; /* Ensure stats panel spans full width */
-  margin-top: var(--spacing-lg, var(--default-spacing-lg));
+.js-minifier-options > :is(h2, h3) {
+  margin: 0 0 var(--spacing-md, var(--default-spacing-md));
+  font-size: clamp(1rem, 0.94rem + 0.25vw, 1.15rem);
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
-.js-minifier-stat-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-xs, var(--default-spacing-xs));
-  padding: var(--spacing-xs, var(--default-spacing-xs)) 0;
+.js-minifier-options .c-checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-sm, var(--default-spacing-sm));
 }
 
-/* Options panel styles */
-.js-minifier-options {
-  margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
+.js-minifier-options .c-checkbox-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--spacing-xs, var(--default-spacing-xs));
+  padding: 0.7rem 0.8rem;
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  border: 1px solid color-mix(in srgb, var(--jsm-accent) 10%, var(--jsm-border-soft));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 92%, var(--jsm-accent) 8%) 0%,
+      var(--color-bg, #fff) 100%
+    );
+  min-width: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-.js-minifier-footer {
-  text-align: center;
-  margin-top: 30px;
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
-  font-size: var(--font-size-base, var(--default-font-size-base));
+.js-minifier-options .c-checkbox-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--jsm-accent);
 }
 
-/* Grid and panel layout fixes */
+.js-minifier-options .c-checkbox-item label {
+  min-width: 0;
+  font-weight: 600;
+  color: var(--color-text, var(--default-color-text));
+}
+
+.js-minifier-options .c-checkbox-item:has(input:checked) {
+  border-color: color-mix(in srgb, var(--jsm-accent) 34%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--jsm-accent) 12%, white 88%) 0%,
+      color-mix(in srgb, var(--jsm-accent) 6%, white 94%) 100%
+    );
+}
+
+.js-minifier-options .c-checkbox-item:has(input:focus-visible) {
+  box-shadow: var(--cst-focus-ring, none), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.js-minifier-options .c-tooltip-container {
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--jsm-accent);
+  background: color-mix(in srgb, var(--jsm-accent) 10%, white 90%);
+  border: 1px solid color-mix(in srgb, var(--jsm-accent) 14%, transparent);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.js-minifier-options .c-tooltip-container:hover {
+  background: color-mix(in srgb, var(--jsm-accent) 16%, white 84%);
+}
+
 .js-minifier-container .o-grid-2col {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Force 2 columns */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--spacing-lg, var(--default-spacing-lg));
   margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
-  min-height: 350px; /* Set minimum height for the grid */
+  min-height: 22rem;
+  align-items: stretch;
 }
 
-/* Force panel flex layout specifically within this tool */
-.js-minifier-container .o-panel {
-  display: flex;
-  flex-direction: column;
-  min-height: 350px; /* Set minimum height for panels */
-  box-sizing: border-box;
-}
-
-/* Fix textarea sizing */
-.js-minifier-container .c-input--textarea {
-  height: auto;
-  flex: 1;
-  min-height: 300px; /* Increase minimum height */
-  box-sizing: border-box;
-  width: 100%; /* Ensure full width */
-  max-width: 100%; /* Prevent overflow */
-}
-
-/* Ensure panels take full width in their grid cells */
 .js-minifier-container .o-panel {
   width: 100%;
   max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 22rem;
+  padding: clamp(0.95rem, 1.1vw, 1.15rem);
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  border-color: var(--jsm-border-soft);
+  box-shadow: var(--cst-shadow-1, none);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 95%, var(--jsm-accent) 5%) 0%,
+      var(--jsm-surface-soft) 100%
+    );
+  box-sizing: border-box;
+  min-width: 0;
 }
 
-/* Responsive adjustments */
+.js-minifier-container .o-panel > :is(h2, h3) {
+  margin: 0 0 var(--spacing-sm, var(--default-spacing-sm));
+  font-size: clamp(1rem, 0.96rem + 0.2vw, 1.1rem);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--color-text, var(--default-color-text));
+}
+
+.js-minifier-container .clear-button-wrapper,
+.js-minifier-container .copy-button-wrapper {
+  width: 100%;
+  flex: 1;
+  display: block;
+}
+
+.js-minifier-container .c-input--textarea {
+  height: auto;
+  flex: 1;
+  min-height: clamp(18rem, 38vh, 24rem);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  border-color: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 80%, white 20%);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 98%, var(--jsm-accent) 2%) 0%,
+      var(--color-bg, #fff) 100%
+    );
+  box-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.03);
+}
+
+.js-minifier-container .c-input--textarea::placeholder {
+  color: color-mix(in srgb, var(--color-text-secondary, #54616f) 88%, white 12%);
+}
+
+.js-minifier-container #js-minifier-output[readonly] {
+  background:
+    linear-gradient(
+      180deg,
+      var(--md-sys-color-surface-container-low, #f5f7f9) 0%,
+      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 86%, white 14%) 100%
+    );
+}
+
+.js-minifier-container #js-minifier-output.processing {
+  cursor: progress;
+  background-image:
+    linear-gradient(
+      180deg,
+      var(--md-sys-color-surface-container-low, #f5f7f9) 0%,
+      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 86%, white 14%) 100%
+    ),
+    linear-gradient(
+      110deg,
+      rgba(255, 255, 255, 0) 25%,
+      rgba(255, 255, 255, 0.45) 40%,
+      rgba(255, 255, 255, 0) 55%
+    );
+  background-size: 100% 100%, 220% 100%;
+  animation: jsm-processing-shimmer 1.2s linear infinite;
+}
+
+@keyframes jsm-processing-shimmer {
+  from {
+    background-position: 0 0, 200% 0;
+  }
+  to {
+    background-position: 0 0, -30% 0;
+  }
+}
+
+.js-minifier-toolbar.o-toolbar {
+  justify-content: center;
+  margin: 0 0 var(--spacing-lg, var(--default-spacing-lg));
+  flex-wrap: wrap;
+  width: 100%;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  padding: var(--spacing-sm, var(--default-spacing-sm));
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  border: 1px solid var(--jsm-border-soft);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 93%, var(--jsm-accent) 7%) 0%,
+      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 92%, white 8%) 100%
+    );
+}
+
+.js-minifier-toolbar.o-toolbar .c-button {
+  min-width: min(100%, 13rem);
+  font-weight: 700;
+}
+
+.js-minifier-stats.c-stats-panel {
+  width: 100%;
+  margin-top: 0;
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  border-color: var(--jsm-border-soft);
+  box-shadow: var(--cst-shadow-1, none);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 96%, var(--jsm-accent) 4%) 0%,
+      var(--jsm-surface-soft) 100%
+    );
+}
+
+.js-minifier-stats > :is(h2, h3) {
+  margin: 0 0 var(--spacing-sm, var(--default-spacing-sm));
+  font-size: clamp(1rem, 0.95rem + 0.2vw, 1.1rem);
+}
+
+.js-minifier-stat-row.c-stat-row {
+  margin: 0;
+  padding: 0.55rem 0.65rem;
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  border: 1px solid color-mix(in srgb, var(--jsm-accent) 8%, transparent);
+  background: color-mix(in srgb, var(--color-bg, #fff) 94%, var(--jsm-accent) 6%);
+}
+
+.js-minifier-stat-row.c-stat-row + .js-minifier-stat-row.c-stat-row {
+  margin-top: var(--spacing-xs, var(--default-spacing-xs));
+}
+
+.js-minifier-stat-row.c-stat-row span:last-child {
+  font-weight: 700;
+  color: var(--color-text, var(--default-color-text));
+}
+
+.js-minifier-stat-row:has(#js-minifier-compression-ratio) {
+  border-color: color-mix(in srgb, var(--jsm-accent) 20%, transparent);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--jsm-accent) 12%, white 88%) 0%,
+      color-mix(in srgb, var(--jsm-accent) 5%, white 95%) 100%
+    );
+}
+
+.js-minifier-footer {
+  margin-top: var(--spacing-lg, var(--default-spacing-lg));
+  padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-md, var(--default-spacing-md));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  border: 1px solid color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 78%, white 22%);
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 96%, white 4%);
+  text-align: center;
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  font-size: var(--font-size-small, var(--default-font-size-small));
+  line-height: 1.45;
+}
+
+.js-minifier-footer p {
+  margin: 0;
+}
+
 @media (max-width: 768px) {
+  .js-minifier-header {
+    padding-inline: 0;
+    margin-bottom: var(--spacing-md, var(--default-spacing-md));
+    padding-bottom: var(--spacing-md, var(--default-spacing-md));
+  }
+
+  .js-minifier-options .c-checkbox-group {
+    grid-template-columns: 1fr;
+  }
+
+  .js-minifier-options .c-checkbox-item {
+    grid-template-columns: auto 1fr auto;
+    align-items: start;
+  }
+
   .js-minifier-container .o-grid-2col {
-    grid-template-columns: 1fr; /* Single column on mobile */
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md, var(--default-spacing-md));
+    margin-bottom: var(--spacing-md, var(--default-spacing-md));
+    min-height: auto;
   }
-  
+
+  .js-minifier-container .o-panel {
+    min-height: auto;
+    padding: var(--spacing-md, var(--default-spacing-md));
+  }
+
+  .js-minifier-container .c-input--textarea {
+    min-height: 15rem;
+  }
+
   .js-minifier-toolbar.o-toolbar {
-    flex-direction: column;
-    align-items: center;
+    padding: var(--spacing-xs, var(--default-spacing-xs));
+    gap: var(--spacing-xs, var(--default-spacing-xs));
   }
-  
-  .js-minifier-toolbar.o-toolbar button {
+
+  .js-minifier-toolbar.o-toolbar .c-button {
     width: 100%;
-    margin-bottom: var(--spacing-sm, var(--default-spacing-sm));
+    min-width: 0;
   }
 }
 
-/*
-  Styles removed previously as they are covered by common/shared-styles.css:
-  - .js-minifier-container (covered by .c-tool-container)
-  - .js-minifier-container * (covered by .tool-container *)
-  - .js-minifier-container h1 (covered by .tool-container h1)
-  - .js-minifier-container h2 (covered by .tool-container h2)
-  - .js-minifier-editor-container (covered by .o-grid-2col)
-  - .js-minifier-panel base styles (covered by .o-panel)
-  - .js-minifier-container textarea (covered by .c-input, .c-input--textarea)
-  - .js-minifier-toolbar base styles (covered by .c-toolbar)
-  - .js-minifier-container button styles (covered by .c-button, .c-button--secondary)
-  - .js-minifier-stats base styles (covered by .c-stats-panel)
-  - .js-minifier-stat-row (covered by .c-stat-row)
-  - .js-minifier-container .js-minifier-tooltip styles (covered by .c-tooltip)
-  - .js-minifier-options base styles (covered by .c-options-panel)
-  - .js-minifier-checkbox-group (covered by .c-checkbox-group)
-  - .js-minifier-checkbox-item (covered by .c-checkbox-item)
-  - .js-minifier-container input[type="checkbox"] (covered by .c-checkbox-item input)
-  - .js-minifier-container label (covered by .c-checkbox-item label)
-*/
+@media (prefers-reduced-motion: reduce) {
+  .js-minifier-container #js-minifier-output.processing {
+    animation: none;
+  }
+}

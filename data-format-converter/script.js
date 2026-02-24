@@ -1,8 +1,10 @@
 import { DataFormatConverter } from './DataFormatConverter.js';
 import { NotificationManager } from '../common/notification-manager.js';
 import DownloadManager from '../common/DownloadManager.js';
+import ClearButton from '../common/clear-button/ClearButton.js';
+import CopyButton from '../common/copy-button/CopyButton.js';
 import { hydrate, render } from 'preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell.js';
 
 const FORMATS = ['json', 'xml', 'yaml', 'properties'];
@@ -57,6 +59,10 @@ export function DataFormatConverterApp({ converter }) {
     const [errorMessage, setErrorMessage] = useState('');
     const debounceTimerRef = useRef(null);
     const stateRef = useRef({ inputFormat, outputFormat, autoConvert });
+    const inputTextAreaRef = useRef(null);
+    const outputTextAreaRef = useRef(null);
+    const clearOverlayButtonRef = useRef(null);
+    const copyOverlayButtonRef = useRef(null);
 
     useEffect(() => {
         stateRef.current = { inputFormat, outputFormat, autoConvert };
@@ -69,6 +75,59 @@ export function DataFormatConverterApp({ converter }) {
             clearTimeout(debounceTimerRef.current);
         };
     }, []);
+
+    useLayoutEffect(() => {
+        if (!inputTextAreaRef.current) {
+            return undefined;
+        }
+
+        const inputEl = inputTextAreaRef.current;
+        clearOverlayButtonRef.current = new ClearButton(inputEl);
+
+        const handleTextCleared = () => {
+            setInputText(inputEl.value);
+            setErrorMessage('');
+            NotificationManager.show('Input cleared', 3000, { type: 'success' });
+        };
+
+        inputEl.addEventListener('textCleared', handleTextCleared);
+
+        return () => {
+            inputEl.removeEventListener('textCleared', handleTextCleared);
+            clearOverlayButtonRef.current?.disconnect?.();
+            clearOverlayButtonRef.current = null;
+        };
+    }, []);
+
+    useEffect(() => {
+        clearOverlayButtonRef.current?.updateVisibility?.();
+    }, [inputText]);
+
+    useLayoutEffect(() => {
+        if (!outputTextAreaRef.current) {
+            return undefined;
+        }
+
+        const outputEl = outputTextAreaRef.current;
+        copyOverlayButtonRef.current = new CopyButton(outputEl);
+
+        const handleContentCopied = () => {
+            setErrorMessage('');
+            NotificationManager.show('Copied to clipboard!', 3000, { type: 'success' });
+        };
+
+        outputEl.addEventListener('contentCopied', handleContentCopied);
+
+        return () => {
+            outputEl.removeEventListener('contentCopied', handleContentCopied);
+            copyOverlayButtonRef.current?.disconnect?.();
+            copyOverlayButtonRef.current = null;
+        };
+    }, []);
+
+    useEffect(() => {
+        copyOverlayButtonRef.current?.updateVisibility?.();
+    }, [outputText]);
 
     const showError = (message, silent = false) => {
         if (!silent) {
@@ -252,11 +311,11 @@ export function DataFormatConverterApp({ converter }) {
     };
 
     return (
-        <div className="tool-container">
+        <div className="tool-container dfc-tool">
             <div className="converter-section o-grid-2col swap-container-wrapper">
                 <div className="input-section o-panel">
-                    <h2>Input Format</h2>
-                    <div className="format-selector" role="group" aria-label="Input Format">
+                    <h3 className="dfc-panel-title">Input Format</h3>
+                    <div className="format-selector dfc-format-selector" role="group" aria-label="Input Format">
                         {FORMATS.map((format) => (
                             <button
                                 key={`input-${format}`}
@@ -269,10 +328,13 @@ export function DataFormatConverterApp({ converter }) {
                             </button>
                         ))}
                     </div>
-                    <div className="textarea-actions">
+                    <div className="textarea-actions dfc-textarea-actions dfc-legacy-inline-action">
                         <button
                             id="clearInputBtn"
                             className="c-button c-button--small c-button--outline"
+                            type="button"
+                            tabIndex={-1}
+                            aria-hidden="true"
                             onClick={handleClearInput}
                         >
                             Clear
@@ -280,6 +342,7 @@ export function DataFormatConverterApp({ converter }) {
                     </div>
                     <textarea
                         id="inputText"
+                        ref={inputTextAreaRef}
                         className="text-area c-input c-input--textarea"
                         placeholder={INPUT_PLACEHOLDERS[inputFormat]}
                         aria-label="Input data"
@@ -301,8 +364,8 @@ export function DataFormatConverterApp({ converter }) {
                 </div>
 
                 <div className="output-section o-panel">
-                    <h2>Output Format</h2>
-                    <div className="format-selector" role="group" aria-label="Output Format">
+                    <h3 className="dfc-panel-title">Output Format</h3>
+                    <div className="format-selector dfc-format-selector" role="group" aria-label="Output Format">
                         {FORMATS.map((format) => (
                             <button
                                 key={`output-${format}`}
@@ -315,10 +378,13 @@ export function DataFormatConverterApp({ converter }) {
                             </button>
                         ))}
                     </div>
-                    <div className="textarea-actions">
+                    <div className="textarea-actions dfc-textarea-actions dfc-legacy-inline-action">
                         <button
                             id="copyOutputBtn"
                             className="c-button c-button--small c-button--outline"
+                            type="button"
+                            tabIndex={-1}
+                            aria-hidden="true"
                             onClick={handleCopyOutput}
                         >
                             Copy
@@ -326,6 +392,7 @@ export function DataFormatConverterApp({ converter }) {
                     </div>
                     <textarea
                         id="outputText"
+                        ref={outputTextAreaRef}
                         className="text-area c-input c-input--textarea"
                         placeholder="Converted data will appear here..."
                         readOnly
@@ -335,7 +402,7 @@ export function DataFormatConverterApp({ converter }) {
                 </div>
             </div>
 
-            <div className="u-text-center dfc-primary-actions">
+            <div className="c-options-panel u-text-center dfc-primary-actions">
                 <label className="c-checkbox dfc-auto-convert-label">
                     <input
                         type="checkbox"
@@ -345,11 +412,12 @@ export function DataFormatConverterApp({ converter }) {
                     />
                     <span>Auto-convert</span>
                 </label>
-                <button id="convertBtn" className="convert-btn c-button" onClick={() => convertData()}>
+                <button id="convertBtn" className="convert-btn c-button dfc-convert-btn" onClick={() => convertData()}>
                     Convert Data
                 </button>
                 <button
                     id="downloadBtn"
+                    type="button"
                     className="c-button c-button--small c-button--icon-download"
                     onClick={handleDownload}
                 >
@@ -359,7 +427,7 @@ export function DataFormatConverterApp({ converter }) {
 
             <div
                 id="inputError"
-                className="error"
+                className="error dfc-status-banner"
                 style={{ display: errorMessage ? 'block' : 'none' }}
             >
                 {errorMessage}
