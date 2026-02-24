@@ -252,6 +252,116 @@
   outline-offset: 2px;
 }
 
+/* Prism emits generic `.token` spans, and host pages often ship global Prism themes.
+   Provide a scoped dark-theme palette for the diff result pane so syntax highlighting
+   stays readable in embedded dark mode without affecting light mode. */
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token {
+  background: transparent !important;
+  text-shadow: none !important;
+}
+
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.comment,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.prolog,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.doctype,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.cdata,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.comment,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.prolog,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.doctype,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.cdata {
+  color: #93a4ab !important;
+}
+
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.punctuation,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.punctuation {
+  color: #c3d0d4 !important;
+}
+
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.property,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.tag,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.constant,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.symbol,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.property,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.tag,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.constant,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.symbol {
+  color: #7dd3fc !important;
+}
+
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.boolean,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.number,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.boolean,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.number {
+  color: #f6c177 !important;
+}
+
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.selector,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.attr-name,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.string,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.char,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.builtin,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.inserted,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.selector,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.attr-name,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.string,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.char,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.builtin,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.inserted {
+  color: #86efac !important;
+}
+
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.operator,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.entity,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.url,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.variable,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.operator,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.entity,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.url,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.variable {
+  color: #d2dce0 !important;
+}
+
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.atrule,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.attr-value,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.keyword,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.atrule,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.attr-value,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.keyword {
+  color: #c4b5fd !important;
+}
+
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.function,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.class-name,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.function,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.class-name {
+  color: #f9a8d4 !important;
+}
+
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.regex,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.important,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.regex,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.important {
+  color: #fda4af !important;
+}
+
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.deleted,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.deleted {
+  color: #fda4af !important;
+  opacity: 0.9;
+}
+
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.bold,
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.important,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.bold,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.important {
+  font-weight: 600;
+}
+
+:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.italic,
+:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.italic {
+  font-style: italic;
+}
+
 .diffc-tool .diff-line {
   display: flex;
   margin: 1px 0;
