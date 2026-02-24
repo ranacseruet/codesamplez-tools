@@ -8,7 +8,7 @@
 
 .jwt-decoder-tool .jwt-decoder-options-panel {
   border-radius: var(--radius-lg, 14px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 86%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 86%, var(--cst-color-mix-neutral, white));
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 12%, transparent), transparent 60%),
     linear-gradient(
@@ -45,7 +45,7 @@
   align-self: stretch;
   min-width: 42px;
   border-radius: var(--radius-md, 10px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   background: color-mix(in srgb, var(--color-surface, #fff) 88%, var(--color-surface-subtle, #f5f7fa));
   color: var(--color-text-secondary, #4b5563);
   display: inline-flex;
@@ -55,7 +55,7 @@
 }
 
 .jwt-decoder-tool .jwt-decoder-secret-help:hover {
-  background: color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 70%, white);
+  background: color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 70%, var(--cst-color-mix-neutral, white));
   color: var(--color-primary, #1d70b8);
 }
 
@@ -68,9 +68,9 @@
   margin: 0;
   padding: 0.7rem 0.85rem;
   border-radius: var(--radius-md, 10px);
-  border: 1px solid color-mix(in srgb, #f0c86a 55%, white);
-  background: color-mix(in srgb, #fff3cd 72%, white);
-  color: #6b5300;
+  border: 1px solid color-mix(in srgb, var(--color-warning, #b06b00) 34%, var(--color-border, #d7dde4));
+  background: color-mix(in srgb, var(--color-warning-soft, #fff7de) 88%, var(--color-surface, #fff));
+  color: color-mix(in srgb, var(--color-warning, #b06b00) 82%, var(--color-text, #1f2937));
   font-size: 0.92rem;
   line-height: 1.45;
 }
@@ -83,7 +83,7 @@
   border-radius: var(--radius-lg, 14px);
   overflow: hidden;
   box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   background: var(--color-surface, #fff);
 }
 
@@ -91,10 +91,10 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 54%, white),
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 54%, var(--cst-color-mix-neutral, white)),
       color-mix(in srgb, var(--color-surface, #fff) 92%, var(--color-primary-soft, #e9f3fb))
     );
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
 }
 
 .jwt-decoder-tool .jwt-decoder-panel-header :is(h2, h3) {
@@ -119,8 +119,8 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 65%, white),
-      white 38%
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 65%, var(--cst-color-mix-neutral, white)),
+      var(--cst-color-mix-neutral, white) 38%
     );
 }
 
@@ -132,22 +132,22 @@
   border-radius: var(--radius-md, 10px);
   overflow: hidden;
   background: color-mix(in srgb, var(--color-surface, #fff) 90%, var(--color-surface-subtle, #f5f7fa));
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
 }
 
 .jwt-decoder-tool .jwt-decoder-tabs {
   display: flex;
   gap: 0.35rem;
   padding: 0.55rem 0.55rem 0;
-  background: color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 75%, white);
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  background: color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 75%, var(--cst-color-mix-neutral, white));
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
 }
 
 .jwt-decoder-tool .jwt-decoder-tab {
   appearance: none;
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   border-bottom: none;
-  background: color-mix(in srgb, white 78%, var(--color-surface-subtle, #f5f7fa));
+  background: color-mix(in srgb, var(--cst-color-mix-neutral, white) 78%, var(--color-surface-subtle, #f5f7fa));
   color: var(--color-text-secondary, #4b5563);
   border-radius: 0.7rem 0.7rem 0 0;
   padding: 0.6rem 0.8rem;
@@ -164,7 +164,7 @@
 }
 
 .jwt-decoder-tool .jwt-decoder-tab:hover {
-  background: color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 72%, white);
+  background: color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 72%, var(--cst-color-mix-neutral, white));
   color: var(--color-primary, #1d70b8);
 }
 
@@ -172,7 +172,7 @@
   background: var(--color-surface, #fff);
   color: var(--color-primary, #1d70b8);
   border-color: color-mix(in srgb, var(--color-primary, #1d70b8) 24%, var(--color-border, #d7dde4));
-  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--color-primary, #1d70b8) 28%, white);
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--color-primary, #1d70b8) 28%, var(--cst-color-mix-neutral, white));
 }
 
 .jwt-decoder-tool .jwt-decoder-tab:focus-visible {
@@ -219,21 +219,21 @@
 }
 
 .jwt-decoder-tool .jwt-decoder-json-key {
-  color: #0550ae;
+  color: color-mix(in srgb, var(--color-primary, #1d70b8) 84%, var(--color-text, #1f2937));
   font-weight: 700;
 }
 
 .jwt-decoder-tool .jwt-decoder-json-string {
-  color: #2f7d32;
+  color: color-mix(in srgb, var(--color-success, #1d7f4f) 86%, var(--color-text, #1f2937));
 }
 
 .jwt-decoder-tool .jwt-decoder-json-number,
 .jwt-decoder-tool .jwt-decoder-json-boolean {
-  color: #b83814;
+  color: color-mix(in srgb, var(--color-danger, #ba1a1a) 72%, var(--color-warning, #b06b00));
 }
 
 .jwt-decoder-tool .jwt-decoder-json-null {
-  color: #6b7280;
+  color: var(--color-text-secondary, #6b7280);
   font-style: italic;
 }
 
@@ -266,7 +266,7 @@
 
 .jwt-decoder-tool .jwt-decoder-result-panel {
   border-radius: var(--radius-lg, 14px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 88%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 88%, var(--cst-color-mix-neutral, white));
   box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
 }
 
@@ -282,7 +282,7 @@
   min-height: 44px;
   padding: 0.7rem 0.85rem;
   border-radius: var(--radius-md, 10px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   background: color-mix(in srgb, var(--color-surface, #fff) 90%, var(--color-surface-subtle, #f5f7fa));
   color: var(--color-text-secondary, #4b5563);
   font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
@@ -293,21 +293,21 @@
 }
 
 .jwt-decoder-tool .jwt-decoder-status.status-success {
-  color: #166534;
-  border-color: #b7e4c7;
-  background: #eafaf0;
+  color: color-mix(in srgb, var(--color-success, #1d7f4f) 86%, var(--color-text, #1f2937));
+  border-color: color-mix(in srgb, var(--color-success, #1d7f4f) 28%, var(--color-border, #d7dde4));
+  background: color-mix(in srgb, var(--color-success, #1d7f4f) 12%, var(--cst-color-mix-neutral, white));
 }
 
 .jwt-decoder-tool .jwt-decoder-status.status-error {
-  color: #b42318;
-  border-color: #f1c0c7;
-  background: #fff0f2;
+  color: color-mix(in srgb, var(--color-danger, #ba1a1a) 82%, var(--color-text, #1f2937));
+  border-color: color-mix(in srgb, var(--color-danger, #ba1a1a) 26%, var(--color-border, #d7dde4));
+  background: color-mix(in srgb, var(--color-danger, #ba1a1a) 12%, var(--cst-color-mix-neutral, white));
 }
 
 .jwt-decoder-tool .jwt-decoder-status.status-warning {
-  color: #8a5a00;
-  border-color: #f3dd9b;
-  background: #fff7de;
+  color: color-mix(in srgb, var(--color-warning, #b06b00) 84%, var(--color-text, #1f2937));
+  border-color: color-mix(in srgb, var(--color-warning, #b06b00) 26%, var(--color-border, #d7dde4));
+  background: color-mix(in srgb, var(--color-warning, #b06b00) 10%, var(--cst-color-mix-neutral, white));
 }
 
 .jwt-decoder-tool .jwt-decoder-status.status-default {

@@ -1,25 +1,147 @@
 import { render } from 'preact';
 import { ToolShellFooter, ToolShellHeader } from './AppShell.jsx';
 
+const STANDALONE_THEME_STORAGE_KEY = 'cst-standalone-theme-mode';
+const THEME_LIGHT = 'light';
+const THEME_DARK = 'dark';
+const THEME_ATTR = 'data-theme';
+const LEGACY_THEME_ATTR = 'data-cst-theme';
+let activeThemeObserver = null;
+
+function isValidThemeMode(value) {
+    return value === THEME_LIGHT || value === THEME_DARK;
+}
+
+function getStoredStandaloneThemeMode() {
+    try {
+        const storedThemeMode = window.localStorage.getItem(STANDALONE_THEME_STORAGE_KEY);
+        return isValidThemeMode(storedThemeMode) ? storedThemeMode : null;
+    } catch {
+        return null;
+    }
+}
+
+function getSystemPreferredThemeMode() {
+    try {
+        return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? THEME_DARK : THEME_LIGHT;
+    } catch {
+        return THEME_LIGHT;
+    }
+}
+
+function getDocumentThemeMode() {
+    if (typeof document === 'undefined' || !document.documentElement) {
+        return null;
+    }
+
+    const currentThemeMode = document.documentElement.getAttribute(THEME_ATTR);
+    if (isValidThemeMode(currentThemeMode)) {
+        return currentThemeMode;
+    }
+
+    const legacyThemeMode = document.documentElement.getAttribute(LEGACY_THEME_ATTR);
+    return isValidThemeMode(legacyThemeMode) ? legacyThemeMode : null;
+}
+
+function applyStandaloneThemeMode(themeMode) {
+    if (typeof document === 'undefined' || !document.documentElement) {
+        return themeMode;
+    }
+
+    const resolvedThemeMode = themeMode === THEME_DARK ? THEME_DARK : THEME_LIGHT;
+    document.documentElement.setAttribute(THEME_ATTR, resolvedThemeMode);
+    // Keep the legacy attribute during migration to avoid breaking existing selectors.
+    document.documentElement.setAttribute(LEGACY_THEME_ATTR, resolvedThemeMode);
+    return resolvedThemeMode;
+}
+
+function persistStandaloneThemeMode(themeMode) {
+    try {
+        window.localStorage.setItem(STANDALONE_THEME_STORAGE_KEY, themeMode);
+    } catch {
+        // Ignore storage failures (private mode / blocked storage).
+    }
+}
+
 export function mountToolShell({
     title,
     description,
     homeHref = '/',
     headerRootId = 'app-shell-header',
-    footerRootId = 'app-shell-footer'
+    footerRootId = 'app-shell-footer',
+    showThemeToggle = false
 } = {}) {
     const headerRoot = document.getElementById(headerRootId);
     const footerRoot = document.getElementById(footerRootId);
+    const isStandaloneMode = document.body?.classList.contains('standalone-app');
+    const shouldEnableThemeToggle = showThemeToggle || isStandaloneMode;
 
-    if (headerRoot) {
+    if (activeThemeObserver) {
+        activeThemeObserver.disconnect();
+        activeThemeObserver = null;
+    }
+
+    let currentThemeMode = THEME_LIGHT;
+
+    if (shouldEnableThemeToggle) {
+        currentThemeMode = applyStandaloneThemeMode(
+            getDocumentThemeMode() || getStoredStandaloneThemeMode() || getSystemPreferredThemeMode()
+        );
+    }
+
+    function handleThemeToggle() {
+        currentThemeMode = currentThemeMode === THEME_DARK ? THEME_LIGHT : THEME_DARK;
+        applyStandaloneThemeMode(currentThemeMode);
+        persistStandaloneThemeMode(currentThemeMode);
+        renderHeader();
+    }
+
+    function renderHeader() {
+        if (!headerRoot) {
+            return;
+        }
+
         render(
-            <ToolShellHeader title={title} description={description} homeHref={homeHref} />,
+            <ToolShellHeader
+                title={title}
+                description={description}
+                homeHref={homeHref}
+                showThemeToggle={shouldEnableThemeToggle}
+                themeMode={currentThemeMode}
+                onToggleTheme={shouldEnableThemeToggle ? handleThemeToggle : undefined}
+            />,
             headerRoot
         );
     }
 
+    renderHeader();
+
     if (footerRoot) {
         render(<ToolShellFooter />, footerRoot);
     }
-}
 
+    if (shouldEnableThemeToggle && typeof MutationObserver !== 'undefined' && document.documentElement) {
+        activeThemeObserver = new MutationObserver((mutations) => {
+            const hasThemeMutation = mutations.some((mutation) =>
+                mutation.type === 'attributes' &&
+                (mutation.attributeName === THEME_ATTR || mutation.attributeName === LEGACY_THEME_ATTR)
+            );
+            if (!hasThemeMutation) {
+                return;
+            }
+
+            const observedThemeMode = getDocumentThemeMode();
+            if (!isValidThemeMode(observedThemeMode) || observedThemeMode === currentThemeMode) {
+                return;
+            }
+
+            currentThemeMode = applyStandaloneThemeMode(observedThemeMode);
+            renderHeader();
+        });
+
+        activeThemeObserver.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: [THEME_ATTR, LEGACY_THEME_ATTR]
+        });
+    }
+}

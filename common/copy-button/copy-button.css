@@ -222,3 +222,13 @@
         box-shadow: 0 4px 12px rgba(0, 95, 115, 0.55);
     }
 }
+
+:root[data-theme="dark"] .copy-button,
+:root[data-cst-theme="dark"] .copy-button {
+    box-shadow: 0 2px 8px rgba(0, 95, 115, 0.45);
+}
+
+:root[data-theme="dark"] .copy-button:hover,
+:root[data-cst-theme="dark"] .copy-button:hover {
+    box-shadow: 0 4px 12px rgba(0, 95, 115, 0.55);
+}

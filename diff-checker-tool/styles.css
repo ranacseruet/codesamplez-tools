@@ -20,7 +20,7 @@
   margin: 0;
   border-radius: var(--radius-lg, 14px);
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
   background: var(--color-surface, #fff);
 }
@@ -36,12 +36,12 @@
   gap: 0.75rem;
   margin: 0;
   padding: 0.9rem 1rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, white);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 52%, white),
-      color-mix(in srgb, white 92%, var(--color-primary-soft, #e9f3fb))
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 52%, var(--cst-color-mix-neutral, white)),
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 92%, var(--color-primary-soft, #e9f3fb))
     );
 }
 
@@ -103,8 +103,8 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 62%, white),
-      white 42%
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 62%, var(--cst-color-mix-neutral, white)),
+      var(--cst-color-mix-neutral, white) 42%
     );
 }
 
@@ -112,7 +112,7 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, white 90%, var(--color-primary-soft, #e9f3fb)),
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 90%, var(--color-primary-soft, #e9f3fb)),
       var(--color-surface, #fff)
     );
 }
@@ -125,11 +125,11 @@
   padding: var(--spacing-md, var(--default-spacing-md));
   gap: var(--spacing-sm, var(--default-spacing-sm));
   border-radius: var(--radius-lg, 14px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 10%, transparent), transparent 58%),
-    linear-gradient(180deg, color-mix(in srgb, white 90%, var(--color-surface-subtle, #f5f7fa)), white);
+    linear-gradient(180deg, color-mix(in srgb, var(--cst-color-mix-neutral, white) 90%, var(--color-surface-subtle, #f5f7fa)), var(--cst-color-mix-neutral, white));
 }
 
 .diffc-tool .diffc-checkbox-group {
@@ -141,11 +141,11 @@
   margin: 0;
   padding: 0.8rem 0.95rem;
   border-radius: var(--radius-md, 10px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, white 93%, var(--color-surface-subtle, #f5f7fa)),
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 93%, var(--color-surface-subtle, #f5f7fa)),
       var(--color-surface, #fff)
     );
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
@@ -161,8 +161,8 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 60%, white),
-      color-mix(in srgb, white 94%, var(--color-primary-soft, #e9f3fb))
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 60%, var(--cst-color-mix-neutral, white)),
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 94%, var(--color-primary-soft, #e9f3fb))
     );
 }
 
@@ -195,12 +195,12 @@
   z-index: 9;
   margin: 0;
   padding: 0.85rem 1rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, white);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, white 82%, var(--color-primary-soft, #e9f3fb)),
-      color-mix(in srgb, white 94%, var(--color-surface-subtle, #f5f7fa))
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 82%, var(--color-primary-soft, #e9f3fb)),
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 94%, var(--color-surface-subtle, #f5f7fa))
     );
   border-top-left-radius: inherit;
   border-top-right-radius: inherit;
@@ -229,7 +229,7 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, white 94%, var(--color-surface-subtle, #f5f7fa)),
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 94%, var(--color-surface-subtle, #f5f7fa)),
       var(--color-surface, #fff)
     );
 }
@@ -240,7 +240,7 @@
   width: 100%;
   padding: 0.3rem;
   border-radius: var(--radius-md, 10px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
   box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
   background: var(--color-surface, #fff);
   overflow: auto;
@@ -276,52 +276,52 @@
 }
 
 .diffc-tool .diff-line:has(.diff-content.diff-added) {
-  background-color: color-mix(in srgb, #16a34a 10%, white);
+  background-color: color-mix(in srgb, #16a34a 10%, var(--cst-color-mix-neutral, white));
   border-left-color: #16a34a;
 }
 
 .diffc-tool .diff-line:has(.diff-content.diff-removed) {
-  background-color: color-mix(in srgb, #dc2626 10%, white);
+  background-color: color-mix(in srgb, #dc2626 10%, var(--cst-color-mix-neutral, white));
   border-left-color: #dc2626;
 }
 
 .diffc-tool .diff-content.diff-added {
-  color: #166534;
+  color: color-mix(in srgb, var(--color-success, #1d7f4f) 86%, var(--color-text, #1f2937));
 }
 
 .diffc-tool .diff-content.diff-removed {
-  color: #991b1b;
+  color: color-mix(in srgb, var(--color-danger, #ba1a1a) 84%, var(--color-text, #1f2937));
 }
 
 .diffc-tool .word-added {
-  background-color: color-mix(in srgb, #16a34a 36%, white);
+  background-color: color-mix(in srgb, #16a34a 36%, var(--cst-color-mix-neutral, white));
   padding: 1px 2px;
   border-radius: 3px;
-  color: #14532d;
+  color: color-mix(in srgb, var(--color-success, #1d7f4f) 90%, var(--color-text, #1f2937));
   font-weight: 600;
   box-shadow:
-    0 0 0 1px color-mix(in srgb, #16a34a 52%, white),
+    0 0 0 1px color-mix(in srgb, #16a34a 52%, var(--cst-color-mix-neutral, white)),
     inset 0 -1px 0 color-mix(in srgb, #14532d 22%, transparent);
 }
 
 .diffc-tool .word-removed {
-  background-color: color-mix(in srgb, #dc2626 34%, white);
+  background-color: color-mix(in srgb, #dc2626 34%, var(--cst-color-mix-neutral, white));
   text-decoration: line-through;
   padding: 1px 2px;
   border-radius: 3px;
-  color: #7f1d1d;
+  color: color-mix(in srgb, var(--color-danger, #ba1a1a) 88%, var(--color-text, #1f2937));
   font-weight: 600;
   box-shadow:
-    0 0 0 1px color-mix(in srgb, #dc2626 48%, white),
+    0 0 0 1px color-mix(in srgb, #dc2626 48%, var(--cst-color-mix-neutral, white)),
     inset 0 -1px 0 color-mix(in srgb, #7f1d1d 18%, transparent);
 }
 
 .diffc-tool .diff-line:has(.diff-content.diff-added):hover {
-  background-color: color-mix(in srgb, #16a34a 14%, white);
+  background-color: color-mix(in srgb, #16a34a 14%, var(--cst-color-mix-neutral, white));
 }
 
 .diffc-tool .diff-line:has(.diff-content.diff-removed):hover {
-  background-color: color-mix(in srgb, #dc2626 14%, white);
+  background-color: color-mix(in srgb, #dc2626 14%, var(--cst-color-mix-neutral, white));
 }
 
 .diffc-tool .diff-line::before {
@@ -354,8 +354,8 @@
   font-size: 12px;
   user-select: none;
   white-space: pre;
-  background-color: color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 76%, white);
-  border-right: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, white);
+  background-color: color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 76%, var(--cst-color-mix-neutral, white));
+  border-right: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
   line-height: 1.45;
   color: var(--color-text-secondary, #4b5563);
 }
@@ -363,27 +363,27 @@
 .diffc-tool .diff-line.current-diff-single {
   outline: 2px solid var(--color-primary, #1d70b8);
   outline-offset: -1px;
-  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, white);
+  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, var(--cst-color-mix-neutral, white));
 }
 
 .diffc-tool .diff-line.current-diff-start {
   border-top: 2px solid var(--color-primary, #1d70b8);
   border-left: 2px solid var(--color-primary, #1d70b8);
   border-right: 2px solid var(--color-primary, #1d70b8);
-  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, white);
+  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, var(--cst-color-mix-neutral, white));
 }
 
 .diffc-tool .diff-line.current-diff-middle {
   border-left: 2px solid var(--color-primary, #1d70b8);
   border-right: 2px solid var(--color-primary, #1d70b8);
-  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, white);
+  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, var(--cst-color-mix-neutral, white));
 }
 
 .diffc-tool .diff-line.current-diff-end {
   border-bottom: 2px solid var(--color-primary, #1d70b8);
   border-left: 2px solid var(--color-primary, #1d70b8);
   border-right: 2px solid var(--color-primary, #1d70b8);
-  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, white);
+  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, var(--cst-color-mix-neutral, white));
 }
 
 @media (max-width: 900px) {

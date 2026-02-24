@@ -4,20 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CodeSamplez Tools</title>
+  <link rel="stylesheet" href="root-shell/styles.main.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="landing-page">
-  <header class="cst-shell__header">
-    <div class="cst-shell__header-inner">
-      <a class="cst-shell__brand" href="/" aria-label="Back to all tools">
-        CodeSamplez Tools
-      </a>
-      <div class="cst-shell__title-wrap">
-        <h1 class="cst-shell__title">Developer Utilities</h1>
-        <p class="cst-shell__description">Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.</p>
-      </div>
-    </div>
-  </header>
+  <div id="app-shell-header"></div>
 
   <main class="main-container" aria-label="Tools index">
     <h2 class="main-title">CodeSamplez Tools</h2>
@@ -143,12 +134,7 @@
 
   </main>
 
-  <footer class="cst-shell__footer">
-    <div class="cst-shell__footer-inner">
-      <span>Client-side by design</span>
-      <span aria-hidden="true">|</span>
-      <a href="/" class="cst-shell__footer-link">All Tools</a>
-    </div>
-  </footer>
+  <div id="app-shell-footer"></div>
+  <script src="root-shell/bundle.main.js" defer></script>
 </body>
 </html>

@@ -2,8 +2,8 @@
 
 .js-minifier-container {
   --jsm-accent: var(--color-primary, #005f73);
-  --jsm-surface-soft: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 88%, white 12%);
-  --jsm-border-soft: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 72%, white 28%);
+  --jsm-surface-soft: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 88%, var(--cst-color-mix-neutral, white) 12%);
+  --jsm-border-soft: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 72%, var(--cst-color-mix-neutral, white) 28%);
 }
 
 .js-minifier-header {
@@ -80,13 +80,51 @@
 }
 
 .js-minifier-options .c-checkbox-item:has(input:checked) {
-  border-color: color-mix(in srgb, var(--jsm-accent) 34%, transparent);
+  border-color: color-mix(
+    in srgb,
+    var(--md-sys-color-primary-container, #bcecf2) 65%,
+    var(--jsm-accent) 35%
+  );
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--jsm-accent) 12%, white 88%) 0%,
-      color-mix(in srgb, var(--jsm-accent) 6%, white 94%) 100%
+      color-mix(
+        in srgb,
+        var(--md-sys-color-primary-container, #bcecf2) 78%,
+        var(--color-bg, #fff) 22%
+      ) 0%,
+      color-mix(
+        in srgb,
+        var(--md-sys-color-primary-container, #bcecf2) 90%,
+        var(--color-bg, #fff) 10%
+      ) 100%
     );
+}
+
+.js-minifier-options .c-checkbox-item:has(input:checked) label {
+  color: var(--md-sys-color-on-primary-container, #001f27);
+}
+
+.js-minifier-options .c-checkbox-item:has(input:checked) .c-tooltip-container {
+  color: var(--md-sys-color-on-primary-container, #001f27);
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-primary-container, #bcecf2) 86%,
+    var(--color-bg, #fff) 14%
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--md-sys-color-on-primary-container, #001f27) 22%,
+    transparent
+  );
+}
+
+.js-minifier-options .c-checkbox-item:has(input:checked) .c-tooltip-container:hover {
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-primary-container, #bcecf2) 78%,
+    var(--color-bg, #fff) 22%
+  );
 }
 
 .js-minifier-options .c-checkbox-item:has(input:focus-visible) {
@@ -101,14 +139,14 @@
   align-items: center;
   justify-content: center;
   color: var(--jsm-accent);
-  background: color-mix(in srgb, var(--jsm-accent) 10%, white 90%);
+  background: color-mix(in srgb, var(--jsm-accent) 10%, var(--cst-color-mix-neutral, white) 90%);
   border: 1px solid color-mix(in srgb, var(--jsm-accent) 14%, transparent);
   font-weight: 700;
   line-height: 1;
 }
 
 .js-minifier-options .c-tooltip-container:hover {
-  background: color-mix(in srgb, var(--jsm-accent) 16%, white 84%);
+  background: color-mix(in srgb, var(--jsm-accent) 16%, var(--cst-color-mix-neutral, white) 84%);
 }
 
 .js-minifier-container .o-grid-2col {
@@ -163,7 +201,7 @@
   width: 100%;
   max-width: 100%;
   border-radius: var(--border-radius-md, var(--default-border-radius-sm));
-  border-color: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 80%, white 20%);
+  border-color: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 80%, var(--cst-color-mix-neutral, white) 20%);
   background:
     linear-gradient(
       180deg,
@@ -174,7 +212,7 @@
 }
 
 .js-minifier-container .c-input--textarea::placeholder {
-  color: color-mix(in srgb, var(--color-text-secondary, #54616f) 88%, white 12%);
+  color: color-mix(in srgb, var(--color-text-secondary, #54616f) 88%, var(--cst-color-mix-neutral, white) 12%);
 }
 
 .js-minifier-container #js-minifier-output[readonly] {
@@ -182,7 +220,7 @@
     linear-gradient(
       180deg,
       var(--md-sys-color-surface-container-low, #f5f7f9) 0%,
-      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 86%, white 14%) 100%
+      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 86%, var(--cst-color-mix-neutral, white) 14%) 100%
     );
 }
 
@@ -192,7 +230,7 @@
     linear-gradient(
       180deg,
       var(--md-sys-color-surface-container-low, #f5f7f9) 0%,
-      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 86%, white 14%) 100%
+      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 86%, var(--cst-color-mix-neutral, white) 14%) 100%
     ),
     linear-gradient(
       110deg,
@@ -226,7 +264,7 @@
     linear-gradient(
       180deg,
       color-mix(in srgb, var(--color-bg, #fff) 93%, var(--jsm-accent) 7%) 0%,
-      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 92%, white 8%) 100%
+      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 92%, var(--cst-color-mix-neutral, white) 8%) 100%
     );
 }
 
@@ -276,8 +314,8 @@
   background:
     linear-gradient(
       135deg,
-      color-mix(in srgb, var(--jsm-accent) 12%, white 88%) 0%,
-      color-mix(in srgb, var(--jsm-accent) 5%, white 95%) 100%
+      color-mix(in srgb, var(--jsm-accent) 12%, var(--cst-color-mix-neutral, white) 88%) 0%,
+      color-mix(in srgb, var(--jsm-accent) 5%, var(--cst-color-mix-neutral, white) 95%) 100%
     );
 }
 
@@ -285,8 +323,8 @@
   margin-top: var(--spacing-lg, var(--default-spacing-lg));
   padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-md, var(--default-spacing-md));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
-  border: 1px solid color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 78%, white 22%);
-  background: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 96%, white 4%);
+  border: 1px solid color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 78%, var(--cst-color-mix-neutral, white) 22%);
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 96%, var(--cst-color-mix-neutral, white) 4%);
   text-align: center;
   color: var(--color-text-secondary, var(--default-color-text-secondary));
   font-size: var(--font-size-small, var(--default-font-size-small));

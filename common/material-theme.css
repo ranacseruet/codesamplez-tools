@@ -83,6 +83,105 @@
   --cst-control-height: 2.5rem;
   --cst-control-height-compact: 2rem;
   --cst-icon-button-size: 1.875rem;
+
+  /* Shared themed surfaces (standalone shell + tool container chrome) */
+  --cst-page-backdrop-base: var(--md-sys-color-surface, #f4f7f8);
+  --cst-page-backdrop-spot-primary: rgba(188, 236, 242, 0.55);
+  --cst-page-backdrop-spot-secondary: rgba(228, 222, 255, 0.4);
+  --cst-tool-surface-overlay-top: rgba(255, 255, 255, 0.92);
+  --cst-tool-surface-overlay-bottom: rgba(255, 255, 255, 0.82);
+  --cst-shell-header-spot: rgba(188, 236, 242, 0.45);
+  --cst-shell-header-bg-start: rgba(255, 255, 255, 0.98);
+  --cst-shell-header-bg-end: var(--md-sys-color-surface-container, #e6ecee);
+  --cst-shell-footer-bg-start: rgba(255, 255, 255, 0.75);
+  --cst-shell-footer-bg-end: rgba(238, 243, 244, 0.9);
+  --cst-shell-brand-chip-bg: rgba(0, 95, 115, 0.08);
+  --cst-shell-brand-chip-border: rgba(0, 95, 115, 0.14);
+  --cst-shell-brand-chip-bg-hover: rgba(0, 95, 115, 0.12);
+  --cst-shell-theme-toggle-bg: rgba(255, 255, 255, 0.72);
+  --cst-shell-theme-toggle-bg-hover: rgba(255, 255, 255, 0.9);
+  --cst-shell-theme-toggle-border: rgba(63, 73, 76, 0.18);
+  --cst-shell-theme-toggle-border-hover: rgba(63, 73, 76, 0.34);
+  --cst-shell-theme-toggle-text: var(--md-sys-color-on-surface, #141c1e);
+  --cst-shell-theme-toggle-icon-active: #b06b00;
+  --cst-color-mix-neutral: #ffffff;
+}
+
+:root[data-theme="light"],
+:root[data-cst-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"],
+:root[data-cst-theme="dark"] {
+  color-scheme: dark;
+
+  /* Material-inspired semantic colors (dark theme) */
+  --md-sys-color-primary: #7cd9e7;
+  --md-sys-color-on-primary: #00363f;
+  --md-sys-color-primary-container: #004f5a;
+  --md-sys-color-on-primary-container: #bcecf2;
+  --md-sys-color-secondary: #b2cbd1;
+  --md-sys-color-on-secondary: #1d343a;
+  --md-sys-color-secondary-container: #334a50;
+  --md-sys-color-on-secondary-container: #cde7ed;
+  --md-sys-color-tertiary: #c8bdf7;
+  --md-sys-color-on-tertiary: #30285c;
+  --md-sys-color-tertiary-container: #473f73;
+  --md-sys-color-on-tertiary-container: #e4deff;
+  --md-sys-color-error: #ffb4ab;
+  --md-sys-color-on-error: #690005;
+  --md-sys-color-error-container: #93000a;
+  --md-sys-color-on-error-container: #ffdad6;
+
+  --md-sys-color-surface: #10181a;
+  --md-sys-color-surface-dim: #10181a;
+  --md-sys-color-surface-bright: #182124;
+  --md-sys-color-surface-container-low: #1a2326;
+  --md-sys-color-surface-container: #202a2d;
+  --md-sys-color-surface-container-high: #283235;
+  --md-sys-color-surface-container-highest: #313b3e;
+  --md-sys-color-on-surface: #e1eaec;
+  --md-sys-color-on-surface-variant: #b7c3c6;
+  --md-sys-color-outline: #899397;
+  --md-sys-color-outline-variant: #404b4e;
+  --md-sys-color-inverse-surface: #dce5e7;
+  --md-sys-color-inverse-on-surface: #263032;
+
+  /* Shared system token adjustments */
+  --cst-color-primary-hover: #95e6f1;
+  --cst-color-secondary-hover: #c4dde3;
+  --cst-color-danger-hover: #ffcbc5;
+  --cst-color-success: #5fd89e;
+  --cst-color-success-hover: #79e6b0;
+  --cst-color-shadow: rgba(0, 0, 0, 0.35);
+  --cst-color-shadow-strong: rgba(0, 0, 0, 0.52);
+  --cst-color-focus-ring: rgba(124, 217, 231, 0.25);
+  --cst-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.32), 0 4px 14px rgba(0, 0, 0, 0.2);
+  --cst-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.32), 0 2px 8px rgba(0, 0, 0, 0.28);
+  --cst-shadow-3: 0 16px 32px rgba(0, 0, 0, 0.38), 0 4px 14px rgba(0, 0, 0, 0.3);
+
+  /* Shared themed surfaces (dark overrides) */
+  --cst-page-backdrop-base: #0d1416;
+  --cst-page-backdrop-spot-primary: rgba(0, 95, 115, 0.28);
+  --cst-page-backdrop-spot-secondary: rgba(92, 86, 127, 0.24);
+  --cst-tool-surface-overlay-top: rgba(28, 37, 40, 0.94);
+  --cst-tool-surface-overlay-bottom: rgba(20, 28, 31, 0.9);
+  --cst-shell-header-spot: rgba(0, 95, 115, 0.22);
+  --cst-shell-header-bg-start: rgba(26, 35, 38, 0.95);
+  --cst-shell-header-bg-end: rgba(20, 28, 31, 0.96);
+  --cst-shell-footer-bg-start: rgba(27, 35, 38, 0.9);
+  --cst-shell-footer-bg-end: rgba(17, 24, 26, 0.95);
+  --cst-shell-brand-chip-bg: rgba(124, 217, 231, 0.12);
+  --cst-shell-brand-chip-border: rgba(124, 217, 231, 0.2);
+  --cst-shell-brand-chip-bg-hover: rgba(124, 217, 231, 0.18);
+  --cst-shell-theme-toggle-bg: rgba(32, 42, 45, 0.86);
+  --cst-shell-theme-toggle-bg-hover: rgba(40, 50, 53, 0.95);
+  --cst-shell-theme-toggle-border: rgba(183, 195, 198, 0.16);
+  --cst-shell-theme-toggle-border-hover: rgba(183, 195, 198, 0.3);
+  --cst-shell-theme-toggle-text: #e1eaec;
+  --cst-shell-theme-toggle-icon-active: #ffd27a;
+  --cst-color-mix-neutral: var(--md-sys-color-surface-container-highest, #313b3e);
 }
 
 @media (prefers-reduced-motion: reduce) {

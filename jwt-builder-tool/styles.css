@@ -2,8 +2,8 @@
 
 .jwt-builder-container {
   --jwtb-accent: var(--color-primary, #005f73);
-  --jwtb-surface-soft: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 90%, white 10%);
-  --jwtb-border-soft: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 78%, white 22%);
+  --jwtb-surface-soft: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 90%, var(--cst-color-mix-neutral, white) 10%);
+  --jwtb-border-soft: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 78%, var(--cst-color-mix-neutral, white) 22%);
   --jwtb-success: color-mix(in srgb, var(--color-success, #1f7a4d) 88%, #0f5132 12%);
 }
 
@@ -76,7 +76,7 @@
       color-mix(in srgb, var(--color-bg, #fff) 98%, var(--jwtb-accent) 2%) 0%,
       var(--color-bg, #fff) 100%
     );
-  border-color: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 82%, white 18%);
+  border-color: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 82%, var(--cst-color-mix-neutral, white) 18%);
 }
 
 .jwt-builder-container .c-input:focus {
@@ -84,7 +84,7 @@
 }
 
 .jwt-builder-container .c-input::placeholder {
-  color: color-mix(in srgb, var(--color-text-secondary, #6b7280) 84%, white 16%);
+  color: color-mix(in srgb, var(--color-text-secondary, #6b7280) 84%, var(--cst-color-mix-neutral, white) 16%);
   opacity: 1;
   font-weight: 400;
 }
@@ -147,7 +147,7 @@
   padding-block: var(--spacing-md, var(--default-spacing-md));
   border-radius: var(--border-radius-md, var(--default-border-radius-sm));
   border: 1px dashed color-mix(in srgb, var(--jwtb-accent) 22%, transparent);
-  background: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 95%, white 5%);
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 95%, var(--cst-color-mix-neutral, white) 5%);
   box-shadow: none;
 }
 
@@ -235,8 +235,8 @@
   background:
     linear-gradient(
       135deg,
-      color-mix(in srgb, var(--color-success, #198754) 8%, white 92%) 0%,
-      color-mix(in srgb, var(--color-success, #198754) 4%, white 96%) 100%
+      color-mix(in srgb, var(--color-success, #198754) 8%, var(--cst-color-mix-neutral, white) 92%) 0%,
+      color-mix(in srgb, var(--color-success, #198754) 4%, var(--cst-color-mix-neutral, white) 96%) 100%
     );
   border: 1px solid color-mix(in srgb, var(--color-success, #198754) 24%, transparent);
   line-height: 1.65;

@@ -61,7 +61,7 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--md-sys-color-surface-container, #edf1f4) 80%, white 20%) 0%,
+      color-mix(in srgb, var(--md-sys-color-surface-container, #edf1f4) 80%, var(--cst-color-mix-neutral, white) 20%) 0%,
       var(--md-sys-color-surface-container, #edf1f4) 100%
     );
   color: var(--color-text-secondary, var(--default-color-secondary));
@@ -74,7 +74,7 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--md-sys-color-surface-container-high, #e3eaee) 82%, white 18%) 0%,
+      color-mix(in srgb, var(--md-sys-color-surface-container-high, #e3eaee) 82%, var(--cst-color-mix-neutral, white) 18%) 0%,
       var(--md-sys-color-surface-container-high, #e3eaee) 100%
     );
   color: var(--color-text, var(--default-color-text));
@@ -159,7 +159,7 @@
 }
 
 .dfc-tool .text-area::placeholder {
-  color: color-mix(in srgb, var(--color-text-secondary, #54616f) 88%, white 12%);
+  color: color-mix(in srgb, var(--color-text-secondary, #54616f) 88%, var(--cst-color-mix-neutral, white) 12%);
 }
 
 .dfc-tool .text-area[readonly] {
@@ -167,7 +167,7 @@
     linear-gradient(
       180deg,
       var(--md-sys-color-surface-container-low, #f5f7f9) 0%,
-      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 88%, white 12%) 100%
+      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 88%, var(--cst-color-mix-neutral, white) 12%) 100%
     );
 }
 
@@ -240,8 +240,8 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-danger, #ba1a1a) 8%, white 92%) 0%,
-      color-mix(in srgb, var(--color-danger, #ba1a1a) 4%, white 96%) 100%
+      color-mix(in srgb, var(--color-danger, #ba1a1a) 8%, var(--cst-color-mix-neutral, white) 92%) 0%,
+      color-mix(in srgb, var(--color-danger, #ba1a1a) 4%, var(--cst-color-mix-neutral, white) 96%) 100%
     );
   color: var(--color-danger, var(--default-color-danger));
 }

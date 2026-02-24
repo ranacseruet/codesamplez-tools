@@ -51,9 +51,9 @@ body.standalone-app {
   color: var(--default-color-text);
   line-height: var(--default-line-height-base);
   background:
-    radial-gradient(circle at top right, rgba(188, 236, 242, 0.55), transparent 45%),
-    radial-gradient(circle at top left, rgba(228, 222, 255, 0.4), transparent 40%),
-    var(--default-color-bg-light);
+    radial-gradient(circle at top right, var(--cst-page-backdrop-spot-primary, rgba(188, 236, 242, 0.55)), transparent 45%),
+    radial-gradient(circle at top left, var(--cst-page-backdrop-spot-secondary, rgba(228, 222, 255, 0.4)), transparent 40%),
+    var(--cst-page-backdrop-base, var(--default-color-bg-light));
   margin: 0;
 
   /* Map standard variables to defaults for standalone mode validity */
@@ -67,10 +67,23 @@ body.standalone-app {
   --color-border-light: var(--default-color-border-light);
   --color-bg: var(--default-color-bg);
   --color-bg-light: var(--default-color-bg-light);
+  --color-surface: var(--md-sys-color-surface-bright, var(--default-color-bg));
+  --color-surface-subtle: var(--md-sys-color-surface-container-low, var(--default-color-bg-light));
+  --color-primary-soft: color-mix(
+    in srgb,
+    var(--color-primary, var(--default-color-primary)) 12%,
+    var(--color-surface, var(--default-color-bg)) 88%
+  );
   --color-success: var(--default-color-success);
   --color-danger: var(--default-color-danger);
   --color-danger-hover: var(--default-color-danger-hover);
   --color-shadow: var(--default-color-shadow);
+  --color-warning: #b06b00;
+  --color-warning-soft: color-mix(
+    in srgb,
+    var(--color-warning) 14%,
+    var(--color-surface, var(--default-color-bg)) 86%
+  );
 
   --font-family-base: var(--default-font-family-base);
   --font-family-mono: var(--default-font-family-mono);
@@ -90,7 +103,12 @@ body.standalone-app {
   --container-max-width: var(--default-container-max-width);
   --border-radius-sm: var(--default-border-radius-sm);
   --border-radius-lg: var(--default-border-radius-lg);
+  --radius-sm: var(--cst-radius-sm, var(--default-border-radius-sm));
+  --radius-md: var(--cst-radius-md, 10px);
+  --radius-lg: var(--cst-radius-lg, var(--default-border-radius-lg));
   --box-shadow: var(--default-box-shadow);
+  --shadow-sm: var(--cst-shadow-2, var(--default-box-shadow));
+  --focus-ring: var(--cst-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.22));
 }
 
 /* ==========================================================================
@@ -101,15 +119,20 @@ body.standalone-app {
   max-width: var(--container-max-width, var(--default-container-max-width));
   margin: 0 auto;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.82)),
+    linear-gradient(
+      180deg,
+      var(--cst-tool-surface-overlay-top, rgba(255, 255, 255, 0.92)),
+      var(--cst-tool-surface-overlay-bottom, rgba(255, 255, 255, 0.82))
+    ),
     var(--color-bg, transparent);
   border: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.18));
   border-radius: var(--border-radius-lg, var(--default-border-radius-lg));
   box-shadow: var(--box-shadow, none);
   padding: clamp(1rem, 2vw, var(--spacing-lg, var(--default-spacing-lg)));
-  font-family: inherit;
-  line-height: inherit;
-  color: inherit;
+  font-family: var(--font-family-base, var(--default-font-family-base));
+  font-size: var(--font-size-base, var(--default-font-size-base));
+  line-height: var(--line-height-base, var(--default-line-height-base));
+  color: var(--color-text, var(--default-color-text));
   /* Avoid layout/paint containment so fixed-position overlays (notifications/tooltips)
      remain viewport-anchored instead of being trapped inside the tool container. */
   contain: style;
@@ -191,7 +214,7 @@ body.standalone-app {
 }
 
 .tool-container h2 {
-  color: inherit;
+  color: var(--color-text, var(--default-color-text));
   margin-bottom: var(--spacing-sm, var(--default-spacing-sm));
   font-size: var(--font-size-h2, var(--default-font-size-h2));
 }
@@ -207,7 +230,7 @@ body.standalone-app {
   font-size: var(--font-size-base, var(--default-font-size-base));
   line-height: var(--line-height-tight, var(--default-line-height-tight));
   background-color: var(--color-bg, #fff);
-  color: var(--color-text, inherit);
+  color: var(--color-text, var(--default-color-text));
   transition:
     border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
     box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
@@ -220,7 +243,7 @@ body.standalone-app {
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   font-size: var(--font-size-base, var(--default-font-size-base));
   background-color: var(--color-bg, #fff);
-  color: var(--color-text, inherit);
+  color: var(--color-text, var(--default-color-text));
   cursor: pointer;
   transition:
     border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
@@ -239,7 +262,7 @@ body.standalone-app {
 }
 
 .o-description {
-  color: var(--color-text-secondary, inherit);
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
   margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
 }
 
@@ -450,7 +473,7 @@ body.standalone-app {
     box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
     background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
   background-color: var(--color-bg, #fff);
-  color: var(--color-text, inherit);
+  color: var(--color-text, var(--default-color-text));
   min-width: 0;
   /* Prevents input from overflowing flex containers */
 }
@@ -503,7 +526,7 @@ body.standalone-app {
 .c-form-group-header {
   font-size: var(--font-size-h2, var(--default-font-size-h2));
   margin-bottom: var(--spacing-md, var(--default-spacing-md));
-  color: var(--color-text, inherit);
+  color: var(--color-text, var(--default-color-text));
   padding-bottom: var(--spacing-sm, var(--default-spacing-sm));
   border-bottom: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.2));
   font-weight: 600;
@@ -527,7 +550,7 @@ body.standalone-app {
 .c-form-row label {
   flex: 0 0 200px;
   /* Fixed width for labels, adjust as needed */
-  color: var(--color-text-secondary, inherit);
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
   font-weight: 500;
   display: flex;
   align-items: flex-start;
@@ -618,7 +641,7 @@ button.c-tooltip-container {
   line-height: var(--line-height-tight, var(--default-line-height-tight));
   min-height: 100px;
   /* Default min height */
-  color: var(--color-text, inherit);
+  color: var(--color-text, var(--default-color-text));
   word-break: break-all;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -635,7 +658,7 @@ button.c-tooltip-container {
 .c-code-output:empty::before {
   content: "Output will appear here";
   /* Generic placeholder */
-  color: var(--color-text-secondary, inherit);
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
   font-style: italic;
 }
 
@@ -657,7 +680,7 @@ button.c-tooltip-container {
 }
 
 .c-stat-row span:first-child {
-  color: var(--color-text-secondary, inherit);
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
 }
 
 /* --- Checkbox Group (from js-minifier) --- */
@@ -685,7 +708,7 @@ button.c-tooltip-container {
 
 .c-checkbox-item label {
   font-size: var(--font-size-base, var(--default-font-size-base));
-  color: var(--color-text, inherit);
+  color: var(--color-text, var(--default-color-text));
   /* Ensure label text color matches base text */
 }
 

@@ -9,7 +9,7 @@
 .jsonf-tool .jsonf-panel {
   border-radius: var(--radius-lg, 14px);
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
   background: var(--color-surface, #fff);
 }
@@ -17,12 +17,12 @@
 .jsonf-tool .jsonf-panel > :is(h2, h3) {
   margin: 0;
   padding: 0.95rem 1rem 0.85rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, white);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 52%, white),
-      color-mix(in srgb, white 92%, var(--color-primary-soft, #e9f3fb))
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 52%, var(--cst-color-mix-neutral, white)),
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 92%, var(--color-primary-soft, #e9f3fb))
     );
   font-size: 1rem;
   letter-spacing: 0.01em;
@@ -49,8 +49,8 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 62%, white),
-      white 40%
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 62%, var(--cst-color-mix-neutral, white)),
+      var(--cst-color-mix-neutral, white) 40%
     );
 }
 
@@ -62,10 +62,10 @@
   flex-wrap: wrap;
   gap: 0.75rem;
   border-radius: var(--radius-lg, 14px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 10%, transparent), transparent 58%),
-    linear-gradient(180deg, color-mix(in srgb, white 88%, var(--color-primary-soft, #e9f3fb)), white);
+    linear-gradient(180deg, color-mix(in srgb, var(--cst-color-mix-neutral, white) 88%, var(--color-primary-soft, #e9f3fb)), var(--cst-color-mix-neutral, white));
   box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
 }
 
@@ -80,7 +80,7 @@
   margin: 0;
   padding: 0.55rem 0.8rem;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   background: color-mix(in srgb, var(--color-surface, #fff) 92%, var(--color-surface-subtle, #f5f7fa));
 }
 
@@ -107,7 +107,7 @@
   gap: 0.35rem;
   margin: 0 var(--spacing-md, var(--default-spacing-md));
   padding-top: 0.2rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
 }
 
 .jsonf-tool .jsonf-tab {
@@ -130,14 +130,14 @@
 
 .jsonf-tool .jsonf-tab:hover {
   color: var(--color-primary, #1d70b8);
-  background: color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 70%, white);
+  background: color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 70%, var(--cst-color-mix-neutral, white));
 }
 
 .jsonf-tool .jsonf-tab.active {
   color: var(--color-primary, #1d70b8);
   background: var(--color-surface, #fff);
   border-color: color-mix(in srgb, var(--color-primary, #1d70b8) 24%, var(--color-border, #d7dde4));
-  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--color-primary, #1d70b8) 28%, white);
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--color-primary, #1d70b8) 28%, var(--cst-color-mix-neutral, white));
 }
 
 .jsonf-tool .jsonf-tab:focus-visible {
@@ -166,11 +166,11 @@
   margin: 0;
   padding: 0.95rem 1rem;
   border-radius: var(--radius-md, 10px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, white 88%, var(--color-surface-subtle, #f5f7fa)),
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 88%, var(--color-surface-subtle, #f5f7fa)),
       var(--color-surface, #fff)
     );
   overflow-x: auto;
@@ -218,7 +218,7 @@
 }
 
 .jsonf-tool .json-key {
-  color: #0550ae;
+  color: color-mix(in srgb, var(--color-primary, #1d70b8) 84%, var(--color-text, #1f2937));
   font-weight: 600;
 }
 
@@ -236,18 +236,26 @@
 }
 
 .jsonf-tool .jsonf-input-status.error {
-  color: #b42318;
-  background: #fff1f3;
-  border: 1px solid #f2c7ce;
+  color: color-mix(in srgb, var(--color-danger, #ba1a1a) 78%, var(--color-text, #1f2937));
+  background: color-mix(
+    in srgb,
+    var(--color-danger, #ba1a1a) 14%,
+    var(--cst-color-mix-neutral, white)
+  );
+  border: 1px solid color-mix(
+    in srgb,
+    var(--color-danger, #ba1a1a) 28%,
+    var(--color-border, #d7dde4)
+  );
   border-radius: var(--radius-sm, 8px);
   padding: 0.6rem 0.75rem;
 }
 
 .jsonf-tool .jsonf-stats-panel {
   border-radius: var(--radius-lg, 14px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
-  background: color-mix(in srgb, white 90%, var(--color-surface-subtle, #f5f7fa));
+  background: color-mix(in srgb, var(--cst-color-mix-neutral, white) 90%, var(--color-surface-subtle, #f5f7fa));
 }
 
 .jsonf-tool .jsonf-stats-panel .c-stat-row {

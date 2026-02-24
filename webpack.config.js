@@ -18,6 +18,7 @@ const tools = [
   'qr-code-generator',
   'data-format-converter'
 ];
+const rootShellEntryName = 'root-shell';
 
 const getWebpackMode = (argv = {}) => argv.mode || process.env.NODE_ENV || 'development';
 const createTerserMinimizer = (toolName) => {
@@ -187,6 +188,35 @@ const getToolConfig = (toolName) => ({
   ]
 });
 
+const getRootShellConfig = () => ({
+  ...baseConfig,
+  name: rootShellEntryName,
+  entry: {
+    main: [
+      './common/material-theme.css',
+      './common/app-shell/app-shell.css',
+      './root-shell.js'
+    ]
+  },
+  output: {
+    path: path.resolve(__dirname, 'build', rootShellEntryName),
+    filename: 'bundle.main.js',
+    publicPath: `/${rootShellEntryName}/`
+  },
+  plugins: [
+    new CleanWebpackPlugin({
+      cleanOnceBeforeBuildPatterns: ['**/*']
+    }),
+    new webpack.DefinePlugin({
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+      'process.platform': JSON.stringify(process.platform)
+    }),
+    new MiniCssExtractPlugin({
+      filename: 'styles.main.css'
+    })
+  ]
+});
+
 const configs = tools.map((tool) => {
   return getToolConfig(tool);
 });
@@ -204,7 +234,13 @@ const developmentConfig = {
       `./${toolName}/styles.css`
     ];
     return entries;
-  }, {}),
+  }, {
+    [rootShellEntryName]: [
+      './common/material-theme.css',
+      './common/app-shell/app-shell.css',
+      './root-shell.js'
+    ]
+  }),
   output: {
     path: path.resolve(__dirname, 'build'),
     filename: '[name]/bundle.main.js',
@@ -288,7 +324,8 @@ module.exports = (_, argv = {}) => {
   });
 
   const productionConfigs = tools.map((tool) => applyMode(getToolConfig(tool)));
+  const rootShellConfig = applyMode(getRootShellConfig());
   const devConfig = applyMode(developmentConfig);
 
-  return mode === 'development' ? devConfig : productionConfigs;
+  return mode === 'development' ? devConfig : [...productionConfigs, rootShellConfig];
 };

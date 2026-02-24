@@ -22,7 +22,7 @@
 .qr-tool__controls,
 .qr-tool__preview {
   border-radius: var(--radius-lg, 14px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
   background: var(--color-surface, #fff);
 }
@@ -34,13 +34,13 @@
   gap: var(--spacing-md, var(--default-spacing-md));
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 10%, transparent), transparent 58%),
-    linear-gradient(180deg, color-mix(in srgb, white 90%, var(--color-primary-soft, #e9f3fb)), white);
+    linear-gradient(180deg, color-mix(in srgb, var(--cst-color-mix-neutral, white) 90%, var(--color-primary-soft, #e9f3fb)), var(--cst-color-mix-neutral, white));
 }
 
 .qr-tool__section-title {
   margin: 0;
   padding: 0 0 0.8rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, white);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
   font-size: 1.05rem;
   letter-spacing: 0.01em;
 }
@@ -78,8 +78,8 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 62%, white),
-      white 40%
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 62%, var(--cst-color-mix-neutral, white)),
+      var(--cst-color-mix-neutral, white) 40%
     );
 }
 
@@ -88,7 +88,7 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, white 90%, var(--color-surface-subtle, #f5f7fa)),
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 90%, var(--color-surface-subtle, #f5f7fa)),
       var(--color-surface, #fff)
     );
 }
@@ -101,8 +101,8 @@
   background:
     linear-gradient(
       90deg,
-      color-mix(in srgb, var(--color-primary, #1d70b8) 18%, white),
-      color-mix(in srgb, var(--color-primary, #1d70b8) 8%, white)
+      color-mix(in srgb, var(--color-primary, #1d70b8) 18%, var(--cst-color-mix-neutral, white)),
+      color-mix(in srgb, var(--color-primary, #1d70b8) 8%, var(--cst-color-mix-neutral, white))
     );
   -webkit-appearance: none;
   appearance: none;
@@ -143,8 +143,8 @@
   justify-content: center;
   min-height: 100%;
   background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 75%, white), transparent 62%),
-    linear-gradient(180deg, white, color-mix(in srgb, white 92%, var(--color-surface-subtle, #f5f7fa)));
+    radial-gradient(circle at top left, color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 75%, var(--cst-color-mix-neutral, white)), transparent 62%),
+    linear-gradient(180deg, var(--cst-color-mix-neutral, white), color-mix(in srgb, var(--cst-color-mix-neutral, white) 92%, var(--color-surface-subtle, #f5f7fa)));
 }
 
 .qr-tool__qr-container {
@@ -154,9 +154,9 @@
   place-items: center;
   padding: clamp(0.9rem, 1.8vw, 1.25rem);
   border-radius: var(--radius-lg, 14px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   background:
-    conic-gradient(from 0deg at 50% 50%, color-mix(in srgb, white 94%, var(--color-primary-soft, #e9f3fb)), white, color-mix(in srgb, white 94%, var(--color-primary-soft, #e9f3fb))),
+    conic-gradient(from 0deg at 50% 50%, color-mix(in srgb, var(--cst-color-mix-neutral, white) 94%, var(--color-primary-soft, #e9f3fb)), var(--cst-color-mix-neutral, white), color-mix(in srgb, var(--cst-color-mix-neutral, white) 94%, var(--color-primary-soft, #e9f3fb))),
     white;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
 }

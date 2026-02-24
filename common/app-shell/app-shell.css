@@ -5,8 +5,12 @@
   border: 1px solid var(--md-sys-color-outline-variant, var(--md-sys-color-outline));
   border-radius: var(--cst-radius-xl, 14px);
   background:
-    radial-gradient(circle at 100% 0%, rgba(188, 236, 242, 0.45), transparent 50%),
-    linear-gradient(145deg, #ffffff 0%, var(--md-sys-color-surface-container) 100%);
+    radial-gradient(circle at 100% 0%, var(--cst-shell-header-spot, rgba(188, 236, 242, 0.45)), transparent 50%),
+    linear-gradient(
+      145deg,
+      var(--cst-shell-header-bg-start, #ffffff) 0%,
+      var(--cst-shell-header-bg-end, var(--md-sys-color-surface-container)) 100%
+    );
   box-shadow: var(--cst-shadow-2, none);
 }
 
@@ -16,6 +20,13 @@
   gap: 0.4rem;
 }
 
+.cst-shell__header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .cst-shell__brand {
   align-self: flex-start;
   display: inline-flex;
@@ -23,8 +34,8 @@
   min-height: 1.85rem;
   padding: 0.15rem 0.55rem;
   border-radius: 999px;
-  background: rgba(0, 95, 115, 0.08);
-  border: 1px solid rgba(0, 95, 115, 0.14);
+  background: var(--cst-shell-brand-chip-bg, rgba(0, 95, 115, 0.08));
+  border: 1px solid var(--cst-shell-brand-chip-border, rgba(0, 95, 115, 0.14));
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -37,7 +48,7 @@
 }
 
 .cst-shell__brand:hover {
-  background: rgba(0, 95, 115, 0.12);
+  background: var(--cst-shell-brand-chip-bg-hover, rgba(0, 95, 115, 0.12));
 }
 
 .cst-shell__brand:focus-visible {
@@ -54,6 +65,55 @@
   color: var(--md-sys-color-on-surface);
 }
 
+.cst-shell__theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--cst-shell-theme-toggle-border, var(--md-sys-color-outline-variant, #bfc9cd));
+  background: var(--cst-shell-theme-toggle-bg, rgba(255, 255, 255, 0.72));
+  color: var(--cst-shell-theme-toggle-text, var(--md-sys-color-on-surface, #141c1e));
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    transform var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+.cst-shell__theme-toggle:hover {
+  background: var(--cst-shell-theme-toggle-bg-hover, rgba(255, 255, 255, 0.9));
+  border-color: var(--cst-shell-theme-toggle-border-hover, var(--md-sys-color-outline, #6f797d));
+}
+
+.cst-shell__theme-toggle:active {
+  transform: translateY(1px);
+}
+
+.cst-shell__theme-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, none);
+}
+
+.cst-shell__theme-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  font-size: 0.95rem;
+}
+
+.cst-shell__theme-toggle[aria-pressed="true"] .cst-shell__theme-toggle-icon {
+  color: var(--cst-shell-theme-toggle-icon-active, var(--md-sys-color-primary, #005f73));
+}
+
 .cst-shell__description {
   margin: 0.2rem 0 0;
   color: var(--md-sys-color-on-surface-variant, #495353);
@@ -67,7 +127,11 @@
   padding: 0.9rem 1rem;
   border: 1px solid var(--md-sys-color-outline-variant, #d6dfde);
   border-radius: var(--cst-radius-lg, 12px);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(238, 243, 244, 0.9));
+  background: linear-gradient(
+    180deg,
+    var(--cst-shell-footer-bg-start, rgba(255, 255, 255, 0.75)),
+    var(--cst-shell-footer-bg-end, rgba(238, 243, 244, 0.9))
+  );
 }
 
 .cst-shell__footer-inner {
@@ -94,6 +158,18 @@
   .cst-shell__header {
     padding: 0.8rem 0.85rem;
     margin-bottom: 1rem;
+  }
+
+  .cst-shell__header-top {
+    gap: 0.5rem;
+  }
+
+  .cst-shell__theme-toggle {
+    padding-inline: 0.55rem;
+  }
+
+  .cst-shell__theme-toggle-text {
+    display: none;
   }
 
   .cst-shell__footer-inner {

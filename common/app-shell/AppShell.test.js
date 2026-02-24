@@ -30,6 +30,32 @@ describe('AppShell components', () => {
         expect(homeLink.getAttribute('aria-label')).toBe('Back to all tools');
     });
 
+    it('renders a theme toggle when enabled', () => {
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+
+        const onToggleTheme = jest.fn();
+
+        render(
+            <ToolShellHeader
+                title="Data Format Converter"
+                description="Convert JSON, XML, YAML, and Properties formats"
+                homeHref="/"
+                showThemeToggle={true}
+                themeMode="light"
+                onToggleTheme={onToggleTheme}
+            />,
+            root
+        );
+
+        const themeToggle = root.querySelector('.cst-shell__theme-toggle');
+        expect(themeToggle).not.toBeNull();
+        expect(themeToggle.textContent).toContain('Dark mode');
+
+        themeToggle.click();
+        expect(onToggleTheme).toHaveBeenCalledTimes(1);
+    });
+
     it('renders footer accessibility and navigation link', () => {
         const root = document.createElement('div');
         document.body.appendChild(root);
@@ -44,4 +70,3 @@ describe('AppShell components', () => {
         expect(allToolsLink.getAttribute('href')).toBe('/');
     });
 });
-
