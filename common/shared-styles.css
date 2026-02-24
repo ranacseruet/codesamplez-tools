@@ -116,6 +116,61 @@ body.standalone-app {
    ========================================================================== */
 
 .tool-container {
+  /* Establish a local token baseline in embeds so host pages cannot override
+     generic `--color-*` variables used by tool styles. */
+  --color-primary: var(--default-color-primary);
+  --color-primary-hover: var(--default-color-primary-hover);
+  --color-secondary: var(--default-color-secondary);
+  --color-secondary-hover: var(--default-color-secondary-hover);
+  --color-text: var(--default-color-text);
+  --color-text-secondary: var(--default-color-text-secondary);
+  --color-border: var(--default-color-border);
+  --color-border-light: var(--default-color-border-light);
+  --color-bg: var(--default-color-bg);
+  --color-bg-light: var(--default-color-bg-light);
+  --color-surface: var(--md-sys-color-surface-bright, var(--default-color-bg));
+  --color-surface-subtle: var(--md-sys-color-surface-container-low, var(--default-color-bg-light));
+  --color-primary-soft: color-mix(
+    in srgb,
+    var(--color-primary, var(--default-color-primary)) 12%,
+    var(--color-surface, var(--default-color-bg)) 88%
+  );
+  --color-success: var(--default-color-success);
+  --color-danger: var(--default-color-danger);
+  --color-danger-hover: var(--default-color-danger-hover);
+  --color-shadow: var(--default-color-shadow);
+  --color-warning: #b06b00;
+  --color-warning-soft: color-mix(
+    in srgb,
+    var(--color-warning) 14%,
+    var(--color-surface, var(--default-color-bg)) 86%
+  );
+
+  --font-family-base: var(--default-font-family-base);
+  --font-family-mono: var(--default-font-family-mono);
+  --font-size-base: var(--default-font-size-base);
+  --font-size-small: var(--default-font-size-small);
+  --font-size-h1: var(--default-font-size-h1);
+  --font-size-h2: var(--default-font-size-h2);
+  --line-height-base: var(--default-line-height-base);
+  --line-height-tight: var(--default-line-height-tight);
+
+  --spacing-xxs: var(--default-spacing-xxs);
+  --spacing-xs: var(--default-spacing-xs);
+  --spacing-sm: var(--default-spacing-sm);
+  --spacing-md: var(--default-spacing-md);
+  --spacing-lg: var(--default-spacing-lg);
+
+  --container-max-width: var(--default-container-max-width);
+  --border-radius-sm: var(--default-border-radius-sm);
+  --border-radius-lg: var(--default-border-radius-lg);
+  --radius-sm: var(--cst-radius-sm, var(--default-border-radius-sm));
+  --radius-md: var(--cst-radius-md, 10px);
+  --radius-lg: var(--cst-radius-lg, var(--default-border-radius-lg));
+  --box-shadow: var(--default-box-shadow);
+  --shadow-sm: var(--cst-shadow-2, var(--default-box-shadow));
+  --focus-ring: var(--cst-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.22));
+
   max-width: var(--container-max-width, var(--default-container-max-width));
   margin: 0 auto;
   background:
