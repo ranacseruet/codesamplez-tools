@@ -210,9 +210,9 @@ export function QRCodeGeneratorApp() {
   };
 
   return (
-    <div id="qr-code-generator-tool" className="tool-container qr-tool">
+    <div id="qr-code-generator-tool" className="tool-container qr-tool c-tool-stack">
       <main className="qr-tool__main-content">
-        <div className="qr-tool__controls">
+        <div className="qr-tool__controls c-surface-card">
           <h3 className="qr-tool__section-title">Configuration</h3>
 
           <div className="qr-tool__form-group">
@@ -276,7 +276,7 @@ export function QRCodeGeneratorApp() {
           </div>
         </div>
 
-        <div className="qr-tool__preview">
+        <div className="qr-tool__preview c-surface-card">
           <div id="qr-code-container" className="qr-tool__qr-container">
             <canvas
               id="qr-canvas"

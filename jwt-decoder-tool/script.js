@@ -200,7 +200,7 @@ export class JWTDecoderUI {
     updateStatusOutput(message, type = 'default', suppressNotification = false) { // type: 'default', 'success', 'error', 'warning'
         const output = this.elements.statusOutput;
         output.textContent = message;
-        output.className = 'jwt-decoder-status'; // Reset classes
+        output.className = 'jwt-decoder-status c-status-banner'; // Reset classes
         switch (type) {
             case 'success':
                 output.classList.add('status-success');
@@ -312,8 +312,8 @@ export class JWTDecoderUI {
 
 export function JwtDecoderApp() {
     return (
-        <div id="jwt-decoder-tool" className="tool-container jwt-decoder-tool">
-            <div className="c-options-panel jwt-decoder-options-panel">
+        <div id="jwt-decoder-tool" className="tool-container jwt-decoder-tool c-tool-stack">
+            <div className="c-options-panel jwt-decoder-options-panel c-surface-card">
                 <h3>Signature Options</h3>
                 <div className="c-form-group jwt-decoder-options-group">
                     <div className="c-form-row jwt-decoder-secret-row">
@@ -343,11 +343,11 @@ export function JwtDecoderApp() {
             </div>
 
             <div className="o-grid-2col jwt-decoder-layout-grid">
-                <div className="o-panel jwt-decoder-panel jwt-decoder-input-panel">
-                    <div className="o-panel-header jwt-decoder-panel-header">
+                <div className="o-panel jwt-decoder-panel jwt-decoder-input-panel c-surface-card c-surface-panel">
+                    <div className="o-panel-header jwt-decoder-panel-header c-surface-panel__header">
                         <h3>JWT Token</h3>
                     </div>
-                    <div className="o-panel-content jwt-decoder-panel-content">
+                    <div className="o-panel-content jwt-decoder-panel-content c-surface-panel__content">
                         <textarea
                             id="jwtInputToken"
                             className="c-input c-input--textarea jwt-decoder-token-input"
@@ -357,16 +357,16 @@ export function JwtDecoderApp() {
                     </div>
                 </div>
 
-                <div className="o-panel jwt-decoder-panel jwt-decoder-output-panel">
-                    <div className="o-panel-header jwt-decoder-panel-header">
+                <div className="o-panel jwt-decoder-panel jwt-decoder-output-panel c-surface-card c-surface-panel">
+                    <div className="o-panel-header jwt-decoder-panel-header c-surface-panel__header">
                         <h3>Decoded Token</h3>
                     </div>
-                    <div className="o-panel-content jwt-decoder-panel-content">
+                    <div className="o-panel-content jwt-decoder-panel-content c-surface-panel__content">
                         <div id="jwtDecodedContainer" className="jwt-decoder-json-container">
-                            <div className="jwt-decoder-tabs" role="tablist">
+                            <div className="jwt-decoder-tabs c-tab-list" role="tablist">
                                 <button
                                     id="tab-raw"
-                                    className="jwt-decoder-tab active jwt-decoder-tab-btn"
+                                    className="jwt-decoder-tab c-tab-button active jwt-decoder-tab-btn"
                                     data-tab="raw"
                                     role="tab"
                                     aria-selected="true"
@@ -377,7 +377,7 @@ export function JwtDecoderApp() {
                                 </button>
                                 <button
                                     id="tab-header"
-                                    className="jwt-decoder-tab jwt-decoder-tab-btn"
+                                    className="jwt-decoder-tab c-tab-button jwt-decoder-tab-btn"
                                     data-tab="header"
                                     role="tab"
                                     aria-selected="false"
@@ -388,7 +388,7 @@ export function JwtDecoderApp() {
                                 </button>
                                 <button
                                     id="tab-payload"
-                                    className="jwt-decoder-tab jwt-decoder-tab-btn"
+                                    className="jwt-decoder-tab c-tab-button jwt-decoder-tab-btn"
                                     data-tab="payload"
                                     role="tab"
                                     aria-selected="false"
@@ -424,14 +424,14 @@ export function JwtDecoderApp() {
                 <button id="jwt-decoder-copy-btn" className="c-button c-button--secondary jwt-decoder-copy-btn">Copy Decoded</button>
             </div>
 
-            <div className="c-stats-panel jwt-decoder-result-panel">
+            <div className="c-stats-panel jwt-decoder-result-panel c-surface-card">
                 <h3>Validation Result</h3>
                 <div className="jwt-decoder-status-container">
-                    <div id="jwtSignatureStatus" className="jwt-decoder-status">Not verified</div>
+                    <div id="jwtSignatureStatus" className="jwt-decoder-status c-status-banner">Not verified</div>
                 </div>
             </div>
 
-            <footer className="jwt-decoder-footer">
+            <footer className="jwt-decoder-footer c-tool-footer">
                 <p>JWT Decoder - Safely decode and verify your JWT tokens. No tokens are stored or transmitted</p>
             </footer>
 

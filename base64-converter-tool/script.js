@@ -329,14 +329,14 @@ export default createConverter;
 
 export function Base64ConverterApp() {
     return (
-        <div id="base64converter-tool" className="tool-container b64-tool">
-            <div className="o-header b64-header">
-                <p className="o-description b64-description">
+        <div id="base64converter-tool" className="tool-container b64-tool c-tool-stack">
+            <div className="o-header b64-header c-tool-header c-surface-card">
+                <p className="o-description c-tool-description">
                     Convert text and files to and from Base64 encoding with support for multiple character encodings.
                 </p>
             </div>
 
-            <div className="o-controls b64-settings-panel">
+            <div className="o-controls b64-settings-panel c-surface-card">
                 <div className="u-flex u-gap-sm b64-settings-row">
                     <select
                         id="base64converter-mode"
@@ -364,8 +364,8 @@ export function Base64ConverterApp() {
             </div>
 
             <div className="u-flex u-gap-lg b64-panels">
-                <div className="o-panel b64-panel">
-                    <div className="o-panel-header b64-panel-header">
+                <div className="o-panel b64-panel c-surface-card c-surface-panel">
+                    <div className="o-panel-header b64-panel-header c-surface-panel__header">
                         <h3>Input</h3>
                     </div>
                     <textarea
@@ -376,8 +376,8 @@ export function Base64ConverterApp() {
                     />
                 </div>
 
-                <div className="o-panel b64-panel">
-                    <div className="o-panel-header b64-panel-header">
+                <div className="o-panel b64-panel c-surface-card c-surface-panel">
+                    <div className="o-panel-header b64-panel-header c-surface-panel__header">
                         <h3>Output</h3>
                     </div>
                     <textarea
@@ -410,9 +410,9 @@ export function Base64ConverterApp() {
                 </div>
             </div>
 
-            <div className="o-controls b64-status-panel">
-                <span id="base64converter-status" className="b64-status-text" aria-live="polite" />
-                <span id="base64converter-copy-status" className="b64-status-text" aria-live="polite" />
+            <div className="o-controls b64-status-panel c-surface-card">
+                <span id="base64converter-status" className="b64-status-text c-status-chip" aria-live="polite" />
+                <span id="base64converter-copy-status" className="b64-status-text c-status-chip" aria-live="polite" />
             </div>
 
             <div id="notification" className="c-notification" role="status" aria-live="polite">

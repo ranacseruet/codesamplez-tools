@@ -21,8 +21,6 @@
 .dfc-tool .input-section,
 .dfc-tool .output-section {
   min-width: 0;
-  display: flex;
-  flex-direction: column;
   gap: var(--spacing-sm, var(--default-spacing-sm));
   padding: clamp(0.95rem, 1.2vw, 1.15rem);
   background:
@@ -30,10 +28,8 @@
       180deg,
       color-mix(in srgb, var(--color-bg, #fff) 94%, var(--color-primary, #005f73) 6%) 0%,
       var(--md-sys-color-surface-container-low, var(--color-bg-light, #f7f9fb)) 100%
-    );
+  );
   border: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.22));
-  border-radius: var(--cst-radius-md, var(--border-radius-md, var(--default-border-radius-sm)));
-  box-shadow: var(--cst-shadow-1, none);
 }
 
 .dfc-tool .dfc-panel-title {
@@ -152,12 +148,6 @@
   box-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.03);
 }
 
-.dfc-tool .clear-button-wrapper,
-.dfc-tool .copy-button-wrapper {
-  display: block;
-  width: 100%;
-}
-
 .dfc-tool .text-area::placeholder {
   color: color-mix(in srgb, var(--color-text-secondary, #54616f) 88%, var(--cst-color-mix-neutral, white) 12%);
 }
@@ -192,13 +182,7 @@
 
 .dfc-tool .dfc-primary-actions.c-options-panel {
   margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   justify-content: center;
-  gap: var(--spacing-sm, var(--default-spacing-sm));
-  padding: var(--spacing-md, var(--default-spacing-md));
-  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
   background:
     linear-gradient(
       180deg,
@@ -235,15 +219,6 @@
 .dfc-tool .dfc-status-banner.error,
 .dfc-tool .dfc-status-banner {
   margin-top: var(--spacing-md, var(--default-spacing-md));
-  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
-  border-color: color-mix(in srgb, var(--color-danger, #ba1a1a) 30%, transparent);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-danger, #ba1a1a) 8%, var(--cst-color-mix-neutral, white) 92%) 0%,
-      color-mix(in srgb, var(--color-danger, #ba1a1a) 4%, var(--cst-color-mix-neutral, white) 96%) 100%
-    );
-  color: var(--color-danger, var(--default-color-danger));
 }
 
 @media (max-width: 768px) {

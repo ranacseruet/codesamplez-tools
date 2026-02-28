@@ -3,9 +3,6 @@
 .diffc-tool {
   --sticky-offset-base: 58px;
   --diffc-options-height: 68px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg, var(--default-spacing-lg));
 }
 
 .diffc-tool .diffc-grid {
@@ -15,82 +12,26 @@
 
 .diffc-tool .diffc-panel,
 .diffc-tool .diffc-result-panel {
-  display: flex;
-  flex-direction: column;
   margin: 0;
-  border-radius: var(--radius-lg, 14px);
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
-  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
-  background: var(--color-surface, #fff);
 }
 
 .diffc-tool .diffc-panel {
   min-height: 22rem;
 }
 
-.diffc-tool .diffc-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin: 0;
-  padding: 0.9rem 1rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 52%, var(--cst-color-mix-neutral, white)),
-      color-mix(in srgb, var(--cst-color-mix-neutral, white) 92%, var(--color-primary-soft, #e9f3fb))
-    );
-}
-
-.diffc-tool .diffc-panel-header :is(h2, h3),
 .diffc-tool .diffc-result-header :is(h2, h3) {
   margin: 0;
   font-size: 1rem;
   letter-spacing: 0.01em;
 }
 
-.diffc-tool .diffc-panel-toolbar {
-  margin: 0;
-  min-height: 0;
-  gap: 0;
-}
-
-.diffc-tool .diffc-panel-toolbar:empty {
-  display: none;
-}
-
 .diffc-tool .diffc-panel-content {
-  flex: 1;
-  display: flex;
   padding: 0;
-  min-height: 0;
-}
-
-/* Shared ClearButton wraps textareas dynamically. */
-.diffc-tool .diffc-panel-content > .clear-button-wrapper {
-  flex: 1;
-  display: flex;
-  width: 100%;
-}
-
-.diffc-tool .diffc-panel-content > .clear-button-wrapper > .diffc-textarea {
-  flex: 1;
 }
 
 .diffc-tool .diffc-textarea {
-  flex: 1;
   min-height: 19rem;
-  width: 100%;
-  max-width: 100%;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  resize: vertical;
   line-height: 1.55;
-  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   background: var(--color-surface, #fff);
 }
 
@@ -121,12 +62,7 @@
   position: sticky;
   top: var(--sticky-offset-base, 80px);
   z-index: 10;
-  margin: 0;
-  padding: var(--spacing-md, var(--default-spacing-md));
   gap: var(--spacing-sm, var(--default-spacing-sm));
-  border-radius: var(--radius-lg, 14px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
-  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 10%, transparent), transparent 58%),
     linear-gradient(180deg, color-mix(in srgb, var(--cst-color-mix-neutral, white) 90%, var(--color-surface-subtle, #f5f7fa)), var(--cst-color-mix-neutral, white));
@@ -138,36 +74,9 @@
 }
 
 .diffc-tool .diffc-checkbox-item {
-  margin: 0;
-  padding: 0.8rem 0.95rem;
-  border-radius: var(--radius-md, 10px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--cst-color-mix-neutral, white) 93%, var(--color-surface-subtle, #f5f7fa)),
-      var(--color-surface, #fff)
-    );
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
-}
-
-.diffc-tool .diffc-checkbox-item label {
-  font-weight: 500;
-  line-height: 1.35;
-}
-
-.diffc-tool .diffc-checkbox-item:has(input:checked) {
-  border-color: color-mix(in srgb, var(--color-primary, #1d70b8) 26%, var(--color-border, #d7dde4));
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 60%, var(--cst-color-mix-neutral, white)),
-      color-mix(in srgb, var(--cst-color-mix-neutral, white) 94%, var(--color-primary-soft, #e9f3fb))
-    );
-}
-
-.diffc-tool .diffc-checkbox-item input:checked + label {
-  color: var(--color-primary, #1d70b8);
+  --c-checkbox-card-padding: 0.8rem 0.95rem;
+  --c-checkbox-card-surface-mix: 93%;
+  --c-checkbox-card-active-top-mix: 60%;
 }
 
 .diffc-tool .diffc-options-toolbar {
@@ -529,20 +438,10 @@
 @media (max-width: 640px) {
   .diffc-tool {
     --diffc-options-height: 118px;
-    gap: var(--spacing-md, var(--default-spacing-md));
   }
 
   .diffc-tool .diffc-panel {
     min-height: 19rem;
-  }
-
-  .diffc-tool .diffc-panel-header,
-  .diffc-tool .diffc-result-header {
-    padding: 0.8rem 0.9rem;
-  }
-
-  .diffc-tool .diffc-options {
-    padding: var(--spacing-sm, var(--default-spacing-sm));
   }
 
   .diffc-tool .diffc-checkbox-item {

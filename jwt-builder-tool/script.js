@@ -233,10 +233,10 @@ if (typeof window !== 'undefined') {
 
 export function JwtBuilderApp() {
   return (
-    <div id="jwt-builder-tool" className="tool-container jwt-builder-container">
+    <div id="jwt-builder-tool" className="tool-container jwt-builder-container c-tool-stack">
       <div id="notification" className="c-notification" role="status" aria-live="polite" />
-      <div className="o-header jwt-builder-header">
-        <p className="o-description jwt-builder-description">Create and sign JSON Web Tokens with standard and custom claims</p>
+      <div className="o-header jwt-builder-header c-tool-header c-surface-card">
+        <p className="o-description c-tool-description">Create and sign JSON Web Tokens with standard and custom claims</p>
       </div>
 
       <form id="jwtForm" className="u-flex u-flex-column u-gap-lg jwt-builder-form" onSubmit={(e) => e.preventDefault()}>
@@ -377,7 +377,7 @@ export function JwtBuilderApp() {
         <button type="button" id="buildJwtBtn" className="c-button jwt-builder-build-btn" onClick={() => void buildJWT()}>Build JWT</button>
       </form>
 
-      <div className="c-form-group result-section jwt-builder-result-panel">
+      <div className="c-form-group result-section jwt-builder-result-panel c-surface-card">
         <h3 className="c-form-group-header">Generated JWT</h3>
         <div className="u-flex u-gap-sm result-container jwt-builder-result-container">
           <pre id="result" className="c-code-output jwt-token-output" title="Generated JWT token" />

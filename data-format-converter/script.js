@@ -311,9 +311,9 @@ export function DataFormatConverterApp({ converter }) {
     };
 
     return (
-        <div className="tool-container dfc-tool">
+        <div className="tool-container dfc-tool c-tool-stack">
             <div className="converter-section o-grid-2col swap-container-wrapper">
-                <div className="input-section o-panel">
+                <div className="input-section o-panel c-surface-card c-surface-panel">
                     <h3 className="dfc-panel-title">Input Format</h3>
                     <div className="format-selector dfc-format-selector" role="group" aria-label="Input Format">
                         {FORMATS.map((format) => (
@@ -363,7 +363,7 @@ export function DataFormatConverterApp({ converter }) {
                     </button>
                 </div>
 
-                <div className="output-section o-panel">
+                <div className="output-section o-panel c-surface-card c-surface-panel">
                     <h3 className="dfc-panel-title">Output Format</h3>
                     <div className="format-selector dfc-format-selector" role="group" aria-label="Output Format">
                         {FORMATS.map((format) => (
@@ -402,7 +402,7 @@ export function DataFormatConverterApp({ converter }) {
                 </div>
             </div>
 
-            <div className="c-options-panel u-text-center dfc-primary-actions">
+            <div className="c-options-panel c-action-strip u-text-center dfc-primary-actions">
                 <label className="c-checkbox dfc-auto-convert-label">
                     <input
                         type="checkbox"
@@ -427,7 +427,7 @@ export function DataFormatConverterApp({ converter }) {
 
             <div
                 id="inputError"
-                className="error dfc-status-banner"
+                className="error dfc-status-banner c-status-banner"
                 style={{ display: errorMessage ? 'block' : 'none' }}
             >
                 {errorMessage}

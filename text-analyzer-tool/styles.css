@@ -1,46 +1,11 @@
 /* Phase E tool-scoped styles for Text Analyzer */
 
-.text-analyzer-tool {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg, var(--default-spacing-lg));
-}
-
 .text-analyzer-tool .ta-editor-container {
   margin: 0;
 }
 
 .text-analyzer-tool .ta-panel {
-  display: flex;
-  flex-direction: column;
   min-height: 21rem;
-  border-radius: var(--radius-lg, 14px);
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
-  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
-  background: var(--color-surface, #fff);
-}
-
-.text-analyzer-tool .ta-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin: 0;
-  padding: 0.9rem 1rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 52%, var(--cst-color-mix-neutral, white)),
-      color-mix(in srgb, var(--cst-color-mix-neutral, white) 92%, var(--color-primary-soft, #e9f3fb))
-    );
-}
-
-.text-analyzer-tool .ta-panel-header :is(h2, h3) {
-  margin: 0;
-  font-size: 1rem;
-  letter-spacing: 0.01em;
 }
 
 .text-analyzer-tool .ta-toolbar {
@@ -53,26 +18,8 @@
   white-space: nowrap;
 }
 
-/* Shared ClearButton wraps the textarea dynamically */
-.text-analyzer-tool .ta-panel > .clear-button-wrapper {
-  flex: 1;
-  display: flex;
-  width: 100%;
-}
-
-.text-analyzer-tool .ta-panel > .clear-button-wrapper > .ta-input-textarea {
-  flex: 1;
-}
-
 .text-analyzer-tool .ta-input-textarea {
-  flex: 1;
   min-height: 19rem;
-  width: 100%;
-  max-width: 100%;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  resize: vertical;
   line-height: 1.55;
   background:
     linear-gradient(
@@ -92,9 +39,6 @@
 .text-analyzer-tool .ta-word-frequency-panel {
   margin: 0;
   padding: var(--spacing-md, var(--default-spacing-md));
-  border-radius: var(--radius-lg, 14px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
-  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
   background: var(--color-surface, #fff);
 }
 
@@ -259,14 +203,9 @@
 }
 
 @media (max-width: 640px) {
-  .text-analyzer-tool {
-    gap: var(--spacing-md, var(--default-spacing-md));
-  }
-
   .text-analyzer-tool .ta-panel-header {
     flex-direction: column;
     align-items: stretch;
-    padding: 0.8rem 0.9rem;
   }
 
   .text-analyzer-tool .ta-toolbar {

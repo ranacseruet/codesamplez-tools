@@ -8,8 +8,8 @@ import { mountToolShell } from '../common/app-shell/mountToolShell.js';
 
 export function JsonFormatterApp() {
   return (
-    <div id="json-formatter-tool" className="tool-container jsonf-tool">
-      <div className="o-panel jsonf-panel jsonf-input-panel">
+    <div id="json-formatter-tool" className="tool-container jsonf-tool c-tool-stack">
+      <div className="o-panel jsonf-panel jsonf-input-panel c-surface-card c-surface-panel">
         <h3>Input JSON</h3>
         <div className="o-panel-content jsonf-panel-content">
           <textarea
@@ -23,7 +23,7 @@ export function JsonFormatterApp() {
         </div>
       </div>
 
-      <div className="o-toolbar jsonf-controls-custom jsonf-toolbar">
+      <div className="o-toolbar jsonf-controls-custom jsonf-toolbar c-action-strip">
         <button className="c-button jsonf-format-btn" id="formatJsonBtn" type="button">Format JSON</button>
         <button className="c-button c-button--secondary jsonf-sample-btn" id="loadSampleBtn" type="button">Load Sample</button>
         <div className="c-checkbox-item jsonf-checkbox-item">
@@ -36,7 +36,7 @@ export function JsonFormatterApp() {
         </div>
       </div>
 
-      <div className="o-panel jsonf-panel jsonf-output-panel">
+      <div className="o-panel jsonf-panel jsonf-output-panel c-surface-card c-surface-panel">
         <h3>Formatted Output</h3>
         <div className="o-panel-header jsonf-panel-header">
           <button className="c-button c-button--secondary jsonf-copy-btn" id="copyOutputBtn" type="button" disabled>Copy Output</button>
@@ -50,9 +50,9 @@ export function JsonFormatterApp() {
           </button>
         </div>
 
-        <div className="jsonf-tabs" role="group" aria-label="Output View">
-          <button className="jsonf-tab active" data-view="tree" aria-pressed="true" type="button">Tree View</button>
-          <button className="jsonf-tab" data-view="plain" aria-pressed="false" type="button">Plain View</button>
+        <div className="jsonf-tabs c-tab-list" role="group" aria-label="Output View">
+          <button className="jsonf-tab c-tab-button active" data-view="tree" aria-pressed="true" type="button">Tree View</button>
+          <button className="jsonf-tab c-tab-button" data-view="plain" aria-pressed="false" type="button">Plain View</button>
         </div>
 
         <div className="o-panel-content jsonf-panel-content jsonf-output-content">
@@ -70,7 +70,7 @@ export function JsonFormatterApp() {
         </div>
       </div>
 
-      <div className="c-stats-panel jsonf-stats-panel">
+      <div className="c-stats-panel jsonf-stats-panel c-surface-card">
         <div className="c-stat-row">
           <span>Original Size:</span>
           <span className="jsonf-original-size">0 bytes</span>
@@ -82,7 +82,7 @@ export function JsonFormatterApp() {
       </div>
 
       <div id="notification" className="c-notification" role="status" aria-live="polite" />
-      <div className="jsonf-footer">Made by Developer, for developers with ❤️</div>
+      <div className="jsonf-footer c-tool-footer">Made by Developer, for developers with ❤️</div>
     </div>
   );
 }

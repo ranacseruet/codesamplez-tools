@@ -7,27 +7,6 @@
   --jwtb-success: color-mix(in srgb, var(--color-success, #1f7a4d) 88%, #0f5132 12%);
 }
 
-.jwt-builder-header.o-header {
-  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
-  padding: var(--spacing-md, var(--default-spacing-md));
-  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
-  border: 1px solid var(--jwtb-border-soft);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-bg, #fff) 95%, var(--jwtb-accent) 5%) 0%,
-      var(--jwtb-surface-soft) 100%
-    );
-  box-shadow: var(--cst-shadow-1, none);
-}
-
-.jwt-builder-description.o-description {
-  margin: 0;
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
-  line-height: 1.55;
-  max-width: 72ch;
-}
-
 .jwt-builder-form {
   gap: var(--spacing-md, var(--default-spacing-md));
 }
@@ -214,7 +193,6 @@
 
 .jwt-builder-container .result-section.jwt-builder-result-panel {
   margin-top: var(--spacing-md, var(--default-spacing-md));
-  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
   border-color: var(--jwtb-border-soft);
   background:
     linear-gradient(

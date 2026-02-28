@@ -6,23 +6,6 @@
   --jsm-border-soft: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 72%, var(--cst-color-mix-neutral, white) 28%);
 }
 
-.js-minifier-header {
-  text-align: center;
-  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
-  padding: var(--spacing-md, var(--default-spacing-md)) var(--spacing-md, var(--default-spacing-md))
-    var(--spacing-lg, var(--default-spacing-lg));
-  border-bottom: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.2));
-}
-
-.js-minifier-description {
-  margin: 0;
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
-  font-size: clamp(0.95rem, 0.92rem + 0.15vw, 1rem);
-  line-height: 1.55;
-  max-width: 62ch;
-  margin-inline: auto;
-}
-
 .js-minifier-options.c-options-panel {
   margin: 0 0 var(--spacing-lg, var(--default-spacing-lg));
   border-radius: var(--border-radius-md, var(--default-border-radius-sm));
@@ -254,12 +237,7 @@
 .js-minifier-toolbar.o-toolbar {
   justify-content: center;
   margin: 0 0 var(--spacing-lg, var(--default-spacing-lg));
-  flex-wrap: wrap;
   width: 100%;
-  gap: var(--spacing-sm, var(--default-spacing-sm));
-  padding: var(--spacing-sm, var(--default-spacing-sm));
-  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
-  border: 1px solid var(--jsm-border-soft);
   background:
     linear-gradient(
       180deg,
@@ -276,9 +254,7 @@
 .js-minifier-stats.c-stats-panel {
   width: 100%;
   margin-top: 0;
-  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
   border-color: var(--jsm-border-soft);
-  box-shadow: var(--cst-shadow-1, none);
   background:
     linear-gradient(
       180deg,
@@ -336,12 +312,6 @@
 }
 
 @media (max-width: 768px) {
-  .js-minifier-header {
-    padding-inline: 0;
-    margin-bottom: var(--spacing-md, var(--default-spacing-md));
-    padding-bottom: var(--spacing-md, var(--default-spacing-md));
-  }
-
   .js-minifier-options .c-checkbox-group {
     grid-template-columns: 1fr;
   }

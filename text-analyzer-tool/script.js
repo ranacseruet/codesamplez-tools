@@ -206,10 +206,10 @@ export function TextAnalyzerApp() {
     };
 
     return (
-        <div className="tool-container text-analyzer-tool">
+        <div className="tool-container text-analyzer-tool c-tool-stack">
             <div className="text-analyzer-editor-container ta-editor-container">
-                <div className="text-analyzer-panel ta-panel ta-input-panel">
-                    <div className="text-analyzer-panel-header ta-panel-header">
+                <div className="text-analyzer-panel ta-panel ta-input-panel c-surface-card c-surface-panel">
+                    <div className="text-analyzer-panel-header ta-panel-header c-surface-panel__header">
                         <h3>Input Text</h3>
                         <div className="text-analyzer-toolbar ta-toolbar">
                             <button
@@ -224,7 +224,7 @@ export function TextAnalyzerApp() {
                     <textarea
                         id="textInput"
                         ref={textAreaRef}
-                        className="c-input c-input--textarea ta-input-textarea"
+                        className="c-input c-input--textarea c-editor-fill ta-input-textarea"
                         placeholder="Enter your text here..."
                         aria-label="Input text to analyze"
                         value={text}
@@ -233,7 +233,7 @@ export function TextAnalyzerApp() {
                 </div>
             </div>
 
-            <div className="text-analyzer-stats ta-stats-panel">
+            <div className="text-analyzer-stats ta-stats-panel c-surface-card">
                 {PRIMARY_STATS.map(([key, label]) => (
                     <div key={key} className="text-analyzer-stat-item ta-stat-item">
                         <span className="text-analyzer-stat-label">{label}</span>
@@ -242,7 +242,7 @@ export function TextAnalyzerApp() {
                 ))}
             </div>
 
-            <div className="text-analyzer-punctuation ta-punctuation-panel">
+            <div className="text-analyzer-punctuation ta-punctuation-panel c-surface-card">
                 <h4>Punctuation Statistics</h4>
                 <div className="text-analyzer-checkbox-group ta-punctuation-grid">
                     {PUNCTUATION_STATS.map(([key, label]) => (
@@ -254,7 +254,7 @@ export function TextAnalyzerApp() {
                 </div>
             </div>
 
-            <div className="text-analyzer-word-frequency ta-word-frequency-panel">
+            <div className="text-analyzer-word-frequency ta-word-frequency-panel c-surface-card">
                 <h4>Word Frequency (Top 5)</h4>
                 <div
                     id="wordFrequencyChart"

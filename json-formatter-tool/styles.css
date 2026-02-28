@@ -1,19 +1,5 @@
 /* Phase E tool-scoped styles for JSON Formatter */
 
-.jsonf-tool {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg, var(--default-spacing-lg));
-}
-
-.jsonf-tool .jsonf-panel {
-  border-radius: var(--radius-lg, 14px);
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
-  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
-  background: var(--color-surface, #fff);
-}
-
 .jsonf-tool .jsonf-panel > :is(h2, h3) {
   margin: 0;
   padding: 0.95rem 1rem 0.85rem;
@@ -55,18 +41,8 @@
 }
 
 .jsonf-tool .jsonf-toolbar {
-  margin: 0;
-  padding: var(--spacing-md, var(--default-spacing-md));
   justify-content: flex-start;
-  align-items: center;
-  flex-wrap: wrap;
   gap: 0.75rem;
-  border-radius: var(--radius-lg, 14px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 10%, transparent), transparent 58%),
-    linear-gradient(180deg, color-mix(in srgb, var(--cst-color-mix-neutral, white) 88%, var(--color-primary-soft, #e9f3fb)), var(--cst-color-mix-neutral, white));
-  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
 }
 
 .jsonf-tool .jsonf-format-btn {
@@ -103,48 +79,8 @@
 }
 
 .jsonf-tool .jsonf-tabs {
-  display: flex;
-  gap: 0.35rem;
   margin: 0 var(--spacing-md, var(--default-spacing-md));
   padding-top: 0.2rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
-}
-
-.jsonf-tool .jsonf-tab {
-  appearance: none;
-  border: 1px solid transparent;
-  border-bottom: none;
-  background: none;
-  color: var(--color-text-secondary, #4b5563);
-  padding: 0.65rem 0.85rem;
-  margin-bottom: -1px;
-  border-radius: 0.65rem 0.65rem 0 0;
-  cursor: pointer;
-  font: inherit;
-  font-weight: 600;
-  transition:
-    color 140ms ease,
-    background-color 140ms ease,
-    border-color 140ms ease;
-}
-
-.jsonf-tool .jsonf-tab:hover {
-  color: var(--color-primary, #1d70b8);
-  background: color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 70%, var(--cst-color-mix-neutral, white));
-}
-
-.jsonf-tool .jsonf-tab.active {
-  color: var(--color-primary, #1d70b8);
-  background: var(--color-surface, #fff);
-  border-color: color-mix(in srgb, var(--color-primary, #1d70b8) 24%, var(--color-border, #d7dde4));
-  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--color-primary, #1d70b8) 28%, var(--cst-color-mix-neutral, white));
-}
-
-.jsonf-tool .jsonf-tab:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring, 0 0 0 3px rgba(29, 112, 184, 0.2));
-  position: relative;
-  z-index: 1;
 }
 
 .jsonf-tool .view-container {
@@ -227,34 +163,7 @@
   font-weight: 700;
 }
 
-.jsonf-tool .jsonf-input-status {
-  min-height: 2.25rem;
-  margin-top: 0;
-  padding: 0.45rem 0.6rem;
-  font-size: 0.85rem;
-  color: var(--color-text-secondary, #4b5563);
-}
-
-.jsonf-tool .jsonf-input-status.error {
-  color: color-mix(in srgb, var(--color-danger, #ba1a1a) 78%, var(--color-text, #1f2937));
-  background: color-mix(
-    in srgb,
-    var(--color-danger, #ba1a1a) 14%,
-    var(--cst-color-mix-neutral, white)
-  );
-  border: 1px solid color-mix(
-    in srgb,
-    var(--color-danger, #ba1a1a) 28%,
-    var(--color-border, #d7dde4)
-  );
-  border-radius: var(--radius-sm, 8px);
-  padding: 0.6rem 0.75rem;
-}
-
 .jsonf-tool .jsonf-stats-panel {
-  border-radius: var(--radius-lg, 14px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
-  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
   background: color-mix(in srgb, var(--cst-color-mix-neutral, white) 90%, var(--color-surface-subtle, #f5f7fa));
 }
 
@@ -269,11 +178,7 @@
 }
 
 .jsonf-tool .jsonf-footer {
-  margin-top: 0;
   padding: 0.35rem 0.2rem 0;
-  text-align: center;
-  color: var(--color-text-secondary, #4b5563);
-  font-size: 0.92rem;
 }
 
 @media (max-width: 900px) {
@@ -302,10 +207,6 @@
 }
 
 @media (max-width: 640px) {
-  .jsonf-tool {
-    gap: var(--spacing-md, var(--default-spacing-md));
-  }
-
   .jsonf-tool .jsonf-panel-content,
   .jsonf-tool .jsonf-toolbar {
     padding: var(--spacing-sm, var(--default-spacing-sm));
@@ -321,11 +222,7 @@
   }
 
   .jsonf-tool .jsonf-tab {
-    flex: 1 1 0;
-    min-width: 0;
     text-align: center;
-    padding: 0.6rem 0.45rem;
-    font-size: 0.86rem;
   }
 
   .jsonf-tool .jsonf-input-textarea,

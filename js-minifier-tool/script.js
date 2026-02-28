@@ -174,12 +174,12 @@ export function JSMinifierApp() {
   };
 
   return (
-    <div id="js-minifier-tool" className="js-minifier-container tool-container">
-      <header className="js-minifier-header">
-        <p className="js-minifier-description">Minify your JavaScript code to reduce file size and improve load times</p>
+    <div id="js-minifier-tool" className="js-minifier-container tool-container c-tool-stack">
+      <header className="js-minifier-header c-tool-header c-surface-card">
+        <p className="o-description c-tool-description">Minify your JavaScript code to reduce file size and improve load times</p>
       </header>
 
-      <div className="js-minifier-options c-options-panel">
+      <div className="js-minifier-options c-options-panel c-surface-card">
         <h3>Minification Options</h3>
         <div className="c-checkbox-group">
           <div className="c-checkbox-item">
@@ -244,7 +244,7 @@ export function JSMinifierApp() {
       </div>
 
       <div className="o-grid-2col">
-        <div className="o-panel">
+        <div className="o-panel c-surface-card c-surface-panel">
           <h3>Original JavaScript</h3>
           <textarea
             id="js-minifier-input"
@@ -257,7 +257,7 @@ export function JSMinifierApp() {
           />
         </div>
 
-        <div className="o-panel">
+        <div className="o-panel c-surface-card c-surface-panel">
           <h3>Minified JavaScript</h3>
           <textarea
             id="js-minifier-output"
@@ -271,7 +271,7 @@ export function JSMinifierApp() {
         </div>
       </div>
 
-      <div className="js-minifier-toolbar o-toolbar">
+      <div className="js-minifier-toolbar o-toolbar c-action-strip">
         <button id="js-minifier-minify-btn" className="c-button" onClick={() => void runMinify()} disabled={isProcessing}>
           {isProcessing ? 'Minifying...' : 'Minify JavaScript'}
         </button>
@@ -280,7 +280,7 @@ export function JSMinifierApp() {
         </button>
       </div>
 
-      <div className="js-minifier-stats c-stats-panel">
+      <div className="js-minifier-stats c-stats-panel c-surface-card">
         <h3>Statistics</h3>
         <div className="c-stat-row js-minifier-stat-row">
           <span>Original Size:</span>

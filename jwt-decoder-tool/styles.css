@@ -1,13 +1,6 @@
 /* Phase E tool-scoped styles for JWT Decoder */
 
-.jwt-decoder-tool {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg, var(--default-spacing-lg));
-}
-
 .jwt-decoder-tool .jwt-decoder-options-panel {
-  border-radius: var(--radius-lg, 14px);
   border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 86%, var(--cst-color-mix-neutral, white));
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 12%, transparent), transparent 60%),
@@ -16,7 +9,6 @@
       color-mix(in srgb, var(--color-surface, #fff) 82%, var(--color-primary-soft, #e9f3fb)),
       var(--color-surface, #fff)
     );
-  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
 }
 
 .jwt-decoder-tool .jwt-decoder-options-panel :is(h2, h3) {
@@ -80,11 +72,6 @@
 }
 
 .jwt-decoder-tool .jwt-decoder-panel {
-  border-radius: var(--radius-lg, 14px);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
-  background: var(--color-surface, #fff);
 }
 
 .jwt-decoder-tool .jwt-decoder-panel-header {
@@ -98,12 +85,10 @@
 }
 
 .jwt-decoder-tool .jwt-decoder-panel-header :is(h2, h3) {
-  font-size: 1rem;
-  letter-spacing: 0.01em;
+  margin: 0;
 }
 
 .jwt-decoder-tool .jwt-decoder-panel-content {
-  padding: var(--spacing-md, var(--default-spacing-md));
 }
 
 .jwt-decoder-tool .jwt-decoder-panel-content .c-input--textarea {
@@ -136,26 +121,18 @@
 }
 
 .jwt-decoder-tool .jwt-decoder-tabs {
-  display: flex;
-  gap: 0.35rem;
   padding: 0.55rem 0.55rem 0;
   background: color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 75%, var(--cst-color-mix-neutral, white));
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
 }
 
 .jwt-decoder-tool .jwt-decoder-tab {
-  appearance: none;
   border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   border-bottom: none;
   background: color-mix(in srgb, var(--cst-color-mix-neutral, white) 78%, var(--color-surface-subtle, #f5f7fa));
   color: var(--color-text-secondary, #4b5563);
   border-radius: 0.7rem 0.7rem 0 0;
   padding: 0.6rem 0.8rem;
-  font: inherit;
-  font-weight: 600;
   line-height: 1.1;
-  cursor: pointer;
-  margin-bottom: -1px;
   transition:
     background-color 140ms ease,
     color 140ms ease,
@@ -173,13 +150,6 @@
   color: var(--color-primary, #1d70b8);
   border-color: color-mix(in srgb, var(--color-primary, #1d70b8) 24%, var(--color-border, #d7dde4));
   box-shadow: inset 0 2px 0 color-mix(in srgb, var(--color-primary, #1d70b8) 28%, var(--cst-color-mix-neutral, white));
-}
-
-.jwt-decoder-tool .jwt-decoder-tab:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring, 0 0 0 3px rgba(29, 112, 184, 0.2));
-  position: relative;
-  z-index: 1;
 }
 
 .jwt-decoder-tool .jwt-decoder-tab-content {
@@ -265,9 +235,7 @@
 }
 
 .jwt-decoder-tool .jwt-decoder-result-panel {
-  border-radius: var(--radius-lg, 14px);
   border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 88%, var(--cst-color-mix-neutral, white));
-  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
 }
 
 .jwt-decoder-tool .jwt-decoder-result-panel :is(h2, h3) {
@@ -279,51 +247,11 @@
 }
 
 .jwt-decoder-tool .jwt-decoder-status {
-  min-height: 44px;
-  padding: 0.7rem 0.85rem;
-  border-radius: var(--radius-md, 10px);
-  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
-  background: color-mix(in srgb, var(--color-surface, #fff) 90%, var(--color-surface-subtle, #f5f7fa));
-  color: var(--color-text-secondary, #4b5563);
   font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-  font-size: 0.9rem;
-  line-height: 1.45;
-  display: flex;
-  align-items: center;
-}
-
-.jwt-decoder-tool .jwt-decoder-status.status-success {
-  color: color-mix(in srgb, var(--color-success, #1d7f4f) 86%, var(--color-text, #1f2937));
-  border-color: color-mix(in srgb, var(--color-success, #1d7f4f) 28%, var(--color-border, #d7dde4));
-  background: color-mix(in srgb, var(--color-success, #1d7f4f) 12%, var(--cst-color-mix-neutral, white));
-}
-
-.jwt-decoder-tool .jwt-decoder-status.status-error {
-  color: color-mix(in srgb, var(--color-danger, #ba1a1a) 82%, var(--color-text, #1f2937));
-  border-color: color-mix(in srgb, var(--color-danger, #ba1a1a) 26%, var(--color-border, #d7dde4));
-  background: color-mix(in srgb, var(--color-danger, #ba1a1a) 12%, var(--cst-color-mix-neutral, white));
-}
-
-.jwt-decoder-tool .jwt-decoder-status.status-warning {
-  color: color-mix(in srgb, var(--color-warning, #b06b00) 84%, var(--color-text, #1f2937));
-  border-color: color-mix(in srgb, var(--color-warning, #b06b00) 26%, var(--color-border, #d7dde4));
-  background: color-mix(in srgb, var(--color-warning, #b06b00) 10%, var(--cst-color-mix-neutral, white));
-}
-
-.jwt-decoder-tool .jwt-decoder-status.status-default {
-  color: var(--color-text-secondary, #4b5563);
 }
 
 .jwt-decoder-tool .jwt-decoder-footer {
-  margin-top: 0;
   padding: 0.75rem 0.25rem 0;
-  text-align: center;
-  color: var(--color-text-secondary, #4b5563);
-  font-size: 0.92rem;
-}
-
-.jwt-decoder-tool .jwt-decoder-footer p {
-  margin: 0;
 }
 
 @media (max-width: 900px) {
@@ -338,10 +266,6 @@
 }
 
 @media (max-width: 640px) {
-  .jwt-decoder-tool {
-    gap: var(--spacing-md, var(--default-spacing-md));
-  }
-
   .jwt-decoder-tool .jwt-decoder-secret-row {
     grid-template-columns: 1fr;
   }
@@ -357,10 +281,7 @@
   }
 
   .jwt-decoder-tool .jwt-decoder-tab {
-    flex: 1 1 0;
-    min-width: 0;
     padding: 0.55rem 0.45rem;
-    font-size: 0.86rem;
   }
 
   .jwt-decoder-tool .jwt-decoder-panel-content .c-input--textarea,

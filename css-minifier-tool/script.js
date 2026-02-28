@@ -233,17 +233,17 @@ export function CssMinifierApp() {
   };
 
   return (
-    <div id="css-minifier-tool" className="css-minifier-container tool-container cssm-tool">
+    <div id="css-minifier-tool" className="css-minifier-container tool-container cssm-tool c-tool-stack">
       <div className="o-grid-2col cssm-grid">
-        <div className="o-panel cssm-panel cssm-input-panel">
-          <div className="o-panel-header cssm-panel-header">
+        <div className="o-panel cssm-panel cssm-input-panel c-surface-card c-surface-panel">
+          <div className="o-panel-header cssm-panel-header c-surface-panel__header">
             <h3>Input CSS</h3>
-            <div className="css-minifier-toolbar o-toolbar cssm-panel-toolbar" />
+            <div className="css-minifier-toolbar o-toolbar cssm-panel-toolbar c-panel-toolbar" />
           </div>
           <textarea
             id="css-minifier-input"
             ref={inputRef}
-            className="c-input c-input--textarea cssm-textarea cssm-input-textarea"
+            className="c-input c-input--textarea c-editor-fill cssm-textarea cssm-input-textarea"
             placeholder="Paste your CSS code here..."
             aria-label="Input CSS"
             value={inputCss}
@@ -251,15 +251,15 @@ export function CssMinifierApp() {
           />
         </div>
 
-        <div className="o-panel cssm-panel cssm-output-panel">
-          <div className="o-panel-header cssm-panel-header">
+        <div className="o-panel cssm-panel cssm-output-panel c-surface-card c-surface-panel">
+          <div className="o-panel-header cssm-panel-header c-surface-panel__header">
             <h3>Minified Output</h3>
-            <div className="css-minifier-toolbar o-toolbar cssm-panel-toolbar" />
+            <div className="css-minifier-toolbar o-toolbar cssm-panel-toolbar c-panel-toolbar" />
           </div>
           <textarea
             id="css-minifier-output"
             ref={outputRef}
-            className={`c-input c-input--textarea cssm-textarea cssm-output-textarea${isProcessing ? ' processing' : ''}`}
+            className={`c-input c-input--textarea c-editor-fill cssm-textarea cssm-output-textarea${isProcessing ? ' processing' : ''}`}
             readOnly
             placeholder="Minified CSS will appear here..."
             aria-label="Minified Output"
@@ -268,7 +268,7 @@ export function CssMinifierApp() {
         </div>
       </div>
 
-      <div className="css-minifier-actions cssm-actions">
+      <div className="css-minifier-actions cssm-actions c-action-strip">
         <button id="minify-btn" className="c-button cssm-minify-btn" onClick={() => void runMinify()} disabled={isProcessing}>
           {isProcessing ? 'Minifying...' : 'Minify CSS'}
         </button>
@@ -277,33 +277,33 @@ export function CssMinifierApp() {
         </button>
       </div>
 
-      <div className="css-minifier-options c-options-panel cssm-options-panel">
+      <div className="css-minifier-options c-options-panel cssm-options-panel c-surface-card">
         <h3>Minification Options</h3>
         <div className="c-checkbox-group cssm-checkbox-group">
           <div className="c-checkbox-row cssm-checkbox-row">
-            <div className="c-checkbox-item cssm-checkbox-item">
+            <div className="c-checkbox-item c-checkbox-card cssm-checkbox-item">
               <input type="checkbox" id="remove-comments" checked={options.removeComments} onChange={updateOption('removeComments')} />
               <label htmlFor="remove-comments">Remove comments</label>
             </div>
-            <div className="c-checkbox-item cssm-checkbox-item">
+            <div className="c-checkbox-item c-checkbox-card cssm-checkbox-item">
               <input type="checkbox" id="remove-whitespace" checked={options.removeWhitespace} onChange={updateOption('removeWhitespace')} />
               <label htmlFor="remove-whitespace">Remove whitespace</label>
             </div>
-            <div className="c-checkbox-item cssm-checkbox-item">
+            <div className="c-checkbox-item c-checkbox-card cssm-checkbox-item">
               <input type="checkbox" id="combine-selectors" checked={options.combineSelectors} onChange={updateOption('combineSelectors')} />
               <label htmlFor="combine-selectors">Combine duplicate selectors</label>
             </div>
           </div>
           <div className="c-checkbox-row cssm-checkbox-row">
-            <div className="c-checkbox-item cssm-checkbox-item">
+            <div className="c-checkbox-item c-checkbox-card cssm-checkbox-item">
               <input type="checkbox" id="shorten-colors" checked={options.shortenColors} onChange={updateOption('shortenColors')} />
               <label htmlFor="shorten-colors">Shorten color values</label>
             </div>
-            <div className="c-checkbox-item cssm-checkbox-item">
+            <div className="c-checkbox-item c-checkbox-card cssm-checkbox-item">
               <input type="checkbox" id="remove-units" checked={options.removeUnits} onChange={updateOption('removeUnits')} />
               <label htmlFor="remove-units">Remove unnecessary units</label>
             </div>
-            <div className="c-checkbox-item cssm-checkbox-item">
+            <div className="c-checkbox-item c-checkbox-card cssm-checkbox-item">
               <input type="checkbox" id="remove-last-semicolons" checked={options.removeLastSemicolons} onChange={updateOption('removeLastSemicolons')} />
               <label htmlFor="remove-last-semicolons">Remove last semicolons</label>
             </div>
@@ -317,7 +317,7 @@ export function CssMinifierApp() {
         </div>
       </div>
 
-      <div className="css-minifier-stats c-stats-panel cssm-stats-panel">
+      <div className="css-minifier-stats c-stats-panel cssm-stats-panel c-surface-card">
         <h3>Statistics</h3>
         <div className="c-stat-row cssm-stat-row">
           <span>Original Size</span>
@@ -333,7 +333,7 @@ export function CssMinifierApp() {
         </div>
       </div>
 
-      <div className="css-minifier-footer cssm-footer">
+      <div className="css-minifier-footer cssm-footer c-tool-footer">
         <p>CSS Minifier - Always test minified CSS before deployment.</p>
       </div>
 

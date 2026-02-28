@@ -413,21 +413,21 @@ export function initializeDiffChecker() {
 
 export function DiffCheckerApp() {
   return (
-    <div id="diff-checker-tool" className="tool-container diffc-tool">
-      <div className="o-header">
-        <p className="o-description">Compare two texts or code snippets and highlight the differences between them.</p>
+    <div id="diff-checker-tool" className="tool-container diffc-tool c-tool-stack">
+      <div className="o-header c-tool-header c-surface-card">
+        <p className="o-description c-tool-description">Compare two texts or code snippets and highlight the differences between them.</p>
       </div>
 
       <div className="o-grid-2col diffc-grid">
-        <div className="o-panel diffc-panel">
-          <div className="diff-checker-panel-header diffc-panel-header">
+        <div className="o-panel diffc-panel c-surface-card c-surface-panel">
+          <div className="diff-checker-panel-header diffc-panel-header c-surface-panel__header">
             <h3>Original Text</h3>
-            <div className="o-toolbar diffc-panel-toolbar" />
+            <div className="o-toolbar diffc-panel-toolbar c-panel-toolbar" />
           </div>
-          <div className="o-panel-content diffc-panel-content">
+          <div className="o-panel-content diffc-panel-content c-surface-panel__content c-surface-panel__content--flush">
             <textarea
               id="text1"
-              className="c-input c-input--textarea diffc-textarea diffc-textarea--original"
+              className="c-input c-input--textarea c-editor-fill diffc-textarea diffc-textarea--original"
               placeholder="Paste your first text here..."
               title="Enter your original text or code here"
               aria-label="Original text input"
@@ -435,15 +435,15 @@ export function DiffCheckerApp() {
           </div>
         </div>
 
-        <div className="o-panel diffc-panel">
-          <div className="diff-checker-panel-header diffc-panel-header">
+        <div className="o-panel diffc-panel c-surface-card c-surface-panel">
+          <div className="diff-checker-panel-header diffc-panel-header c-surface-panel__header">
             <h3>Modified Text</h3>
-            <div className="o-toolbar diffc-panel-toolbar" />
+            <div className="o-toolbar diffc-panel-toolbar c-panel-toolbar" />
           </div>
-          <div className="o-panel-content diffc-panel-content">
+          <div className="o-panel-content diffc-panel-content c-surface-panel__content c-surface-panel__content--flush">
             <textarea
               id="text2"
-              className="c-input c-input--textarea diffc-textarea diffc-textarea--modified"
+              className="c-input c-input--textarea c-editor-fill diffc-textarea diffc-textarea--modified"
               placeholder="Paste your second text here..."
               title="Enter your modified text or code here"
               aria-label="Modified text input"
@@ -452,9 +452,9 @@ export function DiffCheckerApp() {
         </div>
       </div>
 
-      <div className="o-controls diff-checker-options diffc-options">
+      <div className="o-controls diff-checker-options diffc-options c-action-strip">
         <div className="c-checkbox-group diffc-checkbox-group">
-          <div className="c-checkbox-item diffc-checkbox-item">
+          <div className="c-checkbox-item c-checkbox-card diffc-checkbox-item">
             <input type="checkbox" id="ignore-whitespace" defaultChecked />
             <label htmlFor="ignore-whitespace">Ignore whitespace differences</label>
           </div>
@@ -465,7 +465,7 @@ export function DiffCheckerApp() {
         </div>
       </div>
 
-      <div id="diff-result-container" className="o-panel diffc-result-panel">
+      <div id="diff-result-container" className="o-panel diffc-result-panel c-surface-card c-surface-panel">
         <div className="diff-result-header diffc-result-header">
           <h3>Differences</h3>
           <div className="diff-navigation diffc-navigation">

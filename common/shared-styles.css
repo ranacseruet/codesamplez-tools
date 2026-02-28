@@ -767,6 +767,50 @@ button.c-tooltip-container {
   /* Ensure label text color matches base text */
 }
 
+.c-checkbox-card {
+  min-width: 0;
+  margin: 0;
+  padding: var(--c-checkbox-card-padding, 0.75rem 0.8rem);
+  border-radius: var(--c-checkbox-card-radius, var(--radius-md, 10px));
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(
+        in srgb,
+        var(--cst-color-mix-neutral, white) var(--c-checkbox-card-surface-mix, 92%),
+        var(--color-surface-subtle, #f5f7fa)
+      ),
+      var(--color-surface, #fff)
+    );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  align-items: var(--c-checkbox-card-align-items, flex-start);
+}
+
+.c-checkbox-card label {
+  color: var(--c-checkbox-card-label-color, var(--color-text, #1f2937));
+  line-height: 1.35;
+  font-weight: 500;
+}
+
+.c-checkbox-card input:checked + label {
+  color: var(--c-checkbox-card-active-label-color, var(--color-primary, #1d70b8));
+}
+
+.c-checkbox-card:has(input:checked) {
+  border-color: color-mix(in srgb, var(--color-primary, #1d70b8) 26%, var(--color-border, #d7dde4));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(
+        in srgb,
+        var(--color-primary-soft, #e9f3fb) var(--c-checkbox-card-active-top-mix, 62%),
+        var(--cst-color-mix-neutral, white)
+      ),
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 94%, var(--color-primary-soft, #e9f3fb))
+    );
+}
+
 /* --- Options Panel (from js-minifier) --- */
 .c-options-panel {
   margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
@@ -774,6 +818,268 @@ button.c-tooltip-container {
   background-color: var(--md-sys-color-surface-container-low, var(--color-bg-light, transparent));
   border: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.2));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+}
+
+/* --- Shared Surface/Layout Primitives --- */
+.c-tool-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+}
+
+.c-surface-card {
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
+  background: var(--color-surface, #fff);
+}
+
+.c-surface-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.c-surface-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 52%, var(--cst-color-mix-neutral, white)),
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 92%, var(--color-primary-soft, #e9f3fb))
+    );
+}
+
+.c-surface-panel__header > :is(h2, h3, h4, .c-surface-panel__title) {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
+.c-surface-panel__content {
+  flex: 1;
+  min-height: 0;
+  padding: var(--spacing-md, var(--default-spacing-md));
+}
+
+.c-surface-panel__content--flush {
+  padding: 0;
+}
+
+.c-surface-panel .clear-button-wrapper,
+.c-surface-panel .copy-button-wrapper {
+  flex: 1;
+  display: flex;
+  width: 100%;
+}
+
+.c-surface-panel .clear-button-wrapper > .c-editor-fill,
+.c-surface-panel .copy-button-wrapper > .c-editor-fill {
+  flex: 1;
+}
+
+.c-editor-fill {
+  flex: 1;
+  min-height: var(--c-editor-min-height, 19rem);
+  width: 100%;
+  max-width: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  resize: vertical;
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  line-height: 1.5;
+}
+
+.c-action-strip {
+  margin: 0;
+  padding: var(--spacing-md, var(--default-spacing-md));
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 10%, transparent), transparent 58%),
+    linear-gradient(180deg, color-mix(in srgb, var(--cst-color-mix-neutral, white) 88%, var(--color-primary-soft, #e9f3fb)), var(--cst-color-mix-neutral, white));
+}
+
+.c-panel-toolbar {
+  margin: 0;
+  min-height: 0;
+  gap: 0;
+}
+
+.c-panel-toolbar:empty {
+  display: none;
+}
+
+.c-tool-footer {
+  margin-top: 0;
+  text-align: center;
+  color: var(--color-text-secondary, #4b5563);
+  font-size: 0.92rem;
+}
+
+.c-tool-footer p {
+  margin: 0;
+}
+
+.c-tool-description {
+  margin: 0 auto;
+  max-width: var(--c-tool-description-max-width, 72ch);
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  line-height: 1.55;
+  text-align: center;
+}
+
+.c-tool-header {
+  text-align: center;
+  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
+  padding: var(--spacing-md, var(--default-spacing-md));
+  border: 1px solid var(
+    --c-tool-header-border,
+    color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 78%, var(--cst-color-mix-neutral, white) 22%)
+  );
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: var(--cst-shadow-1, none);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 95%, var(--c-tool-header-accent, var(--color-primary, #1d70b8)) 5%) 0%,
+      var(
+        --c-tool-header-surface,
+        color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 90%, var(--cst-color-mix-neutral, white) 10%)
+      ) 100%
+    );
+}
+
+/* Neutralize legacy `o-header` bottom-divider spacing when combined with the shared header card shell. */
+.c-tool-header.o-header {
+  padding-bottom: var(--spacing-md, var(--default-spacing-md));
+  border-bottom: 1px solid var(
+    --c-tool-header-border,
+    color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 78%, var(--cst-color-mix-neutral, white) 22%)
+  );
+}
+
+.c-status-banner {
+  min-height: var(--c-status-min-height, 44px);
+  padding: var(--c-status-padding, 0.7rem 0.85rem);
+  border-radius: var(--c-status-radius, var(--radius-md, 10px));
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  background: color-mix(in srgb, var(--color-surface, #fff) 90%, var(--color-surface-subtle, #f5f7fa));
+  color: var(--color-text-secondary, #4b5563);
+  font-size: var(--c-status-font-size, 0.9rem);
+  line-height: 1.45;
+  display: flex;
+  align-items: center;
+}
+
+.c-status-banner.status-success {
+  color: color-mix(in srgb, var(--color-success, #1d7f4f) 86%, var(--color-text, #1f2937));
+  border-color: color-mix(in srgb, var(--color-success, #1d7f4f) 28%, var(--color-border, #d7dde4));
+  background: color-mix(in srgb, var(--color-success, #1d7f4f) 12%, var(--cst-color-mix-neutral, white));
+}
+
+.c-status-banner.status-error,
+.c-status-banner.error {
+  color: color-mix(in srgb, var(--color-danger, #ba1a1a) 82%, var(--color-text, #1f2937));
+  border-color: color-mix(in srgb, var(--color-danger, #ba1a1a) 26%, var(--color-border, #d7dde4));
+  background: color-mix(in srgb, var(--color-danger, #ba1a1a) 12%, var(--cst-color-mix-neutral, white));
+}
+
+.c-status-banner.status-warning {
+  color: color-mix(in srgb, var(--color-warning, #b06b00) 84%, var(--color-text, #1f2937));
+  border-color: color-mix(in srgb, var(--color-warning, #b06b00) 26%, var(--color-border, #d7dde4));
+  background: color-mix(in srgb, var(--color-warning, #b06b00) 10%, var(--cst-color-mix-neutral, white));
+}
+
+.c-status-banner.status-default {
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.c-input-status {
+  min-height: 2.25rem;
+  margin-top: 0;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.c-input-status.error {
+  color: color-mix(in srgb, var(--color-danger, #ba1a1a) 78%, var(--color-text, #1f2937));
+  background: color-mix(in srgb, var(--color-danger, #ba1a1a) 14%, var(--cst-color-mix-neutral, white));
+  border: 1px solid color-mix(in srgb, var(--color-danger, #ba1a1a) 28%, var(--color-border, #d7dde4));
+  border-radius: var(--c-input-status-radius, var(--radius-sm, 8px));
+  padding: 0.6rem 0.75rem;
+}
+
+.c-status-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.9rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: var(--font-size-small, var(--default-font-size-small));
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  background: color-mix(in srgb, var(--color-bg, #fff) 92%, var(--c-status-chip-accent, var(--color-primary, #1d70b8)) 8%);
+  border: 1px solid color-mix(in srgb, var(--c-status-chip-accent, var(--color-primary, #1d70b8)) 10%, transparent);
+}
+
+.c-status-chip:empty {
+  display: none;
+}
+
+.c-tab-list {
+  display: flex;
+  gap: 0.35rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+}
+
+.c-tab-button {
+  appearance: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  background: none;
+  color: var(--color-text-secondary, #4b5563);
+  padding: 0.65rem 0.85rem;
+  margin-bottom: -1px;
+  border-radius: 0.65rem 0.65rem 0 0;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  transition:
+    color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+.c-tab-button:hover {
+  color: var(--color-primary, #1d70b8);
+  background: color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 70%, var(--cst-color-mix-neutral, white));
+}
+
+.c-tab-button.active {
+  color: var(--color-primary, #1d70b8);
+  background: var(--color-surface, #fff);
+  border-color: color-mix(in srgb, var(--color-primary, #1d70b8) 24%, var(--color-border, #d7dde4));
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--color-primary, #1d70b8) 28%, var(--cst-color-mix-neutral, white));
+}
+
+.c-tab-button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring, 0 0 0 3px rgba(29, 112, 184, 0.2));
+  position: relative;
+  z-index: 1;
 }
 
 /* ==========================================================================
@@ -944,5 +1250,26 @@ button.c-tooltip-container {
     left: 50%;
     margin-left: -5px;
     border-color: transparent transparent var(--color-secondary, var(--default-color-secondary)) transparent;
+  }
+}
+
+@media (max-width: 640px) {
+  .c-tool-stack {
+    gap: var(--spacing-md, var(--default-spacing-md));
+  }
+
+  .c-surface-panel__header {
+    padding: 0.8rem 0.9rem;
+  }
+
+  .c-action-strip {
+    padding: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .c-tab-button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.6rem 0.45rem;
+    font-size: 0.86rem;
   }
 }

@@ -6,31 +6,9 @@
   --b64-border-soft: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 78%, var(--cst-color-mix-neutral, white) 22%);
 }
 
-.b64-header.o-header {
-  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
-  padding: var(--spacing-md, var(--default-spacing-md));
-  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
-  border: 1px solid var(--b64-border-soft);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-bg, #fff) 95%, var(--b64-accent) 5%) 0%,
-      var(--b64-surface-soft) 100%
-    );
-  box-shadow: var(--cst-shadow-1, none);
-}
-
-.b64-description.o-description {
-  margin: 0;
-  max-width: 72ch;
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
-  line-height: 1.55;
-}
-
 .b64-settings-panel.o-controls {
   margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
   padding: var(--spacing-md, var(--default-spacing-md));
-  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
   border: 1px solid var(--b64-border-soft);
   background:
     linear-gradient(
@@ -65,11 +43,8 @@
 
 .b64-tool .b64-panel.o-panel {
   min-width: 0;
-  display: flex;
-  flex-direction: column;
   gap: var(--spacing-sm, var(--default-spacing-sm));
   padding: clamp(0.95rem, 1.1vw, 1.15rem);
-  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
   border-color: var(--b64-border-soft);
   box-shadow: var(--cst-shadow-1, none);
   background:
@@ -81,8 +56,6 @@
 }
 
 .b64-panel-header.o-panel-header {
-  margin-bottom: 0;
-  padding-bottom: var(--spacing-sm, var(--default-spacing-sm));
   border-bottom: 1px solid color-mix(in srgb, var(--b64-accent) 10%, var(--b64-border-soft));
 }
 
@@ -190,19 +163,7 @@
 }
 
 .b64-status-text {
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.9rem;
-  padding: 0.15rem 0.55rem;
-  border-radius: 999px;
-  font-size: var(--font-size-small, var(--default-font-size-small));
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
-  background: color-mix(in srgb, var(--color-bg, #fff) 92%, var(--b64-accent) 8%);
-  border: 1px solid color-mix(in srgb, var(--b64-accent) 10%, transparent);
-}
-
-.b64-status-text:empty {
-  display: none;
+  --c-status-chip-accent: var(--b64-accent);
 }
 
 /* Accessibility: Show focus outline on label when hidden file input is focused */
@@ -213,7 +174,6 @@
 }
 
 @media (max-width: 768px) {
-  .b64-header.o-header,
   .b64-settings-panel.o-controls {
     margin-bottom: var(--spacing-md, var(--default-spacing-md));
     padding: var(--spacing-md, var(--default-spacing-md));
