@@ -8,6 +8,9 @@ export default {
     ['@babel/preset-react', {
       runtime: 'automatic',
       importSource: 'preact'
+    }],
+    ['@babel/preset-typescript', {
+      allowDeclareFields: true
     }]
   ]
 };
