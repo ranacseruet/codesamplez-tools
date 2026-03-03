@@ -2,6 +2,10 @@
  * Shared Notification Manager for tools
  * Provides consistent notification behavior across all tools
  */
+interface NotificationOptions {
+  type?: string;
+}
+
 export class NotificationManager {
   /**
    * Show a notification message
@@ -10,7 +14,7 @@ export class NotificationManager {
    * @param {object} [options] - Additional options
    * @param {string} [options.type] - Notification type ('error', 'success', etc.)
    */
-  static show(message, duration = 2000, options = {}) {
+  static show(message: string, duration = 2000, options: NotificationOptions = {}): void {
     const notification = document.getElementById('notification');
     if (!notification) {
       console.warn('Notification element not found');

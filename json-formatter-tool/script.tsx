@@ -1,10 +1,21 @@
-import { NotificationManager } from '../common/notification-manager.js';
-import { formatBytes } from '../common/format-utils.js';
-import DownloadManager from '../common/DownloadManager.js';
-import ClearButton from '../common/clear-button/ClearButton.js';
-import { scheduleTask, nextFrame } from '../common/scheduler-utils.js';
+import { NotificationManager } from '../common/notification-manager';
+import { formatBytes } from '../common/format-utils';
+import DownloadManager from '../common/DownloadManager';
+import ClearButton from '../common/clear-button/ClearButton';
+import { scheduleTask, nextFrame } from '../common/scheduler-utils';
 import { hydrate, render } from 'preact';
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
+
+interface RenderContext {
+  count: number;
+  runId: number | null;
+}
+
+type JsonFormatterWindow = Window & {
+  jsonFormatter?: JSONFormatter;
+};
+
+const browserWindow = typeof window !== 'undefined' ? (window as JsonFormatterWindow) : null;
 
 export function JsonFormatterApp() {
   return (
@@ -57,7 +68,7 @@ export function JsonFormatterApp() {
 
         <div className="o-panel-content jsonf-panel-content jsonf-output-content">
           <div id="treeView" className="view-container active">
-            <pre className="c-code-output jsonf-code-output" tabIndex="0"><code /></pre>
+            <pre className="c-code-output jsonf-code-output" tabIndex={0}><code /></pre>
           </div>
           <div id="plainView" className="view-container">
             <textarea
@@ -88,28 +99,46 @@ export function JsonFormatterApp() {
 }
 
 export class JSONFormatter {
+  currentRunId: number;
+  downloadManager!: DownloadManager;
+  input!: HTMLTextAreaElement;
+  output!: HTMLElement;
+  plainViewTextarea!: HTMLTextAreaElement;
+  tabs!: NodeListOf<HTMLButtonElement>;
+  viewContainers!: { tree: HTMLElement; plain: HTMLElement };
+  formatBtn!: HTMLButtonElement;
+  copyBtn!: HTMLButtonElement;
+  downloadBtn!: HTMLButtonElement;
+  sampleBtn!: HTMLButtonElement;
+  sortCheckbox!: HTMLInputElement;
+  autoFixCheckbox!: HTMLInputElement;
+  errorStatus!: HTMLElement;
+  originalSizeEl!: HTMLElement;
+  formattedSizeEl!: HTMLElement;
+  clearButtonInstance!: ClearButton;
+
   constructor(initDom = true) {
     this.currentRunId = 0;
     if (initDom) {
       this.downloadManager = new DownloadManager();
-      this.input = document.querySelector('.c-input.c-input--textarea');
-      this.output = document.querySelector('.c-code-output code');
-      this.plainViewTextarea = document.querySelector('#plainView .c-input--textarea'); // New plain view textarea
-      this.tabs = document.querySelectorAll('.jsonf-tab'); // Tabs
+      this.input = document.querySelector('.c-input.c-input--textarea') as HTMLTextAreaElement;
+      this.output = document.querySelector('.c-code-output code') as HTMLElement;
+      this.plainViewTextarea = document.querySelector('#plainView .c-input--textarea') as HTMLTextAreaElement;
+      this.tabs = document.querySelectorAll<HTMLButtonElement>('.jsonf-tab');
       this.viewContainers = {
-        tree: document.querySelector('#treeView'),
-        plain: document.querySelector('#plainView')
+        tree: document.querySelector('#treeView') as HTMLElement,
+        plain: document.querySelector('#plainView') as HTMLElement
       };
-      this.formatBtn = document.querySelector('#formatJsonBtn');
+      this.formatBtn = document.querySelector('#formatJsonBtn') as HTMLButtonElement;
 
-      this.copyBtn = document.querySelector('#copyOutputBtn');
-      this.downloadBtn = document.querySelector('#downloadOutputBtn');
-      this.sampleBtn = document.querySelector('#loadSampleBtn');
-      this.sortCheckbox = document.querySelector('#sortKeys'); // Use ID for checkbox
-      this.autoFixCheckbox = document.querySelector('#autoFix');
-      this.errorStatus = document.querySelector('#jsonErrorStatus');
-      this.originalSizeEl = document.querySelector('.jsonf-original-size'); // This class was kept
-      this.formattedSizeEl = document.querySelector('.jsonf-formatted-size'); // This class was kept
+      this.copyBtn = document.querySelector('#copyOutputBtn') as HTMLButtonElement;
+      this.downloadBtn = document.querySelector('#downloadOutputBtn') as HTMLButtonElement;
+      this.sampleBtn = document.querySelector('#loadSampleBtn') as HTMLButtonElement;
+      this.sortCheckbox = document.querySelector('#sortKeys') as HTMLInputElement;
+      this.autoFixCheckbox = document.querySelector('#autoFix') as HTMLInputElement;
+      this.errorStatus = document.querySelector('#jsonErrorStatus') as HTMLElement;
+      this.originalSizeEl = document.querySelector('.jsonf-original-size') as HTMLElement;
+      this.formattedSizeEl = document.querySelector('.jsonf-formatted-size') as HTMLElement;
 
       // Initialize ClearButton for the input textarea
       this.clearButtonInstance = new ClearButton(this.input);
@@ -136,7 +165,7 @@ export class JSONFormatter {
     }
 
     if (this.input) {
-      const debouncedUpdate = this.constructor.debounce(() => {
+      const debouncedUpdate = JSONFormatter.debounce(() => {
         this.updateStats(this.input.value, '');
       }, 150);
 
@@ -147,7 +176,7 @@ export class JSONFormatter {
     }
 
     if (this.tabs?.length) {
-      this.tabs.forEach(tab => {
+      this.tabs.forEach((tab) => {
         tab.addEventListener('click', () => {
           const viewName = tab.dataset.view;
           this.switchView(viewName);
@@ -157,7 +186,7 @@ export class JSONFormatter {
   }
 
 
-  async formatJSON() {
+  async formatJSON(): Promise<void> {
     // Capture current run ID to prevent stale results
     const runId = ++this.currentRunId;
 
@@ -184,7 +213,7 @@ export class JSONFormatter {
       const fragment = document.createDocumentFragment();
 
       // Async render with chunking
-      await this.renderJSONAsync(formatted, fragment, 0, { runId }, 'root');
+      await this.renderJSONAsync(formatted, fragment, 0, { count: 0, runId }, 'root');
 
       // Abort final UI updates if a newer run has started
       if (runId !== this.currentRunId) return;
@@ -197,8 +226,9 @@ export class JSONFormatter {
       this.downloadBtn.disabled = false;
       this.updateStats(this.input.value.trim(), formattedString);
       NotificationManager.show('JSON formatted successfully!', 2000, { type: 'success' });
-    } catch (error) {
-      this.showError(`Invalid JSON: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.showError(`Invalid JSON: ${message}`);
       this.copyBtn.disabled = true;
       this.downloadBtn.disabled = true;
       this.output.replaceChildren();
@@ -214,7 +244,13 @@ export class JSONFormatter {
   }
 
   // Refactored to be async and chunked
-  async renderJSONAsync(data, parentEl, depth = 0, context = { count: 0, runId: null }, keyName = null) {
+  async renderJSONAsync(
+    data: unknown,
+    parentEl: Node & ParentNode,
+    depth = 0,
+    context: RenderContext = { count: 0, runId: null },
+    keyName: string | null = null
+  ): Promise<void> {
     // Check if a newer run has started
     if (context.runId !== null && context.runId !== this.currentRunId) return;
 
@@ -248,7 +284,9 @@ export class JSONFormatter {
     container.style.marginLeft = `${depth * 15}px`;
 
     const isArray = Array.isArray(data);
-    const isEmpty = isArray ? data.length === 0 : Object.keys(data).length === 0;
+    const arrayData = isArray ? (data as unknown[]) : null;
+    const objectData = !isArray ? (data as Record<string, unknown>) : null;
+    const isEmpty = isArray ? arrayData!.length === 0 : Object.keys(objectData!).length === 0;
 
     if (!isEmpty) {
       const toggle = document.createElement('span');
@@ -261,7 +299,7 @@ export class JSONFormatter {
       toggle.addEventListener('click', () => {
         container.classList.toggle('collapsed');
         toggle.textContent = container.classList.contains('collapsed') ? '+' : '-';
-        toggle.setAttribute('aria-expanded', !container.classList.contains('collapsed'));
+        toggle.setAttribute('aria-expanded', String(!container.classList.contains('collapsed')));
       });
       toggle.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -285,14 +323,14 @@ export class JSONFormatter {
       childrenContainer.className = 'json-children';
 
       if (isArray) {
-        for (let i = 0; i < data.length; i++) {
-          const item = data[i];
+        for (let i = 0; i < arrayData!.length; i++) {
+          const item = arrayData![i];
           const itemContainer = document.createElement('div');
           await this.renderJSONAsync(item, itemContainer, depth + 1, context, `item ${i}`);
           childrenContainer.appendChild(itemContainer);
         }
       } else {
-        const entries = Object.entries(data);
+        const entries = Object.entries(objectData!);
         for (const [key, value] of entries) {
           const itemContainer = document.createElement('div');
 
@@ -319,7 +357,7 @@ export class JSONFormatter {
 
 
 
-  switchView(viewName) {
+  switchView(viewName: string | undefined): void {
     // Update tabs
     this.tabs.forEach(tab => {
       const isActive = tab.dataset.view === viewName;
@@ -328,7 +366,7 @@ export class JSONFormatter {
       } else {
         tab.classList.remove('active');
       }
-      tab.setAttribute('aria-pressed', isActive);
+      tab.setAttribute('aria-pressed', isActive as unknown as string);
     });
 
     // Update views
@@ -343,19 +381,20 @@ export class JSONFormatter {
 
 
 
-  static sortKeysAlphabetically(obj) {
-    if (Array.isArray(obj)) return obj.map(item => this.sortKeysAlphabetically(item)); // 'this' in static method is class
+  static sortKeysAlphabetically(obj: unknown): unknown {
+    if (Array.isArray(obj)) return obj.map(item => this.sortKeysAlphabetically(item));
     if (typeof obj !== 'object' || obj === null) return obj;
 
-    return Object.keys(obj)
+    const record = obj as Record<string, unknown>;
+    return Object.keys(record)
       .sort()
       .reduce((sorted, key) => {
-        sorted[key] = this.sortKeysAlphabetically(obj[key]);
+        sorted[key] = this.sortKeysAlphabetically(record[key]);
         return sorted;
-      }, {});
+      }, {} as Record<string, unknown>);
   }
 
-  updateStats(original, formatted) {
+  updateStats(original: string, formatted: string): void {
     const originalBytes = new Blob([original]).size;
     const formattedBytes = new Blob([formatted]).size;
 
@@ -363,9 +402,9 @@ export class JSONFormatter {
     this.formattedSizeEl.textContent = formatBytes(formattedBytes);
   }
 
-  static debounce(fn, delay) {
-    let timeoutId;
-    return (...args) => {
+  static debounce<TArgs extends unknown[]>(fn: (...args: TArgs) => void, delay: number): (...args: TArgs) => void {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    return (...args: TArgs) => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => fn(...args), delay);
     };
@@ -374,7 +413,7 @@ export class JSONFormatter {
 
 
 
-  static autoFixJSON(jsonString) {
+  static autoFixJSON(jsonString: string): string {
     // Remove trailing commas
     let fixedJson = jsonString.replace(/,\s*([}\]])/g, '$1');
 
@@ -387,30 +426,30 @@ export class JSONFormatter {
     return fixedJson;
   }
 
-  prepareFormattedJson() {
+  prepareFormattedJson(): [unknown, string] {
     let inputValue = this.input.value.trim();
     if (this.autoFixCheckbox.checked) {
-      inputValue = this.constructor.autoFixJSON(inputValue);
+      inputValue = JSONFormatter.autoFixJSON(inputValue);
     }
 
-    const parsed = JSON.parse(inputValue);
+    const parsed = JSON.parse(inputValue) as unknown;
     const formatted = this.sortCheckbox.checked
-      ? this.constructor.sortKeysAlphabetically(parsed)
+      ? JSONFormatter.sortKeysAlphabetically(parsed)
       : parsed;
 
     return [formatted, JSON.stringify(formatted, null, 2)];
   }
 
-  getFormattedOutput() {
+  getFormattedOutput(): string {
     try {
       return this.prepareFormattedJson()[1];
-    } catch (error) {
+    } catch (_error) {
       // If parsing fails, fall back to the original input value
       return this.input.value.trim();
     }
   }
 
-  async copyOutput() {
+  async copyOutput(): Promise<void> {
     try {
       const textToCopy = this.getFormattedOutput();
 
@@ -437,34 +476,36 @@ export class JSONFormatter {
       } finally {
         document.body.removeChild(textarea);
       }
-    } catch (err) {
-      this.showError(`Failed to copy. ${err.message}. Note: Clipboard access requires HTTPS in modern browsers.`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.showError(`Failed to copy. ${message}. Note: Clipboard access requires HTTPS in modern browsers.`);
     }
   }
 
-  showError(message) {
+  showError(message: string): void {
     NotificationManager.show(message, 3000, { type: 'error' });
     this.errorStatus.textContent = message;
     this.errorStatus.classList.add('error');
   }
 
-  clearError() {
+  clearError(): void {
     this.errorStatus.textContent = '';
     this.errorStatus.classList.remove('error');
   }
 
 
-  async downloadOutput() {
+  async downloadOutput(): Promise<void> {
     try {
       const textToDownload = this.getFormattedOutput();
       this.downloadManager.downloadFile(textToDownload, 'formatted.json', 'application/json');
       NotificationManager.show('Download started!', 2000, { type: 'success' });
-    } catch (err) {
-      NotificationManager.show(`Download failed: ${err.message}`, 3000, { type: 'error' });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      NotificationManager.show(`Download failed: ${message}`, 3000, { type: 'error' });
     }
   }
 
-  loadSampleData() {
+  loadSampleData(): void {
     const sampleData = {
       "userProfile": {
         "id": 12345,
@@ -524,8 +565,10 @@ export class JSONFormatter {
 }
 
 export class JSONFormatterToolUI {
+  formatter: JSONFormatter;
+
   constructor(rootSelector = '#json-formatter-app') {
-    const root = document.querySelector(rootSelector) || document.querySelector('#json-formatter-tool');
+    const root = document.querySelector<HTMLElement>(rootSelector) || document.querySelector<HTMLElement>('#json-formatter-tool');
     if (!root) {
       throw new Error('JSON Formatter root element not found');
     }
@@ -545,8 +588,8 @@ if (typeof document !== 'undefined' && typeof document.addEventListener === 'fun
     });
 
     const tool = new JSONFormatterToolUI();
-    if (typeof window !== 'undefined') {
-      window.jsonFormatter = tool.formatter;
+    if (browserWindow) {
+      browserWindow.jsonFormatter = tool.formatter;
     }
   });
 }

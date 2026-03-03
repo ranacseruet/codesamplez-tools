@@ -1,18 +1,18 @@
-import { JSONFormatter } from './script.js';
-import * as NotificationManagerModule from '../common/notification-manager.js';
-import DownloadManager from '../common/DownloadManager.js';
+import { JSONFormatter } from './script';
+import * as NotificationManagerModule from '../common/notification-manager';
+import DownloadManager from '../common/DownloadManager';
 
-jest.mock('../common/notification-manager.js', () => ({
+jest.mock('../common/notification-manager', () => ({
   NotificationManager: {
     show: jest.fn()
   }
 }));
 
-jest.mock('../common/format-utils.js', () => ({
+jest.mock('../common/format-utils', () => ({
   formatBytes: jest.fn(bytes => `${bytes} formatted`)
 }));
 
-jest.mock('../common/DownloadManager.js', () => {
+jest.mock('../common/DownloadManager', () => {
   return jest.fn().mockImplementation(() => {
     return {
       downloadFile: jest.fn()
@@ -20,7 +20,7 @@ jest.mock('../common/DownloadManager.js', () => {
   });
 });
 
-jest.mock('../common/clear-button/ClearButton.js', () => {
+jest.mock('../common/clear-button/ClearButton', () => {
   return jest.fn().mockImplementation(() => {
     return {
       updateVisibility: jest.fn(),
@@ -448,7 +448,7 @@ describe('JSONFormatter', () => {
         writeText: jest.fn().mockResolvedValue(undefined)
       };
 
-      // Mock globalThis.navigator.clipboard as used in script.js
+      // Mock globalThis.navigator.clipboard as used in script.tsx
       global.navigator.clipboard = mockClipboard;
 
       formatter.input = { value: 'test content' };
@@ -1285,4 +1285,3 @@ describe('JSONFormatter', () => {
   });
 
 });
-

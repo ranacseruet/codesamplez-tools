@@ -203,6 +203,17 @@ describe('CopyButton', () => {
             expect(methodCalled).toBe(true);
             expect(copyButtonInstance.copyButton.classList.contains('copy-success')).toBe(true);
         });
+
+        test('should invoke copyContent through the default click binding', async () => {
+            textArea.value = 'bound listener content';
+            const copySpy = jest.spyOn(copyButtonInstance, 'copyContent').mockResolvedValue(undefined);
+
+            copyButtonInstance.copyButton.click();
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(copySpy).toHaveBeenCalledTimes(1);
+            copySpy.mockRestore();
+        });
     });
 
     describe('Event Dispatching', () => {

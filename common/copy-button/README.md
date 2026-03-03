@@ -21,7 +21,7 @@ A stunning, feature-rich copy button component that provides seamless clipboard 
 Simply import the component files into your project:
 
 ```javascript
-import CopyButton from './common/copy-button/CopyButton.js';
+import CopyButton from './common/copy-button/CopyButton';
 import './common/copy-button/copy-button.css';
 ```
 
@@ -46,7 +46,7 @@ const preCopyButton = new CopyButton(preElement);
 ### Advanced Usage with Event Handling
 
 ```javascript
-import CopyButton from './common/copy-button/CopyButton.js';
+import CopyButton from './common/copy-button/CopyButton';
 
 const textArea = document.getElementById('my-textarea');
 const copyButton = new CopyButton(textArea);
@@ -236,7 +236,7 @@ copyButtons.forEach(button => button.disconnect());
 
 ```jsx
 import { useEffect, useRef } from 'react';
-import CopyButton from './common/copy-button/CopyButton.js';
+import CopyButton from './common/copy-button/CopyButton';
 
 function MyTextArea() {
     const textAreaRef = useRef(null);

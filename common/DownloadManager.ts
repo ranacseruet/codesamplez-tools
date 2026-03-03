@@ -2,6 +2,8 @@
  * DownloadManager class provides functionality for managing file downloads in the browser.
  * It handles creating downloadable blobs and triggering downloads.
  */
+type DownloadContent = string | ArrayBuffer | Blob;
+
 class DownloadManager {
   /**
    * Downloads content as a file.
@@ -9,7 +11,7 @@ class DownloadManager {
    * @param {string} filename - The name of the file to download.
    * @param {string} [mimeType='text/plain'] - The MIME type of the file.
    */
-  downloadFile(content, filename, mimeType = 'text/plain') {
+  downloadFile(content: DownloadContent, filename: string, mimeType = 'text/plain'): void {
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     

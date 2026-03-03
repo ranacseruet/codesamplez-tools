@@ -1,6 +1,6 @@
 // Import test utilities and Base64Codec
 import { setupPolyfills, cleanup } from '../base64-converter-tool/test-utils.js';
-import Base64Codec from './Base64Codec.js';
+import Base64Codec from './Base64Codec';
 
 // Setup test environment
 const original = { ...global };

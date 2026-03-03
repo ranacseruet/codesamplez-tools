@@ -14,12 +14,12 @@ const mockBuilder = {
 };
 
 // Mock modules
-jest.mock('./JWTBuilder.js', () => ({
+jest.mock('./JWTBuilder', () => ({
   JWTBuilder: jest.fn(() => mockBuilder)
 }));
 
 // Mock NotificationManager
-jest.mock('../common/notification-manager.js', () => ({
+jest.mock('../common/notification-manager', () => ({
   NotificationManager: {
     show: jest.fn()
   }
@@ -30,14 +30,14 @@ const mockCopyButton = {
   updateVisibility: jest.fn(),
   forceUpdateVisibility: jest.fn()
 };
-jest.mock('../common/copy-button/CopyButton.js', () => {
+jest.mock('../common/copy-button/CopyButton', () => {
   return jest.fn(() => mockCopyButton);
 });
 
 // Import after mocking
-const scriptModule = jest.requireActual('./script.js');
-const { NotificationManager } = jest.requireMock('../common/notification-manager.js');
-const CopyButton = jest.requireMock('../common/copy-button/CopyButton.js');
+const scriptModule = jest.requireActual('./script');
+const { NotificationManager } = jest.requireMock('../common/notification-manager');
+const CopyButton = jest.requireMock('../common/copy-button/CopyButton');
 
 describe('JWT Builder UI Tests', () => {
   beforeEach(() => {

@@ -1,20 +1,21 @@
-import { DiffDisplay, DiffNavigator, CodeDetector, initializeDiffChecker } from './script.js';
-import { NotificationManager } from '../common/notification-manager.js';
+import { DiffDisplay, DiffNavigator, CodeDetector, initializeDiffChecker } from './script';
+import { NotificationManager } from '../common/notification-manager';
+import { scheduleTask } from '../common/scheduler-utils';
 
 // Mock NotificationManager
-jest.mock('../common/notification-manager.js', () => ({
+jest.mock('../common/notification-manager', () => ({
   NotificationManager: {
     show: jest.fn()
   }
 }));
 
 // Mock scheduler
-jest.mock('../common/scheduler-utils.js', () => ({
+jest.mock('../common/scheduler-utils', () => ({
   scheduleTask: jest.fn().mockResolvedValue()
 }));
 
 // Mock ClearButton
-jest.mock('../common/clear-button/ClearButton.js', () => {
+jest.mock('../common/clear-button/ClearButton', () => {
   return jest.fn().mockImplementation(() => ({
     disconnect: jest.fn()
   }));
@@ -611,5 +612,32 @@ describe('initializeDiffChecker', () => {
     await new Promise(resolve => setTimeout(resolve, 0));
 
     expect(NotificationManager.show).toHaveBeenCalledWith(expect.stringContaining('Please enter text'));
+  });
+
+  test('should safely return when diff result element is missing', () => {
+    const originalGetElementById = document.getElementById.bind(document);
+    const getElementByIdSpy = jest.spyOn(document, 'getElementById').mockImplementation((id) => {
+      if (id === 'diff-result') {
+        return null;
+      }
+      return originalGetElementById(id);
+    });
+
+    const initResult = initializeDiffChecker();
+
+    expect(initResult).toBeUndefined();
+    getElementByIdSpy.mockRestore();
+  });
+
+  test('should surface diff computation errors to the notification area', async () => {
+    scheduleTask.mockRejectedValueOnce(new Error('scheduler failed'));
+    initializeDiffChecker();
+
+    document.getElementById('text1').value = 'foo';
+    document.getElementById('text2').value = 'bar';
+    document.getElementById('compare-button').click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(NotificationManager.show).toHaveBeenCalledWith('Error computing diff: scheduler failed');
   });
 });

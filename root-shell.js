@@ -1,4 +1,4 @@
-import { mountToolShell } from './common/app-shell/mountToolShell.js';
+import { mountToolShell } from './common/app-shell/mountToolShell';
 
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {

@@ -101,12 +101,12 @@ Required browser features:
 
 ## Development
 
-The tool is built using vanilla JavaScript and modern web APIs, requiring no external dependencies. The codebase is organized into the following main components:
+The tool is built using TypeScript/TSX and modern web APIs, requiring no external dependencies. The codebase is organized into the following main components:
 
 - `index.html`: Structure and layout
-- `JWTDecoder.js`: Class responsible for parsing, decoding, and validating JWTs
+- `JWTDecoder.ts`: Class responsible for parsing, decoding, and validating JWTs
 - `JsonTreeViewRenderer.js`: Class responsible for rendering the interactive JSON tree view
-- `script.js`: Contains the `JWTDecoderUI` class which handles UI interactions, event listeners, and uses `JWTDecoder` and `JsonTreeViewRenderer`. Also initializes the UI on DOMContentLoaded.
+- `script.tsx`: Contains the `JWTDecoderUI` class and Preact runtime wrapper, handles UI interactions/event listeners, and initializes the app on DOMContentLoaded.
 - `styles.css`: Responsive styling and visual design
 - `JWTDecoder.test.js`: Unit tests for the `JWTDecoder` class
-- `script.test.js`: Unit tests for the UI interactions in `script.js`
+- `script.test.js`: Unit tests for the UI interactions in `script.tsx`

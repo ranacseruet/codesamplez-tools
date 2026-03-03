@@ -3,7 +3,7 @@ import { fireEvent } from '@testing-library/dom';
 
 const mockClearButtonInstances = [];
 
-jest.mock('./JWTDecoder.js', () => ({
+jest.mock('./JWTDecoder', () => ({
   JWTDecoder: jest.fn().mockImplementation((token) => ({
     isValidFormat: Boolean(token && token.split('.').length === 3),
     getHeader: jest.fn(() => ({ alg: 'HS256', typ: 'JWT' })),
@@ -21,17 +21,17 @@ jest.mock('./JsonTreeViewRenderer.js', () => ({
   }))
 }));
 
-jest.mock('../common/notification-manager.js', () => ({
+jest.mock('../common/notification-manager', () => ({
   NotificationManager: {
     show: jest.fn()
   }
 }));
 
-jest.mock('../common/app-shell/mountToolShell.js', () => ({
+jest.mock('../common/app-shell/mountToolShell', () => ({
   mountToolShell: jest.fn()
 }));
 
-jest.mock('../common/clear-button/ClearButton.js', () => ({
+jest.mock('../common/clear-button/ClearButton', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => {
     const instance = {
@@ -43,10 +43,10 @@ jest.mock('../common/clear-button/ClearButton.js', () => ({
   })
 }));
 
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
-import { NotificationManager } from '../common/notification-manager.js';
-import ClearButton from '../common/clear-button/ClearButton.js';
-import { JWTDecoderToolUI } from './script.js';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { NotificationManager } from '../common/notification-manager';
+import ClearButton from '../common/clear-button/ClearButton';
+import { JWTDecoderToolUI } from './script';
 
 describe('JWT Decoder Preact runtime', () => {
   const flush = () => Promise.resolve();

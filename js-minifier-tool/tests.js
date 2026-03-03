@@ -1,5 +1,5 @@
 const { describe, test, expect } = require('../testHelper.js');
-const { JSMinifier } = require('./minifier.js');
+const { JSMinifier } = require('./minifier');
 
 const options = {
     removeComments: true,

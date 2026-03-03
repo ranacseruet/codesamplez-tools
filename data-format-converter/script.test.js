@@ -5,7 +5,7 @@ import { render as preactRender } from 'preact';
 const mockClearButtonInstances = [];
 const mockCopyButtonInstances = [];
 
-jest.mock('../common/clear-button/ClearButton.js', () => ({
+jest.mock('../common/clear-button/ClearButton', () => ({
     __esModule: true,
     default: jest.fn().mockImplementation(() => {
         const instance = {
@@ -17,7 +17,7 @@ jest.mock('../common/clear-button/ClearButton.js', () => ({
     })
 }));
 
-jest.mock('../common/copy-button/CopyButton.js', () => ({
+jest.mock('../common/copy-button/CopyButton', () => ({
     __esModule: true,
     default: jest.fn().mockImplementation(() => {
         const instance = {
@@ -29,21 +29,21 @@ jest.mock('../common/copy-button/CopyButton.js', () => ({
     })
 }));
 
-import { DataFormatConverterUI } from './script.js';
-import { NotificationManager } from '../common/notification-manager.js';
-import DownloadManager from '../common/DownloadManager.js';
-import ClearButton from '../common/clear-button/ClearButton.js';
-import CopyButton from '../common/copy-button/CopyButton.js';
+import { DataFormatConverterUI } from './script';
+import { NotificationManager } from '../common/notification-manager';
+import DownloadManager from '../common/DownloadManager';
+import ClearButton from '../common/clear-button/ClearButton';
+import CopyButton from '../common/copy-button/CopyButton';
 
 // Mock the NotificationManager
-jest.mock('../common/notification-manager.js', () => ({
+jest.mock('../common/notification-manager', () => ({
     NotificationManager: {
         show: jest.fn()
     }
 }));
 
 // Mock DownloadManager
-jest.mock('../common/DownloadManager.js', () => ({
+jest.mock('../common/DownloadManager', () => ({
     __esModule: true,
     default: jest.fn().mockImplementation(() => ({
         downloadFile: jest.fn()
@@ -123,6 +123,26 @@ describe('DataFormatConverterUI Integration', () => {
         expect(document.getElementById('outputText').value).toBe('<xml></xml>');
     });
 
+    it('should report non-Error conversion failures with stringified message', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+
+        ui.converter.parseInput.mockImplementation(() => {
+            throw 'string-conversion-failure';
+        });
+
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+
+        expect(NotificationManager.show).toHaveBeenCalledWith(
+            'Conversion failed: string-conversion-failure',
+            expect.any(Number),
+            expect.any(Object)
+        );
+        expect(document.getElementById('inputError').textContent).toContain('Conversion failed: string-conversion-failure');
+    });
+
     it('should handle auto-convert input event', () => {
         const input = document.getElementById('inputText');
         fireEvent.input(input, { target: { value: '{"a":1}' } });
@@ -136,6 +156,20 @@ describe('DataFormatConverterUI Integration', () => {
         jest.advanceTimersByTime(500);
 
         expect(ui.converter.parseInput).toHaveBeenCalled();
+    });
+
+    it('clears debounce timers when the app is unmounted', async () => {
+        const input = document.getElementById('inputText');
+        const root = document.getElementById('data-format-converter-app');
+        const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
+        fireEvent.input(input, { target: { value: '{"queued":true}' } });
+        await flush();
+
+        preactRender(null, root);
+
+        expect(clearTimeoutSpy).toHaveBeenCalled();
+        clearTimeoutSpy.mockRestore();
     });
 
     it('should skip auto-convert when debounced input is empty after trim', () => {

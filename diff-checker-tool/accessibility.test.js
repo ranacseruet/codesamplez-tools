@@ -1,10 +1,10 @@
 import { render } from 'preact';
 
-jest.mock('../common/app-shell/mountToolShell.js', () => ({
+jest.mock('../common/app-shell/mountToolShell', () => ({
   mountToolShell: jest.fn()
 }));
 
-import { DiffCheckerApp } from './script.js';
+import { DiffCheckerApp } from './script';
 
 describe('Diff Checker Accessibility', () => {
   beforeEach(() => {

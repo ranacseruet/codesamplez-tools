@@ -1,35 +1,62 @@
-import { DataFormatConverter } from './DataFormatConverter.js';
-import { NotificationManager } from '../common/notification-manager.js';
-import DownloadManager from '../common/DownloadManager.js';
-import ClearButton from '../common/clear-button/ClearButton.js';
-import CopyButton from '../common/copy-button/CopyButton.js';
+import { DataFormatConverter } from './DataFormatConverter';
+import { NotificationManager } from '../common/notification-manager';
+import DownloadManager from '../common/DownloadManager';
+import ClearButton from '../common/clear-button/ClearButton';
+import CopyButton from '../common/copy-button/CopyButton';
 import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
 
-const FORMATS = ['json', 'xml', 'yaml', 'properties'];
-const INPUT_PLACEHOLDERS = {
+type SupportedFormat = 'json' | 'xml' | 'yaml' | 'properties';
+
+interface DataFormatConverterAppProps {
+    converter: DataFormatConverter;
+}
+
+interface ConverterStateSnapshot {
+    inputFormat: SupportedFormat;
+    outputFormat: SupportedFormat;
+    autoConvert: boolean;
+}
+
+interface ConvertDataOptions {
+    silent?: boolean;
+    nextInput?: string;
+    nextInputFormat?: SupportedFormat;
+    nextOutputFormat?: SupportedFormat;
+}
+
+const FORMATS: SupportedFormat[] = ['json', 'xml', 'yaml', 'properties'];
+const INPUT_PLACEHOLDERS: Record<SupportedFormat, string> = {
     json: 'Paste your JSON data here...\n\nExample:\n{\n  "name": "John",\n  "age": 30,\n  "city": "New York"\n}',
     xml: 'Paste your XML data here...\n\nExample:\n<person>\n  <name>John</name>\n  <age>30</age>\n  <city>New York</city>\n</person>',
     yaml: 'Paste your YAML data here...\n\nExample:\nname: John\nage: 30\ncity: New York',
     properties: 'Paste your Properties data here...\n\nExample:\nname=John\nage=30\ncity=New York'
 };
-const MIME_TYPES = {
+const MIME_TYPES: Record<SupportedFormat, string> = {
     json: 'application/json',
     xml: 'application/xml',
     yaml: 'text/yaml',
     properties: 'text/plain'
 };
-const EXTENSIONS = {
+const EXTENSIONS: Record<SupportedFormat, string> = {
     json: 'json',
     xml: 'xml',
     yaml: 'yaml',
     properties: 'properties'
 };
 
-const formatLabel = (format) => format === 'properties' ? 'Properties' : format.toUpperCase();
+const formatLabel = (format: SupportedFormat): string =>
+    format === 'properties' ? 'Properties' : format.toUpperCase();
 
-async function copyToClipboard(text) {
+function getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+        return error.message;
+    }
+    return String(error);
+}
+
+async function copyToClipboard(text: string): Promise<void> {
     if (navigator?.clipboard?.writeText) {
         await navigator.clipboard.writeText(text);
         return;
@@ -50,19 +77,19 @@ async function copyToClipboard(text) {
     }
 }
 
-export function DataFormatConverterApp({ converter }) {
-    const [inputFormat, setInputFormat] = useState(converter.inputFormat);
-    const [outputFormat, setOutputFormat] = useState(converter.outputFormat);
+export function DataFormatConverterApp({ converter }: DataFormatConverterAppProps) {
+    const [inputFormat, setInputFormat] = useState<SupportedFormat>(converter.inputFormat);
+    const [outputFormat, setOutputFormat] = useState<SupportedFormat>(converter.outputFormat);
     const [inputText, setInputText] = useState('');
     const [outputText, setOutputText] = useState('');
     const [autoConvert, setAutoConvert] = useState(true);
     const [errorMessage, setErrorMessage] = useState('');
-    const debounceTimerRef = useRef(null);
-    const stateRef = useRef({ inputFormat, outputFormat, autoConvert });
-    const inputTextAreaRef = useRef(null);
-    const outputTextAreaRef = useRef(null);
-    const clearOverlayButtonRef = useRef(null);
-    const copyOverlayButtonRef = useRef(null);
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const stateRef = useRef<ConverterStateSnapshot>({ inputFormat, outputFormat, autoConvert });
+    const inputTextAreaRef = useRef<HTMLTextAreaElement | null>(null);
+    const outputTextAreaRef = useRef<HTMLTextAreaElement | null>(null);
+    const clearOverlayButtonRef = useRef<ClearButton | null>(null);
+    const copyOverlayButtonRef = useRef<CopyButton | null>(null);
 
     useEffect(() => {
         stateRef.current = { inputFormat, outputFormat, autoConvert };
@@ -72,12 +99,12 @@ export function DataFormatConverterApp({ converter }) {
 
     useEffect(() => {
         return () => {
-            clearTimeout(debounceTimerRef.current);
+            clearTimeout(debounceTimerRef.current as ReturnType<typeof setTimeout>);
         };
     }, []);
 
     useLayoutEffect(() => {
-        if (!inputTextAreaRef.current) {
+        if (!(inputTextAreaRef.current instanceof HTMLTextAreaElement)) {
             return undefined;
         }
 
@@ -104,7 +131,7 @@ export function DataFormatConverterApp({ converter }) {
     }, [inputText]);
 
     useLayoutEffect(() => {
-        if (!outputTextAreaRef.current) {
+        if (!(outputTextAreaRef.current instanceof HTMLTextAreaElement)) {
             return undefined;
         }
 
@@ -129,14 +156,14 @@ export function DataFormatConverterApp({ converter }) {
         copyOverlayButtonRef.current?.updateVisibility?.();
     }, [outputText]);
 
-    const showError = (message, silent = false) => {
+    const showError = (message: string, silent = false) => {
         if (!silent) {
             NotificationManager.show(message, 3000, { type: 'error' });
         }
         setErrorMessage(message);
     };
 
-    const showSuccess = (message) => {
+    const showSuccess = (message: string) => {
         NotificationManager.show(message, 3000, { type: 'success' });
         setErrorMessage('');
     };
@@ -146,7 +173,7 @@ export function DataFormatConverterApp({ converter }) {
         nextInput = inputText,
         nextInputFormat = stateRef.current.inputFormat,
         nextOutputFormat = stateRef.current.outputFormat
-    } = {}) => {
+    }: ConvertDataOptions = {}) => {
         const trimmedInput = nextInput.trim();
         if (!trimmedInput) {
             if (!silent) {
@@ -167,22 +194,23 @@ export function DataFormatConverterApp({ converter }) {
             } else {
                 setErrorMessage('');
             }
-        } catch (error) {
-            showError(`Conversion failed: ${error.message}`, silent);
+        } catch (error: unknown) {
+            showError(`Conversion failed: ${getErrorMessage(error)}`, silent);
         }
     };
 
-    const handleInputChange = (event) => {
-        const value = event.target.value;
+    const handleInputChange = (event: Event) => {
+        const target = event.target as HTMLTextAreaElement | null;
+        const value = target?.value ?? '';
         setInputText(value);
 
-        const autoConvertElement = document.getElementById('autoConvert');
+        const autoConvertElement = document.getElementById('autoConvert') as HTMLInputElement | null;
         const shouldAutoConvert = autoConvertElement ? autoConvertElement.checked : stateRef.current.autoConvert;
         if (!shouldAutoConvert) {
             return;
         }
 
-        clearTimeout(debounceTimerRef.current);
+        clearTimeout(debounceTimerRef.current as ReturnType<typeof setTimeout>);
         debounceTimerRef.current = setTimeout(() => {
             const trimmed = value.trim();
             if (!trimmed) {
@@ -205,7 +233,7 @@ export function DataFormatConverterApp({ converter }) {
         }, 500);
     };
 
-    const handleInputFormatChange = (nextFormat) => {
+    const handleInputFormatChange = (nextFormat: SupportedFormat) => {
         stateRef.current = {
             ...stateRef.current,
             inputFormat: nextFormat
@@ -219,7 +247,7 @@ export function DataFormatConverterApp({ converter }) {
         }
     };
 
-    const handleOutputFormatChange = (nextFormat) => {
+    const handleOutputFormatChange = (nextFormat: SupportedFormat) => {
         stateRef.current = {
             ...stateRef.current,
             outputFormat: nextFormat
@@ -235,8 +263,9 @@ export function DataFormatConverterApp({ converter }) {
         }
     };
 
-    const handleAutoConvertToggle = (event) => {
-        const checked = event.target.checked;
+    const handleAutoConvertToggle = (event: Event) => {
+        const target = event.target as HTMLInputElement | null;
+        const checked = Boolean(target?.checked);
         stateRef.current = {
             ...stateRef.current,
             autoConvert: checked
@@ -385,7 +414,7 @@ export function DataFormatConverterApp({ converter }) {
                             type="button"
                             tabIndex={-1}
                             aria-hidden="true"
-                            onClick={handleCopyOutput}
+                            onClick={() => void handleCopyOutput()}
                         >
                             Copy
                         </button>
@@ -438,9 +467,11 @@ export function DataFormatConverterApp({ converter }) {
 }
 
 export class DataFormatConverterUI {
+    converter: DataFormatConverter;
+
     constructor(rootSelector = '#data-format-converter-app') {
         this.converter = new DataFormatConverter();
-        const root = document.querySelector(rootSelector) || document.querySelector('.tool-container');
+        const root = (document.querySelector(rootSelector) || document.querySelector('.tool-container')) as Element | null;
         if (!root) {
             throw new Error('Data Format Converter root element not found');
         }

@@ -6,15 +6,15 @@ import {
   removeLastSemicolonsFromCss,
   combineSelectorsInCss,
   isValidCSS
-} from './minifier.js';
-import { NotificationManager } from '../common/notification-manager.js';
-import { formatBytes } from '../common/format-utils.js';
-import ClearButton from '../common/clear-button/ClearButton.js';
-import CopyButton from '../common/copy-button/CopyButton.js';
-import { scheduleTask } from '../common/scheduler-utils.js';
+} from './minifier';
+import { NotificationManager } from '../common/notification-manager';
+import { formatBytes } from '../common/format-utils';
+import ClearButton from '../common/clear-button/ClearButton';
+import CopyButton from '../common/copy-button/CopyButton';
+import { scheduleTask } from '../common/scheduler-utils';
 import { hydrate, render } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
 
 const DEFAULT_OPTIONS = {
   removeComments: true,
@@ -58,6 +58,18 @@ body {
   top: 0px;
 }`;
 
+type CssMinifierWindow = Window & {
+  removeCommentsFromCss?: typeof removeCommentsFromCss;
+  removeWhitespaceFromCss?: typeof removeWhitespaceFromCss;
+  shortenColorsInCss?: typeof shortenColorsInCss;
+  removeUnnecessaryUnits?: typeof removeUnnecessaryUnits;
+  removeLastSemicolonsFromCss?: typeof removeLastSemicolonsFromCss;
+  combineSelectorsInCss?: typeof combineSelectorsInCss;
+  isValidCSS?: typeof isValidCSS;
+};
+
+const browserWindow = typeof window !== 'undefined' ? (window as CssMinifierWindow) : null;
+
 function createDefaultOptions() {
   return { ...DEFAULT_OPTIONS };
 }
@@ -99,14 +111,14 @@ function calculateStats(original = '', minified = '') {
   };
 }
 
-if (typeof window !== 'undefined') {
-  window.removeCommentsFromCss = removeCommentsFromCss;
-  window.removeWhitespaceFromCss = removeWhitespaceFromCss;
-  window.shortenColorsInCss = shortenColorsInCss;
-  window.removeUnnecessaryUnits = removeUnnecessaryUnits;
-  window.removeLastSemicolonsFromCss = removeLastSemicolonsFromCss;
-  window.combineSelectorsInCss = combineSelectorsInCss;
-  window.isValidCSS = isValidCSS;
+if (browserWindow) {
+  browserWindow.removeCommentsFromCss = removeCommentsFromCss;
+  browserWindow.removeWhitespaceFromCss = removeWhitespaceFromCss;
+  browserWindow.shortenColorsInCss = shortenColorsInCss;
+  browserWindow.removeUnnecessaryUnits = removeUnnecessaryUnits;
+  browserWindow.removeLastSemicolonsFromCss = removeLastSemicolonsFromCss;
+  browserWindow.combineSelectorsInCss = combineSelectorsInCss;
+  browserWindow.isValidCSS = isValidCSS;
 }
 
 export function CssMinifierApp() {

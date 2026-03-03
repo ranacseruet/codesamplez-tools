@@ -1,6 +1,6 @@
-import { analyzeText } from './script.js';
-import { NotificationManager } from '../common/notification-manager.js';
-import ClearButton from '../common/clear-button/ClearButton.js';
+import { analyzeText } from './TextAnalyzer';
+import { NotificationManager } from '../common/notification-manager';
+import ClearButton from '../common/clear-button/ClearButton';
 
 export class TextAnalyzerUI {
     constructor() {

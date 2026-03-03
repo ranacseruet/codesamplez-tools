@@ -1,4 +1,5 @@
-import { JSMinifier } from './minifier.js';
+import { JSMinifier } from './minifier';
+import * as babelParser from '@babel/parser';
 
 describe('JS Minifier', () => {
   describe('configuration options', () => {
@@ -140,6 +141,30 @@ describe('JS Minifier', () => {
       expect(counter()).toBe(1);
       expect(counter()).toBe(2);
       expect(counter()).toBe(3);
+    });
+
+    test('should avoid renaming to short names that collide with globals', () => {
+      const minifier = new JSMinifier({ shortenVariables: true });
+      const input = `function test(){const longVariableName=1;return longVariableName+a;}`;
+      const output = minifier.minify(input);
+
+      expect(output).toContain('const b=1');
+      expect(output).toContain('return b+a');
+    });
+
+    test('should fall back to original code when AST parsing throws', () => {
+      const minifier = new JSMinifier({ shortenVariables: true });
+      const parseSpy = jest.spyOn(babelParser, 'parse').mockImplementation(() => {
+        throw new Error('parser exploded');
+      });
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const input = 'function sample(){return 1;}';
+
+      expect(minifier.shortenVariableNames(input)).toBe(input);
+      expect(warnSpy).toHaveBeenCalledWith('AST Parse failed, falling back to original code', expect.any(Error));
+
+      parseSpy.mockRestore();
+      warnSpy.mockRestore();
     });
 
     test('should NOT replace variable names inside strings', () => {

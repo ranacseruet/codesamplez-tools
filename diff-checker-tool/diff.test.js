@@ -1,4 +1,4 @@
-import { computeDiff } from './diff.js';
+import { computeDiff } from './diff';
 
 describe('Base Functionality', () => {
   test('empty inputs should return empty array', () => {

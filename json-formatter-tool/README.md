@@ -180,7 +180,7 @@ Calculation methodology:
 - Uses shared component classes (c- prefix) for consistency
 - Shared styles from `common/shared-styles.css`
 - Tool-specific styles in `styles.css`
-- Notification system from `common/notification-manager.js`
+- Notification system from `common/notification-manager`
 - Responsive design works on mobile and desktop
 
 ## Browser Support

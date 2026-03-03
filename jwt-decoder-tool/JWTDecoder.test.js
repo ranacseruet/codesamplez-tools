@@ -2,7 +2,8 @@
 const { TextEncoder, TextDecoder } = require('util');
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
-import { JWTDecoder, hmacSha256 } from './JWTDecoder.js';
+import { JWTDecoder, hmacSha256 } from './JWTDecoder';
+import Base64Codec from '../common/Base64Codec';
 
 // Helper function needed for comparing results in tests
 // Note: Using atob/binaryString for jsdom environment compatibility
@@ -81,6 +82,21 @@ describe('JWTDecoder Class', () => {
             expect(decoder.getSignature()).toBe('signature');
         });
 
+        it('should stringify non-Error header parsing failures', () => {
+            const decodeSpy = jest
+                .spyOn(Base64Codec.prototype, 'decodeBase64Url')
+                .mockImplementationOnce(() => {
+                    throw 'header-decode-failure';
+                });
+
+            const decoder = new JWTDecoder(validToken);
+
+            expect(decoder.isValidFormat).toBe(true);
+            expect(decoder.getHeader()).toBeNull();
+            expect(decoder.getParsingError()).toContain('Failed to parse header: header-decode-failure');
+            decodeSpy.mockRestore();
+        });
+
         it('should handle tokens with incorrect number of parts', () => {
             const decoder = new JWTDecoder(tokenWithTwoParts);
             expect(decoder.isValidFormat).toBe(false);
@@ -140,6 +156,28 @@ describe('JWTDecoder Class', () => {
              expect(decoder.getSignature()).toBe(''); // Signature is empty string
              const isValid = await decoder.verifySignature(validSecret, mockHmacSha256);
              expect(isValid).toBe(false); // Verification fails because signature is empty/incorrect
+        });
+
+        it('should return false when computed and provided signatures differ in length', async () => {
+            const decoder = new JWTDecoder(validToken);
+            const shortSignatureHmac = async () => new Uint8Array([1, 2, 3]);
+
+            const isValid = await decoder.verifySignature(validSecret, shortSignatureHmac);
+            expect(isValid).toBe(false);
+        });
+
+        it('should return false when signature verification throws', async () => {
+            const decoder = new JWTDecoder(validToken);
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+            const failingHmac = async () => {
+                throw 'verification-runtime-error';
+            };
+
+            const isValid = await decoder.verifySignature(validSecret, failingHmac);
+
+            expect(isValid).toBe(false);
+            expect(consoleErrorSpy).toHaveBeenCalledWith('Error validating JWT signature:', 'verification-runtime-error');
+            consoleErrorSpy.mockRestore();
         });
 
         // Test using the actual hmacSha256 (might fail if crypto not available)

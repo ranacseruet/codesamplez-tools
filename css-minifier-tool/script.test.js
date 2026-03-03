@@ -5,21 +5,21 @@ import { render as preactRender } from 'preact';
 const clearButtonInstances = [];
 const copyButtonInstances = [];
 
-jest.mock('../common/notification-manager.js', () => ({
+jest.mock('../common/notification-manager', () => ({
   NotificationManager: {
     show: jest.fn()
   }
 }));
 
-jest.mock('../common/app-shell/mountToolShell.js', () => ({
+jest.mock('../common/app-shell/mountToolShell', () => ({
   mountToolShell: jest.fn()
 }));
 
-jest.mock('../common/scheduler-utils.js', () => ({
+jest.mock('../common/scheduler-utils', () => ({
   scheduleTask: jest.fn(() => Promise.resolve())
 }));
 
-jest.mock('../common/clear-button/ClearButton.js', () => ({
+jest.mock('../common/clear-button/ClearButton', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => {
     const instance = {
@@ -31,7 +31,7 @@ jest.mock('../common/clear-button/ClearButton.js', () => ({
   })
 }));
 
-jest.mock('../common/copy-button/CopyButton.js', () => ({
+jest.mock('../common/copy-button/CopyButton', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => {
     const instance = {
@@ -43,7 +43,7 @@ jest.mock('../common/copy-button/CopyButton.js', () => ({
   })
 }));
 
-jest.mock('./minifier.js', () => ({
+jest.mock('./minifier', () => ({
   removeCommentsFromCss: jest.fn((css) => css.replace(/\/\*[\s\S]*?\*\//g, '')),
   removeWhitespaceFromCss: jest.fn((css) => css.replace(/\s+/g, ' ').replace(/\s*([{}:;,])\s*/g, '$1').trim()),
   shortenColorsInCss: jest.fn((css) => css.replace(/red/g, '#f00')),
@@ -53,13 +53,13 @@ jest.mock('./minifier.js', () => ({
   isValidCSS: jest.fn(() => true)
 }));
 
-import { NotificationManager } from '../common/notification-manager.js';
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
-import { scheduleTask } from '../common/scheduler-utils.js';
-import ClearButton from '../common/clear-button/ClearButton.js';
-import CopyButton from '../common/copy-button/CopyButton.js';
-import { isValidCSS } from './minifier.js';
-import { CssMinifierToolUI } from './script.js';
+import { NotificationManager } from '../common/notification-manager';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { scheduleTask } from '../common/scheduler-utils';
+import ClearButton from '../common/clear-button/ClearButton';
+import CopyButton from '../common/copy-button/CopyButton';
+import { isValidCSS } from './minifier';
+import { CssMinifierToolUI } from './script';
 
 describe('CSS Minifier Preact runtime', () => {
   const flush = () => Promise.resolve();

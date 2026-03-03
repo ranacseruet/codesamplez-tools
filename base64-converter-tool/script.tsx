@@ -1,15 +1,54 @@
 // Import dependencies
-import Base64Codec from '../common/Base64Codec.js';
-import { NotificationManager } from '../common/notification-manager.js';
-import DownloadManager from '../common/DownloadManager.js';
-import ClearButton from '../common/clear-button/ClearButton.js';
-import CopyButton from '../common/copy-button/CopyButton.js';
+import Base64Codec from '../common/Base64Codec';
+import { NotificationManager } from '../common/notification-manager';
+import DownloadManager from '../common/DownloadManager';
+import ClearButton from '../common/clear-button/ClearButton';
+import CopyButton from '../common/copy-button/CopyButton';
 import { hydrate, render } from 'preact';
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
 
 const BASE64_DATA_URL_REGEX = /^data:([a-zA-Z0-9/\-+.-\w]+)?(?:;charset=([a-zA-Z0-9/\-+.-\w]+))?;base64,(.*)$/;
 
-function normalizeEncodingValue(value) {
+type Base64Encoding = 'utf8' | 'ascii' | 'iso88591' | 'ucs2';
+
+interface ParsedDataUrl {
+    mimeType: string | null;
+    base64Payload: string;
+}
+
+interface Base64ConverterElements {
+    input: HTMLTextAreaElement;
+    result: HTMLElement;
+    status: HTMLElement;
+    copyStatus: HTMLElement;
+    mode: HTMLSelectElement;
+    encoding: HTMLSelectElement;
+    fileInput: HTMLInputElement;
+    convertButton: HTMLElement;
+    downloadDecodedButton: HTMLButtonElement;
+}
+
+interface Base64ConverterInstance {
+    elements: Base64ConverterElements;
+    currentMimeType: string | null;
+    downloadManager: DownloadManager;
+    clearButtonInstance: ClearButton | null;
+    copyButtonInstance: CopyButton;
+    processInput(): void;
+    detectMimeTypeFromBinary(bytes: Uint8Array): void;
+    getFileExtensionFromMimeType(mimeType: string): void;
+    handleDownload(): Promise<void>;
+    handleFileUpload(event: { target: { files?: FileList | File[] | null; value?: string | null } }): Promise<void>;
+}
+
+type Base64ConverterWindow = Window & {
+    Base64Converter?: () => Base64ConverterInstance;
+    base64ConverterInstance?: Base64ConverterInstance | null;
+};
+
+const browserWindow = typeof window !== 'undefined' ? (window as Base64ConverterWindow) : null;
+
+function normalizeEncodingValue(value: unknown): Base64Encoding {
     const encoding = String(value || '').trim();
     switch (encoding) {
         case 'UTF-8':
@@ -25,11 +64,11 @@ function normalizeEncodingValue(value) {
         case 'iso88591':
             return 'iso88591';
         default:
-            return encoding || 'utf8';
+            return 'utf8';
     }
 }
 
-function parseBase64DataUrl(value) {
+function parseBase64DataUrl(value: unknown): ParsedDataUrl | null {
     const parts = String(value || '').match(BASE64_DATA_URL_REGEX);
     if (!parts || typeof parts[3] !== 'string') {
         return null;
@@ -54,15 +93,17 @@ const BASE64_CONVERTER_ELEMENT_IDS = {
 };
 
 // Converter factory function
-const createConverter = () => {
+const createConverter = (): Base64ConverterInstance => {
     // Create Base64Codec instance
     const codec = new Base64Codec();
     const downloadManager = new DownloadManager();
     
     return {
-        elements: {},
+        elements: {} as Base64ConverterElements,
         currentMimeType: null, // To store MIME type from Data URL
         downloadManager: downloadManager, // Expose downloadManager for testing
+        clearButtonInstance: null,
+        copyButtonInstance: null as unknown as CopyButton,
 
         processInput() {
             const rawInput = this.elements.input.value.trim();
@@ -126,8 +167,8 @@ const createConverter = () => {
                                 try {
                                     resultText = codec.decodeText(base64Payload, encoding);
                                     this.elements.downloadDecodedButton.disabled = false;
-                                } catch (decodeError) {
-                                    const msg = decodeError.message ? decodeError.message.toLowerCase() : "";
+                                } catch (decodeError: unknown) {
+                                    const msg = decodeError instanceof Error && decodeError.message ? decodeError.message.toLowerCase() : "";
                                     if (msg.includes('utf-8') || msg.includes('ucs-2') || 
                                         msg.includes('malformed') || msg.includes('invalid sequence') || 
                                         msg.includes('data was not valid') || msg.includes('valid utf') ||
@@ -176,26 +217,27 @@ const createConverter = () => {
                 }
                 this.elements.downloadDecodedButton.disabled = false;
 
-            } catch (error) {
+            } catch (error: unknown) {
                 console.error('Processing error:', error);
                 this.elements.result.textContent = '';
                 let errorMessage = '';
                 let isEncodingError = false;
+                const message = error instanceof Error ? error.message : String(error);
 
-                if (error.message.includes('UCS-2')) {
+                if (message.includes('UCS-2')) {
                     errorMessage = 'Invalid UCS-2 sequence - Input may be corrupted or not UCS-2 text.';
                     isEncodingError = true;
-                } else if (error.message.includes('UTF-8')) {
+                } else if (message.includes('UTF-8')) {
                     errorMessage = 'Invalid UTF-8 sequence - Input may be corrupted or not UTF-8 text. Try a different encoding, or Download if binary.';
                     isEncodingError = true;
-                } else if (error.message.includes('Invalid base64 input string')) {
+                } else if (message.includes('Invalid base64 input string')) {
                     errorMessage = 'Invalid base64 input';
-                } else if (error.message.includes('Invalid Data URI format')) {
+                } else if (message.includes('Invalid Data URI format')) {
                     errorMessage = 'Invalid Data URI format.';
-                } else if (error.message.includes('empty')) {
+                } else if (message.includes('empty')) {
                     errorMessage = 'Input cannot be empty.';
                 } else {
-                    errorMessage = `Processing failed: ${error.message}`;
+                    errorMessage = `Processing failed: ${message}`;
                 }
 
                 if (isEncodingError) {
@@ -207,11 +249,11 @@ const createConverter = () => {
             }
         },
 
-        detectMimeTypeFromBinary(bytes) {
+        detectMimeTypeFromBinary(_bytes: Uint8Array) {
             // ... (keep existing detectMimeTypeFromBinary implementation unchanged)
         },
 
-        getFileExtensionFromMimeType(mimeType) {
+        getFileExtensionFromMimeType(_mimeType: string) {
             // ... (keep existing getFileExtensionFromMimeType implementation unchanged)
         },
 
@@ -260,14 +302,16 @@ const createConverter = () => {
 
                 downloadManager.downloadFile(content, filename, 'application/octet-stream'); // Default to octet-stream for binary
                 NotificationManager.show(`Content downloaded as "${filename}"`, 2000, { type: 'success' });
-            } catch (error) {
+            } catch (error: unknown) {
                 console.error('Download error:', error);
-                NotificationManager.show('Error downloading content: ' + error.message, 3000, { type: 'error' });
+                const message = error instanceof Error ? error.message : String(error);
+                NotificationManager.show('Error downloading content: ' + message, 3000, { type: 'error' });
             }
         },
 
         async handleFileUpload(e) {
-            const file = e.target.files[0];
+            const files = e.target.files || [];
+            const file = files[0];
             if (!file) return;
 
             const reader = new FileReader();
@@ -275,20 +319,20 @@ const createConverter = () => {
             reader.onload = () => {
                 try {
                     const dataUrl = reader.result;
+                    if (typeof dataUrl !== 'string') {
+                        throw new Error('Invalid file reader result');
+                    }
                     let base64String;
-                    let mimeType;
 
                     if (dataUrl.startsWith('data:')) {
                         const parsedDataUrl = parseBase64DataUrl(dataUrl);
                         if (parsedDataUrl) {
-                            mimeType = parsedDataUrl.mimeType || 'application/octet-stream';
                             base64String = parsedDataUrl.base64Payload;
                         } else {
                             throw new Error('Invalid Data URI format');
                         }
                     } else {
                         base64String = dataUrl.trim();
-                        mimeType = 'application/octet-stream';
                     }
 
                     this.elements.input.value = `[File: ${file.name} uploaded and encoded to output]`;
@@ -296,12 +340,13 @@ const createConverter = () => {
                     // Update CopyButton visibility directly
                     this.copyButtonInstance.forceUpdateVisibility();
 
-                } catch (error) {
+                } catch (error: unknown) {
                 console.error('File processing error after read:', error);
                 this.elements.result.textContent = '';
                 this.copyButtonInstance.forceUpdateVisibility();
                 this.elements.input.value = '';
-                NotificationManager.show('Error processing file: ' + error.message, 3000, { type: 'error' });
+                const message = error instanceof Error ? error.message : String(error);
+                NotificationManager.show('Error processing file: ' + message, 3000, { type: 'error' });
                     this.elements.downloadDecodedButton.disabled = true;
                 } finally {
                     e.target.value = null;
@@ -313,7 +358,7 @@ const createConverter = () => {
                 this.elements.result.textContent = '';
                 this.copyButtonInstance.forceUpdateVisibility();
                 this.elements.input.value = '';
-                NotificationManager.show('Error reading file: ' + reader.error.message, 3000, { type: 'error' });
+                NotificationManager.show('Error reading file: ' + (reader.error?.message || 'Unknown error'), 3000, { type: 'error' });
                 this.elements.downloadDecodedButton.disabled = true;
                 e.target.value = null;
             };
@@ -422,9 +467,9 @@ export function Base64ConverterApp() {
     );
 }
 
-function initializeBase64ConverterDom() {
-    if (typeof window !== 'undefined') {
-        window.Base64Converter = createConverter;
+function initializeBase64ConverterDom(): Base64ConverterInstance | null {
+    if (browserWindow) {
+        browserWindow.Base64Converter = createConverter;
     }
     const converter = createConverter();
 
@@ -461,15 +506,15 @@ function initializeBase64ConverterDom() {
         }
     }
 
-    const elements = {};
+    const elements: Partial<Base64ConverterElements> = {};
     const missingElements = [];
-    for (const [key, id] of Object.entries(BASE64_CONVERTER_ELEMENT_IDS)) {
+    for (const [key, id] of Object.entries(BASE64_CONVERTER_ELEMENT_IDS) as [keyof Base64ConverterElements, string][]) {
         const element = document.getElementById(id);
         if (!element) {
             missingElements.push(id);
             continue;
         }
-        elements[key] = element;
+        (elements as Record<keyof Base64ConverterElements, HTMLElement>)[key] = element;
     }
 
     if (missingElements.length > 0) {
@@ -478,18 +523,19 @@ function initializeBase64ConverterDom() {
         return null;
     }
 
-    converter.elements = elements;
+    const typedElements = elements as Base64ConverterElements;
+    converter.elements = typedElements;
 
     if (dataFromUrl) {
-        elements.input.value = dataFromUrl;
-        elements.mode.value = 'auto';
+        typedElements.input.value = dataFromUrl;
+        typedElements.mode.value = 'auto';
     }
 
-    converter.clearButtonInstance = new ClearButton(elements.input);
-    converter.copyButtonInstance = new CopyButton(elements.result);
+    converter.clearButtonInstance = new ClearButton(typedElements.input);
+    converter.copyButtonInstance = new CopyButton(typedElements.result as HTMLTextAreaElement | HTMLInputElement | HTMLPreElement);
 
-    if (typeof window !== 'undefined') {
-        window.base64ConverterInstance = converter;
+    if (browserWindow) {
+        browserWindow.base64ConverterInstance = converter;
     }
 
     const convertHandler = () => {
@@ -498,13 +544,13 @@ function initializeBase64ConverterDom() {
         }
         converter.processInput();
     };
-    elements.convertButton.addEventListener('click', convertHandler);
+    typedElements.convertButton.addEventListener('click', convertHandler);
 
     const fileUploadHandler = (e) => converter.handleFileUpload(e);
-    elements.fileInput.addEventListener('change', fileUploadHandler);
+    typedElements.fileInput.addEventListener('change', fileUploadHandler);
 
     const downloadHandler = () => converter.handleDownload();
-    elements.downloadDecodedButton.addEventListener('click', downloadHandler);
+    typedElements.downloadDecodedButton.addEventListener('click', downloadHandler);
 
     if (shouldAutoConvert && dataFromUrl && typeof converter.processInput === 'function') {
         setTimeout(() => {
@@ -516,8 +562,10 @@ function initializeBase64ConverterDom() {
 }
 
 export class Base64ConverterToolUI {
+    converter: Base64ConverterInstance | null;
+
     constructor(rootSelector = '#base64converter-app') {
-        const root = document.querySelector(rootSelector) || document.querySelector('#base64converter-tool');
+        const root = document.querySelector<HTMLElement>(rootSelector) || document.querySelector<HTMLElement>('#base64converter-tool');
         if (!root) {
             throw new Error('Base64 Converter root element not found');
         }

@@ -16,7 +16,7 @@ jest.mock('../common/DownloadManager', () => ({
     }))
 }));
 
-jest.mock('../common/clear-button/ClearButton.js', () => ({
+jest.mock('../common/clear-button/ClearButton', () => ({
     __esModule: true,
     default: jest.fn().mockImplementation(() => ({
         updateVisibility: jest.fn(),
@@ -24,14 +24,14 @@ jest.mock('../common/clear-button/ClearButton.js', () => ({
     }))
 }));
 
-jest.mock('../common/app-shell/mountToolShell.js', () => ({
+jest.mock('../common/app-shell/mountToolShell', () => ({
     mountToolShell: jest.fn()
 }));
 
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
 import QRCode from 'qrcode';
 import { QRCodeGeneratorToolUI } from './script';
-import ClearButton from '../common/clear-button/ClearButton.js';
+import ClearButton from '../common/clear-button/ClearButton';
 
 describe('QRCodeGenerator Preact runtime', () => {
     const flush = () => Promise.resolve();

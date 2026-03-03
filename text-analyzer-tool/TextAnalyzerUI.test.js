@@ -1,6 +1,6 @@
 import TextAnalyzerUI from './TextAnalyzerUI.js';
-import { analyzeText } from './script.js';
-import { NotificationManager } from '../common/notification-manager.js';
+import { analyzeText } from './TextAnalyzer';
+import { NotificationManager } from '../common/notification-manager';
 
 // Polyfill TextEncoder/TextDecoder for jsdom
 const { TextEncoder, TextDecoder } = require('util');
@@ -35,8 +35,8 @@ const dom = new JSDOM(`
 global.document = dom.window.document;
 global.window = dom.window;
 
-// Mock script.js module
-jest.mock('./script.js', () => {
+// Mock TextAnalyzer module
+jest.mock('./TextAnalyzer', () => {
   return {
     analyzeText: jest.fn().mockImplementation((text) => ({
       charCount: text.length,
@@ -61,7 +61,7 @@ jest.mock('./script.js', () => {
 });
 
 // Mock NotificationManager
-jest.mock('../common/notification-manager.js', () => {
+jest.mock('../common/notification-manager', () => {
   return {
     NotificationManager: {
       show: jest.fn()
@@ -69,7 +69,7 @@ jest.mock('../common/notification-manager.js', () => {
   };
 });
 
-const { analyzeText: mockAnalyzeText } = require('./script.js');
+const { analyzeText: mockAnalyzeText } = require('./TextAnalyzer');
 
 describe('TextAnalyzerUI', () => {
   let textAnalyzerUI;

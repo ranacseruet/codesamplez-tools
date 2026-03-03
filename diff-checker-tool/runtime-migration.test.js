@@ -3,21 +3,21 @@ import { fireEvent } from '@testing-library/dom';
 
 const clearButtonInstances = [];
 
-jest.mock('../common/notification-manager.js', () => ({
+jest.mock('../common/notification-manager', () => ({
   NotificationManager: {
     show: jest.fn()
   }
 }));
 
-jest.mock('../common/app-shell/mountToolShell.js', () => ({
+jest.mock('../common/app-shell/mountToolShell', () => ({
   mountToolShell: jest.fn()
 }));
 
-jest.mock('../common/scheduler-utils.js', () => ({
+jest.mock('../common/scheduler-utils', () => ({
   scheduleTask: jest.fn(() => Promise.resolve())
 }));
 
-jest.mock('../common/clear-button/ClearButton.js', () => ({
+jest.mock('../common/clear-button/ClearButton', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => {
     const instance = {
@@ -28,10 +28,10 @@ jest.mock('../common/clear-button/ClearButton.js', () => ({
   })
 }));
 
-import ClearButton from '../common/clear-button/ClearButton.js';
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
-import { NotificationManager } from '../common/notification-manager.js';
-import { DiffCheckerToolUI } from './script.js';
+import ClearButton from '../common/clear-button/ClearButton';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { NotificationManager } from '../common/notification-manager';
+import { DiffCheckerToolUI } from './script';
 
 describe('Diff Checker Preact runtime', () => {
   const flush = () => Promise.resolve();

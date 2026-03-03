@@ -1,10 +1,16 @@
+type Base64Encoding = 'utf8' | 'ascii' | 'iso88591' | 'ucs2';
+type Base64UrlInput = string | ArrayBuffer | Uint8Array;
+
 class Base64Codec {
+    private encoder: TextEncoder;
+    private decoder: TextDecoder;
+
     constructor() {
         this.encoder = new TextEncoder();
         this.decoder = new TextDecoder('utf-8', { fatal: true });
     }
 
-    isBase64(payload) { // Expects only the base64 data payload, no prefix
+    isBase64(payload: unknown): boolean { // Expects only the base64 data payload, no prefix
         if (typeof payload !== 'string' || payload === '') {
             return false;
         }
@@ -36,7 +42,7 @@ class Base64Codec {
         }
     }
 
-    _encodeBase64Bytes(bytes) {
+    _encodeBase64Bytes(bytes: Uint8Array): string {
         // Manual Base64 encoding is used to avoid issues with `btoa()` and large byte arrays.
         // The `btoa(String.fromCharCode(...bytes))` approach can cause a "Maximum call stack size exceeded" error
         // for large inputs and may not handle all Unicode characters correctly.
@@ -61,7 +67,7 @@ class Base64Codec {
         return result.join('');
     }
 
-    encodeText(text, encoding) {
+    encodeText(text: string | null | undefined, encoding: Base64Encoding): string {
         if (text === undefined || text === null) {
             throw new Error('Input text cannot be null or undefined');
         }
@@ -78,7 +84,7 @@ class Base64Codec {
                     let byteIndex = 0;
 
                     for (let i = 0; i < chars.length; i++) {
-                        const codePoint = chars[i].codePointAt(0);
+                        const codePoint = chars[i].codePointAt(0) ?? 0;
                         if (codePoint > 0xFFFF) {
                             // 4-byte sequence for surrogate pairs/emojis
                             bytes[byteIndex++] = 0xF0;
@@ -99,12 +105,12 @@ class Base64Codec {
                     return this._encodeBase64Bytes(bytes);
                 }
             }
-        } catch (error) {
+        } catch (_error) {
             throw new Error('Encoding failed');
         }
     }
 
-    decodeText(base64Str, encoding) {
+    decodeText(base64Str: string | null | undefined, encoding: Base64Encoding): string {
         if (!base64Str) {
             throw new Error('Input base64 string cannot be empty');
         }
@@ -155,9 +161,10 @@ class Base64Codec {
                 }
             }
         } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
             // If the error is a specific decoding error we want to preserve, propagate it.
-            if (error.message.includes('UTF-8') || error.message.includes('UCS-2')) {
-                throw error;
+            if (message.includes('UTF-8') || message.includes('UCS-2')) {
+                throw error instanceof Error ? error : new Error(message);
             }
             // Otherwise, it's likely an issue with the Base64 string itself (e.g., from atob).
             throw new Error('Invalid base64 string');
@@ -165,7 +172,7 @@ class Base64Codec {
     }
 
     // URL-safe Base64 methods adapted from jwt-builder-tool/base64.js
-    base64UrlToBase64(str) {
+    base64UrlToBase64(str: string): string {
         let output = str.replace(/-/g, '+').replace(/_/g, '/');
         switch (output.length % 4) {
             case 0:
@@ -182,19 +189,19 @@ class Base64Codec {
         return output;
     }
 
-    base64ToBase64Url(str) {
+    base64ToBase64Url(str: string): string {
         return str.replace(/[+]/g, '-')
             .replace(/[/]/g, '_')
             .replace(/[=]+$/, '');
     }
 
-    encodeBase64Url(data) {
+    encodeBase64Url(data: Base64UrlInput): string {
         const bytes = typeof data === 'string' ? this.encoder.encode(data) : new Uint8Array(data);
         const base64 = this._encodeBase64Bytes(bytes);
         return this.base64ToBase64Url(base64);
     }
 
-    decodeBase64Url(str) {
+    decodeBase64Url(str: string): Uint8Array {
         const base64 = this.base64UrlToBase64(str);
         const decoded = atob(base64);
         return Uint8Array.from(decoded, c => c.charCodeAt(0));

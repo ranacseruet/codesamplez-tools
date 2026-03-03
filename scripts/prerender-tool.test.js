@@ -110,4 +110,28 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="compare-button"');
         expect(markup).toContain('id="diff-result"');
     });
+
+    it('renders css-minifier app markup for server-side prerender', () => {
+        const markup = renderToolPrerenderMarkup('css-minifier-tool');
+
+        expect(markup).toContain('id="css-minifier-input"');
+        expect(markup).toContain('id="css-minifier-output"');
+        expect(markup).toContain('id="minify-btn"');
+    });
+
+    it('renders text-analyzer app markup for server-side prerender', () => {
+        const markup = renderToolPrerenderMarkup('text-analyzer-tool');
+
+        expect(markup).toContain('id="textInput"');
+        expect(markup).toContain('id="wordFrequencyChart"');
+        expect(markup).toContain('id="load-sample"');
+    });
+
+    it('renders qr-code-generator app markup for server-side prerender', () => {
+        const markup = renderToolPrerenderMarkup('qr-code-generator');
+
+        expect(markup).toContain('id="qr-text"');
+        expect(markup).toContain('id="qr-canvas"');
+        expect(markup).toContain('id="download-btn"');
+    });
 });

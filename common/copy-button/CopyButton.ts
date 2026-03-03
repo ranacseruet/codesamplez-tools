@@ -1,7 +1,17 @@
+type CopyTargetElement = HTMLTextAreaElement | HTMLInputElement | HTMLPreElement;
+
 class CopyButton {
-    constructor(targetElement) {
-        if (!(targetElement instanceof HTMLTextAreaElement) && 
-            !(targetElement instanceof HTMLInputElement) && 
+    targetElement: CopyTargetElement;
+    isPreElement: boolean;
+    copyButton: HTMLButtonElement;
+    wrapper: HTMLDivElement;
+    boundCopyContent: (() => void) | null;
+    boundUpdateVisibility: (() => void) | null;
+    mutationObserver?: MutationObserver | null;
+
+    constructor(targetElement: CopyTargetElement) {
+        if (!(targetElement instanceof HTMLTextAreaElement) &&
+            !(targetElement instanceof HTMLInputElement) &&
             !(targetElement instanceof HTMLPreElement)) {
             throw new Error('CopyButton must be initialized with a valid HTMLTextAreaElement, HTMLInputElement, or HTMLPreElement.');
         }
@@ -9,12 +19,15 @@ class CopyButton {
         this.targetElement = targetElement;
         this.isPreElement = targetElement instanceof HTMLPreElement;
         this.copyButton = this.createCopyButton();
+        this.wrapper = document.createElement('div');
+        this.boundCopyContent = null;
+        this.boundUpdateVisibility = null;
         this.appendCopyButton();
         this.addEventListeners();
         this.updateVisibility();
     }
 
-    createCopyButton() {
+    createCopyButton(): HTMLButtonElement {
         const button = document.createElement('button');
         button.type = 'button'; // Prevent form submission when inside forms
         button.classList.add('copy-button');
@@ -23,25 +36,30 @@ class CopyButton {
         return button;
     }
 
-    appendCopyButton() {
+    appendCopyButton(): void {
         // Create wrapper for the copy button
-        this.wrapper = document.createElement('div');
         this.wrapper.classList.add('copy-button-wrapper');
-        this.targetElement.parentNode.insertBefore(this.wrapper, this.targetElement);
+        this.targetElement.parentNode!.insertBefore(this.wrapper, this.targetElement);
         this.wrapper.appendChild(this.targetElement);
         this.wrapper.appendChild(this.copyButton);
     }
 
-    addEventListeners() {
+    addEventListeners(): void {
         // Store bound functions as instance properties for proper cleanup
-        this.boundCopyContent = this.copyContent.bind(this);
-        this.boundUpdateVisibility = this.updateVisibility.bind(this);
-        
+        this.boundCopyContent = () => {
+            void this.copyContent();
+        };
+        this.boundUpdateVisibility = () => {
+            this.updateVisibility();
+        };
+
         this.copyButton.addEventListener('click', this.boundCopyContent);
-        
+
         if (this.isPreElement) {
             // For pre elements, use MutationObserver to detect content changes
-            this.mutationObserver = new MutationObserver(this.boundUpdateVisibility);
+            this.mutationObserver = new MutationObserver(() => {
+                this.updateVisibility();
+            });
             this.mutationObserver.observe(this.targetElement, {
                 childList: true,
                 subtree: true,
@@ -57,7 +75,7 @@ class CopyButton {
         }
     }
 
-    disconnect() {
+    disconnect(): void {
         // Remove event listeners to prevent memory leaks
         if (this.isPreElement) {
             // Disconnect MutationObserver for pre elements
@@ -75,19 +93,22 @@ class CopyButton {
                 this.targetElement.removeEventListener('change', this.boundUpdateVisibility);
             }
         }
-        
+
         if (this.boundCopyContent) {
             this.copyButton.removeEventListener('click', this.boundCopyContent);
         }
     }
 
-    getContent() {
-        return this.isPreElement ? this.targetElement.textContent : this.targetElement.value;
+    getContent(): string {
+        if (this.targetElement instanceof HTMLPreElement) {
+            return this.targetElement.textContent || '';
+        }
+        return this.targetElement.value;
     }
 
-    async copyContent() {
+    async copyContent(): Promise<void> {
         const content = this.getContent();
-        
+
         if (!content.trim()) {
             return;
         }
@@ -100,10 +121,10 @@ class CopyButton {
                 // Fallback for older browsers or non-secure contexts
                 this.fallbackCopyToClipboard(content);
             }
-            
+
             this.showSuccessAnimation();
             this.dispatchCopyEvent(content);
-            
+
         } catch (error) {
             console.warn('Copy to clipboard failed:', error);
             // Try fallback method
@@ -118,7 +139,7 @@ class CopyButton {
         }
     }
 
-    fallbackCopyToClipboard(text) {
+    fallbackCopyToClipboard(text: string): void {
         // Create a temporary textarea element
         const textArea = document.createElement('textarea');
         textArea.value = text;
@@ -126,10 +147,10 @@ class CopyButton {
         textArea.style.left = '-999999px';
         textArea.style.top = '-999999px';
         document.body.appendChild(textArea);
-        
+
         textArea.focus();
         textArea.select();
-        
+
         try {
             const successful = document.execCommand('copy');
             if (!successful) {
@@ -140,10 +161,10 @@ class CopyButton {
         }
     }
 
-    showSuccessAnimation() {
+    showSuccessAnimation(): void {
         this.copyButton.classList.add('copy-success');
         this.copyButton.setAttribute('aria-label', 'Copied successfully!');
-        
+
         // Remove the class after animation completes
         setTimeout(() => {
             this.copyButton.classList.remove('copy-success');
@@ -151,17 +172,17 @@ class CopyButton {
         }, 600);
     }
 
-    showErrorAnimation() {
+    showErrorAnimation(): void {
         this.copyButton.classList.add('copy-error');
-        
+
         // Remove the class after animation completes
         setTimeout(() => {
             this.copyButton.classList.remove('copy-error');
         }, 600);
     }
 
-    dispatchCopyEvent(content) {
-        const copyEvent = new CustomEvent('contentCopied', { 
+    dispatchCopyEvent(content: string): void {
+        const copyEvent = new CustomEvent('contentCopied', {
             bubbles: true,
             detail: {
                 content: content,
@@ -172,7 +193,7 @@ class CopyButton {
         this.targetElement.dispatchEvent(copyEvent);
     }
 
-    updateVisibility() {
+    updateVisibility(): this {
         const content = this.getContent();
         if (content.length > 0) {
             this.copyButton.style.display = 'block';
@@ -181,9 +202,9 @@ class CopyButton {
         }
         return this; // Allow method chaining
     }
-    
+
     // Public method to force visibility update
-    forceUpdateVisibility() {
+    forceUpdateVisibility(): this {
         this.updateVisibility();
         return this; // Allow method chaining
     }

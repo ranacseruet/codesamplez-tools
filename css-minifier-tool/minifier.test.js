@@ -1,4 +1,4 @@
-import { minifyCSS, isValidCSS, shortenColorsInCss } from './minifier.js';
+import { minifyCSS, isValidCSS, shortenColorsInCss } from './minifier';
 
 describe('CSS Minifier', () => {
   test('should remove whitespace and newlines', () => {

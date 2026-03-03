@@ -1,18 +1,39 @@
-import { JWTBuilder } from './JWTBuilder.js';
-import { NotificationManager } from '../common/notification-manager.js';
-import CopyButton from '../common/copy-button/CopyButton.js';
+import { JWTBuilder } from './JWTBuilder';
+import { NotificationManager } from '../common/notification-manager';
+import CopyButton from '../common/copy-button/CopyButton';
 import { hydrate, render } from 'preact';
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
+
+type JwtBuilderWindow = Window & {
+  jwtBuilder?: JWTBuilder;
+  addClaim?: () => void;
+  removeClaim?: (button: HTMLElement | null) => void;
+  buildJWT?: () => Promise<string | null>;
+  generateRandomSecret?: () => string | null;
+  setExp?: (hours: number) => void;
+  setNow?: (elementId: string) => void;
+};
+
+const browserWindow = typeof window !== 'undefined' ? (window as JwtBuilderWindow) : null;
 
 // Export for testing and create a singleton instance
-export const jwtBuilder = (typeof window !== 'undefined' && window.jwtBuilder) || new JWTBuilder();
+export const jwtBuilder = browserWindow?.jwtBuilder || new JWTBuilder();
 
-if (typeof window !== 'undefined') {
-  window.jwtBuilder = jwtBuilder;
+if (browserWindow) {
+  browserWindow.jwtBuilder = jwtBuilder;
 }
 
-let keyCopyButton = null;
+let keyCopyButton: CopyButton | null = null;
 let claimCounter = 0;
+
+function getInputElement(id: string): HTMLInputElement | null {
+  const element = document.getElementById(id);
+  return element instanceof HTMLInputElement ? element : null;
+}
+
+function getInputValue(id: string): string {
+  return getInputElement(id)?.value || '';
+}
 
 function initializeDefaultClaims() {
   const now = new Date();
@@ -29,7 +50,7 @@ function initializeDefaultClaims() {
     jti: 'your-indentifier'
   };
 
-  const standardClaims = ['iss', 'exp', 'sub', 'aud', 'iat', 'nbf', 'jti'];
+  const standardClaims: (keyof typeof payload)[] = ['iss', 'exp', 'sub', 'aud', 'iat', 'nbf', 'jti'];
   standardClaims.forEach((claim) => {
     document.getElementById(claim)?.setAttribute('value', payload[claim]);
   });
@@ -37,11 +58,11 @@ function initializeDefaultClaims() {
 
 function initializeCopyButtons() {
   const resultElement = document.getElementById('result');
-  if (resultElement) {
+  if (resultElement instanceof HTMLPreElement) {
     new CopyButton(resultElement);
   }
 
-  const keyInput = document.getElementById('key');
+  const keyInput = getInputElement('key');
   if (keyInput) {
     keyCopyButton = new CopyButton(keyInput);
   }
@@ -90,15 +111,15 @@ export function addClaim() {
   `;
   customClaimsDiv.appendChild(newClaimRow);
 
-  const nameInput = newClaimRow.querySelector('input[name="claimName"]');
+  const nameInput = newClaimRow.querySelector('input[name="claimName"]') as HTMLInputElement | null;
   if (nameInput) {
     nameInput.focus();
   }
 }
 
-export function removeClaim(button) {
+export function removeClaim(button: HTMLElement | null) {
   const customClaimsDiv = document.getElementById('customClaims');
-  const addClaimBtn = document.querySelector('.add-claim');
+  const addClaimBtn = document.querySelector('.add-claim') as HTMLButtonElement | null;
   if (!button?.parentElement || !customClaimsDiv) {
     return;
   }
@@ -118,10 +139,10 @@ export function removeClaim(button) {
 }
 
 export async function buildJWT() {
-  const payload = {};
+  const payload: Record<string, unknown> = {};
 
   ['exp', 'iat', 'nbf'].forEach((claim) => {
-    const value = document.getElementById(claim)?.value;
+    const value = getInputValue(claim);
     if (value) {
       const timestamp = jwtBuilder.parseDateTime(value);
       if (timestamp !== null) {
@@ -131,7 +152,7 @@ export async function buildJWT() {
   });
 
   ['iss', 'sub', 'aud', 'jti'].forEach((claim) => {
-    const value = document.getElementById(claim)?.value;
+    const value = getInputValue(claim);
     if (value?.trim()) {
       payload[claim] = value;
     }
@@ -139,8 +160,8 @@ export async function buildJWT() {
 
   const customClaims = document.querySelectorAll('#customClaims .custom-claim-row');
   customClaims.forEach((claimRow) => {
-    const name = claimRow.querySelector('input[name="claimName"]')?.value;
-    const value = claimRow.querySelector('input[name="claimValue"]')?.value;
+    const name = (claimRow.querySelector('input[name="claimName"]') as HTMLInputElement | null)?.value;
+    const value = (claimRow.querySelector('input[name="claimValue"]') as HTMLInputElement | null)?.value;
     if (name?.trim() && value?.trim()) {
       try {
         if (value.startsWith('[') || value.startsWith('{')) {
@@ -154,9 +175,9 @@ export async function buildJWT() {
     }
   });
 
-  const key = document.getElementById('key')?.value || '';
-  const iss = document.getElementById('iss')?.value || '';
-  const exp = document.getElementById('exp')?.value || '';
+  const key = getInputValue('key');
+  const iss = getInputValue('iss');
+  const exp = getInputValue('exp');
   const resultDiv = document.getElementById('result');
   if (!resultDiv) {
     return null;
@@ -183,8 +204,10 @@ export async function buildJWT() {
     resultDiv.textContent = jwt;
     NotificationManager.show('JWT successfully built', 2000, { type: 'success' });
     return jwt;
-  } catch (error) {
-    const message = error instanceof SyntaxError ? 'Invalid JSON payload.' : `Error building JWT: ${error.message}`;
+  } catch (error: unknown) {
+    const message = error instanceof SyntaxError
+      ? 'Invalid JSON payload.'
+      : `Error building JWT: ${error instanceof Error ? error.message : String(error)}`;
     NotificationManager.show(message, 3000, { type: 'error' });
     resultDiv.textContent = '';
     return null;
@@ -192,7 +215,7 @@ export async function buildJWT() {
 }
 
 export function generateRandomSecret() {
-  const keyInput = document.getElementById('key');
+  const keyInput = getInputElement('key');
   if (keyInput) {
     const randomSecret = jwtBuilder.generateRandomSecret(32);
     keyInput.value = randomSecret;
@@ -205,30 +228,30 @@ export function generateRandomSecret() {
   return null;
 }
 
-export function setExp(hours) {
+export function setExp(hours: number) {
   const now = new Date();
   now.setHours(now.getHours() + hours);
-  const expInput = document.getElementById('exp');
+  const expInput = getInputElement('exp');
   if (expInput) {
     expInput.value = jwtBuilder.getFormattedDate(now);
   }
 }
 
-export function setNow(elementId) {
+export function setNow(elementId: string) {
   const now = new Date();
-  const input = document.getElementById(elementId);
+  const input = getInputElement(elementId);
   if (input) {
     input.value = jwtBuilder.getFormattedDate(now);
   }
 }
 
-if (typeof window !== 'undefined') {
-  window.addClaim = addClaim;
-  window.removeClaim = removeClaim;
-  window.buildJWT = buildJWT;
-  window.generateRandomSecret = generateRandomSecret;
-  window.setExp = setExp;
-  window.setNow = setNow;
+if (browserWindow) {
+  browserWindow.addClaim = addClaim;
+  browserWindow.removeClaim = removeClaim;
+  browserWindow.buildJWT = buildJWT;
+  browserWindow.generateRandomSecret = generateRandomSecret;
+  browserWindow.setExp = setExp;
+  browserWindow.setNow = setNow;
 }
 
 export function JwtBuilderApp() {
@@ -394,6 +417,8 @@ export function initializeJwtBuilderDom() {
 }
 
 export class JWTBuilderToolUI {
+  builder: JWTBuilder;
+
   constructor(rootSelector = '#jwt-builder-app') {
     const root = document.querySelector(rootSelector) || document.querySelector('#jwt-builder-tool');
     if (!root) {

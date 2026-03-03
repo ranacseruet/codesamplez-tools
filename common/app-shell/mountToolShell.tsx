@@ -1,18 +1,29 @@
 import { render } from 'preact';
-import { ToolShellFooter, ToolShellHeader } from './AppShell.jsx';
+import { ToolShellFooter, ToolShellHeader } from './AppShell';
 
 const STANDALONE_THEME_STORAGE_KEY = 'cst-standalone-theme-mode';
 const THEME_LIGHT = 'light';
 const THEME_DARK = 'dark';
 const THEME_ATTR = 'data-theme';
 const LEGACY_THEME_ATTR = 'data-cst-theme';
-let activeThemeObserver = null;
+let activeThemeObserver: MutationObserver | null = null;
 
-function isValidThemeMode(value) {
+type ThemeMode = typeof THEME_LIGHT | typeof THEME_DARK;
+
+interface MountToolShellOptions {
+    title?: string;
+    description?: string;
+    homeHref?: string;
+    headerRootId?: string;
+    footerRootId?: string;
+    showThemeToggle?: boolean;
+}
+
+function isValidThemeMode(value: unknown): value is ThemeMode {
     return value === THEME_LIGHT || value === THEME_DARK;
 }
 
-function getStoredStandaloneThemeMode() {
+function getStoredStandaloneThemeMode(): ThemeMode | null {
     try {
         const storedThemeMode = window.localStorage.getItem(STANDALONE_THEME_STORAGE_KEY);
         return isValidThemeMode(storedThemeMode) ? storedThemeMode : null;
@@ -21,7 +32,7 @@ function getStoredStandaloneThemeMode() {
     }
 }
 
-function getSystemPreferredThemeMode() {
+function getSystemPreferredThemeMode(): ThemeMode {
     try {
         return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? THEME_DARK : THEME_LIGHT;
     } catch {
@@ -29,7 +40,7 @@ function getSystemPreferredThemeMode() {
     }
 }
 
-function getDocumentThemeMode() {
+function getDocumentThemeMode(): ThemeMode | null {
     if (typeof document === 'undefined' || !document.documentElement) {
         return null;
     }
@@ -43,7 +54,7 @@ function getDocumentThemeMode() {
     return isValidThemeMode(legacyThemeMode) ? legacyThemeMode : null;
 }
 
-function applyStandaloneThemeMode(themeMode) {
+function applyStandaloneThemeMode(themeMode: ThemeMode): ThemeMode {
     if (typeof document === 'undefined' || !document.documentElement) {
         return themeMode;
     }
@@ -55,7 +66,7 @@ function applyStandaloneThemeMode(themeMode) {
     return resolvedThemeMode;
 }
 
-function persistStandaloneThemeMode(themeMode) {
+function persistStandaloneThemeMode(themeMode: ThemeMode): void {
     try {
         window.localStorage.setItem(STANDALONE_THEME_STORAGE_KEY, themeMode);
     } catch {
@@ -70,18 +81,18 @@ export function mountToolShell({
     headerRootId = 'app-shell-header',
     footerRootId = 'app-shell-footer',
     showThemeToggle = false
-} = {}) {
+}: MountToolShellOptions = {}): void {
     const headerRoot = document.getElementById(headerRootId);
     const footerRoot = document.getElementById(footerRootId);
     const isStandaloneMode = document.body?.classList.contains('standalone-app');
-    const shouldEnableThemeToggle = showThemeToggle || isStandaloneMode;
+    const shouldEnableThemeToggle = showThemeToggle || Boolean(isStandaloneMode);
 
     if (activeThemeObserver) {
         activeThemeObserver.disconnect();
         activeThemeObserver = null;
     }
 
-    let currentThemeMode = THEME_LIGHT;
+    let currentThemeMode: ThemeMode = THEME_LIGHT;
 
     if (shouldEnableThemeToggle) {
         currentThemeMode = applyStandaloneThemeMode(
@@ -89,14 +100,14 @@ export function mountToolShell({
         );
     }
 
-    function handleThemeToggle() {
+    function handleThemeToggle(): void {
         currentThemeMode = currentThemeMode === THEME_DARK ? THEME_LIGHT : THEME_DARK;
         applyStandaloneThemeMode(currentThemeMode);
         persistStandaloneThemeMode(currentThemeMode);
         renderHeader();
     }
 
-    function renderHeader() {
+    function renderHeader(): void {
         if (!headerRoot) {
             return;
         }
@@ -121,7 +132,7 @@ export function mountToolShell({
     }
 
     if (shouldEnableThemeToggle && typeof MutationObserver !== 'undefined' && document.documentElement) {
-        activeThemeObserver = new MutationObserver((mutations) => {
+        activeThemeObserver = new MutationObserver((mutations: MutationRecord[]) => {
             const hasThemeMutation = mutations.some((mutation) =>
                 mutation.type === 'attributes' &&
                 (mutation.attributeName === THEME_ATTR || mutation.attributeName === LEGACY_THEME_ATTR)

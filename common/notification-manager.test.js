@@ -1,4 +1,4 @@
-import { NotificationManager } from './notification-manager.js';
+import { NotificationManager } from './notification-manager';
 
 describe('NotificationManager', () => {
   let notificationElement;

@@ -1,10 +1,12 @@
 // Import shared components and styles
 import { computeDiff } from './diff';
 import ClearButton from '../common/clear-button/ClearButton';
-import { NotificationManager } from '../common/notification-manager.js';
-import { scheduleTask } from '../common/scheduler-utils.js';
+import { NotificationManager } from '../common/notification-manager';
+import { scheduleTask } from '../common/scheduler-utils';
 import { hydrate, render } from 'preact';
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
+
+declare const Prism: any;
 
 // Class to detect if content is code (used for syntax highlighting)
 class CodeDetector {
@@ -25,7 +27,11 @@ class CodeDetector {
 
 // Class to handle the diff display
 class DiffDisplay {
-  constructor(diffResultElement) {
+  diffResultElement: HTMLElement;
+  originalLineNumber: number;
+  modifiedLineNumber: number;
+
+  constructor(diffResultElement: HTMLElement) {
     this.diffResultElement = diffResultElement;
     this.originalLineNumber = 1;
     this.modifiedLineNumber = 1;
@@ -202,7 +208,14 @@ class DiffDisplay {
 
 // Class to handle diff navigation
 class DiffNavigator {
-  constructor(resultElement, prevButton, nextButton, counterElement) {
+  resultElement: HTMLElement;
+  prevButton: HTMLButtonElement | null;
+  nextButton: HTMLButtonElement | null;
+  counterElement: HTMLElement | null;
+  diffElements: HTMLElement[][];
+  currentDiffIndex: number;
+
+  constructor(resultElement: HTMLElement, prevButton: HTMLButtonElement | null, nextButton: HTMLButtonElement | null, counterElement: HTMLElement | null) {
     this.resultElement = resultElement;
     this.prevButton = prevButton;
     this.nextButton = nextButton;
@@ -225,7 +238,7 @@ class DiffNavigator {
   updateDiffElements() {
     this.diffElements = [];
     let currentBlock = [];
-    const allDiffLines = Array.from(this.resultElement.querySelectorAll('.diff-line'));
+    const allDiffLines = Array.from(this.resultElement.querySelectorAll('.diff-line')) as HTMLElement[];
     for (const line of allDiffLines) {
       const hasDiff = line.querySelector('.diff-added, .diff-removed');
       if (hasDiff) {
@@ -323,21 +336,25 @@ class DiffNavigator {
 export function initializeDiffChecker() {
   if (typeof document === 'undefined') return;
 
-  const compareButton = document.getElementById('compare-button');
-  const text1 = document.getElementById('text1');
-  const text2 = document.getElementById('text2');
-  const diffResultElement = document.getElementById('diff-result');
+  const compareButton = document.getElementById('compare-button') as HTMLButtonElement | null;
+  const text1 = document.getElementById('text1') as HTMLTextAreaElement | null;
+  const text2 = document.getElementById('text2') as HTMLTextAreaElement | null;
+  const diffResultElement = document.getElementById('diff-result') as HTMLElement | null;
+  if (!diffResultElement) {
+    return;
+  }
 
   // Instantiate the navigator
   const diffNavigator = new DiffNavigator(
     diffResultElement,
-    document.getElementById('prev-diff-button'),
-    document.getElementById('next-diff-button'),
+    document.getElementById('prev-diff-button') as HTMLButtonElement | null,
+    document.getElementById('next-diff-button') as HTMLButtonElement | null,
     document.getElementById('diff-counter')
   );
 
   // Initialize clear buttons with cleanup support
-  let clearButton1, clearButton2;
+  let clearButton1: ClearButton | null = null;
+  let clearButton2: ClearButton | null = null;
 
   // Cleanup function to disconnect clear buttons
   /* istanbul ignore next */
@@ -384,7 +401,8 @@ export function initializeDiffChecker() {
         const modifiedLines = modifiedText.split('\n');
 
         const isCodeContent = CodeDetector.isCode(originalText) || CodeDetector.isCode(modifiedText);
-        const ignoreWhitespace = document.getElementById('ignore-whitespace').checked;
+        const ignoreWhitespaceToggle = document.getElementById('ignore-whitespace') as HTMLInputElement | null;
+        const ignoreWhitespace = ignoreWhitespaceToggle?.checked ?? true;
         const diffResults = computeDiff(originalLines, modifiedLines, ignoreWhitespace);
 
         const diffDisplay = new DiffDisplay(diffResultElement);
@@ -396,7 +414,8 @@ export function initializeDiffChecker() {
         // Show notification
         NotificationManager.show('Diff computation complete!');
       } catch (error) {
-        NotificationManager.show('Error computing diff: ' + error.message);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        NotificationManager.show('Error computing diff: ' + errorMessage);
         console.error(error);
       } finally {
         // Restore UI state
@@ -407,7 +426,8 @@ export function initializeDiffChecker() {
   }
 
   // Export cleanup function for testing
-  window.diffCheckerCleanup = cleanup;
+  const browserWindow = window as Window & { diffCheckerCleanup?: () => void };
+  browserWindow.diffCheckerCleanup = cleanup;
   return { cleanup };
 }
 
@@ -494,7 +514,7 @@ export function DiffCheckerApp() {
           <pre
             id="diff-result"
             className="c-code-output diffc-result-output"
-            tabIndex="0"
+            tabIndex={0}
           />
         </div>
       </div>
@@ -509,6 +529,8 @@ function initializeDiffCheckerDom() {
 }
 
 export class DiffCheckerToolUI {
+  instance: ReturnType<typeof initializeDiffCheckerDom> | undefined;
+
   constructor(rootSelector = '#diff-checker-app') {
     const root = document.querySelector(rootSelector) || document.querySelector('#diff-checker-tool');
     if (!root) {

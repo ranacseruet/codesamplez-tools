@@ -1,4 +1,4 @@
-import { formatBytes } from './format-utils.js';
+import { formatBytes } from './format-utils';
 
 describe('formatBytes', () => {
     test('should format bytes to appropriate units', () => {

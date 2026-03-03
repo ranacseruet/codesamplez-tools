@@ -7,21 +7,21 @@ const mockCopyButtonInstances = [];
 const mockMinifierInstances = [];
 const mockMinifyImpl = jest.fn((code) => String(code).replace(/\s+/g, ' ').trim());
 
-jest.mock('../common/notification-manager.js', () => ({
+jest.mock('../common/notification-manager', () => ({
   NotificationManager: {
     show: jest.fn()
   }
 }));
 
-jest.mock('../common/app-shell/mountToolShell.js', () => ({
+jest.mock('../common/app-shell/mountToolShell', () => ({
   mountToolShell: jest.fn()
 }));
 
-jest.mock('../common/scheduler-utils.js', () => ({
+jest.mock('../common/scheduler-utils', () => ({
   scheduleTask: jest.fn(() => Promise.resolve())
 }));
 
-jest.mock('../common/clear-button/ClearButton.js', () => ({
+jest.mock('../common/clear-button/ClearButton', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => {
     const instance = {
@@ -33,7 +33,7 @@ jest.mock('../common/clear-button/ClearButton.js', () => ({
   })
 }));
 
-jest.mock('../common/copy-button/CopyButton.js', () => ({
+jest.mock('../common/copy-button/CopyButton', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => {
     const instance = {
@@ -45,7 +45,7 @@ jest.mock('../common/copy-button/CopyButton.js', () => ({
   })
 }));
 
-jest.mock('./minifier.js', () => ({
+jest.mock('./minifier', () => ({
   JSMinifier: jest.fn().mockImplementation((options = {}) => {
     const instance = {
       options,
@@ -56,13 +56,13 @@ jest.mock('./minifier.js', () => ({
   })
 }));
 
-import { NotificationManager } from '../common/notification-manager.js';
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
-import { scheduleTask } from '../common/scheduler-utils.js';
-import ClearButton from '../common/clear-button/ClearButton.js';
-import CopyButton from '../common/copy-button/CopyButton.js';
-import { JSMinifier } from './minifier.js';
-import { JSMinifierToolUI } from './script.js';
+import { NotificationManager } from '../common/notification-manager';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { scheduleTask } from '../common/scheduler-utils';
+import ClearButton from '../common/clear-button/ClearButton';
+import CopyButton from '../common/copy-button/CopyButton';
+import { JSMinifier } from './minifier';
+import { JSMinifierToolUI } from './script';
 
 describe('JavaScript Minifier Preact runtime', () => {
   const flush = () => Promise.resolve();

@@ -1,13 +1,25 @@
 import { load as loadYAML, dump as dumpYAML } from 'js-yaml';
 import { XMLParser, XMLBuilder, XMLValidator } from 'fast-xml-parser';
 
+type SupportedFormat = 'json' | 'xml' | 'yaml' | 'properties';
+
+function getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+        return error.message;
+    }
+    return String(error);
+}
+
 export class DataFormatConverter {
+    inputFormat: SupportedFormat;
+    outputFormat: SupportedFormat;
+
     constructor() {
         this.inputFormat = 'json';
         this.outputFormat = 'xml';
     }
 
-    parseInput(input, format) {
+    parseInput(input: string, format: string): unknown {
         switch (format) {
             case 'json':
                 return JSON.parse(input);
@@ -22,17 +34,17 @@ export class DataFormatConverter {
         }
     }
 
-    validateOutput(output, format) {
+    validateOutput(output: string, format: string): boolean {
         try {
             this.parseInput(output, format);
             return true;
-        } catch (e) {
+        } catch (_e) {
             return false;
         }
     }
 
-    formatOutput(data, format) {
-        let output;
+    formatOutput(data: unknown, format: string): string {
+        let output: string;
         switch (format) {
             case 'json':
                 output = JSON.stringify(data, null, 2);
@@ -56,9 +68,9 @@ export class DataFormatConverter {
         return output;
     }
 
-    parseXML(xmlString) {
+    parseXML(xmlString: string): unknown {
         // Validate XML structure
-        const validation = XMLValidator.validate(xmlString);
+        const validation = XMLValidator.validate(xmlString) as true | { err?: { msg?: string } };
         if (validation !== true) {
             // Provide specific error from validator if available, or generic message
             const msg = validation.err ? validation.err.msg : 'Invalid XML format';
@@ -71,20 +83,20 @@ export class DataFormatConverter {
             isArray: (name, jpath, isLeafNode, isAttribute) => false,
             numberParseOptions: {
                 skipLike: /^[0-9]+$/ // Keep numbers as strings to match tests
-            }
+            } as any
         });
         try {
             const result = parser.parse(xmlString);
             // Remove root wrapper and return direct child properties
             const rootKey = Object.keys(result)[0];
             return result[rootKey];
-        } catch (e) {
+        } catch (_e) {
             throw new Error('Invalid XML format');
         }
     }
 
-    parseProperties(content) {
-        const result = {};
+    parseProperties(content: string): Record<string, string> {
+        const result: Record<string, string> = {};
         let validLineFound = false;
         content.split(/\r?\n/).forEach(line => {
             line = line.trim();
@@ -107,7 +119,7 @@ export class DataFormatConverter {
         return result;
     }
 
-    formatProperties(obj) {
+    formatProperties(obj: unknown): string {
         if (obj === null || obj === undefined || typeof obj !== 'object') {
             throw new Error('Cannot format to properties');
         }
@@ -116,7 +128,7 @@ export class DataFormatConverter {
             .join('\n');
     }
 
-    escapeProp(str) {
+    escapeProp(str: unknown): string {
         return String(str)
             .replace(/\\/g, '\\\\')
             .replace(/\n/g, '\\n')
@@ -125,7 +137,7 @@ export class DataFormatConverter {
             .replace(/=/g, '\\=');
     }
 
-    unescapeProp(str) {
+    unescapeProp(str: string): string {
         return str.replace(/\\(.)/g, (match, char) => {
             switch(char) {
                 case 'n': return '\n';
@@ -138,13 +150,13 @@ export class DataFormatConverter {
         });
     }
 
-    xmlToObject(xmlNode) {
+    xmlToObject(xmlNode: Node): unknown {
         // Convert DOM node to XML string first
         const xmlString = new XMLSerializer().serializeToString(xmlNode);
         return this.parseXML(xmlString);
     }
 
-    formatXML(obj, rootName = 'root') {
+    formatXML(obj: unknown, rootName = 'root'): string {
         if (obj === null || obj === undefined) {
             throw new Error('Cannot format null or undefined to XML');
         }
@@ -159,12 +171,12 @@ export class DataFormatConverter {
         
         try {
             return builder.build({ [rootName]: obj });
-        } catch (e) {
+        } catch (_e) {
             throw new Error('Cannot format to XML');
         }
     }
 
-    parseYAML(yamlString) {
+    parseYAML(yamlString: string): unknown {
         try {
             // Handle empty YAML - return empty object to match test expectations
             if (!yamlString.trim()) {
@@ -175,22 +187,22 @@ export class DataFormatConverter {
             // Convert undefined to empty object to match test expectations
             return result === undefined ? {} : result;
         } catch (e) {
-            throw new Error(`Invalid YAML format: ${e.message}`);
+            throw new Error(`Invalid YAML format: ${getErrorMessage(e)}`);
         }
     }
 
-    formatYAML(obj) {
+    formatYAML(obj: unknown): string {
         try {
             if (obj === null || obj === undefined) {
                 throw new Error('Cannot format null or undefined to YAML');
             }
             return dumpYAML(obj, { indent: 2 });
         } catch (e) {
-            throw new Error(`Cannot format to YAML: ${e.message}`);
+            throw new Error(`Cannot format to YAML: ${getErrorMessage(e)}`);
         }
     }
 
-    detectFormat(input) {
+    detectFormat(input: string): SupportedFormat | null {
         const trimmed = input.trim();
         if (!trimmed) return null;
 

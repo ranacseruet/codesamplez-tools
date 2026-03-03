@@ -20,7 +20,7 @@ jest.mock('../common/DownloadManager', () => {
 });
 
 // Mock ClearButton
-jest.mock('../common/clear-button/ClearButton.js', () => {
+jest.mock('../common/clear-button/ClearButton', () => {
   return jest.fn().mockImplementation(() => {
     return {};
   });
@@ -28,7 +28,7 @@ jest.mock('../common/clear-button/ClearButton.js', () => {
 
 import QRCode from 'qrcode';
 import DownloadManager from '../common/DownloadManager';
-import ClearButton from '../common/clear-button/ClearButton.js';
+import ClearButton from '../common/clear-button/ClearButton';
 import { QRCodeGeneratorUI } from './script';
 
 let qrCodeGenerator;
@@ -291,5 +291,129 @@ describe('QRCodeGeneratorUI', () => {
 
     const expectedTruncatedText = longText.substring(0, 50) + '...';
     expect(mockQrCanvas.setAttribute).toHaveBeenCalledWith('aria-label', `QR code for: ${expectedTruncatedText}`);
+  });
+
+  it('should return early from generateQRCode when required elements are missing', () => {
+    QRCode.toCanvas.mockClear();
+    const elementMap = {
+      'qr-text': mockQrText,
+      'qr-size': mockQrSize,
+      'size-label': mockSizeLabel,
+      'qr-margin': mockQrMargin,
+      'margin-label': mockMarginLabel,
+      'error-correction': mockErrorCorrection,
+      'qr-canvas': mockQrCanvas,
+      'download-btn': mockDownloadBtn,
+      'error-message': null
+    };
+    document.getElementById.mockImplementation((id) => elementMap[id] || null);
+
+    const partialGenerator = new QRCodeGeneratorUI({
+      qrTextId: 'qr-text',
+      qrSizeId: 'qr-size',
+      sizeLabelId: 'size-label',
+      qrMarginId: 'qr-margin',
+      marginLabelId: 'margin-label',
+      errorCorrectionId: 'error-correction',
+      qrCanvasId: 'qr-canvas',
+      downloadBtnId: 'download-btn',
+      errorMessageId: 'error-message'
+    });
+
+    partialGenerator.generateQRCode();
+    expect(QRCode.toCanvas).not.toHaveBeenCalled();
+  });
+
+  it('should return early from bindEvents when required controls are missing', () => {
+    const elementMap = {
+      'qr-text': mockQrText,
+      'qr-size': mockQrSize,
+      'size-label': mockSizeLabel,
+      'qr-margin': mockQrMargin,
+      'margin-label': mockMarginLabel,
+      'error-correction': mockErrorCorrection,
+      'qr-canvas': mockQrCanvas,
+      'download-btn': null,
+      'error-message': mockErrorMessage
+    };
+    mockQrText.addEventListener.mockClear();
+    document.getElementById.mockImplementation((id) => elementMap[id] || null);
+
+    new QRCodeGeneratorUI({
+      qrTextId: 'qr-text',
+      qrSizeId: 'qr-size',
+      sizeLabelId: 'size-label',
+      qrMarginId: 'qr-margin',
+      marginLabelId: 'margin-label',
+      errorCorrectionId: 'error-correction',
+      qrCanvasId: 'qr-canvas',
+      downloadBtnId: 'download-btn',
+      errorMessageId: 'error-message'
+    });
+
+    expect(mockQrText.addEventListener).not.toHaveBeenCalledWith('input', expect.any(Function));
+  });
+
+  it('should return early from downloadQRCode when canvas is missing', () => {
+    const elementMap = {
+      'qr-text': mockQrText,
+      'qr-size': mockQrSize,
+      'size-label': mockSizeLabel,
+      'qr-margin': mockQrMargin,
+      'margin-label': mockMarginLabel,
+      'error-correction': mockErrorCorrection,
+      'qr-canvas': null,
+      'download-btn': mockDownloadBtn,
+      'error-message': mockErrorMessage
+    };
+    document.getElementById.mockImplementation((id) => elementMap[id] || null);
+    mockDownloadManagerInstance.downloadFile.mockClear();
+
+    const partialGenerator = new QRCodeGeneratorUI({
+      qrTextId: 'qr-text',
+      qrSizeId: 'qr-size',
+      sizeLabelId: 'size-label',
+      qrMarginId: 'qr-margin',
+      marginLabelId: 'margin-label',
+      errorCorrectionId: 'error-correction',
+      qrCanvasId: 'qr-canvas',
+      downloadBtnId: 'download-btn',
+      errorMessageId: 'error-message'
+    });
+    partialGenerator.downloadManager = mockDownloadManagerInstance;
+
+    partialGenerator.downloadQRCode();
+    expect(mockDownloadManagerInstance.downloadFile).not.toHaveBeenCalled();
+  });
+
+  it('should return early from initializeApp when label or range inputs are missing', () => {
+    QRCode.toCanvas.mockClear();
+    const elementMap = {
+      'qr-text': mockQrText,
+      'qr-size': mockQrSize,
+      'size-label': null,
+      'qr-margin': mockQrMargin,
+      'margin-label': mockMarginLabel,
+      'error-correction': mockErrorCorrection,
+      'qr-canvas': mockQrCanvas,
+      'download-btn': mockDownloadBtn,
+      'error-message': mockErrorMessage
+    };
+    document.getElementById.mockImplementation((id) => elementMap[id] || null);
+
+    const partialGenerator = new QRCodeGeneratorUI({
+      qrTextId: 'qr-text',
+      qrSizeId: 'qr-size',
+      sizeLabelId: 'size-label',
+      qrMarginId: 'qr-margin',
+      marginLabelId: 'margin-label',
+      errorCorrectionId: 'error-correction',
+      qrCanvasId: 'qr-canvas',
+      downloadBtnId: 'download-btn',
+      errorMessageId: 'error-message'
+    });
+    partialGenerator.initializeApp();
+
+    expect(QRCode.toCanvas).not.toHaveBeenCalled();
   });
 });

@@ -1,12 +1,12 @@
-import { JSMinifier } from './minifier.js';
-import { formatBytes } from '../common/format-utils.js';
-import { NotificationManager } from '../common/notification-manager.js';
-import ClearButton from '../common/clear-button/ClearButton.js';
-import CopyButton from '../common/copy-button/CopyButton.js';
-import { scheduleTask } from '../common/scheduler-utils.js';
+import { JSMinifier } from './minifier';
+import { formatBytes } from '../common/format-utils';
+import { NotificationManager } from '../common/notification-manager';
+import ClearButton from '../common/clear-button/ClearButton';
+import CopyButton from '../common/copy-button/CopyButton';
+import { scheduleTask } from '../common/scheduler-utils';
 import { hydrate, render } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
 
 const DEFAULT_OPTIONS = {
   removeComments: true,
@@ -52,7 +52,7 @@ function calculateStats(original = '', minified = '') {
 }
 
 if (typeof window !== 'undefined') {
-  window.JSMinifier = JSMinifier;
+  (window as Window & { JSMinifier?: typeof JSMinifier }).JSMinifier = JSMinifier;
 }
 
 export function JSMinifierApp() {

@@ -1,25 +1,78 @@
-import { JWTDecoder } from './JWTDecoder.js';
+import { JWTDecoder } from './JWTDecoder';
 import { JsonTreeViewRenderer } from './JsonTreeViewRenderer.js';
-import { NotificationManager } from '../common/notification-manager.js';
-import ClearButton from '../common/clear-button/ClearButton.js';
+import { NotificationManager } from '../common/notification-manager';
+import ClearButton from '../common/clear-button/ClearButton';
 import { hydrate, render } from 'preact';
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
+
+type StatusType = 'default' | 'success' | 'error' | 'warning';
+
+type ElementConstructor<T extends HTMLElement> = { new (): T };
+
+interface JWTDecoderUIElements {
+    jwtInput: HTMLTextAreaElement;
+    secretInput: HTMLInputElement | HTMLTextAreaElement;
+    copyBtn: HTMLButtonElement;
+    decodeBtn: HTMLButtonElement;
+    validateBtn: HTMLButtonElement;
+    decodedOutput: HTMLTextAreaElement;
+    statusOutput: HTMLElement;
+    headerJsonContainer: HTMLElement;
+    payloadJsonContainer: HTMLElement;
+    rawJsonViewerContainer: HTMLElement;
+}
+
+type JwtDecoderWindow = Window & {
+    jwtDecoderApp?: JWTDecoderUI;
+};
+
+const browserWindow = typeof window !== 'undefined' ? (window as JwtDecoderWindow) : null;
+
+function getRequiredElement<T extends HTMLElement>(
+    id: string,
+    expectedType: ElementConstructor<T>,
+    expectedTypeName: string
+): T {
+    const element = document.getElementById(id);
+    if (!(element instanceof expectedType)) {
+        throw new Error(`Expected #${id} to be a ${expectedTypeName}.`);
+    }
+
+    return element;
+}
+
+function getRequiredTextInputLikeElement(id: string): HTMLInputElement | HTMLTextAreaElement {
+    const element = document.getElementById(id);
+    if (!(element instanceof HTMLInputElement) && !(element instanceof HTMLTextAreaElement)) {
+        throw new Error(`Expected #${id} to be a text input element.`);
+    }
+
+    return element;
+}
 
 export class JWTDecoderUI {
+    jsonRenderer: JsonTreeViewRenderer;
+    elements: JWTDecoderUIElements;
+    decodeTimeout: ReturnType<typeof setTimeout> | null;
+    verifyTimeout: ReturnType<typeof setTimeout> | null;
+    clearButton: ClearButton | null;
+
     constructor() {
         // Instantiate the renderer within the class
         this.jsonRenderer = new JsonTreeViewRenderer();
 
         // Cache DOM Elements
         this.elements = {
-            jwtInput: document.getElementById('jwtInputToken'),
-            secretInput: document.getElementById('jwtSecretKey'),
-            copyBtn: document.getElementById('jwt-decoder-copy-btn'),
-            decodedOutput: document.getElementById('jwtDecodedOutput'), // Hidden textarea
-            statusOutput: document.getElementById('jwtSignatureStatus'),
-            headerJsonContainer: document.getElementById('headerJson'),
-            payloadJsonContainer: document.getElementById('payloadJson'),
-            rawJsonViewerContainer: document.getElementById('rawJsonViewer')
+            jwtInput: getRequiredElement('jwtInputToken', HTMLTextAreaElement, 'HTMLTextAreaElement'),
+            secretInput: getRequiredTextInputLikeElement('jwtSecretKey'),
+            copyBtn: getRequiredElement('jwt-decoder-copy-btn', HTMLButtonElement, 'HTMLButtonElement'),
+            decodeBtn: getRequiredElement('jwt-decoder-decode-btn', HTMLButtonElement, 'HTMLButtonElement'),
+            validateBtn: getRequiredElement('jwt-decoder-validate-btn', HTMLButtonElement, 'HTMLButtonElement'),
+            decodedOutput: getRequiredElement('jwtDecodedOutput', HTMLTextAreaElement, 'HTMLTextAreaElement'),
+            statusOutput: getRequiredElement('jwtSignatureStatus', HTMLElement, 'HTMLElement'),
+            headerJsonContainer: getRequiredElement('headerJson', HTMLElement, 'HTMLElement'),
+            payloadJsonContainer: getRequiredElement('payloadJson', HTMLElement, 'HTMLElement'),
+            rawJsonViewerContainer: getRequiredElement('rawJsonViewer', HTMLElement, 'HTMLElement')
         };
 
         // Debounce timers
@@ -31,7 +84,7 @@ export class JWTDecoderUI {
     }
 
     // --- Initialization ---
-    initialize() {
+    initialize(): void {
         if (typeof document === 'undefined') return; // Guard against non-browser environments
 
         this.setupTabs();
@@ -42,9 +95,9 @@ export class JWTDecoderUI {
     }
 
     // --- UI Setup ---
-    setupTabs() {
-        const tabs = document.querySelectorAll('.jwt-decoder-tab');
-        const tabList = document.querySelector('.jwt-decoder-tabs');
+    setupTabs(): void {
+        const tabs = document.querySelectorAll<HTMLButtonElement>('.jwt-decoder-tab');
+        const tabList = document.querySelector<HTMLElement>('.jwt-decoder-tabs');
 
         // Handle Click Events
         tabs.forEach(tab => {
@@ -55,27 +108,29 @@ export class JWTDecoderUI {
 
         // Handle Keyboard Navigation
         if (tabList) {
-            tabList.addEventListener('keydown', (e) => {
-                const key = e.key;
+            tabList.addEventListener('keydown', (event: KeyboardEvent) => {
+                const key = event.key;
                 const direction = key === 'ArrowLeft' ? -1 : key === 'ArrowRight' ? 1 : 0;
 
                 if (direction !== 0) {
-                    e.preventDefault();
+                    event.preventDefault();
                     const currentTab = document.activeElement;
-                    const index = Array.from(tabs).indexOf(currentTab);
+                    const index = Array.from(tabs).findIndex((tab) => tab === currentTab);
                     if (index !== -1) {
                         const newIndex = (index + direction + tabs.length) % tabs.length;
                         const newTab = tabs[newIndex];
-                        newTab.focus();
-                        this.activateTab(newTab);
+                        if (newTab) {
+                            newTab.focus();
+                            this.activateTab(newTab);
+                        }
                     }
                 }
             });
         }
     }
 
-    activateTab(tab) {
-        const tabs = document.querySelectorAll('.jwt-decoder-tab');
+    activateTab(tab: HTMLElement): void {
+        const tabs = document.querySelectorAll<HTMLElement>('.jwt-decoder-tab');
 
         tabs.forEach(t => {
             t.classList.remove('active');
@@ -87,7 +142,7 @@ export class JWTDecoderUI {
         tab.setAttribute('aria-selected', 'true');
         tab.setAttribute('tabindex', '0');
 
-        const tabPanes = document.querySelectorAll('.jwt-decoder-tab-pane');
+        const tabPanes = document.querySelectorAll<HTMLElement>('.jwt-decoder-tab-pane');
         tabPanes.forEach(pane => pane.classList.remove('active'));
 
         const tabId = tab.getAttribute('data-tab');
@@ -97,7 +152,7 @@ export class JWTDecoderUI {
         }
     }
 
-    setupEventListeners() {
+    setupEventListeners(): void {
         // Initialize Clear Button component for JWT input
         this.clearButton = new ClearButton(this.elements.jwtInput);
 
@@ -109,11 +164,11 @@ export class JWTDecoderUI {
 
         // Button Click Handlers for manual actions
         this.elements.copyBtn.addEventListener('click', this.copyDecoded.bind(this));
-        document.getElementById('jwt-decoder-decode-btn').addEventListener('click', () => this.decodeAndRender(false));
-        document.getElementById('jwt-decoder-validate-btn').addEventListener('click', () => this.decodeAndRender(true));
+        this.elements.decodeBtn.addEventListener('click', () => this.decodeAndRender(false));
+        this.elements.validateBtn.addEventListener('click', () => this.decodeAndRender(true));
     }
 
-    preloadData() {
+    preloadData(): void {
         // Preload with sample JWT token and secret (optional)
         this.elements.jwtInput.value = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
         this.elements.secretInput.value = 'your-256-bit-secret';
@@ -124,18 +179,18 @@ export class JWTDecoderUI {
         }
     }
 
-    initializeTooltips() {
+    initializeTooltips(): void {
         this.elements.copyBtn.setAttribute('title', 'Copy decoded token to clipboard');
-        document.getElementById('jwt-decoder-decode-btn').setAttribute('title', 'Decode the JWT token');
-        document.getElementById('jwt-decoder-validate-btn').setAttribute('title', 'Decode and validate the JWT signature with the provided secret key');
+        this.elements.decodeBtn.setAttribute('title', 'Decode the JWT token');
+        this.elements.validateBtn.setAttribute('title', 'Decode and validate the JWT signature with the provided secret key');
     }
 
     // --- Core Logic & Rendering ---
-    async decodeAndRender(verifySignature = false, suppressNotification = false) {
+    async decodeAndRender(verifySignature = false, suppressNotification = false): Promise<void> {
         return this.decodeAndRenderWithAutoVerify(verifySignature, false, suppressNotification);
     }
 
-    async decodeAndRenderWithAutoVerify(verifySignature = false, isAuto = false, suppressNotification = false) {
+    async decodeAndRenderWithAutoVerify(verifySignature = false, isAuto = false, suppressNotification = false): Promise<void> {
         const jwt = this.elements.jwtInput.value.trim();
         const secret = this.elements.secretInput.value.trim();
 
@@ -188,8 +243,8 @@ export class JWTDecoderUI {
                     }
                 }
 
-            } catch (e) {
-                this.handleProcessingError(e);
+            } catch (error: unknown) {
+                this.handleProcessingError(error);
             }
         }
     }
@@ -197,7 +252,7 @@ export class JWTDecoderUI {
     // --- UI Update Helpers ---
     // Removed updateButtonStates, updateDecodeButtonState, updateVerifyButtonState
 
-    updateStatusOutput(message, type = 'default', suppressNotification = false) { // type: 'default', 'success', 'error', 'warning'
+    updateStatusOutput(message: string, type: StatusType = 'default', suppressNotification = false): void { // type: 'default', 'success', 'error', 'warning'
         const output = this.elements.statusOutput;
         output.textContent = message;
         output.className = 'jwt-decoder-status c-status-banner'; // Reset classes
@@ -230,7 +285,7 @@ export class JWTDecoderUI {
         }
     }
 
-    clearOutputs() {
+    clearOutputs(): void {
         this.elements.decodedOutput.value = '';
         this.elements.headerJsonContainer.innerHTML = '';
         this.elements.payloadJsonContainer.innerHTML = '';
@@ -238,22 +293,23 @@ export class JWTDecoderUI {
         // Status is updated in decodeAndRender or clearAll
     }
 
-    switchToRawTab() {
-        const rawTab = document.querySelector('.jwt-decoder-tab[data-tab="raw"]');
+    switchToRawTab(): void {
+        const rawTab = document.querySelector<HTMLElement>('.jwt-decoder-tab[data-tab="raw"]');
         if (rawTab) rawTab.click();
     }
 
-    handleProcessingError(e) {
-        this.elements.decodedOutput.value = `Error: ${e.message}`;
+    handleProcessingError(error: unknown): void {
+        const message = error instanceof Error ? error.message : String(error);
+        this.elements.decodedOutput.value = `Error: ${message}`;
         this.elements.headerJsonContainer.innerHTML = '';
         this.elements.payloadJsonContainer.innerHTML = '';
         this.elements.rawJsonViewerContainer.innerHTML = '';
-        this.updateStatusOutput(`Error: ${e.message}`, 'error');
-        console.error('JWT Processing Error:', e);
+        this.updateStatusOutput(`Error: ${message}`, 'error');
+        console.error('JWT Processing Error:', error);
     }
 
     // --- Event Handlers ---
-    debounceDecode() {
+    debounceDecode(): void {
         clearTimeout(this.decodeTimeout);
         const token = this.elements.jwtInput.value.trim();
 
@@ -269,7 +325,7 @@ export class JWTDecoderUI {
         }, 300);
     }
 
-    debounceVerify() {
+    debounceVerify(): void {
         clearTimeout(this.verifyTimeout);
         // Auto-verify on secret input change if secret is present.
         const secret = this.elements.secretInput.value.trim();
@@ -280,7 +336,7 @@ export class JWTDecoderUI {
         }
     }
 
-    async copyDecoded() {
+    async copyDecoded(): Promise<void> {
         const decodedContent = this.elements.decodedOutput.value;
         const copyBtn = this.elements.copyBtn;
 
@@ -293,14 +349,14 @@ export class JWTDecoderUI {
         try {
             await navigator.clipboard.writeText(decodedContent);
             NotificationManager.show('Copied to clipboard!', 2000, { type: 'success' });
-        } catch (err) {
-            console.error('Failed to copy:', err);
+        } catch (error: unknown) {
+            console.error('Failed to copy:', error);
             NotificationManager.show('Failed to copy to clipboard', 2000, { type: 'error' });
             copyBtn.setAttribute('title', 'Failed to copy to clipboard');
         }
     }
 
-    clearAll() {
+    clearAll(): void {
         this.elements.jwtInput.value = '';
         this.elements.secretInput.value = '';
         this.clearOutputs();
@@ -371,7 +427,7 @@ export function JwtDecoderApp() {
                                     role="tab"
                                     aria-selected="true"
                                     aria-controls="rawTab"
-                                    tabIndex="0"
+                                    tabIndex={0}
                                 >
                                     Raw
                                 </button>
@@ -382,7 +438,7 @@ export function JwtDecoderApp() {
                                     role="tab"
                                     aria-selected="false"
                                     aria-controls="headerTab"
-                                    tabIndex="-1"
+                                    tabIndex={-1}
                                 >
                                     Header
                                 </button>
@@ -393,7 +449,7 @@ export function JwtDecoderApp() {
                                     role="tab"
                                     aria-selected="false"
                                     aria-controls="payloadTab"
-                                    tabIndex="-1"
+                                    tabIndex={-1}
                                 >
                                     Payload
                                 </button>
@@ -401,14 +457,14 @@ export function JwtDecoderApp() {
 
                             <div className="jwt-decoder-tab-content">
                                 <div id="rawTab" className="jwt-decoder-tab-pane active" role="tabpanel" aria-labelledby="tab-raw">
-                                    <div id="rawJsonViewer" className="jwt-decoder-json-viewer" tabIndex="0" aria-label="Decoded token raw JSON viewer" />
+                                    <div id="rawJsonViewer" className="jwt-decoder-json-viewer" tabIndex={0} aria-label="Decoded token raw JSON viewer" />
                                     <textarea id="jwtDecodedOutput" readOnly placeholder="Decoded token will appear here..." style={{ display: 'none' }} />
                                 </div>
                                 <div id="headerTab" className="jwt-decoder-tab-pane" role="tabpanel" aria-labelledby="tab-header">
-                                    <div id="headerJson" className="jwt-decoder-json-viewer" tabIndex="0" aria-label="JWT header JSON viewer" />
+                                    <div id="headerJson" className="jwt-decoder-json-viewer" tabIndex={0} aria-label="JWT header JSON viewer" />
                                 </div>
                                 <div id="payloadTab" className="jwt-decoder-tab-pane" role="tabpanel" aria-labelledby="tab-payload">
-                                    <div id="payloadJson" className="jwt-decoder-json-viewer" tabIndex="0" aria-label="JWT payload JSON viewer" />
+                                    <div id="payloadJson" className="jwt-decoder-json-viewer" tabIndex={0} aria-label="JWT payload JSON viewer" />
                                 </div>
                             </div>
                         </div>
@@ -440,20 +496,22 @@ export function JwtDecoderApp() {
     );
 }
 
-function initializeJwtDecoderDom() {
+function initializeJwtDecoderDom(): JWTDecoderUI {
     const jwtDecoderApp = new JWTDecoderUI();
     jwtDecoderApp.initialize();
 
-    if (typeof window !== 'undefined') {
-        window.jwtDecoderApp = jwtDecoderApp;
+    if (browserWindow) {
+        browserWindow.jwtDecoderApp = jwtDecoderApp;
     }
 
     return jwtDecoderApp;
 }
 
 export class JWTDecoderToolUI {
+    app: JWTDecoderUI;
+
     constructor(rootSelector = '#jwt-decoder-app') {
-        const root = document.querySelector(rootSelector) || document.querySelector('#jwt-decoder-tool');
+        const root = document.querySelector<HTMLElement>(rootSelector) || document.querySelector<HTMLElement>('#jwt-decoder-tool');
         if (!root) {
             throw new Error('JWT Decoder root element not found');
         }

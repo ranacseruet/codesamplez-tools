@@ -1,22 +1,47 @@
 import QRCode from 'qrcode';
 import DownloadManager from '../common/DownloadManager';
-import ClearButton from '../common/clear-button/ClearButton.js';
+import ClearButton from '../common/clear-button/ClearButton';
 import { hydrate, render } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
 
 const QR_EMPTY_INPUT_MESSAGE = 'Please enter text or a URL to generate a QR code.';
 const QR_TOO_LONG_ERROR_MESSAGE = 'Error: Input data is too long for the selected error correction level. Try reducing data or increasing error correction.';
 
+type QrGeneratorDomOptions = {
+  qrTextId: string;
+  qrSizeId: string;
+  sizeLabelId: string;
+  qrMarginId: string;
+  marginLabelId: string;
+  errorCorrectionId: string;
+  qrCanvasId: string;
+  downloadBtnId: string;
+  errorMessageId: string;
+};
+
 export class QRCodeGeneratorUI {
-  constructor(options) {
-    this.qrText = document.getElementById(options.qrTextId);
-    this.qrSize = document.getElementById(options.qrSizeId);
+  qrText: HTMLTextAreaElement | null = null;
+  qrSize: HTMLInputElement | null = null;
+  sizeLabel: HTMLElement | null = null;
+  qrMargin: HTMLInputElement | null = null;
+  marginLabel: HTMLElement | null = null;
+  errorCorrection: HTMLSelectElement | null = null;
+  qrCanvas: HTMLCanvasElement | null = null;
+  downloadBtn: HTMLElement | null = null;
+  errorMessage: HTMLElement | null = null;
+  downloadManager!: DownloadManager;
+  clearButton: ClearButton | null = null;
+  debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor(options: QrGeneratorDomOptions) {
+    this.qrText = document.getElementById(options.qrTextId) as HTMLTextAreaElement | null;
+    this.qrSize = document.getElementById(options.qrSizeId) as HTMLInputElement | null;
     this.sizeLabel = document.getElementById(options.sizeLabelId);
-    this.qrMargin = document.getElementById(options.qrMarginId);
+    this.qrMargin = document.getElementById(options.qrMarginId) as HTMLInputElement | null;
     this.marginLabel = document.getElementById(options.marginLabelId);
-    this.errorCorrection = document.getElementById(options.errorCorrectionId);
-    this.qrCanvas = document.getElementById(options.qrCanvasId);
+    this.errorCorrection = document.getElementById(options.errorCorrectionId) as HTMLSelectElement | null;
+    this.qrCanvas = document.getElementById(options.qrCanvasId) as HTMLCanvasElement | null;
     this.downloadBtn = document.getElementById(options.downloadBtnId);
     this.errorMessage = document.getElementById(options.errorMessageId);
     this.downloadManager = new DownloadManager();
@@ -32,6 +57,10 @@ export class QRCodeGeneratorUI {
   }
 
   generateQRCode() {
+    if (!this.qrText || !this.qrSize || !this.errorCorrection || !this.qrMargin || !this.qrCanvas || !this.errorMessage) {
+      return;
+    }
+
     clearTimeout(this.debounceTimer);
     this.debounceTimer = setTimeout(() => {
       const text = this.qrText.value;
@@ -70,6 +99,10 @@ export class QRCodeGeneratorUI {
   }
 
   bindEvents() {
+    if (!this.qrText || !this.qrSize || !this.sizeLabel || !this.qrMargin || !this.marginLabel || !this.errorCorrection || !this.downloadBtn) {
+      return;
+    }
+
     try {
       this.qrText.addEventListener('input', () => this.generateQRCode());
       this.qrText.addEventListener('textCleared', () => this.generateQRCode()); // Listen for clear event
@@ -89,12 +122,20 @@ export class QRCodeGeneratorUI {
   }
 
   downloadQRCode() {
+    if (!this.qrCanvas) {
+      return;
+    }
+
     const dataUrl = this.qrCanvas.toDataURL('image/png');
     const filename = `qrcode-${Date.now()}.png`;
     this.downloadManager.downloadFile(dataUrl, filename, 'image/png');
   }
 
   initializeApp() {
+    if (!this.sizeLabel || !this.qrSize || !this.marginLabel || !this.qrMargin) {
+      return;
+    }
+
     this.sizeLabel.textContent = `${this.qrSize.value}px`;
     this.marginLabel.textContent = this.qrMargin.value;
     this.generateQRCode();
@@ -119,7 +160,7 @@ function createQrCanvasOptions({ text, size, margin, errorCorrection }) {
   };
 }
 
-function getQrCanvasAriaLabel(text) {
+function getQrCanvasAriaLabel(text: string) {
   const labelText = text.length > 50 ? `${text.substring(0, 50)}...` : text;
   return `QR code for: ${labelText}`;
 }
@@ -132,10 +173,10 @@ export function QRCodeGeneratorApp() {
   const [errorMessage, setErrorMessage] = useState('');
   const [canvasVisible, setCanvasVisible] = useState(true);
   const [canvasAriaLabel, setCanvasAriaLabel] = useState('QR Code');
-  const textAreaRef = useRef(null);
-  const canvasRef = useRef(null);
-  const debounceRef = useRef(null);
-  const clearButtonRef = useRef(null);
+  const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearButtonRef = useRef<ClearButton | null>(null);
 
   useEffect(() => {
     if (!(textAreaRef.current instanceof HTMLTextAreaElement)) {
@@ -209,6 +250,32 @@ export function QRCodeGeneratorApp() {
     downloadManager.downloadFile(dataUrl, filename, 'image/png');
   };
 
+  const handleTextInput = (event) => {
+    const target = event.target;
+    setText(target instanceof HTMLTextAreaElement ? target.value : '');
+  };
+
+  const handleSizeInput = (event) => {
+    const target = event.target;
+    if (target instanceof HTMLInputElement) {
+      setSize(Number(target.value));
+    }
+  };
+
+  const handleMarginInput = (event) => {
+    const target = event.target;
+    if (target instanceof HTMLInputElement) {
+      setMargin(Number(target.value));
+    }
+  };
+
+  const handleErrorCorrectionChange = (event) => {
+    const target = event.target;
+    if (target instanceof HTMLSelectElement) {
+      setErrorCorrection(target.value);
+    }
+  };
+
   return (
     <div id="qr-code-generator-tool" className="tool-container qr-tool c-tool-stack">
       <main className="qr-tool__main-content">
@@ -220,11 +287,11 @@ export function QRCodeGeneratorApp() {
             <textarea
               id="qr-text"
               ref={textAreaRef}
-              rows="4"
+              rows={4}
               className="qr-tool__textarea c-input c-input--textarea"
               placeholder="e.g. https://codesamplez.com"
               value={text}
-              onInput={(event) => setText(event.target.value)}
+              onInput={handleTextInput}
             />
           </div>
 
@@ -240,7 +307,7 @@ export function QRCodeGeneratorApp() {
               step="16"
               value={size}
               className="qr-tool__slider"
-              onInput={(event) => setSize(Number(event.target.value))}
+              onInput={handleSizeInput}
             />
           </div>
 
@@ -256,7 +323,7 @@ export function QRCodeGeneratorApp() {
               step="1"
               value={margin}
               className="qr-tool__slider"
-              onInput={(event) => setMargin(Number(event.target.value))}
+              onInput={handleMarginInput}
             />
           </div>
 
@@ -266,7 +333,7 @@ export function QRCodeGeneratorApp() {
               id="error-correction"
               className="qr-tool__select c-input"
               value={errorCorrection}
-              onChange={(event) => setErrorCorrection(event.target.value)}
+              onChange={handleErrorCorrectionChange}
             >
               <option value="L">Low (L) - ~7%</option>
               <option value="M">Medium (M) - ~15%</option>
@@ -322,7 +389,8 @@ if (typeof document !== 'undefined' && typeof document.addEventListener === 'fun
 
     const qrCodeGenerator = new QRCodeGeneratorToolUI();
     if (typeof window !== 'undefined') {
-      window.qrCodeGenerator = qrCodeGenerator;
+      const browserWindow = window as Window & { qrCodeGenerator?: QRCodeGeneratorToolUI };
+      browserWindow.qrCodeGenerator = qrCodeGenerator;
     }
   });
 }

@@ -39,7 +39,7 @@ global.setTimeout = jest.fn((fn) => fn()); // Execute immediately for tests
 global.clearTimeout = jest.fn();
 
 // Import functions for testing
-import { analyzeText } from './script.js'; // Main script functions
+import { analyzeText } from './TextAnalyzer'; // Main analyzer functions
 
 describe('Text Analyzer Tests', () => {
     // Mock the DOMContentLoaded and event listener setup from script.js
@@ -77,7 +77,7 @@ describe('Text Analyzer Tests', () => {
 
         // Re-import the script to ensure fresh event listeners are set up
         jest.resetModules();
-        const script = require('./script.js'); // This will execute the script's top-level code
+        const script = require('./script'); // This will execute the script's top-level code
 
         // Manually get references to the functions that would be attached to DOM events
         // This requires exposing them for testing, or mocking the event dispatch.

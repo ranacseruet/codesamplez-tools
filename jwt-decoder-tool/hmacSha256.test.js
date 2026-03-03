@@ -2,7 +2,7 @@ const { TextEncoder, TextDecoder } = require('util');
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
-import { hmacSha256 } from './JWTDecoder.js';
+import { hmacSha256 } from './JWTDecoder';
 
 describe('hmacSha256', () => {
     beforeAll(() => {

@@ -1,4 +1,4 @@
-import { mountToolShell } from './mountToolShell.js';
+import { mountToolShell } from './mountToolShell';
 
 describe('mountToolShell', () => {
     beforeEach(() => {

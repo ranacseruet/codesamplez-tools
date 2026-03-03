@@ -1,33 +1,41 @@
 class ClearButton {
-    constructor(textAreaElement) {
+    textArea: HTMLTextAreaElement;
+    clearButton: HTMLButtonElement;
+    wrapper: HTMLDivElement;
+    boundClearText: (() => void) | null;
+    boundUpdateVisibility: (() => void) | null;
+
+    constructor(textAreaElement: HTMLTextAreaElement) {
         if (!(textAreaElement instanceof HTMLTextAreaElement)) {
             throw new Error('ClearButton must be initialized with a valid HTMLTextAreaElement.');
         }
 
         this.textArea = textAreaElement;
         this.clearButton = this.createClearButton();
+        this.wrapper = document.createElement('div');
+        this.boundClearText = null;
+        this.boundUpdateVisibility = null;
         this.appendClearButton();
         this.addEventListeners();
         this.updateVisibility();
     }
 
-    createClearButton() {
+    createClearButton(): HTMLButtonElement {
         const button = document.createElement('button');
         button.classList.add('clear-button');
         button.setAttribute('aria-label', 'Clear text');
         return button;
     }
 
-    appendClearButton() {
+    appendClearButton(): void {
         // Create wrapper for the clear button
-        this.wrapper = document.createElement('div');
         this.wrapper.classList.add('clear-button-wrapper');
-        this.textArea.parentNode.insertBefore(this.wrapper, this.textArea);
+        this.textArea.parentNode!.insertBefore(this.wrapper, this.textArea);
         this.wrapper.appendChild(this.textArea);
         this.wrapper.appendChild(this.clearButton);
     }
 
-    addEventListeners() {
+    addEventListeners(): void {
         // Store bound functions as instance properties for proper cleanup
         this.boundClearText = this.clearText.bind(this);
         this.boundUpdateVisibility = this.updateVisibility.bind(this);
@@ -42,7 +50,7 @@ class ClearButton {
         this.textArea.addEventListener('change', this.boundUpdateVisibility);
     }
 
-    disconnect() {
+    disconnect(): void {
         // Remove event listeners to prevent memory leaks
         if (this.boundUpdateVisibility) {
             this.textArea.removeEventListener('input', this.boundUpdateVisibility);
@@ -57,7 +65,7 @@ class ClearButton {
         }
     }
 
-    clearText() {
+    clearText(): void {
         // Add clearing animation
         this.clearButton.classList.add('clearing');
         
@@ -85,7 +93,7 @@ class ClearButton {
         }, 300);
     }
 
-    updateVisibility() {
+    updateVisibility(): void {
         if (this.textArea.value.length > 0) {
             this.clearButton.style.display = 'block';
         } else {

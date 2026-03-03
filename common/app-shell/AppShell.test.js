@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { ToolShellFooter, ToolShellHeader } from './AppShell.jsx';
+import { ToolShellFooter, ToolShellHeader } from './AppShell';
 
 describe('AppShell components', () => {
     beforeEach(() => {

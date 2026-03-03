@@ -7,7 +7,7 @@ global.TextDecoder = TextDecoder;
 global.atob = str => Buffer.from(str, 'base64').toString('binary');
 global.btoa = str => Buffer.from(str, 'binary').toString('base64');
 
-import { JWTBuilder } from './JWTBuilder.js';
+import { JWTBuilder } from './JWTBuilder';
 
 function decodeBase64Url(str) {
   let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
@@ -245,6 +245,14 @@ describe('JWTBuilder', () => {
       payload.circular.self = payload; // Create circular reference
 
       await expect(jwtBuilder.buildJWT(payload, 'test-secret')).rejects.toThrow();
+    });
+
+    test('maps signing SyntaxError to a user-facing payload error', async () => {
+      jest.spyOn(jwtBuilder, 'generateSignature').mockRejectedValueOnce(new SyntaxError('unexpected syntax'));
+
+      await expect(jwtBuilder.buildJWT({ sub: 'test-user' }, 'test-secret'))
+        .rejects
+        .toThrow('Invalid JSON payload.');
     });
 
     test('creates JWT with complex nested payload', async () => {

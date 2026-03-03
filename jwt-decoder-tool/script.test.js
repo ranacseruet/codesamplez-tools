@@ -1,8 +1,8 @@
 // Import the script to execute it and attach listeners in the JSDOM environment
-import './script.js';
+import { JWTDecoderUI } from './script';
 
 // Mock the JWTDecoder class methods used by the script
-jest.mock('./JWTDecoder.js', () => ({
+jest.mock('./JWTDecoder', () => ({
   JWTDecoder: jest.fn().mockImplementation((token) => {
     // Basic mock for valid/invalid format based on token content
     const isValid = token && token.split('.').length === 3;
@@ -33,14 +33,14 @@ jest.mock('./JsonTreeViewRenderer.js', () => ({
 }));
 
 // Mock the NotificationManager
-jest.mock('../common/notification-manager.js', () => ({
+jest.mock('../common/notification-manager', () => ({
     NotificationManager: {
         show: jest.fn()
     }
 }));
 
 // Mock the ClearButton component
-jest.mock('../common/clear-button/ClearButton.js', () => {
+jest.mock('../common/clear-button/ClearButton', () => {
     return jest.fn().mockImplementation(() => ({
         updateVisibility: jest.fn(),
         disconnect: jest.fn()
@@ -111,7 +111,7 @@ describe('JWT Decoder UI Interactions', () => {
     jwtInput.value = 'valid.token.sig'; // Use a token our mock considers valid
     jwtInput.dispatchEvent(new Event('input'));
 
-    // Fast-forward time past the debounce delay (300ms in script.js)
+    // Fast-forward time past the debounce delay (300ms in script.tsx)
     // Use runAllTimersAsync to ensure all nested timers/promises resolve
     await jest.runAllTimersAsync();
 
@@ -135,13 +135,13 @@ describe('JWT Decoder UI Interactions', () => {
     secretInput.value = 'secret';
     secretInput.dispatchEvent(new Event('input'));
 
-    // Fast-forward time past the verify debounce delay (300ms in script.js)
+    // Fast-forward time past the verify debounce delay (300ms in script.tsx)
     await jest.runAllTimersAsync();
 
     // Check if status updated to valid
     expect(statusOutput.textContent).toBe('✓ Decoded successfully. Signature is valid.');
     expect(statusOutput.classList.contains('status-success')).toBe(true);
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenCalledWith('✓ Decoded successfully. Signature is valid.', 2000, expect.objectContaining({ type: 'success' }));
 
     // Test invalid signature
@@ -150,7 +150,7 @@ describe('JWT Decoder UI Interactions', () => {
     await jest.runAllTimersAsync();
     expect(statusOutput.textContent).toBe('✗ Decoded successfully. Signature is invalid.');
     expect(statusOutput.classList.contains('status-error')).toBe(true);
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenCalledWith('✗ Decoded successfully. Signature is invalid.', 2000, expect.objectContaining({ type: 'error' }));
 
     // Test removing secret
@@ -158,7 +158,7 @@ describe('JWT Decoder UI Interactions', () => {
     secretInput.dispatchEvent(new Event('input'));
     await jest.runAllTimersAsync();
     expect(statusOutput.textContent).toBe('Decoded successfully.');
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenCalledWith('Decoded successfully.', 2000, expect.objectContaining({ type: 'success' }));
   });
 
@@ -174,7 +174,7 @@ describe('JWT Decoder UI Interactions', () => {
     await jest.runAllTimersAsync();
     expect(statusOutput.textContent).toBe('✓ Decoded successfully. Signature is valid.');
     expect(statusOutput.classList.contains('status-success')).toBe(true);
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenCalledWith('✓ Decoded successfully. Signature is valid.', 2000, expect.objectContaining({ type: 'success' }));
 
     // 2. Change token to one with invalid signature (but valid format)
@@ -183,7 +183,7 @@ describe('JWT Decoder UI Interactions', () => {
     await jest.runAllTimersAsync();
     expect(statusOutput.textContent).toBe('✗ Decoded successfully. Signature is invalid.');
     expect(statusOutput.classList.contains('status-error')).toBe(true);
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenCalledWith('✗ Decoded successfully. Signature is invalid.', 2000, expect.objectContaining({ type: 'error' }));
 
     // 3. Change token back to valid
@@ -192,7 +192,7 @@ describe('JWT Decoder UI Interactions', () => {
     await jest.runAllTimersAsync();
     expect(statusOutput.textContent).toBe('✓ Decoded successfully. Signature is valid.');
     expect(statusOutput.classList.contains('status-success')).toBe(true);
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenLastCalledWith('✓ Decoded successfully. Signature is valid.', 2000, expect.objectContaining({ type: 'success' }));
 
     // 4. Change token to invalid format
@@ -201,7 +201,7 @@ describe('JWT Decoder UI Interactions', () => {
     await jest.runAllTimersAsync();
     expect(statusOutput.textContent).toContain('Error: Invalid mock format'); // Check for parsing error
     expect(statusOutput.classList.contains('status-error')).toBe(true);
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenLastCalledWith(expect.stringContaining('Error: Invalid mock format'), 2000, expect.objectContaining({ type: 'error' }));
   });
 
@@ -216,7 +216,7 @@ describe('JWT Decoder UI Interactions', () => {
     await jest.runAllTimersAsync();
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(decodedOutput.value);
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenCalledWith('Copied to clipboard!', 2000, expect.objectContaining({ type: 'success' }));
   });
 
@@ -231,7 +231,7 @@ describe('JWT Decoder UI Interactions', () => {
 
     expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
     expect(copyBtn.textContent).not.toBe('Copied!'); // Check it didn't change to "Copied!"
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenCalledWith('Cannot copy error content', 2000, expect.objectContaining({ type: 'error' }));
   });
 
@@ -246,7 +246,7 @@ describe('JWT Decoder UI Interactions', () => {
     copyBtn.click();
     await jest.runAllTimersAsync();
 
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
       .toHaveBeenCalledWith('Failed to copy to clipboard', 2000, expect.objectContaining({ type: 'error' }));
     expect(copyBtn.getAttribute('title')).toBe('Failed to copy to clipboard');
     expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to copy:', expect.any(Error));
@@ -302,7 +302,7 @@ describe('JWT Decoder UI Interactions', () => {
     expect(statusOutput.textContent).toBe('Decoded successfully.');
     expect(statusOutput.classList.contains('status-success')).toBe(true);
     expect(headerJson.innerHTML).toContain('"alg":"HS256"');
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenCalledWith('Decoded successfully.', 2000, expect.objectContaining({ type: 'success' }));
   });
 
@@ -319,7 +319,7 @@ describe('JWT Decoder UI Interactions', () => {
 
     expect(statusOutput.textContent).toBe('✓ Decoded successfully. Signature is valid.');
     expect(statusOutput.classList.contains('status-success')).toBe(true);
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenCalledWith('✓ Decoded successfully. Signature is valid.', 2000, expect.objectContaining({ type: 'success' }));
   });
 
@@ -336,7 +336,7 @@ describe('JWT Decoder UI Interactions', () => {
 
     expect(statusOutput.textContent).toBe('Decoded successfully. Secret key required for signature validation.');
     expect(statusOutput.classList.contains('status-warning')).toBe(true);
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenCalledWith('Decoded successfully. Secret key required for signature validation.', 2000, expect.objectContaining({ type: 'warning' }));
   });
 
@@ -378,7 +378,7 @@ describe('JWT Decoder UI Interactions', () => {
     expect(payloadJson.innerHTML).toBe('');
     expect(rawJsonViewer.innerHTML).toBe('');
     expect(decodedOutput.value).toBe('');
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenCalledWith('Enter a JWT token.', 2000, expect.objectContaining({ type: 'default' }));
   });
 
@@ -456,7 +456,7 @@ describe('JWT Decoder UI Interactions', () => {
     await jest.runAllTimersAsync();
     expect(statusOutput.textContent).toBe('Decoded successfully.');
     expect(statusOutput.classList.contains('status-success')).toBe(true);
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenLastCalledWith('Decoded successfully.', 2000, expect.objectContaining({ type: 'success' }));
   });
 
@@ -486,8 +486,23 @@ describe('JWT Decoder UI Interactions', () => {
     expect(payloadJson.innerHTML).toBe('');
     expect(rawJsonViewer.innerHTML).toBe('');
     expect(statusOutput.textContent).toBe('Enter a JWT token.');
-    expect(require('../common/notification-manager.js').NotificationManager.show)
+    expect(require('../common/notification-manager').NotificationManager.show)
       .toHaveBeenCalledWith('All fields cleared.', 2000, expect.objectContaining({ type: 'success' }));
+  });
+
+  it('should throw when #jwtInputToken is not a textarea', () => {
+    document.body.innerHTML = '<div id="jwtInputToken"></div>';
+
+    expect(() => new JWTDecoderUI()).toThrow('Expected #jwtInputToken to be a HTMLTextAreaElement.');
+  });
+
+  it('should throw when #jwtSecretKey is not a text input element', () => {
+    document.body.innerHTML = `
+      <textarea id="jwtInputToken"></textarea>
+      <div id="jwtSecretKey"></div>
+    `;
+
+    expect(() => new JWTDecoderUI()).toThrow('Expected #jwtSecretKey to be a text input element.');
   });
 
   // Clean up timers after tests

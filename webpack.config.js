@@ -113,7 +113,7 @@ const getToolConfig = (toolName) => ({
       './common/material-theme.css',
       './common/app-shell/app-shell.css',
       './common/shared-styles.css',
-      `./${toolName}/script.js`,
+      `./${toolName}/script`,
       `./${toolName}/styles.css`
     ]
   },
@@ -230,7 +230,7 @@ const developmentConfig = {
       './common/material-theme.css',
       './common/app-shell/app-shell.css',
       './common/shared-styles.css',
-      `./${toolName}/script.js`,
+      `./${toolName}/script`,
       `./${toolName}/styles.css`
     ];
     return entries;

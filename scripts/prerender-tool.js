@@ -8,13 +8,14 @@ function ensureBabelRegister() {
     }
 
     require('@babel/register')({
-        extensions: ['.js', '.jsx'],
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
         ignore: [/node_modules/],
         babelrc: false,
         configFile: false,
         presets: [
             ['@babel/preset-env', { targets: { node: 'current' }, modules: 'commonjs' }],
-            ['@babel/preset-react', { runtime: 'automatic', importSource: 'preact' }]
+            ['@babel/preset-react', { runtime: 'automatic', importSource: 'preact' }],
+            ['@babel/preset-typescript', { allowDeclareFields: true }]
         ]
     });
 
@@ -26,7 +27,7 @@ const TOOL_PRERENDER_REGISTRY = {
         rootId: 'base64converter-app',
         createAppNode: () => {
             const { h } = require('preact');
-            const { Base64ConverterApp } = require(path.resolve(__dirname, '../base64-converter-tool/script.js'));
+            const { Base64ConverterApp } = require(path.resolve(__dirname, '../base64-converter-tool/script'));
             return h(Base64ConverterApp, {});
         }
     },
@@ -34,8 +35,8 @@ const TOOL_PRERENDER_REGISTRY = {
         rootId: 'data-format-converter-app',
         createAppNode: () => {
             const { h } = require('preact');
-            const { DataFormatConverter } = require(path.resolve(__dirname, '../data-format-converter/DataFormatConverter.js'));
-            const { DataFormatConverterApp } = require(path.resolve(__dirname, '../data-format-converter/script.js'));
+            const { DataFormatConverter } = require(path.resolve(__dirname, '../data-format-converter/DataFormatConverter'));
+            const { DataFormatConverterApp } = require(path.resolve(__dirname, '../data-format-converter/script'));
 
             return h(DataFormatConverterApp, {
                 converter: new DataFormatConverter()
@@ -46,7 +47,7 @@ const TOOL_PRERENDER_REGISTRY = {
         rootId: 'css-minifier-app',
         createAppNode: () => {
             const { h } = require('preact');
-            const { CssMinifierApp } = require(path.resolve(__dirname, '../css-minifier-tool/script.js'));
+            const { CssMinifierApp } = require(path.resolve(__dirname, '../css-minifier-tool/script'));
             return h(CssMinifierApp, {});
         }
     },
@@ -54,7 +55,7 @@ const TOOL_PRERENDER_REGISTRY = {
         rootId: 'diff-checker-app',
         createAppNode: () => {
             const { h } = require('preact');
-            const { DiffCheckerApp } = require(path.resolve(__dirname, '../diff-checker-tool/script.js'));
+            const { DiffCheckerApp } = require(path.resolve(__dirname, '../diff-checker-tool/script'));
             return h(DiffCheckerApp, {});
         }
     },
@@ -62,7 +63,7 @@ const TOOL_PRERENDER_REGISTRY = {
         rootId: 'json-formatter-app',
         createAppNode: () => {
             const { h } = require('preact');
-            const { JsonFormatterApp } = require(path.resolve(__dirname, '../json-formatter-tool/script.js'));
+            const { JsonFormatterApp } = require(path.resolve(__dirname, '../json-formatter-tool/script'));
             return h(JsonFormatterApp, {});
         }
     },
@@ -70,7 +71,7 @@ const TOOL_PRERENDER_REGISTRY = {
         rootId: 'js-minifier-app',
         createAppNode: () => {
             const { h } = require('preact');
-            const { JSMinifierApp } = require(path.resolve(__dirname, '../js-minifier-tool/script.js'));
+            const { JSMinifierApp } = require(path.resolve(__dirname, '../js-minifier-tool/script'));
             return h(JSMinifierApp, {});
         }
     },
@@ -78,7 +79,7 @@ const TOOL_PRERENDER_REGISTRY = {
         rootId: 'jwt-builder-app',
         createAppNode: () => {
             const { h } = require('preact');
-            const { JwtBuilderApp } = require(path.resolve(__dirname, '../jwt-builder-tool/script.js'));
+            const { JwtBuilderApp } = require(path.resolve(__dirname, '../jwt-builder-tool/script'));
             return h(JwtBuilderApp, {});
         }
     },
@@ -86,7 +87,7 @@ const TOOL_PRERENDER_REGISTRY = {
         rootId: 'jwt-decoder-app',
         createAppNode: () => {
             const { h } = require('preact');
-            const { JwtDecoderApp } = require(path.resolve(__dirname, '../jwt-decoder-tool/script.js'));
+            const { JwtDecoderApp } = require(path.resolve(__dirname, '../jwt-decoder-tool/script'));
             return h(JwtDecoderApp, {});
         }
     },
@@ -94,7 +95,7 @@ const TOOL_PRERENDER_REGISTRY = {
         rootId: 'text-analyzer-app',
         createAppNode: () => {
             const { h } = require('preact');
-            const { TextAnalyzerApp } = require(path.resolve(__dirname, '../text-analyzer-tool/script.js'));
+            const { TextAnalyzerApp } = require(path.resolve(__dirname, '../text-analyzer-tool/script'));
             return h(TextAnalyzerApp, {});
         }
     },
@@ -102,7 +103,7 @@ const TOOL_PRERENDER_REGISTRY = {
         rootId: 'qr-code-generator-app',
         createAppNode: () => {
             const { h } = require('preact');
-            const { QRCodeGeneratorApp } = require(path.resolve(__dirname, '../qr-code-generator/script.js'));
+            const { QRCodeGeneratorApp } = require(path.resolve(__dirname, '../qr-code-generator/script'));
             return h(QRCodeGeneratorApp, {});
         }
     }

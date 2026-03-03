@@ -13,21 +13,21 @@ var mockBuilder = {
 
 const mockCopyButtons = [];
 
-jest.mock('./JWTBuilder.js', () => ({
+jest.mock('./JWTBuilder', () => ({
   JWTBuilder: jest.fn(() => mockBuilder)
 }));
 
-jest.mock('../common/notification-manager.js', () => ({
+jest.mock('../common/notification-manager', () => ({
   NotificationManager: {
     show: jest.fn()
   }
 }));
 
-jest.mock('../common/app-shell/mountToolShell.js', () => ({
+jest.mock('../common/app-shell/mountToolShell', () => ({
   mountToolShell: jest.fn()
 }));
 
-jest.mock('../common/copy-button/CopyButton.js', () => ({
+jest.mock('../common/copy-button/CopyButton', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation((target) => {
     const instance = {
@@ -41,10 +41,10 @@ jest.mock('../common/copy-button/CopyButton.js', () => ({
   })
 }));
 
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
-import { NotificationManager } from '../common/notification-manager.js';
-import CopyButton from '../common/copy-button/CopyButton.js';
-import { JWTBuilderToolUI, jwtBuilder as scriptJwtBuilder } from './script.js';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { NotificationManager } from '../common/notification-manager';
+import CopyButton from '../common/copy-button/CopyButton';
+import { JWTBuilderToolUI, jwtBuilder as scriptJwtBuilder } from './script';
 
 describe('JWT Builder Preact runtime', () => {
   const flush = () => Promise.resolve();

@@ -1,8 +1,8 @@
 // Import the script to execute it and attach listeners in the JSDOM environment
-import './script.js';
+import './script';
 
 // Mock the JWTDecoder class methods used by the script
-jest.mock('./JWTDecoder.js', () => ({
+jest.mock('./JWTDecoder', () => ({
   JWTDecoder: jest.fn().mockImplementation((token) => {
     // Basic mock for valid/invalid format based on token content
     const isValid = token && token.split('.').length === 3;
@@ -30,14 +30,14 @@ jest.mock('./JsonTreeViewRenderer.js', () => ({
 }));
 
 // Mock the NotificationManager
-jest.mock('../common/notification-manager.js', () => ({
+jest.mock('../common/notification-manager', () => ({
     NotificationManager: {
         show: jest.fn()
     }
 }));
 
 // Mock the ClearButton component
-jest.mock('../common/clear-button/ClearButton.js', () => {
+jest.mock('../common/clear-button/ClearButton', () => {
     return jest.fn().mockImplementation(() => ({
         updateVisibility: jest.fn(),
         disconnect: jest.fn()

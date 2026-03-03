@@ -1,3 +1,16 @@
+import type { JSX } from 'preact';
+
+type ThemeMode = 'light' | 'dark';
+
+interface ToolShellHeaderProps {
+    title?: string;
+    description?: string;
+    homeHref?: string;
+    showThemeToggle?: boolean;
+    themeMode?: ThemeMode;
+    onToggleTheme?: () => void;
+}
+
 export function ToolShellHeader({
     title,
     description,
@@ -5,7 +18,7 @@ export function ToolShellHeader({
     showThemeToggle = false,
     themeMode = 'light',
     onToggleTheme
-}) {
+}: ToolShellHeaderProps): JSX.Element {
     const isDarkMode = themeMode === 'dark';
     const themeToggleLabel = isDarkMode ? 'Light mode' : 'Dark mode';
     const themeToggleAriaLabel = isDarkMode ? 'Switch to light mode' : 'Switch to dark mode';
@@ -42,7 +55,7 @@ export function ToolShellHeader({
     );
 }
 
-export function ToolShellFooter() {
+export function ToolShellFooter(): JSX.Element {
     return (
         <footer className="cst-shell__footer">
             <div className="cst-shell__footer-inner">

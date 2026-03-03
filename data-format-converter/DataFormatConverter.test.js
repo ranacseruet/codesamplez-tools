@@ -1,4 +1,4 @@
-import { DataFormatConverter } from './DataFormatConverter.js';
+import { DataFormatConverter } from './DataFormatConverter';
 
 describe('DataFormatConverter', () => {
     let converter;
@@ -49,6 +49,18 @@ describe('DataFormatConverter', () => {
 
         it('should throw error for unsupported format', () => {
             expect(() => converter.parseInput('data', 'csv')).toThrow('Unsupported input format: csv');
+        });
+
+        it('should stringify non-Error YAML parser failures', () => {
+            const yaml = require('js-yaml');
+            const loadSpy = jest.spyOn(yaml, 'load').mockImplementation(() => {
+                throw 'string-yaml-error';
+            });
+
+            expect(() => converter.parseInput('name: test', 'yaml'))
+                .toThrow('Invalid YAML format: string-yaml-error');
+
+            loadSpy.mockRestore();
         });
     });
 

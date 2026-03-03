@@ -3,29 +3,29 @@ import { fireEvent } from '@testing-library/dom';
 
 const clearButtonInstances = [];
 
-jest.mock('../common/notification-manager.js', () => ({
+jest.mock('../common/notification-manager', () => ({
   NotificationManager: {
     show: jest.fn()
   }
 }));
 
-jest.mock('../common/app-shell/mountToolShell.js', () => ({
+jest.mock('../common/app-shell/mountToolShell', () => ({
   mountToolShell: jest.fn()
 }));
 
-jest.mock('../common/scheduler-utils.js', () => ({
+jest.mock('../common/scheduler-utils', () => ({
   scheduleTask: jest.fn(() => Promise.resolve()),
   nextFrame: jest.fn(() => Promise.resolve())
 }));
 
-jest.mock('../common/DownloadManager.js', () => ({
+jest.mock('../common/DownloadManager', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => ({
     downloadFile: jest.fn()
   }))
 }));
 
-jest.mock('../common/clear-button/ClearButton.js', () => ({
+jest.mock('../common/clear-button/ClearButton', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => {
     const instance = {
@@ -37,9 +37,9 @@ jest.mock('../common/clear-button/ClearButton.js', () => ({
   })
 }));
 
-import { NotificationManager } from '../common/notification-manager.js';
-import { mountToolShell } from '../common/app-shell/mountToolShell.js';
-import { JSONFormatterToolUI } from './script.js';
+import { NotificationManager } from '../common/notification-manager';
+import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { JSONFormatterToolUI } from './script';
 
 describe('JSON Formatter Preact runtime', () => {
   const flush = () => Promise.resolve();

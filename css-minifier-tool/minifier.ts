@@ -170,7 +170,8 @@ function isValidCSS(cssString) {
       if (styleElement.sheet.cssRules.length > 0) {
         // Check for invalid rules like "body { color: }" which might still create a rule
         const firstRule = styleElement.sheet.cssRules[0];
-        if (firstRule.style && firstRule.style.length === 0 && cssWithoutComments.includes(':') && !cssWithoutComments.endsWith(';}') && cssWithoutComments.endsWith('}')) {
+        const styleRule = firstRule as CSSStyleRule;
+        if (styleRule.style && styleRule.style.length === 0 && cssWithoutComments.includes(':') && !cssWithoutComments.endsWith(';}') && cssWithoutComments.endsWith('}')) {
           // Heuristic: if a rule exists, has a colon, but no actual styles applied, and doesn't look like a valid empty rule.
           // This targets "property: }"
           isValid = false;
