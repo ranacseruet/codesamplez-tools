@@ -1,0 +1,92 @@
+name: Phase H Health Monitoring
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '23'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production artifacts
+        run: npm run build
+
+      - name: Capture bundle metrics
+        run: |
+          mkdir -p qa-artifacts/health
+          npm run bundle-metrics | tee qa-artifacts/health/bundle-metrics.md
+
+      - name: Bundle budget check (report-only)
+        run: npm run bundle-budget-check
+        continue-on-error: true
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start local QA server
+        run: |
+          set -euo pipefail
+          npm start > /tmp/codesamplez-health-start.log 2>&1 &
+          echo "QA_SERVER_PID=$!" >> $GITHUB_ENV
+          ready=0
+          for i in $(seq 1 45); do
+            if curl -sSf http://127.0.0.1:8080 >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "QA server failed to start on http://127.0.0.1:8080"
+            cat /tmp/codesamplez-health-start.log || true
+            exit 1
+          fi
+
+      - name: Accessibility baseline check (scheduled, report-only)
+        run: npm run qa:a11y:foundation
+        env:
+          QA_BASE_URL: http://127.0.0.1:8080
+          QA_A11Y_FAIL_ON_VIOLATIONS: '0'
+        continue-on-error: true
+
+      - name: Visual baseline snapshot capture (scheduled, report-only)
+        run: npm run qa:visual-baseline:foundation
+        env:
+          QA_BASE_URL: http://127.0.0.1:8080
+        continue-on-error: true
+
+      - name: Dependency audit capture (high severity)
+        run: |
+          mkdir -p qa-artifacts/dependency-audit
+          npm audit --audit-level=high --json > qa-artifacts/dependency-audit/${{ github.run_id }}-high-audit.json || true
+
+      - name: Stop local QA server
+        if: always()
+        run: kill $QA_SERVER_PID || true
+
+      - name: Upload monitoring artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-h-health-${{ github.run_id }}
+          retention-days: 30
+          path: |
+            reports/bundle-metrics/latest.json
+            qa-artifacts/health/bundle-metrics.md
+            qa-artifacts/a11y-reports/phase-d-foundation/phase-d-foundation-a11y-results.json
+            qa-artifacts/visual-baselines/phase-d-foundation/phase-d-foundation-visual-results.json
+            qa-artifacts/dependency-audit

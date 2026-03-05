@@ -1,0 +1,68 @@
+name: Phase H Cross-Browser Signoff
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cross-browser-signoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '23'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Build production artifacts
+        run: npm run build
+
+      - name: Start local QA server
+        run: |
+          set -euo pipefail
+          npm start > /tmp/codesamplez-cross-browser-start.log 2>&1 &
+          echo "QA_SERVER_PID=$!" >> $GITHUB_ENV
+          ready=0
+          for i in $(seq 1 45); do
+            if curl -sSf http://127.0.0.1:8080 >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "QA server failed to start on http://127.0.0.1:8080"
+            cat /tmp/codesamplez-cross-browser-start.log || true
+            exit 1
+          fi
+
+      - name: Run cross-browser signoff
+        env:
+          QA_BASE_URL: http://127.0.0.1:8080
+        run: npm run qa:cross-browser:phase-h
+
+      - name: Stop local QA server
+        if: always()
+        run: kill $QA_SERVER_PID || true
+
+      - name: Upload cross-browser signoff artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-h-cross-browser-signoff-${{ github.run_id }}
+          retention-days: 30
+          path: |
+            qa-artifacts/cross-browser-signoff/phase-h-cross-browser-signoff-results.json
+            qa-artifacts/cross-browser-signoff/phase-h-cross-browser-signoff-results.md

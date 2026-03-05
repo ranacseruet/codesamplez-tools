@@ -64,6 +64,8 @@ Production builds are created using `npm run build`:
   - Screenshots
   - Security/Privacy considerations
 - Keep documentation up-to-date with changes
+- For the post-migration steady-state workflow (bundle metrics, QA, TS migration), follow [Phase H Contributor Workflow](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/docs/phase-h-contributor-workflow.md).
+- For user-visible PR communication and shared-surface review expectations, follow [Phase H Release And Change Communication Workflow](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/docs/phase-h-release-communication-workflow.md).
 
 ## Development Workflow
 1. Pull latest changes while on "main" branch (`git pull`)

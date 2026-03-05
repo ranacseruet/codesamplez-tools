@@ -22,9 +22,8 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Typecheck (report-only)
+    - name: Typecheck
       run: npm run typecheck
-      continue-on-error: true
 
     - name: Run tests
       run: npx jest --coverage
@@ -42,6 +41,61 @@ jobs:
 
     - name: Verify Build Artifacts
       run: npm run verify-build
+
+    - name: Bundle Metrics Report
+      run: npm run bundle-metrics
+
+    - name: Bundle Budget Check
+      run: npm run bundle-budget-check
+
+    - name: Install Playwright Chromium
+      run: npx playwright install --with-deps chromium
+
+    - name: Start Local Server for QA Baselines
+      run: |
+        set -euo pipefail
+        npm start > /tmp/codesamplez-ci-start.log 2>&1 &
+        echo "QA_SERVER_PID=$!" >> $GITHUB_ENV
+        ready=0
+        for i in $(seq 1 45); do
+          if curl -sSf http://127.0.0.1:8080 >/dev/null; then
+            ready=1
+            break
+          fi
+          sleep 1
+        done
+        if [ "$ready" -ne 1 ]; then
+          echo "QA server failed to start on http://127.0.0.1:8080"
+          cat /tmp/codesamplez-ci-start.log || true
+          exit 1
+        fi
+
+    - name: Accessibility Baseline (report-only)
+      run: npm run qa:a11y:foundation
+      env:
+        QA_BASE_URL: http://127.0.0.1:8080
+        QA_A11Y_FAIL_ON_VIOLATIONS: '0'
+      continue-on-error: true
+
+    - name: Visual Baseline Snapshot Capture (report-only)
+      run: npm run qa:visual-baseline:foundation
+      env:
+        QA_BASE_URL: http://127.0.0.1:8080
+      continue-on-error: true
+
+    - name: Upload main visual baseline artifacts
+      if: github.ref == 'refs/heads/main' && always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: phase-h-foundation-visual-baseline
+        retention-days: 30
+        if-no-files-found: warn
+        path: |
+          qa-artifacts/visual-baselines/phase-d-foundation
+
+    - name: Stop Local QA Server
+      if: always()
+      run: kill $QA_SERVER_PID || true
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v5

@@ -1,0 +1,305 @@
+name: Phase H PR Visual Diff
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  visual-diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '23'
+          cache: 'npm'
+
+      - name: Install dependencies (PR)
+        run: npm ci
+
+      - name: Find latest main visual baseline artifact
+        id: baseline_artifact
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifactName = 'phase-h-foundation-visual-baseline';
+            const workflowId = 'ci.yml';
+            const { owner, repo } = context.repo;
+            try {
+              const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+                owner,
+                repo,
+                workflow_id: workflowId,
+                branch: 'main',
+                event: 'push',
+                per_page: 20
+              });
+
+              let selectedRun = null;
+              for (const run of runs) {
+                if (run.status !== 'completed' || run.conclusion !== 'success') {
+                  continue;
+                }
+                const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+                  owner,
+                  repo,
+                  run_id: run.id,
+                  per_page: 100
+                });
+                const baselineArtifact = artifacts.data.artifacts.find(
+                  (artifact) => artifact.name === artifactName && !artifact.expired
+                );
+                if (baselineArtifact) {
+                  selectedRun = run;
+                  break;
+                }
+              }
+
+              if (!selectedRun) {
+                const message = `No non-expired ${artifactName} artifact found from successful main CI runs.`;
+                core.warning(message);
+                core.setOutput('found', 'false');
+                core.setOutput('message', message);
+                return;
+              }
+
+              core.info(`Using ${artifactName} from main CI run ${selectedRun.id} (${selectedRun.head_sha}).`);
+              core.setOutput('found', 'true');
+              core.setOutput('run_id', String(selectedRun.id));
+              core.setOutput('artifact_name', artifactName);
+              core.setOutput('head_sha', selectedRun.head_sha);
+              core.setOutput('message', '');
+            } catch (error) {
+              const status = error && typeof error.status !== 'undefined' ? error.status : 'unknown';
+              const message = `Unable to access ${artifactName} from main CI runs (status: ${status}). Visual diff will be skipped for this run.`;
+              core.warning(message);
+              core.setOutput('found', 'false');
+              core.setOutput('message', message);
+            }
+
+      - name: Download main visual baseline artifact
+        if: steps.baseline_artifact.outputs.found == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.baseline_artifact.outputs.run_id }}
+          name: ${{ steps.baseline_artifact.outputs.artifact_name }}
+          path: baseline/qa-artifacts/visual-baselines/phase-d-foundation
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build PR artifacts
+        run: npm run build
+
+      - name: Select visual checks for PR scope
+        id: diff_scope
+        run: |
+          set -euo pipefail
+
+          BASE_BRANCH="${{ github.base_ref || 'main' }}"
+          if [ -z "$BASE_BRANCH" ]; then
+            BASE_BRANCH="main"
+          fi
+          git fetch origin "$BASE_BRANCH" --depth=1
+
+          all_checks=(
+            "root-index desktop baseline"
+            "root-index mobile baseline"
+            "data-format-converter desktop baseline"
+            "data-format-converter mobile baseline"
+            "js-minifier-tool desktop baseline"
+            "js-minifier-tool mobile baseline"
+            "base64-converter-tool desktop baseline"
+            "base64-converter-tool mobile baseline"
+            "jwt-builder-tool desktop baseline"
+            "jwt-builder-tool mobile baseline"
+            "jwt-decoder-tool desktop baseline"
+            "jwt-decoder-tool mobile baseline"
+            "json-formatter-tool desktop baseline"
+            "json-formatter-tool mobile baseline"
+            "css-minifier-tool desktop baseline"
+            "css-minifier-tool mobile baseline"
+            "text-analyzer-tool desktop baseline"
+            "text-analyzer-tool mobile baseline"
+            "qr-code-generator desktop baseline"
+            "qr-code-generator mobile baseline"
+            "diff-checker-tool desktop baseline"
+            "diff-checker-tool mobile baseline"
+          )
+
+          declare -A selected=()
+
+          add_check() {
+            local check_name="$1"
+            selected["$check_name"]=1
+          }
+
+          is_shared_change=false
+          for file in $(git diff --name-only "origin/$BASE_BRANCH...HEAD"); do
+            case "$file" in
+              common/* | public-path.* | docs/ui-styling-conventions.md | docs/ui-component-catalog.md | docs/ui-component-catalog.html | docs/ui-component-catalog.css | docs/ui-styling-conventions.md | docs/phase-h-contributor-workflow.md | docs/ui-component-catalog.html | common)
+                is_shared_change=true
+                ;;
+              data-format-converter/*)
+                add_check "data-format-converter desktop baseline"
+                add_check "data-format-converter mobile baseline"
+                ;;
+              js-minifier-tool/*)
+                add_check "js-minifier-tool desktop baseline"
+                add_check "js-minifier-tool mobile baseline"
+                ;;
+              base64-converter-tool/*)
+                add_check "base64-converter-tool desktop baseline"
+                add_check "base64-converter-tool mobile baseline"
+                ;;
+              jwt-builder-tool/*)
+                add_check "jwt-builder-tool desktop baseline"
+                add_check "jwt-builder-tool mobile baseline"
+                ;;
+              jwt-decoder-tool/*)
+                add_check "jwt-decoder-tool desktop baseline"
+                add_check "jwt-decoder-tool mobile baseline"
+                ;;
+              json-formatter-tool/*)
+                add_check "json-formatter-tool desktop baseline"
+                add_check "json-formatter-tool mobile baseline"
+                ;;
+              css-minifier-tool/*)
+                add_check "css-minifier-tool desktop baseline"
+                add_check "css-minifier-tool mobile baseline"
+                ;;
+              text-analyzer-tool/*)
+                add_check "text-analyzer-tool desktop baseline"
+                add_check "text-analyzer-tool mobile baseline"
+                ;;
+              qr-code-generator/*)
+                add_check "qr-code-generator desktop baseline"
+                add_check "qr-code-generator mobile baseline"
+                ;;
+              diff-checker-tool/*)
+                add_check "diff-checker-tool desktop baseline"
+                add_check "diff-checker-tool mobile baseline"
+                ;;
+            esac
+          done
+
+          selected_checks=()
+          if [ "$is_shared_change" = true ]; then
+            selected_checks=("${all_checks[@]}")
+          elif [ "${#selected[@]}" -gt 0 ]; then
+            for check_name in "${all_checks[@]}"; do
+              if [ -n "${selected[$check_name]+set}" ]; then
+                selected_checks+=("$check_name")
+              fi
+            done
+          else
+            selected_checks=("${all_checks[@]}")
+          fi
+
+          CHECK_LIST="$(printf '%s,' "${selected_checks[@]}")"
+          CHECK_LIST="${CHECK_LIST%,}"
+
+          echo "Selected visual checks: $CHECK_LIST"
+          echo "selected_checks=$CHECK_LIST" >> "$GITHUB_OUTPUT"
+          echo "is_shared_change=$is_shared_change" >> "$GITHUB_OUTPUT"
+
+      - name: Capture PR visual snapshots
+        env:
+          QA_BASE_URL: http://127.0.0.1:8080
+          QA_VISUAL_OUT_DIR: qa-artifacts/visual-baselines/phase-d-foundation/pr
+          QA_VISUAL_RESULTS_FILE: qa-artifacts/visual-baselines/phase-d-foundation/pr/phase-d-foundation-visual-results.json
+          QA_VISUAL_CHECKS: ${{ steps.diff_scope.outputs.selected_checks }}
+        run: |
+          set -euo pipefail
+          npm start > /tmp/codesamplez-pr-start.log 2>&1 &
+          PR_QA_SERVER_PID=$!
+          trap 'kill $PR_QA_SERVER_PID || true' EXIT
+          ready=0
+          for i in $(seq 1 45); do
+            if curl -sSf http://127.0.0.1:8080 >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "PR QA server failed to start on http://127.0.0.1:8080"
+            cat /tmp/codesamplez-pr-start.log || true
+            exit 1
+          fi
+          npm run qa:visual-baseline:foundation
+          trap - EXIT
+          kill $PR_QA_SERVER_PID || true
+
+      - name: Compare baseline and PR visual snapshots (report-only)
+        if: steps.baseline_artifact.outputs.found == 'true'
+        env:
+          QA_VISUAL_BASELINE_RESULTS_PATH: ${{ github.workspace }}/baseline/qa-artifacts/visual-baselines/phase-d-foundation/phase-d-foundation-visual-results.json
+          QA_VISUAL_CURRENT_RESULTS_PATH: ${{ github.workspace }}/qa-artifacts/visual-baselines/phase-d-foundation/pr/phase-d-foundation-visual-results.json
+          QA_VISUAL_BASELINE_RUN_DIR: ${{ github.workspace }}/baseline
+          QA_VISUAL_CURRENT_RUN_DIR: ${{ github.workspace }}
+          QA_VISUAL_ALLOWED_CHECKS: ${{ steps.diff_scope.outputs.selected_checks }}
+          QA_VISUAL_DIFF_OUT_DIR: ${{ github.workspace }}/qa-artifacts/visual-diffs/phase-h-pr
+        run: |
+          set -euo pipefail
+          npm run qa:visual-diff:foundation
+
+      - name: Record skipped visual diff summary
+        if: steps.baseline_artifact.outputs.found != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p qa-artifacts/visual-diffs/phase-h-pr
+          cat <<'EOF' > qa-artifacts/visual-diffs/phase-h-pr/phase-h-pr-visual-diff-summary.md
+          # Phase H PR Visual Diff Summary
+
+          - Status: skipped
+          - Reason: latest successful `main` visual baseline artifact was not available
+          - Details: ${{ steps.baseline_artifact.outputs.message }}
+          - Current run: `qa-artifacts/visual-baselines/phase-d-foundation/pr/phase-d-foundation-visual-results.json`
+
+          ## Next action
+
+          - Merge the baseline-uploading workflow to `main` and wait for one successful `main` CI run, or refresh the expired baseline artifact.
+          EOF
+          cat <<'EOF' > qa-artifacts/visual-diffs/phase-h-pr/phase-h-pr-visual-diff-summary.json
+          {
+            "status": "skipped",
+            "reason": "missing_main_baseline_artifact",
+            "message": "${{ steps.baseline_artifact.outputs.message }}",
+            "baselineAvailable": false,
+            "currentResultsPath": "qa-artifacts/visual-baselines/phase-d-foundation/pr/phase-d-foundation-visual-results.json"
+          }
+          EOF
+          {
+            echo "## Phase H PR Visual Diff"
+            echo ""
+            echo "- Status: skipped"
+            echo "- Reason: latest successful \`main\` visual baseline artifact was not available."
+            echo "- Details: ${{ steps.baseline_artifact.outputs.message }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload PR visual diff artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-h-pr-visual-diff-${{ github.event.number || github.run_id }}
+          retention-days: 30
+          path: |
+            qa-artifacts/visual-diffs/phase-h-pr/phase-h-pr-visual-diff-summary.md
+            qa-artifacts/visual-diffs/phase-h-pr/phase-h-pr-visual-diff-summary.json
+            baseline/qa-artifacts/visual-baselines/phase-d-foundation
+            qa-artifacts/visual-baselines/phase-d-foundation/pr
