@@ -1,0 +1,195 @@
+name: Phase 2 Visual Diff Canary
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/phase-2-visual-diff-canary.yml'
+      - '.github/visual-regression.json'
+      - 'visual-diff-github-action/**'
+      - 'scripts/visual-baseline-ui-foundation.mjs'
+      - 'scripts/visual-diff-ui-foundation.mjs'
+      - 'scripts/visual-regression-config.mjs'
+      - 'types/qa-script-types.d.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+  workflow_dispatch:
+    inputs:
+      route-ids:
+        description: Optional comma-separated route ids for the canary run
+        required: false
+        type: string
+
+concurrency:
+  group: phase-2-visual-diff-canary-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish-canary-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '23'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        run: npm run build
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start local app
+        run: |
+          set -euo pipefail
+          npm start > /tmp/phase-2-visual-canary-baseline.log 2>&1 &
+          echo "QA_SERVER_PID=$!" >> "$GITHUB_ENV"
+          ready=0
+          for i in $(seq 1 45); do
+            if curl -sSf http://127.0.0.1:8080 >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/phase-2-visual-canary-baseline.log || true
+            exit 1
+          fi
+
+      - name: Capture baseline via shared action
+        id: capture
+        uses: ./visual-diff-github-action/actions/capture-visual-routes
+        with:
+          repo-config-path: .github/visual-regression.json
+          route-ids: ${{ inputs.route-ids }}
+
+      - name: Stage baseline artifact
+        id: stage
+        uses: ./visual-diff-github-action/actions/stage-visual-artifacts
+        with:
+          artifact-type: baseline
+          bundle-dir: qa-artifacts/phase-2-canary-baseline
+          results-path: ${{ steps.capture.outputs.results-file }}
+          manifest-path: ${{ steps.capture.outputs.manifest-file }}
+          screenshots-dir: ${{ steps.capture.outputs.screenshots-root }}/screenshots
+
+      - name: Upload canary baseline artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-2-canary-baseline-${{ github.run_id }}
+          retention-days: 7
+          path: ${{ steps.stage.outputs.bundle-dir }}
+
+      - name: Stop local app
+        if: always()
+        run: kill $QA_SERVER_PID || true
+
+  diff-canary:
+    needs: publish-canary-baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '23'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        run: npm run build
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Download canary baseline artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: phase-2-canary-baseline-${{ github.run_id }}
+          path: baseline-download
+
+      - name: Start local app
+        run: |
+          set -euo pipefail
+          npm start > /tmp/phase-2-visual-canary-diff.log 2>&1 &
+          echo "QA_SERVER_PID=$!" >> "$GITHUB_ENV"
+          ready=0
+          for i in $(seq 1 45); do
+            if curl -sSf http://127.0.0.1:8080 >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/phase-2-visual-canary-diff.log || true
+            exit 1
+          fi
+
+      - name: Capture current routes via shared action
+        id: capture
+        uses: ./visual-diff-github-action/actions/capture-visual-routes
+        with:
+          repo-config-path: .github/visual-regression.json
+          route-ids: ${{ inputs.route-ids }}
+
+      - name: Compare with staged baseline via shared action
+        id: compare
+        uses: ./visual-diff-github-action/actions/compare-visual-results
+        with:
+          repo-config-path: .github/visual-regression.json
+          route-ids: ${{ inputs.route-ids }}
+          baseline-results-path: baseline-download/visual-baseline-results.json
+          baseline-manifest-path: baseline-download/visual-screenshot-manifest.json
+          baseline-run-dir: baseline-download
+          current-results-path: ${{ steps.capture.outputs.results-file }}
+          current-manifest-path: ${{ steps.capture.outputs.manifest-file }}
+          current-run-dir: ${{ steps.capture.outputs.screenshots-root }}
+
+      - name: Stage diff artifact
+        id: stage
+        uses: ./visual-diff-github-action/actions/stage-visual-artifacts
+        with:
+          artifact-type: diff
+          bundle-dir: qa-artifacts/phase-2-canary-diff
+          summary-json-path: ${{ steps.compare.outputs.summary-path }}
+          summary-markdown-path: ${{ steps.compare.outputs.markdown-path }}
+          baseline-results-path: baseline-download/visual-baseline-results.json
+          current-results-path: ${{ steps.capture.outputs.results-file }}
+          baseline-manifest-path: baseline-download/visual-screenshot-manifest.json
+          current-manifest-path: ${{ steps.capture.outputs.manifest-file }}
+          baseline-screenshots-dir: baseline-download/screenshots
+          current-screenshots-dir: ${{ steps.capture.outputs.screenshots-root }}/screenshots
+
+      - name: Upload canary diff artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-2-canary-diff-${{ github.run_id }}
+          retention-days: 7
+          path: ${{ steps.stage.outputs.bundle-dir }}
+
+      - name: Evaluate outcome
+        continue-on-error: true
+        uses: ./visual-diff-github-action/actions/evaluate-visual-diff-outcome
+        with:
+          summary-path: ${{ steps.compare.outputs.summary-path }}
+
+      - name: Stop local app
+        if: always()
+        run: kill $QA_SERVER_PID || true

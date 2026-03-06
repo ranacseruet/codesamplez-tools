@@ -1,0 +1,126 @@
+name: Publish Visual PR Comment
+description: Upsert a PR comment with the visual diff summary.
+
+inputs:
+  github-token:
+    description: Token used to update the pull request comment.
+    required: true
+  pr-number:
+    description: Pull request number to comment on.
+    required: true
+  summary-path:
+    description: Path to the visual diff summary JSON.
+    required: true
+  run-url:
+    description: Workflow run URL to include in the comment.
+    required: false
+    default: ''
+  artifact-name:
+    description: Artifact label to include in the comment.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/github-script@v7
+      env:
+        VISUAL_DIFF_SUMMARY_PATH: ${{ inputs.summary-path }}
+        VISUAL_DIFF_RUN_URL: ${{ inputs.run-url }}
+        VISUAL_DIFF_ARTIFACT_NAME: ${{ inputs.artifact-name }}
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const fs = require('fs');
+          const marker = '<!-- pr-visual-diff-summary -->';
+          const summaryPath = process.env.VISUAL_DIFF_SUMMARY_PATH;
+          if (!fs.existsSync(summaryPath)) {
+            core.warning(`Visual diff summary not found at ${summaryPath}`);
+            return;
+          }
+
+          const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+          const status = summary.status || 'incomplete';
+          const statusLabelMap = {
+            clean: 'Clean',
+            'changes-detected': 'Changes detected',
+            incomplete: 'Incomplete',
+            skipped: 'Skipped'
+          };
+          const statusIconMap = {
+            clean: '✅',
+            'changes-detected': '🟡',
+            incomplete: '⚠️',
+            skipped: '⏭️'
+          };
+
+          const selectedRoutes = Array.isArray(summary.selectedRoutes)
+            ? String(summary.selectedRoutes.length)
+            : 'all';
+          const lines = [
+            marker,
+            '## Visual Diff',
+            '',
+            `- Status: ${statusIconMap[status] || '⚠️'} **${statusLabelMap[status] || status}**`,
+            `- Selected routes: ${selectedRoutes}`,
+            `- Changed screenshots: ${summary.changedScreenshots || 0}`,
+            `- Matched screenshots: ${summary.matchedScreenshots || 0}`,
+            `- Missing in baseline: ${summary.missingInBaseline || 0}`,
+            `- Missing in current: ${summary.missingInCurrent || 0}`,
+            `- Comparison errors: ${(summary.errors || []).length}`
+          ];
+
+          if (process.env.VISUAL_DIFF_ARTIFACT_NAME) {
+            lines.push(`- Artifact: \`${process.env.VISUAL_DIFF_ARTIFACT_NAME}\``);
+          }
+          if (process.env.VISUAL_DIFF_RUN_URL) {
+            lines.push(`- Run: ${process.env.VISUAL_DIFF_RUN_URL}`);
+          }
+          if (summary.baselineArtifactName) {
+            lines.push(`- Baseline artifact: \`${summary.baselineArtifactName}\``);
+          }
+          if (summary.baselineSourceSha) {
+            lines.push(`- Baseline SHA: \`${summary.baselineSourceSha}\``);
+          }
+          if (summary.message) {
+            lines.push(`- Details: ${summary.message}`);
+          }
+          if (Array.isArray(summary.changed) && summary.changed.length > 0) {
+            lines.push('');
+            lines.push('<details><summary>Changed screenshots</summary>');
+            lines.push('');
+            for (const item of summary.changed.slice(0, 10)) {
+              lines.push(`- ${item.id} (${item.viewport})`);
+            }
+            if (summary.changed.length > 10) {
+              lines.push(`- ...and ${summary.changed.length - 10} more`);
+            }
+            lines.push('');
+            lines.push('</details>');
+          }
+
+          const body = lines.join('\n');
+          const issueNumber = Number('${{ inputs.pr-number }}');
+          const comments = await github.paginate(github.rest.issues.listComments, {
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: issueNumber,
+            per_page: 100
+          });
+          const existing = comments.find((comment) => comment.body && comment.body.includes(marker));
+
+          if (existing) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existing.id,
+              body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body
+            });
+          }

@@ -1,0 +1,111 @@
+name: Stage Visual Artifacts
+description: Stage baseline or diff artifacts into the standard bundle structure before upload.
+
+inputs:
+  artifact-type:
+    description: Either baseline or diff.
+    required: true
+  bundle-dir:
+    description: Output bundle directory.
+    required: false
+    default: qa-artifacts/visual-artifact-bundle
+  results-path:
+    description: Baseline results path for baseline artifact staging.
+    required: false
+    default: ''
+  manifest-path:
+    description: Baseline manifest path for baseline artifact staging.
+    required: false
+    default: ''
+  screenshots-dir:
+    description: Screenshots directory for baseline artifact staging.
+    required: false
+    default: ''
+  summary-json-path:
+    description: Diff summary JSON path.
+    required: false
+    default: ''
+  summary-markdown-path:
+    description: Diff summary markdown path.
+    required: false
+    default: ''
+  baseline-results-path:
+    description: Baseline results path for diff artifact staging.
+    required: false
+    default: ''
+  current-results-path:
+    description: Current results path for diff artifact staging.
+    required: false
+    default: ''
+  baseline-manifest-path:
+    description: Baseline manifest path for diff artifact staging.
+    required: false
+    default: ''
+  current-manifest-path:
+    description: Current manifest path for diff artifact staging.
+    required: false
+    default: ''
+  baseline-screenshots-dir:
+    description: Baseline screenshots dir for diff artifact staging.
+    required: false
+    default: ''
+  current-screenshots-dir:
+    description: Current screenshots dir for diff artifact staging.
+    required: false
+    default: ''
+
+outputs:
+  bundle-dir:
+    description: The staged artifact bundle directory.
+    value: ${{ steps.stage.outputs.bundle_dir }}
+
+runs:
+  using: composite
+  steps:
+    - id: stage
+      shell: bash
+      run: |
+        set -euo pipefail
+        BUNDLE_DIR="${{ inputs.bundle-dir }}"
+        rm -rf "$BUNDLE_DIR"
+
+        if [ "${{ inputs.artifact-type }}" = "baseline" ]; then
+          mkdir -p "$BUNDLE_DIR/screenshots"
+          if [ -n "${{ inputs.results-path }}" ] && [ -f "${{ inputs.results-path }}" ]; then
+            cp "${{ inputs.results-path }}" "$BUNDLE_DIR/visual-baseline-results.json"
+          fi
+          if [ -n "${{ inputs.manifest-path }}" ] && [ -f "${{ inputs.manifest-path }}" ]; then
+            cp "${{ inputs.manifest-path }}" "$BUNDLE_DIR/visual-screenshot-manifest.json"
+          fi
+          if [ -n "${{ inputs.screenshots-dir }}" ] && [ -d "${{ inputs.screenshots-dir }}" ]; then
+            find "${{ inputs.screenshots-dir }}" -type f -name '*.png' -exec cp {} "$BUNDLE_DIR/screenshots/" \;
+          fi
+        else
+          mkdir -p "$BUNDLE_DIR/baseline-screenshots" "$BUNDLE_DIR/current-screenshots"
+          if [ -f "${{ inputs.summary-json-path }}" ]; then
+            cp "${{ inputs.summary-json-path }}" "$BUNDLE_DIR/visual-diff-summary.json"
+          fi
+          if [ -f "${{ inputs.summary-markdown-path }}" ]; then
+            cp "${{ inputs.summary-markdown-path }}" "$BUNDLE_DIR/visual-diff-summary.md"
+          fi
+          if [ -f "${{ inputs.baseline-results-path }}" ]; then
+            cp "${{ inputs.baseline-results-path }}" "$BUNDLE_DIR/baseline-results.json"
+          fi
+          if [ -f "${{ inputs.current-results-path }}" ]; then
+            cp "${{ inputs.current-results-path }}" "$BUNDLE_DIR/current-results.json"
+          fi
+          if [ -f "${{ inputs.baseline-manifest-path }}" ]; then
+            cp "${{ inputs.baseline-manifest-path }}" "$BUNDLE_DIR/baseline-screenshot-manifest.json"
+          fi
+          if [ -f "${{ inputs.current-manifest-path }}" ]; then
+            cp "${{ inputs.current-manifest-path }}" "$BUNDLE_DIR/current-screenshot-manifest.json"
+          fi
+          if [ -d "${{ inputs.baseline-screenshots-dir }}" ]; then
+            find "${{ inputs.baseline-screenshots-dir }}" -type f -name '*.png' -exec cp {} "$BUNDLE_DIR/baseline-screenshots/" \;
+          fi
+          if [ -d "${{ inputs.current-screenshots-dir }}" ]; then
+            find "${{ inputs.current-screenshots-dir }}" -type f -name '*.png' -exec cp {} "$BUNDLE_DIR/current-screenshots/" \;
+          fi
+        fi
+
+        echo "bundle_dir=$BUNDLE_DIR" >> "$GITHUB_OUTPUT"

@@ -1,0 +1,36 @@
+name: Evaluate Visual Diff Outcome
+description: Evaluate the diff summary against diff.mode and fail when required.
+
+inputs:
+  summary-path:
+    description: Path to the visual diff summary JSON.
+    required: true
+
+outputs:
+  status:
+    description: Computed visual diff status.
+    value: ${{ steps.evaluate.outputs.status }}
+
+runs:
+  using: composite
+  steps:
+    - id: evaluate
+      shell: bash
+      env:
+        SUMMARY_PATH: ${{ inputs.summary-path }}
+      run: |
+        node --input-type=module <<'EOF'
+        import fs from 'node:fs/promises';
+        import path from 'node:path';
+        import { pathToFileURL } from 'node:url';
+
+        const modulePath = path.resolve(process.env.GITHUB_ACTION_PATH, '../../lib/compare-visual-results.mjs');
+        const { shouldFailVisualDiff, formatVisualDiffFailureMessage } = await import(pathToFileURL(modulePath));
+        const summary = JSON.parse(await fs.readFile(process.env.SUMMARY_PATH, 'utf8'));
+
+        await fs.appendFile(process.env.GITHUB_OUTPUT, `status=${summary.status || ''}\n`);
+
+        if (shouldFailVisualDiff(summary)) {
+          throw new Error(formatVisualDiffFailureMessage(summary.diffMode, summary));
+        }
+        EOF
