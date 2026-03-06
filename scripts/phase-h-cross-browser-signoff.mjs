@@ -1,6 +1,11 @@
+// @ts-check
+
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { chromium, firefox, webkit } from 'playwright';
+
+/** @typedef {import('../types/qa-script-types').CrossBrowserCheck} CrossBrowserCheck */
+/** @typedef {import('../types/qa-script-types').CrossBrowserResults} CrossBrowserResults */
 
 const baseUrl = process.env.QA_BASE_URL || 'http://127.0.0.1:8080';
 const outDir = path.resolve(process.env.QA_CROSS_BROWSER_OUT_DIR || path.join('qa-artifacts', 'cross-browser-signoff'));
@@ -40,6 +45,7 @@ const scenarios = [
   }
 ];
 
+/** @type {CrossBrowserResults} */
 const results = {
   startedAt: new Date().toISOString(),
   baseUrl,
@@ -47,10 +53,22 @@ const results = {
   checks: []
 };
 
+/**
+ * @param {import('playwright').Page} page
+ * @param {string} selector
+ * @param {number} [timeout]
+ * @returns {Promise<void>}
+ */
 async function waitVisible(page, selector, timeout = 10000) {
   await page.waitForSelector(selector, { state: 'visible', timeout });
 }
 
+/**
+ * @param {string} browserName
+ * @param {{ name: string }} scenario
+ * @param {() => Promise<Record<string, unknown> | void>} fn
+ * @returns {Promise<void>}
+ */
 async function record(browserName, scenario, fn) {
   const started = Date.now();
   const name = `${browserName} ${scenario.name}`;
@@ -77,6 +95,10 @@ async function record(browserName, scenario, fn) {
   }
 }
 
+/**
+ * @param {CrossBrowserResults} summary
+ * @returns {string}
+ */
 function makeMarkdown(summary) {
   const lines = [];
   lines.push('# Phase H Cross-Browser Signoff');
@@ -94,6 +116,12 @@ function makeMarkdown(summary) {
   return lines.join('\n') + '\n';
 }
 
+/**
+ * @param {string} browserName
+ * @param {import('playwright').BrowserType} browserType
+ * @param {{ name: string, url: string, waits: string[] }} scenario
+ * @returns {Promise<void>}
+ */
 async function runScenario(browserName, browserType, scenario) {
   const browser = await browserType.launch({ headless: true });
   try {

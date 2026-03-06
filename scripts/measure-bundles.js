@@ -1,3 +1,5 @@
+// @ts-check
+
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
@@ -5,7 +7,30 @@ const zlib = require('zlib');
 const BUILD_DIR = path.resolve(__dirname, '../build');
 const DEFAULT_JSON_OUT = path.resolve(__dirname, '../reports/bundle-metrics/latest.json');
 
+/**
+ * @typedef {'both' | 'json' | 'markdown'} ReportFormat
+ * @typedef {{ buildDir: string, jsonOut: string | null, markdownOut: string | null, format: ReportFormat }} MeasureBundleArgs
+ * @typedef {{ rawBytes: number, gzipBytes: number }} RawAndGzipMetric
+ * @typedef {{ rawBytes: number }} RawOnlyMetric
+ * @typedef {{ js: RawAndGzipMetric | null, css: RawAndGzipMetric | null, html: RawOnlyMetric | null }} ToolMetricFiles
+ * @typedef {{ tool: string, files: ToolMetricFiles }} ToolMetricRow
+ * @typedef {{ jsRawBytes: number, jsGzipBytes: number, cssRawBytes: number, cssGzipBytes: number, htmlRawBytes: number }} BundleMetricSummary
+ */
+
+/**
+ * @param {string | undefined} value
+ * @returns {ReportFormat}
+ */
+function normalizeFormat(value) {
+    return value === 'json' || value === 'markdown' || value === 'both' ? value : 'both';
+}
+
+/**
+ * @param {string[]} argv
+ * @returns {MeasureBundleArgs}
+ */
 function parseArgs(argv) {
+    /** @type {MeasureBundleArgs} */
     const args = {
         buildDir: BUILD_DIR,
         jsonOut: null,
@@ -35,7 +60,7 @@ function parseArgs(argv) {
         }
 
         if (arg === '--format') {
-            args.format = argv[index + 1] || 'both';
+            args.format = normalizeFormat(argv[index + 1]);
             index += 1;
             continue;
         }
@@ -65,10 +90,17 @@ function printHelp() {
     console.log('  --write-default-json     Write JSON report to reports/bundle-metrics/latest.json');
 }
 
+/**
+ * @param {string} filePath
+ */
 function ensureDir(filePath) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
 }
 
+/**
+ * @param {string} filePath
+ * @returns {Buffer | null}
+ */
 function readFileBufferIfExists(filePath) {
     if (!fs.existsSync(filePath)) {
         return null;
@@ -77,6 +109,10 @@ function readFileBufferIfExists(filePath) {
     return fs.readFileSync(filePath);
 }
 
+/**
+ * @param {Buffer | null} buffer
+ * @returns {RawAndGzipMetric | null}
+ */
 function getMetric(buffer) {
     if (!buffer) {
         return null;
@@ -88,6 +124,10 @@ function getMetric(buffer) {
     };
 }
 
+/**
+ * @param {number | null | undefined} value
+ * @returns {string}
+ */
 function formatNumber(value) {
     if (value === null || value === undefined) {
         return 'n/a';
@@ -96,6 +136,10 @@ function formatNumber(value) {
     return value.toLocaleString('en-US');
 }
 
+/**
+ * @param {RawAndGzipMetric | null} metric
+ * @returns {string}
+ */
 function formatRawGzip(metric) {
     if (!metric) {
         return 'n/a';
@@ -104,6 +148,10 @@ function formatRawGzip(metric) {
     return `${formatNumber(metric.rawBytes)} / ${formatNumber(metric.gzipBytes)}`;
 }
 
+/**
+ * @param {RawOnlyMetric | null} metric
+ * @returns {string}
+ */
 function formatRaw(metric) {
     if (!metric) {
         return 'n/a';
@@ -112,6 +160,10 @@ function formatRaw(metric) {
     return formatNumber(metric.rawBytes);
 }
 
+/**
+ * @param {string} buildDir
+ * @returns {string[]}
+ */
 function listToolDirectories(buildDir) {
     const entries = fs.readdirSync(buildDir, { withFileTypes: true });
 
@@ -130,6 +182,11 @@ function listToolDirectories(buildDir) {
         .sort();
 }
 
+/**
+ * @param {string} buildDir
+ * @param {string} toolName
+ * @returns {ToolMetricRow}
+ */
 function collectToolMetrics(buildDir, toolName) {
     const toolDir = path.join(buildDir, toolName);
     const jsMetric = getMetric(readFileBufferIfExists(path.join(toolDir, 'bundle.main.js')));
@@ -146,6 +203,10 @@ function collectToolMetrics(buildDir, toolName) {
     };
 }
 
+/**
+ * @param {ToolMetricRow[]} tools
+ * @returns {BundleMetricSummary}
+ */
 function createSummary(tools) {
     return tools.reduce(
         (acc, tool) => {
@@ -175,6 +236,10 @@ function createSummary(tools) {
     );
 }
 
+/**
+ * @param {ToolMetricRow[]} tools
+ * @returns {string}
+ */
 function toMarkdownTableRows(tools) {
     const header = [
         '| Tool | JS (raw/gzip bytes) | CSS (raw/gzip bytes) | HTML (bytes) |',

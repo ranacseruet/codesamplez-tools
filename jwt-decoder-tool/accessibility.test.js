@@ -21,7 +21,7 @@ jest.mock('./JWTDecoder', () => ({
 }));
 
 // Mock the JsonTreeViewRenderer
-jest.mock('./JsonTreeViewRenderer.js', () => ({
+jest.mock('./JsonTreeViewRenderer', () => ({
     JsonTreeViewRenderer: jest.fn().mockImplementation(() => ({
         render: jest.fn((data, container) => {
             container.innerHTML = `<pre>${JSON.stringify(data)}</pre>`;

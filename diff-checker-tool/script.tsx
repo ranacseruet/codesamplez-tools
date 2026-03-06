@@ -3,6 +3,7 @@ import { computeDiff } from './diff';
 import ClearButton from '../common/clear-button/ClearButton';
 import { NotificationManager } from '../common/notification-manager';
 import { scheduleTask } from '../common/scheduler-utils';
+import type { ToolCleanupHandle } from '../common/tooling-contracts';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 
@@ -333,7 +334,7 @@ class DiffNavigator {
 
 
 // Main event handler
-export function initializeDiffChecker() {
+export function initializeDiffChecker(): ToolCleanupHandle | void {
   if (typeof document === 'undefined') return;
 
   const compareButton = document.getElementById('compare-button') as HTMLButtonElement | null;
@@ -426,7 +427,7 @@ export function initializeDiffChecker() {
   }
 
   // Export cleanup function for testing
-  const browserWindow = window as Window & { diffCheckerCleanup?: () => void };
+  const browserWindow = window as Window & { diffCheckerCleanup?: ToolCleanupHandle['cleanup'] };
   browserWindow.diffCheckerCleanup = cleanup;
   return { cleanup };
 }

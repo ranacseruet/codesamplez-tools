@@ -1,6 +1,15 @@
+// @ts-check
+
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
+
+/** @typedef {import('../types/qa-script-types').QaVisualBaselineResults} QaVisualBaselineResults */
+/** @typedef {import('../types/qa-script-types').VisualDiffChangedItem} VisualDiffChangedItem */
+/** @typedef {import('../types/qa-script-types').VisualDiffErrorItem} VisualDiffErrorItem */
+/** @typedef {import('../types/qa-script-types').VisualDiffMissingItem} VisualDiffMissingItem */
+/** @typedef {import('../types/qa-script-types').VisualDiffSummary} VisualDiffSummary */
 
 const baselineResultsPath = path.resolve(
   process.env.QA_VISUAL_BASELINE_RESULTS_PATH ||
@@ -27,55 +36,43 @@ const allowedChecks = new Set(
     .map((item) => item.trim())
     .filter(Boolean)
 );
+const baselineArtifactName = process.env.QA_VISUAL_BASELINE_ARTIFACT_NAME || '';
+const baselineSourceSha = process.env.QA_VISUAL_BASELINE_SOURCE_SHA || '';
 
-const summary = {
-  startedAt: new Date().toISOString(),
-  baselineResultsPath,
-  currentResultsPath,
-  totalScreenshots: 0,
-  matchedScreenshots: 0,
-  changedScreenshots: 0,
-  missingInBaseline: 0,
-  missingInCurrent: 0,
-  skipped: 0,
-  deltas: [],
-  changed: [],
-  missing: [],
-  errors: []
-};
+/**
+ * @typedef {{
+ *   name: string,
+ *   relativePath: string,
+ *   checkName: string,
+ *   status: string
+ * }} ScreenshotEntry
+ */
 
-function toAbsoluteScreenshotPath(runDir, relativeScreenshotPath) {
-  return path.resolve(runDir, relativeScreenshotPath);
-}
+const fileIndexCache = new Map();
 
-function screenshotEntries(results, runDir) {
-  const entries = new Map();
-  for (const check of results.checks || []) {
-    if (allowedChecks.size > 0 && !allowedChecks.has(check.name)) {
-      continue;
-    }
-    for (const screenshot of check.screenshots || []) {
-      entries.set(screenshot, {
-        name: screenshot,
-        checkName: check.name,
-        status: check.status,
-        absolutePath: toAbsoluteScreenshotPath(runDir, screenshot)
-      });
-    }
-  }
-  return entries;
-}
-
+/**
+ * @param {string} filePath
+ * @returns {Promise<string>}
+ */
 async function fileHash(filePath) {
   const data = await fs.readFile(filePath);
   return createHash('sha256').update(data).digest('hex');
 }
 
+/**
+ * @param {string} filePath
+ * @returns {Promise<number>}
+ */
 async function fileSize(filePath) {
   const stat = await fs.stat(filePath);
   return stat.size;
 }
 
+/**
+ * @param {number} current
+ * @param {number} baseline
+ * @returns {number}
+ */
 function formatPercent(current, baseline) {
   if (!Number.isFinite(baseline) || baseline === 0) {
     return 0;
@@ -83,10 +80,180 @@ function formatPercent(current, baseline) {
   return ((current - baseline) / baseline) * 100;
 }
 
+/**
+ * @param {number} value
+ * @returns {string}
+ */
+function toPercentLabel(value) {
+  return `${Math.abs(value).toFixed(2)}`;
+}
+
+/**
+ * @param {string} filePath
+ * @returns {Promise<boolean>}
+ */
+async function exists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * @param {string} rootDir
+ * @returns {Promise<Map<string, string[]>>}
+ */
+async function buildFileIndex(rootDir) {
+  const cached = fileIndexCache.get(rootDir);
+  if (cached) {
+    return cached;
+  }
+
+  /** @type {Map<string, string[]>} */
+  const filesByBasename = new Map();
+
+  /**
+   * @param {string} currentDir
+   * @returns {Promise<void>}
+   */
+  async function visit(currentDir) {
+    const entries = await fs.readdir(currentDir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        await visit(fullPath);
+        continue;
+      }
+
+      if (!entry.isFile()) {
+        continue;
+      }
+
+      const list = filesByBasename.get(entry.name) || [];
+      list.push(fullPath);
+      filesByBasename.set(entry.name, list);
+    }
+  }
+
+  if (await exists(rootDir)) {
+    await visit(rootDir);
+  }
+
+  fileIndexCache.set(rootDir, filesByBasename);
+  return filesByBasename;
+}
+
+/**
+ * @param {string} runDir
+ * @param {string} relativeScreenshotPath
+ * @returns {Promise<string>}
+ */
+export async function resolveScreenshotPath(runDir, relativeScreenshotPath) {
+  const directPath = path.resolve(runDir, relativeScreenshotPath);
+  if (await exists(directPath)) {
+    return directPath;
+  }
+
+  const fileIndex = await buildFileIndex(runDir);
+  const basename = path.basename(relativeScreenshotPath);
+  const basenameMatches = fileIndex.get(basename) || [];
+
+  if (basenameMatches.length === 1) {
+    return basenameMatches[0];
+  }
+
+  if (basenameMatches.length > 1) {
+    const normalizedRelativePath = relativeScreenshotPath.replace(/\\/g, '/');
+    const suffixMatches = basenameMatches.filter((candidate) => candidate.replace(/\\/g, '/').endsWith(normalizedRelativePath));
+    if (suffixMatches.length === 1) {
+      return suffixMatches[0];
+    }
+  }
+
+  throw new Error(
+    `Unable to locate screenshot ${relativeScreenshotPath} under ${runDir}. ` +
+      'Confirm the artifact download and screenshot staging steps completed successfully.'
+  );
+}
+
+/**
+ * @param {QaVisualBaselineResults} results
+ * @param {Set<string>} selectedChecks
+ * @returns {Map<string, ScreenshotEntry>}
+ */
+function screenshotEntries(results, selectedChecks) {
+  /** @type {Map<string, ScreenshotEntry>} */
+  const entries = new Map();
+  for (const check of results.checks || []) {
+    if (selectedChecks.size > 0 && !selectedChecks.has(check.name)) {
+      continue;
+    }
+    for (const screenshot of check.screenshots || []) {
+      const logicalName = path.basename(screenshot);
+      entries.set(logicalName, {
+        name: logicalName,
+        relativePath: screenshot,
+        checkName: check.name,
+        status: check.status
+      });
+    }
+  }
+  return entries;
+}
+
+/**
+ * @param {VisualDiffSummary} summaryData
+ * @returns {'clean' | 'changes-detected' | 'incomplete'}
+ */
+export function determineVisualDiffStatus(summaryData) {
+  if (summaryData.errors.length > 0 || summaryData.missingInBaseline > 0 || summaryData.missingInCurrent > 0) {
+    return 'incomplete';
+  }
+  if (summaryData.changedScreenshots > 0) {
+    return 'changes-detected';
+  }
+  return 'clean';
+}
+
+/**
+ * @param {'clean' | 'changes-detected' | 'incomplete' | 'skipped'} status
+ * @returns {string}
+ */
+function statusLabel(status) {
+  if (status === 'clean') {
+    return 'clean';
+  }
+  if (status === 'changes-detected') {
+    return 'changes detected';
+  }
+  if (status === 'incomplete') {
+    return 'incomplete';
+  }
+  return 'skipped';
+}
+
+/**
+ * @param {VisualDiffSummary} summaryData
+ * @param {Array<Omit<VisualDiffChangedItem, 'sizeDeltaPercent'> & { sizeDeltaPercent: string }>} changedItems
+ * @param {VisualDiffMissingItem[]} missingItems
+ * @returns {string}
+ */
 function makeMarkdown(summaryData, changedItems, missingItems) {
   const lines = [];
-  lines.push('# Phase H PR Visual Diff Summary');
+  lines.push('# Visual Diff Summary');
   lines.push('');
+  lines.push(`- Status: ${statusLabel(summaryData.status || 'incomplete')}`);
+  if (summaryData.selectedChecks && summaryData.selectedChecks.length > 0) {
+    lines.push(`- Selected checks: ${summaryData.selectedChecks.length}`);
+  }
+  if (summaryData.baselineArtifactName) {
+    lines.push(`- Baseline artifact: \`${summaryData.baselineArtifactName}\``);
+  }
+  if (summaryData.baselineSourceSha) {
+    lines.push(`- Baseline source SHA: \`${summaryData.baselineSourceSha}\``);
+  }
   lines.push(`- Baseline run: \`${summaryData.baselineResultsPath}\``);
   lines.push(`- Current run: \`${summaryData.currentResultsPath}\``);
   lines.push(`- Total screenshots: ${summaryData.totalScreenshots}`);
@@ -129,10 +296,10 @@ function makeMarkdown(summaryData, changedItems, missingItems) {
   return lines.join('\n') + '\n';
 }
 
-function toPercentLabel(value) {
-  return `${Math.abs(value).toFixed(2)}`;
-}
-
+/**
+ * @param {string} filePath
+ * @returns {Promise<QaVisualBaselineResults>}
+ */
 async function loadResults(filePath) {
   try {
     await fs.access(filePath);
@@ -147,15 +314,53 @@ async function loadResults(filePath) {
   return JSON.parse(raw);
 }
 
-async function main() {
-  await fs.mkdir(outDir, { recursive: true });
+/**
+ * @param {{
+ *   baselineResultsPath?: string,
+ *   currentResultsPath?: string,
+ *   baselineRunDir?: string,
+ *   currentRunDir?: string,
+ *   allowedChecks?: Iterable<string>,
+ *   baselineArtifactName?: string,
+ *   baselineSourceSha?: string
+ * }} [options]
+ * @returns {Promise<{ summary: VisualDiffSummary, markdown: string }>}
+ */
+export async function generateVisualDiffReport(options = {}) {
+  const selectedChecks = new Set(options.allowedChecks || allowedChecks);
+  const resolvedBaselineResultsPath = path.resolve(options.baselineResultsPath || baselineResultsPath);
+  const resolvedCurrentResultsPath = path.resolve(options.currentResultsPath || currentResultsPath);
+  const resolvedBaselineRunDir = path.resolve(options.baselineRunDir || baselineRunDir);
+  const resolvedCurrentRunDir = path.resolve(options.currentRunDir || currentRunDir);
+
+  /** @type {VisualDiffSummary} */
+  const summary = {
+    startedAt: new Date().toISOString(),
+    baselineResultsPath: resolvedBaselineResultsPath,
+    currentResultsPath: resolvedCurrentResultsPath,
+    totalScreenshots: 0,
+    matchedScreenshots: 0,
+    changedScreenshots: 0,
+    missingInBaseline: 0,
+    missingInCurrent: 0,
+    skipped: 0,
+    deltas: [],
+    changed: [],
+    missing: [],
+    errors: [],
+    selectedChecks: [...selectedChecks],
+    baselineArtifactName: options.baselineArtifactName || baselineArtifactName || undefined,
+    baselineSourceSha: options.baselineSourceSha || baselineSourceSha || undefined,
+    baselineAvailable: true
+  };
+
   const [baseResults, currentResults] = await Promise.all([
-    loadResults(baselineResultsPath),
-    loadResults(currentResultsPath)
+    loadResults(resolvedBaselineResultsPath),
+    loadResults(resolvedCurrentResultsPath)
   ]);
 
-  const baselineEntries = screenshotEntries(baseResults, baselineRunDir);
-  const currentEntries = screenshotEntries(currentResults, currentRunDir);
+  const baselineEntries = screenshotEntries(baseResults, selectedChecks);
+  const currentEntries = screenshotEntries(currentResults, selectedChecks);
 
   const screenshotSet = new Set([...baselineEntries.keys(), ...currentEntries.keys()]);
   summary.totalScreenshots = screenshotSet.size;
@@ -166,7 +371,7 @@ async function main() {
 
     if (!base) {
       summary.missingInBaseline += 1;
-      summary.missing.push({ name: screenshot, reason: 'missing baseline capture', checkName: current.checkName });
+      summary.missing.push({ name: screenshot, reason: 'missing baseline capture', checkName: current?.checkName });
       continue;
     }
     if (!current) {
@@ -180,15 +385,20 @@ async function main() {
     let baseHash = '';
     let currentHash = '';
     try {
-      [baseHash, currentHash] = await Promise.all([fileHash(base.absolutePath), fileHash(current.absolutePath)]);
-      [baseBytes, currentBytes] = await Promise.all([fileSize(base.absolutePath), fileSize(current.absolutePath)]);
+      const [basePath, currentPath] = await Promise.all([
+        resolveScreenshotPath(resolvedBaselineRunDir, base.relativePath),
+        resolveScreenshotPath(resolvedCurrentRunDir, current.relativePath)
+      ]);
+      [baseHash, currentHash] = await Promise.all([fileHash(basePath), fileHash(currentPath)]);
+      [baseBytes, currentBytes] = await Promise.all([fileSize(basePath), fileSize(currentPath)]);
     } catch (error) {
       summary.skipped += 1;
+      /** @type {VisualDiffErrorItem} */
       const errorRecord = {
         name: screenshot,
         checkName: current.checkName,
         status: 'error',
-        message: error.message
+        message: error instanceof Error ? error.message : String(error)
       };
       summary.errors.push(errorRecord);
       summary.deltas.push(errorRecord);
@@ -205,11 +415,12 @@ async function main() {
     }
 
     summary.changedScreenshots += 1;
+    /** @type {VisualDiffChangedItem} */
     const record = {
       name: screenshot,
       checkName: current.checkName,
       baselineHash: baseHash,
-      currentHash: currentHash,
+      currentHash,
       baselineBytes: baseBytes,
       currentBytes,
       sizeDeltaBytes,
@@ -221,19 +432,25 @@ async function main() {
   }
 
   summary.deltas = [...summary.changed, ...summary.errors, ...summary.missing].sort((a, b) => {
-    if (a.status === b.status) {
+    const leftStatus = 'status' in a ? a.status : 'missing';
+    const rightStatus = 'status' in b ? b.status : 'missing';
+    if (leftStatus === rightStatus) {
       return a.name.localeCompare(b.name);
     }
-    if (a.status === 'changed') {
+    if (leftStatus === 'changed') {
       return -1;
     }
-    if (a.status === 'error') {
-      return b.status === 'changed' ? 1 : -1;
+    if (leftStatus === 'error') {
+      return rightStatus === 'changed' ? 1 : -1;
     }
     return 1;
   });
 
-  const markdownLines = makeMarkdown(
+  summary.status = determineVisualDiffStatus(summary);
+  summary.finishedAt = new Date().toISOString();
+  summary.completed = true;
+
+  const markdown = makeMarkdown(
     summary,
     summary.changed.map((change) => ({
       ...change,
@@ -246,30 +463,25 @@ async function main() {
     }))
   );
 
-  summary.finishedAt = new Date().toISOString();
-  summary.completed = true;
-  await fs.writeFile(
-    summaryPath,
-    JSON.stringify(
-      {
-        ...summary,
-        changed: summary.changed,
-        missing: summary.missing,
-        errors: summary.errors,
-        deltas: summary.deltas
-      },
-      null,
-      2
-    )
-  );
-  await fs.writeFile(markdownPath, markdownLines);
+  return { summary, markdown };
+}
+
+async function main() {
+  await fs.mkdir(outDir, { recursive: true });
+  const { summary, markdown } = await generateVisualDiffReport();
+  await fs.writeFile(summaryPath, JSON.stringify(summary, null, 2));
+  await fs.writeFile(markdownPath, markdown);
 
   if (summary.errors.length > 0) {
     throw new Error(`Visual diff comparison encountered ${summary.errors.length} screenshot read errors.`);
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+const isDirectRun = process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url;
+
+if (isDirectRun) {
+  main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}

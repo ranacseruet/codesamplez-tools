@@ -1,7 +1,17 @@
+// @ts-check
+
 const path = require('path');
+
+/**
+ * @typedef {import('../common/tooling-contracts').ToolPrerenderConfig} ToolPrerenderConfig
+ * @typedef {import('../common/tooling-contracts').ToolPrerenderRegistry} ToolPrerenderRegistry
+ */
 
 let babelRegistered = false;
 
+/**
+ * @returns {void}
+ */
 function ensureBabelRegister() {
     if (babelRegistered) {
         return;
@@ -22,6 +32,7 @@ function ensureBabelRegister() {
     babelRegistered = true;
 }
 
+/** @type {ToolPrerenderRegistry} */
 const TOOL_PRERENDER_REGISTRY = {
     'base64-converter-tool': {
         rootId: 'base64converter-app',
@@ -113,6 +124,10 @@ function getPrerenderConfig(toolName) {
     return TOOL_PRERENDER_REGISTRY[toolName] || null;
 }
 
+/**
+ * @param {string} toolName
+ * @returns {string}
+ */
 function renderToolPrerenderMarkup(toolName) {
     const config = getPrerenderConfig(toolName);
     if (!config) {
@@ -121,14 +136,25 @@ function renderToolPrerenderMarkup(toolName) {
 
     ensureBabelRegister();
 
-    const renderToString = require('preact-render-to-string');
+    const renderToString = /** @type {(node: import('preact').VNode) => string} */ (
+        /** @type {unknown} */ (require('preact-render-to-string'))
+    );
     return renderToString(config.createAppNode());
 }
 
+/**
+ * @param {string} text
+ * @returns {string}
+ */
 function escapeRegExp(text) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/**
+ * @param {string} toolName
+ * @param {string} html
+ * @returns {string}
+ */
 function injectToolPrerender(toolName, html) {
     const config = getPrerenderConfig(toolName);
     if (!config) {
@@ -144,6 +170,9 @@ function injectToolPrerender(toolName, html) {
     return html.replace(rootPattern, `<div id="${config.rootId}">${prerenderedMarkup}</div>`);
 }
 
+/**
+ * @returns {string[]}
+ */
 function getPrerenderToolNames() {
     return Object.keys(TOOL_PRERENDER_REGISTRY);
 }

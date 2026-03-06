@@ -1,4 +1,4 @@
-import TextAnalyzerUI from './TextAnalyzerUI.js';
+import { TextAnalyzerUI } from './TextAnalyzerUI';
 import { analyzeText } from './TextAnalyzer';
 import { NotificationManager } from '../common/notification-manager';
 
@@ -76,7 +76,7 @@ describe('TextAnalyzerUI', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    const TextAnalyzerUI = (await import('./TextAnalyzerUI.js')).default;
+    const { TextAnalyzerUI } = await import('./TextAnalyzerUI');
     
     // Create DOM elements first
     document.body.innerHTML = `

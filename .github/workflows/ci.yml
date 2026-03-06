@@ -26,7 +26,7 @@ jobs:
       run: npm run typecheck
 
     - name: Run tests
-      run: npx jest --coverage
+      run: npm test -- --coverage
 
     - name: Build
       run: rm -rf build && NODE_ENV=production && npm run build
@@ -81,17 +81,31 @@ jobs:
       run: npm run qa:visual-baseline:foundation
       env:
         QA_BASE_URL: http://127.0.0.1:8080
+        QA_VISUAL_OUT_DIR: qa-artifacts/visual-baselines/ui-foundation
+        QA_VISUAL_RESULTS_FILE: qa-artifacts/visual-baselines/ui-foundation/visual-baseline-results.json
       continue-on-error: true
+
+    - name: Prepare main visual baseline artifact bundle
+      if: github.ref == 'refs/heads/main' && always()
+      run: |
+        set -euo pipefail
+        BUNDLE_DIR="qa-artifacts/visual-baseline-artifact"
+        rm -rf "$BUNDLE_DIR"
+        mkdir -p "$BUNDLE_DIR/screenshots"
+        if [ -f qa-artifacts/visual-baselines/ui-foundation/visual-baseline-results.json ]; then
+          cp qa-artifacts/visual-baselines/ui-foundation/visual-baseline-results.json "$BUNDLE_DIR/visual-baseline-results.json"
+        fi
+        find qa-artifacts/visual-baselines/ui-foundation -type f -name '*.png' -exec cp {} "$BUNDLE_DIR/screenshots/" \;
 
     - name: Upload main visual baseline artifacts
       if: github.ref == 'refs/heads/main' && always()
       uses: actions/upload-artifact@v4
       with:
-        name: phase-h-foundation-visual-baseline
+        name: ui-foundation-visual-baseline
         retention-days: 30
         if-no-files-found: warn
         path: |
-          qa-artifacts/visual-baselines/phase-d-foundation
+          qa-artifacts/visual-baseline-artifact
 
     - name: Stop Local QA Server
       if: always()

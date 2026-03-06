@@ -105,7 +105,7 @@ The tool is built using TypeScript/TSX and modern web APIs, requiring no externa
 
 - `index.html`: Structure and layout
 - `JWTDecoder.ts`: Class responsible for parsing, decoding, and validating JWTs
-- `JsonTreeViewRenderer.js`: Class responsible for rendering the interactive JSON tree view
+- `JsonTreeViewRenderer.ts`: Class responsible for rendering the interactive JSON tree view
 - `script.tsx`: Contains the `JWTDecoderUI` class and Preact runtime wrapper, handles UI interactions/event listeners, and initializes the app on DOMContentLoaded.
 - `styles.css`: Responsive styling and visual design
 - `JWTDecoder.test.js`: Unit tests for the `JWTDecoder` class

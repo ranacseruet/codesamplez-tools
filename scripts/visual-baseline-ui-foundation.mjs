@@ -1,6 +1,11 @@
+// @ts-check
+
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { chromium, devices } from 'playwright';
+
+/** @typedef {import('../types/qa-script-types').QaVisualBaselineResults} QaVisualBaselineResults */
+/** @typedef {import('../types/qa-script-types').QaScreenshotCheck} QaScreenshotCheck */
 
 const baseUrl = process.env.QA_BASE_URL || 'http://127.0.0.1:8080';
 const outDir = path.resolve(process.env.QA_VISUAL_OUT_DIR || path.join('qa-artifacts', 'visual-baselines', 'phase-d-foundation'));
@@ -12,6 +17,7 @@ const requestedChecks = new Set(
     .filter(Boolean)
 );
 
+/** @type {QaVisualBaselineResults} */
 const results = {
   startedAt: new Date().toISOString(),
   baseUrl,
@@ -19,6 +25,11 @@ const results = {
   checks: []
 };
 
+/**
+ * @param {string} name
+ * @param {() => Promise<Record<string, unknown> | void>} fn
+ * @returns {Promise<void>}
+ */
 async function record(name, fn) {
   const start = Date.now();
   try {
@@ -40,6 +51,10 @@ async function record(name, fn) {
   }
 }
 
+/**
+ * @param {string} checkName
+ * @returns {boolean}
+ */
 function shouldRunCheck(checkName) {
   if (requestedChecks.size === 0) {
     return true;
@@ -47,6 +62,11 @@ function shouldRunCheck(checkName) {
   return requestedChecks.has(checkName);
 }
 
+/**
+ * @param {string} name
+ * @param {() => Promise<Record<string, unknown> | void>} fn
+ * @returns {Promise<void>}
+ */
 async function recordCheck(name, fn) {
   if (!shouldRunCheck(name)) {
     results.checks.push({
@@ -60,10 +80,21 @@ async function recordCheck(name, fn) {
   return record(name, fn);
 }
 
+/**
+ * @param {import('playwright').Page} page
+ * @param {string} selector
+ * @param {number} [timeout]
+ * @returns {Promise<void>}
+ */
 async function waitVisible(page, selector, timeout = 10000) {
   await page.waitForSelector(selector, { state: 'visible', timeout });
 }
 
+/**
+ * @param {import('playwright').Page} page
+ * @param {string} filename
+ * @returns {Promise<string>}
+ */
 async function screenshot(page, filename) {
   const fullPath = path.join(outDir, filename);
   await page.screenshot({ path: fullPath, fullPage: true });

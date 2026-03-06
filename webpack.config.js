@@ -195,7 +195,7 @@ const getRootShellConfig = () => ({
     main: [
       './common/material-theme.css',
       './common/app-shell/app-shell.css',
-      './root-shell.js'
+      './root-shell'
     ]
   },
   output: {

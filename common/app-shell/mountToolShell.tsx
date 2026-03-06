@@ -1,5 +1,6 @@
 import { render } from 'preact';
 import { ToolShellFooter, ToolShellHeader } from './AppShell';
+import type { MountToolShellOptions } from '../tooling-contracts';
 
 const STANDALONE_THEME_STORAGE_KEY = 'cst-standalone-theme-mode';
 const THEME_LIGHT = 'light';
@@ -9,15 +10,6 @@ const LEGACY_THEME_ATTR = 'data-cst-theme';
 let activeThemeObserver: MutationObserver | null = null;
 
 type ThemeMode = typeof THEME_LIGHT | typeof THEME_DARK;
-
-interface MountToolShellOptions {
-    title?: string;
-    description?: string;
-    homeHref?: string;
-    headerRootId?: string;
-    footerRootId?: string;
-    showThemeToggle?: boolean;
-}
 
 function isValidThemeMode(value: unknown): value is ThemeMode {
     return value === THEME_LIGHT || value === THEME_DARK;

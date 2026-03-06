@@ -1,5 +1,5 @@
 import { JWTDecoder } from './JWTDecoder';
-import { JsonTreeViewRenderer } from './JsonTreeViewRenderer.js';
+import { JsonTreeViewRenderer } from './JsonTreeViewRenderer';
 import { NotificationManager } from '../common/notification-manager';
 import ClearButton from '../common/clear-button/ClearButton';
 import { hydrate, render } from 'preact';

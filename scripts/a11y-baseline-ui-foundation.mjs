@@ -1,13 +1,19 @@
+// @ts-check
+
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { chromium, devices } from 'playwright';
 import AxeBuilder from '@axe-core/playwright';
+
+/** @typedef {import('../types/qa-script-types').A11yViolationSummary} A11yViolationSummary */
+/** @typedef {import('../types/qa-script-types').QaA11yResults} QaA11yResults */
 
 const baseUrl = process.env.QA_BASE_URL || 'http://127.0.0.1:8080';
 const failOnViolations = process.env.QA_A11Y_FAIL_ON_VIOLATIONS === '1';
 const outDir = path.resolve('qa-artifacts', 'a11y-reports', 'phase-d-foundation');
 const reportPath = path.join(outDir, 'phase-d-foundation-a11y-results.json');
 
+/** @type {QaA11yResults} */
 const results = {
   startedAt: new Date().toISOString(),
   baseUrl,
@@ -16,10 +22,27 @@ const results = {
   checks: []
 };
 
+/**
+ * @param {import('playwright').Page} page
+ * @param {string} selector
+ * @param {number} [timeout]
+ * @returns {Promise<void>}
+ */
 async function waitVisible(page, selector, timeout = 10000) {
   await page.waitForSelector(selector, { state: 'visible', timeout });
 }
 
+/**
+ * @param {Array<{
+ *   id: string,
+ *   impact?: string | null,
+ *   help: string,
+ *   helpUrl: string,
+ *   tags: string[],
+ *   nodes: Array<{ target: unknown[], html: string, failureSummary?: string }>
+ * }>} violations
+ * @returns {A11yViolationSummary[]}
+ */
 function summarizeViolations(violations) {
   return violations.map((violation) => ({
     id: violation.id,
@@ -36,6 +59,10 @@ function summarizeViolations(violations) {
   }));
 }
 
+/**
+ * @param {import('playwright').Page} page
+ * @returns {Promise<Record<string, unknown>>}
+ */
 async function analyzePageA11y(page) {
   const axe = new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']);
   const analysis = await axe.analyze();
@@ -48,6 +75,11 @@ async function analyzePageA11y(page) {
   };
 }
 
+/**
+ * @param {string} name
+ * @param {() => Promise<Record<string, unknown> | void>} fn
+ * @returns {Promise<void>}
+ */
 async function record(name, fn) {
   const started = Date.now();
   try {

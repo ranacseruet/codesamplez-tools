@@ -1,3 +1,5 @@
+// @ts-check
+
 const fs = require('fs');
 const path = require('path');
 
@@ -5,7 +7,8 @@ const DEFAULT_BUILD_DIR = path.resolve(__dirname, '../build');
 const DEFAULT_WARN_PERCENT = 5;
 const DEFAULT_FAIL_PERCENT = 10;
 
-// Section 9.1 baselines from docs/post-migration-modernization-execution-plan.md
+// Section 9.1 baselines from docs/archive/post-migration-modernization-execution-plan.md
+/** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 857058,
     'data-format-converter': 144312,
@@ -18,6 +21,12 @@ const JS_RAW_BASELINES = Object.freeze({
     'text-analyzer-tool': 51949,
     'qr-code-generator': 91896
 });
+
+/**
+ * @typedef {{ buildDir: string, warnPct: number, failPct: number, waiverSpecs: string[] }} BudgetArgs
+ * @typedef {'OK' | 'WARN' | 'FAIL' | 'WAIVED_FAIL' | 'MISSING'} BudgetStatus
+ * @typedef {{ tool: string, baseline: number, current: number | null, warnThreshold: number, failThreshold: number, delta: number | null, status: BudgetStatus }} BudgetResult
+ */
 
 function printHelp() {
     console.log('Usage: node scripts/check-bundle-budgets.js [options]');
@@ -33,7 +42,12 @@ function printHelp() {
     console.log('  BUNDLE_BUDGET_WAIVERS    Same format as --waive (merged with CLI waivers)');
 }
 
+/**
+ * @param {string[]} argv
+ * @returns {BudgetArgs}
+ */
 function parseArgs(argv) {
+    /** @type {BudgetArgs} */
     const args = {
         buildDir: DEFAULT_BUILD_DIR,
         warnPct: DEFAULT_WARN_PERCENT,
@@ -77,10 +91,18 @@ function parseArgs(argv) {
     return args;
 }
 
+/**
+ * @param {number} value
+ * @returns {string}
+ */
 function formatNumber(value) {
     return value.toLocaleString('en-US');
 }
 
+/**
+ * @param {string} filePath
+ * @returns {boolean}
+ */
 function isDirectory(filePath) {
     try {
         return fs.statSync(filePath).isDirectory();
@@ -89,6 +111,10 @@ function isDirectory(filePath) {
     }
 }
 
+/**
+ * @param {string} spec
+ * @returns {string[]}
+ */
 function splitWaiverSpec(spec) {
     return spec
         .split(',')
@@ -96,6 +122,10 @@ function splitWaiverSpec(spec) {
         .filter(Boolean);
 }
 
+/**
+ * @param {string[]} specs
+ * @returns {Map<string, string>}
+ */
 function parseWaivers(specs) {
     const waiverMap = new Map();
 
@@ -123,6 +153,10 @@ function parseWaivers(specs) {
     return waiverMap;
 }
 
+/**
+ * @param {string} buildDir
+ * @returns {string[]}
+ */
 function listBundleToolDirs(buildDir) {
     return fs.readdirSync(buildDir, { withFileTypes: true })
         .filter((entry) => entry.isDirectory())
@@ -131,6 +165,10 @@ function listBundleToolDirs(buildDir) {
         .sort();
 }
 
+/**
+ * @param {BudgetArgs} args
+ * @returns {void}
+ */
 function validateConfig(args) {
     if (!isDirectory(args.buildDir)) {
         console.error(`Build directory not found: ${args.buildDir}`);
@@ -154,6 +192,11 @@ function validateConfig(args) {
     }
 }
 
+/**
+ * @param {number} baseline
+ * @param {number} percent
+ * @returns {number}
+ */
 function createThreshold(baseline, percent) {
     return Math.ceil(baseline * (1 + percent / 100));
 }
@@ -167,6 +210,7 @@ function main() {
     const baselineTools = Object.keys(JS_RAW_BASELINES).sort();
     const builtTools = listBundleToolDirs(args.buildDir);
     const untrackedBuiltTools = builtTools.filter((tool) => !JS_RAW_BASELINES[tool]);
+    /** @type {BudgetResult[]} */
     const results = [];
     const errors = [];
     const warnings = [];
@@ -197,6 +241,7 @@ function main() {
         const isFail = current > failThreshold;
         const waiverReason = waivers.get(tool);
         const isWaived = Boolean(waiverReason);
+        /** @type {BudgetStatus} */
         let status = 'OK';
 
         if (isFail) {
