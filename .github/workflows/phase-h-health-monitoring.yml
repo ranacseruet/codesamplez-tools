@@ -88,5 +88,6 @@ jobs:
             reports/bundle-metrics/latest.json
             qa-artifacts/health/bundle-metrics.md
             qa-artifacts/a11y-reports/phase-d-foundation/phase-d-foundation-a11y-results.json
-            qa-artifacts/visual-baselines/phase-d-foundation/phase-d-foundation-visual-results.json
+            qa-artifacts/visual-baselines/current/visual-baseline-results.json
+            qa-artifacts/visual-baselines/current/visual-screenshot-manifest.json
             qa-artifacts/dependency-audit

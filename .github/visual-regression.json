@@ -1,0 +1,201 @@
+{
+  "baselineArtifactName": "ui-foundation-visual-baseline",
+  "workingDirectory": ".",
+  "baseUrl": "http://127.0.0.1:8080",
+  "readyUrl": "http://127.0.0.1:8080",
+  "readyTimeoutSeconds": 45,
+  "resultsFile": "qa-artifacts/visual-baselines/current/visual-baseline-results.json",
+  "manifestFile": "qa-artifacts/visual-baselines/current/visual-screenshot-manifest.json",
+  "screenshotsRoot": "qa-artifacts/visual-baselines/current",
+  "selection": {
+    "sharedPrefixes": [
+      "common/",
+      "public-path."
+    ],
+    "sharedExact": [
+      "index.html",
+      "styles.css",
+      "root-shell.ts",
+      "webpack.config.js",
+      "package.json",
+      "package-lock.json",
+      "babel.config.js"
+    ]
+  },
+  "routes": [
+    {
+      "id": "root-index-desktop",
+      "path": "/",
+      "viewport": "desktop"
+    },
+    {
+      "id": "root-index-mobile",
+      "path": "/",
+      "viewport": "mobile"
+    },
+    {
+      "id": "data-format-converter-desktop",
+      "path": "/data-format-converter/",
+      "viewport": "desktop",
+      "changePaths": [
+        "data-format-converter/"
+      ]
+    },
+    {
+      "id": "data-format-converter-mobile",
+      "path": "/data-format-converter/",
+      "viewport": "mobile",
+      "changePaths": [
+        "data-format-converter/"
+      ]
+    },
+    {
+      "id": "js-minifier-tool-desktop",
+      "path": "/js-minifier-tool/",
+      "viewport": "desktop",
+      "changePaths": [
+        "js-minifier-tool/"
+      ]
+    },
+    {
+      "id": "js-minifier-tool-mobile",
+      "path": "/js-minifier-tool/",
+      "viewport": "mobile",
+      "changePaths": [
+        "js-minifier-tool/"
+      ]
+    },
+    {
+      "id": "base64-converter-tool-desktop",
+      "path": "/base64-converter-tool/",
+      "viewport": "desktop",
+      "changePaths": [
+        "base64-converter-tool/"
+      ]
+    },
+    {
+      "id": "base64-converter-tool-mobile",
+      "path": "/base64-converter-tool/",
+      "viewport": "mobile",
+      "changePaths": [
+        "base64-converter-tool/"
+      ]
+    },
+    {
+      "id": "jwt-builder-tool-desktop",
+      "path": "/jwt-builder-tool/",
+      "viewport": "desktop",
+      "changePaths": [
+        "jwt-builder-tool/"
+      ]
+    },
+    {
+      "id": "jwt-builder-tool-mobile",
+      "path": "/jwt-builder-tool/",
+      "viewport": "mobile",
+      "changePaths": [
+        "jwt-builder-tool/"
+      ]
+    },
+    {
+      "id": "jwt-decoder-tool-desktop",
+      "path": "/jwt-decoder-tool/",
+      "viewport": "desktop",
+      "changePaths": [
+        "jwt-decoder-tool/"
+      ]
+    },
+    {
+      "id": "jwt-decoder-tool-mobile",
+      "path": "/jwt-decoder-tool/",
+      "viewport": "mobile",
+      "changePaths": [
+        "jwt-decoder-tool/"
+      ]
+    },
+    {
+      "id": "json-formatter-tool-desktop",
+      "path": "/json-formatter-tool/",
+      "viewport": "desktop",
+      "changePaths": [
+        "json-formatter-tool/"
+      ]
+    },
+    {
+      "id": "json-formatter-tool-mobile",
+      "path": "/json-formatter-tool/",
+      "viewport": "mobile",
+      "changePaths": [
+        "json-formatter-tool/"
+      ]
+    },
+    {
+      "id": "css-minifier-tool-desktop",
+      "path": "/css-minifier-tool/",
+      "viewport": "desktop",
+      "changePaths": [
+        "css-minifier-tool/"
+      ]
+    },
+    {
+      "id": "css-minifier-tool-mobile",
+      "path": "/css-minifier-tool/",
+      "viewport": "mobile",
+      "changePaths": [
+        "css-minifier-tool/"
+      ]
+    },
+    {
+      "id": "text-analyzer-tool-desktop",
+      "path": "/text-analyzer-tool/",
+      "viewport": "desktop",
+      "changePaths": [
+        "text-analyzer-tool/"
+      ]
+    },
+    {
+      "id": "text-analyzer-tool-mobile",
+      "path": "/text-analyzer-tool/",
+      "viewport": "mobile",
+      "changePaths": [
+        "text-analyzer-tool/"
+      ]
+    },
+    {
+      "id": "qr-code-generator-desktop",
+      "path": "/qr-code-generator/",
+      "viewport": "desktop",
+      "changePaths": [
+        "qr-code-generator/"
+      ]
+    },
+    {
+      "id": "qr-code-generator-mobile",
+      "path": "/qr-code-generator/",
+      "viewport": "mobile",
+      "changePaths": [
+        "qr-code-generator/"
+      ]
+    },
+    {
+      "id": "diff-checker-tool-desktop",
+      "path": "/diff-checker-tool/",
+      "viewport": "desktop",
+      "changePaths": [
+        "diff-checker-tool/"
+      ]
+    },
+    {
+      "id": "diff-checker-tool-mobile",
+      "path": "/diff-checker-tool/",
+      "viewport": "mobile",
+      "changePaths": [
+        "diff-checker-tool/"
+      ]
+    }
+  ],
+  "diff": {
+    "threshold": 0.01,
+    "mode": "report-only"
+  }
+}

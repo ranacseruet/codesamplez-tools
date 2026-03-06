@@ -17,49 +17,48 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Load visual regression config
+      id: visual_config
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          const configPath = path.join(process.env.GITHUB_WORKSPACE, '.github', 'visual-regression.json');
+          const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+
+          core.setOutput('baseline_artifact_name', config.baselineArtifactName);
+          core.setOutput('results_file', config.resultsFile);
+          core.setOutput('manifest_file', config.manifestFile);
+          core.setOutput('screenshots_root', config.screenshotsRoot);
+          core.setOutput('screenshots_dir', `${config.screenshotsRoot}/screenshots`);
+          core.setOutput('all_route_ids', (config.routes || []).map((route) => route.id).join(','));
+
     - name: Detect visual QA relevance
       id: visual_relevance
       uses: actions/github-script@v7
       with:
         script: |
-          const allToolPrefixes = [
-            'data-format-converter/',
-            'js-minifier-tool/',
-            'base64-converter-tool/',
-            'jwt-builder-tool/',
-            'jwt-decoder-tool/',
-            'json-formatter-tool/',
-            'css-minifier-tool/',
-            'text-analyzer-tool/',
-            'qr-code-generator/',
-            'diff-checker-tool/'
-          ];
-          const sharedPrefixes = ['common/'];
-          const sharedExact = new Set([
-            'index.html',
-            'styles.css',
-            'root-shell.ts',
-            'webpack.config.js',
-            'package.json',
-            'package-lock.json',
-            'babel.config.js',
-            'docs/ui-styling-conventions.md',
-            'docs/ui-component-catalog.html',
-            'docs/ui-component-catalog.css',
-            'scripts/visual-baseline-ui-foundation.mjs',
-            'scripts/visual-diff-ui-foundation.mjs',
-            'scripts/a11y-baseline-ui-foundation.mjs'
-          ]);
+          const fs = require('fs');
+          const path = require('path');
+          const configPath = path.join(process.env.GITHUB_WORKSPACE, '.github', 'visual-regression.json');
+          const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+          const allRouteIds = `${{ steps.visual_config.outputs.all_route_ids }}`.split(',').filter(Boolean);
+          const sharedPrefixes = config.selection?.sharedPrefixes || [];
+          const sharedExact = new Set(config.selection?.sharedExact || []);
+          const routes = Array.isArray(config.routes) ? config.routes : [];
 
           if (context.eventName === 'push' && context.ref === 'refs/heads/main') {
             core.setOutput('run_visual_qa', 'true');
             core.setOutput('reason', 'main_push');
+            core.setOutput('selected_route_ids', allRouteIds.join(','));
             return;
           }
 
           if (context.eventName !== 'pull_request' || !context.payload.pull_request?.number) {
             core.setOutput('run_visual_qa', 'true');
             core.setOutput('reason', 'non_pr_event');
+            core.setOutput('selected_route_ids', allRouteIds.join(','));
             return;
           }
 
@@ -72,19 +71,25 @@ jobs:
             });
 
             const filenames = files.map((file) => file.filename);
-            const hasVisualRelevantChanges = filenames.some((file) => (
-              sharedPrefixes.some((prefix) => file.startsWith(prefix)) ||
-              allToolPrefixes.some((prefix) => file.startsWith(prefix)) ||
-              sharedExact.has(file) ||
-              /^public-path\./.test(file)
-            ));
+            if (filenames.some((file) => sharedExact.has(file) || sharedPrefixes.some((prefix) => file.startsWith(prefix)))) {
+              core.setOutput('run_visual_qa', 'true');
+              core.setOutput('reason', 'shared_visual_change');
+              core.setOutput('selected_route_ids', allRouteIds.join(','));
+              return;
+            }
 
-            core.setOutput('run_visual_qa', hasVisualRelevantChanges ? 'true' : 'false');
-            core.setOutput('reason', hasVisualRelevantChanges ? 'visual_relevant_changes' : 'no_visual_relevant_changes');
+            const selectedRouteIds = routes
+              .filter((route) => (route.changePaths || []).some((prefix) => filenames.some((file) => file.startsWith(prefix))))
+              .map((route) => route.id);
+
+            core.setOutput('run_visual_qa', selectedRouteIds.length > 0 ? 'true' : 'false');
+            core.setOutput('reason', selectedRouteIds.length > 0 ? 'scoped_visual_change' : 'no_visual_relevant_changes');
+            core.setOutput('selected_route_ids', selectedRouteIds.join(','));
           } catch (error) {
             core.warning(`Unable to inspect PR files for visual QA relevance; defaulting to run visual QA. ${error.message}`);
             core.setOutput('run_visual_qa', 'true');
             core.setOutput('reason', 'visual_relevance_check_failed');
+            core.setOutput('selected_route_ids', allRouteIds.join(','));
           }
 
     - name: Set up Node.js
@@ -158,9 +163,7 @@ jobs:
       if: steps.visual_relevance.outputs.run_visual_qa == 'true'
       run: npm run qa:visual-baseline:foundation
       env:
-        QA_BASE_URL: http://127.0.0.1:8080
-        QA_VISUAL_OUT_DIR: qa-artifacts/visual-baselines/ui-foundation
-        QA_VISUAL_RESULTS_FILE: qa-artifacts/visual-baselines/ui-foundation/visual-baseline-results.json
+        QA_VISUAL_ROUTE_IDS: ${{ steps.visual_relevance.outputs.selected_route_ids }}
       continue-on-error: true
 
     - name: Record skipped visual QA summary
@@ -180,16 +183,21 @@ jobs:
         BUNDLE_DIR="qa-artifacts/visual-baseline-artifact"
         rm -rf "$BUNDLE_DIR"
         mkdir -p "$BUNDLE_DIR/screenshots"
-        if [ -f qa-artifacts/visual-baselines/ui-foundation/visual-baseline-results.json ]; then
-          cp qa-artifacts/visual-baselines/ui-foundation/visual-baseline-results.json "$BUNDLE_DIR/visual-baseline-results.json"
+        if [ -f "${{ steps.visual_config.outputs.results_file }}" ]; then
+          cp "${{ steps.visual_config.outputs.results_file }}" "$BUNDLE_DIR/visual-baseline-results.json"
         fi
-        find qa-artifacts/visual-baselines/ui-foundation -type f -name '*.png' -exec cp {} "$BUNDLE_DIR/screenshots/" \;
+        if [ -f "${{ steps.visual_config.outputs.manifest_file }}" ]; then
+          cp "${{ steps.visual_config.outputs.manifest_file }}" "$BUNDLE_DIR/visual-screenshot-manifest.json"
+        fi
+        if [ -d "${{ steps.visual_config.outputs.screenshots_dir }}" ]; then
+          find "${{ steps.visual_config.outputs.screenshots_dir }}" -type f -name '*.png' -exec cp {} "$BUNDLE_DIR/screenshots/" \;
+        fi
 
     - name: Upload main visual baseline artifacts
       if: github.ref == 'refs/heads/main' && always()
       uses: actions/upload-artifact@v4
       with:
-        name: ui-foundation-visual-baseline
+        name: ${{ steps.visual_config.outputs.baseline_artifact_name }}
         retention-days: 30
         if-no-files-found: warn
         path: |

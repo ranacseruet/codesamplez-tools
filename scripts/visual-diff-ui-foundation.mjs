@@ -2,91 +2,40 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import pngjs from 'pngjs';
 
-/** @typedef {import('../types/qa-script-types').QaVisualBaselineResults} QaVisualBaselineResults */
+import {
+  loadVisualRegressionConfig,
+  resolveFromWorkingDirectory,
+  selectConfiguredRoutes,
+  splitCommaList
+} from './visual-regression-config.mjs';
+
+const { PNG } = pngjs;
+
+/** @typedef {import('../types/qa-script-types').VisualBaselineResults} VisualBaselineResults */
 /** @typedef {import('../types/qa-script-types').VisualDiffChangedItem} VisualDiffChangedItem */
 /** @typedef {import('../types/qa-script-types').VisualDiffErrorItem} VisualDiffErrorItem */
 /** @typedef {import('../types/qa-script-types').VisualDiffMissingItem} VisualDiffMissingItem */
 /** @typedef {import('../types/qa-script-types').VisualDiffSummary} VisualDiffSummary */
+/** @typedef {import('../types/qa-script-types').VisualRegressionConfig['diff']['mode']} VisualDiffMode */
+/** @typedef {import('../types/qa-script-types').VisualScreenshotManifest} VisualScreenshotManifest */
+/** @typedef {import('../types/qa-script-types').VisualScreenshotManifestEntry} VisualScreenshotManifestEntry */
 
-const baselineResultsPath = path.resolve(
-  process.env.QA_VISUAL_BASELINE_RESULTS_PATH ||
-    path.join('baseline', 'qa-artifacts', 'visual-baselines', 'phase-d-foundation', 'phase-d-foundation-visual-results.json')
-);
-const currentResultsPath = path.resolve(
-  process.env.QA_VISUAL_CURRENT_RESULTS_PATH ||
-    path.join('qa-artifacts', 'visual-baselines', 'phase-d-foundation', 'pr', 'phase-d-foundation-visual-results.json')
-);
+const baselineResultsPath = process.env.QA_VISUAL_BASELINE_RESULTS_PATH;
+const baselineManifestPath = process.env.QA_VISUAL_BASELINE_MANIFEST_PATH;
+const currentResultsPath = process.env.QA_VISUAL_CURRENT_RESULTS_PATH;
+const currentManifestPath = process.env.QA_VISUAL_CURRENT_MANIFEST_PATH;
 const baselineRunDir = path.resolve(process.env.QA_VISUAL_BASELINE_RUN_DIR || 'baseline');
 const currentRunDir = path.resolve(process.env.QA_VISUAL_CURRENT_RUN_DIR || '.');
-const outDir = path.resolve(process.env.QA_VISUAL_DIFF_OUT_DIR || path.join('qa-artifacts', 'visual-diffs', 'phase-h-pr'));
-const summaryPath = path.resolve(
-  process.env.QA_VISUAL_DIFF_SUMMARY_PATH ||
-    path.join(outDir, 'phase-h-pr-visual-diff-summary.json')
-);
-const markdownPath = path.resolve(
-  process.env.QA_VISUAL_DIFF_SUMMARY_MARKDOWN ||
-    path.join(outDir, 'phase-h-pr-visual-diff-summary.md')
-);
-const allowedChecks = new Set(
-  (process.env.QA_VISUAL_ALLOWED_CHECKS || '')
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean)
-);
+const outDir = path.resolve(process.env.QA_VISUAL_DIFF_OUT_DIR || path.join('qa-artifacts', 'visual-diffs', 'current'));
+const summaryPath = path.resolve(process.env.QA_VISUAL_DIFF_SUMMARY_PATH || path.join(outDir, 'visual-diff-summary.json'));
+const markdownPath = path.resolve(process.env.QA_VISUAL_DIFF_SUMMARY_MARKDOWN || path.join(outDir, 'visual-diff-summary.md'));
 const baselineArtifactName = process.env.QA_VISUAL_BASELINE_ARTIFACT_NAME || '';
 const baselineSourceSha = process.env.QA_VISUAL_BASELINE_SOURCE_SHA || '';
 
-/**
- * @typedef {{
- *   name: string,
- *   relativePath: string,
- *   checkName: string,
- *   status: string
- * }} ScreenshotEntry
- */
-
 const fileIndexCache = new Map();
-
-/**
- * @param {string} filePath
- * @returns {Promise<string>}
- */
-async function fileHash(filePath) {
-  const data = await fs.readFile(filePath);
-  return createHash('sha256').update(data).digest('hex');
-}
-
-/**
- * @param {string} filePath
- * @returns {Promise<number>}
- */
-async function fileSize(filePath) {
-  const stat = await fs.stat(filePath);
-  return stat.size;
-}
-
-/**
- * @param {number} current
- * @param {number} baseline
- * @returns {number}
- */
-function formatPercent(current, baseline) {
-  if (!Number.isFinite(baseline) || baseline === 0) {
-    return 0;
-  }
-  return ((current - baseline) / baseline) * 100;
-}
-
-/**
- * @param {number} value
- * @returns {string}
- */
-function toPercentLabel(value) {
-  return `${Math.abs(value).toFixed(2)}`;
-}
 
 /**
  * @param {string} filePath
@@ -99,6 +48,49 @@ async function exists(filePath) {
   } catch {
     return false;
   }
+}
+
+/**
+ * @template T
+ * @param {string} filePath
+ * @param {string} label
+ * @returns {Promise<T>}
+ */
+async function loadJson(filePath, label) {
+  try {
+    const raw = await fs.readFile(filePath, 'utf8');
+    return JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`Unable to load ${label} at ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * @param {VisualBaselineResults} results
+ * @returns {Map<string, VisualBaselineResults['routes'][number]>}
+ */
+function indexRouteResults(results) {
+  return new Map((results.routes || []).map((route) => [route.id, route]));
+}
+
+/**
+ * @param {VisualScreenshotManifest} manifest
+ * @param {string[]} selectedRouteIds
+ * @returns {Map<string, VisualScreenshotManifestEntry>}
+ */
+function indexManifestEntries(manifest, selectedRouteIds) {
+  const selected = new Set(selectedRouteIds);
+  const entries = new Map();
+  for (const screenshot of manifest.screenshots || []) {
+    if (!selected.has(screenshot.id)) {
+      continue;
+    }
+    if (entries.has(screenshot.id)) {
+      throw new Error(`Duplicate screenshot id ${screenshot.id} detected in visual screenshot manifest.`);
+    }
+    entries.set(screenshot.id, screenshot);
+  }
+  return entries;
 }
 
 /**
@@ -126,7 +118,6 @@ async function buildFileIndex(rootDir) {
         await visit(fullPath);
         continue;
       }
-
       if (!entry.isFile()) {
         continue;
       }
@@ -147,60 +138,73 @@ async function buildFileIndex(rootDir) {
 
 /**
  * @param {string} runDir
- * @param {string} relativeScreenshotPath
+ * @param {string} relativeImagePath
  * @returns {Promise<string>}
  */
-export async function resolveScreenshotPath(runDir, relativeScreenshotPath) {
-  const directPath = path.resolve(runDir, relativeScreenshotPath);
+async function resolveImagePath(runDir, relativeImagePath) {
+  const directPath = path.resolve(runDir, relativeImagePath);
   if (await exists(directPath)) {
     return directPath;
   }
 
   const fileIndex = await buildFileIndex(runDir);
-  const basename = path.basename(relativeScreenshotPath);
-  const basenameMatches = fileIndex.get(basename) || [];
+  const basename = path.basename(relativeImagePath);
+  const matches = fileIndex.get(basename) || [];
 
-  if (basenameMatches.length === 1) {
-    return basenameMatches[0];
+  if (matches.length === 1) {
+    return matches[0];
   }
 
-  if (basenameMatches.length > 1) {
-    const normalizedRelativePath = relativeScreenshotPath.replace(/\\/g, '/');
-    const suffixMatches = basenameMatches.filter((candidate) => candidate.replace(/\\/g, '/').endsWith(normalizedRelativePath));
+  if (matches.length > 1) {
+    const normalizedRelativePath = relativeImagePath.replace(/\\/g, '/');
+    const suffixMatches = matches.filter((candidate) => candidate.replace(/\\/g, '/').endsWith(normalizedRelativePath));
     if (suffixMatches.length === 1) {
       return suffixMatches[0];
     }
   }
 
-  throw new Error(
-    `Unable to locate screenshot ${relativeScreenshotPath} under ${runDir}. ` +
-      'Confirm the artifact download and screenshot staging steps completed successfully.'
-  );
+  throw new Error(`Unable to locate screenshot ${relativeImagePath} under ${runDir}.`);
 }
 
 /**
- * @param {QaVisualBaselineResults} results
- * @param {Set<string>} selectedChecks
- * @returns {Map<string, ScreenshotEntry>}
+ * @param {string} baselinePath
+ * @param {string} currentPath
+ * @returns {Promise<{ width: number, height: number, differentPixels: number, totalPixels: number, mismatchRatio: number }>}
  */
-function screenshotEntries(results, selectedChecks) {
-  /** @type {Map<string, ScreenshotEntry>} */
-  const entries = new Map();
-  for (const check of results.checks || []) {
-    if (selectedChecks.size > 0 && !selectedChecks.has(check.name)) {
-      continue;
-    }
-    for (const screenshot of check.screenshots || []) {
-      const logicalName = path.basename(screenshot);
-      entries.set(logicalName, {
-        name: logicalName,
-        relativePath: screenshot,
-        checkName: check.name,
-        status: check.status
-      });
+async function comparePngs(baselinePath, currentPath) {
+  const [baselineBuffer, currentBuffer] = await Promise.all([
+    fs.readFile(baselinePath),
+    fs.readFile(currentPath)
+  ]);
+  const baselinePng = PNG.sync.read(baselineBuffer);
+  const currentPng = PNG.sync.read(currentBuffer);
+
+  if (baselinePng.width !== currentPng.width || baselinePng.height !== currentPng.height) {
+    throw new Error(
+      `Dimension mismatch: baseline ${baselinePng.width}x${baselinePng.height}, current ${currentPng.width}x${currentPng.height}.`
+    );
+  }
+
+  let differentPixels = 0;
+  for (let index = 0; index < baselinePng.data.length; index += 4) {
+    if (
+      baselinePng.data[index] !== currentPng.data[index] ||
+      baselinePng.data[index + 1] !== currentPng.data[index + 1] ||
+      baselinePng.data[index + 2] !== currentPng.data[index + 2] ||
+      baselinePng.data[index + 3] !== currentPng.data[index + 3]
+    ) {
+      differentPixels += 1;
     }
   }
-  return entries;
+
+  const totalPixels = baselinePng.width * baselinePng.height;
+  return {
+    width: baselinePng.width,
+    height: baselinePng.height,
+    differentPixels,
+    totalPixels,
+    mismatchRatio: totalPixels === 0 ? 0 : differentPixels / totalPixels
+  };
 }
 
 /**
@@ -218,269 +222,311 @@ export function determineVisualDiffStatus(summaryData) {
 }
 
 /**
- * @param {'clean' | 'changes-detected' | 'incomplete' | 'skipped'} status
- * @returns {string}
+ * @param {VisualDiffSummary} summaryData
+ * @returns {boolean}
  */
-function statusLabel(status) {
-  if (status === 'clean') {
-    return 'clean';
+export function shouldFailVisualDiff(summaryData) {
+  if (summaryData.diffMode === 'report-only') {
+    return false;
   }
-  if (status === 'changes-detected') {
-    return 'changes detected';
+  if (summaryData.diffMode === 'fail-on-changes') {
+    return summaryData.changedScreenshots > 0;
   }
-  if (status === 'incomplete') {
-    return 'incomplete';
+  if (summaryData.diffMode === 'fail-on-incomplete') {
+    return summaryData.errors.length > 0 || summaryData.missingInBaseline > 0 || summaryData.missingInCurrent > 0;
   }
-  return 'skipped';
+  return (
+    summaryData.changedScreenshots > 0 ||
+    summaryData.errors.length > 0 ||
+    summaryData.missingInBaseline > 0 ||
+    summaryData.missingInCurrent > 0
+  );
 }
 
 /**
  * @param {VisualDiffSummary} summaryData
- * @param {Array<Omit<VisualDiffChangedItem, 'sizeDeltaPercent'> & { sizeDeltaPercent: string }>} changedItems
- * @param {VisualDiffMissingItem[]} missingItems
  * @returns {string}
  */
-function makeMarkdown(summaryData, changedItems, missingItems) {
-  const lines = [];
-  lines.push('# Visual Diff Summary');
-  lines.push('');
-  lines.push(`- Status: ${statusLabel(summaryData.status || 'incomplete')}`);
-  if (summaryData.selectedChecks && summaryData.selectedChecks.length > 0) {
-    lines.push(`- Selected checks: ${summaryData.selectedChecks.length}`);
-  }
+function makeMarkdown(summaryData) {
+  const lines = [
+    '# Visual Diff Summary',
+    '',
+    `- Status: ${summaryData.status || 'incomplete'}`,
+    `- Diff mode: \`${summaryData.diffMode}\``,
+    `- Threshold: ${summaryData.threshold}`,
+    `- Selected routes: ${summaryData.selectedRoutes?.length || 0}`,
+    `- Total screenshots: ${summaryData.totalScreenshots}`,
+    `- Matched screenshots: ${summaryData.matchedScreenshots}`,
+    `- Changed screenshots: ${summaryData.changedScreenshots}`,
+    `- Missing in baseline: ${summaryData.missingInBaseline}`,
+    `- Missing in current: ${summaryData.missingInCurrent}`,
+    `- Comparison errors: ${summaryData.errors.length}`
+  ];
+
   if (summaryData.baselineArtifactName) {
     lines.push(`- Baseline artifact: \`${summaryData.baselineArtifactName}\``);
   }
   if (summaryData.baselineSourceSha) {
     lines.push(`- Baseline source SHA: \`${summaryData.baselineSourceSha}\``);
   }
-  lines.push(`- Baseline run: \`${summaryData.baselineResultsPath}\``);
-  lines.push(`- Current run: \`${summaryData.currentResultsPath}\``);
-  lines.push(`- Total screenshots: ${summaryData.totalScreenshots}`);
-  lines.push(`- Matched: ${summaryData.matchedScreenshots}`);
-  lines.push(`- Changed: ${summaryData.changedScreenshots}`);
-  lines.push(`- Missing in baseline: ${summaryData.missingInBaseline}`);
-  lines.push(`- Missing in current: ${summaryData.missingInCurrent}`);
-  lines.push(`- Comparison errors: ${summaryData.errors.length}`);
+  lines.push(`- Baseline results: \`${summaryData.baselineResultsPath}\``);
+  lines.push(`- Current results: \`${summaryData.currentResultsPath}\``);
+  lines.push(`- Baseline manifest: \`${summaryData.baselineManifestPath}\``);
+  lines.push(`- Current manifest: \`${summaryData.currentManifestPath}\``);
   lines.push('');
   lines.push('## Changed screenshots');
-  if (!changedItems.length) {
-    lines.push('- None (report-only)');
+
+  if (summaryData.changed.length === 0) {
+    lines.push('- None');
   } else {
-    for (const item of changedItems) {
-      lines.push(`- ${item.name} (${item.checkName})`);
-      lines.push(`  - Base hash: ${item.baselineHash.slice(0, 8)}...`);
-      lines.push(`  - Current hash: ${item.currentHash.slice(0, 8)}...`);
-      lines.push(`  - Size: ${item.baselineBytes} -> ${item.currentBytes} bytes`);
-      lines.push(`  - Size delta: ${item.sizeDeltaSign}${item.sizeDeltaBytes} (${item.sizeDeltaPercent}%)`);
+    for (const item of summaryData.changed) {
+      lines.push(`- ${item.id} (${item.viewport})`);
+      lines.push(`  - Path: ${item.path}`);
+      lines.push(`  - Mismatch ratio: ${item.mismatchRatio.toFixed(6)}`);
+      lines.push(`  - Pixels changed: ${item.differentPixels}/${item.totalPixels}`);
     }
   }
+
+  lines.push('');
+  lines.push('## Missing screenshots');
+  if (summaryData.missing.length === 0) {
+    lines.push('- None');
+  } else {
+    for (const item of summaryData.missing) {
+      lines.push(`- ${item.id}: ${item.reason}`);
+    }
+  }
+
   lines.push('');
   lines.push('## Comparison errors');
-  if (!summaryData.errors.length) {
+  if (summaryData.errors.length === 0) {
     lines.push('- None');
   } else {
     for (const item of summaryData.errors) {
-      lines.push(`- ${item.name}: ${item.message}`);
+      lines.push(`- ${item.id}: ${item.message}`);
     }
   }
-  lines.push('');
-  lines.push('## Missing screenshots');
-  if (!missingItems.length) {
-    lines.push('- None');
-  } else {
-    for (const item of missingItems) {
-      lines.push(`- ${item.name}: ${item.reason}`);
-    }
-  }
+
   return lines.join('\n') + '\n';
 }
 
 /**
- * @param {string} filePath
- * @returns {Promise<QaVisualBaselineResults>}
+ * @param {VisualDiffMode} diffMode
+ * @param {VisualDiffSummary} summary
+ * @returns {string}
  */
-async function loadResults(filePath) {
-  try {
-    await fs.access(filePath);
-  } catch {
-    const label = filePath === baselineResultsPath ? 'baseline' : 'current';
-    throw new Error(
-      `Missing ${label} visual results file at ${filePath}. ` +
-        `Confirm the screenshot capture or baseline artifact download step completed successfully.`
-    );
+export function formatVisualDiffFailureMessage(diffMode, summary) {
+  if (diffMode === 'fail-on-changes') {
+    return `Visual diff failed because ${summary.changedScreenshots} screenshot(s) exceeded the mismatch threshold.`;
   }
-  const raw = await fs.readFile(filePath, 'utf8');
-  return JSON.parse(raw);
+  if (diffMode === 'fail-on-incomplete') {
+    return 'Visual diff failed because the comparison was incomplete.';
+  }
+  return 'Visual diff failed because strict mode detected changes or incomplete comparisons.';
 }
 
 /**
  * @param {{
+ *   configPath?: string,
  *   baselineResultsPath?: string,
+ *   baselineManifestPath?: string,
  *   currentResultsPath?: string,
+ *   currentManifestPath?: string,
  *   baselineRunDir?: string,
  *   currentRunDir?: string,
- *   allowedChecks?: Iterable<string>,
+ *   routeIds?: Iterable<string>,
  *   baselineArtifactName?: string,
  *   baselineSourceSha?: string
  * }} [options]
  * @returns {Promise<{ summary: VisualDiffSummary, markdown: string }>}
  */
 export async function generateVisualDiffReport(options = {}) {
-  const selectedChecks = new Set(options.allowedChecks || allowedChecks);
-  const resolvedBaselineResultsPath = path.resolve(options.baselineResultsPath || baselineResultsPath);
-  const resolvedCurrentResultsPath = path.resolve(options.currentResultsPath || currentResultsPath);
+  const { config } = await loadVisualRegressionConfig(options.configPath);
+  const selectedRouteIds = selectConfiguredRoutes(
+    config,
+    options.routeIds || splitCommaList(process.env.QA_VISUAL_ROUTE_IDS)
+  ).selectedRouteIds;
+
+  const resolvedBaselineResultsPath = path.resolve(
+    options.baselineResultsPath || baselineResultsPath || resolveFromWorkingDirectory(config, config.resultsFile)
+  );
+  const resolvedBaselineManifestPath = path.resolve(
+    options.baselineManifestPath || baselineManifestPath || resolveFromWorkingDirectory(config, config.manifestFile)
+  );
+  const resolvedCurrentResultsPath = path.resolve(
+    options.currentResultsPath || currentResultsPath || resolveFromWorkingDirectory(config, config.resultsFile)
+  );
+  const resolvedCurrentManifestPath = path.resolve(
+    options.currentManifestPath || currentManifestPath || resolveFromWorkingDirectory(config, config.manifestFile)
+  );
   const resolvedBaselineRunDir = path.resolve(options.baselineRunDir || baselineRunDir);
   const resolvedCurrentRunDir = path.resolve(options.currentRunDir || currentRunDir);
+
+  const [baselineResults, currentResults, baselineManifest, currentManifest] = await Promise.all([
+    loadJson(resolvedBaselineResultsPath, 'baseline visual results'),
+    loadJson(resolvedCurrentResultsPath, 'current visual results'),
+    loadJson(resolvedBaselineManifestPath, 'baseline screenshot manifest'),
+    loadJson(resolvedCurrentManifestPath, 'current screenshot manifest')
+  ]);
+
+  const baselineRouteResults = indexRouteResults(/** @type {VisualBaselineResults} */ (baselineResults));
+  const currentRouteResults = indexRouteResults(/** @type {VisualBaselineResults} */ (currentResults));
+  const baselineEntries = indexManifestEntries(/** @type {VisualScreenshotManifest} */ (baselineManifest), selectedRouteIds);
+  const currentEntries = indexManifestEntries(/** @type {VisualScreenshotManifest} */ (currentManifest), selectedRouteIds);
 
   /** @type {VisualDiffSummary} */
   const summary = {
     startedAt: new Date().toISOString(),
     baselineResultsPath: resolvedBaselineResultsPath,
     currentResultsPath: resolvedCurrentResultsPath,
-    totalScreenshots: 0,
+    baselineManifestPath: resolvedBaselineManifestPath,
+    currentManifestPath: resolvedCurrentManifestPath,
+    diffMode: config.diff.mode,
+    threshold: config.diff.threshold,
+    totalScreenshots: selectedRouteIds.length,
     matchedScreenshots: 0,
     changedScreenshots: 0,
     missingInBaseline: 0,
     missingInCurrent: 0,
-    skipped: 0,
-    deltas: [],
     changed: [],
     missing: [],
     errors: [],
-    selectedChecks: [...selectedChecks],
+    selectedRoutes: selectedRouteIds,
     baselineArtifactName: options.baselineArtifactName || baselineArtifactName || undefined,
     baselineSourceSha: options.baselineSourceSha || baselineSourceSha || undefined,
     baselineAvailable: true
   };
 
-  const [baseResults, currentResults] = await Promise.all([
-    loadResults(resolvedBaselineResultsPath),
-    loadResults(resolvedCurrentResultsPath)
-  ]);
+  for (const routeId of selectedRouteIds) {
+    const routeConfig = config.routes.find((route) => route.id === routeId);
+    const baselineEntry = baselineEntries.get(routeId);
+    const currentEntry = currentEntries.get(routeId);
+    const baselineRouteResult = baselineRouteResults.get(routeId);
+    const currentRouteResult = currentRouteResults.get(routeId);
 
-  const baselineEntries = screenshotEntries(baseResults, selectedChecks);
-  const currentEntries = screenshotEntries(currentResults, selectedChecks);
-
-  const screenshotSet = new Set([...baselineEntries.keys(), ...currentEntries.keys()]);
-  summary.totalScreenshots = screenshotSet.size;
-
-  for (const screenshot of screenshotSet) {
-    const base = baselineEntries.get(screenshot);
-    const current = currentEntries.get(screenshot);
-
-    if (!base) {
-      summary.missingInBaseline += 1;
-      summary.missing.push({ name: screenshot, reason: 'missing baseline capture', checkName: current?.checkName });
-      continue;
-    }
-    if (!current) {
-      summary.missingInCurrent += 1;
-      summary.missing.push({ name: screenshot, reason: 'missing current PR capture', checkName: base.checkName });
-      continue;
-    }
-
-    let baseBytes = 0;
-    let currentBytes = 0;
-    let baseHash = '';
-    let currentHash = '';
-    try {
-      const [basePath, currentPath] = await Promise.all([
-        resolveScreenshotPath(resolvedBaselineRunDir, base.relativePath),
-        resolveScreenshotPath(resolvedCurrentRunDir, current.relativePath)
-      ]);
-      [baseHash, currentHash] = await Promise.all([fileHash(basePath), fileHash(currentPath)]);
-      [baseBytes, currentBytes] = await Promise.all([fileSize(basePath), fileSize(currentPath)]);
-    } catch (error) {
-      summary.skipped += 1;
+    if (!baselineEntry && !currentEntry) {
       /** @type {VisualDiffErrorItem} */
       const errorRecord = {
-        name: screenshot,
-        checkName: current.checkName,
+        id: routeId,
+        path: routeConfig?.path,
+        viewport: routeConfig?.viewport,
+        status: 'error',
+        message: [
+          'Screenshot missing from both manifests.',
+          baselineRouteResult?.status === 'failed' ? `Baseline capture failed: ${baselineRouteResult.error || 'unknown error'}` : '',
+          currentRouteResult?.status === 'failed' ? `Current capture failed: ${currentRouteResult.error || 'unknown error'}` : ''
+        ]
+          .filter(Boolean)
+          .join(' ')
+      };
+      summary.errors.push(errorRecord);
+      continue;
+    }
+
+    if (!baselineEntry) {
+      summary.missingInBaseline += 1;
+      summary.missing.push({
+        id: routeId,
+        path: currentEntry?.path || routeConfig?.path,
+        viewport: currentEntry?.viewport || routeConfig?.viewport,
+        location: 'baseline',
+        reason: 'missing baseline capture'
+      });
+      continue;
+    }
+
+    if (!currentEntry) {
+      summary.missingInCurrent += 1;
+      summary.missing.push({
+        id: routeId,
+        path: baselineEntry.path || routeConfig?.path,
+        viewport: baselineEntry.viewport || routeConfig?.viewport,
+        location: 'current',
+        reason: 'missing current capture'
+      });
+      continue;
+    }
+
+    try {
+      const [resolvedBaselineImagePath, resolvedCurrentImagePath] = await Promise.all([
+        resolveImagePath(resolvedBaselineRunDir, baselineEntry.imagePath),
+        resolveImagePath(resolvedCurrentRunDir, currentEntry.imagePath)
+      ]);
+      const comparison = await comparePngs(resolvedBaselineImagePath, resolvedCurrentImagePath);
+
+      if (comparison.mismatchRatio <= config.diff.threshold) {
+        summary.matchedScreenshots += 1;
+        continue;
+      }
+
+      /** @type {VisualDiffChangedItem} */
+      const changedRecord = {
+        id: routeId,
+        path: currentEntry.path,
+        viewport: currentEntry.viewport,
+        baselineImagePath: baselineEntry.imagePath,
+        currentImagePath: currentEntry.imagePath,
+        width: comparison.width,
+        height: comparison.height,
+        differentPixels: comparison.differentPixels,
+        totalPixels: comparison.totalPixels,
+        mismatchRatio: Number(comparison.mismatchRatio.toFixed(6)),
+        status: 'changed'
+      };
+      summary.changedScreenshots += 1;
+      summary.changed.push(changedRecord);
+    } catch (error) {
+      /** @type {VisualDiffErrorItem} */
+      const errorRecord = {
+        id: routeId,
+        path: currentEntry.path || baselineEntry.path || routeConfig?.path,
+        viewport: currentEntry.viewport || baselineEntry.viewport || routeConfig?.viewport,
         status: 'error',
         message: error instanceof Error ? error.message : String(error)
       };
       summary.errors.push(errorRecord);
-      summary.deltas.push(errorRecord);
-      continue;
     }
-
-    const sizeDeltaBytes = currentBytes - baseBytes;
-    const sizeDeltaPercent = formatPercent(currentBytes, baseBytes);
-    const sizeDeltaSign = sizeDeltaBytes >= 0 ? '+' : '';
-
-    if (baseHash === currentHash) {
-      summary.matchedScreenshots += 1;
-      continue;
-    }
-
-    summary.changedScreenshots += 1;
-    /** @type {VisualDiffChangedItem} */
-    const record = {
-      name: screenshot,
-      checkName: current.checkName,
-      baselineHash: baseHash,
-      currentHash,
-      baselineBytes: baseBytes,
-      currentBytes,
-      sizeDeltaBytes,
-      sizeDeltaPercent: Number(sizeDeltaPercent.toFixed(2)),
-      sizeDeltaSign,
-      status: 'changed'
-    };
-    summary.changed.push(record);
   }
-
-  summary.deltas = [...summary.changed, ...summary.errors, ...summary.missing].sort((a, b) => {
-    const leftStatus = 'status' in a ? a.status : 'missing';
-    const rightStatus = 'status' in b ? b.status : 'missing';
-    if (leftStatus === rightStatus) {
-      return a.name.localeCompare(b.name);
-    }
-    if (leftStatus === 'changed') {
-      return -1;
-    }
-    if (leftStatus === 'error') {
-      return rightStatus === 'changed' ? 1 : -1;
-    }
-    return 1;
-  });
 
   summary.status = determineVisualDiffStatus(summary);
   summary.finishedAt = new Date().toISOString();
   summary.completed = true;
 
-  const markdown = makeMarkdown(
+  return {
     summary,
-    summary.changed.map((change) => ({
-      ...change,
-      sizeDeltaPercent: toPercentLabel(change.sizeDeltaPercent),
-      sizeDeltaSign: change.sizeDeltaSign || ''
-    })),
-    summary.missing.map((missing) => ({
-      ...missing,
-      reason: missing.reason
-    }))
-  );
-
-  return { summary, markdown };
+    markdown: makeMarkdown(summary)
+  };
 }
 
-async function main() {
-  await fs.mkdir(outDir, { recursive: true });
-  const { summary, markdown } = await generateVisualDiffReport();
-  await fs.writeFile(summaryPath, JSON.stringify(summary, null, 2));
-  await fs.writeFile(markdownPath, markdown);
+/**
+ * @param {Parameters<typeof generateVisualDiffReport>[0] & {
+ *   outDir?: string,
+ *   summaryPath?: string,
+ *   markdownPath?: string
+ * }} [options]
+ * @returns {Promise<void>}
+ */
+export async function runVisualDiffCli(options = {}) {
+  const resolvedOutDir = path.resolve(options.outDir || outDir);
+  const resolvedSummaryPath = path.resolve(options.summaryPath || summaryPath);
+  const resolvedMarkdownPath = path.resolve(options.markdownPath || markdownPath);
 
-  if (summary.errors.length > 0) {
-    throw new Error(`Visual diff comparison encountered ${summary.errors.length} screenshot read errors.`);
+  await fs.mkdir(resolvedOutDir, { recursive: true });
+  const { summary, markdown } = await generateVisualDiffReport(options);
+  await Promise.all([
+    fs.writeFile(resolvedSummaryPath, JSON.stringify(summary, null, 2)),
+    fs.writeFile(resolvedMarkdownPath, markdown)
+  ]);
+
+  if (shouldFailVisualDiff(summary)) {
+    throw new Error(formatVisualDiffFailureMessage(summary.diffMode, summary));
   }
 }
 
 const isDirectRun = process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url;
 
 if (isDirectRun) {
-  main().catch((error) => {
+  runVisualDiffCli().catch((error) => {
     console.error(error);
     process.exitCode = 1;
   });
