@@ -15,6 +15,11 @@ When this module moves to a dedicated shared repo or to a repository-root workfl
 2. Version the shared repo or tag the current repo.
 3. Update consumer repos to reference the shared actions and reusable workflows by version.
 
+Current status in this repo:
+
+- the primary CI and PR paths call the shared composite actions directly from repo-owned jobs
+- repo workflows own startup readiness and pass config and selected route ids into the shared actions
+
 ## Consumer responsibilities
 
 - install dependencies

@@ -13,11 +13,14 @@ permissions:
   pull-requests: read
 
 jobs:
-  visual-diff:
+  prepare-visual-diff:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request')
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-
+    outputs:
+      pr_number: ${{ steps.run_context.outputs.pr_number }}
+      head_sha: ${{ steps.run_context.outputs.head_sha }}
+      should_run: ${{ steps.diff_scope.outputs.should_run }}
+      selected_route_ids: ${{ steps.diff_scope.outputs.selected_route_ids }}
     steps:
       - name: Checkout PR
         uses: actions/checkout@v4
@@ -35,11 +38,6 @@ jobs:
             const configPath = path.join(process.env.GITHUB_WORKSPACE, '.github', 'visual-regression.json');
             const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
-            core.setOutput('baseline_artifact_name', config.baselineArtifactName);
-            core.setOutput('results_file', config.resultsFile);
-            core.setOutput('manifest_file', config.manifestFile);
-            core.setOutput('screenshots_root', config.screenshotsRoot);
-            core.setOutput('screenshots_dir', `${config.screenshotsRoot}/screenshots`);
             core.setOutput('all_route_ids', (config.routes || []).map((route) => route.id).join(','));
 
       - name: Resolve run context
@@ -53,12 +51,7 @@ jobs:
               : (context.payload.pull_request || null);
 
             core.setOutput('pr_number', pr?.number ? String(pr.number) : '');
-            core.setOutput('base_ref', pr?.base?.ref || 'main');
             core.setOutput('head_sha', isWorkflowRun ? context.payload.workflow_run.head_sha : context.sha);
-            core.setOutput(
-              'run_url',
-              `${process.env.GITHUB_SERVER_URL}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
-            );
 
       - name: Determine visual diff scope
         id: diff_scope
@@ -76,7 +69,6 @@ jobs:
 
             if (context.eventName === 'workflow_dispatch') {
               core.setOutput('should_run', 'true');
-              core.setOutput('reason', 'manual_dispatch');
               core.setOutput('selected_route_ids', allRouteIds.join(','));
               return;
             }
@@ -85,7 +77,6 @@ jobs:
             if (!Number.isFinite(prNumber) || prNumber <= 0) {
               core.warning('PR number unavailable; defaulting to running all visual checks.');
               core.setOutput('should_run', 'true');
-              core.setOutput('reason', 'missing_pr_number');
               core.setOutput('selected_route_ids', allRouteIds.join(','));
               return;
             }
@@ -101,7 +92,6 @@ jobs:
               const filenames = files.map((file) => file.filename);
               if (filenames.some((file) => sharedExact.has(file) || sharedPrefixes.some((prefix) => file.startsWith(prefix)))) {
                 core.setOutput('should_run', 'true');
-                core.setOutput('reason', 'shared_visual_change');
                 core.setOutput('selected_route_ids', allRouteIds.join(','));
                 return;
               }
@@ -112,147 +102,57 @@ jobs:
 
               if (selectedRouteIds.length > 0) {
                 core.setOutput('should_run', 'true');
-                core.setOutput('reason', 'scoped_visual_change');
                 core.setOutput('selected_route_ids', selectedRouteIds.join(','));
                 return;
               }
 
               core.notice('Skipping visual diff because the PR does not change any visual-relevant files.');
               core.setOutput('should_run', 'false');
-              core.setOutput('reason', filenames.length > 0 ? 'no_visual_relevant_changes' : 'no_changed_files');
               core.setOutput('selected_route_ids', '');
             } catch (error) {
               core.warning(`Unable to inspect PR files for visual diff scope; defaulting to run all visual checks. ${error.message}`);
               core.setOutput('should_run', 'true');
-              core.setOutput('reason', 'visual_scope_check_failed');
               core.setOutput('selected_route_ids', allRouteIds.join(','));
             }
 
-      - name: Find latest main visual baseline artifact
-        if: steps.diff_scope.outputs.should_run == 'true'
-        id: baseline_artifact
-        uses: actions/github-script@v7
+  visual-diff:
+    needs: prepare-visual-diff
+    if: needs.prepare-visual-diff.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
         with:
-          script: |
-            const artifactNames = ['${{ steps.visual_config.outputs.baseline_artifact_name }}'].filter(Boolean);
-            const workflowId = 'ci.yml';
-            const { owner, repo } = context.repo;
-            try {
-              const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
-                owner,
-                repo,
-                workflow_id: workflowId,
-                branch: 'main',
-                event: 'push',
-                per_page: 20
-              });
+          ref: ${{ needs.prepare-visual-diff.outputs.head_sha }}
 
-              let selectedRun = null;
-              let selectedArtifactName = null;
-              for (const run of runs) {
-                if (run.status !== 'completed' || run.conclusion !== 'success') {
-                  continue;
-                }
-                const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-                  owner,
-                  repo,
-                  run_id: run.id,
-                  per_page: 100
-                });
-                const baselineArtifact = artifactNames
-                  .map((artifactName) => artifacts.data.artifacts.find(
-                    (artifact) => artifact.name === artifactName && !artifact.expired
-                  ))
-                  .find(Boolean);
-                if (baselineArtifact) {
-                  selectedRun = run;
-                  selectedArtifactName = baselineArtifact.name;
-                  break;
-                }
-              }
-
-              if (!selectedRun) {
-                const message = `No non-expired visual baseline artifact found from successful main CI runs.`;
-                core.warning(message);
-                core.setOutput('found', 'false');
-                core.setOutput('message', message);
-                return;
-              }
-
-              core.info(`Using ${selectedArtifactName} from main CI run ${selectedRun.id} (${selectedRun.head_sha}).`);
-              core.setOutput('found', 'true');
-              core.setOutput('run_id', String(selectedRun.id));
-              core.setOutput('artifact_name', selectedArtifactName);
-              core.setOutput('head_sha', selectedRun.head_sha);
-              core.setOutput('message', '');
-            } catch (error) {
-              const status = error && typeof error.status !== 'undefined' ? error.status : 'unknown';
-              const message = `Unable to access a main visual baseline artifact from CI runs (status: ${status}). Visual diff will be skipped for this run.`;
-              core.warning(message);
-              core.setOutput('found', 'false');
-              core.setOutput('message', message);
-            }
-
-      - name: Download main visual baseline artifact
-        if: steps.diff_scope.outputs.should_run == 'true' && steps.baseline_artifact.outputs.found == 'true'
-        uses: actions/download-artifact@v4
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          run-id: ${{ steps.baseline_artifact.outputs.run_id }}
-          name: ${{ steps.baseline_artifact.outputs.artifact_name }}
-          path: baseline-download
-
-      - name: Locate downloaded baseline results
-        if: steps.diff_scope.outputs.should_run == 'true' && steps.baseline_artifact.outputs.found == 'true'
-        id: baseline_paths
-        run: |
-          set -euo pipefail
-          RESULTS_FILE="$(find baseline-download -type f \( -name 'visual-baseline-results.json' -o -name 'phase-d-foundation-visual-results.json' \) | head -n 1)"
-          MANIFEST_FILE="$(find baseline-download -type f -name 'visual-screenshot-manifest.json' | head -n 1)"
-          if [ -z "$RESULTS_FILE" ]; then
-            echo "Unable to locate baseline visual results JSON in downloaded artifact."
-            find baseline-download -maxdepth 5 -type f | sort || true
-            exit 1
-          fi
-          if [ -z "$MANIFEST_FILE" ]; then
-            echo "Unable to locate baseline visual screenshot manifest in downloaded artifact."
-            find baseline-download -maxdepth 5 -type f | sort || true
-            exit 1
-          fi
-          echo "results_file=$RESULTS_FILE" >> "$GITHUB_OUTPUT"
-          echo "manifest_file=$MANIFEST_FILE" >> "$GITHUB_OUTPUT"
-          echo "run_dir=${GITHUB_WORKSPACE}/baseline-download" >> "$GITHUB_OUTPUT"
-          echo "screenshots_dir=$(dirname "$MANIFEST_FILE")/screenshots" >> "$GITHUB_OUTPUT"
-
-      - name: Set up Node.js
-        if: steps.diff_scope.outputs.should_run == 'true'
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '23'
-          cache: 'npm'
+          cache: npm
 
-      - name: Install dependencies (PR)
-        if: steps.diff_scope.outputs.should_run == 'true'
+      - name: Resolve baseline artifact
+        id: baseline
+        uses: ./visual-diff-github-action/actions/resolve-baseline-artifact
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-config-path: .github/visual-regression.json
+          workflow-id: ci.yml
+          branch: main
+
+      - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright Chromium
-        if: steps.diff_scope.outputs.should_run == 'true'
-        run: npx playwright install --with-deps chromium
-
-      - name: Build PR artifacts
-        if: steps.diff_scope.outputs.should_run == 'true'
+      - name: Build app
         run: npm run build
 
-      - name: Capture PR visual snapshots
-        if: steps.diff_scope.outputs.should_run == 'true'
-        env:
-          QA_VISUAL_ROUTE_IDS: ${{ steps.diff_scope.outputs.selected_route_ids }}
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start app
         run: |
           set -euo pipefail
-          npm start > /tmp/codesamplez-pr-start.log 2>&1 &
-          PR_QA_SERVER_PID=$!
-          trap 'kill $PR_QA_SERVER_PID || true' EXIT
+          npm start > /tmp/visual-pr-diff-start.log 2>&1 &
+          echo "QA_SERVER_PID=$!" >> "$GITHUB_ENV"
           ready=0
           for i in $(seq 1 45); do
             if curl -sSf http://127.0.0.1:8080 >/dev/null; then
@@ -262,46 +162,143 @@ jobs:
             sleep 1
           done
           if [ "$ready" -ne 1 ]; then
-            echo "PR QA server failed to start on http://127.0.0.1:8080"
-            cat /tmp/codesamplez-pr-start.log || true
+            cat /tmp/visual-pr-diff-start.log || true
             exit 1
           fi
-          npm run qa:visual-baseline:foundation
-          trap - EXIT
-          kill $PR_QA_SERVER_PID || true
 
-      - name: Compare baseline and PR visual snapshots (report-only)
-        if: steps.diff_scope.outputs.should_run == 'true' && steps.baseline_artifact.outputs.found == 'true'
-        env:
-          QA_VISUAL_BASELINE_RESULTS_PATH: ${{ steps.baseline_paths.outputs.results_file }}
-          QA_VISUAL_BASELINE_MANIFEST_PATH: ${{ steps.baseline_paths.outputs.manifest_file }}
-          QA_VISUAL_CURRENT_RESULTS_PATH: ${{ github.workspace }}/${{ steps.visual_config.outputs.results_file }}
-          QA_VISUAL_CURRENT_MANIFEST_PATH: ${{ github.workspace }}/${{ steps.visual_config.outputs.manifest_file }}
-          QA_VISUAL_BASELINE_RUN_DIR: ${{ steps.baseline_paths.outputs.run_dir }}
-          QA_VISUAL_CURRENT_RUN_DIR: ${{ github.workspace }}
-          QA_VISUAL_ROUTE_IDS: ${{ steps.diff_scope.outputs.selected_route_ids }}
-          QA_VISUAL_BASELINE_ARTIFACT_NAME: ${{ steps.baseline_artifact.outputs.artifact_name }}
-          QA_VISUAL_BASELINE_SOURCE_SHA: ${{ steps.baseline_artifact.outputs.head_sha }}
-          QA_VISUAL_DIFF_OUT_DIR: ${{ github.workspace }}/qa-artifacts/visual-diffs/pr
-          QA_VISUAL_DIFF_SUMMARY_PATH: ${{ github.workspace }}/qa-artifacts/visual-diffs/pr/visual-diff-summary.json
-          QA_VISUAL_DIFF_SUMMARY_MARKDOWN: ${{ github.workspace }}/qa-artifacts/visual-diffs/pr/visual-diff-summary.md
+      - name: Capture current visual routes
+        id: capture
+        uses: ./visual-diff-github-action/actions/capture-visual-routes
+        with:
+          repo-config-path: .github/visual-regression.json
+          route-ids: ${{ needs.prepare-visual-diff.outputs.selected_route_ids }}
+
+      - name: Compare with baseline
+        if: steps.baseline.outputs.found == 'true'
+        id: compare
+        uses: ./visual-diff-github-action/actions/compare-visual-results
+        with:
+          repo-config-path: .github/visual-regression.json
+          route-ids: ${{ needs.prepare-visual-diff.outputs.selected_route_ids }}
+          baseline-results-path: ${{ steps.baseline.outputs.results-file }}
+          baseline-manifest-path: ${{ steps.baseline.outputs.manifest-file }}
+          baseline-run-dir: ${{ steps.baseline.outputs.run-dir }}
+          current-results-path: ${{ steps.capture.outputs.results-file }}
+          current-manifest-path: ${{ steps.capture.outputs.manifest-file }}
+          current-run-dir: ${{ steps.capture.outputs.screenshots-root }}
+          baseline-artifact-name: ${{ steps.baseline.outputs.artifact-name }}
+          baseline-source-sha: ${{ steps.baseline.outputs.head-sha }}
+
+      - name: Record skipped visual diff summary
+        if: steps.baseline.outputs.found != 'true'
+        id: skipped_summary
         run: |
           set -euo pipefail
-          npm run qa:visual-diff:foundation
+          mkdir -p qa-artifacts/visual-diffs/current
+          node --input-type=module <<'EOF'
+          import fs from 'node:fs/promises';
 
-      - name: Record skipped visual diff summary for irrelevant changes
-        if: steps.diff_scope.outputs.should_run != 'true'
+          const summary = {
+            status: 'skipped',
+            reason: 'missing_main_baseline_artifact',
+            message: `${{ steps.baseline.outputs.message }}`,
+            baselineAvailable: false,
+            currentResultsPath: `${{ steps.capture.outputs.results-file }}`
+          };
+
+          const markdown = [
+            '# Visual Diff Summary',
+            '',
+            '- Status: skipped',
+            '- Reason: latest successful `main` visual baseline artifact was not available',
+            `- Details: ${summary.message}`,
+            `- Current run: \`${summary.currentResultsPath}\``,
+            '',
+            '## Next action',
+            '',
+            '- Merge the baseline-publishing workflow to `main` and wait for one successful run, or refresh the expired baseline artifact.'
+          ].join('\n') + '\n';
+
+          await fs.writeFile('qa-artifacts/visual-diffs/current/visual-diff-summary.json', `${JSON.stringify(summary, null, 2)}\n`);
+          await fs.writeFile('qa-artifacts/visual-diffs/current/visual-diff-summary.md', markdown);
+          EOF
+          {
+            echo "summary_path=${GITHUB_WORKSPACE}/qa-artifacts/visual-diffs/current/visual-diff-summary.json"
+            echo "markdown_path=${GITHUB_WORKSPACE}/qa-artifacts/visual-diffs/current/visual-diff-summary.md"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Stage diff artifact
+        id: stage
+        uses: ./visual-diff-github-action/actions/stage-visual-artifacts
+        with:
+          artifact-type: diff
+          bundle-dir: qa-artifacts/visual-diff-artifact
+          summary-json-path: ${{ steps.compare.outputs.summary-path || steps.skipped_summary.outputs.summary_path }}
+          summary-markdown-path: ${{ steps.compare.outputs.markdown-path || steps.skipped_summary.outputs.markdown_path }}
+          baseline-results-path: ${{ steps.baseline.outputs.results-file }}
+          current-results-path: ${{ steps.capture.outputs.results-file }}
+          baseline-manifest-path: ${{ steps.baseline.outputs.manifest-file }}
+          current-manifest-path: ${{ steps.capture.outputs.manifest-file }}
+          baseline-screenshots-dir: ${{ steps.baseline.outputs.screenshots-dir }}
+          current-screenshots-dir: ${{ steps.capture.outputs.screenshots-root }}/screenshots
+
+      - name: Publish visual diff summary to workflow run
+        if: always()
         run: |
           set -euo pipefail
-          mkdir -p qa-artifacts/visual-diffs/pr
-          cat <<'EOF' > qa-artifacts/visual-diffs/pr/visual-diff-summary.md
+          SUMMARY_FILE="${{ steps.compare.outputs.markdown-path || steps.skipped_summary.outputs.markdown_path }}"
+          if [ -f "$SUMMARY_FILE" ]; then
+            cat "$SUMMARY_FILE" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload diff artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-visual-diff-${{ needs.prepare-visual-diff.outputs.pr_number || github.run_id }}
+          retention-days: 30
+          path: ${{ steps.stage.outputs.bundle-dir }}
+
+      - name: Publish PR comment
+        if: needs.prepare-visual-diff.outputs.pr_number != ''
+        uses: ./visual-diff-github-action/actions/publish-visual-pr-comment
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ needs.prepare-visual-diff.outputs.pr_number }}
+          summary-path: ${{ steps.compare.outputs.summary-path || steps.skipped_summary.outputs.summary_path }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          artifact-name: pr-visual-diff-${{ needs.prepare-visual-diff.outputs.pr_number || github.run_id }}
+
+      - name: Evaluate outcome
+        if: steps.baseline.outputs.found == 'true'
+        uses: ./visual-diff-github-action/actions/evaluate-visual-diff-outcome
+        with:
+          summary-path: ${{ steps.compare.outputs.summary-path }}
+
+      - name: Stop app
+        if: always()
+        run: kill "$QA_SERVER_PID" || true
+
+  skipped-visual-diff:
+    needs: prepare-visual-diff
+    if: needs.prepare-visual-diff.outputs.should_run != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare-visual-diff.outputs.head_sha || github.sha }}
+
+      - name: Record skipped visual diff summary
+        run: |
+          set -euo pipefail
+          mkdir -p qa-artifacts/visual-diffs/current
+          cat <<'EOF' > qa-artifacts/visual-diffs/current/visual-diff-summary.md
           # Visual Diff Summary
 
           - Status: skipped
           - Reason: no visual-relevant changes were detected in this pull request
           - Details: the PR did not modify files mapped to visual QA coverage
           EOF
-          cat <<'EOF' > qa-artifacts/visual-diffs/pr/visual-diff-summary.json
+          cat <<'EOF' > qa-artifacts/visual-diffs/current/visual-diff-summary.json
           {
             "status": "skipped",
             "reason": "no_visual_relevant_changes",
@@ -310,189 +307,22 @@ jobs:
           }
           EOF
 
-      - name: Record skipped visual diff summary
-        if: steps.diff_scope.outputs.should_run == 'true' && steps.baseline_artifact.outputs.found != 'true'
-        run: |
-          set -euo pipefail
-          mkdir -p qa-artifacts/visual-diffs/pr
-          cat <<'EOF' > qa-artifacts/visual-diffs/pr/visual-diff-summary.md
-          # Visual Diff Summary
-
-          - Status: skipped
-          - Reason: latest successful `main` visual baseline artifact was not available
-          - Details: ${{ steps.baseline_artifact.outputs.message }}
-          - Current run: `${{ steps.visual_config.outputs.results_file }}`
-
-          ## Next action
-
-          - Merge the baseline-uploading workflow to `main` and wait for one successful `main` CI run, or refresh the expired baseline artifact.
-          EOF
-          cat <<'EOF' > qa-artifacts/visual-diffs/pr/visual-diff-summary.json
-          {
-            "status": "skipped",
-            "reason": "missing_main_baseline_artifact",
-            "message": "${{ steps.baseline_artifact.outputs.message }}",
-            "baselineAvailable": false,
-            "currentResultsPath": "${{ steps.visual_config.outputs.results_file }}"
-          }
-          EOF
-
       - name: Publish visual diff summary to workflow run
-        if: always()
-        run: |
-          set -euo pipefail
-          if [ -f qa-artifacts/visual-diffs/pr/visual-diff-summary.md ]; then
-            cat qa-artifacts/visual-diffs/pr/visual-diff-summary.md >> "$GITHUB_STEP_SUMMARY"
-          fi
+        run: cat qa-artifacts/visual-diffs/current/visual-diff-summary.md >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Prepare PR visual diff artifact bundle
-        if: always()
-        run: |
-          set -euo pipefail
-          BUNDLE_DIR="qa-artifacts/visual-diff-artifact"
-          rm -rf "$BUNDLE_DIR"
-          mkdir -p "$BUNDLE_DIR/baseline-screenshots" "$BUNDLE_DIR/current-screenshots"
-          if [ -f qa-artifacts/visual-diffs/pr/visual-diff-summary.md ]; then
-            cp qa-artifacts/visual-diffs/pr/visual-diff-summary.md "$BUNDLE_DIR/visual-diff-summary.md"
-          fi
-          if [ -f qa-artifacts/visual-diffs/pr/visual-diff-summary.json ]; then
-            cp qa-artifacts/visual-diffs/pr/visual-diff-summary.json "$BUNDLE_DIR/visual-diff-summary.json"
-          fi
-          if [ -n "${{ steps.baseline_paths.outputs.results_file }}" ] && [ -f "${{ steps.baseline_paths.outputs.results_file }}" ]; then
-            cp "${{ steps.baseline_paths.outputs.results_file }}" "$BUNDLE_DIR/baseline-results.json"
-          fi
-          if [ -n "${{ steps.baseline_paths.outputs.manifest_file }}" ] && [ -f "${{ steps.baseline_paths.outputs.manifest_file }}" ]; then
-            cp "${{ steps.baseline_paths.outputs.manifest_file }}" "$BUNDLE_DIR/baseline-screenshot-manifest.json"
-          fi
-          if [ -f "${{ steps.visual_config.outputs.results_file }}" ]; then
-            cp "${{ steps.visual_config.outputs.results_file }}" "$BUNDLE_DIR/current-results.json"
-          fi
-          if [ -f "${{ steps.visual_config.outputs.manifest_file }}" ]; then
-            cp "${{ steps.visual_config.outputs.manifest_file }}" "$BUNDLE_DIR/current-screenshot-manifest.json"
-          fi
-          if [ -d "${{ steps.baseline_paths.outputs.screenshots_dir }}" ]; then
-            find "${{ steps.baseline_paths.outputs.screenshots_dir }}" -type f -name '*.png' -exec cp {} "$BUNDLE_DIR/baseline-screenshots/" \;
-          fi
-          if [ -d "${{ steps.visual_config.outputs.screenshots_dir }}" ]; then
-            find "${{ steps.visual_config.outputs.screenshots_dir }}" -type f -name '*.png' -exec cp {} "$BUNDLE_DIR/current-screenshots/" \;
-          fi
-
-      - name: Upload PR visual diff artifacts
-        id: upload_visual_diff_artifact
-        if: always()
+      - name: Upload skipped visual diff artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pr-visual-diff-${{ steps.run_context.outputs.pr_number || github.run_id }}
+          name: pr-visual-diff-${{ needs.prepare-visual-diff.outputs.pr_number || github.run_id }}
           retention-days: 30
-          path: |
-            qa-artifacts/visual-diff-artifact
+          path: qa-artifacts/visual-diffs/current
 
-      - name: Post PR visual diff summary comment
-        if: always() && steps.run_context.outputs.pr_number != ''
-        continue-on-error: true
-        uses: actions/github-script@v7
-        env:
-          VISUAL_DIFF_SUMMARY_PATH: qa-artifacts/visual-diffs/pr/visual-diff-summary.json
-          VISUAL_DIFF_RUN_URL: ${{ steps.run_context.outputs.run_url }}
-          VISUAL_DIFF_ARTIFACT_NAME: pr-visual-diff-${{ steps.run_context.outputs.pr_number || github.run_id }}
+      - name: Publish PR comment
+        if: needs.prepare-visual-diff.outputs.pr_number != ''
+        uses: ./visual-diff-github-action/actions/publish-visual-pr-comment
         with:
-          script: |
-            const fs = require('fs');
-            const marker = '<!-- pr-visual-diff-summary -->';
-            const summaryPath = process.env.VISUAL_DIFF_SUMMARY_PATH;
-            if (!fs.existsSync(summaryPath)) {
-              core.warning(`Visual diff summary not found at ${summaryPath}`);
-              return;
-            }
-
-            const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
-            const status = summary.status || 'incomplete';
-            const statusLabelMap = {
-              clean: 'Clean',
-              'changes-detected': 'Changes detected',
-              incomplete: 'Incomplete',
-              skipped: 'Skipped'
-            };
-            const statusIconMap = {
-              clean: '✅',
-              'changes-detected': '🟡',
-              incomplete: '⚠️',
-              skipped: '⏭️'
-            };
-
-            const selectedRoutes = Array.isArray(summary.selectedRoutes)
-              ? String(summary.selectedRoutes.length)
-              : 'all';
-            const lines = [
-              marker,
-              '## Visual Diff',
-              '',
-              `- Status: ${statusIconMap[status] || '⚠️'} **${statusLabelMap[status] || status}**`,
-              `- Selected routes: ${selectedRoutes}`,
-              `- Changed screenshots: ${summary.changedScreenshots || 0}`,
-              `- Matched screenshots: ${summary.matchedScreenshots || 0}`,
-              `- Missing in baseline: ${summary.missingInBaseline || 0}`,
-              `- Missing in current: ${summary.missingInCurrent || 0}`,
-              `- Comparison errors: ${(summary.errors || []).length}`,
-              `- Artifact: \`${process.env.VISUAL_DIFF_ARTIFACT_NAME}\``,
-              `- Run: ${process.env.VISUAL_DIFF_RUN_URL}`
-            ];
-
-            if (summary.baselineArtifactName) {
-              lines.push(`- Baseline artifact: \`${summary.baselineArtifactName}\``);
-            }
-            if (summary.baselineSourceSha) {
-              lines.push(`- Baseline SHA: \`${summary.baselineSourceSha}\``);
-            }
-            if (summary.message) {
-              lines.push(`- Details: ${summary.message}`);
-            }
-            if (Array.isArray(summary.changed) && summary.changed.length > 0) {
-              lines.push('');
-              lines.push('<details><summary>Changed screenshots</summary>');
-              lines.push('');
-              for (const item of summary.changed.slice(0, 10)) {
-                lines.push(`- ${item.id} (${item.viewport})`);
-              }
-              if (summary.changed.length > 10) {
-                lines.push(`- ...and ${summary.changed.length - 10} more`);
-              }
-              lines.push('');
-              lines.push('</details>');
-            }
-            if (Array.isArray(summary.errors) && summary.errors.length > 0) {
-              lines.push('');
-              lines.push('<details><summary>Comparison errors</summary>');
-              lines.push('');
-              for (const item of summary.errors.slice(0, 10)) {
-                lines.push(`- ${item.id}: ${item.message}`);
-              }
-              lines.push('');
-              lines.push('</details>');
-            }
-
-            const body = lines.join('\n');
-            const issueNumber = Number('${{ steps.run_context.outputs.pr_number }}');
-            const comments = await github.paginate(github.rest.issues.listComments, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issueNumber,
-              per_page: 100
-            });
-            const existing = comments.find((comment) => comment.body && comment.body.includes(marker));
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issueNumber,
-                body
-              });
-            }
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ needs.prepare-visual-diff.outputs.pr_number }}
+          summary-path: qa-artifacts/visual-diffs/current/visual-diff-summary.json
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          artifact-name: pr-visual-diff-${{ needs.prepare-visual-diff.outputs.pr_number || github.run_id }}

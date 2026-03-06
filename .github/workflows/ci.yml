@@ -159,12 +159,33 @@ jobs:
         QA_A11Y_FAIL_ON_VIOLATIONS: '0'
       continue-on-error: true
 
-    - name: Visual Baseline Snapshot Capture (report-only)
-      if: steps.visual_relevance.outputs.run_visual_qa == 'true'
-      run: npm run qa:visual-baseline:foundation
-      env:
-        QA_VISUAL_ROUTE_IDS: ${{ steps.visual_relevance.outputs.selected_route_ids }}
-      continue-on-error: true
+    - name: Capture baseline visual routes
+      if: github.ref == 'refs/heads/main' && steps.visual_relevance.outputs.run_visual_qa == 'true'
+      id: capture_visual
+      uses: ./visual-diff-github-action/actions/capture-visual-routes
+      with:
+        repo-config-path: .github/visual-regression.json
+        route-ids: ${{ steps.visual_relevance.outputs.selected_route_ids }}
+
+    - name: Stage main visual baseline artifact
+      if: github.ref == 'refs/heads/main' && steps.visual_relevance.outputs.run_visual_qa == 'true'
+      id: stage_visual
+      uses: ./visual-diff-github-action/actions/stage-visual-artifacts
+      with:
+        artifact-type: baseline
+        bundle-dir: qa-artifacts/visual-baseline-artifact
+        results-path: ${{ steps.capture_visual.outputs.results-file }}
+        manifest-path: ${{ steps.capture_visual.outputs.manifest-file }}
+        screenshots-dir: ${{ steps.capture_visual.outputs.screenshots-root }}/screenshots
+
+    - name: Upload main visual baseline artifacts
+      if: github.ref == 'refs/heads/main' && steps.visual_relevance.outputs.run_visual_qa == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.visual_config.outputs.baseline_artifact_name }}
+        retention-days: 30
+        if-no-files-found: warn
+        path: ${{ steps.stage_visual.outputs.bundle-dir }}
 
     - name: Record skipped visual QA summary
       if: steps.visual_relevance.outputs.run_visual_qa != 'true'
@@ -175,33 +196,6 @@ jobs:
         - Status: skipped
         - Reason: no visual-relevant changes detected in this pull request
         EOF
-
-    - name: Prepare main visual baseline artifact bundle
-      if: github.ref == 'refs/heads/main' && always()
-      run: |
-        set -euo pipefail
-        BUNDLE_DIR="qa-artifacts/visual-baseline-artifact"
-        rm -rf "$BUNDLE_DIR"
-        mkdir -p "$BUNDLE_DIR/screenshots"
-        if [ -f "${{ steps.visual_config.outputs.results_file }}" ]; then
-          cp "${{ steps.visual_config.outputs.results_file }}" "$BUNDLE_DIR/visual-baseline-results.json"
-        fi
-        if [ -f "${{ steps.visual_config.outputs.manifest_file }}" ]; then
-          cp "${{ steps.visual_config.outputs.manifest_file }}" "$BUNDLE_DIR/visual-screenshot-manifest.json"
-        fi
-        if [ -d "${{ steps.visual_config.outputs.screenshots_dir }}" ]; then
-          find "${{ steps.visual_config.outputs.screenshots_dir }}" -type f -name '*.png' -exec cp {} "$BUNDLE_DIR/screenshots/" \;
-        fi
-
-    - name: Upload main visual baseline artifacts
-      if: github.ref == 'refs/heads/main' && always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ steps.visual_config.outputs.baseline_artifact_name }}
-        retention-days: 30
-        if-no-files-found: warn
-        path: |
-          qa-artifacts/visual-baseline-artifact
 
     - name: Stop Local QA Server
       if: always() && steps.visual_relevance.outputs.run_visual_qa == 'true'
