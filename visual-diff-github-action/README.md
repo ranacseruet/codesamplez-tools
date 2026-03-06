@@ -11,7 +11,9 @@ This module contains the extracted shared visual regression implementation for `
 
 ## Current status
 
-The runnable local proof path in this repo is the canary workflow at [.github/workflows/phase-2-visual-diff-canary.yml](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/.github/workflows/phase-2-visual-diff-canary.yml).
+The primary CI and PR workflows in this repo now call the shared actions directly from repo-owned jobs.
+
+The canary workflow at [.github/workflows/visual-diff-canary.yml](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/.github/workflows/visual-diff-canary.yml) remains as a narrow smoke path for shared action implementation changes.
 
 Because GitHub only recognizes reusable workflows from a repository root `.github/workflows/` directory, the workflow files under this module are staged templates for extraction and promotion. The shared actions under `actions/` are fully runnable in-place from this repo.
 
@@ -19,6 +21,7 @@ Because GitHub only recognizes reusable workflows from a repository root `.githu
 
 - `actions/capture-visual-routes`
 - `actions/compare-visual-results`
+- `actions/determine-visual-diff-scope`
 - `actions/resolve-baseline-artifact`
 - `actions/stage-visual-artifacts`
 - `actions/publish-visual-pr-comment`

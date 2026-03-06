@@ -1,4 +1,4 @@
-name: Phase H Health Monitoring
+name: Health Monitoring
 
 on:
   schedule:
@@ -82,7 +82,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-h-health-${{ github.run_id }}
+          name: health-monitoring-${{ github.run_id }}
           retention-days: 30
           path: |
             reports/bundle-metrics/latest.json

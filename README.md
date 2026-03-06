@@ -104,7 +104,7 @@ Supporting and report-oriented checks:
 - `npm run qa:a11y:foundation`
 - `npm run qa:visual-baseline:foundation`
 - `npm run qa:visual-diff:foundation`
-- `npm run qa:cross-browser:phase-h`
+- `npm run qa:cross-browser`
 
 `npm run qa:visual-diff:foundation` expects a baseline artifact layout by default. For local runs, either stage baseline artifacts under `baseline/qa-artifacts/...` or override the baseline/current paths with `QA_VISUAL_BASELINE_RESULTS_PATH`, `QA_VISUAL_CURRENT_RESULTS_PATH`, `QA_VISUAL_BASELINE_RUN_DIR`, and `QA_VISUAL_CURRENT_RUN_DIR`.
 

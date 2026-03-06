@@ -28,69 +28,16 @@ jobs:
           const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
           core.setOutput('baseline_artifact_name', config.baselineArtifactName);
-          core.setOutput('results_file', config.resultsFile);
-          core.setOutput('manifest_file', config.manifestFile);
-          core.setOutput('screenshots_root', config.screenshotsRoot);
-          core.setOutput('screenshots_dir', `${config.screenshotsRoot}/screenshots`);
-          core.setOutput('all_route_ids', (config.routes || []).map((route) => route.id).join(','));
 
-    - name: Detect visual QA relevance
+    - name: Determine visual QA scope
       id: visual_relevance
-      uses: actions/github-script@v7
+      uses: ./visual-diff-github-action/actions/determine-visual-diff-scope
       with:
-        script: |
-          const fs = require('fs');
-          const path = require('path');
-          const configPath = path.join(process.env.GITHUB_WORKSPACE, '.github', 'visual-regression.json');
-          const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-          const allRouteIds = `${{ steps.visual_config.outputs.all_route_ids }}`.split(',').filter(Boolean);
-          const sharedPrefixes = config.selection?.sharedPrefixes || [];
-          const sharedExact = new Set(config.selection?.sharedExact || []);
-          const routes = Array.isArray(config.routes) ? config.routes : [];
-
-          if (context.eventName === 'push' && context.ref === 'refs/heads/main') {
-            core.setOutput('run_visual_qa', 'true');
-            core.setOutput('reason', 'main_push');
-            core.setOutput('selected_route_ids', allRouteIds.join(','));
-            return;
-          }
-
-          if (context.eventName !== 'pull_request' || !context.payload.pull_request?.number) {
-            core.setOutput('run_visual_qa', 'true');
-            core.setOutput('reason', 'non_pr_event');
-            core.setOutput('selected_route_ids', allRouteIds.join(','));
-            return;
-          }
-
-          try {
-            const files = await github.paginate(github.rest.pulls.listFiles, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              per_page: 100
-            });
-
-            const filenames = files.map((file) => file.filename);
-            if (filenames.some((file) => sharedExact.has(file) || sharedPrefixes.some((prefix) => file.startsWith(prefix)))) {
-              core.setOutput('run_visual_qa', 'true');
-              core.setOutput('reason', 'shared_visual_change');
-              core.setOutput('selected_route_ids', allRouteIds.join(','));
-              return;
-            }
-
-            const selectedRouteIds = routes
-              .filter((route) => (route.changePaths || []).some((prefix) => filenames.some((file) => file.startsWith(prefix))))
-              .map((route) => route.id);
-
-            core.setOutput('run_visual_qa', selectedRouteIds.length > 0 ? 'true' : 'false');
-            core.setOutput('reason', selectedRouteIds.length > 0 ? 'scoped_visual_change' : 'no_visual_relevant_changes');
-            core.setOutput('selected_route_ids', selectedRouteIds.join(','));
-          } catch (error) {
-            core.warning(`Unable to inspect PR files for visual QA relevance; defaulting to run visual QA. ${error.message}`);
-            core.setOutput('run_visual_qa', 'true');
-            core.setOutput('reason', 'visual_relevance_check_failed');
-            core.setOutput('selected_route_ids', allRouteIds.join(','));
-          }
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        repo-config-path: .github/visual-regression.json
+        pr-number: ${{ github.event.pull_request.number || '' }}
+        force-run: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        force-run-reason: main_push
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
@@ -128,11 +75,11 @@ jobs:
       run: npm run bundle-budget-check
 
     - name: Install Playwright Chromium
-      if: steps.visual_relevance.outputs.run_visual_qa == 'true'
+      if: steps.visual_relevance.outputs.should-run == 'true'
       run: npx playwright install --with-deps chromium
 
     - name: Start Local Server for QA Baselines
-      if: steps.visual_relevance.outputs.run_visual_qa == 'true'
+      if: steps.visual_relevance.outputs.should-run == 'true'
       run: |
         set -euo pipefail
         npm start > /tmp/codesamplez-ci-start.log 2>&1 &
@@ -152,7 +99,7 @@ jobs:
         fi
 
     - name: Accessibility Baseline (report-only)
-      if: steps.visual_relevance.outputs.run_visual_qa == 'true'
+      if: steps.visual_relevance.outputs.should-run == 'true'
       run: npm run qa:a11y:foundation
       env:
         QA_BASE_URL: http://127.0.0.1:8080
@@ -160,15 +107,15 @@ jobs:
       continue-on-error: true
 
     - name: Capture baseline visual routes
-      if: github.ref == 'refs/heads/main' && steps.visual_relevance.outputs.run_visual_qa == 'true'
+      if: github.ref == 'refs/heads/main' && steps.visual_relevance.outputs.should-run == 'true'
       id: capture_visual
       uses: ./visual-diff-github-action/actions/capture-visual-routes
       with:
         repo-config-path: .github/visual-regression.json
-        route-ids: ${{ steps.visual_relevance.outputs.selected_route_ids }}
+        route-ids: ${{ steps.visual_relevance.outputs.selected-route-ids }}
 
     - name: Stage main visual baseline artifact
-      if: github.ref == 'refs/heads/main' && steps.visual_relevance.outputs.run_visual_qa == 'true'
+      if: github.ref == 'refs/heads/main' && steps.visual_relevance.outputs.should-run == 'true'
       id: stage_visual
       uses: ./visual-diff-github-action/actions/stage-visual-artifacts
       with:
@@ -179,7 +126,7 @@ jobs:
         screenshots-dir: ${{ steps.capture_visual.outputs.screenshots-root }}/screenshots
 
     - name: Upload main visual baseline artifacts
-      if: github.ref == 'refs/heads/main' && steps.visual_relevance.outputs.run_visual_qa == 'true'
+      if: github.ref == 'refs/heads/main' && steps.visual_relevance.outputs.should-run == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: ${{ steps.visual_config.outputs.baseline_artifact_name }}
@@ -188,7 +135,7 @@ jobs:
         path: ${{ steps.stage_visual.outputs.bundle-dir }}
 
     - name: Record skipped visual QA summary
-      if: steps.visual_relevance.outputs.run_visual_qa != 'true'
+      if: steps.visual_relevance.outputs.should-run != 'true'
       run: |
         cat <<'EOF' >> "$GITHUB_STEP_SUMMARY"
         ## Visual QA
@@ -198,7 +145,7 @@ jobs:
         EOF
 
     - name: Stop Local QA Server
-      if: always() && steps.visual_relevance.outputs.run_visual_qa == 'true'
+      if: always() && steps.visual_relevance.outputs.should-run == 'true'
       run: kill $QA_SERVER_PID || true
 
     - name: Upload coverage reports to Codecov

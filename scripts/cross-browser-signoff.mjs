@@ -10,10 +10,10 @@ import { chromium, firefox, webkit } from 'playwright';
 const baseUrl = process.env.QA_BASE_URL || 'http://127.0.0.1:8080';
 const outDir = path.resolve(process.env.QA_CROSS_BROWSER_OUT_DIR || path.join('qa-artifacts', 'cross-browser-signoff'));
 const resultsPath = path.resolve(
-  process.env.QA_CROSS_BROWSER_RESULTS_FILE || path.join(outDir, 'phase-h-cross-browser-signoff-results.json')
+  process.env.QA_CROSS_BROWSER_RESULTS_FILE || path.join(outDir, 'cross-browser-signoff-results.json')
 );
 const markdownPath = path.resolve(
-  process.env.QA_CROSS_BROWSER_RESULTS_MARKDOWN || path.join(outDir, 'phase-h-cross-browser-signoff-results.md')
+  process.env.QA_CROSS_BROWSER_RESULTS_MARKDOWN || path.join(outDir, 'cross-browser-signoff-results.md')
 );
 
 const browserMatrix = [
@@ -49,7 +49,7 @@ const scenarios = [
 const results = {
   startedAt: new Date().toISOString(),
   baseUrl,
-  suite: 'phase-h-cross-browser-signoff',
+  suite: 'cross-browser-signoff',
   checks: []
 };
 
@@ -101,7 +101,7 @@ async function record(browserName, scenario, fn) {
  */
 function makeMarkdown(summary) {
   const lines = [];
-  lines.push('# Phase H Cross-Browser Signoff');
+  lines.push('# Cross-Browser Signoff');
   lines.push('');
   lines.push(`- Base URL: \`${summary.baseUrl}\``);
   lines.push(`- Total checks: ${summary.checks.length}`);

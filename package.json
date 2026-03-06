@@ -25,7 +25,7 @@
     "qa:visual-baseline:foundation": "node scripts/visual-baseline-ui-foundation.mjs",
     "qa:visual-diff:foundation": "node scripts/visual-diff-ui-foundation.mjs",
     "qa:a11y:foundation": "node scripts/a11y-baseline-ui-foundation.mjs",
-    "qa:cross-browser:phase-h": "node scripts/phase-h-cross-browser-signoff.mjs"
+    "qa:cross-browser": "node scripts/cross-browser-signoff.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",

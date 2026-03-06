@@ -1,19 +1,11 @@
-name: Phase 2 Visual Diff Canary
+name: Visual Diff Canary
 
 on:
   pull_request:
     branches: [ main ]
     paths:
-      - '.github/workflows/phase-2-visual-diff-canary.yml'
-      - '.github/visual-regression.json'
+      - '.github/workflows/visual-diff-canary.yml'
       - 'visual-diff-github-action/**'
-      - 'scripts/visual-baseline-ui-foundation.mjs'
-      - 'scripts/visual-diff-ui-foundation.mjs'
-      - 'scripts/visual-regression-config.mjs'
-      - 'types/qa-script-types.d.ts'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.json'
   workflow_dispatch:
     inputs:
       route-ids:
@@ -22,7 +14,7 @@ on:
         type: string
 
 concurrency:
-  group: phase-2-visual-diff-canary-${{ github.ref }}
+  group: visual-diff-canary-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -53,7 +45,7 @@ jobs:
       - name: Start local app
         run: |
           set -euo pipefail
-          npm start > /tmp/phase-2-visual-canary-baseline.log 2>&1 &
+          npm start > /tmp/visual-diff-canary-baseline.log 2>&1 &
           echo "QA_SERVER_PID=$!" >> "$GITHUB_ENV"
           ready=0
           for i in $(seq 1 45); do
@@ -64,7 +56,7 @@ jobs:
             sleep 1
           done
           if [ "$ready" -ne 1 ]; then
-            cat /tmp/phase-2-visual-canary-baseline.log || true
+            cat /tmp/visual-diff-canary-baseline.log || true
             exit 1
           fi
 
@@ -80,7 +72,7 @@ jobs:
         uses: ./visual-diff-github-action/actions/stage-visual-artifacts
         with:
           artifact-type: baseline
-          bundle-dir: qa-artifacts/phase-2-canary-baseline
+          bundle-dir: qa-artifacts/visual-diff-canary-baseline
           results-path: ${{ steps.capture.outputs.results-file }}
           manifest-path: ${{ steps.capture.outputs.manifest-file }}
           screenshots-dir: ${{ steps.capture.outputs.screenshots-root }}/screenshots
@@ -88,7 +80,7 @@ jobs:
       - name: Upload canary baseline artifact
         uses: actions/upload-artifact@v4
         with:
-          name: phase-2-canary-baseline-${{ github.run_id }}
+          name: visual-diff-canary-baseline-${{ github.run_id }}
           retention-days: 7
           path: ${{ steps.stage.outputs.bundle-dir }}
 
@@ -121,13 +113,13 @@ jobs:
       - name: Download canary baseline artifact
         uses: actions/download-artifact@v4
         with:
-          name: phase-2-canary-baseline-${{ github.run_id }}
+          name: visual-diff-canary-baseline-${{ github.run_id }}
           path: baseline-download
 
       - name: Start local app
         run: |
           set -euo pipefail
-          npm start > /tmp/phase-2-visual-canary-diff.log 2>&1 &
+          npm start > /tmp/visual-diff-canary-diff.log 2>&1 &
           echo "QA_SERVER_PID=$!" >> "$GITHUB_ENV"
           ready=0
           for i in $(seq 1 45); do
@@ -138,7 +130,7 @@ jobs:
             sleep 1
           done
           if [ "$ready" -ne 1 ]; then
-            cat /tmp/phase-2-visual-canary-diff.log || true
+            cat /tmp/visual-diff-canary-diff.log || true
             exit 1
           fi
 
@@ -167,7 +159,7 @@ jobs:
         uses: ./visual-diff-github-action/actions/stage-visual-artifacts
         with:
           artifact-type: diff
-          bundle-dir: qa-artifacts/phase-2-canary-diff
+          bundle-dir: qa-artifacts/visual-diff-canary-diff
           summary-json-path: ${{ steps.compare.outputs.summary-path }}
           summary-markdown-path: ${{ steps.compare.outputs.markdown-path }}
           baseline-results-path: baseline-download/visual-baseline-results.json
@@ -180,7 +172,7 @@ jobs:
       - name: Upload canary diff artifact
         uses: actions/upload-artifact@v4
         with:
-          name: phase-2-canary-diff-${{ github.run_id }}
+          name: visual-diff-canary-diff-${{ github.run_id }}
           retention-days: 7
           path: ${{ steps.stage.outputs.bundle-dir }}
 

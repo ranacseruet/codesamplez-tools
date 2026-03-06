@@ -85,7 +85,7 @@ Additional checks to run when relevant:
 - `npm run qa:a11y:foundation`
 - `npm run qa:visual-baseline:foundation`
 - `npm run qa:visual-diff:foundation`
-- `npm run qa:cross-browser:phase-h`
+- `npm run qa:cross-browser`
 
 Notes:
 

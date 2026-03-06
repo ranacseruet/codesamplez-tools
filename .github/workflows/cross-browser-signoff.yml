@@ -1,4 +1,4 @@
-name: Phase H Cross-Browser Signoff
+name: Cross-Browser Signoff
 
 on:
   workflow_dispatch:
@@ -51,7 +51,7 @@ jobs:
       - name: Run cross-browser signoff
         env:
           QA_BASE_URL: http://127.0.0.1:8080
-        run: npm run qa:cross-browser:phase-h
+        run: npm run qa:cross-browser
 
       - name: Stop local QA server
         if: always()
@@ -61,8 +61,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-h-cross-browser-signoff-${{ github.run_id }}
+          name: cross-browser-signoff-${{ github.run_id }}
           retention-days: 30
           path: |
-            qa-artifacts/cross-browser-signoff/phase-h-cross-browser-signoff-results.json
-            qa-artifacts/cross-browser-signoff/phase-h-cross-browser-signoff-results.md
+            qa-artifacts/cross-browser-signoff/cross-browser-signoff-results.json
+            qa-artifacts/cross-browser-signoff/cross-browser-signoff-results.md
