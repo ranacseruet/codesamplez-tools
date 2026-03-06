@@ -64,9 +64,10 @@ jobs:
         continue-on-error: true
 
       - name: Visual baseline snapshot capture (scheduled, report-only)
-        run: npm run qa:visual-baseline:foundation
-        env:
-          QA_BASE_URL: http://127.0.0.1:8080
+        id: visual_capture
+        uses: ./visual-diff-github-action/actions/capture-visual-routes
+        with:
+          repo-config-path: .github/visual-regression.json
         continue-on-error: true
 
       - name: Dependency audit capture (high severity)

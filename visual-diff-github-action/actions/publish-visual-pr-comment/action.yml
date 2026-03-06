@@ -90,7 +90,10 @@ runs:
             lines.push('<details><summary>Changed screenshots</summary>');
             lines.push('');
             for (const item of summary.changed.slice(0, 10)) {
-              lines.push(`- ${item.id} (${item.viewport})`);
+              const percentChanged = typeof item.mismatchRatio === 'number'
+                ? `${(item.mismatchRatio * 100).toFixed(2)}%`
+                : 'n/a';
+              lines.push(`- ${item.id} (${item.viewport}) - ${percentChanged} changed`);
             }
             if (summary.changed.length > 10) {
               lines.push(`- ...and ${summary.changed.length - 10} more`);
@@ -107,7 +110,14 @@ runs:
             issue_number: issueNumber,
             per_page: 100
           });
-          const existing = comments.find((comment) => comment.body && comment.body.includes(marker));
+          const matchingComments = comments
+            .filter((comment) => comment.body && comment.body.includes(marker))
+            .sort((left, right) => {
+              const leftTime = new Date(left.updated_at || left.created_at).getTime();
+              const rightTime = new Date(right.updated_at || right.created_at).getTime();
+              return rightTime - leftTime;
+            });
+          const existing = matchingComments[0];
 
           if (existing) {
             await github.rest.issues.updateComment({
@@ -122,5 +132,13 @@ runs:
               repo: context.repo.repo,
               issue_number: issueNumber,
               body
+            });
+          }
+
+          for (const duplicate of matchingComments.slice(1)) {
+            await github.rest.issues.deleteComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: duplicate.id
             });
           }

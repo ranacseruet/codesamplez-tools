@@ -13,8 +13,6 @@ This module contains the extracted shared visual regression implementation for `
 
 The primary CI and PR workflows in this repo now call the shared actions directly from repo-owned jobs.
 
-The canary workflow at [.github/workflows/visual-diff-canary.yml](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/.github/workflows/visual-diff-canary.yml) remains as a narrow smoke path for shared action implementation changes.
-
 Because GitHub only recognizes reusable workflows from a repository root `.github/workflows/` directory, the workflow files under this module are staged templates for extraction and promotion. The shared actions under `actions/` are fully runnable in-place from this repo.
 
 ## Shared actions
