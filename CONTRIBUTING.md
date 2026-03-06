@@ -30,6 +30,7 @@ Shared foundation:
 
 - Runtime foundation is `preact`.
 - Shared shell/layout primitives live in `common/app-shell`.
+- Shared bootstrap and prerender contracts live in `common/tooling-contracts.ts`.
 - Shared design tokens and reusable primitives live in:
   - `common/material-theme.css`
   - `common/shared-styles.css`
@@ -56,6 +57,11 @@ Shared foundation:
 
 - Use consistent indentation and keep modules focused.
 - Prefer TypeScript for new logic and runtime work when practical.
+- Keep directly executed helper entrypoints on the current Node runtime path:
+  - CommonJS helpers stay `.js`
+  - ESM helpers stay `.mjs`
+  - use `// @ts-check` plus typed JSDoc on those entrypoints instead of converting them to compiled script entry files
+- Prefer `.ts` / `.tsx` for shared importable modules when practical.
 - Use semantic HTML.
 - Keep CSS scoped and reusable:
   - use shared primitives first
@@ -78,6 +84,7 @@ Additional checks to run when relevant:
 - `npm run bundle-metrics`
 - `npm run qa:a11y:foundation`
 - `npm run qa:visual-baseline:foundation`
+- `npm run qa:visual-diff:foundation`
 - `npm run qa:cross-browser:phase-h`
 
 Notes:
@@ -85,6 +92,7 @@ Notes:
 - Jest runs in a JSDOM environment.
 - Test files typically live alongside the corresponding tool or shared module.
 - Playwright-based checks use the built site, usually served locally with `npm start`.
+- `npm run qa:visual-diff:foundation` expects CI-style baseline artifacts by default. For local comparisons, either stage files under `baseline/qa-artifacts/...` or override the baseline/current result paths and run directories with the `QA_VISUAL_*` environment variables.
 
 ## Building
 
@@ -105,7 +113,7 @@ Always run `npm run verify-build` after build changes or when touching output-af
 - Use these active references:
   - [README](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/README.md)
   - [UI Styling Conventions](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/docs/ui-styling-conventions.md)
-  - [Deferred TypeScript And Tooling Hardening Execution Plan](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/docs/typescript-tooling-hardening-execution-plan.md)
+  - [Archived Docs Index](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/docs/archive/README.md)
 - Treat `docs/archive/` as historical reference only.
 
 ## Development Workflow

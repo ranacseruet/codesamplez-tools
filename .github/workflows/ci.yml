@@ -6,12 +6,86 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Detect visual QA relevance
+      id: visual_relevance
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const allToolPrefixes = [
+            'data-format-converter/',
+            'js-minifier-tool/',
+            'base64-converter-tool/',
+            'jwt-builder-tool/',
+            'jwt-decoder-tool/',
+            'json-formatter-tool/',
+            'css-minifier-tool/',
+            'text-analyzer-tool/',
+            'qr-code-generator/',
+            'diff-checker-tool/'
+          ];
+          const sharedPrefixes = ['common/'];
+          const sharedExact = new Set([
+            'index.html',
+            'styles.css',
+            'root-shell.ts',
+            'webpack.config.js',
+            'package.json',
+            'package-lock.json',
+            'babel.config.js',
+            'docs/ui-styling-conventions.md',
+            'docs/ui-component-catalog.html',
+            'docs/ui-component-catalog.css',
+            'scripts/visual-baseline-ui-foundation.mjs',
+            'scripts/visual-diff-ui-foundation.mjs',
+            'scripts/a11y-baseline-ui-foundation.mjs'
+          ]);
+
+          if (context.eventName === 'push' && context.ref === 'refs/heads/main') {
+            core.setOutput('run_visual_qa', 'true');
+            core.setOutput('reason', 'main_push');
+            return;
+          }
+
+          if (context.eventName !== 'pull_request' || !context.payload.pull_request?.number) {
+            core.setOutput('run_visual_qa', 'true');
+            core.setOutput('reason', 'non_pr_event');
+            return;
+          }
+
+          try {
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100
+            });
+
+            const filenames = files.map((file) => file.filename);
+            const hasVisualRelevantChanges = filenames.some((file) => (
+              sharedPrefixes.some((prefix) => file.startsWith(prefix)) ||
+              allToolPrefixes.some((prefix) => file.startsWith(prefix)) ||
+              sharedExact.has(file) ||
+              /^public-path\./.test(file)
+            ));
+
+            core.setOutput('run_visual_qa', hasVisualRelevantChanges ? 'true' : 'false');
+            core.setOutput('reason', hasVisualRelevantChanges ? 'visual_relevant_changes' : 'no_visual_relevant_changes');
+          } catch (error) {
+            core.warning(`Unable to inspect PR files for visual QA relevance; defaulting to run visual QA. ${error.message}`);
+            core.setOutput('run_visual_qa', 'true');
+            core.setOutput('reason', 'visual_relevance_check_failed');
+          }
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
@@ -49,9 +123,11 @@ jobs:
       run: npm run bundle-budget-check
 
     - name: Install Playwright Chromium
+      if: steps.visual_relevance.outputs.run_visual_qa == 'true'
       run: npx playwright install --with-deps chromium
 
     - name: Start Local Server for QA Baselines
+      if: steps.visual_relevance.outputs.run_visual_qa == 'true'
       run: |
         set -euo pipefail
         npm start > /tmp/codesamplez-ci-start.log 2>&1 &
@@ -71,6 +147,7 @@ jobs:
         fi
 
     - name: Accessibility Baseline (report-only)
+      if: steps.visual_relevance.outputs.run_visual_qa == 'true'
       run: npm run qa:a11y:foundation
       env:
         QA_BASE_URL: http://127.0.0.1:8080
@@ -78,12 +155,23 @@ jobs:
       continue-on-error: true
 
     - name: Visual Baseline Snapshot Capture (report-only)
+      if: steps.visual_relevance.outputs.run_visual_qa == 'true'
       run: npm run qa:visual-baseline:foundation
       env:
         QA_BASE_URL: http://127.0.0.1:8080
         QA_VISUAL_OUT_DIR: qa-artifacts/visual-baselines/ui-foundation
         QA_VISUAL_RESULTS_FILE: qa-artifacts/visual-baselines/ui-foundation/visual-baseline-results.json
       continue-on-error: true
+
+    - name: Record skipped visual QA summary
+      if: steps.visual_relevance.outputs.run_visual_qa != 'true'
+      run: |
+        cat <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+        ## Visual QA
+
+        - Status: skipped
+        - Reason: no visual-relevant changes detected in this pull request
+        EOF
 
     - name: Prepare main visual baseline artifact bundle
       if: github.ref == 'refs/heads/main' && always()
@@ -108,7 +196,7 @@ jobs:
           qa-artifacts/visual-baseline-artifact
 
     - name: Stop Local QA Server
-      if: always()
+      if: always() && steps.visual_relevance.outputs.run_visual_qa == 'true'
       run: kill $QA_SERVER_PID || true
 
     - name: Upload coverage reports to Codecov

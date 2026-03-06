@@ -39,6 +39,7 @@ The repo is on a post-migration steady-state workflow.
 
 - Runtime foundation: `preact`
 - Shared shell/layout primitives: `common/app-shell`
+- Shared bootstrap and prerender contracts: `common/tooling-contracts.ts`
 - Shared design tokens and reusable primitives:
   - `common/material-theme.css`
   - `common/shared-styles.css`
@@ -54,7 +55,8 @@ Engineering constraints:
 - Tools remain fully client-side and privacy-preserving
 - Existing tool URLs and build output paths are stable deployment contracts
 - Shared UI work should reuse existing tokens/primitives before adding new ones
-- Remaining deferred TypeScript/tooling hardening work is tracked in `docs/typescript-tooling-hardening-execution-plan.md`
+- Directly executed helper entrypoints under `scripts/` stay on the current Node runtime path (`.js` / `.mjs`) and use `// @ts-check` plus typed JSDoc
+- Shared importable runtime modules should prefer `.ts` / `.tsx` when practical
 
 ## Technologies
 
@@ -104,6 +106,8 @@ Supporting and report-oriented checks:
 - `npm run qa:visual-diff:foundation`
 - `npm run qa:cross-browser:phase-h`
 
+`npm run qa:visual-diff:foundation` expects a baseline artifact layout by default. For local runs, either stage baseline artifacts under `baseline/qa-artifacts/...` or override the baseline/current paths with `QA_VISUAL_BASELINE_RESULTS_PATH`, `QA_VISUAL_CURRENT_RESULTS_PATH`, `QA_VISUAL_BASELINE_RUN_DIR`, and `QA_VISUAL_CURRENT_RUN_DIR`.
+
 ## Contributing
 
 1. Create a feature branch.
@@ -125,7 +129,6 @@ Contributor references:
 
 - [Contributing Guidelines](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/CONTRIBUTING.md)
 - [UI Styling Conventions](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/docs/ui-styling-conventions.md)
-- [Deferred TypeScript And Tooling Hardening Execution Plan](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/docs/typescript-tooling-hardening-execution-plan.md)
 - [Archived Docs Index](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/docs/archive/README.md)
 
 ## License

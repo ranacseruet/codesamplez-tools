@@ -10,6 +10,7 @@ permissions:
   contents: read
   actions: read
   issues: write
+  pull-requests: read
 
 jobs:
   visual-diff:
@@ -23,15 +24,6 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '23'
-          cache: 'npm'
-
-      - name: Install dependencies (PR)
-        run: npm ci
 
       - name: Resolve run context
         id: run_context
@@ -51,7 +43,137 @@ jobs:
               `${process.env.GITHUB_SERVER_URL}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
             );
 
+      - name: Determine visual diff scope
+        id: diff_scope
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const allChecks = [
+              'root-index desktop baseline',
+              'root-index mobile baseline',
+              'data-format-converter desktop baseline',
+              'data-format-converter mobile baseline',
+              'js-minifier-tool desktop baseline',
+              'js-minifier-tool mobile baseline',
+              'base64-converter-tool desktop baseline',
+              'base64-converter-tool mobile baseline',
+              'jwt-builder-tool desktop baseline',
+              'jwt-builder-tool mobile baseline',
+              'jwt-decoder-tool desktop baseline',
+              'jwt-decoder-tool mobile baseline',
+              'json-formatter-tool desktop baseline',
+              'json-formatter-tool mobile baseline',
+              'css-minifier-tool desktop baseline',
+              'css-minifier-tool mobile baseline',
+              'text-analyzer-tool desktop baseline',
+              'text-analyzer-tool mobile baseline',
+              'qr-code-generator desktop baseline',
+              'qr-code-generator mobile baseline',
+              'diff-checker-tool desktop baseline',
+              'diff-checker-tool mobile baseline'
+            ];
+            const checkMap = new Map([
+              ['data-format-converter/', ['data-format-converter desktop baseline', 'data-format-converter mobile baseline']],
+              ['js-minifier-tool/', ['js-minifier-tool desktop baseline', 'js-minifier-tool mobile baseline']],
+              ['base64-converter-tool/', ['base64-converter-tool desktop baseline', 'base64-converter-tool mobile baseline']],
+              ['jwt-builder-tool/', ['jwt-builder-tool desktop baseline', 'jwt-builder-tool mobile baseline']],
+              ['jwt-decoder-tool/', ['jwt-decoder-tool desktop baseline', 'jwt-decoder-tool mobile baseline']],
+              ['json-formatter-tool/', ['json-formatter-tool desktop baseline', 'json-formatter-tool mobile baseline']],
+              ['css-minifier-tool/', ['css-minifier-tool desktop baseline', 'css-minifier-tool mobile baseline']],
+              ['text-analyzer-tool/', ['text-analyzer-tool desktop baseline', 'text-analyzer-tool mobile baseline']],
+              ['qr-code-generator/', ['qr-code-generator desktop baseline', 'qr-code-generator mobile baseline']],
+              ['diff-checker-tool/', ['diff-checker-tool desktop baseline', 'diff-checker-tool mobile baseline']]
+            ]);
+            const sharedPrefixes = ['common/'];
+            const sharedExact = new Set([
+              'index.html',
+              'styles.css',
+              'root-shell.ts',
+              'webpack.config.js',
+              'package.json',
+              'package-lock.json',
+              'babel.config.js',
+              'docs/ui-styling-conventions.md',
+              'docs/ui-component-catalog.html',
+              'docs/ui-component-catalog.css',
+              'scripts/visual-baseline-ui-foundation.mjs',
+              'scripts/visual-diff-ui-foundation.mjs',
+              'scripts/a11y-baseline-ui-foundation.mjs'
+            ]);
+
+            if (context.eventName === 'workflow_dispatch') {
+              core.setOutput('should_run', 'true');
+              core.setOutput('reason', 'manual_dispatch');
+              core.setOutput('selected_checks', allChecks.join(','));
+              return;
+            }
+
+            const prNumber = Number('${{ steps.run_context.outputs.pr_number }}');
+            if (!Number.isFinite(prNumber) || prNumber <= 0) {
+              core.warning('PR number unavailable; defaulting to running all visual checks.');
+              core.setOutput('should_run', 'true');
+              core.setOutput('reason', 'missing_pr_number');
+              core.setOutput('selected_checks', allChecks.join(','));
+              return;
+            }
+
+            try {
+              const files = await github.paginate(github.rest.pulls.listFiles, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                per_page: 100
+              });
+
+              const filenames = files.map((file) => file.filename);
+              const selected = new Set();
+              let isSharedChange = false;
+
+              for (const file of filenames) {
+                if (
+                  sharedPrefixes.some((prefix) => file.startsWith(prefix)) ||
+                  sharedExact.has(file) ||
+                  /^public-path\./.test(file)
+                ) {
+                  isSharedChange = true;
+                  break;
+                }
+
+                for (const [prefix, checks] of checkMap.entries()) {
+                  if (file.startsWith(prefix)) {
+                    checks.forEach((check) => selected.add(check));
+                  }
+                }
+              }
+
+              if (isSharedChange) {
+                core.setOutput('should_run', 'true');
+                core.setOutput('reason', 'shared_visual_change');
+                core.setOutput('selected_checks', allChecks.join(','));
+                return;
+              }
+
+              if (selected.size > 0) {
+                const selectedChecks = allChecks.filter((check) => selected.has(check));
+                core.setOutput('should_run', 'true');
+                core.setOutput('reason', 'scoped_visual_change');
+                core.setOutput('selected_checks', selectedChecks.join(','));
+                return;
+              }
+
+              core.notice('Skipping visual diff because the PR does not change any visual-relevant files.');
+              core.setOutput('should_run', 'false');
+              core.setOutput('reason', filenames.length > 0 ? 'no_visual_relevant_changes' : 'no_changed_files');
+              core.setOutput('selected_checks', '');
+            } catch (error) {
+              core.warning(`Unable to inspect PR files for visual diff scope; defaulting to run all visual checks. ${error.message}`);
+              core.setOutput('should_run', 'true');
+              core.setOutput('reason', 'visual_scope_check_failed');
+              core.setOutput('selected_checks', allChecks.join(','));
+            }
+
       - name: Find latest main visual baseline artifact
+        if: steps.diff_scope.outputs.should_run == 'true'
         id: baseline_artifact
         uses: actions/github-script@v7
         with:
@@ -116,7 +238,7 @@ jobs:
             }
 
       - name: Download main visual baseline artifact
-        if: steps.baseline_artifact.outputs.found == 'true'
+        if: steps.diff_scope.outputs.should_run == 'true' && steps.baseline_artifact.outputs.found == 'true'
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -126,7 +248,7 @@ jobs:
           path: baseline-download
 
       - name: Locate downloaded baseline results
-        if: steps.baseline_artifact.outputs.found == 'true'
+        if: steps.diff_scope.outputs.should_run == 'true' && steps.baseline_artifact.outputs.found == 'true'
         id: baseline_paths
         run: |
           set -euo pipefail
@@ -139,125 +261,27 @@ jobs:
           echo "results_file=$RESULTS_FILE" >> "$GITHUB_OUTPUT"
           echo "run_dir=${GITHUB_WORKSPACE}/baseline-download" >> "$GITHUB_OUTPUT"
 
+      - name: Set up Node.js
+        if: steps.diff_scope.outputs.should_run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '23'
+          cache: 'npm'
+
+      - name: Install dependencies (PR)
+        if: steps.diff_scope.outputs.should_run == 'true'
+        run: npm ci
+
       - name: Install Playwright Chromium
+        if: steps.diff_scope.outputs.should_run == 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Build PR artifacts
+        if: steps.diff_scope.outputs.should_run == 'true'
         run: npm run build
 
-      - name: Select visual checks for PR scope
-        id: diff_scope
-        run: |
-          set -euo pipefail
-
-          BASE_BRANCH="${{ steps.run_context.outputs.base_ref || 'main' }}"
-          if [ -z "$BASE_BRANCH" ]; then
-            BASE_BRANCH="main"
-          fi
-          git fetch origin "$BASE_BRANCH" --depth=1
-
-          all_checks=(
-            "root-index desktop baseline"
-            "root-index mobile baseline"
-            "data-format-converter desktop baseline"
-            "data-format-converter mobile baseline"
-            "js-minifier-tool desktop baseline"
-            "js-minifier-tool mobile baseline"
-            "base64-converter-tool desktop baseline"
-            "base64-converter-tool mobile baseline"
-            "jwt-builder-tool desktop baseline"
-            "jwt-builder-tool mobile baseline"
-            "jwt-decoder-tool desktop baseline"
-            "jwt-decoder-tool mobile baseline"
-            "json-formatter-tool desktop baseline"
-            "json-formatter-tool mobile baseline"
-            "css-minifier-tool desktop baseline"
-            "css-minifier-tool mobile baseline"
-            "text-analyzer-tool desktop baseline"
-            "text-analyzer-tool mobile baseline"
-            "qr-code-generator desktop baseline"
-            "qr-code-generator mobile baseline"
-            "diff-checker-tool desktop baseline"
-            "diff-checker-tool mobile baseline"
-          )
-
-          declare -A selected=()
-
-          add_check() {
-            local check_name="$1"
-            selected["$check_name"]=1
-          }
-
-          is_shared_change=false
-          for file in $(git diff --name-only "origin/$BASE_BRANCH...HEAD"); do
-            case "$file" in
-              common/* | public-path.* | docs/ui-styling-conventions.md | docs/ui-component-catalog.html | docs/ui-component-catalog.css)
-                is_shared_change=true
-                ;;
-              data-format-converter/*)
-                add_check "data-format-converter desktop baseline"
-                add_check "data-format-converter mobile baseline"
-                ;;
-              js-minifier-tool/*)
-                add_check "js-minifier-tool desktop baseline"
-                add_check "js-minifier-tool mobile baseline"
-                ;;
-              base64-converter-tool/*)
-                add_check "base64-converter-tool desktop baseline"
-                add_check "base64-converter-tool mobile baseline"
-                ;;
-              jwt-builder-tool/*)
-                add_check "jwt-builder-tool desktop baseline"
-                add_check "jwt-builder-tool mobile baseline"
-                ;;
-              jwt-decoder-tool/*)
-                add_check "jwt-decoder-tool desktop baseline"
-                add_check "jwt-decoder-tool mobile baseline"
-                ;;
-              json-formatter-tool/*)
-                add_check "json-formatter-tool desktop baseline"
-                add_check "json-formatter-tool mobile baseline"
-                ;;
-              css-minifier-tool/*)
-                add_check "css-minifier-tool desktop baseline"
-                add_check "css-minifier-tool mobile baseline"
-                ;;
-              text-analyzer-tool/*)
-                add_check "text-analyzer-tool desktop baseline"
-                add_check "text-analyzer-tool mobile baseline"
-                ;;
-              qr-code-generator/*)
-                add_check "qr-code-generator desktop baseline"
-                add_check "qr-code-generator mobile baseline"
-                ;;
-              diff-checker-tool/*)
-                add_check "diff-checker-tool desktop baseline"
-                add_check "diff-checker-tool mobile baseline"
-                ;;
-            esac
-          done
-
-          selected_checks=()
-          if [ "$is_shared_change" = true ]; then
-            selected_checks=("${all_checks[@]}")
-          elif [ "${#selected[@]}" -gt 0 ]; then
-            for check_name in "${all_checks[@]}"; do
-              if [ -n "${selected[$check_name]+set}" ]; then
-                selected_checks+=("$check_name")
-              fi
-            done
-          else
-            selected_checks=("${all_checks[@]}")
-          fi
-
-          CHECK_LIST="$(printf '%s,' "${selected_checks[@]}")"
-          CHECK_LIST="${CHECK_LIST%,}"
-
-          echo "Selected visual checks: $CHECK_LIST"
-          echo "selected_checks=$CHECK_LIST" >> "$GITHUB_OUTPUT"
-          echo "is_shared_change=$is_shared_change" >> "$GITHUB_OUTPUT"
-
       - name: Capture PR visual snapshots
+        if: steps.diff_scope.outputs.should_run == 'true'
         env:
           QA_BASE_URL: http://127.0.0.1:8080
           QA_VISUAL_OUT_DIR: qa-artifacts/visual-baselines/pr-current
@@ -286,7 +310,7 @@ jobs:
           kill $PR_QA_SERVER_PID || true
 
       - name: Compare baseline and PR visual snapshots (report-only)
-        if: steps.baseline_artifact.outputs.found == 'true'
+        if: steps.diff_scope.outputs.should_run == 'true' && steps.baseline_artifact.outputs.found == 'true'
         env:
           QA_VISUAL_BASELINE_RESULTS_PATH: ${{ steps.baseline_paths.outputs.results_file }}
           QA_VISUAL_CURRENT_RESULTS_PATH: ${{ github.workspace }}/qa-artifacts/visual-baselines/pr-current/visual-baseline-results.json
@@ -302,8 +326,29 @@ jobs:
           set -euo pipefail
           npm run qa:visual-diff:foundation
 
+      - name: Record skipped visual diff summary for irrelevant changes
+        if: steps.diff_scope.outputs.should_run != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p qa-artifacts/visual-diffs/pr
+          cat <<'EOF' > qa-artifacts/visual-diffs/pr/visual-diff-summary.md
+          # Visual Diff Summary
+
+          - Status: skipped
+          - Reason: no visual-relevant changes were detected in this pull request
+          - Details: the PR did not modify files mapped to visual QA coverage
+          EOF
+          cat <<'EOF' > qa-artifacts/visual-diffs/pr/visual-diff-summary.json
+          {
+            "status": "skipped",
+            "reason": "no_visual_relevant_changes",
+            "message": "No visual-relevant changes were detected in this pull request.",
+            "selectedChecks": []
+          }
+          EOF
+
       - name: Record skipped visual diff summary
-        if: steps.baseline_artifact.outputs.found != 'true'
+        if: steps.diff_scope.outputs.should_run == 'true' && steps.baseline_artifact.outputs.found != 'true'
         run: |
           set -euo pipefail
           mkdir -p qa-artifacts/visual-diffs/pr
@@ -406,8 +451,8 @@ jobs:
               skipped: '⏭️'
             };
 
-            const selectedChecks = Array.isArray(summary.selectedChecks) && summary.selectedChecks.length > 0
-              ? summary.selectedChecks.length
+            const selectedChecks = Array.isArray(summary.selectedChecks)
+              ? String(summary.selectedChecks.length)
               : 'all';
             const lines = [
               marker,
@@ -429,6 +474,9 @@ jobs:
             }
             if (summary.baselineSourceSha) {
               lines.push(`- Baseline SHA: \`${summary.baselineSourceSha}\``);
+            }
+            if (summary.message) {
+              lines.push(`- Details: ${summary.message}`);
             }
             if (Array.isArray(summary.changed) && summary.changed.length > 0) {
               lines.push('');
