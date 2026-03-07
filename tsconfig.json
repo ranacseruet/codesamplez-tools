@@ -28,7 +28,6 @@
     "scripts/cross-browser-signoff.mjs",
     "scripts/prerender-tool.js",
     "scripts/measure-bundles.js",
-    "snapdrift/**/*.mjs"
   ],
   "exclude": ["build", "coverage", "node_modules", "qa-artifacts", "reports"]
 }

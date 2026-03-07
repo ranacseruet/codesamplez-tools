@@ -57,3 +57,4 @@ reports/bundle-metrics/latest.json
 **/memory-bank/
 .clinerules
 .clineignore
+snapdrift/

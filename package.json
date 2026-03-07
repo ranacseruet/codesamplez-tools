@@ -66,8 +66,7 @@
       "**/*.test.[jt]s?(x)"
     ],
     "testPathIgnorePatterns": [
-      "/node_modules/",
-      "/snapdrift/"
+      "/node_modules/"
     ],
     "transform": {
       "^.+\\.(ts|tsx|js|jsx)$": [
