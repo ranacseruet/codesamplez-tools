@@ -16,6 +16,7 @@ const { PNG } = pngjs;
 
 /** @typedef {import('../../types/qa-script-types').VisualBaselineResults} VisualBaselineResults */
 /** @typedef {import('../../types/qa-script-types').VisualDiffChangedItem} VisualDiffChangedItem */
+/** @typedef {import('../../types/qa-script-types').VisualDiffDimensionItem} VisualDiffDimensionItem */
 /** @typedef {import('../../types/qa-script-types').VisualDiffErrorItem} VisualDiffErrorItem */
 /** @typedef {import('../../types/qa-script-types').VisualDiffSummary} VisualDiffSummary */
 /** @typedef {import('../../types/qa-script-types').VisualRegressionConfig['diff']['mode']} VisualDiffMode */
@@ -212,7 +213,12 @@ async function comparePngs(baselinePath, currentPath) {
  * @returns {'clean' | 'changes-detected' | 'incomplete'}
  */
 export function determineVisualDiffStatus(summaryData) {
-  if (summaryData.errors.length > 0 || summaryData.missingInBaseline > 0 || summaryData.missingInCurrent > 0) {
+  if (
+    summaryData.errors.length > 0 ||
+    (summaryData.dimensionChanges || []).length > 0 ||
+    summaryData.missingInBaseline > 0 ||
+    summaryData.missingInCurrent > 0
+  ) {
     return 'incomplete';
   }
   if (summaryData.changedScreenshots > 0) {
@@ -233,11 +239,17 @@ export function shouldFailVisualDiff(summaryData) {
     return summaryData.changedScreenshots > 0;
   }
   if (summaryData.diffMode === 'fail-on-incomplete') {
-    return summaryData.errors.length > 0 || summaryData.missingInBaseline > 0 || summaryData.missingInCurrent > 0;
+    return (
+      summaryData.errors.length > 0 ||
+      (summaryData.dimensionChanges || []).length > 0 ||
+      summaryData.missingInBaseline > 0 ||
+      summaryData.missingInCurrent > 0
+    );
   }
   return (
     summaryData.changedScreenshots > 0 ||
     summaryData.errors.length > 0 ||
+    (summaryData.dimensionChanges || []).length > 0 ||
     summaryData.missingInBaseline > 0 ||
     summaryData.missingInCurrent > 0
   );
@@ -260,6 +272,7 @@ function makeMarkdown(summaryData) {
     `- Changed screenshots: ${summaryData.changedScreenshots}`,
     `- Missing in baseline: ${summaryData.missingInBaseline}`,
     `- Missing in current: ${summaryData.missingInCurrent}`,
+    `- Viewport dimension changes: ${(summaryData.dimensionChanges || []).length}`,
     `- Comparison errors: ${summaryData.errors.length}`
   ];
 
@@ -294,6 +307,23 @@ function makeMarkdown(summaryData) {
   } else {
     for (const item of summaryData.missing) {
       lines.push(`- ${item.id}: ${item.reason}`);
+    }
+  }
+
+  lines.push('');
+  lines.push('## Viewport dimension changes');
+  if ((summaryData.dimensionChanges || []).length === 0) {
+    lines.push('- None');
+  } else {
+    lines.push('');
+    lines.push('Viewport dimensions changed between baseline and current capture. Pixel diff was skipped for these routes.');
+    lines.push('**Next step:** merge this PR and re-capture the baseline on `main` to update it.');
+    lines.push('');
+    for (const item of summaryData.dimensionChanges) {
+      lines.push(
+        `- **${item.id}** (${item.viewport}) ${item.path}: ` +
+        `baseline ${item.baselineWidth}×${item.baselineHeight}, current ${item.currentWidth}×${item.currentHeight}`
+      );
     }
   }
 
@@ -393,6 +423,7 @@ export async function generateVisualDiffReport(options = {}) {
     changed: [],
     missing: [],
     errors: [],
+    dimensionChanges: [],
     selectedRoutes: selectedRouteIds,
     baselineArtifactName: options.baselineArtifactName || baselineArtifactName || undefined,
     baselineSourceSha: options.baselineSourceSha || baselineSourceSha || undefined,
@@ -450,6 +481,22 @@ export async function generateVisualDiffReport(options = {}) {
     }
 
     try {
+      if (baselineEntry.width !== currentEntry.width || baselineEntry.height !== currentEntry.height) {
+        /** @type {VisualDiffDimensionItem} */
+        const dimensionRecord = {
+          id: routeId,
+          path: currentEntry.path || baselineEntry.path || routeConfig?.path,
+          viewport: currentEntry.viewport || baselineEntry.viewport || routeConfig?.viewport,
+          baselineWidth: baselineEntry.width,
+          baselineHeight: baselineEntry.height,
+          currentWidth: currentEntry.width,
+          currentHeight: currentEntry.height,
+          status: 'dimension-changed'
+        };
+        summary.dimensionChanges.push(dimensionRecord);
+        continue;
+      }
+
       const [resolvedBaselineImagePath, resolvedCurrentImagePath] = await Promise.all([
         resolveImagePath(resolvedBaselineRunDir, baselineEntry.imagePath),
         resolveImagePath(resolvedCurrentRunDir, currentEntry.imagePath)

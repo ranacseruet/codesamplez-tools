@@ -15,6 +15,14 @@ outputs:
 runs:
   using: composite
   steps:
+    - name: Set action root path
+      shell: bash
+      run: echo "ACTION_ROOT=$(cd "$GITHUB_ACTION_PATH/../.." && pwd)" >> "$GITHUB_ENV"
+
+    - name: Install shared action dependencies
+      shell: bash
+      run: npm ci --prefix "$ACTION_ROOT"
+
     - id: evaluate
       shell: bash
       env:
@@ -25,7 +33,7 @@ runs:
         import path from 'node:path';
         import { pathToFileURL } from 'node:url';
 
-        const modulePath = path.resolve(process.env.GITHUB_ACTION_PATH, '../../lib/compare-visual-results.mjs');
+        const modulePath = path.resolve(process.env.ACTION_ROOT, 'lib/compare-visual-results.mjs');
         const { shouldFailVisualDiff, formatVisualDiffFailureMessage } = await import(pathToFileURL(modulePath));
         const summary = JSON.parse(await fs.readFile(process.env.SUMMARY_PATH, 'utf8'));
 

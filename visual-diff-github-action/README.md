@@ -44,7 +44,6 @@ Consumer repos still own:
 - Node setup
 - dependency installation
 - app build
-- Playwright browser installation
 - app startup
 - readiness wait
 - app shutdown
@@ -95,9 +94,8 @@ In the workflow that runs on `push` to `main`:
 1. Check out the repo.
 2. Set up Node and install dependencies.
 3. Build the app if needed.
-4. Install Playwright Chromium.
-5. Start the app locally and wait until `baseUrl` is reachable.
-6. Call `publish-visual-baseline`.
+4. Start the app locally and wait until `baseUrl` is reachable.
+5. Call `publish-visual-baseline`.
 
 Example:
 
@@ -114,6 +112,18 @@ If you already have route selection logic, pass it through `route-ids`. Otherwis
 This repo's current reference implementation lives in [ci.yml](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/.github/workflows/ci.yml).
 
 ### Step 3: Add the PR visual diff workflow
+
+The PR workflow must grant write permissions so the action can resolve baseline artifacts from another repo and post PR comments:
+
+```yaml
+permissions:
+  contents: read
+  actions: read
+  issues: write
+  pull-requests: write
+```
+
+`actions: read` is required to download the baseline artifact from the main branch workflow run. `issues: write` and `pull-requests: write` are required to post and update the PR comment. Without these, the action will fail with a 403.
 
 In the PR workflow:
 

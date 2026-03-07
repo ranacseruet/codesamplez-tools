@@ -50,6 +50,7 @@ function isVisualRegressionConfig(value) {
   return Boolean(
     candidate &&
       typeof candidate === 'object' &&
+      typeof candidate.baselineArtifactName === 'string' &&
       typeof candidate.baseUrl === 'string' &&
       typeof candidate.readyUrl === 'string' &&
       typeof candidate.resultsFile === 'string' &&

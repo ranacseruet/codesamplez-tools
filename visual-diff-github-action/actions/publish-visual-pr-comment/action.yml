@@ -66,6 +66,7 @@ runs:
           const selectedRoutes = Array.isArray(summary.selectedRoutes)
             ? String(summary.selectedRoutes.length)
             : 'all';
+          const dimensionChanges = summary.dimensionChanges || [];
           const lines = [
             marker,
             '## Visual Diff',
@@ -76,6 +77,7 @@ runs:
             `- Matched screenshots: ${summary.matchedScreenshots || 0}`,
             `- Missing in baseline: ${summary.missingInBaseline || 0}`,
             `- Missing in current: ${summary.missingInCurrent || 0}`,
+            `- Viewport dimension changes: ${dimensionChanges.length}`,
             `- Comparison errors: ${(summary.errors || []).length}`
           ];
 
@@ -106,6 +108,20 @@ runs:
             }
             if (summary.changed.length > 10) {
               lines.push(`- ...and ${summary.changed.length - 10} more`);
+            }
+            lines.push('');
+            lines.push('</details>');
+          }
+
+          if (dimensionChanges.length > 0) {
+            lines.push('');
+            lines.push('<details><summary>Viewport dimension changes — diff skipped</summary>');
+            lines.push('');
+            lines.push('The page dimensions changed between the baseline and the current capture. Pixel diff was skipped for these routes.');
+            lines.push('**Next step:** merge this PR and let the main CI re-capture the baseline with the new dimensions.');
+            lines.push('');
+            for (const item of dimensionChanges) {
+              lines.push(`- **${item.id}** (${item.viewport}): baseline ${item.baselineWidth}×${item.baselineHeight} → current ${item.currentWidth}×${item.currentHeight}`);
             }
             lines.push('');
             lines.push('</details>');

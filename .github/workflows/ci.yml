@@ -52,10 +52,6 @@ jobs:
     - name: Bundle Budget Check
       run: npm run bundle-budget-check
 
-    - name: Install Playwright Chromium
-      if: github.ref == 'refs/heads/main'
-      run: npx playwright install --with-deps chromium
-
     - name: Start Local Server for QA Baselines
       if: github.ref == 'refs/heads/main'
       run: |

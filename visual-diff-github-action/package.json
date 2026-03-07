@@ -1,0 +1,11 @@
+{
+  "name": "visual-diff-github-action",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared dependencies for the visual diff composite actions.",
+  "dependencies": {
+    "playwright": "^1.58.2",
+    "pngjs": "^5.0.0"
+  }
+}

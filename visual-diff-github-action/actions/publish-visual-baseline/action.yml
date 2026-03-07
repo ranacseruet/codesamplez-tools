@@ -42,6 +42,10 @@ outputs:
 runs:
   using: composite
   steps:
+    - name: Set action root path
+      shell: bash
+      run: echo "ACTION_ROOT=$(cd "$GITHUB_ACTION_PATH/../.." && pwd)" >> "$GITHUB_ENV"
+
     - id: config
       shell: bash
       env:
@@ -52,12 +56,21 @@ runs:
         import path from 'node:path';
         import { pathToFileURL } from 'node:url';
 
-        const modulePath = path.resolve(process.env.GITHUB_ACTION_PATH, '../../lib/visual-regression-config.mjs');
+        const modulePath = path.resolve(process.env.ACTION_ROOT, 'lib/visual-regression-config.mjs');
         const { loadVisualRegressionConfig } = await import(pathToFileURL(modulePath));
         const { config } = await loadVisualRegressionConfig(process.env.REPO_CONFIG_PATH || undefined);
 
         await fs.appendFile(process.env.GITHUB_OUTPUT, `artifact_name=${config.baselineArtifactName}\n`);
         EOF
+
+    - name: Install shared action dependencies
+      shell: bash
+      run: npm ci --prefix "$ACTION_ROOT"
+
+    - name: Install Playwright Chromium
+      shell: bash
+      run: |
+        "$ACTION_ROOT/node_modules/.bin/playwright" install --with-deps chromium
 
     - id: capture
       shell: bash
@@ -70,8 +83,8 @@ runs:
         import path from 'node:path';
         import { pathToFileURL } from 'node:url';
 
-        const captureModulePath = path.resolve(process.env.GITHUB_ACTION_PATH, '../../lib/capture-visual-routes.mjs');
-        const configModulePath = path.resolve(process.env.GITHUB_ACTION_PATH, '../../lib/visual-regression-config.mjs');
+        const captureModulePath = path.resolve(process.env.ACTION_ROOT, 'lib/capture-visual-routes.mjs');
+        const configModulePath = path.resolve(process.env.ACTION_ROOT, 'lib/visual-regression-config.mjs');
         const { runVisualBaselineCapture } = await import(pathToFileURL(captureModulePath));
         const { splitCommaList } = await import(pathToFileURL(configModulePath));
 
@@ -102,7 +115,7 @@ runs:
         import path from 'node:path';
         import { pathToFileURL } from 'node:url';
 
-        const modulePath = path.resolve(process.env.GITHUB_ACTION_PATH, '../../lib/stage-visual-artifacts.mjs');
+        const modulePath = path.resolve(process.env.ACTION_ROOT, 'lib/stage-visual-artifacts.mjs');
         const { stageVisualArtifacts } = await import(pathToFileURL(modulePath));
 
         const result = await stageVisualArtifacts({

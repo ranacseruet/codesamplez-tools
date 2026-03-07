@@ -36,6 +36,10 @@ outputs:
 runs:
   using: composite
   steps:
+    - name: Set action root path
+      shell: bash
+      run: echo "ACTION_ROOT=$(cd "$GITHUB_ACTION_PATH/../.." && pwd)" >> "$GITHUB_ENV"
+
     - id: scope
       uses: actions/github-script@v7
       env:
@@ -49,7 +53,7 @@ runs:
           const path = require('path');
           const { pathToFileURL } = require('url');
 
-          const configModulePath = path.resolve(process.env.GITHUB_ACTION_PATH, '../../lib/visual-regression-config.mjs');
+          const configModulePath = path.resolve(process.env.ACTION_ROOT, 'lib/visual-regression-config.mjs');
           const { loadVisualRegressionConfig, selectRoutesForChangedFiles } = await import(pathToFileURL(configModulePath));
           const { config } = await loadVisualRegressionConfig(process.env.REPO_CONFIG_PATH || undefined);
 

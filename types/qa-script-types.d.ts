@@ -130,6 +130,17 @@ export interface VisualDiffErrorItem {
   message: string;
 }
 
+export interface VisualDiffDimensionItem {
+  id: string;
+  path?: string;
+  viewport?: VisualViewportPreset;
+  baselineWidth: number;
+  baselineHeight: number;
+  currentWidth: number;
+  currentHeight: number;
+  status: 'dimension-changed';
+}
+
 export interface VisualDiffChangedItem {
   id: string;
   path: string;
@@ -167,6 +178,7 @@ export interface VisualDiffSummary {
   changed: VisualDiffChangedItem[];
   missing: VisualDiffMissingItem[];
   errors: VisualDiffErrorItem[];
+  dimensionChanges: VisualDiffDimensionItem[];
   message?: string;
 }
 
