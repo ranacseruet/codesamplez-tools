@@ -15,10 +15,10 @@ import {
   VISUAL_SETTLE_DELAY_MS
 } from './visual-regression-config.mjs';
 
-/** @typedef {import('../../types/qa-script-types').VisualBaselineResults} VisualBaselineResults */
-/** @typedef {import('../../types/qa-script-types').VisualBaselineRouteResult} VisualBaselineRouteResult */
-/** @typedef {import('../../types/qa-script-types').VisualRegressionRouteConfig} VisualRegressionRouteConfig */
-/** @typedef {import('../../types/qa-script-types').VisualScreenshotManifest} VisualScreenshotManifest */
+/** @typedef {import('../types/visual-diff-types').VisualBaselineResults} VisualBaselineResults */
+/** @typedef {import('../types/visual-diff-types').VisualBaselineRouteResult} VisualBaselineRouteResult */
+/** @typedef {import('../types/visual-diff-types').VisualRegressionRouteConfig} VisualRegressionRouteConfig */
+/** @typedef {import('../types/visual-diff-types').VisualScreenshotManifest} VisualScreenshotManifest */
 
 /**
  * @param {string} targetPath

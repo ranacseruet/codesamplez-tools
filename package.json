@@ -67,6 +67,10 @@
     "testMatch": [
       "**/*.test.[jt]s?(x)"
     ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/visual-diff-github-action/"
+    ],
     "transform": {
       "^.+\\.(ts|tsx|js|jsx)$": [
         "babel-jest",

@@ -1,9 +1,9 @@
 /** @jest-environment node */
 
-const fs = require('node:fs/promises');
-const os = require('node:os');
-const path = require('node:path');
-const yaml = require('js-yaml');
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import yaml from 'js-yaml';
 
 async function readAction(actionPath) {
     return yaml.load(await fs.readFile(actionPath, 'utf8'));
@@ -11,11 +11,11 @@ async function readAction(actionPath) {
 
 describe('visual diff action contracts', () => {
     it('keeps the low-level defaulted inputs ergonomic', async () => {
-        const determineScope = await readAction('visual-diff-github-action/actions/determine-visual-diff-scope/action.yml');
-        const publishComment = await readAction('visual-diff-github-action/actions/publish-visual-pr-comment/action.yml');
-        const compare = await readAction('visual-diff-github-action/actions/compare-visual-results/action.yml');
-        const stage = await readAction('visual-diff-github-action/actions/stage-visual-artifacts/action.yml');
-        const evaluate = await readAction('visual-diff-github-action/actions/evaluate-visual-diff-outcome/action.yml');
+        const determineScope = await readAction('actions/determine-visual-diff-scope/action.yml');
+        const publishComment = await readAction('actions/publish-visual-pr-comment/action.yml');
+        const compare = await readAction('actions/compare-visual-results/action.yml');
+        const stage = await readAction('actions/stage-visual-artifacts/action.yml');
+        const evaluate = await readAction('actions/evaluate-visual-diff-outcome/action.yml');
 
         expect(determineScope.inputs['pr-number'].required).toBe(false);
         expect(publishComment.inputs['pr-number'].required).toBe(false);
@@ -27,7 +27,7 @@ describe('visual diff action contracts', () => {
     });
 
     it('uses artifact-type-specific default bundle directories at runtime', async () => {
-        const { stageVisualArtifacts } = await import('../visual-diff-github-action/lib/stage-visual-artifacts.mjs');
+        const { stageVisualArtifacts } = await import('../lib/stage-visual-artifacts.mjs');
         const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'visual-stage-defaults-'));
         const originalCwd = process.cwd();
 
@@ -48,8 +48,8 @@ describe('visual diff action contracts', () => {
     });
 
     it('defines the wrapper actions as the primary public entrypoints', async () => {
-        const publishBaseline = await readAction('visual-diff-github-action/actions/publish-visual-baseline/action.yml');
-        const runPrDiff = await readAction('visual-diff-github-action/actions/run-visual-pr-diff/action.yml');
+        const publishBaseline = await readAction('actions/publish-visual-baseline/action.yml');
+        const runPrDiff = await readAction('actions/run-visual-pr-diff/action.yml');
 
         expect(publishBaseline.inputs['repo-config-path'].default).toBe('.github/visual-regression.json');
         expect(publishBaseline.inputs['route-ids'].default).toBe('');

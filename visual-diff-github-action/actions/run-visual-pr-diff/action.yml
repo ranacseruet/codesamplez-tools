@@ -83,11 +83,13 @@ runs:
       run: echo "ACTION_ROOT=$(cd "$GITHUB_ACTION_PATH/../.." && pwd)" >> "$GITHUB_ENV"
 
     - id: context
-      uses: actions/github-script@v7
+      uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+      env:
+        INPUT_PR_NUMBER: ${{ inputs.pr-number }}
       with:
         github-token: ${{ inputs.github-token }}
         script: |
-          const explicitPrNumber = '${{ inputs.pr-number }}'.trim();
+          const explicitPrNumber = (process.env.INPUT_PR_NUMBER || '').trim();
           const prNumber = explicitPrNumber || String(context.payload.pull_request?.number || context.issue?.number || '');
           const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
           const artifactName = `pr-visual-diff-${prNumber || process.env.GITHUB_RUN_ID}`;
@@ -97,7 +99,7 @@ runs:
           core.setOutput('artifact_name', artifactName);
 
     - id: scope
-      uses: actions/github-script@v7
+      uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
       env:
         REPO_CONFIG_PATH: ${{ inputs.repo-config-path }}
         ROUTE_IDS: ${{ inputs.route-ids }}
@@ -176,7 +178,7 @@ runs:
 
     - id: baseline
       if: steps.scope.outputs.should_run == 'true'
-      uses: actions/github-script@v7
+      uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
       env:
         REPO_CONFIG_PATH: ${{ inputs.repo-config-path }}
         INPUT_ARTIFACT_NAME: ''
@@ -247,7 +249,7 @@ runs:
           }
 
     - if: steps.scope.outputs.should_run == 'true' && steps.baseline.outputs.found == 'true'
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         github-token: ${{ inputs.github-token }}
         repository: ${{ inputs.baseline-repository || github.repository }}
@@ -460,7 +462,7 @@ runs:
         await fs.appendFile(process.env.GITHUB_OUTPUT, `bundle_dir=${result.bundleDir}\n`);
         EOF
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: ${{ steps.context.outputs.artifact_name }}
         retention-days: ${{ inputs.artifact-retention-days }}
@@ -477,7 +479,7 @@ runs:
         fi
 
     - if: inputs.comment-on-pr == 'true'
-      uses: actions/github-script@v7
+      uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
       env:
         PR_NUMBER: ${{ steps.context.outputs.pr_number }}
         SUMMARY_PATH: ${{ steps.compare.outputs.summary_path || steps.skipped_baseline.outputs.summary_path || steps.skipped_scope.outputs.summary_path }}
@@ -487,6 +489,9 @@ runs:
         github-token: ${{ inputs.github-token }}
         script: |
           const fs = require('fs');
+          const path = require('path');
+          const { pathToFileURL } = require('url');
+
           const summaryPath = process.env.SUMMARY_PATH;
           if (!summaryPath || !fs.existsSync(summaryPath)) {
             core.warning(`Visual diff summary not found at ${summaryPath || '<missing>'}`);
@@ -499,71 +504,15 @@ runs:
             return;
           }
 
-          const marker = '<!-- pr-visual-diff-summary -->';
+          const modulePath = path.resolve(process.env.ACTION_ROOT, 'lib/visual-diff-pr-comment.mjs');
+          const { buildPrCommentBody, PR_COMMENT_MARKER } = await import(pathToFileURL(modulePath));
+
           const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
-          const status = summary.status || 'incomplete';
-          const statusLabelMap = {
-            clean: 'Clean',
-            'changes-detected': 'Changes detected',
-            incomplete: 'Incomplete',
-            skipped: 'Skipped'
-          };
-          const statusIconMap = {
-            clean: '✅',
-            'changes-detected': '🟡',
-            incomplete: '⚠️',
-            skipped: '⏭️'
-          };
+          const body = buildPrCommentBody(summary, {
+            artifactName: process.env.ARTIFACT_NAME || '',
+            runUrl: process.env.RUN_URL || ''
+          });
 
-          const selectedRoutes = Array.isArray(summary.selectedRoutes)
-            ? String(summary.selectedRoutes.length)
-            : 'all';
-          const lines = [
-            marker,
-            '## Visual Diff',
-            '',
-            `- Status: ${statusIconMap[status] || '⚠️'} **${statusLabelMap[status] || status}**`,
-            `- Selected routes: ${selectedRoutes}`,
-            `- Changed screenshots: ${summary.changedScreenshots || 0}`,
-            `- Matched screenshots: ${summary.matchedScreenshots || 0}`,
-            `- Missing in baseline: ${summary.missingInBaseline || 0}`,
-            `- Missing in current: ${summary.missingInCurrent || 0}`,
-            `- Comparison errors: ${(summary.errors || []).length}`
-          ];
-
-          if (process.env.ARTIFACT_NAME) {
-            lines.push(`- Artifact: \`${process.env.ARTIFACT_NAME}\``);
-          }
-          if (process.env.RUN_URL) {
-            lines.push(`- Run: ${process.env.RUN_URL}`);
-          }
-          if (summary.baselineArtifactName) {
-            lines.push(`- Baseline artifact: \`${summary.baselineArtifactName}\``);
-          }
-          if (summary.baselineSourceSha) {
-            lines.push(`- Baseline SHA: \`${summary.baselineSourceSha}\``);
-          }
-          if (summary.message) {
-            lines.push(`- Details: ${summary.message}`);
-          }
-          if (Array.isArray(summary.changed) && summary.changed.length > 0) {
-            lines.push('');
-            lines.push('<details><summary>Changed screenshots</summary>');
-            lines.push('');
-            for (const item of summary.changed.slice(0, 10)) {
-              const percentChanged = typeof item.mismatchRatio === 'number'
-                ? `${(item.mismatchRatio * 100).toFixed(2)}%`
-                : 'n/a';
-              lines.push(`- ${item.id} (${item.viewport}) - ${percentChanged} changed`);
-            }
-            if (summary.changed.length > 10) {
-              lines.push(`- ...and ${summary.changed.length - 10} more`);
-            }
-            lines.push('');
-            lines.push('</details>');
-          }
-
-          const body = lines.join('\n');
           const comments = await github.paginate(github.rest.issues.listComments, {
             owner: context.repo.owner,
             repo: context.repo.repo,
@@ -571,7 +520,7 @@ runs:
             per_page: 100
           });
           const matchingComments = comments
-            .filter((comment) => comment.body && comment.body.includes(marker))
+            .filter((comment) => comment.body && comment.body.includes(PR_COMMENT_MARKER))
             .sort((left, right) => {
               const leftTime = new Date(left.updated_at || left.created_at).getTime();
               const rightTime = new Date(right.updated_at || right.created_at).getTime();

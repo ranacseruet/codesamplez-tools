@@ -26,8 +26,8 @@ export const VISUAL_NAVIGATION_TIMEOUT_MS = 30000;
 export const VISUAL_SETTLE_DELAY_MS = 300;
 
 /**
- * @typedef {import('../../types/qa-script-types').VisualRegressionConfig} VisualRegressionConfig
- * @typedef {import('../../types/qa-script-types').VisualRegressionRouteConfig} VisualRegressionRouteConfig
+ * @typedef {import('../types/visual-diff-types').VisualRegressionConfig} VisualRegressionConfig
+ * @typedef {import('../types/visual-diff-types').VisualRegressionRouteConfig} VisualRegressionRouteConfig
  */
 
 /**

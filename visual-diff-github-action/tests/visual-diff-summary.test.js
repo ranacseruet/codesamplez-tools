@@ -1,8 +1,8 @@
 /** @jest-environment node */
 
-const fs = require('node:fs/promises');
-const os = require('node:os');
-const path = require('node:path');
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 
 describe('visual diff skipped summary helpers', () => {
     let tempDir;
@@ -18,7 +18,7 @@ describe('visual diff skipped summary helpers', () => {
     });
 
     it('writes the no-visual-relevant-changes skipped summary with default messaging', async () => {
-        const { writeVisualDiffSummary } = await import('../visual-diff-github-action/lib/visual-diff-summary.mjs');
+        const { writeVisualDiffSummary } = await import('../lib/visual-diff-summary.mjs');
 
         const result = await writeVisualDiffSummary({
             reason: 'no_visual_relevant_changes',
@@ -39,7 +39,7 @@ describe('visual diff skipped summary helpers', () => {
     });
 
     it('writes the missing-baseline skipped summary with current run metadata', async () => {
-        const { writeVisualDiffSummary } = await import('../visual-diff-github-action/lib/visual-diff-summary.mjs');
+        const { writeVisualDiffSummary } = await import('../lib/visual-diff-summary.mjs');
 
         const result = await writeVisualDiffSummary({
             reason: 'missing_main_baseline_artifact',
@@ -66,7 +66,7 @@ describe('visual diff skipped summary helpers', () => {
     });
 
     it('falls back to an underscore-decoded reason string for unknown skip reasons', async () => {
-        const { buildVisualDiffSummary } = await import('../visual-diff-github-action/lib/visual-diff-summary.mjs');
+        const { buildVisualDiffSummary } = await import('../lib/visual-diff-summary.mjs');
 
         const { summary, markdown } = buildVisualDiffSummary({
             status: 'incomplete',

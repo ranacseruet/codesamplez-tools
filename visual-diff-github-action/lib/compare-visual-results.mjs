@@ -14,14 +14,14 @@ import {
 
 const { PNG } = pngjs;
 
-/** @typedef {import('../../types/qa-script-types').VisualBaselineResults} VisualBaselineResults */
-/** @typedef {import('../../types/qa-script-types').VisualDiffChangedItem} VisualDiffChangedItem */
-/** @typedef {import('../../types/qa-script-types').VisualDiffDimensionItem} VisualDiffDimensionItem */
-/** @typedef {import('../../types/qa-script-types').VisualDiffErrorItem} VisualDiffErrorItem */
-/** @typedef {import('../../types/qa-script-types').VisualDiffSummary} VisualDiffSummary */
-/** @typedef {import('../../types/qa-script-types').VisualRegressionConfig['diff']['mode']} VisualDiffMode */
-/** @typedef {import('../../types/qa-script-types').VisualScreenshotManifest} VisualScreenshotManifest */
-/** @typedef {import('../../types/qa-script-types').VisualScreenshotManifestEntry} VisualScreenshotManifestEntry */
+/** @typedef {import('../types/visual-diff-types').VisualBaselineResults} VisualBaselineResults */
+/** @typedef {import('../types/visual-diff-types').VisualDiffChangedItem} VisualDiffChangedItem */
+/** @typedef {import('../types/visual-diff-types').VisualDiffDimensionItem} VisualDiffDimensionItem */
+/** @typedef {import('../types/visual-diff-types').VisualDiffErrorItem} VisualDiffErrorItem */
+/** @typedef {import('../types/visual-diff-types').VisualDiffSummary} VisualDiffSummary */
+/** @typedef {import('../types/visual-diff-types').VisualRegressionConfig['diff']['mode']} VisualDiffMode */
+/** @typedef {import('../types/visual-diff-types').VisualScreenshotManifest} VisualScreenshotManifest */
+/** @typedef {import('../types/visual-diff-types').VisualScreenshotManifestEntry} VisualScreenshotManifestEntry */
 
 const baselineResultsPath = process.env.QA_VISUAL_BASELINE_RESULTS_PATH;
 const baselineManifestPath = process.env.QA_VISUAL_BASELINE_MANIFEST_PATH;

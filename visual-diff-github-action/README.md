@@ -9,17 +9,13 @@ This module contains the shared visual regression implementation for `Node + Pla
 - `.github/workflows/`: staged reusable workflow templates for later promotion
 - `docs/`: contracts and migration notes
 
-## Current status
+## Status: v1 (stable)
 
-The primary CI and PR workflows in this repo now use the wrapper actions as the main integration path.
+The contracts, lib exports, and action interfaces are frozen for v1. See [CHANGELOG](CHANGELOG.md) for version history.
 
-Because GitHub only recognizes reusable workflows from a repository root `.github/workflows/` directory, the workflow files under this module are still staged templates. The composite actions under `actions/` are the current cross-repo integration surface.
+The primary CI and PR workflows in this repo use the wrapper actions as the main integration path. Because GitHub only recognizes reusable workflows from a repository root `.github/workflows/` directory, the workflow files under this module are staged templates. The composite actions under `actions/` are the current cross-repo integration surface.
 
-## Pilot Integration Guide (Temporary)
-
-This section is pilot-specific documentation for the current cross-repo adoption model.
-
-Clean this section up after the overall reusable visual diff plan is complete and the module is either promoted to a dedicated shared repo or moved into a repository-root reusable workflow location.
+## Integration Guide
 
 ### Primary entrypoints
 
@@ -29,10 +25,10 @@ Clean this section up after the overall reusable visual diff plan is complete an
 Use these wrapper actions by cross-repo reference:
 
 ```yaml
-- uses: ranacseruet/codesamplez-tools/visual-diff-github-action/actions/publish-visual-baseline@main
+- uses: user/visual-diff-github-action/actions/publish-visual-baseline@v1
 ```
 
-Pin to a commit SHA or tag instead of a moving branch when possible.
+Pin to a commit SHA or tag (e.g., `@v1`) instead of a moving branch when possible.
 
 If this repo is private, enable GitHub Actions access from the consumer repo before testing cross-repo references.
 
@@ -85,7 +81,7 @@ Example:
 }
 ```
 
-If you want changed-file scoping, also add the optional `selection` block and per-route `changePaths` entries as shown in this repo's [`visual-regression.json`](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/.github/visual-regression.json).
+If you want changed-file scoping, also add the optional `selection` block and per-route `changePaths` entries. See the [migration guide](docs/migration-guide.md#4-optional-add-changed-file-scoping) for details.
 
 ### Step 2: Publish the baseline artifact from the main CI workflow
 
@@ -101,7 +97,7 @@ Example:
 
 ```yaml
 - name: Publish main visual baseline
-  uses: ranacseruet/codesamplez-tools/visual-diff-github-action/actions/publish-visual-baseline@main
+  uses: user/visual-diff-github-action/actions/publish-visual-baseline@v1
   with:
     repo-config-path: .github/visual-regression.json
     artifact-retention-days: '30'
@@ -109,7 +105,7 @@ Example:
 
 If you already have route selection logic, pass it through `route-ids`. Otherwise the wrapper captures all configured routes.
 
-This repo's current reference implementation lives in [ci.yml](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/.github/workflows/ci.yml).
+See the [migration guide](docs/migration-guide.md) for a full working example.
 
 ### Step 3: Add the PR visual diff workflow
 
@@ -136,7 +132,7 @@ Example:
 
 ```yaml
 - name: Run visual PR diff
-  uses: ranacseruet/codesamplez-tools/visual-diff-github-action/actions/run-visual-pr-diff@main
+  uses: user/visual-diff-github-action/actions/run-visual-pr-diff@v1
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     repo-config-path: .github/visual-regression.json
@@ -163,7 +159,7 @@ Useful overrides:
 - `baseline-branch`: override the publishing branch
 - `comment-on-pr`: set to `false` to suppress the PR comment
 
-This repo's current reference implementation lives in [pr-visual-diff.yml](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/.github/workflows/pr-visual-diff.yml).
+See the [migration guide](docs/migration-guide.md) for the full PR workflow setup.
 
 ### Advanced usage
 
@@ -193,4 +189,4 @@ The pixel diff engine has the following known limitations:
 
 Consumer repos provide `.github/visual-regression.json` and keep repo-specific app build/start logic outside the shared visual pipeline.
 
-See [docs/contracts.md](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/visual-diff-github-action/docs/contracts.md) for the exact file contracts and [docs/migration-guide.md](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/visual-diff-github-action/docs/migration-guide.md) for the wrapper-first rollout path.
+See [docs/contracts.md](docs/contracts.md) for the exact file contracts and [docs/migration-guide.md](docs/migration-guide.md) for the wrapper-first rollout path.

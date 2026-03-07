@@ -1,8 +1,8 @@
 /** @jest-environment node */
 
-const fs = require('node:fs/promises');
-const os = require('node:os');
-const path = require('node:path');
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 
 async function writeFile(filePath, content = '') {
     await fs.mkdir(path.dirname(filePath), { recursive: true });
@@ -27,7 +27,7 @@ describe('stage visual artifacts helper', () => {
     });
 
     it('stages a baseline bundle and recursively copies only png screenshots', async () => {
-        const { stageVisualArtifacts } = await import('../visual-diff-github-action/lib/stage-visual-artifacts.mjs');
+        const { stageVisualArtifacts } = await import('../lib/stage-visual-artifacts.mjs');
 
         const resultsPath = path.join(tempDir, 'inputs', 'visual-baseline-results.json');
         const manifestPath = path.join(tempDir, 'inputs', 'visual-screenshot-manifest.json');
@@ -54,7 +54,7 @@ describe('stage visual artifacts helper', () => {
     });
 
     it('stages a diff bundle, supports custom bundle dirs, and tolerates missing optional inputs', async () => {
-        const { stageVisualArtifacts } = await import('../visual-diff-github-action/lib/stage-visual-artifacts.mjs');
+        const { stageVisualArtifacts } = await import('../lib/stage-visual-artifacts.mjs');
 
         const bundleDir = path.join(tempDir, 'custom-bundle');
         const summaryJsonPath = path.join(tempDir, 'inputs', 'visual-diff-summary.json');

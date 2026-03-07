@@ -1,11 +1,9 @@
 /** @jest-environment node */
 
-const fs = require('node:fs/promises');
-const os = require('node:os');
-const path = require('node:path');
-
-// Use pngjs (available in the root node_modules) to build test PNG buffers.
-const { PNG } = require('pngjs');
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { PNG } from 'pngjs';
 
 // ---------------------------------------------------------------------------
 // PNG / fixture helpers
@@ -125,7 +123,7 @@ describe('determineVisualDiffStatus', () => {
     let determineVisualDiffStatus;
 
     beforeAll(async () => {
-        ({ determineVisualDiffStatus } = await import('../visual-diff-github-action/lib/compare-visual-results.mjs'));
+        ({ determineVisualDiffStatus } = await import('../lib/compare-visual-results.mjs'));
     });
 
     const base = { errors: [], dimensionChanges: [], missingInBaseline: 0, missingInCurrent: 0, changedScreenshots: 0 };
@@ -161,7 +159,7 @@ describe('shouldFailVisualDiff', () => {
     let shouldFailVisualDiff;
 
     beforeAll(async () => {
-        ({ shouldFailVisualDiff } = await import('../visual-diff-github-action/lib/compare-visual-results.mjs'));
+        ({ shouldFailVisualDiff } = await import('../lib/compare-visual-results.mjs'));
     });
 
     const clean = { errors: [], dimensionChanges: [], missingInBaseline: 0, missingInCurrent: 0, changedScreenshots: 0 };
@@ -217,7 +215,7 @@ describe('formatVisualDiffFailureMessage', () => {
     let formatVisualDiffFailureMessage;
 
     beforeAll(async () => {
-        ({ formatVisualDiffFailureMessage } = await import('../visual-diff-github-action/lib/compare-visual-results.mjs'));
+        ({ formatVisualDiffFailureMessage } = await import('../lib/compare-visual-results.mjs'));
     });
 
     it('fail-on-changes includes the screenshot count', () => {
@@ -246,7 +244,7 @@ describe('generateVisualDiffReport', () => {
     let tempDir;
 
     beforeAll(async () => {
-        ({ generateVisualDiffReport } = await import('../visual-diff-github-action/lib/compare-visual-results.mjs'));
+        ({ generateVisualDiffReport } = await import('../lib/compare-visual-results.mjs'));
     });
 
     beforeEach(async () => {
@@ -817,7 +815,7 @@ describe('runVisualDiffCli', () => {
     let tempDir;
 
     beforeAll(async () => {
-        ({ runVisualDiffCli } = await import('../visual-diff-github-action/lib/compare-visual-results.mjs'));
+        ({ runVisualDiffCli } = await import('../lib/compare-visual-results.mjs'));
     });
 
     beforeEach(async () => {
