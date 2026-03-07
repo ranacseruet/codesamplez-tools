@@ -54,6 +54,7 @@ describe('visual diff action contracts', () => {
         expect(publishBaseline.inputs['repo-config-path'].default).toBe('.github/visual-regression.json');
         expect(publishBaseline.inputs['route-ids'].default).toBe('');
         expect(publishBaseline.inputs['artifact-retention-days'].default).toBe('30');
+        expect(publishBaseline.inputs['upload-artifact'].default).toBe('true');
         expect(publishBaseline.outputs['artifact-name']).toBeTruthy();
         expect(publishBaseline.outputs['bundle-dir']).toBeTruthy();
 

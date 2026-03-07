@@ -65,9 +65,9 @@ jobs:
 
       - name: Visual baseline snapshot capture (scheduled, report-only)
         id: visual_capture
-        uses: ./visual-diff-github-action/actions/capture-visual-routes
+        uses: ./visual-diff-github-action/actions/publish-visual-baseline
         with:
-          repo-config-path: .github/visual-regression.json
+          upload-artifact: 'false'
         continue-on-error: true
 
       - name: Dependency audit capture (high severity)
@@ -91,4 +91,5 @@ jobs:
             qa-artifacts/a11y-reports/phase-d-foundation/phase-d-foundation-a11y-results.json
             qa-artifacts/visual-baselines/current/visual-baseline-results.json
             qa-artifacts/visual-baselines/current/visual-screenshot-manifest.json
+            qa-artifacts/visual-baseline-artifact
             qa-artifacts/dependency-audit

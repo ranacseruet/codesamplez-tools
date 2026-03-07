@@ -60,9 +60,7 @@ jobs:
         uses: ./visual-diff-github-action/actions/run-visual-pr-diff
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          repo-config-path: .github/visual-regression.json
           force-run: ${{ github.event_name == 'workflow_dispatch' }}
-          force-run-reason: manual_dispatch
 
       - name: Stop app
         if: always()

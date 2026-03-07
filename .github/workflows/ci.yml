@@ -17,16 +17,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Determine visual QA scope
-      id: visual_relevance
-      uses: ./visual-diff-github-action/actions/determine-visual-diff-scope
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        repo-config-path: .github/visual-regression.json
-        pr-number: ${{ github.event.pull_request.number || '' }}
-        force-run: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        force-run-reason: main_push
-
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
@@ -63,11 +53,11 @@ jobs:
       run: npm run bundle-budget-check
 
     - name: Install Playwright Chromium
-      if: steps.visual_relevance.outputs.should-run == 'true'
+      if: github.ref == 'refs/heads/main'
       run: npx playwright install --with-deps chromium
 
     - name: Start Local Server for QA Baselines
-      if: steps.visual_relevance.outputs.should-run == 'true'
+      if: github.ref == 'refs/heads/main'
       run: |
         set -euo pipefail
         npm start > /tmp/codesamplez-ci-start.log 2>&1 &
@@ -87,7 +77,7 @@ jobs:
         fi
 
     - name: Accessibility Baseline (report-only)
-      if: steps.visual_relevance.outputs.should-run == 'true'
+      if: github.ref == 'refs/heads/main'
       run: npm run qa:a11y:foundation
       env:
         QA_BASE_URL: http://127.0.0.1:8080
@@ -95,25 +85,11 @@ jobs:
       continue-on-error: true
 
     - name: Publish main visual baseline
-      if: github.ref == 'refs/heads/main' && steps.visual_relevance.outputs.should-run == 'true'
+      if: github.ref == 'refs/heads/main'
       uses: ./visual-diff-github-action/actions/publish-visual-baseline
-      with:
-        repo-config-path: .github/visual-regression.json
-        route-ids: ${{ steps.visual_relevance.outputs.selected-route-ids }}
-        artifact-retention-days: '30'
-
-    - name: Record skipped visual QA summary
-      if: steps.visual_relevance.outputs.should-run != 'true'
-      run: |
-        cat <<'EOF' >> "$GITHUB_STEP_SUMMARY"
-        ## Visual QA
-
-        - Status: skipped
-        - Reason: no visual-relevant changes detected in this pull request
-        EOF
 
     - name: Stop Local QA Server
-      if: always() && steps.visual_relevance.outputs.should-run == 'true'
+      if: always() && github.ref == 'refs/heads/main'
       run: kill $QA_SERVER_PID || true
 
     - name: Upload coverage reports to Codecov

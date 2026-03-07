@@ -14,6 +14,10 @@ inputs:
     description: Retention period for the uploaded baseline artifact.
     required: false
     default: '30'
+  upload-artifact:
+    description: Whether to upload the staged baseline artifact.
+    required: false
+    default: 'true'
 
 outputs:
   artifact-name:
@@ -111,7 +115,8 @@ runs:
         await fs.appendFile(process.env.GITHUB_OUTPUT, `bundle_dir=${result.bundleDir}\n`);
         EOF
 
-    - uses: actions/upload-artifact@v4
+    - if: inputs.upload-artifact == 'true'
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ steps.config.outputs.artifact_name }}
         retention-days: ${{ inputs.artifact-retention-days }}
