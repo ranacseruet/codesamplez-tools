@@ -47,11 +47,26 @@ The diff artifact bundle contains:
 - `baseline-screenshots/*.png`
 - `current-screenshots/*.png`
 
+## Diff summary shape
+
+The `visual-diff-summary.json` includes:
+
+- `status`: `clean`, `changes-detected`, `incomplete`, or `skipped`
+- `selectedRoutes`: list of route ids included in the run
+- `totalScreenshots`, `matchedScreenshots`, `changedScreenshots`
+- `missingInBaseline`, `missingInCurrent`
+- `changed[]`: changed screenshot details with `mismatchRatio`, `differentPixels`, `totalPixels`
+- `missing[]`: missing screenshot entries with `location` and `reason`
+- `errors[]`: comparison errors with `message`
+- `dimensionChanges[]`: routes where baseline and current viewport dimensions differ (pixel diff is skipped for these)
+- `baselineArtifactName`, `baselineSourceSha`: provenance metadata (optional)
+- `diffMode`, `threshold`: enforcement config echoed from repo config
+
 ## Diff semantics
 
 - screenshots are matched by `id`
 - mismatch ratio is `different_pixels / total_pixels`
-- dimension mismatches are incomplete comparison errors
+- viewport dimension mismatches (different width or height between baseline and current) skip pixel diff and are recorded in `dimensionChanges[]` with status `incomplete`
 - missing screenshots are counted separately from changed screenshots
 - `diff.mode` controls enforcement, not summary generation
 

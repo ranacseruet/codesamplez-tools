@@ -179,6 +179,16 @@ The low-level actions remain available for advanced consumers, but they are now 
 
 Use the low-level actions only when you need custom orchestration that the wrappers do not provide.
 
+## Diff calculation limitations
+
+The pixel diff engine has the following known limitations:
+
+- **Viewport dimension changes skip diff**: When a PR changes page content such that the captured screenshot dimensions differ from the baseline (e.g., adding or removing sections that change page height), pixel-level comparison is skipped for that route. These are reported as "dimension changes" in the summary, not as errors. The recommended workflow is to merge the PR and let the main CI re-capture the baseline with the new dimensions.
+- **Full-page capture dependency**: Screenshot dimensions depend on the full rendered page height at capture time. Any layout change that affects the document height — even outside the visually changed area — will trigger a dimension mismatch for that route.
+- **No sub-region diffing**: The engine compares entire screenshots pixel-by-pixel. There is no support for cropping or masking specific regions before comparison.
+- **Fixed viewport presets only**: v1 supports only `desktop` (1440x900) and `mobile` (390x844) presets. Custom viewport sizes are not supported.
+- **Single threshold per config**: The mismatch threshold (`diff.threshold`) applies uniformly to all routes. Per-route thresholds are not supported in v1.
+
 ## Repo contract
 
 Consumer repos provide `.github/visual-regression.json` and keep repo-specific app build/start logic outside the shared visual pipeline.

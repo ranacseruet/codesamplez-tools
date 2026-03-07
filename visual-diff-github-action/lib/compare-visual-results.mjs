@@ -260,82 +260,117 @@ export function shouldFailVisualDiff(summaryData) {
  * @returns {string}
  */
 function makeMarkdown(summaryData) {
+  const statusIconMap = {
+    clean: '✅',
+    'changes-detected': '🟡',
+    incomplete: '⚠️',
+    skipped: '⏭️'
+  };
+  const statusLabelMap = {
+    clean: 'Clean',
+    'changes-detected': 'Changes detected',
+    incomplete: 'Incomplete',
+    skipped: 'Skipped'
+  };
+  const status = summaryData.status || 'incomplete';
+  const statusIcon = statusIconMap[status] || '⚠️';
+  const statusLabel = statusLabelMap[status] || status;
+  const dimensionChanges = summaryData.dimensionChanges || [];
+
   const lines = [
-    '# Visual Diff Summary',
+    `# ${statusIcon} Visual Diff Summary — ${statusLabel}`,
     '',
-    `- Status: ${summaryData.status || 'incomplete'}`,
-    `- Diff mode: \`${summaryData.diffMode}\``,
-    `- Threshold: ${summaryData.threshold}`,
-    `- Selected routes: ${summaryData.selectedRoutes?.length || 0}`,
-    `- Total screenshots: ${summaryData.totalScreenshots}`,
-    `- Matched screenshots: ${summaryData.matchedScreenshots}`,
-    `- Changed screenshots: ${summaryData.changedScreenshots}`,
-    `- Missing in baseline: ${summaryData.missingInBaseline}`,
-    `- Missing in current: ${summaryData.missingInCurrent}`,
-    `- Viewport dimension changes: ${(summaryData.dimensionChanges || []).length}`,
-    `- Comparison errors: ${summaryData.errors.length}`
+    '| Metric | Count |',
+    '|:-------|------:|',
+    `| Selected routes | ${summaryData.selectedRoutes?.length || 0} |`,
+    `| Matched | ${summaryData.matchedScreenshots} |`,
+    `| Changed | ${summaryData.changedScreenshots} |`,
+    `| Missing in baseline | ${summaryData.missingInBaseline} |`,
+    `| Missing in current | ${summaryData.missingInCurrent} |`,
+    `| Dimension changes | ${dimensionChanges.length} |`,
+    `| Errors | ${summaryData.errors.length} |`,
+    '',
+    '| Setting | Value |',
+    '|:--------|:------|',
+    `| Diff mode | \`${summaryData.diffMode}\` |`,
+    `| Threshold | ${summaryData.threshold} |`
   ];
 
+  const metaItems = [];
   if (summaryData.baselineArtifactName) {
-    lines.push(`- Baseline artifact: \`${summaryData.baselineArtifactName}\``);
+    metaItems.push(`Baseline: \`${summaryData.baselineArtifactName}\``);
   }
   if (summaryData.baselineSourceSha) {
-    lines.push(`- Baseline source SHA: \`${summaryData.baselineSourceSha}\``);
+    metaItems.push(`SHA: \`${summaryData.baselineSourceSha}\``);
   }
-  lines.push(`- Baseline results: \`${summaryData.baselineResultsPath}\``);
-  lines.push(`- Current results: \`${summaryData.currentResultsPath}\``);
-  lines.push(`- Baseline manifest: \`${summaryData.baselineManifestPath}\``);
-  lines.push(`- Current manifest: \`${summaryData.currentManifestPath}\``);
+  if (metaItems.length > 0) {
+    lines.push('');
+    lines.push(`<sub>${metaItems.join(' · ')}</sub>`);
+  }
+
   lines.push('');
   lines.push('## Changed screenshots');
 
   if (summaryData.changed.length === 0) {
-    lines.push('- None');
+    lines.push('');
+    lines.push('None');
   } else {
+    lines.push('');
+    lines.push('| Route | Viewport | Mismatch | Pixels changed |');
+    lines.push('|:------|:---------|:---------|:---------------|');
     for (const item of summaryData.changed) {
-      lines.push(`- ${item.id} (${item.viewport})`);
-      lines.push(`  - Path: ${item.path}`);
-      lines.push(`  - Mismatch ratio: ${item.mismatchRatio.toFixed(6)}`);
-      lines.push(`  - Pixels changed: ${item.differentPixels}/${item.totalPixels}`);
+      lines.push(`| ${item.id} | ${item.viewport} | ${(item.mismatchRatio * 100).toFixed(2)}% | ${item.differentPixels}/${item.totalPixels} |`);
     }
   }
 
   lines.push('');
   lines.push('## Missing screenshots');
   if (summaryData.missing.length === 0) {
-    lines.push('- None');
+    lines.push('');
+    lines.push('None');
   } else {
+    lines.push('');
+    lines.push('| Route | Reason |');
+    lines.push('|:------|:-------|');
     for (const item of summaryData.missing) {
-      lines.push(`- ${item.id}: ${item.reason}`);
+      lines.push(`| ${item.id} | ${item.reason} |`);
     }
   }
 
   lines.push('');
   lines.push('## Viewport dimension changes');
-  if ((summaryData.dimensionChanges || []).length === 0) {
-    lines.push('- None');
+  if (dimensionChanges.length === 0) {
+    lines.push('');
+    lines.push('None');
   } else {
     lines.push('');
-    lines.push('Viewport dimensions changed between baseline and current capture. Pixel diff was skipped for these routes.');
-    lines.push('**Next step:** merge this PR and re-capture the baseline on `main` to update it.');
+    lines.push('> Viewport dimensions changed between baseline and current capture. Pixel diff was skipped for these routes.');
+    lines.push('>');
+    lines.push('> **Next step:** merge this PR and re-capture the baseline on `main` to update it.');
     lines.push('');
-    for (const item of summaryData.dimensionChanges) {
-      lines.push(
-        `- **${item.id}** (${item.viewport}) ${item.path}: ` +
-        `baseline ${item.baselineWidth}×${item.baselineHeight}, current ${item.currentWidth}×${item.currentHeight}`
-      );
+    lines.push('| Route | Viewport | Baseline | Current |');
+    lines.push('|:------|:---------|:---------|:--------|');
+    for (const item of dimensionChanges) {
+      lines.push(`| ${item.id} | ${item.viewport} | ${item.baselineWidth}×${item.baselineHeight} | ${item.currentWidth}×${item.currentHeight} |`);
     }
   }
 
   lines.push('');
   lines.push('## Comparison errors');
   if (summaryData.errors.length === 0) {
-    lines.push('- None');
+    lines.push('');
+    lines.push('None');
   } else {
+    lines.push('');
+    lines.push('| Route | Error |');
+    lines.push('|:------|:------|');
     for (const item of summaryData.errors) {
-      lines.push(`- ${item.id}: ${item.message}`);
+      lines.push(`| ${item.id} | ${item.message} |`);
     }
   }
+
+  lines.push('');
+  lines.push(`<sub>Baseline results: \`${summaryData.baselineResultsPath}\` · Current results: \`${summaryData.currentResultsPath}\`</sub>`);
 
   return lines.join('\n') + '\n';
 }

@@ -741,11 +741,11 @@ describe('generateVisualDiffReport', () => {
 
             const { markdown } = await generateVisualDiffReport({ ...opts, routeIds: [routeId] });
 
-            expect(markdown).toContain('# Visual Diff Summary');
+            expect(markdown).toContain('Visual Diff Summary');
+            expect(markdown).toContain('Clean');
             expect(markdown).toContain('## Changed screenshots');
             expect(markdown).toContain('## Viewport dimension changes');
             expect(markdown).toContain('## Comparison errors');
-            expect(markdown).toContain('- Status: clean');
         });
 
         it('lists changed screenshots with mismatch details', async () => {
@@ -763,7 +763,7 @@ describe('generateVisualDiffReport', () => {
             const { markdown } = await generateVisualDiffReport({ ...opts, routeIds: [routeId] });
 
             expect(markdown).toContain(routeId);
-            expect(markdown).toContain('Mismatch ratio');
+            expect(markdown).toContain('Mismatch');
         });
 
         it('describes dimension changes with baseline/current dimensions and next-step guidance', async () => {
@@ -859,7 +859,7 @@ describe('runVisualDiffCli', () => {
         const markdown = await fs.readFile(opts.markdownPath, 'utf8');
 
         expect(summary.status).toBe('clean');
-        expect(markdown).toContain('# Visual Diff Summary');
+        expect(markdown).toContain('Visual Diff Summary');
     });
 
     it('does not throw in report-only mode even when screenshots have changed', async () => {

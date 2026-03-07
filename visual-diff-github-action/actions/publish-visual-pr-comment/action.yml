@@ -67,47 +67,45 @@ runs:
             ? String(summary.selectedRoutes.length)
             : 'all';
           const dimensionChanges = summary.dimensionChanges || [];
+          const errorCount = (summary.errors || []).length;
+          const statusIcon = statusIconMap[status] || '⚠️';
+          const statusLabel = statusLabelMap[status] || status;
+
           const lines = [
             marker,
-            '## Visual Diff',
+            `## ${statusIcon} Visual Diff — ${statusLabel}`,
             '',
-            `- Status: ${statusIconMap[status] || '⚠️'} **${statusLabelMap[status] || status}**`,
-            `- Selected routes: ${selectedRoutes}`,
-            `- Changed screenshots: ${summary.changedScreenshots || 0}`,
-            `- Matched screenshots: ${summary.matchedScreenshots || 0}`,
-            `- Missing in baseline: ${summary.missingInBaseline || 0}`,
-            `- Missing in current: ${summary.missingInCurrent || 0}`,
-            `- Viewport dimension changes: ${dimensionChanges.length}`,
-            `- Comparison errors: ${(summary.errors || []).length}`
+            '| Metric | Count |',
+            '|:-------|------:|',
+            `| Selected routes | ${selectedRoutes} |`,
+            `| Matched | ${summary.matchedScreenshots || 0} |`,
+            `| Changed | ${summary.changedScreenshots || 0} |`,
+            `| Missing in baseline | ${summary.missingInBaseline || 0} |`,
+            `| Missing in current | ${summary.missingInCurrent || 0} |`,
+            `| Dimension changes | ${dimensionChanges.length} |`,
+            `| Errors | ${errorCount} |`
           ];
 
-          if (process.env.VISUAL_DIFF_ARTIFACT_NAME) {
-            lines.push(`- Artifact: \`${process.env.VISUAL_DIFF_ARTIFACT_NAME}\``);
-          }
-          if (runUrl) {
-            lines.push(`- Run: ${runUrl}`);
-          }
-          if (summary.baselineArtifactName) {
-            lines.push(`- Baseline artifact: \`${summary.baselineArtifactName}\``);
-          }
-          if (summary.baselineSourceSha) {
-            lines.push(`- Baseline SHA: \`${summary.baselineSourceSha}\``);
-          }
           if (summary.message) {
-            lines.push(`- Details: ${summary.message}`);
+            lines.push('');
+            lines.push(`> **Note:** ${summary.message}`);
           }
+
           if (Array.isArray(summary.changed) && summary.changed.length > 0) {
             lines.push('');
             lines.push('<details><summary>Changed screenshots</summary>');
             lines.push('');
-            for (const item of summary.changed.slice(0, 10)) {
+            lines.push('| Route | Viewport | Mismatch |');
+            lines.push('|:------|:---------|:---------|');
+            for (const item of summary.changed.slice(0, 20)) {
               const percentChanged = typeof item.mismatchRatio === 'number'
                 ? `${(item.mismatchRatio * 100).toFixed(2)}%`
                 : 'n/a';
-              lines.push(`- ${item.id} (${item.viewport}) - ${percentChanged} changed`);
+              lines.push(`| ${item.id} | ${item.viewport} | ${percentChanged} |`);
             }
-            if (summary.changed.length > 10) {
-              lines.push(`- ...and ${summary.changed.length - 10} more`);
+            if (summary.changed.length > 20) {
+              lines.push('');
+              lines.push(`*...and ${summary.changed.length - 20} more*`);
             }
             lines.push('');
             lines.push('</details>');
@@ -117,14 +115,35 @@ runs:
             lines.push('');
             lines.push('<details><summary>Viewport dimension changes — diff skipped</summary>');
             lines.push('');
-            lines.push('The page dimensions changed between the baseline and the current capture. Pixel diff was skipped for these routes.');
-            lines.push('**Next step:** merge this PR and let the main CI re-capture the baseline with the new dimensions.');
+            lines.push('> The page dimensions changed between the baseline and the current capture. Pixel diff was skipped for these routes.');
+            lines.push('>');
+            lines.push('> **Next step:** merge this PR and let the main CI re-capture the baseline with the new dimensions.');
             lines.push('');
+            lines.push('| Route | Viewport | Baseline | Current |');
+            lines.push('|:------|:---------|:---------|:--------|');
             for (const item of dimensionChanges) {
-              lines.push(`- **${item.id}** (${item.viewport}): baseline ${item.baselineWidth}×${item.baselineHeight} → current ${item.currentWidth}×${item.currentHeight}`);
+              lines.push(`| ${item.id} | ${item.viewport} | ${item.baselineWidth}×${item.baselineHeight} | ${item.currentWidth}×${item.currentHeight} |`);
             }
             lines.push('');
             lines.push('</details>');
+          }
+
+          const metaItems = [];
+          if (process.env.VISUAL_DIFF_ARTIFACT_NAME) {
+            metaItems.push(`Artifact: \`${process.env.VISUAL_DIFF_ARTIFACT_NAME}\``);
+          }
+          if (summary.baselineArtifactName) {
+            metaItems.push(`Baseline: \`${summary.baselineArtifactName}\``);
+          }
+          if (summary.baselineSourceSha) {
+            metaItems.push(`Baseline SHA: \`${summary.baselineSourceSha.slice(0, 7)}\``);
+          }
+          if (runUrl) {
+            metaItems.push(`[View run](${runUrl})`);
+          }
+          if (metaItems.length > 0) {
+            lines.push('');
+            lines.push(`<sub>${metaItems.join(' · ')}</sub>`);
           }
 
           const body = lines.join('\n');
@@ -134,35 +153,19 @@ runs:
             issue_number: issueNumber,
             per_page: 100
           });
-          const matchingComments = comments
-            .filter((comment) => comment.body && comment.body.includes(marker))
-            .sort((left, right) => {
-              const leftTime = new Date(left.updated_at || left.created_at).getTime();
-              const rightTime = new Date(right.updated_at || right.created_at).getTime();
-              return rightTime - leftTime;
-            });
-          const existing = matchingComments[0];
+          const oldComments = comments.filter((comment) => comment.body && comment.body.includes(marker));
 
-          if (existing) {
-            await github.rest.issues.updateComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: existing.id,
-              body
-            });
-          } else {
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issueNumber,
-              body
-            });
-          }
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: issueNumber,
+            body
+          });
 
-          for (const duplicate of matchingComments.slice(1)) {
+          for (const old of oldComments) {
             await github.rest.issues.deleteComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: duplicate.id
+              comment_id: old.id
             });
           }

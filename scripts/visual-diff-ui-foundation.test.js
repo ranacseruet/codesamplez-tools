@@ -225,8 +225,8 @@ describe('visual diff report generation', () => {
         expect(summary.missingInBaseline).toBe(0);
         expect(summary.missingInCurrent).toBe(0);
         expect(summary.errors).toHaveLength(0);
-        expect(markdown).toContain('- Status: clean');
-        expect(markdown).toContain('- Baseline artifact: `ui-foundation-visual-baseline`');
+        expect(markdown).toContain('Clean');
+        expect(markdown).toContain('ui-foundation-visual-baseline');
 
         const secondRun = await generateVisualDiffReport({
             configPath,
@@ -1035,6 +1035,6 @@ describe('visual diff report generation', () => {
             'Visual diff failed because 1 screenshot(s) exceeded the mismatch threshold.'
         );
         expect(JSON.parse(await fs.readFile(summaryJson, 'utf8')).changedScreenshots).toBe(1);
-        expect(await fs.readFile(summaryMarkdown, 'utf8')).toContain('# Visual Diff Summary');
+        expect(await fs.readFile(summaryMarkdown, 'utf8')).toContain('Visual Diff Summary');
     });
 });
