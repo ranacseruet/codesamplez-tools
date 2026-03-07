@@ -61,7 +61,7 @@ jobs:
 
       - name: Publish visual baseline
         id: publish
-        uses: ./visual-diff-github-action/actions/publish-visual-baseline
+        uses: ./actions/publish-visual-baseline
         with:
           repo-config-path: ${{ inputs.repo-config-path }}
           artifact-retention-days: ${{ inputs.artifact-retention-days }}

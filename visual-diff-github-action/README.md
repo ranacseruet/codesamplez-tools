@@ -7,7 +7,7 @@ This module contains the shared visual regression implementation for `Node + Pla
 - `lib/`: shared config, capture, compare, staging, and skipped-summary logic
 - `actions/`: cross-repo composite actions for baseline publishing and PR diffs
 - `.github/workflows/`: staged reusable workflow templates for later promotion
-- `docs/`: contracts and migration notes
+- `docs/`: contracts and promotion checklist
 
 ## Status: v1 (stable)
 
@@ -81,7 +81,7 @@ Example:
 }
 ```
 
-If you want changed-file scoping, also add the optional `selection` block and per-route `changePaths` entries. See the [migration guide](docs/migration-guide.md#4-optional-add-changed-file-scoping) for details.
+If you want changed-file scoping, also add the optional `selection` block and per-route `changePaths` entries. See [docs/contracts.md](docs/contracts.md) for the full schema including optional `selection` fields.
 
 ### Step 2: Publish the baseline artifact from the main CI workflow
 
@@ -105,8 +105,6 @@ Example:
 
 If you already have route selection logic, pass it through `route-ids`. Otherwise the wrapper captures all configured routes.
 
-See the [migration guide](docs/migration-guide.md) for a full working example.
-
 ### Step 3: Add the PR visual diff workflow
 
 The PR workflow must grant write permissions so the action can resolve baseline artifacts from another repo and post PR comments:
@@ -128,7 +126,7 @@ In the PR workflow:
 3. Build and start the app locally.
 4. Call `run-visual-pr-diff`.
 
-Example:
+Step example:
 
 ```yaml
 - name: Run visual PR diff
@@ -136,6 +134,47 @@ Example:
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     repo-config-path: .github/visual-regression.json
+```
+
+Complete `.github/workflows/pr-visual-diff.yml`:
+
+```yaml
+name: PR Visual Diff
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  visual-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      - name: Start app
+        run: |
+          npm start &
+          for i in $(seq 1 45); do
+            curl -sf http://127.0.0.1:8080 && break || sleep 1
+          done
+
+      - name: Run visual PR diff
+        uses: user/visual-diff-github-action/actions/run-visual-pr-diff@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-config-path: .github/visual-regression.json
 ```
 
 The wrapper:
@@ -158,8 +197,6 @@ Useful overrides:
 - `baseline-workflow-id`: override the publishing workflow id
 - `baseline-branch`: override the publishing branch
 - `comment-on-pr`: set to `false` to suppress the PR comment
-
-See the [migration guide](docs/migration-guide.md) for the full PR workflow setup.
 
 ### Advanced usage
 
@@ -189,4 +226,36 @@ The pixel diff engine has the following known limitations:
 
 Consumer repos provide `.github/visual-regression.json` and keep repo-specific app build/start logic outside the shared visual pipeline.
 
-See [docs/contracts.md](docs/contracts.md) for the exact file contracts and [docs/migration-guide.md](docs/migration-guide.md) for the wrapper-first rollout path.
+See [docs/contracts.md](docs/contracts.md) for the exact file contracts.
+
+## Enforcement modes
+
+Start with `report-only` to accumulate baselines without affecting build status. Once baselines are stable, switch to `fail-on-changes` to catch visual regressions. Use `strict` to also fail on missing screenshots, dimension changes, and comparison errors.
+
+| Mode | Fails when |
+|:-----|:-----------|
+| `report-only` | Never |
+| `fail-on-changes` | `changedScreenshots > 0` |
+| `fail-on-incomplete` | Errors, dimension changes, or missing screenshots |
+| `strict` | Any of the above |
+
+## Upgrading
+
+When the module moves to a dedicated repo or cuts a new version:
+
+1. Update the `uses:` reference in your workflow to the new repo/tag.
+2. Check the [CHANGELOG](CHANGELOG.md) for any contract changes.
+3. Minor version bumps do not require changes to `.github/visual-regression.json`.
+
+## Troubleshooting
+
+**"No non-expired visual baseline artifact was found"**
+- The main CI workflow has not run successfully yet, or the artifact has expired.
+- Run the main CI workflow on `main` and wait for it to complete.
+
+**403 when posting PR comments**
+- Add `issues: write` and `pull-requests: write` permissions to the PR workflow job.
+
+**Screenshots have different dimensions**
+- Expected when a PR changes page content such that the captured dimensions differ from the baseline (e.g., adding or removing sections that change page height). Recorded as a "dimension change" in the diff summary; pixel comparison is skipped for that route.
+- Merge the PR and let the main CI re-capture the baseline with the new dimensions.

@@ -69,7 +69,7 @@ jobs:
 
       - name: Run visual PR diff
         id: visual_diff
-        uses: ./visual-diff-github-action/actions/run-visual-pr-diff
+        uses: ./actions/run-visual-pr-diff
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repo-config-path: ${{ inputs.repo-config-path }}
