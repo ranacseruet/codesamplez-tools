@@ -1,11 +1,13 @@
 # Migration Guide
 
-## Phase 2 local rollout
+## Current rollout path
 
 1. Keep the repo-owned visual config in `.github/visual-regression.json`.
 2. Keep app build/start logic in repo workflows.
-3. Call the shared actions in `visual-diff-github-action/actions/` for route scoping, capture, compare, staging, and PR reporting.
-4. Validate the primary CI and PR paths directly once the repo switches over.
+3. Use `actions/publish-visual-baseline` for the main baseline-publish path.
+4. Use `actions/run-visual-pr-diff` for the PR diff path.
+5. Use the low-level actions only for advanced custom orchestration.
+6. Validate the primary CI and PR paths directly once the repo switches over.
 
 ## Promotion path
 
@@ -17,8 +19,9 @@ When this module moves to a dedicated shared repo or to a repository-root workfl
 
 Current status in this repo:
 
-- the primary CI and PR paths call the shared composite actions directly from repo-owned jobs
-- repo workflows own startup readiness and pass config and selected route ids into the shared actions
+- the primary CI path calls `publish-visual-baseline`
+- the primary PR path calls `run-visual-pr-diff`
+- repo workflows still own startup readiness and app lifecycle
 - the temporary canary path used during rollout has been removed after primary-path validation
 
 ## Consumer responsibilities
@@ -27,4 +30,4 @@ Current status in this repo:
 - build the app if needed
 - start the app locally in CI
 - make the app reachable at `baseUrl`
-- choose when to invoke the shared actions or workflows
+- choose when to invoke the wrapper actions or staged workflows

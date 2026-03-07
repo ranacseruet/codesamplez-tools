@@ -59,25 +59,9 @@ jobs:
           cat /tmp/visual-baseline-start.log || true
           exit 1
 
-      - name: Capture visual routes
-        id: capture
-        uses: ./visual-diff-github-action/actions/capture-visual-routes
+      - name: Publish visual baseline
+        id: publish
+        uses: ./visual-diff-github-action/actions/publish-visual-baseline
         with:
           repo-config-path: ${{ inputs.repo-config-path }}
-
-      - name: Stage baseline artifact
-        id: stage
-        uses: ./visual-diff-github-action/actions/stage-visual-artifacts
-        with:
-          artifact-type: baseline
-          bundle-dir: qa-artifacts/visual-baseline-artifact
-          results-path: ${{ steps.capture.outputs.results-file }}
-          manifest-path: ${{ steps.capture.outputs.manifest-file }}
-          screenshots-dir: ${{ steps.capture.outputs.screenshots-root }}/screenshots
-
-      - name: Upload baseline artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ui-foundation-visual-baseline
-          retention-days: ${{ inputs.artifact-retention-days }}
-          path: ${{ steps.stage.outputs.bundle-dir }}
+          artifact-retention-days: ${{ inputs.artifact-retention-days }}

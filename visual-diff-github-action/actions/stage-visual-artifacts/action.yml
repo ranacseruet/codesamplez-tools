@@ -8,7 +8,7 @@ inputs:
   bundle-dir:
     description: Output bundle directory.
     required: false
-    default: qa-artifacts/visual-artifact-bundle
+    default: ''
   results-path:
     description: Baseline results path for baseline artifact staging.
     required: false
@@ -64,48 +64,44 @@ runs:
   steps:
     - id: stage
       shell: bash
+      env:
+        ARTIFACT_TYPE: ${{ inputs.artifact-type }}
+        BUNDLE_DIR: ${{ inputs.bundle-dir }}
+        RESULTS_PATH: ${{ inputs.results-path }}
+        MANIFEST_PATH: ${{ inputs.manifest-path }}
+        SCREENSHOTS_DIR: ${{ inputs.screenshots-dir }}
+        SUMMARY_JSON_PATH: ${{ inputs.summary-json-path }}
+        SUMMARY_MARKDOWN_PATH: ${{ inputs.summary-markdown-path }}
+        BASELINE_RESULTS_PATH: ${{ inputs.baseline-results-path }}
+        CURRENT_RESULTS_PATH: ${{ inputs.current-results-path }}
+        BASELINE_MANIFEST_PATH: ${{ inputs.baseline-manifest-path }}
+        CURRENT_MANIFEST_PATH: ${{ inputs.current-manifest-path }}
+        BASELINE_SCREENSHOTS_DIR: ${{ inputs.baseline-screenshots-dir }}
+        CURRENT_SCREENSHOTS_DIR: ${{ inputs.current-screenshots-dir }}
       run: |
-        set -euo pipefail
-        BUNDLE_DIR="${{ inputs.bundle-dir }}"
-        rm -rf "$BUNDLE_DIR"
+        node --input-type=module <<'EOF'
+        import fs from 'node:fs/promises';
+        import path from 'node:path';
+        import { pathToFileURL } from 'node:url';
 
-        if [ "${{ inputs.artifact-type }}" = "baseline" ]; then
-          mkdir -p "$BUNDLE_DIR/screenshots"
-          if [ -n "${{ inputs.results-path }}" ] && [ -f "${{ inputs.results-path }}" ]; then
-            cp "${{ inputs.results-path }}" "$BUNDLE_DIR/visual-baseline-results.json"
-          fi
-          if [ -n "${{ inputs.manifest-path }}" ] && [ -f "${{ inputs.manifest-path }}" ]; then
-            cp "${{ inputs.manifest-path }}" "$BUNDLE_DIR/visual-screenshot-manifest.json"
-          fi
-          if [ -n "${{ inputs.screenshots-dir }}" ] && [ -d "${{ inputs.screenshots-dir }}" ]; then
-            find "${{ inputs.screenshots-dir }}" -type f -name '*.png' -exec cp {} "$BUNDLE_DIR/screenshots/" \;
-          fi
-        else
-          mkdir -p "$BUNDLE_DIR/baseline-screenshots" "$BUNDLE_DIR/current-screenshots"
-          if [ -f "${{ inputs.summary-json-path }}" ]; then
-            cp "${{ inputs.summary-json-path }}" "$BUNDLE_DIR/visual-diff-summary.json"
-          fi
-          if [ -f "${{ inputs.summary-markdown-path }}" ]; then
-            cp "${{ inputs.summary-markdown-path }}" "$BUNDLE_DIR/visual-diff-summary.md"
-          fi
-          if [ -f "${{ inputs.baseline-results-path }}" ]; then
-            cp "${{ inputs.baseline-results-path }}" "$BUNDLE_DIR/baseline-results.json"
-          fi
-          if [ -f "${{ inputs.current-results-path }}" ]; then
-            cp "${{ inputs.current-results-path }}" "$BUNDLE_DIR/current-results.json"
-          fi
-          if [ -f "${{ inputs.baseline-manifest-path }}" ]; then
-            cp "${{ inputs.baseline-manifest-path }}" "$BUNDLE_DIR/baseline-screenshot-manifest.json"
-          fi
-          if [ -f "${{ inputs.current-manifest-path }}" ]; then
-            cp "${{ inputs.current-manifest-path }}" "$BUNDLE_DIR/current-screenshot-manifest.json"
-          fi
-          if [ -d "${{ inputs.baseline-screenshots-dir }}" ]; then
-            find "${{ inputs.baseline-screenshots-dir }}" -type f -name '*.png' -exec cp {} "$BUNDLE_DIR/baseline-screenshots/" \;
-          fi
-          if [ -d "${{ inputs.current-screenshots-dir }}" ]; then
-            find "${{ inputs.current-screenshots-dir }}" -type f -name '*.png' -exec cp {} "$BUNDLE_DIR/current-screenshots/" \;
-          fi
-        fi
+        const modulePath = path.resolve(process.env.GITHUB_ACTION_PATH, '../../lib/stage-visual-artifacts.mjs');
+        const { stageVisualArtifacts } = await import(pathToFileURL(modulePath));
 
-        echo "bundle_dir=$BUNDLE_DIR" >> "$GITHUB_OUTPUT"
+        const result = await stageVisualArtifacts({
+          artifactType: process.env.ARTIFACT_TYPE,
+          bundleDir: process.env.BUNDLE_DIR || undefined,
+          resultsPath: process.env.RESULTS_PATH || undefined,
+          manifestPath: process.env.MANIFEST_PATH || undefined,
+          screenshotsDir: process.env.SCREENSHOTS_DIR || undefined,
+          summaryJsonPath: process.env.SUMMARY_JSON_PATH || undefined,
+          summaryMarkdownPath: process.env.SUMMARY_MARKDOWN_PATH || undefined,
+          baselineResultsPath: process.env.BASELINE_RESULTS_PATH || undefined,
+          currentResultsPath: process.env.CURRENT_RESULTS_PATH || undefined,
+          baselineManifestPath: process.env.BASELINE_MANIFEST_PATH || undefined,
+          currentManifestPath: process.env.CURRENT_MANIFEST_PATH || undefined,
+          baselineScreenshotsDir: process.env.BASELINE_SCREENSHOTS_DIR || undefined,
+          currentScreenshotsDir: process.env.CURRENT_SCREENSHOTS_DIR || undefined
+        });
+
+        await fs.appendFile(process.env.GITHUB_OUTPUT, `bundle_dir=${result.bundleDir}\n`);
+        EOF

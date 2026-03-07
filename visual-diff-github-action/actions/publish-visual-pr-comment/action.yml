@@ -7,7 +7,8 @@ inputs:
     required: true
   pr-number:
     description: Pull request number to comment on.
-    required: true
+    required: false
+    default: ''
   summary-path:
     description: Path to the visual diff summary JSON.
     required: true
@@ -38,6 +39,14 @@ runs:
             core.warning(`Visual diff summary not found at ${summaryPath}`);
             return;
           }
+
+          const issueNumber = Number('${{ inputs.pr-number }}' || context.payload.pull_request?.number || context.issue?.number || '');
+          if (!Number.isFinite(issueNumber) || issueNumber <= 0) {
+            core.warning('Visual diff PR comment skipped because no pull request number was available.');
+            return;
+          }
+
+          const runUrl = process.env.VISUAL_DIFF_RUN_URL || `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 
           const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
           const status = summary.status || 'incomplete';
@@ -73,8 +82,8 @@ runs:
           if (process.env.VISUAL_DIFF_ARTIFACT_NAME) {
             lines.push(`- Artifact: \`${process.env.VISUAL_DIFF_ARTIFACT_NAME}\``);
           }
-          if (process.env.VISUAL_DIFF_RUN_URL) {
-            lines.push(`- Run: ${process.env.VISUAL_DIFF_RUN_URL}`);
+          if (runUrl) {
+            lines.push(`- Run: ${runUrl}`);
           }
           if (summary.baselineArtifactName) {
             lines.push(`- Baseline artifact: \`${summary.baselineArtifactName}\``);
@@ -103,7 +112,6 @@ runs:
           }
 
           const body = lines.join('\n');
-          const issueNumber = Number('${{ inputs.pr-number }}');
           const comments = await github.paginate(github.rest.issues.listComments, {
             owner: context.repo.owner,
             repo: context.repo.repo,

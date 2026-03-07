@@ -27,7 +27,7 @@ const baselineManifestPath = process.env.QA_VISUAL_BASELINE_MANIFEST_PATH;
 const currentResultsPath = process.env.QA_VISUAL_CURRENT_RESULTS_PATH;
 const currentManifestPath = process.env.QA_VISUAL_CURRENT_MANIFEST_PATH;
 const baselineRunDir = path.resolve(process.env.QA_VISUAL_BASELINE_RUN_DIR || 'baseline');
-const currentRunDir = path.resolve(process.env.QA_VISUAL_CURRENT_RUN_DIR || '.');
+const currentRunDir = process.env.QA_VISUAL_CURRENT_RUN_DIR ? path.resolve(process.env.QA_VISUAL_CURRENT_RUN_DIR) : '';
 const outDir = path.resolve(process.env.QA_VISUAL_DIFF_OUT_DIR || path.join('qa-artifacts', 'visual-diffs', 'current'));
 const summaryPath = path.resolve(process.env.QA_VISUAL_DIFF_SUMMARY_PATH || path.join(outDir, 'visual-diff-summary.json'));
 const markdownPath = path.resolve(process.env.QA_VISUAL_DIFF_SUMMARY_MARKDOWN || path.join(outDir, 'visual-diff-summary.md'));
@@ -360,7 +360,9 @@ export async function generateVisualDiffReport(options = {}) {
     options.currentManifestPath || currentManifestPath || resolveFromWorkingDirectory(config, config.manifestFile)
   );
   const resolvedBaselineRunDir = path.resolve(options.baselineRunDir || baselineRunDir);
-  const resolvedCurrentRunDir = path.resolve(options.currentRunDir || currentRunDir);
+  const resolvedCurrentRunDir = path.resolve(
+    options.currentRunDir || currentRunDir || resolveFromWorkingDirectory(config, config.screenshotsRoot)
+  );
 
   const [baselineResults, currentResults, baselineManifest, currentManifest] = await Promise.all([
     loadJson(resolvedBaselineResultsPath, 'baseline visual results'),

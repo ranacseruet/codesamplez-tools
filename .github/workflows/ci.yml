@@ -17,18 +17,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Load visual regression config
-      id: visual_config
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const fs = require('fs');
-          const path = require('path');
-          const configPath = path.join(process.env.GITHUB_WORKSPACE, '.github', 'visual-regression.json');
-          const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-
-          core.setOutput('baseline_artifact_name', config.baselineArtifactName);
-
     - name: Determine visual QA scope
       id: visual_relevance
       uses: ./visual-diff-github-action/actions/determine-visual-diff-scope
@@ -106,33 +94,13 @@ jobs:
         QA_A11Y_FAIL_ON_VIOLATIONS: '0'
       continue-on-error: true
 
-    - name: Capture baseline visual routes
+    - name: Publish main visual baseline
       if: github.ref == 'refs/heads/main' && steps.visual_relevance.outputs.should-run == 'true'
-      id: capture_visual
-      uses: ./visual-diff-github-action/actions/capture-visual-routes
+      uses: ./visual-diff-github-action/actions/publish-visual-baseline
       with:
         repo-config-path: .github/visual-regression.json
         route-ids: ${{ steps.visual_relevance.outputs.selected-route-ids }}
-
-    - name: Stage main visual baseline artifact
-      if: github.ref == 'refs/heads/main' && steps.visual_relevance.outputs.should-run == 'true'
-      id: stage_visual
-      uses: ./visual-diff-github-action/actions/stage-visual-artifacts
-      with:
-        artifact-type: baseline
-        bundle-dir: qa-artifacts/visual-baseline-artifact
-        results-path: ${{ steps.capture_visual.outputs.results-file }}
-        manifest-path: ${{ steps.capture_visual.outputs.manifest-file }}
-        screenshots-dir: ${{ steps.capture_visual.outputs.screenshots-root }}/screenshots
-
-    - name: Upload main visual baseline artifacts
-      if: github.ref == 'refs/heads/main' && steps.visual_relevance.outputs.should-run == 'true'
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ steps.visual_config.outputs.baseline_artifact_name }}
-        retention-days: 30
-        if-no-files-found: warn
-        path: ${{ steps.stage_visual.outputs.bundle-dir }}
+        artifact-retention-days: '30'
 
     - name: Record skipped visual QA summary
       if: steps.visual_relevance.outputs.should-run != 'true'

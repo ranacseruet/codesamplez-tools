@@ -30,7 +30,7 @@ inputs:
   current-run-dir:
     description: Root directory that contains current screenshots.
     required: false
-    default: .
+    default: ''
   out-dir:
     description: Directory where the diff summary files should be written.
     required: false

@@ -18,7 +18,7 @@ on:
       comment-on-pr:
         required: false
         type: boolean
-        default: false
+        default: true
       install-command:
         required: false
         type: string
@@ -46,13 +46,6 @@ jobs:
           node-version: ${{ inputs.node-version }}
           cache: npm
 
-      - name: Resolve baseline artifact
-        id: baseline
-        uses: ./visual-diff-github-action/actions/resolve-baseline-artifact
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          repo-config-path: ${{ inputs.repo-config-path }}
-
       - name: Install dependencies
         run: ${{ inputs.install-command }}
 
@@ -74,59 +67,12 @@ jobs:
           cat /tmp/visual-pr-diff-start.log || true
           exit 1
 
-      - name: Capture current visual routes
-        id: capture
-        uses: ./visual-diff-github-action/actions/capture-visual-routes
-        with:
-          repo-config-path: ${{ inputs.repo-config-path }}
-
-      - name: Compare with baseline
-        id: compare
-        uses: ./visual-diff-github-action/actions/compare-visual-results
-        with:
-          repo-config-path: ${{ inputs.repo-config-path }}
-          baseline-results-path: ${{ steps.baseline.outputs.results-file }}
-          baseline-manifest-path: ${{ steps.baseline.outputs.manifest-file }}
-          baseline-run-dir: ${{ steps.baseline.outputs.run-dir }}
-          current-results-path: ${{ steps.capture.outputs.results-file }}
-          current-manifest-path: ${{ steps.capture.outputs.manifest-file }}
-          current-run-dir: ${{ steps.capture.outputs.screenshots-root }}
-          baseline-artifact-name: ${{ steps.baseline.outputs.artifact-name }}
-          baseline-source-sha: ${{ steps.baseline.outputs.head-sha }}
-
-      - name: Stage diff artifact
-        id: stage
-        uses: ./visual-diff-github-action/actions/stage-visual-artifacts
-        with:
-          artifact-type: diff
-          bundle-dir: qa-artifacts/visual-diff-artifact
-          summary-json-path: ${{ steps.compare.outputs.summary-path }}
-          summary-markdown-path: ${{ steps.compare.outputs.markdown-path }}
-          baseline-results-path: ${{ steps.baseline.outputs.results-file }}
-          current-results-path: ${{ steps.capture.outputs.results-file }}
-          baseline-manifest-path: ${{ steps.baseline.outputs.manifest-file }}
-          current-manifest-path: ${{ steps.capture.outputs.manifest-file }}
-          baseline-screenshots-dir: ${{ steps.baseline.outputs.screenshots-dir }}
-          current-screenshots-dir: ${{ steps.capture.outputs.screenshots-root }}/screenshots
-
-      - name: Upload diff artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: pr-visual-diff-${{ github.run_id }}
-          retention-days: ${{ inputs.artifact-retention-days }}
-          path: ${{ steps.stage.outputs.bundle-dir }}
-
-      - name: Publish PR comment
-        if: ${{ inputs.comment-on-pr && inputs.pr-number != '' }}
-        uses: ./visual-diff-github-action/actions/publish-visual-pr-comment
+      - name: Run visual PR diff
+        id: visual_diff
+        uses: ./visual-diff-github-action/actions/run-visual-pr-diff
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-config-path: ${{ inputs.repo-config-path }}
           pr-number: ${{ inputs.pr-number }}
-          summary-path: ${{ steps.compare.outputs.summary-path }}
-          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          artifact-name: pr-visual-diff-${{ github.run_id }}
-
-      - name: Evaluate outcome
-        uses: ./visual-diff-github-action/actions/evaluate-visual-diff-outcome
-        with:
-          summary-path: ${{ steps.compare.outputs.summary-path }}
+          artifact-retention-days: ${{ inputs.artifact-retention-days }}
+          comment-on-pr: ${{ inputs.comment-on-pr }}

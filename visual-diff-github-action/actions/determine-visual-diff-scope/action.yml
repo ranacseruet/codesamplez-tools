@@ -54,6 +54,7 @@ runs:
           const { config } = await loadVisualRegressionConfig(process.env.REPO_CONFIG_PATH || undefined);
 
           const allRouteIds = (config.routes || []).map((route) => route.id);
+          const resolvedPrNumber = Number(process.env.INPUT_PR_NUMBER || context.payload.pull_request?.number || '');
 
           function setOutputs(scope) {
             core.setOutput('should_run', scope.shouldRun ? 'true' : 'false');
@@ -70,8 +71,7 @@ runs:
             return;
           }
 
-          const prNumber = Number(process.env.INPUT_PR_NUMBER || '');
-          if (!Number.isFinite(prNumber) || prNumber <= 0) {
+          if (!Number.isFinite(resolvedPrNumber) || resolvedPrNumber <= 0) {
             setOutputs({
               shouldRun: true,
               reason: 'missing_pr_number',
@@ -84,7 +84,7 @@ runs:
             const files = await github.paginate(github.rest.pulls.listFiles, {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: prNumber,
+              pull_number: resolvedPrNumber,
               per_page: 100
             });
 

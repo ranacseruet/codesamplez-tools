@@ -339,6 +339,95 @@ describe('visual diff report generation', () => {
         expect(shouldFailVisualDiff(summary)).toBe(true);
     });
 
+    it('defaults current paths and current run dir from the visual regression config', async () => {
+        const { generateVisualDiffReport } = await import('./visual-diff-ui-foundation.mjs');
+
+        const configPath = path.join(tempDir, 'visual-regression.json');
+        const baselineRunDir = path.join(tempDir, 'baseline');
+        const workingDirectory = path.join(tempDir, 'workspace');
+        const baselineResultsPath = path.join(baselineRunDir, 'visual-baseline-results.json');
+        const baselineManifestPath = path.join(baselineRunDir, 'visual-screenshot-manifest.json');
+        const currentResultsPath = path.join(workingDirectory, 'current-defaults', 'visual-baseline-results.json');
+        const currentManifestPath = path.join(workingDirectory, 'current-defaults', 'visual-screenshot-manifest.json');
+
+        await writeConfig(configPath, {
+            workingDirectory,
+            resultsFile: 'current-defaults/visual-baseline-results.json',
+            manifestFile: 'current-defaults/visual-screenshot-manifest.json',
+            screenshotsRoot: 'current-defaults'
+        });
+
+        await writePng(path.join(baselineRunDir, 'screenshots', 'root-index-desktop.png'), [
+            [255, 0, 0, 255],
+            [255, 0, 0, 255],
+            [255, 0, 0, 255],
+            [255, 0, 0, 255]
+        ]);
+        await writePng(path.join(workingDirectory, 'current-defaults', 'screenshots', 'root-index-desktop.png'), [
+            [255, 0, 0, 255],
+            [255, 0, 0, 255],
+            [255, 0, 0, 255],
+            [255, 0, 0, 255]
+        ]);
+
+        await writeResults(baselineResultsPath, [
+            {
+                id: 'root-index-desktop',
+                path: '/',
+                viewport: 'desktop',
+                status: 'passed',
+                durationMs: 1,
+                imagePath: 'screenshots/root-index-desktop.png',
+                width: 1440,
+                height: 900
+            }
+        ]);
+        await writeManifest(baselineManifestPath, [
+            {
+                id: 'root-index-desktop',
+                path: '/',
+                viewport: 'desktop',
+                imagePath: 'screenshots/root-index-desktop.png',
+                width: 1440,
+                height: 900
+            }
+        ]);
+        await writeResults(currentResultsPath, [
+            {
+                id: 'root-index-desktop',
+                path: '/',
+                viewport: 'desktop',
+                status: 'passed',
+                durationMs: 1,
+                imagePath: 'screenshots/root-index-desktop.png',
+                width: 1440,
+                height: 900
+            }
+        ]);
+        await writeManifest(currentManifestPath, [
+            {
+                id: 'root-index-desktop',
+                path: '/',
+                viewport: 'desktop',
+                imagePath: 'screenshots/root-index-desktop.png',
+                width: 1440,
+                height: 900
+            }
+        ]);
+
+        const { summary } = await generateVisualDiffReport({
+            configPath,
+            baselineResultsPath,
+            baselineManifestPath,
+            baselineRunDir,
+            routeIds: ['root-index-desktop']
+        });
+
+        expect(summary.status).toBe('clean');
+        expect(summary.currentResultsPath).toBe(currentResultsPath);
+        expect(summary.currentManifestPath).toBe(currentManifestPath);
+    });
+
     it('records incomplete comparisons when both manifests omit a failed route', async () => {
         const { generateVisualDiffReport } = await import('./visual-diff-ui-foundation.mjs');
         const configPath = path.join(tempDir, 'visual-regression.json');

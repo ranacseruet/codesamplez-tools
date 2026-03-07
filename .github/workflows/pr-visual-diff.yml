@@ -13,64 +13,20 @@ permissions:
   pull-requests: write
 
 jobs:
-  prepare-visual-diff:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    outputs:
-      pr_number: ${{ steps.run_context.outputs.pr_number }}
-      head_sha: ${{ steps.run_context.outputs.head_sha }}
-      should_run: ${{ steps.diff_scope.outputs.should-run }}
-      selected_route_ids: ${{ steps.diff_scope.outputs.selected-route-ids }}
-    steps:
-      - name: Checkout PR
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.pull_request.head.sha }}
-
-      - name: Resolve run context
-        id: run_context
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const pr = context.payload.pull_request || null;
-
-            core.setOutput('pr_number', pr?.number ? String(pr.number) : '');
-            core.setOutput('head_sha', pr?.head?.sha || context.sha);
-
-      - name: Determine visual diff scope
-        id: diff_scope
-        uses: ./visual-diff-github-action/actions/determine-visual-diff-scope
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          repo-config-path: .github/visual-regression.json
-          pr-number: ${{ steps.run_context.outputs.pr_number }}
-          force-run: ${{ github.event_name == 'workflow_dispatch' }}
-          force-run-reason: manual_dispatch
-
   visual-diff:
-    needs: prepare-visual-diff
-    if: needs.prepare-visual-diff.outputs.should_run == 'true'
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.prepare-visual-diff.outputs.head_sha }}
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.pull_request.head.sha }}
 
       - uses: actions/setup-node@v4
         with:
           node-version: '23'
           cache: npm
-
-      - name: Resolve baseline artifact
-        id: baseline
-        uses: ./visual-diff-github-action/actions/resolve-baseline-artifact
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          repo-config-path: .github/visual-regression.json
-          workflow-id: ci.yml
-          branch: main
 
       - name: Install dependencies
         run: npm ci
@@ -99,163 +55,15 @@ jobs:
             exit 1
           fi
 
-      - name: Capture current visual routes
-        id: capture
-        uses: ./visual-diff-github-action/actions/capture-visual-routes
-        with:
-          repo-config-path: .github/visual-regression.json
-          route-ids: ${{ needs.prepare-visual-diff.outputs.selected_route_ids }}
-
-      - name: Compare with baseline
-        if: steps.baseline.outputs.found == 'true'
-        id: compare
-        uses: ./visual-diff-github-action/actions/compare-visual-results
-        with:
-          repo-config-path: .github/visual-regression.json
-          route-ids: ${{ needs.prepare-visual-diff.outputs.selected_route_ids }}
-          baseline-results-path: ${{ steps.baseline.outputs.results-file }}
-          baseline-manifest-path: ${{ steps.baseline.outputs.manifest-file }}
-          baseline-run-dir: ${{ steps.baseline.outputs.run-dir }}
-          current-results-path: ${{ steps.capture.outputs.results-file }}
-          current-manifest-path: ${{ steps.capture.outputs.manifest-file }}
-          current-run-dir: ${{ steps.capture.outputs.screenshots-root }}
-          baseline-artifact-name: ${{ steps.baseline.outputs.artifact-name }}
-          baseline-source-sha: ${{ steps.baseline.outputs.head-sha }}
-
-      - name: Record skipped visual diff summary
-        if: steps.baseline.outputs.found != 'true'
-        id: skipped_summary
-        run: |
-          set -euo pipefail
-          mkdir -p qa-artifacts/visual-diffs/current
-          node --input-type=module <<'EOF'
-          import fs from 'node:fs/promises';
-
-          const summary = {
-            status: 'skipped',
-            reason: 'missing_main_baseline_artifact',
-            message: `${{ steps.baseline.outputs.message }}`,
-            baselineAvailable: false,
-            currentResultsPath: `${{ steps.capture.outputs.results-file }}`
-          };
-
-          const markdown = [
-            '# Visual Diff Summary',
-            '',
-            '- Status: skipped',
-            '- Reason: latest successful `main` visual baseline artifact was not available',
-            `- Details: ${summary.message}`,
-            `- Current run: \`${summary.currentResultsPath}\``,
-            '',
-            '## Next action',
-            '',
-            '- Merge the baseline-publishing workflow to `main` and wait for one successful run, or refresh the expired baseline artifact.'
-          ].join('\n') + '\n';
-
-          await fs.writeFile('qa-artifacts/visual-diffs/current/visual-diff-summary.json', `${JSON.stringify(summary, null, 2)}\n`);
-          await fs.writeFile('qa-artifacts/visual-diffs/current/visual-diff-summary.md', markdown);
-          EOF
-          {
-            echo "summary_path=${GITHUB_WORKSPACE}/qa-artifacts/visual-diffs/current/visual-diff-summary.json"
-            echo "markdown_path=${GITHUB_WORKSPACE}/qa-artifacts/visual-diffs/current/visual-diff-summary.md"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Stage diff artifact
-        id: stage
-        uses: ./visual-diff-github-action/actions/stage-visual-artifacts
-        with:
-          artifact-type: diff
-          bundle-dir: qa-artifacts/visual-diff-artifact
-          summary-json-path: ${{ steps.compare.outputs.summary-path || steps.skipped_summary.outputs.summary_path }}
-          summary-markdown-path: ${{ steps.compare.outputs.markdown-path || steps.skipped_summary.outputs.markdown_path }}
-          baseline-results-path: ${{ steps.baseline.outputs.results-file }}
-          current-results-path: ${{ steps.capture.outputs.results-file }}
-          baseline-manifest-path: ${{ steps.baseline.outputs.manifest-file }}
-          current-manifest-path: ${{ steps.capture.outputs.manifest-file }}
-          baseline-screenshots-dir: ${{ steps.baseline.outputs.screenshots-dir }}
-          current-screenshots-dir: ${{ steps.capture.outputs.screenshots-root }}/screenshots
-
-      - name: Publish visual diff summary to workflow run
-        if: always()
-        run: |
-          set -euo pipefail
-          SUMMARY_FILE="${{ steps.compare.outputs.markdown-path || steps.skipped_summary.outputs.markdown_path }}"
-          if [ -f "$SUMMARY_FILE" ]; then
-            cat "$SUMMARY_FILE" >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-      - name: Upload diff artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: pr-visual-diff-${{ needs.prepare-visual-diff.outputs.pr_number || github.run_id }}
-          retention-days: 30
-          path: ${{ steps.stage.outputs.bundle-dir }}
-
-      - name: Publish PR comment
-        if: needs.prepare-visual-diff.outputs.pr_number != ''
-        uses: ./visual-diff-github-action/actions/publish-visual-pr-comment
+      - name: Run visual PR diff
+        id: visual_diff
+        uses: ./visual-diff-github-action/actions/run-visual-pr-diff
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          pr-number: ${{ needs.prepare-visual-diff.outputs.pr_number }}
-          summary-path: ${{ steps.compare.outputs.summary-path || steps.skipped_summary.outputs.summary_path }}
-          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          artifact-name: pr-visual-diff-${{ needs.prepare-visual-diff.outputs.pr_number || github.run_id }}
-
-      - name: Evaluate outcome
-        if: steps.baseline.outputs.found == 'true'
-        uses: ./visual-diff-github-action/actions/evaluate-visual-diff-outcome
-        with:
-          summary-path: ${{ steps.compare.outputs.summary-path }}
+          repo-config-path: .github/visual-regression.json
+          force-run: ${{ github.event_name == 'workflow_dispatch' }}
+          force-run-reason: manual_dispatch
 
       - name: Stop app
         if: always()
         run: kill "$QA_SERVER_PID" || true
-
-  skipped-visual-diff:
-    needs: prepare-visual-diff
-    if: needs.prepare-visual-diff.outputs.should_run != 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.prepare-visual-diff.outputs.head_sha || github.sha }}
-
-      - name: Record skipped visual diff summary
-        run: |
-          set -euo pipefail
-          mkdir -p qa-artifacts/visual-diffs/current
-          cat <<'EOF' > qa-artifacts/visual-diffs/current/visual-diff-summary.md
-          # Visual Diff Summary
-
-          - Status: skipped
-          - Reason: no visual-relevant changes were detected in this pull request
-          - Details: the PR did not modify files mapped to visual QA coverage
-          EOF
-          cat <<'EOF' > qa-artifacts/visual-diffs/current/visual-diff-summary.json
-          {
-            "status": "skipped",
-            "reason": "no_visual_relevant_changes",
-            "message": "No visual-relevant changes were detected in this pull request.",
-            "selectedRoutes": []
-          }
-          EOF
-
-      - name: Publish visual diff summary to workflow run
-        run: cat qa-artifacts/visual-diffs/current/visual-diff-summary.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload skipped visual diff artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: pr-visual-diff-${{ needs.prepare-visual-diff.outputs.pr_number || github.run_id }}
-          retention-days: 30
-          path: qa-artifacts/visual-diffs/current
-
-      - name: Publish PR comment
-        if: needs.prepare-visual-diff.outputs.pr_number != ''
-        uses: ./visual-diff-github-action/actions/publish-visual-pr-comment
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          pr-number: ${{ needs.prepare-visual-diff.outputs.pr_number }}
-          summary-path: qa-artifacts/visual-diffs/current/visual-diff-summary.json
-          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          artifact-name: pr-visual-diff-${{ needs.prepare-visual-diff.outputs.pr_number || github.run_id }}
