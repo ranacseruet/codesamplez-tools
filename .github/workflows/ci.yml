@@ -33,7 +33,7 @@ jobs:
       run: npm test -- --coverage
 
     - name: Run shared visual diff action tests
-      run: npm test --prefix visual-diff-github-action
+      run: npm test --prefix snapdrift
 
     - name: Build
       run: rm -rf build && NODE_ENV=production && npm run build
@@ -85,7 +85,7 @@ jobs:
 
     - name: Publish main visual baseline
       if: github.ref == 'refs/heads/main'
-      uses: ./visual-diff-github-action/actions/publish-visual-baseline
+      uses: ./snapdrift/actions/publish-visual-baseline
 
     - name: Stop Local QA Server
       if: always() && github.ref == 'refs/heads/main'

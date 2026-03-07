@@ -67,7 +67,7 @@
     ],
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/visual-diff-github-action/"
+      "/snapdrift/"
     ],
     "transform": {
       "^.+\\.(ts|tsx|js|jsx)$": [
