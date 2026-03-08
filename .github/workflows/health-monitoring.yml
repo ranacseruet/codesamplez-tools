@@ -65,7 +65,7 @@ jobs:
 
       - name: Visual baseline snapshot capture (scheduled, report-only)
         id: visual_capture
-        uses: ranacseruet/snapdrift/actions/publish-visual-baseline@v1
+        uses: ranacseruet/snapdrift/actions/publish-visual-baseline@3a64d5b8b62d341953ebcb85d86059f785c694ea  # v1
         with:
           upload-artifact: 'false'
         continue-on-error: true

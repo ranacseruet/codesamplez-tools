@@ -82,7 +82,7 @@ jobs:
 
     - name: Publish main visual baseline
       if: github.ref == 'refs/heads/main'
-      uses: ranacseruet/snapdrift/actions/publish-visual-baseline@v1
+      uses: ranacseruet/snapdrift/actions/publish-visual-baseline@3a64d5b8b62d341953ebcb85d86059f785c694ea  # v1
 
     - name: Stop Local QA Server
       if: always() && github.ref == 'refs/heads/main'
