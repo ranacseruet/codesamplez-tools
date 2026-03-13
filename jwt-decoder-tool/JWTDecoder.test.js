@@ -43,6 +43,7 @@ const mockHmacSha256 = async (message, key) => {
 
 
 describe('JWTDecoder Class', () => {
+    const codec = new Base64Codec();
     const validToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
     const validSecret = 'your-256-bit-secret';
     const invalidSecret = 'wrong-secret';
@@ -50,6 +51,11 @@ describe('JWTDecoder Class', () => {
     const tokenWithInvalidBase64 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid-base64-payload.signature';
     const tokenWithTwoParts = 'header.payload';
     const emptyToken = '';
+    const unsupportedAlgToken = [
+        codec.encodeBase64Url(JSON.stringify({ alg: 'RS256', typ: 'JWT' })),
+        codec.encodeBase64Url(JSON.stringify({ sub: '1234567890', name: 'John Doe', iat: 1516239022 })),
+        'SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
+    ].join('.');
 
     describe('Constructor and Parsing', () => {
         it('should correctly parse a valid JWT token', () => {
@@ -164,6 +170,17 @@ describe('JWTDecoder Class', () => {
 
             const isValid = await decoder.verifySignature(validSecret, shortSignatureHmac);
             expect(isValid).toBe(false);
+        });
+
+        it('should reject tokens whose declared algorithm is not HS256', async () => {
+            const decoder = new JWTDecoder(unsupportedAlgToken);
+            const hmacSpy = jest.fn(mockHmacSha256);
+
+            const isValid = await decoder.verifySignature(validSecret, hmacSpy);
+
+            expect(decoder.getAlgorithm()).toBe('RS256');
+            expect(isValid).toBe(false);
+            expect(hmacSpy).not.toHaveBeenCalled();
         });
 
         it('should return false when signature verification throws', async () => {

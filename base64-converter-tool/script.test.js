@@ -605,7 +605,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             // Mock window.location.search
             originalLocation = window.location;
             delete window.location;
-            window.location = { search: '' };
+            window.location = { search: '', hash: '' };
         });
 
         afterEach(() => {
@@ -633,6 +633,25 @@ describe('Base64Converter UI (script.tsx)', () => {
             expect(converter.elements.input.value).toBe('Hello World');
             expect(converter.elements.mode.value).toBe('auto');
             expect(converter.elements.result.textContent).toBe('SGVsbG8gV29ybGQ=');
+
+            jest.useRealTimers();
+        });
+
+        test('should prefer hash-based preload over query-string preload', () => {
+            window.location.search = '?data=Hello%20World';
+            window.location.hash = '#data=SGVsbG8gV29ybGQ%3D';
+
+            jest.useFakeTimers();
+
+            jest.resetModules();
+            require('./script');
+            document.dispatchEvent(new Event('DOMContentLoaded'));
+
+            jest.runAllTimers();
+
+            const converter = window.base64ConverterInstance;
+            expect(converter.elements.input.value).toBe('SGVsbG8gV29ybGQ=');
+            expect(converter.elements.result.textContent).toBe('Hello World');
 
             jest.useRealTimers();
         });
@@ -787,7 +806,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             // Use a URL parameter that would trigger the error handling
             delete window.location;
             Object.defineProperty(window, 'location', {
-                value: { search: '?data=%ZZinvalid' },
+                value: { search: '?data=%ZZinvalid', hash: '' },
                 writable: true
             });
 

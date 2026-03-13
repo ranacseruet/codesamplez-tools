@@ -16,6 +16,11 @@ interface ParsedDataUrl {
     base64Payload: string;
 }
 
+interface PreloadedDataParam {
+    value: string | null;
+    source: 'hash' | 'query' | null;
+}
+
 interface Base64ConverterElements {
     input: HTMLTextAreaElement;
     result: HTMLElement;
@@ -78,6 +83,23 @@ function parseBase64DataUrl(value: unknown): ParsedDataUrl | null {
         mimeType: parts[1] || null,
         base64Payload: parts[3].trim()
     };
+}
+
+function getPreloadedDataParam(locationLike: Pick<Location, 'hash' | 'search'>): PreloadedDataParam {
+    const hashValue = locationLike.hash.startsWith('#') ? locationLike.hash.slice(1) : locationLike.hash;
+    const hashParams = new URLSearchParams(hashValue);
+    const hashData = hashParams.get('data');
+    if (hashData !== null) {
+        return { value: hashData, source: 'hash' };
+    }
+
+    const searchParams = new URLSearchParams(locationLike.search);
+    const searchData = searchParams.get('data');
+    if (searchData !== null) {
+        return { value: searchData, source: 'query' };
+    }
+
+    return { value: null, source: null };
 }
 
 const BASE64_CONVERTER_ELEMENT_IDS = {
@@ -473,9 +495,9 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
     }
     const converter = createConverter();
 
-    // Handle URL parameters for external linking
-    const urlParams = new URLSearchParams(window.location.search);
-    const dataParam = urlParams.get('data');
+    // Handle fragment/query preload for external linking.
+    const preloadedData = getPreloadedDataParam(window.location);
+    const dataParam = preloadedData.value;
 
     let dataFromUrl = null;
     let shouldAutoConvert = false;
@@ -503,6 +525,14 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
                 dataFromUrl = '';
                 shouldAutoConvert = false;
             }
+        }
+
+        if (shouldAutoConvert && preloadedData.source === 'query') {
+            NotificationManager.show(
+                'Legacy ?data= preload detected. Prefer #data= to avoid leaking content in URLs.',
+                4000,
+                { type: 'warning' }
+            );
         }
     }
 

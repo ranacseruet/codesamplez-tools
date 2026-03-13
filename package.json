@@ -2,6 +2,9 @@
   "name": "codesamplez-tools",
   "version": "1.0.0",
   "description": "A collection of utility tools",
+  "engines": {
+    "node": "24.x"
+  },
   "browserslist": [
     "last 2 Chrome major versions",
     "last 2 Edge major versions",
@@ -93,10 +96,11 @@
     "@material/web": "^2.4.1",
     "core-js": "^3.48.0",
     "diff": "^7.0.0",
-    "fast-xml-parser": "^5.2.5",
-    "js-yaml": "^4.1.0",
+    "fast-xml-parser": "^5.5.3",
+    "js-yaml": "^4.1.1",
     "preact": "^10.28.4",
     "preact-render-to-string": "^6.6.6",
+    "prismjs": "^1.30.0",
     "qrcode": "^1.5.4"
   }
 }

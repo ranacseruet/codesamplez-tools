@@ -37,32 +37,34 @@ A powerful and user-friendly web tool for encoding and decoding Base64 strings w
 4. View the result below the input area
 5. Click "Copy Result" to copy the converted text to clipboard
 
-### URL Parameter Integration
+### URL Preload Integration
 
 The tool supports external linking, allowing you to create URLs that automatically load data into the converter.
 
 #### Creating Shareable Links
 
-You can create links that pre-load data by adding a `data` URL parameter:
+Use the URL fragment to pre-load data:
 
 ```
-https://your-domain.com/base64-converter/?data=YOUR_BASE64_OR_TEXT_DATA
+https://your-domain.com/base64-converter/#data=YOUR_BASE64_OR_TEXT_DATA
 ```
 
 **Examples:**
 
-- Encode mode: `?data=Hello%20World`
-- Decode mode: `?data=SGVsbG8gV29ybGQ%3D`
+- Encode mode: `#data=Hello%20World`
+- Decode mode: `#data=SGVsbG8gV29ybGQ%3D`
 
 #### How It Works
 
-1. Add `?data=` followed by URL-encoded text or Base64 data
+1. Add `#data=` followed by URL-encoded text or Base64 data
 2. The tool will:
-   - Automatically decode the URL parameter
+   - Automatically decode the fragment value
    - Pre-populate the input field with the decoded data
    - Set the mode to "Auto Detect" for smart processing
    - Immediately perform the conversion
 3. The conversion starts instantly when the page loads
+
+Legacy `?data=` links still work as a fallback, but they are discouraged because query strings are more likely to leak through browser history, logs, and shared URLs.
 
 #### URL Encoding Requirements
 
@@ -79,12 +81,12 @@ You can integrate this into your own applications by creating links like:
 
 ```html
 <!-- Link to encode "Hello World" -->
-<a href="https://your-domain.com/base64-converter/?data=Hello%20World">
+<a href="https://your-domain.com/base64-converter/#data=Hello%20World">
   Encode "Hello World"
 </a>
 
 <!-- Link with Base64 data to decode -->
-<a href="https://your-domain.com/base64-converter/?data=SGVsbG8gV29ybGQ%3D">
+<a href="https://your-domain.com/base64-converter/#data=SGVsbG8gV29ybGQ%3D">
   Decode Base64 string
 </a>
 ```

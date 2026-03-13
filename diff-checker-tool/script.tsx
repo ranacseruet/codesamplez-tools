@@ -5,9 +5,21 @@ import { NotificationManager } from '../common/notification-manager';
 import { scheduleTask } from '../common/scheduler-utils';
 import type { ToolCleanupHandle } from '../common/tooling-contracts';
 import { hydrate, render } from 'preact';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-javascript';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 
-declare const Prism: any;
+type PrismRuntime = {
+  highlight?: (code: string, grammar: unknown, language: string) => string;
+  languages?: Record<string, unknown>;
+};
+
+function getPrismRuntime(): PrismRuntime {
+  const globalPrism = typeof globalThis !== 'undefined'
+    ? (globalThis as typeof globalThis & { Prism?: PrismRuntime }).Prism
+    : undefined;
+  return globalPrism || Prism;
+}
 
 // Class to detect if content is code (used for syntax highlighting)
 class CodeDetector {
@@ -147,9 +159,10 @@ class DiffDisplay {
     // Only apply Prism highlighting if the line is unchanged and it's code content
     if (changeType === 'unchanged' && isCodeContent) {
       try {
+        const prismRuntime = getPrismRuntime();
         // Ensure Prism is available
-        if (typeof Prism !== 'undefined' && Prism.languages && Prism.languages.javascript) {
-          return Prism.highlight(lineContent, Prism.languages.javascript, 'javascript') + '\n';
+        if (prismRuntime.languages && prismRuntime.languages.javascript && prismRuntime.highlight) {
+          return prismRuntime.highlight(lineContent, prismRuntime.languages.javascript, 'javascript') + '\n';
         } else {
           console.warn('Prism.js or javascript language not available. Falling back to escaped HTML.');
           // Fallback for Prism errors or unavailability: escaped HTML

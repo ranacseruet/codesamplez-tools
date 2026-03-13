@@ -136,10 +136,18 @@ export class JWTDecoder {
         return this.#parseError;
     }
 
+    getAlgorithm(): string | null {
+        return typeof this.#header?.alg === 'string' ? this.#header.alg : null;
+    }
+
     async verifySignature(secret: string | null | undefined, hmacFunc: HmacFunction = hmacSha256): Promise<boolean> {
         // Cannot verify if basic format is wrong, signature is missing, secret is missing,
         // or if header/payload failed to parse.
         if (!this.#isValidTokenFormat || !this.#signature || !secret || this.#header === null || this.#payload === null) {
+            return false;
+        }
+
+        if (this.getAlgorithm() !== 'HS256') {
             return false;
         }
 

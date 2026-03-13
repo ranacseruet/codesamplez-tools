@@ -19,6 +19,19 @@ const tools = [
   'data-format-converter'
 ];
 const rootShellEntryName = 'root-shell';
+const getRootShellEntry = () => ([
+  './common/material-theme.css',
+  './common/app-shell/app-shell.css',
+  './root-shell'
+]);
+const getToolEntry = (toolName) => ([
+  './common/material-theme.css',
+  './common/app-shell/app-shell.css',
+  './common/shared-styles.css',
+  ...(toolName === 'diff-checker-tool' ? ['prismjs/themes/prism.css'] : []),
+  `./${toolName}/script`,
+  `./${toolName}/styles.css`
+]);
 
 const getWebpackMode = (argv = {}) => argv.mode || process.env.NODE_ENV || 'development';
 const createTerserMinimizer = (toolName) => {
@@ -109,13 +122,7 @@ const getToolConfig = (toolName) => ({
     }
   },
   entry: {
-    main: [
-      './common/material-theme.css',
-      './common/app-shell/app-shell.css',
-      './common/shared-styles.css',
-      `./${toolName}/script`,
-      `./${toolName}/styles.css`
-    ]
+    main: getToolEntry(toolName)
   },
   output: {
     path: path.resolve(__dirname, 'build', toolName),
@@ -192,11 +199,7 @@ const getRootShellConfig = () => ({
   ...baseConfig,
   name: rootShellEntryName,
   entry: {
-    main: [
-      './common/material-theme.css',
-      './common/app-shell/app-shell.css',
-      './root-shell'
-    ]
+    main: getRootShellEntry()
   },
   output: {
     path: path.resolve(__dirname, 'build', rootShellEntryName),
@@ -226,20 +229,10 @@ const developmentConfig = {
   name: 'development',
   entry: tools.reduce((entries, tool) => {
     const toolName = tool.name || tool;
-    entries[toolName] = [
-      './common/material-theme.css',
-      './common/app-shell/app-shell.css',
-      './common/shared-styles.css',
-      `./${toolName}/script`,
-      `./${toolName}/styles.css`
-    ];
+    entries[toolName] = getToolEntry(toolName);
     return entries;
   }, {
-    [rootShellEntryName]: [
-      './common/material-theme.css',
-      './common/app-shell/app-shell.css',
-      './root-shell.js'
-    ]
+    [rootShellEntryName]: getRootShellEntry()
   }),
   output: {
     path: path.resolve(__dirname, 'build'),
