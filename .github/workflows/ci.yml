@@ -32,6 +32,9 @@ jobs:
     - name: Run tests
       run: npm test -- --coverage
 
+    - name: Dependency Audit
+      run: npm run audit:deps
+
     - name: Build
       run: rm -rf build && NODE_ENV=production && npm run build
 

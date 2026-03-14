@@ -75,6 +75,7 @@ Required validation gates:
 
 - `npm run typecheck`
 - `npm test`
+- `npm run audit:deps`
 - `npm run build`
 - `npm run verify-build`
 
@@ -83,16 +84,16 @@ Additional checks to run when relevant:
 - `npm run bundle-budget-check`
 - `npm run bundle-metrics`
 - `npm run qa:a11y:foundation`
-- `npm run qa:visual-baseline:foundation`
-- `npm run qa:visual-diff:foundation`
 - `npm run qa:cross-browser`
+- Review the PR visual diff workflow when UI or layout changes are involved
+- Review the main-branch visual baseline publish result when shared UI changes land
 
 Notes:
 
 - Jest runs in a JSDOM environment.
 - Test files typically live alongside the corresponding tool or shared module.
 - Playwright-based checks use the built site, usually served locally with `npm start`.
-- `npm run qa:visual-diff:foundation` expects CI-style baseline artifacts by default. For local comparisons, either stage files under `baseline/qa-artifacts/...` or override the baseline/current result paths and run directories with the `QA_VISUAL_*` environment variables.
+- Visual baseline publishing and PR visual diffs are CI-managed workflows in this repository rather than local npm scripts.
 
 ## Building
 
@@ -111,9 +112,9 @@ Always run `npm run verify-build` after build changes or when touching output-af
 - Keep tool-level `README.md` files current.
 - Keep active contributor docs aligned with implemented behavior, not archived plans.
 - Use these active references:
-  - [README](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/README.md)
-  - [UI Styling Conventions](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/docs/ui-styling-conventions.md)
-  - [Archived Docs Index](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/docs/archive/README.md)
+  - [README](./README.md)
+  - [UI Styling Conventions](./docs/ui-styling-conventions.md)
+  - [Archived Docs Index](./docs/archive/README.md)
 - Treat `docs/archive/` as historical reference only.
 
 ## Development Workflow

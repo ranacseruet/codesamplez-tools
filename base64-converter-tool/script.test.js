@@ -576,7 +576,11 @@ describe('Base64Converter UI (script.tsx)', () => {
     });
 
     describe('URL Parameter Support (External Linking)', () => {
-        let originalLocation;
+        const setTestUrl = (search = '', hash = '') => {
+            const normalizedSearch = search ? (search.startsWith('?') ? search : `?${search}`) : '';
+            const normalizedHash = hash ? (hash.startsWith('#') ? hash : `#${hash}`) : '';
+            window.history.replaceState({}, '', `http://localhost/${normalizedSearch}${normalizedHash}`);
+        };
 
         beforeEach(() => {
             // Reset JSDOM environment
@@ -601,21 +605,16 @@ describe('Base64Converter UI (script.tsx)', () => {
                 <button id="base64converter-convert"></button>
                 <button id="base64converter-download-decoded" disabled></button>
             `;
-
-            // Mock window.location.search
-            originalLocation = window.location;
-            delete window.location;
-            window.location = { search: '', hash: '' };
+            setTestUrl();
         });
 
         afterEach(() => {
-            // Restore original window.location
-            window.location = originalLocation;
+            setTestUrl();
             jest.restoreAllMocks();
         });
 
         test('should handle URL with data parameter and auto-convert plain text', () => {
-            window.location.search = '?data=Hello%20World';
+            setTestUrl('?data=Hello%20World');
 
             // Mock setTimeout to execute immediately for testing
             jest.useFakeTimers();
@@ -638,8 +637,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should prefer hash-based preload over query-string preload', () => {
-            window.location.search = '?data=Hello%20World';
-            window.location.hash = '#data=SGVsbG8gV29ybGQ%3D';
+            setTestUrl('?data=Hello%20World', '#data=SGVsbG8gV29ybGQ%3D');
 
             jest.useFakeTimers();
 
@@ -657,7 +655,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should handle URL with data parameter and auto-convert base64', () => {
-            window.location.search = '?data=SGVsbG8gV29ybGQ%3D';
+            setTestUrl('?data=SGVsbG8gV29ybGQ%3D');
 
             jest.useFakeTimers();
 
@@ -676,7 +674,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should handle URL with encoded special characters', () => {
-            window.location.search = '?data=Hello%2C%20World%21%20%26%20everyone%2E';
+            setTestUrl('?data=Hello%2C%20World%21%20%26%20everyone%2E');
 
             jest.useFakeTimers();
 
@@ -694,7 +692,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should handle invalid URL-encoded data parameter', () => {
-            window.location.search = '?data=%ZZinvalid-encoding';
+            setTestUrl('?data=%25ZZinvalid-encoding');
 
             jest.useFakeTimers();
 
@@ -715,7 +713,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should handle empty data parameter', () => {
-            window.location.search = '?data=';
+            setTestUrl('?data=');
 
             jest.useFakeTimers();
 
@@ -733,7 +731,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should handle URL without data parameter (normal behavior)', () => {
-            window.location.search = '';
+            setTestUrl();
 
             jest.useFakeTimers();
 
@@ -751,7 +749,7 @@ describe('Base64Converter UI (script.tsx)', () => {
 
         test('should URL-decode data parameter correctly', () => {
             // Test with various encoded characters
-            window.location.search = '?data=Hello%20%5C%2F%3F%23%5B%5D%40%21%24%26%27%28%29%2A%2B%2C%3B%3D';
+            setTestUrl('?data=Hello%20%5C%2F%3F%23%5B%5D%40%21%24%26%27%28%29%2A%2B%2C%3B%3D');
 
             jest.useFakeTimers();
 
@@ -770,7 +768,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should handle URL parameter with malformed encoding by escaping invalid percent signs', () => {
-            window.location.search = '?data=%%invalid'; // Malformed URL encoding with extra %
+            setTestUrl('?data=%25%25invalid'); // Encodes %%invalid while preserving malformed payload semantics
 
             jest.useFakeTimers();
 
@@ -804,11 +802,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             });
 
             // Use a URL parameter that would trigger the error handling
-            delete window.location;
-            Object.defineProperty(window, 'location', {
-                value: { search: '?data=%ZZinvalid', hash: '' },
-                writable: true
-            });
+            setTestUrl('?data=%25ZZinvalid');
 
             jest.useFakeTimers();
 

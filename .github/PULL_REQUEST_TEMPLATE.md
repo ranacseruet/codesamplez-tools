@@ -23,6 +23,7 @@ Affected tools or surfaces:
 ## Validation
 
 - [ ] `npm test`
+- [ ] `npm run audit:deps`
 - [ ] `npm run build`
 - [ ] `npm run verify-build`
 - [ ] `npm run typecheck`

@@ -76,6 +76,7 @@ Engineering constraints:
 3. Run the required validation gates:
    - `npm run typecheck`
    - `npm test`
+   - `npm run audit:deps`
    - `npm run build`
    - `npm run verify-build`
 
@@ -94,6 +95,7 @@ Required local and CI gates:
 
 - `npm run typecheck`
 - `npm test`
+- `npm run audit:deps`
 - `npm run build`
 - `npm run verify-build`
 - `npm run bundle-budget-check`
@@ -102,11 +104,11 @@ Supporting and report-oriented checks:
 
 - `npm run bundle-metrics`
 - `npm run qa:a11y:foundation`
-- `npm run qa:visual-baseline:foundation`
-- `npm run qa:visual-diff:foundation`
 - `npm run qa:cross-browser`
+- Review the PR visual diff workflow when a change affects UI or layout
+- Review the main-branch visual baseline publish result when shared UI changes land
 
-`npm run qa:visual-diff:foundation` expects a baseline artifact layout by default. For local runs, either stage baseline artifacts under `baseline/qa-artifacts/...` or override the baseline/current paths with `QA_VISUAL_BASELINE_RESULTS_PATH`, `QA_VISUAL_CURRENT_RESULTS_PATH`, `QA_VISUAL_BASELINE_RUN_DIR`, and `QA_VISUAL_CURRENT_RUN_DIR`.
+Visual baseline publishing and PR visual diffs are CI-managed workflows in this repository rather than local npm scripts.
 
 ## Contributing
 
@@ -116,21 +118,30 @@ Supporting and report-oriented checks:
 4. Run the required gates:
    - `npm run typecheck`
    - `npm test`
+   - `npm run audit:deps`
    - `npm run build`
    - `npm run verify-build`
 5. Run any relevant supporting checks for your change:
    - `npm run bundle-budget-check`
    - `npm run qa:a11y:foundation`
-   - `npm run qa:visual-baseline:foundation`
+   - `npm run qa:cross-browser` for browser-sensitive changes
+   - Review the PR visual diff workflow when UI or layout changes are involved
 6. Serve the production build locally with `npm start` when checking browser behavior.
 7. Open a pull request with validation and user-impact notes.
 
 Contributor references:
 
-- [Contributing Guidelines](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/CONTRIBUTING.md)
-- [UI Styling Conventions](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/docs/ui-styling-conventions.md)
-- [Archived Docs Index](/Users/mdaliahsanrana/Work/codesamplez/codesamplez-tools/docs/archive/README.md)
+- [Contributing Guidelines](./CONTRIBUTING.md)
+- [UI Styling Conventions](./docs/ui-styling-conventions.md)
+- [Archived Docs Index](./docs/archive/README.md)
+
+## Project Policies
+
+- [Support](./SUPPORT.md)
+- [Security Policy](./SECURITY.md)
+- [Code of Conduct](./CODE_OF_CONDUCT.md)
+- [License](./LICENSE)
 
 ## License
 
-This project is licensed under the MIT License. See `LICENSE` for details.
+This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.

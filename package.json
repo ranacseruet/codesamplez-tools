@@ -1,7 +1,24 @@
 {
   "name": "codesamplez-tools",
   "version": "1.0.0",
-  "description": "A collection of utility tools",
+  "description": "Browser-based developer utilities that run client-side and build into standalone static artifacts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ranacseruet/codesamplez-tools.git"
+  },
+  "homepage": "https://github.com/ranacseruet/codesamplez-tools#readme",
+  "bugs": {
+    "url": "https://github.com/ranacseruet/codesamplez-tools/issues"
+  },
+  "keywords": [
+    "developer-tools",
+    "browser-tools",
+    "client-side",
+    "formatters",
+    "converters",
+    "preact"
+  ],
   "engines": {
     "node": "24.x"
   },
@@ -23,6 +40,7 @@
     "build:dev": "webpack --mode development",
     "verify-build": "node scripts/build-verification.js",
     "typecheck": "tsc --project tsconfig.json",
+    "audit:deps": "npm audit --audit-level=high",
     "bundle-metrics": "node scripts/measure-bundles.js --format markdown --write-default-json",
     "bundle-budget-check": "node scripts/check-bundle-budgets.js",
     "qa:a11y:foundation": "node scripts/a11y-baseline-ui-foundation.mjs",
@@ -42,23 +60,23 @@
     "babel-jest": "^29.7.0",
     "babel-loader": "^10.0.0",
     "clean-webpack-plugin": "^4.0.0",
-    "copy-webpack-plugin": "^13.0.0",
+    "copy-webpack-plugin": "^14.0.0",
     "css-loader": "^7.1.2",
-    "css-minimizer-webpack-plugin": "^7.0.2",
+    "css-minimizer-webpack-plugin": "^8.0.0",
     "cssnano": "^7.0.6",
     "file-loader": "^6.2.0",
     "http-server": "^14.1.1",
     "jest": "^30.2.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "jsdom": "^26.0.0",
+    "jest-environment-jsdom": "^30.3.0",
+    "jsdom": "^26.1.0",
     "mini-css-extract-plugin": "^2.9.2",
     "playwright": "^1.58.2",
     "postcss-cli": "^11.0.0",
     "style-loader": "^4.0.0",
     "typescript": "^5.9.3",
-    "webpack": "^5.98.0",
+    "webpack": "^5.105.4",
     "webpack-cli": "^6.0.1",
-    "webpack-dev-server": "^5.2.0"
+    "webpack-dev-server": "^5.2.3"
   },
   "jest": {
     "testEnvironment": "jsdom",
@@ -95,7 +113,7 @@
     "@babel/types": "^7.28.6",
     "@material/web": "^2.4.1",
     "core-js": "^3.48.0",
-    "diff": "^7.0.0",
+    "diff": "^8.0.3",
     "fast-xml-parser": "^5.5.3",
     "js-yaml": "^4.1.1",
     "preact": "^10.28.4",
