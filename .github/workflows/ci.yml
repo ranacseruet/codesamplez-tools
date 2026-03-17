@@ -16,6 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
@@ -35,10 +37,33 @@ jobs:
     - name: Dependency Audit
       run: npm run audit:deps
 
+    - name: Detect affected runtime targets
+      id: affected
+      run: |
+        node scripts/detect-affected-tools.js \
+          --base "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}" \
+          --head "${{ github.sha }}" \
+          --write-github-output
+
     - name: Build
-      run: rm -rf build && NODE_ENV=production && npm run build
+      if: steps.affected.outputs.should_build == 'true'
+      run: |
+        set -euo pipefail
+        rm -rf build
+        BUILD_ARGS=()
+        if [ -n "${{ steps.affected.outputs.affected_tools }}" ]; then
+          BUILD_ARGS+=(--tools "${{ steps.affected.outputs.affected_tools }}")
+        fi
+        if [ "${{ steps.affected.outputs.include_root_shell }}" = "true" ]; then
+          BUILD_ARGS+=(--include-root-shell)
+        fi
+        if [ "${{ steps.affected.outputs.include_root_assets }}" = "true" ]; then
+          BUILD_ARGS+=(--include-root-assets)
+        fi
+        NODE_ENV=production npm run build -- "${BUILD_ARGS[@]}"
 
     - name: Cache build artifacts
+      if: steps.affected.outputs.should_build == 'true'
       uses: actions/cache@v4
       with:
         path: build
@@ -47,16 +72,37 @@ jobs:
           ${{ runner.os }}-build-${{ github.sha }}
 
     - name: Verify Build Artifacts
-      run: npm run verify-build
+      if: steps.affected.outputs.should_build == 'true'
+      run: |
+        set -euo pipefail
+        VERIFY_ARGS=()
+        if [ -n "${{ steps.affected.outputs.affected_tools }}" ]; then
+          VERIFY_ARGS+=(--tools "${{ steps.affected.outputs.affected_tools }}")
+        fi
+        if [ "${{ steps.affected.outputs.include_root_shell }}" = "true" ]; then
+          VERIFY_ARGS+=(--include-root-shell)
+        fi
+        npm run verify-build -- "${VERIFY_ARGS[@]}"
 
     - name: Bundle Metrics Report
-      run: npm run bundle-metrics
+      if: steps.affected.outputs.should_build == 'true'
+      run: |
+        set -euo pipefail
+        METRIC_ARGS=()
+        if [ -n "${{ steps.affected.outputs.affected_tools }}" ]; then
+          METRIC_ARGS+=(--tools "${{ steps.affected.outputs.affected_tools }}")
+        fi
+        if [ "${{ steps.affected.outputs.include_root_shell }}" = "true" ]; then
+          METRIC_ARGS+=(--include-root-shell)
+        fi
+        npm run bundle-metrics -- "${METRIC_ARGS[@]}"
 
     - name: Bundle Budget Check
-      run: npm run bundle-budget-check
+      if: steps.affected.outputs.affected_tool_count != '0'
+      run: npm run bundle-budget-check -- --tools "${{ steps.affected.outputs.affected_tools }}"
 
     - name: Start Local Server for QA Baselines
-      if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main' && steps.affected.outputs.affected_tool_count != '0'
       run: |
         set -euo pipefail
         npm start > /tmp/codesamplez-ci-start.log 2>&1 &
@@ -76,19 +122,19 @@ jobs:
         fi
 
     - name: Accessibility Baseline (report-only)
-      if: github.ref == 'refs/heads/main'
-      run: npm run qa:a11y:foundation
+      if: github.ref == 'refs/heads/main' && steps.affected.outputs.affected_tool_count != '0'
+      run: npm run qa:a11y:foundation -- --tools "${{ steps.affected.outputs.affected_tools }}"
       env:
         QA_BASE_URL: http://127.0.0.1:8080
         QA_A11Y_FAIL_ON_VIOLATIONS: '0'
       continue-on-error: true
 
     - name: Publish main visual baseline
-      if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main' && steps.affected.outputs.scope == 'all-tools'
       uses: ranacseruet/snapdrift/actions/baseline@v0.1.0
 
     - name: Stop Local QA Server
-      if: always() && github.ref == 'refs/heads/main'
+      if: always() && github.ref == 'refs/heads/main' && steps.affected.outputs.affected_tool_count != '0'
       run: kill $QA_SERVER_PID || true
 
     - name: Upload coverage reports to Codecov
@@ -102,7 +148,20 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Detect affected deploy targets
+      id: affected
+      run: |
+        node scripts/detect-affected-tools.js \
+          --base "${{ github.event.before }}" \
+          --head "${{ github.sha }}" \
+          --write-github-output
+
     - name: Restore build artifacts
+      if: steps.affected.outputs.should_deploy == 'true'
       uses: actions/cache@v4
       with:
         path: build
@@ -111,20 +170,25 @@ jobs:
           ${{ runner.os }}-build-${{ github.sha }}
 
     - name: Configure AWS credentials
+      if: steps.affected.outputs.should_deploy == 'true'
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
-    - name: Deploy to S3
+    - name: Deploy affected assets
+      if: steps.affected.outputs.should_deploy == 'true'
       run: |
-        aws s3 sync build/ s3://tools.codesamplez.com/ \
-          --exclude "*" \
-          --include "*.js" \
-          --include "*.css" \
-          --include "robots.txt" \
-          --delete
-    - name: Invalidate CloudFront cache
-      run: |    
-        aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+        set -euo pipefail
+        DEPLOY_ARGS=(--bucket tools.codesamplez.com --distribution-id "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}")
+        if [ -n "${{ steps.affected.outputs.affected_tools }}" ]; then
+          DEPLOY_ARGS+=(--tools "${{ steps.affected.outputs.affected_tools }}")
+        fi
+        if [ "${{ steps.affected.outputs.include_root_shell }}" = "true" ]; then
+          DEPLOY_ARGS+=(--include-root-shell)
+        fi
+        if [ "${{ steps.affected.outputs.include_root_assets }}" = "true" ]; then
+          DEPLOY_ARGS+=(--include-root-assets)
+        fi
+        npm run deploy:affected -- "${DEPLOY_ARGS[@]}"

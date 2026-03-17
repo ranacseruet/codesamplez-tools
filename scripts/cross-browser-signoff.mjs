@@ -2,11 +2,14 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { chromium, firefox, webkit } from 'playwright';
 
 /** @typedef {import('../types/qa-script-types').CrossBrowserCheck} CrossBrowserCheck */
 /** @typedef {import('../types/qa-script-types').CrossBrowserResults} CrossBrowserResults */
 
+const require = createRequire(import.meta.url);
+const { parseToolSelectionArgs } = require('./tool-manifest');
 const baseUrl = process.env.QA_BASE_URL || 'http://127.0.0.1:8080';
 const outDir = path.resolve(process.env.QA_CROSS_BROWSER_OUT_DIR || path.join('qa-artifacts', 'cross-browser-signoff'));
 const resultsPath = path.resolve(
@@ -15,6 +18,8 @@ const resultsPath = path.resolve(
 const markdownPath = path.resolve(
   process.env.QA_CROSS_BROWSER_RESULTS_MARKDOWN || path.join(outDir, 'cross-browser-signoff-results.md')
 );
+const selection = parseToolSelectionArgs(process.argv.slice(2));
+const selectedTools = new Set(selection.requestedTools);
 
 const browserMatrix = [
   { name: 'chromium', type: chromium },
@@ -117,6 +122,14 @@ function makeMarkdown(summary) {
 }
 
 /**
+ * @param {{ name: string }} scenario
+ * @returns {boolean}
+ */
+function shouldRunScenario(scenario) {
+  return selectedTools.size === 0 || selectedTools.has(scenario.name);
+}
+
+/**
  * @param {string} browserName
  * @param {import('playwright').BrowserType} browserType
  * @param {{ name: string, url: string, waits: string[] }} scenario
@@ -147,7 +160,7 @@ async function main() {
   await fs.mkdir(outDir, { recursive: true });
 
   for (const browser of browserMatrix) {
-    for (const scenario of scenarios) {
+    for (const scenario of scenarios.filter(shouldRunScenario)) {
       await runScenario(browser.name, browser.type, scenario);
     }
   }

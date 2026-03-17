@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { parseToolSelectionArgs } = require('./tool-manifest');
 
 const DEFAULT_BUILD_DIR = path.resolve(__dirname, '../build');
 const DEFAULT_WARN_PERCENT = 5;
@@ -23,7 +24,7 @@ const JS_RAW_BASELINES = Object.freeze({
 });
 
 /**
- * @typedef {{ buildDir: string, warnPct: number, failPct: number, waiverSpecs: string[] }} BudgetArgs
+ * @typedef {{ buildDir: string, warnPct: number, failPct: number, waiverSpecs: string[], selection: ReturnType<typeof parseToolSelectionArgs> }} BudgetArgs
  * @typedef {'OK' | 'WARN' | 'FAIL' | 'WAIVED_FAIL' | 'MISSING'} BudgetStatus
  * @typedef {{ tool: string, baseline: number, current: number | null, warnThreshold: number, failThreshold: number, delta: number | null, status: BudgetStatus }} BudgetResult
  */
@@ -33,6 +34,8 @@ function printHelp() {
     console.log('');
     console.log('Options:');
     console.log('  --build-dir <path>       Build directory (default: ./build)');
+    console.log('  --tool <id>              Check a single tool budget');
+    console.log('  --tools <id,id>          Check multiple tool budgets');
     console.log('  --warn-pct <number>      Warning threshold percent (default: 5)');
     console.log('  --fail-pct <number>      Failure threshold percent (default: 10)');
     console.log('  --waive <spec>           Comma-separated waiver spec, e.g. "tool-a=JIRA-123,tool-b"');
@@ -52,8 +55,11 @@ function parseArgs(argv) {
         buildDir: DEFAULT_BUILD_DIR,
         warnPct: DEFAULT_WARN_PERCENT,
         failPct: DEFAULT_FAIL_PERCENT,
-        waiverSpecs: []
+        waiverSpecs: [],
+        selection: parseToolSelectionArgs([])
     };
+    /** @type {string[]} */
+    const selectionArgv = [];
 
     for (let index = 0; index < argv.length; index += 1) {
         const arg = argv[index];
@@ -82,12 +88,19 @@ function parseArgs(argv) {
             continue;
         }
 
+        if (arg === '--tool' || arg === '--tools') {
+            selectionArgv.push(arg, argv[index + 1] || '');
+            index += 1;
+            continue;
+        }
+
         if (arg === '--help' || arg === '-h') {
             printHelp();
             process.exit(0);
         }
     }
 
+    args.selection = parseToolSelectionArgs(selectionArgv);
     return args;
 }
 
@@ -207,7 +220,10 @@ function main() {
 
     const envWaivers = process.env.BUNDLE_BUDGET_WAIVERS ? [process.env.BUNDLE_BUDGET_WAIVERS] : [];
     const waivers = parseWaivers([...envWaivers, ...args.waiverSpecs]);
-    const baselineTools = Object.keys(JS_RAW_BASELINES).sort();
+    const baselineTools = (args.selection.requestedTools.length > 0
+        ? args.selection.requestedTools
+        : Object.keys(JS_RAW_BASELINES)
+    ).sort();
     const builtTools = listBundleToolDirs(args.buildDir);
     const untrackedBuiltTools = builtTools.filter((tool) => !JS_RAW_BASELINES[tool]);
     /** @type {BudgetResult[]} */

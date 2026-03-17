@@ -3,13 +3,14 @@
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
+const { getRootShellDefinition, parseToolSelectionArgs } = require('./tool-manifest');
 
 const BUILD_DIR = path.resolve(__dirname, '../build');
 const DEFAULT_JSON_OUT = path.resolve(__dirname, '../reports/bundle-metrics/latest.json');
 
 /**
  * @typedef {'both' | 'json' | 'markdown'} ReportFormat
- * @typedef {{ buildDir: string, jsonOut: string | null, markdownOut: string | null, format: ReportFormat }} MeasureBundleArgs
+ * @typedef {{ buildDir: string, jsonOut: string | null, markdownOut: string | null, format: ReportFormat, selection: ReturnType<typeof parseToolSelectionArgs> }} MeasureBundleArgs
  * @typedef {{ rawBytes: number, gzipBytes: number }} RawAndGzipMetric
  * @typedef {{ rawBytes: number }} RawOnlyMetric
  * @typedef {{ js: RawAndGzipMetric | null, css: RawAndGzipMetric | null, html: RawOnlyMetric | null }} ToolMetricFiles
@@ -35,8 +36,11 @@ function parseArgs(argv) {
         buildDir: BUILD_DIR,
         jsonOut: null,
         markdownOut: null,
-        format: 'both'
+        format: 'both',
+        selection: parseToolSelectionArgs([])
     };
+    /** @type {string[]} */
+    const selectionArgv = [];
 
     for (let index = 0; index < argv.length; index += 1) {
         const arg = argv[index];
@@ -65,6 +69,17 @@ function parseArgs(argv) {
             continue;
         }
 
+        if (arg === '--tool' || arg === '--tools') {
+            selectionArgv.push(arg, argv[index + 1] || '');
+            index += 1;
+            continue;
+        }
+
+        if (arg === '--include-root-shell') {
+            selectionArgv.push(arg);
+            continue;
+        }
+
         if (arg === '--write-default-json') {
             args.jsonOut = DEFAULT_JSON_OUT;
             continue;
@@ -76,6 +91,7 @@ function parseArgs(argv) {
         }
     }
 
+    args.selection = parseToolSelectionArgs(selectionArgv);
     return args;
 }
 
@@ -84,6 +100,9 @@ function printHelp() {
     console.log('');
     console.log('Options:');
     console.log('  --build-dir <path>       Build directory (default: ./build)');
+    console.log('  --tool <id>              Measure a single tool');
+    console.log('  --tools <id,id>          Measure multiple tools');
+    console.log('  --include-root-shell     Include root-shell metrics when filtering');
     console.log('  --format <both|json|markdown>');
     console.log('  --json-out <path>        Write JSON report to file');
     console.log('  --markdown-out <path>    Write markdown table to file');
@@ -263,13 +282,19 @@ function main() {
     }
 
     const toolNames = listToolDirectories(args.buildDir);
+    const filteredToolNames = args.selection.requestedTools.length > 0
+        ? toolNames.filter((toolName) => {
+            return args.selection.requestedTools.includes(toolName)
+                || (args.selection.includeRootShell && toolName === getRootShellDefinition().id);
+        })
+        : toolNames;
 
-    if (toolNames.length === 0) {
-        console.error(`No tool build directories found in ${args.buildDir}`);
+    if (filteredToolNames.length === 0) {
+        console.error(`No matching build directories found in ${args.buildDir}`);
         process.exit(1);
     }
 
-    const tools = toolNames.map((toolName) => collectToolMetrics(args.buildDir, toolName));
+    const tools = filteredToolNames.map((toolName) => collectToolMetrics(args.buildDir, toolName));
     const summary = createSummary(tools);
     const generatedAt = new Date().toISOString();
 

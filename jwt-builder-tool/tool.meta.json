@@ -1,0 +1,5 @@
+{
+  "id": "jwt-builder-tool",
+  "version": "1.0.0",
+  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
+}

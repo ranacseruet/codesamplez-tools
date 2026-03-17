@@ -83,11 +83,22 @@ Engineering constraints:
 ### Build And Serve
 
 - Production build: `npm run build`
+- Targeted production build: `npm run build -- --tool jwt-decoder-tool`
+- Multi-tool production build: `npm run build -- --tools jwt-decoder-tool,json-formatter-tool`
 - Verify build output: `npm run verify-build`
+- Verify selected tool builds: `npm run verify-build -- --tools jwt-decoder-tool,json-formatter-tool`
 - Serve the production build locally: `npm start`
 - Dev server: `npm run dev`
 
 The build preserves the standalone deployment contract for each tool and prerenders supported tool UI into static HTML before client hydration.
+
+## Tool Release Metadata
+
+- List per-tool versions: `npm run tool:versions`
+- Bump a tool version: `npm run tool:version:bump -- --tool jwt-decoder-tool --release patch`
+- Create a release tag: `npm run tool:tag-release -- --tool jwt-decoder-tool`
+
+Per-tool versions are tracked in tool-local `tool.meta.json` files as deployment release metadata, not as separate npm package versions.
 
 ## Quality Gates
 

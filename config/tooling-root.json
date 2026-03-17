@@ -1,0 +1,11 @@
+{
+  "rootShell": {
+    "id": "root-shell",
+    "outputPath": "build/root-shell"
+  },
+  "rootAssets": [
+    "index.html",
+    "styles.css",
+    "robots.txt"
+  ]
+}

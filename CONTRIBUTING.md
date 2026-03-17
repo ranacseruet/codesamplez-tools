@@ -99,6 +99,14 @@ Notes:
 
 Production builds are created with `npm run build`.
 
+Selective build and validation commands are also available:
+
+- `npm run build -- --tool jwt-decoder-tool`
+- `npm run build -- --tools jwt-decoder-tool,json-formatter-tool`
+- `npm run verify-build -- --tools jwt-decoder-tool,json-formatter-tool`
+- `npm run bundle-metrics -- --tool jwt-decoder-tool`
+- `npm run bundle-budget-check -- --tool jwt-decoder-tool`
+
 The build:
 
 - emits standalone production assets per tool

@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { JSDOM, VirtualConsole } = require('jsdom');
 const { TextEncoder, TextDecoder } = require('util');
+const { getRootShellDefinition, parseToolSelectionArgs } = require('./tool-manifest');
 
 const BUILD_DIR = path.resolve(__dirname, '../build');
 const IGNORE_DIRS = ['assets', 'common'];
@@ -137,15 +138,61 @@ function verifyBuild(buildDir) {
     return getBuildTools(buildDir).map((tool) => verifyToolBundle(buildDir, tool));
 }
 
+/**
+ * @param {string[]} argv
+ * @returns {{ buildDir: string, selection: ReturnType<typeof parseToolSelectionArgs> }}
+ */
+function parseArgs(argv) {
+    let buildDir = BUILD_DIR;
+    /** @type {string[]} */
+    const selectionArgv = [];
+
+    for (let index = 0; index < argv.length; index += 1) {
+        const arg = argv[index];
+
+        if (arg === '--build-dir') {
+            buildDir = path.resolve(process.cwd(), argv[index + 1]);
+            index += 1;
+            continue;
+        }
+
+        if (arg === '--tool' || arg === '--tools') {
+            selectionArgv.push(arg, argv[index + 1] || '');
+            index += 1;
+            continue;
+        }
+
+        if (arg === '--include-root-shell') {
+            selectionArgv.push(arg);
+            continue;
+        }
+    }
+
+    return {
+        buildDir,
+        selection: parseToolSelectionArgs(selectionArgv)
+    };
+}
+
 function main() {
     console.log(`${colors.cyan}Starting Build Verification...${colors.reset}`);
+    const args = parseArgs(process.argv.slice(2));
 
-    if (!fs.existsSync(BUILD_DIR)) {
-        console.error(`${colors.red}Build directory not found at ${BUILD_DIR}. Run 'npm run build' first.${colors.reset}`);
+    if (!fs.existsSync(args.buildDir)) {
+        console.error(`${colors.red}Build directory not found at ${args.buildDir}. Run 'npm run build' first.${colors.reset}`);
         process.exit(1);
     }
 
-    const results = verifyBuild(BUILD_DIR);
+    let tools = getBuildTools(args.buildDir);
+    if (args.selection.requestedTools.length > 0) {
+        const allowedTools = new Set(args.selection.requestedTools);
+        if (args.selection.includeRootShell) {
+            allowedTools.add(getRootShellDefinition().id);
+        }
+        tools = tools.filter((tool) => allowedTools.has(tool));
+    }
+
+    const results = tools.map((tool) => verifyToolBundle(args.buildDir, tool));
     const errorCount = results.filter((result) => result.status === 'failed').length;
     const successCount = results.filter((result) => result.status === 'passed').length;
 
@@ -165,6 +212,7 @@ main();
 module.exports = {
     getBuildTools,
     installBrowserLikeGlobals,
+    parseArgs,
     verifyToolBundle,
     verifyBuild
 };

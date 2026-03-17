@@ -1,0 +1,5 @@
+{
+  "id": "data-format-converter",
+  "version": "1.0.0",
+  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
+}

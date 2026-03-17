@@ -36,15 +36,20 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "start": "http-server build -c-1 -p 8080",
     "dev": "NODE_ENV=development webpack serve --mode development",
-    "build": "webpack --mode production",
-    "build:dev": "webpack --mode development",
+    "build": "node scripts/build-tools.js --mode production",
+    "build:dev": "node scripts/build-tools.js --mode development",
     "verify-build": "node scripts/build-verification.js",
+    "detect-affected-tools": "node scripts/detect-affected-tools.js",
     "typecheck": "tsc --project tsconfig.json",
     "audit:deps": "npm audit --audit-level=high",
     "bundle-metrics": "node scripts/measure-bundles.js --format markdown --write-default-json",
     "bundle-budget-check": "node scripts/check-bundle-budgets.js",
     "qa:a11y:foundation": "node scripts/a11y-baseline-ui-foundation.mjs",
-    "qa:cross-browser": "node scripts/cross-browser-signoff.mjs"
+    "qa:cross-browser": "node scripts/cross-browser-signoff.mjs",
+    "tool:versions": "node scripts/tool-release.js list",
+    "tool:version:bump": "node scripts/tool-release.js bump",
+    "tool:tag-release": "node scripts/tool-release.js tag",
+    "deploy:affected": "node scripts/deploy-affected-assets.js"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
