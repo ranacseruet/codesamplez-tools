@@ -6,6 +6,7 @@ import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import toolMetadata from './tool.meta.json';
 
 const BASE64_DATA_URL_REGEX = /^data:([a-zA-Z0-9/\-+.-\w]+)?(?:;charset=([a-zA-Z0-9/\-+.-\w]+))?;base64,(.*)$/;
 
@@ -608,8 +609,8 @@ export class Base64ConverterToolUI {
 
 function bootstrapBase64ConverterPage() {
     mountToolShell({
-        title: 'Base64 Converter',
-        description: 'Convert text and files to and from Base64 with multiple encoding options.',
+        title: toolMetadata.title,
+        description: toolMetadata.description,
         homeHref: '/'
     });
 

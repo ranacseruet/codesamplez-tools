@@ -35,7 +35,6 @@ function ensureBabelRegister() {
 /** @type {ToolPrerenderRegistry} */
 const TOOL_PRERENDER_REGISTRY = {
     'base64-converter-tool': {
-        rootId: 'base64converter-app',
         createAppNode: () => {
             const { h } = require('preact');
             const { Base64ConverterApp } = require(path.resolve(__dirname, '../base64-converter-tool/script'));
@@ -43,7 +42,6 @@ const TOOL_PRERENDER_REGISTRY = {
         }
     },
     'data-format-converter': {
-        rootId: 'data-format-converter-app',
         createAppNode: () => {
             const { h } = require('preact');
             const { DataFormatConverter } = require(path.resolve(__dirname, '../data-format-converter/DataFormatConverter'));
@@ -55,7 +53,6 @@ const TOOL_PRERENDER_REGISTRY = {
         }
     },
     'css-minifier-tool': {
-        rootId: 'css-minifier-app',
         createAppNode: () => {
             const { h } = require('preact');
             const { CssMinifierApp } = require(path.resolve(__dirname, '../css-minifier-tool/script'));
@@ -63,7 +60,6 @@ const TOOL_PRERENDER_REGISTRY = {
         }
     },
     'diff-checker-tool': {
-        rootId: 'diff-checker-app',
         createAppNode: () => {
             const { h } = require('preact');
             const { DiffCheckerApp } = require(path.resolve(__dirname, '../diff-checker-tool/script'));
@@ -71,7 +67,6 @@ const TOOL_PRERENDER_REGISTRY = {
         }
     },
     'json-formatter-tool': {
-        rootId: 'json-formatter-app',
         createAppNode: () => {
             const { h } = require('preact');
             const { JsonFormatterApp } = require(path.resolve(__dirname, '../json-formatter-tool/script'));
@@ -79,7 +74,6 @@ const TOOL_PRERENDER_REGISTRY = {
         }
     },
     'js-minifier-tool': {
-        rootId: 'js-minifier-app',
         createAppNode: () => {
             const { h } = require('preact');
             const { JSMinifierApp } = require(path.resolve(__dirname, '../js-minifier-tool/script'));
@@ -87,7 +81,6 @@ const TOOL_PRERENDER_REGISTRY = {
         }
     },
     'jwt-builder-tool': {
-        rootId: 'jwt-builder-app',
         createAppNode: () => {
             const { h } = require('preact');
             const { JwtBuilderApp } = require(path.resolve(__dirname, '../jwt-builder-tool/script'));
@@ -95,7 +88,6 @@ const TOOL_PRERENDER_REGISTRY = {
         }
     },
     'jwt-decoder-tool': {
-        rootId: 'jwt-decoder-app',
         createAppNode: () => {
             const { h } = require('preact');
             const { JwtDecoderApp } = require(path.resolve(__dirname, '../jwt-decoder-tool/script'));
@@ -103,7 +95,6 @@ const TOOL_PRERENDER_REGISTRY = {
         }
     },
     'text-analyzer-tool': {
-        rootId: 'text-analyzer-app',
         createAppNode: () => {
             const { h } = require('preact');
             const { TextAnalyzerApp } = require(path.resolve(__dirname, '../text-analyzer-tool/script'));
@@ -111,7 +102,6 @@ const TOOL_PRERENDER_REGISTRY = {
         }
     },
     'qr-code-generator': {
-        rootId: 'qr-code-generator-app',
         createAppNode: () => {
             const { h } = require('preact');
             const { QRCodeGeneratorApp } = require(path.resolve(__dirname, '../qr-code-generator/script'));
@@ -143,34 +133,6 @@ function renderToolPrerenderMarkup(toolName) {
 }
 
 /**
- * @param {string} text
- * @returns {string}
- */
-function escapeRegExp(text) {
-    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/**
- * @param {string} toolName
- * @param {string} html
- * @returns {string}
- */
-function injectToolPrerender(toolName, html) {
-    const config = getPrerenderConfig(toolName);
-    if (!config) {
-        return html;
-    }
-
-    const rootPattern = new RegExp(`<div\\s+id=["']${escapeRegExp(config.rootId)}["']\\s*><\\/div>`);
-    if (!rootPattern.test(html)) {
-        return html;
-    }
-
-    const prerenderedMarkup = renderToolPrerenderMarkup(toolName);
-    return html.replace(rootPattern, `<div id="${config.rootId}">${prerenderedMarkup}</div>`);
-}
-
-/**
  * @returns {string[]}
  */
 function getPrerenderToolNames() {
@@ -181,6 +143,5 @@ module.exports = {
     TOOL_PRERENDER_REGISTRY,
     getPrerenderConfig,
     getPrerenderToolNames,
-    injectToolPrerender,
     renderToolPrerenderMarkup
 };

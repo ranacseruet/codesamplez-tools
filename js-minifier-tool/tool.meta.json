@@ -1,5 +1,10 @@
 {
   "id": "js-minifier-tool",
   "version": "1.0.0",
+  "title": "JavaScript Minifier",
+  "description": "Minify JavaScript to reduce payload size while preserving functionality.",
+  "appRootId": "js-minifier-app",
+  "publicPath": "/js-minifier-tool/",
+  "scriptType": "module",
   "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
 }

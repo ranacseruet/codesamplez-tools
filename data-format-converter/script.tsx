@@ -6,6 +6,7 @@ import CopyButton from '../common/copy-button/CopyButton';
 import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import toolMetadata from './tool.meta.json';
 
 type SupportedFormat = 'json' | 'xml' | 'yaml' | 'properties';
 
@@ -484,8 +485,8 @@ export class DataFormatConverterUI {
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
         mountToolShell({
-            title: 'Data Format Converter',
-            description: 'Convert JSON, XML, YAML, and Properties formats',
+            title: toolMetadata.title,
+            description: toolMetadata.description,
             homeHref: '/'
         });
         new DataFormatConverterUI();

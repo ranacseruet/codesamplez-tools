@@ -1,5 +1,10 @@
 {
   "id": "base64-converter-tool",
   "version": "1.0.0",
+  "title": "Base64 Converter",
+  "description": "Convert text and files to and from Base64 with multiple encoding options.",
+  "appRootId": "base64converter-app",
+  "publicPath": "/base64-converter-tool/",
+  "scriptType": "module",
   "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
 }

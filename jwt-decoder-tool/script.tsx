@@ -4,6 +4,7 @@ import { NotificationManager } from '../common/notification-manager';
 import ClearButton from '../common/clear-button/ClearButton';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import toolMetadata from './tool.meta.json';
 
 type StatusType = 'default' | 'success' | 'error' | 'warning';
 
@@ -524,8 +525,8 @@ export class JWTDecoderToolUI {
 
 function bootstrapJwtDecoderPage() {
     mountToolShell({
-        title: 'JWT Decoder & Validator',
-        description: 'Decode and validate JWT tokens locally in your browser.',
+        title: toolMetadata.title,
+        description: toolMetadata.description,
         homeHref: '/'
     });
 

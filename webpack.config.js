@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const webpack = require('webpack');
 const CopyPlugin = require('copy-webpack-plugin');
@@ -5,7 +6,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const { injectToolPrerender } = require('./scripts/prerender-tool');
+const { generateToolDocument } = require('./scripts/tool-document');
 const { getRootAssets, getToolIds, selectTools, splitCsv } = require('./scripts/tool-manifest');
 const tools = getToolIds();
 const rootShellEntryName = 'root-shell';
@@ -45,8 +46,49 @@ const createTerserMinimizer = (toolName) => {
     }
   });
 };
-const transformToolHtml = (toolName, htmlContent) => {
-  return injectToolPrerender(toolName, htmlContent.toString());
+const createToolDocumentPattern = (toolName) => ({
+  from: path.join(__dirname, toolName, 'tool.meta.json'),
+  to: path.join(__dirname, 'build', toolName, 'index.html'),
+  transform() {
+    return generateToolDocument(toolName);
+  }
+});
+const getToolFeaturedImageSourceName = (toolName) => {
+  const imagesDir = path.join(__dirname, toolName, 'images');
+  if (!fs.existsSync(imagesDir)) {
+    return null;
+  }
+
+  const pngFiles = fs.readdirSync(imagesDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.png'))
+    .map((entry) => entry.name)
+    .sort();
+
+  if (pngFiles.length === 0) {
+    return null;
+  }
+
+  const featuredPng = pngFiles.find((name) => name === 'featured.png');
+  if (featuredPng) {
+    return featuredPng;
+  }
+
+  if (pngFiles.length === 1) {
+    return pngFiles[0];
+  }
+
+  throw new Error(`Expected exactly one PNG image asset for ${toolName}, found: ${pngFiles.join(', ')}`);
+};
+const createToolFeaturedImagePattern = (toolName) => {
+  const sourceImageName = getToolFeaturedImageSourceName(toolName);
+  if (!sourceImageName) {
+    return null;
+  }
+
+  return {
+    from: path.join(__dirname, toolName, 'images', sourceImageName),
+    to: path.join(__dirname, 'build', toolName, 'images', 'featured.png')
+  };
 };
 
 const createRootAssetPatterns = () => getRootAssets().map((asset) => ({
@@ -179,17 +221,12 @@ const getToolConfig = (toolName) => ({
     new CopyPlugin({
       patterns: [
         {
-          from: path.join(__dirname, toolName, 'index.html'),
-          to: path.join(__dirname, 'build', toolName, 'index.html'),
-          transform(content) {
-            return transformToolHtml(toolName, content);
-          }
+          ...createToolDocumentPattern(toolName)
         },
-        {
-          from: path.join(__dirname, toolName, 'images'),
-          to: path.join(__dirname, 'build', toolName, 'images'),
-          noErrorOnMissing: true
-        }
+        ...(() => {
+          const imagePattern = createToolFeaturedImagePattern(toolName);
+          return imagePattern ? [imagePattern] : [];
+        })()
       ]
     })
   ]
@@ -267,17 +304,12 @@ const developmentConfig = {
           const toolName = tool.name || tool;
           return patterns.concat([
             {
-              from: path.join(__dirname, toolName, 'index.html'),
-              to: path.join(__dirname, 'build', toolName, 'index.html'),
-              transform(content) {
-                return transformToolHtml(toolName, content);
-              }
+              ...createToolDocumentPattern(toolName)
             },
-            {
-              from: path.join(__dirname, toolName, 'images'),
-              to: path.join(__dirname, 'build', toolName, 'images'),
-              noErrorOnMissing: true
-            }
+            ...(() => {
+              const imagePattern = createToolFeaturedImagePattern(toolName);
+              return imagePattern ? [imagePattern] : [];
+            })()
           ]);
         }, [])
       ]
@@ -338,17 +370,12 @@ module.exports = (env = {}, argv = {}) => {
           ...selectedToolIds.reduce((patterns, toolName) => {
             return patterns.concat([
               {
-                from: path.join(__dirname, toolName, 'index.html'),
-                to: path.join(__dirname, 'build', toolName, 'index.html'),
-                transform(content) {
-                  return transformToolHtml(toolName, content);
-                }
+                ...createToolDocumentPattern(toolName)
               },
-              {
-                from: path.join(__dirname, toolName, 'images'),
-                to: path.join(__dirname, 'build', toolName, 'images'),
-                noErrorOnMissing: true
-              }
+              ...(() => {
+                const imagePattern = createToolFeaturedImagePattern(toolName);
+                return imagePattern ? [imagePattern] : [];
+              })()
             ]);
           }, [])
         ]

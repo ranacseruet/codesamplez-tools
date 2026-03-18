@@ -81,7 +81,7 @@ Tested and works on:
 ## Development
 The codebase is organized into the following main components:
 
-- `index.html`: Main HTML structure
+- `tool.meta.json`: Shared page metadata used to generate the standalone document shell
 - `script.js`: Contains the `QRCodeGenerator` class which handles:
   - UI interactions
   - QR code generation

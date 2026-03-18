@@ -3,6 +3,7 @@ import { NotificationManager } from '../common/notification-manager';
 import CopyButton from '../common/copy-button/CopyButton';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import toolMetadata from './tool.meta.json';
 
 type JwtBuilderWindow = Window & {
   jwtBuilder?: JWTBuilder;
@@ -433,8 +434,8 @@ export class JWTBuilderToolUI {
 
 function bootstrapJwtBuilderPage() {
   mountToolShell({
-    title: 'JWT Builder',
-    description: 'Create and sign JWT tokens locally with standard and custom claims.',
+    title: toolMetadata.title,
+    description: toolMetadata.description,
     homeHref: '/'
   });
 

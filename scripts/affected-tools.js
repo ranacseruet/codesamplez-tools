@@ -13,6 +13,7 @@ const ALL_TOOL_TRIGGER_FILES = new Set([
     'config/tooling-root.json',
     'scripts/build-tools.js',
     'scripts/prerender-tool.js',
+    'scripts/tool-document.js',
     'scripts/tool-manifest.js'
 ]);
 
