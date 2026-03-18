@@ -1,5 +1,10 @@
 {
   "id": "qr-code-generator",
   "version": "1.0.0",
+  "title": "QR Code Generator",
+  "description": "Create and customize your QR codes instantly.",
+  "appRootId": "qr-code-generator-app",
+  "publicPath": "/qr-code-generator/",
+  "scriptType": "classic",
   "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
 }

@@ -15,6 +15,7 @@ import { scheduleTask } from '../common/scheduler-utils';
 import { hydrate, render } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import toolMetadata from './tool.meta.json';
 
 const DEFAULT_OPTIONS = {
   removeComments: true,
@@ -371,8 +372,8 @@ export class CssMinifierToolUI {
 if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
   document.addEventListener('DOMContentLoaded', () => {
     mountToolShell({
-      title: 'CSS Minifier',
-      description: 'Optimize CSS by removing unnecessary characters without changing behavior.',
+      title: toolMetadata.title,
+      description: toolMetadata.description,
       homeHref: '/'
     });
 

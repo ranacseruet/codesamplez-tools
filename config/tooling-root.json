@@ -1,4 +1,5 @@
 {
+  "siteBaseUrl": "https://tools.codesamplez.com",
   "rootShell": {
     "id": "root-shell",
     "outputPath": "build/root-shell"

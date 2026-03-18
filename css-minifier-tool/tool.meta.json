@@ -1,5 +1,10 @@
 {
   "id": "css-minifier-tool",
   "version": "1.0.0",
+  "title": "CSS Minifier",
+  "description": "Optimize CSS by removing unnecessary characters without changing behavior.",
+  "appRootId": "css-minifier-app",
+  "publicPath": "/css-minifier-tool/",
+  "scriptType": "module",
   "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
 }

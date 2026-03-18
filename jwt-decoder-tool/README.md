@@ -103,7 +103,7 @@ Required browser features:
 
 The tool is built using TypeScript/TSX and modern web APIs, requiring no external dependencies. The codebase is organized into the following main components:
 
-- `index.html`: Structure and layout
+- `tool.meta.json`: Shared page metadata used to generate the standalone document shell
 - `JWTDecoder.ts`: Class responsible for parsing, decoding, and validating JWTs
 - `JsonTreeViewRenderer.ts`: Class responsible for rendering the interactive JSON tree view
 - `script.tsx`: Contains the `JWTDecoderUI` class and Preact runtime wrapper, handles UI interactions/event listeners, and initializes the app on DOMContentLoaded.

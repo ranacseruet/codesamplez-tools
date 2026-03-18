@@ -6,30 +6,50 @@ const path = require('path');
 const REPO_ROOT = path.resolve(__dirname, '..');
 const ROOT_CONFIG_PATH = path.resolve(REPO_ROOT, 'config/tooling-root.json');
 const TOOL_METADATA_FILENAME = 'tool.meta.json';
+const DEFAULT_FEATURED_IMAGE_DIRECTORY = 'images';
+const DEFAULT_FEATURED_IMAGE_FILENAME = 'featured.png';
+const DEFAULT_FEATURED_IMAGE_EXTENSION = '.png';
+const DEFAULT_FEATURED_IMAGE_PATH = path.posix.join(DEFAULT_FEATURED_IMAGE_DIRECTORY, DEFAULT_FEATURED_IMAGE_FILENAME);
+
+/**
+ * @typedef {'module' | 'classic'} ToolScriptType
+ */
 
 /**
  * @typedef {{
+ *   siteBaseUrl: string,
  *   id: string,
  *   version: string,
  *   sourceRoot: string,
  *   outputPath: string,
+ *   title: string,
+ *   description: string,
+ *   appRootId: string,
+ *   publicPath: string,
+ *   scriptType: ToolScriptType,
+ *   featuredImagePath: string,
  *   dependencyScopes: string[]
  * }} ToolDefinition
  * @typedef {{ id: string, outputPath: string }} RootShellDefinition
- * @typedef {{ tools: ToolDefinition[], rootShell: RootShellDefinition, rootAssets: string[] }} ToolManifest
+ * @typedef {{ siteBaseUrl: string, tools: ToolDefinition[], rootShell: RootShellDefinition, rootAssets: string[] }} ToolManifest
  * @typedef {{ requestedTools: string[], includeRootShell: boolean, includeRootAssets: boolean }} ToolSelection
  */
 
 /**
  * @typedef {{
- *   id: string,
- *   version: string,
- *   dependencyScopes: string[]
+  *   id: string,
+  *   version: string,
+ *   title: string,
+ *   description: string,
+ *   appRootId: string,
+ *   publicPath: string,
+ *   scriptType: ToolScriptType,
+  *   dependencyScopes: string[]
  * }} RawToolMetadata
  */
 
 /**
- * @returns {{ rootShell: RootShellDefinition, rootAssets: string[] }}
+ * @returns {{ siteBaseUrl: string, rootShell: RootShellDefinition, rootAssets: string[] }}
  */
 function loadRootConfig() {
     return JSON.parse(fs.readFileSync(ROOT_CONFIG_PATH, 'utf8'));
@@ -61,12 +81,20 @@ function readToolMetadata(metadataPath) {
 function createToolDefinition(metadataPath) {
     const sourceRoot = path.basename(path.dirname(metadataPath));
     const metadata = readToolMetadata(metadataPath);
+    const rootConfig = loadRootConfig();
 
     return {
+        siteBaseUrl: rootConfig.siteBaseUrl,
         id: metadata.id,
         version: metadata.version,
         sourceRoot,
         outputPath: path.join('build', metadata.id),
+        title: metadata.title,
+        description: metadata.description,
+        appRootId: metadata.appRootId,
+        publicPath: metadata.publicPath,
+        scriptType: metadata.scriptType,
+        featuredImagePath: DEFAULT_FEATURED_IMAGE_PATH,
         dependencyScopes: metadata.dependencyScopes.slice()
     };
 }
@@ -84,6 +112,7 @@ function getToolDefinitions() {
 function loadManifest() {
     const rootConfig = loadRootConfig();
     return {
+        siteBaseUrl: rootConfig.siteBaseUrl,
         tools: getToolDefinitions(),
         rootShell: rootConfig.rootShell,
         rootAssets: rootConfig.rootAssets.slice()
@@ -123,6 +152,13 @@ function getToolMetadataPath(toolId) {
  */
 function getRootShellDefinition() {
     return loadManifest().rootShell;
+}
+
+/**
+ * @returns {string}
+ */
+function getSiteBaseUrl() {
+    return loadRootConfig().siteBaseUrl;
 }
 
 /**
@@ -234,6 +270,10 @@ function selectTools(requestedTools) {
 }
 
 module.exports = {
+    DEFAULT_FEATURED_IMAGE_DIRECTORY,
+    DEFAULT_FEATURED_IMAGE_EXTENSION,
+    DEFAULT_FEATURED_IMAGE_FILENAME,
+    DEFAULT_FEATURED_IMAGE_PATH,
     ROOT_CONFIG_PATH,
     REPO_ROOT,
     TOOL_METADATA_FILENAME,
@@ -241,6 +281,7 @@ module.exports = {
     dedupeToolIds,
     getRootAssets,
     getRootShellDefinition,
+    getSiteBaseUrl,
     getToolById,
     getToolDefinitions,
     getToolIds,

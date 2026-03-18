@@ -14,7 +14,6 @@ export interface ToolCleanupHandle {
 }
 
 export interface ToolPrerenderConfig {
-  rootId: string;
   createAppNode: () => VNode;
 }
 
