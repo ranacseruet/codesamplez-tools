@@ -1,6 +1,7 @@
 // @ts-check
 
 const path = require('path');
+const { getRelatedTools } = require('./tool-manifest');
 
 /**
  * @typedef {import('../common/tooling-contracts').ToolPrerenderConfig} ToolPrerenderConfig
@@ -115,6 +116,20 @@ function getPrerenderConfig(toolName) {
 }
 
 /**
+ * @param {() => import('preact').VNode | null} createNode
+ * @returns {string}
+ */
+function renderNodeToMarkup(createNode) {
+    ensureBabelRegister();
+
+    const renderToString = /** @type {(node: import('preact').VNode) => string} */ (
+        /** @type {unknown} */ (require('preact-render-to-string'))
+    );
+    const node = createNode();
+    return node ? renderToString(node) : '';
+}
+
+/**
  * @param {string} toolName
  * @returns {string}
  */
@@ -124,12 +139,29 @@ function renderToolPrerenderMarkup(toolName) {
         throw new Error(`No prerender config found for tool: ${toolName}`);
     }
 
-    ensureBabelRegister();
+    return renderNodeToMarkup(() => config.createAppNode());
+}
 
-    const renderToString = /** @type {(node: import('preact').VNode) => string} */ (
-        /** @type {unknown} */ (require('preact-render-to-string'))
-    );
-    return renderToString(config.createAppNode());
+/**
+ * @param {string} toolName
+ * @returns {string}
+ */
+function renderRelatedToolsPrerenderMarkup(toolName) {
+    const relatedTools = getRelatedTools(toolName);
+
+    return renderNodeToMarkup(() => {
+        const { h } = require('preact');
+        const { RelatedToolsSection } = require(path.resolve(__dirname, '../common/related-tools/RelatedTools'));
+
+        return h(RelatedToolsSection, {
+            tools: relatedTools.map((tool) => ({
+                id: tool.id,
+                title: tool.title,
+                description: tool.description,
+                publicPath: tool.publicPath
+            }))
+        });
+    });
 }
 
 /**
@@ -143,5 +175,6 @@ module.exports = {
     TOOL_PRERENDER_REGISTRY,
     getPrerenderConfig,
     getPrerenderToolNames,
+    renderRelatedToolsPrerenderMarkup,
     renderToolPrerenderMarkup
 };

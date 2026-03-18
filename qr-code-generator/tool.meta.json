@@ -6,5 +6,6 @@
   "appRootId": "qr-code-generator-app",
   "publicPath": "/qr-code-generator/",
   "scriptType": "classic",
-  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
+  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
+  "relatedToolIds": ["base64-converter-tool", "data-format-converter", "text-analyzer-tool"]
 }

@@ -6,5 +6,6 @@
   "appRootId": "base64converter-app",
   "publicPath": "/base64-converter-tool/",
   "scriptType": "module",
-  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
+  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
+  "relatedToolIds": ["jwt-decoder-tool", "jwt-builder-tool", "data-format-converter"]
 }

@@ -13,7 +13,7 @@ describe('tool document generation', () => {
 
     it('renders a module tool document with metadata and shell placeholders', () => {
         const tool = getToolById('diff-checker-tool');
-        const html = renderToolDocument(tool, '<section>SSR payload</section>');
+        const html = renderToolDocument(tool, '<section>SSR payload</section>', '<section class="c-related-tools">Related</section>');
 
         expect(html).toContain('<title>Diff Checker</title>');
         expect(html).toContain('<meta name="description" content="Compare two texts or code snippets and highlight the differences between them.">');
@@ -21,6 +21,7 @@ describe('tool document generation', () => {
         expect(html).toContain('<meta property="og:image" content="https://tools.codesamplez.com/diff-checker-tool/images/featured.png">');
         expect(html).toContain('<div id="app-shell-header"></div>');
         expect(html).toContain('<div id="diff-checker-app"><section>SSR payload</section></div>');
+        expect(html).toContain('<section class="c-related-tools">Related</section>');
         expect(html).toContain('<script src="bundle.main.js" type="module"></script>');
     });
 
@@ -38,6 +39,9 @@ describe('tool document generation', () => {
 
         expect(html).toContain('id="base64converter-mode"');
         expect(html).toContain('id="base64converter-convert"');
+        expect(html).toContain('id="related-tools-heading"');
+        expect(html).toContain('Related tools');
+        expect(html).toContain('href="/jwt-decoder-tool/"');
         expect(html).toContain('https://tools.codesamplez.com/base64-converter-tool/images/featured.png');
     });
 });

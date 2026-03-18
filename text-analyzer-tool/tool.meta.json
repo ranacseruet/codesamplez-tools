@@ -6,5 +6,6 @@
   "appRootId": "text-analyzer-app",
   "publicPath": "/text-analyzer-tool/",
   "scriptType": "module",
-  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
+  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
+  "relatedToolIds": ["diff-checker-tool", "qr-code-generator", "json-formatter-tool"]
 }

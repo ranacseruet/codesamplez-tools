@@ -6,5 +6,6 @@
   "appRootId": "js-minifier-app",
   "publicPath": "/js-minifier-tool/",
   "scriptType": "module",
-  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
+  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
+  "relatedToolIds": ["css-minifier-tool", "json-formatter-tool", "diff-checker-tool"]
 }

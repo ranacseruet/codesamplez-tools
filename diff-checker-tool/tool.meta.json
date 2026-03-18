@@ -6,5 +6,6 @@
   "appRootId": "diff-checker-app",
   "publicPath": "/diff-checker-tool/",
   "scriptType": "module",
-  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
+  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
+  "relatedToolIds": ["text-analyzer-tool", "json-formatter-tool", "js-minifier-tool"]
 }

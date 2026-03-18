@@ -1,7 +1,7 @@
 // @ts-check
 
 const { getToolById } = require('./tool-manifest');
-const { renderToolPrerenderMarkup } = require('./prerender-tool');
+const { renderRelatedToolsPrerenderMarkup, renderToolPrerenderMarkup } = require('./prerender-tool');
 
 /**
  * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
@@ -38,9 +38,10 @@ function joinUrl(baseUrl, pathName) {
 /**
  * @param {ToolDefinition} tool
  * @param {string} prerenderedMarkup
+ * @param {string} relatedToolsMarkup
  * @returns {string}
  */
-function renderToolDocument(tool, prerenderedMarkup) {
+function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '') {
     const absolutePageUrl = joinUrl(tool.siteBaseUrl, tool.publicPath);
     const absoluteFeaturedImageUrl = joinUrl(tool.siteBaseUrl, `${tool.publicPath.replace(/\/$/, '')}/${tool.featuredImagePath}`);
     const escapedTitle = escapeAttribute(tool.title);
@@ -79,6 +80,7 @@ function renderToolDocument(tool, prerenderedMarkup) {
 <body class="standalone-app">
     <div id="app-shell-header"></div>
     <div id="${escapedAppRootId}">${prerenderedMarkup}</div>
+    ${relatedToolsMarkup}
     <div id="app-shell-footer"></div>
     <script src="bundle.main.js"${scriptTypeAttribute}></script>
 </body>
@@ -97,7 +99,7 @@ function generateToolDocument(toolId) {
         throw new Error(`Unknown tool id: ${toolId}`);
     }
 
-    return renderToolDocument(tool, renderToolPrerenderMarkup(toolId));
+    return renderToolDocument(tool, renderToolPrerenderMarkup(toolId), renderRelatedToolsPrerenderMarkup(toolId));
 }
 
 module.exports = {

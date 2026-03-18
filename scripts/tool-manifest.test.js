@@ -6,6 +6,7 @@ const {
   assertValidToolIds,
   dedupeToolIds,
   getRootAssets,
+  getRelatedTools,
   getRootShellDefinition,
   getSiteBaseUrl,
   getToolById,
@@ -17,7 +18,8 @@ const {
   normalizeSelection,
   parseToolSelectionArgs,
   selectTools,
-  splitCsv
+  splitCsv,
+  validateToolDefinitions
 } = require('./tool-manifest');
 
 describe('tool-manifest', () => {
@@ -50,7 +52,8 @@ describe('tool-manifest', () => {
         scriptType: 'module',
         featuredImagePath: DEFAULT_FEATURED_IMAGE_PATH,
         siteBaseUrl: 'https://tools.codesamplez.com',
-        dependencyScopes: ['build-system', 'shared-ui', 'shared-runtime']
+        dependencyScopes: ['build-system', 'shared-ui', 'shared-runtime'],
+        relatedToolIds: ['jwt-builder-tool', 'base64-converter-tool', 'json-formatter-tool']
       })
     ]));
   });
@@ -83,6 +86,36 @@ describe('tool-manifest', () => {
     expect(() => getToolMetadataPath('not-a-real-tool')).toThrow('Unknown tool id');
   });
 
+  it('resolves related tool definitions for document rendering', () => {
+    expect(getRelatedTools('jwt-decoder-tool')).toEqual([
+      expect.objectContaining({ id: 'jwt-builder-tool', publicPath: '/jwt-builder-tool/' }),
+      expect.objectContaining({ id: 'base64-converter-tool', publicPath: '/base64-converter-tool/' }),
+      expect.objectContaining({ id: 'json-formatter-tool', publicPath: '/json-formatter-tool/' })
+    ]);
+  });
+
+  it('rejects related-tool lookups for unknown tool ids', () => {
+    expect(() => getRelatedTools('not-a-real-tool')).toThrow('Unknown tool id: not-a-real-tool');
+  });
+
+  it('surfaces the defensive missing-related-tool guard when map lookup fails', () => {
+    const originalGet = Map.prototype.get;
+    const getSpy = jest.spyOn(Map.prototype, 'get').mockImplementation(function (key) {
+      if (key === 'jwt-builder-tool') {
+        return undefined;
+      }
+
+      return originalGet.call(this, key);
+    });
+
+    try {
+      expect(() => getRelatedTools('jwt-decoder-tool'))
+        .toThrow('Tool jwt-decoder-tool references an unknown related tool id: jwt-builder-tool');
+    } finally {
+      getSpy.mockRestore();
+    }
+  });
+
   it('exposes root assets and root shell helpers', () => {
     expect(getRootAssets()).toEqual(['index.html', 'styles.css', 'robots.txt']);
     expect(getSiteBaseUrl()).toBe('https://tools.codesamplez.com');
@@ -93,6 +126,7 @@ describe('tool-manifest', () => {
   });
 
   it('supports CSV splitting, dedupe, and validation helpers', () => {
+    expect(splitCsv(undefined)).toEqual([]);
     expect(splitCsv('jwt-decoder-tool, json-formatter-tool ,')).toEqual([
       'jwt-decoder-tool',
       'json-formatter-tool'
@@ -126,6 +160,36 @@ describe('tool-manifest', () => {
       includeRootShell: false,
       includeRootAssets: false
     });
+
+    expect(normalizeSelection({
+      requestedTools: ['jwt-decoder-tool'],
+      includeRootShell: true,
+      includeRootAssets: true
+    })).toEqual({
+      requestedTools: ['jwt-decoder-tool'],
+      includeRootShell: true,
+      includeRootAssets: true
+    });
+  });
+
+  it('rejects missing --tool values during selection parsing', () => {
+    expect(() => parseToolSelectionArgs(['--tool'])).toThrow('Unknown tool id(s): ');
+  });
+
+  it('parses the root-assets flag without requiring a tool selection', () => {
+    expect(parseToolSelectionArgs(['--include-root-assets'])).toEqual({
+      requestedTools: [],
+      includeRootShell: false,
+      includeRootAssets: true
+    });
+  });
+
+  it('ignores unrelated arguments during selection parsing', () => {
+    expect(parseToolSelectionArgs(['--not-a-real-flag'])).toEqual({
+      requestedTools: [],
+      includeRootShell: false,
+      includeRootAssets: false
+    });
   });
 
   it('selects requested tool definitions', () => {
@@ -133,5 +197,115 @@ describe('tool-manifest', () => {
       expect.objectContaining({ id: 'json-formatter-tool' }),
       expect.objectContaining({ id: 'jwt-decoder-tool' })
     ]);
+  });
+
+  it('rejects invalid related tool references', () => {
+    const baseTool = {
+      siteBaseUrl: 'https://tools.codesamplez.com',
+      sourceRoot: 'jwt-decoder-tool',
+      outputPath: 'build/jwt-decoder-tool',
+      version: '1.0.0',
+      title: 'JWT Decoder & Validator',
+      description: 'Decode and validate JWT tokens locally in your browser.',
+      appRootId: 'jwt-decoder-app',
+      publicPath: '/jwt-decoder-tool/',
+      scriptType: 'module',
+      featuredImagePath: DEFAULT_FEATURED_IMAGE_PATH,
+      dependencyScopes: ['build-system', 'shared-ui', 'shared-runtime']
+    };
+
+    expect(() => validateToolDefinitions([
+      {
+        ...baseTool,
+        id: 'jwt-decoder-tool'
+      },
+      {
+        ...baseTool,
+        id: 'jwt-builder-tool',
+        sourceRoot: 'jwt-builder-tool',
+        outputPath: 'build/jwt-builder-tool',
+        appRootId: 'jwt-builder-app',
+        publicPath: '/jwt-builder-tool/',
+        title: 'JWT Builder',
+        description: 'Create and sign JWT tokens locally with standard and custom claims.',
+        relatedToolIds: ['jwt-decoder-tool']
+      }
+    ])).toThrow('must define relatedToolIds as an array');
+
+    expect(() => validateToolDefinitions([
+      {
+        ...baseTool,
+        id: 'jwt-decoder-tool',
+        relatedToolIds: ['']
+      },
+      {
+        ...baseTool,
+        id: 'jwt-builder-tool',
+        sourceRoot: 'jwt-builder-tool',
+        outputPath: 'build/jwt-builder-tool',
+        appRootId: 'jwt-builder-app',
+        publicPath: '/jwt-builder-tool/',
+        title: 'JWT Builder',
+        description: 'Create and sign JWT tokens locally with standard and custom claims.',
+        relatedToolIds: ['jwt-decoder-tool']
+      }
+    ])).toThrow('contains an invalid related tool id');
+
+    expect(() => validateToolDefinitions([
+      {
+        ...baseTool,
+        id: 'jwt-decoder-tool',
+        relatedToolIds: ['jwt-decoder-tool']
+      },
+      {
+        ...baseTool,
+        id: 'jwt-builder-tool',
+        sourceRoot: 'jwt-builder-tool',
+        outputPath: 'build/jwt-builder-tool',
+        appRootId: 'jwt-builder-app',
+        publicPath: '/jwt-builder-tool/',
+        title: 'JWT Builder',
+        description: 'Create and sign JWT tokens locally with standard and custom claims.',
+        relatedToolIds: ['jwt-decoder-tool']
+      }
+    ])).toThrow('cannot reference itself');
+
+    expect(() => validateToolDefinitions([
+      {
+        ...baseTool,
+        id: 'jwt-decoder-tool',
+        relatedToolIds: ['jwt-builder-tool', 'jwt-builder-tool']
+      },
+      {
+        ...baseTool,
+        id: 'jwt-builder-tool',
+        sourceRoot: 'jwt-builder-tool',
+        outputPath: 'build/jwt-builder-tool',
+        appRootId: 'jwt-builder-app',
+        publicPath: '/jwt-builder-tool/',
+        title: 'JWT Builder',
+        description: 'Create and sign JWT tokens locally with standard and custom claims.',
+        relatedToolIds: ['jwt-decoder-tool']
+      }
+    ])).toThrow('duplicate related tool id');
+
+    expect(() => validateToolDefinitions([
+      {
+        ...baseTool,
+        id: 'jwt-decoder-tool',
+        relatedToolIds: ['not-a-real-tool']
+      },
+      {
+        ...baseTool,
+        id: 'jwt-builder-tool',
+        sourceRoot: 'jwt-builder-tool',
+        outputPath: 'build/jwt-builder-tool',
+        appRootId: 'jwt-builder-app',
+        publicPath: '/jwt-builder-tool/',
+        title: 'JWT Builder',
+        description: 'Create and sign JWT tokens locally with standard and custom claims.',
+        relatedToolIds: ['jwt-decoder-tool']
+      }
+    ])).toThrow('unknown related tool id');
   });
 });

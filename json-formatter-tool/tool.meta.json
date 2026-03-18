@@ -6,5 +6,6 @@
   "appRootId": "json-formatter-app",
   "publicPath": "/json-formatter-tool/",
   "scriptType": "module",
-  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
+  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
+  "relatedToolIds": ["data-format-converter", "jwt-decoder-tool", "js-minifier-tool"]
 }

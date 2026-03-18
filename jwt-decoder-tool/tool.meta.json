@@ -6,5 +6,6 @@
   "appRootId": "jwt-decoder-app",
   "publicPath": "/jwt-decoder-tool/",
   "scriptType": "module",
-  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
+  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
+  "relatedToolIds": ["jwt-builder-tool", "base64-converter-tool", "json-formatter-tool"]
 }

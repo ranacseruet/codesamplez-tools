@@ -28,7 +28,8 @@ const DEFAULT_FEATURED_IMAGE_PATH = path.posix.join(DEFAULT_FEATURED_IMAGE_DIREC
  *   publicPath: string,
  *   scriptType: ToolScriptType,
  *   featuredImagePath: string,
- *   dependencyScopes: string[]
+ *   dependencyScopes: string[],
+ *   relatedToolIds: string[]
  * }} ToolDefinition
  * @typedef {{ id: string, outputPath: string }} RootShellDefinition
  * @typedef {{ siteBaseUrl: string, tools: ToolDefinition[], rootShell: RootShellDefinition, rootAssets: string[] }} ToolManifest
@@ -44,7 +45,8 @@ const DEFAULT_FEATURED_IMAGE_PATH = path.posix.join(DEFAULT_FEATURED_IMAGE_DIREC
  *   appRootId: string,
  *   publicPath: string,
  *   scriptType: ToolScriptType,
-  *   dependencyScopes: string[]
+  *   dependencyScopes: string[],
+  *   relatedToolIds: string[]
  * }} RawToolMetadata
  */
 
@@ -95,15 +97,53 @@ function createToolDefinition(metadataPath) {
         publicPath: metadata.publicPath,
         scriptType: metadata.scriptType,
         featuredImagePath: DEFAULT_FEATURED_IMAGE_PATH,
-        dependencyScopes: metadata.dependencyScopes.slice()
+        dependencyScopes: metadata.dependencyScopes.slice(),
+        relatedToolIds: metadata.relatedToolIds
     };
+}
+
+/**
+ * @param {ToolDefinition[]} toolDefinitions
+ * @returns {ToolDefinition[]}
+ */
+function validateToolDefinitions(toolDefinitions) {
+    const knownToolIds = new Set(toolDefinitions.map((tool) => tool.id));
+
+    toolDefinitions.forEach((tool) => {
+        if (!Array.isArray(tool.relatedToolIds)) {
+            throw new Error(`Tool ${tool.id} must define relatedToolIds as an array`);
+        }
+
+        const seenRelatedToolIds = new Set();
+        tool.relatedToolIds.forEach((relatedToolId) => {
+            if (typeof relatedToolId !== 'string' || relatedToolId.length === 0) {
+                throw new Error(`Tool ${tool.id} contains an invalid related tool id`);
+            }
+
+            if (relatedToolId === tool.id) {
+                throw new Error(`Tool ${tool.id} cannot reference itself in relatedToolIds`);
+            }
+
+            if (seenRelatedToolIds.has(relatedToolId)) {
+                throw new Error(`Tool ${tool.id} contains a duplicate related tool id: ${relatedToolId}`);
+            }
+
+            if (!knownToolIds.has(relatedToolId)) {
+                throw new Error(`Tool ${tool.id} references an unknown related tool id: ${relatedToolId}`);
+            }
+
+            seenRelatedToolIds.add(relatedToolId);
+        });
+    });
+
+    return toolDefinitions;
 }
 
 /**
  * @returns {ToolDefinition[]}
  */
 function getToolDefinitions() {
-    return listToolMetadataPaths().map((metadataPath) => createToolDefinition(metadataPath));
+    return validateToolDefinitions(listToolMetadataPaths().map((metadataPath) => createToolDefinition(metadataPath)));
 }
 
 /**
@@ -132,6 +172,28 @@ function getToolIds() {
  */
 function getToolById(toolId) {
     return getToolDefinitions().find((tool) => tool.id === toolId);
+}
+
+/**
+ * @param {string} toolId
+ * @returns {ToolDefinition[]}
+ */
+function getRelatedTools(toolId) {
+    const toolDefinitions = getToolDefinitions();
+    const tool = toolDefinitions.find((candidate) => candidate.id === toolId);
+    if (!tool) {
+        throw new Error(`Unknown tool id: ${toolId}`);
+    }
+
+    const toolById = new Map(toolDefinitions.map((candidate) => [candidate.id, candidate]));
+    return tool.relatedToolIds.map((relatedToolId) => {
+        const relatedTool = toolById.get(relatedToolId);
+        if (!relatedTool) {
+            throw new Error(`Tool ${toolId} references an unknown related tool id: ${relatedToolId}`);
+        }
+
+        return relatedTool;
+    });
 }
 
 /**
@@ -280,6 +342,7 @@ module.exports = {
     assertValidToolIds,
     dedupeToolIds,
     getRootAssets,
+    getRelatedTools,
     getRootShellDefinition,
     getSiteBaseUrl,
     getToolById,
@@ -291,5 +354,6 @@ module.exports = {
     normalizeSelection,
     parseToolSelectionArgs,
     selectTools,
-    splitCsv
+    splitCsv,
+    validateToolDefinitions
 };

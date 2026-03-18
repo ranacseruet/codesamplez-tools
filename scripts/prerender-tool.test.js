@@ -3,6 +3,7 @@
 const {
     getPrerenderConfig,
     getPrerenderToolNames,
+    renderRelatedToolsPrerenderMarkup,
     renderToolPrerenderMarkup
 } = require('./prerender-tool.js');
 
@@ -105,5 +106,16 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="qr-text"');
         expect(markup).toContain('id="qr-canvas"');
         expect(markup).toContain('id="download-btn"');
+    });
+
+    it('renders related-tools markup for a representative tool', () => {
+        const markup = renderRelatedToolsPrerenderMarkup('jwt-decoder-tool');
+
+        expect(markup).toContain('id="related-tools-heading"');
+        expect(markup).toContain('JWT Builder');
+        expect(markup).toContain('Base64 Converter');
+        expect(markup).toContain('href="/jwt-builder-tool/"');
+        expect(markup).toContain('href="/base64-converter-tool/"');
+        expect(markup).toContain('Open tool');
     });
 });

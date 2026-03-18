@@ -6,5 +6,6 @@
   "appRootId": "data-format-converter-app",
   "publicPath": "/data-format-converter/",
   "scriptType": "module",
-  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
+  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
+  "relatedToolIds": ["json-formatter-tool", "base64-converter-tool", "diff-checker-tool"]
 }
