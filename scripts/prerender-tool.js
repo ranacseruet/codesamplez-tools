@@ -8,6 +8,7 @@ const path = require('path');
  */
 
 let babelRegistered = false;
+const FEATURED_IMAGE_RELATIVE_PATH = 'images/featured.png';
 
 /**
  * @returns {void}
@@ -151,23 +152,70 @@ function escapeRegExp(text) {
 }
 
 /**
+ * @param {string} value
+ * @returns {string}
+ */
+function escapeHtmlAttribute(value) {
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+/**
+ * @param {string} toolName
+ * @param {string} html
+ * @returns {string}
+ */
+function injectToolFeaturedImageMetadata(toolName, html) {
+    if (!/<\/head>/i.test(html)) {
+        return html;
+    }
+
+    if (/property=["']og:image["']/i.test(html) || /name=["']twitter:image["']/i.test(html)) {
+        return html;
+    }
+
+    const titleMatch = html.match(/<title>([^<]*)<\/title>/i);
+    const title = (titleMatch?.[1] || toolName).trim();
+    const escapedTitle = escapeHtmlAttribute(title);
+    const escapedAlt = escapeHtmlAttribute(`${title} featured image`);
+    const escapedImagePath = escapeHtmlAttribute(FEATURED_IMAGE_RELATIVE_PATH);
+    const metadataMarkup = [
+        `    <meta property="og:type" content="website">`,
+        `    <meta property="og:title" content="${escapedTitle}">`,
+        `    <meta property="og:image" content="${escapedImagePath}">`,
+        `    <meta property="og:image:alt" content="${escapedAlt}">`,
+        `    <meta name="twitter:card" content="summary_large_image">`,
+        `    <meta name="twitter:title" content="${escapedTitle}">`,
+        `    <meta name="twitter:image" content="${escapedImagePath}">`,
+        `    <meta name="twitter:image:alt" content="${escapedAlt}">`,
+        `    <link rel="image_src" href="${escapedImagePath}">`
+    ].join('\n');
+
+    return html.replace(/<\/head>/i, `${metadataMarkup}\n</head>`);
+}
+
+/**
  * @param {string} toolName
  * @param {string} html
  * @returns {string}
  */
 function injectToolPrerender(toolName, html) {
     const config = getPrerenderConfig(toolName);
+    let transformedHtml = injectToolFeaturedImageMetadata(toolName, html);
     if (!config) {
-        return html;
+        return transformedHtml;
     }
 
     const rootPattern = new RegExp(`<div\\s+id=["']${escapeRegExp(config.rootId)}["']\\s*><\\/div>`);
-    if (!rootPattern.test(html)) {
-        return html;
+    if (!rootPattern.test(transformedHtml)) {
+        return transformedHtml;
     }
 
     const prerenderedMarkup = renderToolPrerenderMarkup(toolName);
-    return html.replace(rootPattern, `<div id="${config.rootId}">${prerenderedMarkup}</div>`);
+    return transformedHtml.replace(rootPattern, `<div id="${config.rootId}">${prerenderedMarkup}</div>`);
 }
 
 /**
@@ -181,6 +229,7 @@ module.exports = {
     TOOL_PRERENDER_REGISTRY,
     getPrerenderConfig,
     getPrerenderToolNames,
+    injectToolFeaturedImageMetadata,
     injectToolPrerender,
     renderToolPrerenderMarkup
 };

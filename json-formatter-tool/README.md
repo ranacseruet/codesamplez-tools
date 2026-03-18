@@ -206,4 +206,4 @@ Calculation methodology:
   - High contrast toggle indicators (▼/▶)
   - Error messages with distinct styling
 
-![JSON Formatter Screenshot](images/json-formatter.png)
+![JSON Formatter Screenshot](images/featured.png)

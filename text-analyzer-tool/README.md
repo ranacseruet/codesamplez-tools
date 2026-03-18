@@ -2,7 +2,7 @@
 
 A lightweight, browser-based text analysis tool that provides real-time statistics about your text.
 
-![Text Analyzer Tool](images/text-analyzer.png)
+![Text Analyzer Tool](images/featured.png)
 
 ## Privacy & Security
 - 🔒 **100% Client-Side Processing**: All text analysis happens locally in your browser
