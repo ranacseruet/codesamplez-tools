@@ -24,6 +24,7 @@ describe('mountToolShell', () => {
         expect(document.querySelector('#app-shell-header .cst-shell__description')?.textContent)
             .toContain('Convert JSON, XML, YAML, and Properties formats');
         expect(document.querySelector('#app-shell-footer .cst-shell__footer-link')?.getAttribute('href')).toBe('/');
+        expect(document.querySelector('#app-shell-header .cst-shell__tool-menu-trigger')?.textContent).toContain('Browse Tools');
     });
 
     it('supports custom mount root ids', () => {

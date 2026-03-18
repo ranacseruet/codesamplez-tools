@@ -25,6 +25,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .cst-shell__brand {
@@ -63,6 +64,134 @@
   line-height: var(--cst-line-height-tight, 1.35);
   letter-spacing: -0.02em;
   color: var(--md-sys-color-on-surface);
+}
+
+.cst-shell__header-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.cst-shell__tool-menu {
+  position: relative;
+}
+
+.cst-shell__tool-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--cst-shell-theme-toggle-border, var(--md-sys-color-outline-variant, #bfc9cd));
+  background: var(--cst-shell-theme-toggle-bg, rgba(255, 255, 255, 0.72));
+  color: var(--cst-shell-theme-toggle-text, var(--md-sys-color-on-surface, #141c1e));
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  list-style: none;
+  white-space: nowrap;
+  transition:
+    background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+.cst-shell__tool-menu-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.cst-shell__tool-menu-trigger::after {
+  content: "▾";
+  font-size: 0.72rem;
+  transition: transform var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+.cst-shell__tool-menu[open] .cst-shell__tool-menu-trigger::after {
+  transform: rotate(180deg);
+}
+
+.cst-shell__tool-menu-trigger:hover {
+  background: var(--cst-shell-theme-toggle-bg-hover, rgba(255, 255, 255, 0.9));
+  border-color: var(--cst-shell-theme-toggle-border-hover, var(--md-sys-color-outline, #6f797d));
+}
+
+.cst-shell__tool-menu-trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, none);
+}
+
+.cst-shell__tool-menu-panel {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  right: 0;
+  z-index: 20;
+  width: min(42rem, calc(100vw - 2.5rem));
+  padding: 0.95rem;
+  border: 1px solid var(--md-sys-color-outline-variant, var(--md-sys-color-outline));
+  border-radius: var(--cst-radius-lg, 12px);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98),
+      var(--md-sys-color-surface-container-low, rgba(244, 247, 248, 0.98))
+    );
+  box-shadow: var(--cst-shadow-3, 0 18px 40px rgba(19, 32, 37, 0.16));
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.cst-shell__tool-menu-group {
+  min-width: 0;
+}
+
+.cst-shell__tool-menu-heading {
+  margin: 0 0 0.6rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant, #4f5a5d);
+}
+
+.cst-shell__tool-menu-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cst-shell__tool-menu-item {
+  margin: 0;
+}
+
+.cst-shell__tool-menu-link {
+  display: block;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.65rem;
+  color: var(--md-sys-color-on-surface, #141c1e);
+  text-decoration: none;
+  line-height: 1.35;
+  transition:
+    background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+.cst-shell__tool-menu-link:hover {
+  background: color-mix(in srgb, var(--md-sys-color-primary, #005f73) 10%, transparent);
+  color: var(--md-sys-color-primary, #005f73);
+}
+
+.cst-shell__tool-menu-link:focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, none);
 }
 
 .cst-shell__theme-toggle {
@@ -162,6 +291,27 @@
 
   .cst-shell__header-top {
     gap: 0.5rem;
+  }
+
+  .cst-shell__header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .cst-shell__tool-menu {
+    width: 100%;
+  }
+
+  .cst-shell__tool-menu-trigger {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .cst-shell__tool-menu-panel {
+    left: 0;
+    right: auto;
+    width: 100%;
+    grid-template-columns: 1fr;
   }
 
   .cst-shell__theme-toggle {
