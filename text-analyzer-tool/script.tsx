@@ -4,6 +4,7 @@ import { NotificationManager } from '../common/notification-manager';
 import ClearButton from '../common/clear-button/ClearButton';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { analyzeText } from './TextAnalyzer';
+import toolMetadata from './tool.meta.json';
 
 const SAMPLE_TEXT = "This is a sample text for analysis. It has multiple sentences and paragraphs.\n\nLet's see how well it works!";
 
@@ -180,8 +181,8 @@ if (typeof module !== 'undefined' && module.exports) {
 if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
     document.addEventListener('DOMContentLoaded', () => {
         mountToolShell({
-            title: 'Text Analyzer',
-            description: 'Analyze your text to get word count, character statistics, and more.',
+            title: toolMetadata.title,
+            description: toolMetadata.description,
             homeHref: '/'
         });
         new TextAnalyzerToolUI();

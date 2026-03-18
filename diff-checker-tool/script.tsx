@@ -8,6 +8,7 @@ import { hydrate, render } from 'preact';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-javascript';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import toolMetadata from './tool.meta.json';
 
 type PrismRuntime = {
   highlight?: (code: string, grammar: unknown, language: string) => string;
@@ -559,8 +560,8 @@ export class DiffCheckerToolUI {
 
 function bootstrapDiffCheckerPage() {
   mountToolShell({
-    title: 'Diff Checker',
-    description: 'Compare two texts or code snippets and highlight the differences between them.',
+    title: toolMetadata.title,
+    description: toolMetadata.description,
     homeHref: '/'
   });
 

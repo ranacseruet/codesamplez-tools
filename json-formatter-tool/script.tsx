@@ -5,6 +5,7 @@ import ClearButton from '../common/clear-button/ClearButton';
 import { scheduleTask, nextFrame } from '../common/scheduler-utils';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import toolMetadata from './tool.meta.json';
 
 interface RenderContext {
   count: number;
@@ -582,8 +583,8 @@ export class JSONFormatterToolUI {
 if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
   document.addEventListener('DOMContentLoaded', () => {
     mountToolShell({
-      title: 'JSON Formatter',
-      description: 'Format, validate, and beautify JSON with tree and plain views.',
+      title: toolMetadata.title,
+      description: toolMetadata.description,
       homeHref: '/'
     });
 

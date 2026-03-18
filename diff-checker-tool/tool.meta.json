@@ -1,5 +1,10 @@
 {
   "id": "diff-checker-tool",
   "version": "1.0.0",
+  "title": "Diff Checker",
+  "description": "Compare two texts or code snippets and highlight the differences between them.",
+  "appRootId": "diff-checker-app",
+  "publicPath": "/diff-checker-tool/",
+  "scriptType": "module",
   "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
 }

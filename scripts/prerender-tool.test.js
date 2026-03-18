@@ -3,7 +3,6 @@
 const {
     getPrerenderConfig,
     getPrerenderToolNames,
-    injectToolPrerender,
     renderToolPrerenderMarkup
 } = require('./prerender-tool.js');
 
@@ -14,7 +13,6 @@ describe('generic tool prerender helpers', () => {
 
         const config = getPrerenderConfig('data-format-converter');
         expect(config).not.toBeNull();
-        expect(config.rootId).toBe('data-format-converter-app');
         expect(typeof config.createAppNode).toBe('function');
     });
 
@@ -29,32 +27,6 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="inputText"');
         expect(markup).toContain('id="outputText"');
         expect(markup).toContain('Convert Data');
-    });
-
-    it('injects prerendered markup into configured app root placeholder', () => {
-        const htmlTemplate = '<html><body><div id="data-format-converter-app"></div></body></html>';
-
-        const injected = injectToolPrerender('data-format-converter', htmlTemplate);
-
-        expect(injected).toContain('<div id="data-format-converter-app">');
-        expect(injected).toContain('id="convertBtn"');
-        expect(injected).not.toContain('<div id="data-format-converter-app"></div>');
-    });
-
-    it('leaves html unchanged when configured root placeholder is missing', () => {
-        const htmlTemplate = '<html><body><div id="different-root"></div></body></html>';
-
-        const injected = injectToolPrerender('data-format-converter', htmlTemplate);
-
-        expect(injected).toBe(htmlTemplate);
-    });
-
-    it('leaves html unchanged for tools without prerender support', () => {
-        const htmlTemplate = '<html><body><div id="unknown-tool-app"></div></body></html>';
-
-        const injected = injectToolPrerender('non-existent-tool', htmlTemplate);
-
-        expect(injected).toBe(htmlTemplate);
     });
 
     it('throws when attempting to render a tool without prerender config', () => {

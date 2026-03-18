@@ -1,5 +1,10 @@
 {
   "id": "data-format-converter",
   "version": "1.0.0",
+  "title": "Data Format Converter",
+  "description": "Convert JSON, XML, YAML, and Properties formats",
+  "appRootId": "data-format-converter-app",
+  "publicPath": "/data-format-converter/",
+  "scriptType": "module",
   "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"]
 }

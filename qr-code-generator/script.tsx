@@ -4,6 +4,7 @@ import ClearButton from '../common/clear-button/ClearButton';
 import { hydrate, render } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import toolMetadata from './tool.meta.json';
 
 const QR_EMPTY_INPUT_MESSAGE = 'Please enter text or a URL to generate a QR code.';
 const QR_TOO_LONG_ERROR_MESSAGE = 'Error: Input data is too long for the selected error correction level. Try reducing data or increasing error correction.';
@@ -382,8 +383,8 @@ export class QRCodeGeneratorToolUI {
 if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
   document.addEventListener('DOMContentLoaded', () => {
     mountToolShell({
-      title: 'QR Code Generator',
-      description: 'Create and customize your QR codes instantly.',
+      title: toolMetadata.title,
+      description: toolMetadata.description,
       homeHref: '/'
     });
 

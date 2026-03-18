@@ -153,7 +153,7 @@ Compatible with modern browsers that support:
 ## Development
 
 The tool consists of the following main files:
-- `index.html`: Structure and UI elements
+- `tool.meta.json`: Shared page metadata used to generate the standalone document shell
 - `styles.css`: Tool-specific styling and layout (inherits base styles from `common/shared-styles.css`)
 - `script.js`: JWT generation logic and user interactions
 - `base64.js`: Helper functions for Base64URL encoding
