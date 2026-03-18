@@ -49,6 +49,7 @@ yarn.lock
 **/*.tmp
 **/*.temp
 **/.cache/
+tasks/
 verification/
 qa-artifacts/
 reports/bundle-metrics/latest.json

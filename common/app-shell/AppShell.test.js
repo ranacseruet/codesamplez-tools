@@ -28,6 +28,22 @@ describe('AppShell components', () => {
         expect(homeLink).not.toBeNull();
         expect(homeLink.getAttribute('href')).toBe('/');
         expect(homeLink.getAttribute('aria-label')).toBe('Back to all tools');
+
+        const menuTrigger = root.querySelector('summary.cst-shell__tool-menu-trigger');
+        expect(menuTrigger).not.toBeNull();
+        expect(menuTrigger.textContent).toContain('Browse Tools');
+
+        const groupHeadings = Array.from(root.querySelectorAll('.cst-shell__tool-menu-heading')).map((node) => node.textContent);
+        expect(groupHeadings).toEqual([
+            'Code Formatters & Validators',
+            'Encoders & Decoders',
+            'Text Analysis & Diff Tools'
+        ]);
+
+        const dataFormatConverterLink = Array.from(root.querySelectorAll('.cst-shell__tool-menu-link'))
+            .find((link) => link.textContent === 'Data Format Converter');
+        expect(dataFormatConverterLink).not.toBeNull();
+        expect(dataFormatConverterLink?.getAttribute('href')).toBe('/data-format-converter/');
     });
 
     it('renders a theme toggle when enabled', () => {
