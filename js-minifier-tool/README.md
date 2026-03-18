@@ -130,4 +130,4 @@ The minifier includes several safety features:
 
 ## Screenshot
 
-![JavaScript Minifier Screenshot](./images/js-minifier.png)
+![JavaScript Minifier Screenshot](./images/featured.png)
