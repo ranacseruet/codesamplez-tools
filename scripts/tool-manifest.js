@@ -6,7 +6,10 @@ const path = require('path');
 const REPO_ROOT = path.resolve(__dirname, '..');
 const ROOT_CONFIG_PATH = path.resolve(REPO_ROOT, 'config/tooling-root.json');
 const TOOL_METADATA_FILENAME = 'tool.meta.json';
-const DEFAULT_FEATURED_IMAGE_PATH = 'images/featured.png';
+const DEFAULT_FEATURED_IMAGE_DIRECTORY = 'images';
+const DEFAULT_FEATURED_IMAGE_FILENAME = 'featured.png';
+const DEFAULT_FEATURED_IMAGE_EXTENSION = '.png';
+const DEFAULT_FEATURED_IMAGE_PATH = path.posix.join(DEFAULT_FEATURED_IMAGE_DIRECTORY, DEFAULT_FEATURED_IMAGE_FILENAME);
 
 /**
  * @typedef {'module' | 'classic'} ToolScriptType
@@ -267,6 +270,9 @@ function selectTools(requestedTools) {
 }
 
 module.exports = {
+    DEFAULT_FEATURED_IMAGE_DIRECTORY,
+    DEFAULT_FEATURED_IMAGE_EXTENSION,
+    DEFAULT_FEATURED_IMAGE_FILENAME,
     DEFAULT_FEATURED_IMAGE_PATH,
     ROOT_CONFIG_PATH,
     REPO_ROOT,

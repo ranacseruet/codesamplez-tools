@@ -24,7 +24,7 @@ describe('tool-manifest', () => {
   it('loads the shared root config', () => {
     expect(ROOT_CONFIG_PATH).toBe(path.resolve(__dirname, '../config/tooling-root.json'));
     expect(loadRootConfig()).toEqual({
-      siteBaseUrl: 'https://codesamplez.com',
+      siteBaseUrl: 'https://tools.codesamplez.com',
       rootShell: {
         id: 'root-shell',
         outputPath: 'build/root-shell'
@@ -49,7 +49,7 @@ describe('tool-manifest', () => {
         publicPath: '/jwt-decoder-tool/',
         scriptType: 'module',
         featuredImagePath: DEFAULT_FEATURED_IMAGE_PATH,
-        siteBaseUrl: 'https://codesamplez.com',
+        siteBaseUrl: 'https://tools.codesamplez.com',
         dependencyScopes: ['build-system', 'shared-ui', 'shared-runtime']
       })
     ]));
@@ -57,7 +57,7 @@ describe('tool-manifest', () => {
 
   it('builds a normalized manifest view', () => {
     expect(loadManifest()).toEqual({
-      siteBaseUrl: 'https://codesamplez.com',
+      siteBaseUrl: 'https://tools.codesamplez.com',
       tools: expect.arrayContaining([
         expect.objectContaining({ id: 'base64-converter-tool' }),
         expect.objectContaining({ id: 'jwt-decoder-tool' })
@@ -85,7 +85,7 @@ describe('tool-manifest', () => {
 
   it('exposes root assets and root shell helpers', () => {
     expect(getRootAssets()).toEqual(['index.html', 'styles.css', 'robots.txt']);
-    expect(getSiteBaseUrl()).toBe('https://codesamplez.com');
+    expect(getSiteBaseUrl()).toBe('https://tools.codesamplez.com');
     expect(getRootShellDefinition()).toEqual({
       id: 'root-shell',
       outputPath: 'build/root-shell'

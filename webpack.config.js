@@ -7,7 +7,15 @@ const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const { generateToolDocument } = require('./scripts/tool-document');
-const { getRootAssets, getToolIds, selectTools, splitCsv } = require('./scripts/tool-manifest');
+const {
+  DEFAULT_FEATURED_IMAGE_DIRECTORY,
+  DEFAULT_FEATURED_IMAGE_EXTENSION,
+  DEFAULT_FEATURED_IMAGE_FILENAME,
+  getRootAssets,
+  getToolIds,
+  selectTools,
+  splitCsv
+} = require('./scripts/tool-manifest');
 const tools = getToolIds();
 const rootShellEntryName = 'root-shell';
 const getRootShellEntry = () => ([
@@ -60,7 +68,7 @@ const getToolFeaturedImageSourceName = (toolName) => {
   }
 
   const pngFiles = fs.readdirSync(imagesDir, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.png'))
+    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(DEFAULT_FEATURED_IMAGE_EXTENSION))
     .map((entry) => entry.name)
     .sort();
 
@@ -68,7 +76,7 @@ const getToolFeaturedImageSourceName = (toolName) => {
     return null;
   }
 
-  const featuredPng = pngFiles.find((name) => name === 'featured.png');
+  const featuredPng = pngFiles.find((name) => name === DEFAULT_FEATURED_IMAGE_FILENAME);
   if (featuredPng) {
     return featuredPng;
   }
@@ -87,7 +95,7 @@ const createToolFeaturedImagePattern = (toolName) => {
 
   return {
     from: path.join(__dirname, toolName, 'images', sourceImageName),
-    to: path.join(__dirname, 'build', toolName, 'images', 'featured.png')
+    to: path.join(__dirname, 'build', toolName, DEFAULT_FEATURED_IMAGE_DIRECTORY, DEFAULT_FEATURED_IMAGE_FILENAME)
   };
 };
 
