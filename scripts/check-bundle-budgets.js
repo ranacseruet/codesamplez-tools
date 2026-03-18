@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { parseToolSelectionArgs } = require('./tool-manifest');
+const { getToolById, getToolByOutputDir, getToolDefinitions, parseToolSelectionArgs } = require('./tool-manifest');
 
 const DEFAULT_BUILD_DIR = path.resolve(__dirname, '../build');
 const DEFAULT_WARN_PERCENT = 5;
@@ -171,9 +171,12 @@ function parseWaivers(specs) {
  * @returns {string[]}
  */
 function listBundleToolDirs(buildDir) {
+    const validToolDirs = new Set(getToolDefinitions().map((tool) => tool.outputDir));
+
     return fs.readdirSync(buildDir, { withFileTypes: true })
         .filter((entry) => entry.isDirectory())
         .map((entry) => entry.name)
+        .filter((toolName) => validToolDirs.has(toolName))
         .filter((toolName) => fs.existsSync(path.join(buildDir, toolName, 'bundle.main.js')))
         .sort();
 }
@@ -224,7 +227,9 @@ function main() {
         ? args.selection.requestedTools
         : Object.keys(JS_RAW_BASELINES)
     ).sort();
-    const builtTools = listBundleToolDirs(args.buildDir);
+    const builtTools = listBundleToolDirs(args.buildDir).map((toolDir) => {
+        return getToolByOutputDir(toolDir)?.id || toolDir;
+    });
     const untrackedBuiltTools = builtTools.filter((tool) => !JS_RAW_BASELINES[tool]);
     /** @type {BudgetResult[]} */
     const results = [];
@@ -235,7 +240,8 @@ function main() {
         const baseline = JS_RAW_BASELINES[tool];
         const warnThreshold = createThreshold(baseline, args.warnPct);
         const failThreshold = createThreshold(baseline, args.failPct);
-        const bundlePath = path.join(args.buildDir, tool, 'bundle.main.js');
+        const buildDirName = getToolById(tool)?.outputDir || tool;
+        const bundlePath = path.join(args.buildDir, buildDirName, 'bundle.main.js');
 
         if (!fs.existsSync(bundlePath)) {
             errors.push(`[missing] ${tool}: ${bundlePath} not found`);

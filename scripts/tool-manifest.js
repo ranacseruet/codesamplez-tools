@@ -21,6 +21,7 @@ const DEFAULT_FEATURED_IMAGE_PATH = path.posix.join(DEFAULT_FEATURED_IMAGE_DIREC
  *   id: string,
  *   version: string,
  *   sourceRoot: string,
+ *   outputDir: string,
  *   outputPath: string,
  *   title: string,
  *   description: string,
@@ -77,6 +78,31 @@ function readToolMetadata(metadataPath) {
 }
 
 /**
+ * @param {string} publicPath
+ * @returns {string}
+ */
+function normalizePublicPath(publicPath) {
+    if (typeof publicPath !== 'string') {
+        throw new Error('Tool publicPath must be a string');
+    }
+
+    const trimmedPath = publicPath.trim().replace(/^\/+|\/+$/g, '');
+    if (!trimmedPath) {
+        throw new Error('Tool publicPath must contain a non-root path segment');
+    }
+
+    return `/${trimmedPath}/`;
+}
+
+/**
+ * @param {string} publicPath
+ * @returns {string}
+ */
+function getOutputDirFromPublicPath(publicPath) {
+    return normalizePublicPath(publicPath).slice(1, -1);
+}
+
+/**
  * @param {string} metadataPath
  * @returns {ToolDefinition}
  */
@@ -84,17 +110,20 @@ function createToolDefinition(metadataPath) {
     const sourceRoot = path.basename(path.dirname(metadataPath));
     const metadata = readToolMetadata(metadataPath);
     const rootConfig = loadRootConfig();
+    const publicPath = normalizePublicPath(metadata.publicPath);
+    const outputDir = getOutputDirFromPublicPath(publicPath);
 
     return {
         siteBaseUrl: rootConfig.siteBaseUrl,
         id: metadata.id,
         version: metadata.version,
         sourceRoot,
-        outputPath: path.join('build', metadata.id),
+        outputDir,
+        outputPath: path.join('build', outputDir),
         title: metadata.title,
         description: metadata.description,
         appRootId: metadata.appRootId,
-        publicPath: metadata.publicPath,
+        publicPath,
         scriptType: metadata.scriptType,
         featuredImagePath: DEFAULT_FEATURED_IMAGE_PATH,
         dependencyScopes: metadata.dependencyScopes.slice(),
@@ -108,8 +137,21 @@ function createToolDefinition(metadataPath) {
  */
 function validateToolDefinitions(toolDefinitions) {
     const knownToolIds = new Set(toolDefinitions.map((tool) => tool.id));
+    const knownPublicPaths = new Map();
+    const knownOutputDirs = new Map();
 
     toolDefinitions.forEach((tool) => {
+        if (knownPublicPaths.has(tool.publicPath)) {
+            throw new Error(`Duplicate tool publicPath detected for ${tool.id}: ${tool.publicPath}`);
+        }
+
+        if (knownOutputDirs.has(tool.outputDir)) {
+            throw new Error(`Duplicate tool outputDir detected for ${tool.id}: ${tool.outputDir}`);
+        }
+
+        knownPublicPaths.set(tool.publicPath, tool.id);
+        knownOutputDirs.set(tool.outputDir, tool.id);
+
         if (!Array.isArray(tool.relatedToolIds)) {
             throw new Error(`Tool ${tool.id} must define relatedToolIds as an array`);
         }
@@ -172,6 +214,14 @@ function getToolIds() {
  */
 function getToolById(toolId) {
     return getToolDefinitions().find((tool) => tool.id === toolId);
+}
+
+/**
+ * @param {string} outputDir
+ * @returns {ToolDefinition | undefined}
+ */
+function getToolByOutputDir(outputDir) {
+    return getToolDefinitions().find((tool) => tool.outputDir === outputDir);
 }
 
 /**
@@ -346,12 +396,15 @@ module.exports = {
     getRootShellDefinition,
     getSiteBaseUrl,
     getToolById,
+    getToolByOutputDir,
     getToolDefinitions,
     getToolIds,
     getToolMetadataPath,
+    getOutputDirFromPublicPath,
     loadManifest,
     loadRootConfig,
     normalizeSelection,
+    normalizePublicPath,
     parseToolSelectionArgs,
     selectTools,
     splitCsv,

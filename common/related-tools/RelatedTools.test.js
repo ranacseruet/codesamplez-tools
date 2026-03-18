@@ -17,13 +17,13 @@ describe('RelatedToolsSection', () => {
                         id: 'jwt-builder-tool',
                         title: 'JWT Builder',
                         description: 'Create and sign JWT tokens locally with standard and custom claims.',
-                        publicPath: '/jwt-builder-tool/'
+                        publicPath: '/jwt-builder/'
                     },
                     {
                         id: 'base64-converter-tool',
                         title: 'Base64 Converter',
                         description: 'Convert text and files to and from Base64 with multiple encoding options.',
-                        publicPath: '/base64-converter-tool/'
+                        publicPath: '/base64-converter/'
                     }
                 ]}
             />,
@@ -36,8 +36,8 @@ describe('RelatedToolsSection', () => {
 
         const links = Array.from(root.querySelectorAll('a.c-related-tools__cta'));
         expect(links.map((link) => link.getAttribute('href'))).toEqual([
-            '/jwt-builder-tool/',
-            '/base64-converter-tool/'
+            '/jwt-builder/',
+            '/base64-converter/'
         ]);
         expect(links.every((link) => link.textContent === 'Open tool')).toBe(true);
     });

@@ -10,12 +10,15 @@ const {
   getRootShellDefinition,
   getSiteBaseUrl,
   getToolById,
+  getToolByOutputDir,
   getToolDefinitions,
   getToolIds,
   getToolMetadataPath,
+  getOutputDirFromPublicPath,
   loadManifest,
   loadRootConfig,
   normalizeSelection,
+  normalizePublicPath,
   parseToolSelectionArgs,
   selectTools,
   splitCsv,
@@ -42,13 +45,14 @@ describe('tool-manifest', () => {
     expect(toolDefinitions).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: 'jwt-decoder-tool',
-        sourceRoot: 'jwt-decoder-tool',
-        outputPath: 'build/jwt-decoder-tool',
+        sourceRoot: 'jwt-decoder',
+        outputDir: 'jwt-decoder',
+        outputPath: 'build/jwt-decoder',
         version: '1.0.0',
         title: 'JWT Decoder & Validator',
         description: 'Decode and validate JWT tokens locally in your browser.',
         appRootId: 'jwt-decoder-app',
-        publicPath: '/jwt-decoder-tool/',
+        publicPath: '/jwt-decoder/',
         scriptType: 'module',
         featuredImagePath: DEFAULT_FEATURED_IMAGE_PATH,
         siteBaseUrl: 'https://tools.codesamplez.com',
@@ -77,20 +81,51 @@ describe('tool-manifest', () => {
     expect(getToolIds()).toContain('jwt-decoder-tool');
     expect(getToolById('jwt-decoder-tool')).toEqual(expect.objectContaining({
       id: 'jwt-decoder-tool',
-      sourceRoot: 'jwt-decoder-tool',
-      publicPath: '/jwt-decoder-tool/'
+      sourceRoot: 'jwt-decoder',
+      outputDir: 'jwt-decoder',
+      publicPath: '/jwt-decoder/'
     }));
     expect(getToolMetadataPath('jwt-decoder-tool')).toBe(
-      path.resolve(__dirname, '../jwt-decoder-tool', TOOL_METADATA_FILENAME)
+      path.resolve(__dirname, '../jwt-decoder', TOOL_METADATA_FILENAME)
+    );
+    expect(getToolById('data-format-converter')).toEqual(expect.objectContaining({
+      id: 'data-format-converter',
+      sourceRoot: 'data-format-converter',
+      outputDir: 'data-format-converter',
+      publicPath: '/data-format-converter/'
+    }));
+    expect(getToolById('qr-code-generator')).toEqual(expect.objectContaining({
+      id: 'qr-code-generator',
+      sourceRoot: 'qr-code-generator',
+      outputDir: 'qr-code-generator',
+      publicPath: '/qr-code-generator/'
+    }));
+    expect(getToolMetadataPath('data-format-converter')).toBe(
+      path.resolve(__dirname, '../data-format-converter', TOOL_METADATA_FILENAME)
+    );
+    expect(getToolMetadataPath('qr-code-generator')).toBe(
+      path.resolve(__dirname, '../qr-code-generator', TOOL_METADATA_FILENAME)
     );
     expect(() => getToolMetadataPath('not-a-real-tool')).toThrow('Unknown tool id');
   });
 
+  it('normalizes public paths and output-dir lookups', () => {
+    expect(normalizePublicPath(' jwt-decoder ')).toBe('/jwt-decoder/');
+    expect(getOutputDirFromPublicPath('/jwt-decoder/')).toBe('jwt-decoder');
+    expect(getToolByOutputDir('jwt-decoder')).toEqual(expect.objectContaining({
+      id: 'jwt-decoder-tool',
+      publicPath: '/jwt-decoder/'
+    }));
+    expect(getToolByOutputDir('not-a-real-output-dir')).toBeUndefined();
+    expect(() => normalizePublicPath(42)).toThrow('Tool publicPath must be a string');
+    expect(() => normalizePublicPath(' / ')).toThrow('Tool publicPath must contain a non-root path segment');
+  });
+
   it('resolves related tool definitions for document rendering', () => {
     expect(getRelatedTools('jwt-decoder-tool')).toEqual([
-      expect.objectContaining({ id: 'jwt-builder-tool', publicPath: '/jwt-builder-tool/' }),
-      expect.objectContaining({ id: 'base64-converter-tool', publicPath: '/base64-converter-tool/' }),
-      expect.objectContaining({ id: 'json-formatter-tool', publicPath: '/json-formatter-tool/' })
+      expect.objectContaining({ id: 'jwt-builder-tool', publicPath: '/jwt-builder/' }),
+      expect.objectContaining({ id: 'base64-converter-tool', publicPath: '/base64-converter/' }),
+      expect.objectContaining({ id: 'json-formatter-tool', publicPath: '/json-formatter/' })
     ]);
   });
 
@@ -202,13 +237,14 @@ describe('tool-manifest', () => {
   it('rejects invalid related tool references', () => {
     const baseTool = {
       siteBaseUrl: 'https://tools.codesamplez.com',
-      sourceRoot: 'jwt-decoder-tool',
-      outputPath: 'build/jwt-decoder-tool',
+      sourceRoot: 'jwt-decoder',
+      outputDir: 'jwt-decoder',
+      outputPath: 'build/jwt-decoder',
       version: '1.0.0',
       title: 'JWT Decoder & Validator',
       description: 'Decode and validate JWT tokens locally in your browser.',
       appRootId: 'jwt-decoder-app',
-      publicPath: '/jwt-decoder-tool/',
+      publicPath: '/jwt-decoder/',
       scriptType: 'module',
       featuredImagePath: DEFAULT_FEATURED_IMAGE_PATH,
       dependencyScopes: ['build-system', 'shared-ui', 'shared-runtime']
@@ -222,10 +258,11 @@ describe('tool-manifest', () => {
       {
         ...baseTool,
         id: 'jwt-builder-tool',
-        sourceRoot: 'jwt-builder-tool',
-        outputPath: 'build/jwt-builder-tool',
+        sourceRoot: 'jwt-builder',
+        outputDir: 'jwt-builder',
+        outputPath: 'build/jwt-builder',
         appRootId: 'jwt-builder-app',
-        publicPath: '/jwt-builder-tool/',
+        publicPath: '/jwt-builder/',
         title: 'JWT Builder',
         description: 'Create and sign JWT tokens locally with standard and custom claims.',
         relatedToolIds: ['jwt-decoder-tool']
@@ -241,10 +278,11 @@ describe('tool-manifest', () => {
       {
         ...baseTool,
         id: 'jwt-builder-tool',
-        sourceRoot: 'jwt-builder-tool',
-        outputPath: 'build/jwt-builder-tool',
+        sourceRoot: 'jwt-builder',
+        outputDir: 'jwt-builder',
+        outputPath: 'build/jwt-builder',
         appRootId: 'jwt-builder-app',
-        publicPath: '/jwt-builder-tool/',
+        publicPath: '/jwt-builder/',
         title: 'JWT Builder',
         description: 'Create and sign JWT tokens locally with standard and custom claims.',
         relatedToolIds: ['jwt-decoder-tool']
@@ -260,10 +298,11 @@ describe('tool-manifest', () => {
       {
         ...baseTool,
         id: 'jwt-builder-tool',
-        sourceRoot: 'jwt-builder-tool',
-        outputPath: 'build/jwt-builder-tool',
+        sourceRoot: 'jwt-builder',
+        outputDir: 'jwt-builder',
+        outputPath: 'build/jwt-builder',
         appRootId: 'jwt-builder-app',
-        publicPath: '/jwt-builder-tool/',
+        publicPath: '/jwt-builder/',
         title: 'JWT Builder',
         description: 'Create and sign JWT tokens locally with standard and custom claims.',
         relatedToolIds: ['jwt-decoder-tool']
@@ -279,10 +318,11 @@ describe('tool-manifest', () => {
       {
         ...baseTool,
         id: 'jwt-builder-tool',
-        sourceRoot: 'jwt-builder-tool',
-        outputPath: 'build/jwt-builder-tool',
+        sourceRoot: 'jwt-builder',
+        outputDir: 'jwt-builder',
+        outputPath: 'build/jwt-builder',
         appRootId: 'jwt-builder-app',
-        publicPath: '/jwt-builder-tool/',
+        publicPath: '/jwt-builder/',
         title: 'JWT Builder',
         description: 'Create and sign JWT tokens locally with standard and custom claims.',
         relatedToolIds: ['jwt-decoder-tool']
@@ -298,14 +338,63 @@ describe('tool-manifest', () => {
       {
         ...baseTool,
         id: 'jwt-builder-tool',
-        sourceRoot: 'jwt-builder-tool',
-        outputPath: 'build/jwt-builder-tool',
+        sourceRoot: 'jwt-builder',
+        outputDir: 'jwt-builder',
+        outputPath: 'build/jwt-builder',
         appRootId: 'jwt-builder-app',
-        publicPath: '/jwt-builder-tool/',
+        publicPath: '/jwt-builder/',
         title: 'JWT Builder',
         description: 'Create and sign JWT tokens locally with standard and custom claims.',
         relatedToolIds: ['jwt-decoder-tool']
       }
     ])).toThrow('unknown related tool id');
+  });
+
+  it('rejects duplicate public paths and output dirs', () => {
+    const decoderTool = {
+      siteBaseUrl: 'https://tools.codesamplez.com',
+      id: 'jwt-decoder-tool',
+      sourceRoot: 'jwt-decoder',
+      outputDir: 'jwt-decoder',
+      outputPath: 'build/jwt-decoder',
+      version: '1.0.0',
+      title: 'JWT Decoder & Validator',
+      description: 'Decode and validate JWT tokens locally in your browser.',
+      appRootId: 'jwt-decoder-app',
+      publicPath: '/jwt-decoder/',
+      scriptType: 'module',
+      featuredImagePath: DEFAULT_FEATURED_IMAGE_PATH,
+      dependencyScopes: ['build-system', 'shared-ui', 'shared-runtime'],
+      relatedToolIds: ['jwt-builder-tool']
+    };
+    const builderTool = {
+      ...decoderTool,
+      id: 'jwt-builder-tool',
+      sourceRoot: 'jwt-builder',
+      outputDir: 'jwt-builder',
+      outputPath: 'build/jwt-builder',
+      title: 'JWT Builder',
+      description: 'Create and sign JWT tokens locally with standard and custom claims.',
+      appRootId: 'jwt-builder-app',
+      publicPath: '/jwt-builder/',
+      relatedToolIds: ['jwt-decoder-tool']
+    };
+
+    expect(() => validateToolDefinitions([
+      decoderTool,
+      {
+        ...builderTool,
+        publicPath: '/jwt-decoder/'
+      }
+    ])).toThrow('Duplicate tool publicPath detected for jwt-builder-tool: /jwt-decoder/');
+
+    expect(() => validateToolDefinitions([
+      decoderTool,
+      {
+        ...builderTool,
+        outputDir: 'jwt-decoder',
+        outputPath: 'build/jwt-decoder'
+      }
+    ])).toThrow('Duplicate tool outputDir detected for jwt-builder-tool: jwt-decoder');
   });
 });

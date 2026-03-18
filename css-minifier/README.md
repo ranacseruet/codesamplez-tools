@@ -30,7 +30,7 @@ A powerful web-based tool for optimizing CSS code by intelligently removing redu
 
 ### Web Interface
 1. Run `npm run build`
-2. Open `build/css-minifier-tool/index.html` in any modern browser
+2. Open `build/css-minifier/index.html` in any modern browser
 3. Paste your CSS code into the input field
 4. Click "Minify" to process the code
 5. Copy the optimized output from the result section

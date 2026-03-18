@@ -4,7 +4,7 @@
   "title": "Text Analyzer",
   "description": "Analyze your text to get word count, character statistics, and more.",
   "appRootId": "text-analyzer-app",
-  "publicPath": "/text-analyzer-tool/",
+  "publicPath": "/text-analyzer/",
   "scriptType": "module",
   "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
   "relatedToolIds": ["diff-checker-tool", "qr-code-generator", "json-formatter-tool"]

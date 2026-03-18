@@ -1,5 +1,5 @@
 ignore:
-  - "base64-converter-tool/test-utils.js"
+  - "base64-converter/test-utils.js"
 coverage:
   status:
     project:

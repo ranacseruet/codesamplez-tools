@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
-const { getRootAssets, getRootShellDefinition, parseToolSelectionArgs } = require('./tool-manifest');
+const { getRootAssets, getRootShellDefinition, getToolById, parseToolSelectionArgs } = require('./tool-manifest');
 
 /**
  * @typedef {{
@@ -173,10 +173,15 @@ function main() {
     const invalidationPaths = [];
 
     args.selection.requestedTools.forEach((toolId) => {
-        const sourceDir = path.join(args.buildDir, toolId);
+        const tool = getToolById(toolId);
+        if (!tool) {
+            throw new Error(`Unknown tool id: ${toolId}`);
+        }
+
+        const sourceDir = path.join(args.buildDir, tool.outputDir);
         assertExists(sourceDir);
-        syncDirectoryExcludingHtml(args.bucket, sourceDir, toolId, args.dryRun);
-        invalidationPaths.push(`/${toolId}/*`);
+        syncDirectoryExcludingHtml(args.bucket, sourceDir, tool.outputDir, args.dryRun);
+        invalidationPaths.push(`${tool.publicPath}*`);
     });
 
     if (args.selection.includeRootShell) {

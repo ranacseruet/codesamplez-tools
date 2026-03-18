@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { JSDOM, VirtualConsole } = require('jsdom');
 const { TextEncoder, TextDecoder } = require('util');
-const { getRootShellDefinition, parseToolSelectionArgs } = require('./tool-manifest');
+const { getRootShellDefinition, getToolById, getToolDefinitions, parseToolSelectionArgs } = require('./tool-manifest');
 
 const BUILD_DIR = path.resolve(__dirname, '../build');
 const IGNORE_DIRS = ['assets', 'common'];
@@ -26,8 +26,15 @@ const colors = {
  * @returns {string[]}
  */
 function getBuildTools(buildDir) {
+    const validBuildDirs = new Set([
+        ...getToolDefinitions().map((tool) => tool.outputDir),
+        getRootShellDefinition().id
+    ]);
+
     return fs.readdirSync(buildDir).filter((file) => {
-        return fs.statSync(path.join(buildDir, file)).isDirectory() && !IGNORE_DIRS.includes(file);
+        return fs.statSync(path.join(buildDir, file)).isDirectory()
+            && !IGNORE_DIRS.includes(file)
+            && validBuildDirs.has(file);
     });
 }
 
@@ -185,7 +192,10 @@ function main() {
 
     let tools = getBuildTools(args.buildDir);
     if (args.selection.requestedTools.length > 0) {
-        const allowedTools = new Set(args.selection.requestedTools);
+        const allowedTools = new Set(args.selection.requestedTools.map((toolId) => {
+            const tool = getToolById(toolId);
+            return tool ? tool.outputDir : toolId;
+        }));
         if (args.selection.includeRootShell) {
             allowedTools.add(getRootShellDefinition().id);
         }

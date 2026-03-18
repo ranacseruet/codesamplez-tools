@@ -4,7 +4,7 @@
   "title": "JSON Formatter",
   "description": "Format, validate, and beautify JSON with tree and plain views.",
   "appRootId": "json-formatter-app",
-  "publicPath": "/json-formatter-tool/",
+  "publicPath": "/json-formatter/",
   "scriptType": "module",
   "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
   "relatedToolIds": ["data-format-converter", "jwt-decoder-tool", "js-minifier-tool"]

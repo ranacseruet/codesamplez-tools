@@ -4,7 +4,7 @@
   "title": "Diff Checker",
   "description": "Compare two texts or code snippets and highlight the differences between them.",
   "appRootId": "diff-checker-app",
-  "publicPath": "/diff-checker-tool/",
+  "publicPath": "/diff-checker/",
   "scriptType": "module",
   "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
   "relatedToolIds": ["text-analyzer-tool", "json-formatter-tool", "js-minifier-tool"]

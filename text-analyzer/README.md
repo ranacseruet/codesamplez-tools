@@ -71,7 +71,7 @@ The tool uses vanilla JavaScript with event listeners to provide real-time text 
 The application follows a modular architecture:
 
 - **HTML5**: Semantic markup for accessibility and SEO, using shared classes where applicable.
-- **CSS**: Leverages shared styles from `common/shared-styles.css` for base elements, layout, and common components (buttons, notifications). Tool-specific styles or overrides are located in `text-analyzer-tool/styles.css`. Follows BEM methodology.
+- **CSS**: Leverages shared styles from `common/shared-styles.css` for base elements, layout, and common components (buttons, notifications). Tool-specific styles or overrides are located in `text-analyzer/styles.css`. Follows BEM methodology.
 - **JavaScript**: Vanilla JS with modular class-based design.
 
 ### Key Components

@@ -40,12 +40,12 @@ const scenarios = [
   },
   {
     name: 'js-minifier-tool',
-    url: '/js-minifier-tool/',
+    url: '/js-minifier/',
     waits: ['#app-shell-header .cst-shell__header', '#js-minifier-minify-btn', '#js-minifier-input', '#js-minifier-output']
   },
   {
     name: 'diff-checker-tool',
-    url: '/diff-checker-tool/',
+    url: '/diff-checker/',
     waits: ['#app-shell-header .cst-shell__header', '#text1', '#text2', '#compare-button', '#diff-result']
   }
 ];

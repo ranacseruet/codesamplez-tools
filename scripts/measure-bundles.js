@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
-const { getRootShellDefinition, parseToolSelectionArgs } = require('./tool-manifest');
+const { getRootShellDefinition, getToolById, getToolByOutputDir, getToolDefinitions, parseToolSelectionArgs } = require('./tool-manifest');
 
 const BUILD_DIR = path.resolve(__dirname, '../build');
 const DEFAULT_JSON_OUT = path.resolve(__dirname, '../reports/bundle-metrics/latest.json');
@@ -185,10 +185,15 @@ function formatRaw(metric) {
  */
 function listToolDirectories(buildDir) {
     const entries = fs.readdirSync(buildDir, { withFileTypes: true });
+    const validToolDirs = new Set([
+        ...getToolDefinitions().map((tool) => tool.outputDir),
+        getRootShellDefinition().id
+    ]);
 
     return entries
         .filter((entry) => entry.isDirectory())
         .map((entry) => entry.name)
+        .filter((toolName) => validToolDirs.has(toolName))
         .filter((toolName) => {
             const toolDir = path.join(buildDir, toolName);
 
@@ -211,9 +216,10 @@ function collectToolMetrics(buildDir, toolName) {
     const jsMetric = getMetric(readFileBufferIfExists(path.join(toolDir, 'bundle.main.js')));
     const cssMetric = getMetric(readFileBufferIfExists(path.join(toolDir, 'styles.main.css')));
     const htmlBuffer = readFileBufferIfExists(path.join(toolDir, 'index.html'));
+    const tool = getToolByOutputDir(toolName);
 
     return {
-        tool: toolName,
+        tool: tool ? tool.id : toolName,
         files: {
             js: jsMetric,
             css: cssMetric,
@@ -284,7 +290,9 @@ function main() {
     const toolNames = listToolDirectories(args.buildDir);
     const filteredToolNames = args.selection.requestedTools.length > 0
         ? toolNames.filter((toolName) => {
-            return args.selection.requestedTools.includes(toolName)
+            return args.selection.requestedTools.some((toolId) => {
+                return getToolById(toolId)?.outputDir === toolName;
+            })
                 || (args.selection.includeRootShell && toolName === getRootShellDefinition().id);
         })
         : toolNames;

@@ -1,8 +1,9 @@
 // @ts-check
 
+const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
-const { parseToolSelectionArgs } = require('./tool-manifest');
+const { normalizeSelection, parseToolSelectionArgs, selectTools } = require('./tool-manifest');
 
 function printHelp() {
     console.log('Usage: node scripts/build-tools.js [options] [-- <webpack args>]');
@@ -62,10 +63,31 @@ function parseArgs(argv) {
     };
 }
 
+/**
+ * @param {ReturnType<typeof parseToolSelectionArgs>} selection
+ * @returns {void}
+ */
+function removeLegacyToolBuildDirs(selection) {
+    const normalizedSelection = normalizeSelection(selection);
+    const buildDir = path.resolve(process.cwd(), 'build');
+
+    selectTools(normalizedSelection.requestedTools).forEach((tool) => {
+        if (tool.outputDir === tool.id) {
+            return;
+        }
+
+        fs.rmSync(path.join(buildDir, tool.id), {
+            force: true,
+            recursive: true
+        });
+    });
+}
+
 function main() {
     const args = parseArgs(process.argv.slice(2));
     const selection = parseToolSelectionArgs(args.selectionArgv);
     const hasExplicitSelection = args.selectionArgv.length > 0;
+    removeLegacyToolBuildDirs(selection);
     /** @type {string[]} */
     const cliArgs = [
         require.resolve('webpack-cli/bin/cli.js'),

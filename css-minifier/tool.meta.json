@@ -4,7 +4,7 @@
   "title": "CSS Minifier",
   "description": "Optimize CSS by removing unnecessary characters without changing behavior.",
   "appRootId": "css-minifier-app",
-  "publicPath": "/css-minifier-tool/",
+  "publicPath": "/css-minifier/",
   "scriptType": "module",
   "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
   "relatedToolIds": ["js-minifier-tool", "json-formatter-tool", "diff-checker-tool"]

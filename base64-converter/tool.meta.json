@@ -4,7 +4,7 @@
   "title": "Base64 Converter",
   "description": "Convert text and files to and from Base64 with multiple encoding options.",
   "appRootId": "base64converter-app",
-  "publicPath": "/base64-converter-tool/",
+  "publicPath": "/base64-converter/",
   "scriptType": "module",
   "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
   "relatedToolIds": ["jwt-decoder-tool", "jwt-builder-tool", "data-format-converter"]

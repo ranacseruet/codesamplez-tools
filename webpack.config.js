@@ -12,29 +12,29 @@ const {
   DEFAULT_FEATURED_IMAGE_EXTENSION,
   DEFAULT_FEATURED_IMAGE_FILENAME,
   getRootAssets,
-  getToolIds,
+  getToolDefinitions,
   selectTools,
   splitCsv
 } = require('./scripts/tool-manifest');
-const tools = getToolIds();
+const tools = getToolDefinitions();
 const rootShellEntryName = 'root-shell';
 const getRootShellEntry = () => ([
   './common/material-theme.css',
   './common/app-shell/app-shell.css',
   './root-shell'
 ]);
-const getToolEntry = (toolName) => ([
+const getToolEntry = (tool) => ([
   './common/material-theme.css',
   './common/app-shell/app-shell.css',
   './common/shared-styles.css',
-  ...(toolName === 'diff-checker-tool' ? ['prismjs/themes/prism.css'] : []),
-  `./${toolName}/script`,
-  `./${toolName}/styles.css`
+  ...(tool.id === 'diff-checker-tool' ? ['prismjs/themes/prism.css'] : []),
+  `./${tool.sourceRoot}/script`,
+  `./${tool.sourceRoot}/styles.css`
 ]);
 
 const getWebpackMode = (argv = {}) => argv.mode || process.env.NODE_ENV || 'development';
-const createTerserMinimizer = (toolName) => {
-  if (toolName !== 'js-minifier-tool') {
+const createTerserMinimizer = (toolId) => {
+  if (toolId !== 'js-minifier-tool') {
     return new TerserPlugin();
   }
 
@@ -54,15 +54,15 @@ const createTerserMinimizer = (toolName) => {
     }
   });
 };
-const createToolDocumentPattern = (toolName) => ({
-  from: path.join(__dirname, toolName, 'tool.meta.json'),
-  to: path.join(__dirname, 'build', toolName, 'index.html'),
+const createToolDocumentPattern = (tool) => ({
+  from: path.join(__dirname, tool.sourceRoot, 'tool.meta.json'),
+  to: path.join(__dirname, tool.outputPath, 'index.html'),
   transform() {
-    return generateToolDocument(toolName);
+    return generateToolDocument(tool.id);
   }
 });
-const getToolFeaturedImageSourceName = (toolName) => {
-  const imagesDir = path.join(__dirname, toolName, 'images');
+const getToolFeaturedImageSourceName = (tool) => {
+  const imagesDir = path.join(__dirname, tool.sourceRoot, 'images');
   if (!fs.existsSync(imagesDir)) {
     return null;
   }
@@ -85,17 +85,17 @@ const getToolFeaturedImageSourceName = (toolName) => {
     return pngFiles[0];
   }
 
-  throw new Error(`Expected exactly one PNG image asset for ${toolName}, found: ${pngFiles.join(', ')}`);
+  throw new Error(`Expected exactly one PNG image asset for ${tool.id}, found: ${pngFiles.join(', ')}`);
 };
-const createToolFeaturedImagePattern = (toolName) => {
-  const sourceImageName = getToolFeaturedImageSourceName(toolName);
+const createToolFeaturedImagePattern = (tool) => {
+  const sourceImageName = getToolFeaturedImageSourceName(tool);
   if (!sourceImageName) {
     return null;
   }
 
   return {
-    from: path.join(__dirname, toolName, 'images', sourceImageName),
-    to: path.join(__dirname, 'build', toolName, DEFAULT_FEATURED_IMAGE_DIRECTORY, DEFAULT_FEATURED_IMAGE_FILENAME)
+    from: path.join(__dirname, tool.sourceRoot, 'images', sourceImageName),
+    to: path.join(__dirname, tool.outputPath, DEFAULT_FEATURED_IMAGE_DIRECTORY, DEFAULT_FEATURED_IMAGE_FILENAME)
   };
 };
 
@@ -110,18 +110,18 @@ const readSelectedToolsFromEnv = (env = {}) => {
     : splitCsv(typeof env.tools === 'string' ? env.tools : undefined);
 
   if (requestedTools.length > 0) {
-    return selectTools(requestedTools).map((tool) => tool.id);
+    return selectTools(requestedTools);
   }
 
   return env.toolSelection === 'explicit' ? [] : tools;
 };
 
-const shouldIncludeRootShell = (env = {}, selectedToolIds) => {
-  return env.includeRootShell === true || env.includeRootShell === 'true' || selectedToolIds.length === tools.length;
+const shouldIncludeRootShell = (env = {}, selectedTools) => {
+  return env.includeRootShell === true || env.includeRootShell === 'true' || selectedTools.length === tools.length;
 };
 
-const shouldIncludeRootAssets = (env = {}, selectedToolIds) => {
-  return env.includeRootAssets === true || env.includeRootAssets === 'true' || selectedToolIds.length === tools.length;
+const shouldIncludeRootAssets = (env = {}, selectedTools) => {
+  return env.includeRootAssets === true || env.includeRootAssets === 'true' || selectedTools.length === tools.length;
 };
 
 const baseConfig = {
@@ -161,13 +161,13 @@ const baseConfig = {
   }
 };
 
-const getToolConfig = (toolName) => ({
+const getToolConfig = (tool) => ({
   ...baseConfig,
-  name: toolName,
+  name: tool.id,
   optimization: {
     ...baseConfig.optimization,
     minimizer: [
-      createTerserMinimizer(toolName),
+      createTerserMinimizer(tool.id),
       new CssMinimizerPlugin()
     ]
   },
@@ -175,7 +175,7 @@ const getToolConfig = (toolName) => ({
     ...baseConfig.resolve,
     alias: {
       ...(baseConfig.resolve.alias || {}),
-      ...(toolName === 'js-minifier-tool'
+      ...(tool.id === 'js-minifier-tool'
         ? {
             debug: path.resolve(__dirname, 'common/shims/debug-noop.js'),
             '@babel/code-frame': path.resolve(__dirname, 'common/shims/babel-code-frame-noop.js'),
@@ -187,12 +187,12 @@ const getToolConfig = (toolName) => ({
     }
   },
   entry: {
-    main: getToolEntry(toolName)
+    main: getToolEntry(tool)
   },
   output: {
-    path: path.resolve(__dirname, 'build', toolName),
+    path: path.resolve(__dirname, tool.outputPath),
     filename: 'bundle.main.js',
-    publicPath: `/${toolName}/`
+    publicPath: tool.publicPath
   },
   plugins: [
     new CleanWebpackPlugin({
@@ -205,7 +205,7 @@ const getToolConfig = (toolName) => ({
     new MiniCssExtractPlugin({
       filename: 'styles.main.css'
     }),
-    ...(toolName === 'data-format-converter'
+    ...(tool.id === 'data-format-converter'
       ? [
           // `fast-xml-parser`'s validator is sizable. The tool only needs a
           // boolean/error-shape validity check, so replace it with a smaller
@@ -229,10 +229,10 @@ const getToolConfig = (toolName) => ({
     new CopyPlugin({
       patterns: [
         {
-          ...createToolDocumentPattern(toolName)
+          ...createToolDocumentPattern(tool)
         },
         ...(() => {
-          const imagePattern = createToolFeaturedImagePattern(toolName);
+          const imagePattern = createToolFeaturedImagePattern(tool);
           return imagePattern ? [imagePattern] : [];
         })()
       ]
@@ -276,8 +276,7 @@ const developmentConfig = {
   ...baseConfig,
   name: 'development',
   entry: tools.reduce((entries, tool) => {
-    const toolName = tool.name || tool;
-    entries[toolName] = getToolEntry(toolName);
+    entries[tool.outputDir] = getToolEntry(tool);
     return entries;
   }, {
     [rootShellEntryName]: getRootShellEntry()
@@ -309,13 +308,12 @@ const developmentConfig = {
           to: 'styles.css'
         },
         ...tools.reduce((patterns, tool) => {
-          const toolName = tool.name || tool;
           return patterns.concat([
             {
-              ...createToolDocumentPattern(toolName)
+              ...createToolDocumentPattern(tool)
             },
             ...(() => {
-              const imagePattern = createToolFeaturedImagePattern(toolName);
+              const imagePattern = createToolFeaturedImagePattern(tool);
               return imagePattern ? [imagePattern] : [];
             })()
           ]);
@@ -339,9 +337,9 @@ const developmentConfig = {
 module.exports = (env = {}, argv = {}) => {
   const mode = getWebpackMode(argv);
   baseConfig.mode = mode;
-  const selectedToolIds = readSelectedToolsFromEnv(env);
-  const includeRootShell = shouldIncludeRootShell(env, selectedToolIds);
-  const includeRootAssets = shouldIncludeRootAssets(env, selectedToolIds);
+  const selectedTools = readSelectedToolsFromEnv(env);
+  const includeRootShell = shouldIncludeRootShell(env, selectedTools);
+  const includeRootAssets = shouldIncludeRootAssets(env, selectedTools);
 
   const applyMode = (config) => ({
     ...config,
@@ -359,12 +357,12 @@ module.exports = (env = {}, argv = {}) => {
     })
   });
 
-  const productionConfigs = selectedToolIds.map((tool) => applyMode(getToolConfig(tool)));
+  const productionConfigs = selectedTools.map((tool) => applyMode(getToolConfig(tool)));
   const rootShellConfig = includeRootShell ? applyMode(getRootShellConfig(includeRootAssets)) : null;
   const devConfig = applyMode({
     ...developmentConfig,
-    entry: selectedToolIds.reduce((entries, toolName) => {
-      entries[toolName] = getToolEntry(toolName);
+    entry: selectedTools.reduce((entries, tool) => {
+      entries[tool.outputDir] = getToolEntry(tool);
       return entries;
     }, includeRootShell ? { [rootShellEntryName]: getRootShellEntry() } : {}),
     plugins: developmentConfig.plugins.map((plugin) => {
@@ -375,13 +373,13 @@ module.exports = (env = {}, argv = {}) => {
       return new CopyPlugin({
         patterns: [
           ...(includeRootAssets ? createRootAssetPatterns() : []),
-          ...selectedToolIds.reduce((patterns, toolName) => {
+          ...selectedTools.reduce((patterns, tool) => {
             return patterns.concat([
               {
-                ...createToolDocumentPattern(toolName)
+                ...createToolDocumentPattern(tool)
               },
               ...(() => {
-                const imagePattern = createToolFeaturedImagePattern(toolName);
+                const imagePattern = createToolFeaturedImagePattern(tool);
                 return imagePattern ? [imagePattern] : [];
               })()
             ]);

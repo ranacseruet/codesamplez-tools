@@ -25,8 +25,9 @@ describe('tool metadata discovery', () => {
     expect(getToolDefinitions()).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: 'jwt-decoder-tool',
-        sourceRoot: 'jwt-decoder-tool',
-        outputPath: 'build/jwt-decoder-tool',
+        sourceRoot: 'jwt-decoder',
+        outputDir: 'jwt-decoder',
+        outputPath: 'build/jwt-decoder',
         version: '1.0.0'
       })
     ]));
@@ -35,16 +36,30 @@ describe('tool metadata discovery', () => {
 
 describe('detectAffectedTargets', () => {
   it('narrows tool-local runtime changes to the matching tool', () => {
-    expect(detectAffectedTargets(['jwt-decoder-tool/script.tsx'])).toEqual({
+    expect(detectAffectedTargets(['jwt-decoder/script.tsx'])).toEqual({
       scope: 'selected-tools',
-      changedFiles: ['jwt-decoder-tool/script.tsx'],
+      changedFiles: ['jwt-decoder/script.tsx'],
       affectedTools: ['jwt-decoder-tool'],
       includeRootShell: false,
       includeRootAssets: false,
       shouldBuild: true,
       shouldDeploy: true,
-      deployPaths: ['jwt-decoder-tool'],
-      invalidationPaths: ['/jwt-decoder-tool/', '/jwt-decoder-tool/*']
+      deployPaths: ['jwt-decoder'],
+      invalidationPaths: ['/jwt-decoder/', '/jwt-decoder/*']
+    });
+  });
+
+  it('maps renamed source directories back to their stable tool ids', () => {
+    expect(detectAffectedTargets(['data-format-converter/script.tsx'])).toEqual({
+      scope: 'selected-tools',
+      changedFiles: ['data-format-converter/script.tsx'],
+      affectedTools: ['data-format-converter'],
+      includeRootShell: false,
+      includeRootAssets: false,
+      shouldBuild: true,
+      shouldDeploy: true,
+      deployPaths: ['data-format-converter'],
+      invalidationPaths: ['/data-format-converter/', '/data-format-converter/*']
     });
   });
 
@@ -73,9 +88,9 @@ describe('detectAffectedTargets', () => {
   });
 
   it('skips docs-only changes', () => {
-    expect(detectAffectedTargets(['README.md', 'jwt-decoder-tool/README.md'])).toEqual({
+    expect(detectAffectedTargets(['README.md', 'jwt-decoder/README.md'])).toEqual({
       scope: 'none',
-      changedFiles: ['README.md', 'jwt-decoder-tool/README.md'],
+      changedFiles: ['README.md', 'jwt-decoder/README.md'],
       affectedTools: [],
       includeRootShell: false,
       includeRootAssets: false,
@@ -84,5 +99,33 @@ describe('detectAffectedTargets', () => {
       deployPaths: [],
       invalidationPaths: []
     });
+  });
+
+  it('surfaces the defensive missing-tool guard when finalizing selected tools', () => {
+    jest.resetModules();
+
+    jest.isolateModules(() => {
+      jest.doMock('./tool-manifest', () => {
+        const actual = jest.requireActual('./tool-manifest');
+        return {
+          ...actual,
+          getToolById: jest.fn((toolId) => {
+            if (toolId === 'jwt-decoder-tool') {
+              return undefined;
+            }
+
+            return actual.getToolById(toolId);
+          })
+        };
+      });
+
+      const { detectAffectedTargets: detectAffectedTargetsWithMissingTool } = require('./affected-tools');
+
+      expect(() => detectAffectedTargetsWithMissingTool(['jwt-decoder/script.tsx']))
+        .toThrow('Unknown tool id: jwt-decoder-tool');
+    });
+
+    jest.dontMock('./tool-manifest');
+    jest.resetModules();
   });
 });

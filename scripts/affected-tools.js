@@ -1,7 +1,7 @@
 // @ts-check
 
 const path = require('path');
-const { getRootAssets, getRootShellDefinition, getToolDefinitions, getToolIds } = require('./tool-manifest');
+const { getRootAssets, getRootShellDefinition, getToolById, getToolDefinitions, getToolIds } = require('./tool-manifest');
 
 const ALL_TOOL_TRIGGER_FILES = new Set([
     'babel.config.js',
@@ -96,9 +96,14 @@ function finalizeAffectedTargets(result) {
     const rootShell = getRootShellDefinition();
 
     result.affectedTools.forEach((toolId) => {
-        deployPaths.add(toolId);
-        invalidationPaths.add(`/${toolId}/`);
-        invalidationPaths.add(`/${toolId}/*`);
+        const tool = getToolById(toolId);
+        if (!tool) {
+            throw new Error(`Unknown tool id: ${toolId}`);
+        }
+
+        deployPaths.add(tool.outputDir);
+        invalidationPaths.add(tool.publicPath);
+        invalidationPaths.add(`${tool.publicPath}*`);
     });
 
     if (result.includeRootShell) {

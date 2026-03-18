@@ -4,7 +4,7 @@
   "title": "JWT Decoder & Validator",
   "description": "Decode and validate JWT tokens locally in your browser.",
   "appRootId": "jwt-decoder-app",
-  "publicPath": "/jwt-decoder-tool/",
+  "publicPath": "/jwt-decoder/",
   "scriptType": "module",
   "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
   "relatedToolIds": ["jwt-builder-tool", "base64-converter-tool", "json-formatter-tool"]

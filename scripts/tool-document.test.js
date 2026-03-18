@@ -5,10 +5,10 @@ const { getToolById } = require('./tool-manifest');
 
 describe('tool document generation', () => {
     it('joins urls without dropping nested paths', () => {
-        expect(joinUrl('https://tools.codesamplez.com', '/json-formatter-tool/'))
-            .toBe('https://tools.codesamplez.com/json-formatter-tool/');
-        expect(joinUrl('https://tools.codesamplez.com/', 'text-analyzer-tool/images/featured.png'))
-            .toBe('https://tools.codesamplez.com/text-analyzer-tool/images/featured.png');
+        expect(joinUrl('https://tools.codesamplez.com', '/json-formatter/'))
+            .toBe('https://tools.codesamplez.com/json-formatter/');
+        expect(joinUrl('https://tools.codesamplez.com/', 'text-analyzer/images/featured.png'))
+            .toBe('https://tools.codesamplez.com/text-analyzer/images/featured.png');
     });
 
     it('renders a module tool document with metadata and shell placeholders', () => {
@@ -17,8 +17,8 @@ describe('tool document generation', () => {
 
         expect(html).toContain('<title>Diff Checker</title>');
         expect(html).toContain('<meta name="description" content="Compare two texts or code snippets and highlight the differences between them.">');
-        expect(html).toContain('<link rel="canonical" href="https://tools.codesamplez.com/diff-checker-tool/">');
-        expect(html).toContain('<meta property="og:image" content="https://tools.codesamplez.com/diff-checker-tool/images/featured.png">');
+        expect(html).toContain('<link rel="canonical" href="https://tools.codesamplez.com/diff-checker/">');
+        expect(html).toContain('<meta property="og:image" content="https://tools.codesamplez.com/diff-checker/images/featured.png">');
         expect(html).toContain('<div id="app-shell-header"></div>');
         expect(html).toContain('<div id="diff-checker-app"><section>SSR payload</section></div>');
         expect(html).toContain('<section class="c-related-tools">Related</section>');
@@ -41,7 +41,7 @@ describe('tool document generation', () => {
         expect(html).toContain('id="base64converter-convert"');
         expect(html).toContain('id="related-tools-heading"');
         expect(html).toContain('Related tools');
-        expect(html).toContain('href="/jwt-decoder-tool/"');
-        expect(html).toContain('https://tools.codesamplez.com/base64-converter-tool/images/featured.png');
+        expect(html).toContain('href="/jwt-decoder/"');
+        expect(html).toContain('https://tools.codesamplez.com/base64-converter/images/featured.png');
     });
 });

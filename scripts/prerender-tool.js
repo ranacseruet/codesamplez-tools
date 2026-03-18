@@ -38,7 +38,7 @@ const TOOL_PRERENDER_REGISTRY = {
     'base64-converter-tool': {
         createAppNode: () => {
             const { h } = require('preact');
-            const { Base64ConverterApp } = require(path.resolve(__dirname, '../base64-converter-tool/script'));
+            const { Base64ConverterApp } = require(path.resolve(__dirname, '../base64-converter/script'));
             return h(Base64ConverterApp, {});
         }
     },
@@ -56,49 +56,49 @@ const TOOL_PRERENDER_REGISTRY = {
     'css-minifier-tool': {
         createAppNode: () => {
             const { h } = require('preact');
-            const { CssMinifierApp } = require(path.resolve(__dirname, '../css-minifier-tool/script'));
+            const { CssMinifierApp } = require(path.resolve(__dirname, '../css-minifier/script'));
             return h(CssMinifierApp, {});
         }
     },
     'diff-checker-tool': {
         createAppNode: () => {
             const { h } = require('preact');
-            const { DiffCheckerApp } = require(path.resolve(__dirname, '../diff-checker-tool/script'));
+            const { DiffCheckerApp } = require(path.resolve(__dirname, '../diff-checker/script'));
             return h(DiffCheckerApp, {});
         }
     },
     'json-formatter-tool': {
         createAppNode: () => {
             const { h } = require('preact');
-            const { JsonFormatterApp } = require(path.resolve(__dirname, '../json-formatter-tool/script'));
+            const { JsonFormatterApp } = require(path.resolve(__dirname, '../json-formatter/script'));
             return h(JsonFormatterApp, {});
         }
     },
     'js-minifier-tool': {
         createAppNode: () => {
             const { h } = require('preact');
-            const { JSMinifierApp } = require(path.resolve(__dirname, '../js-minifier-tool/script'));
+            const { JSMinifierApp } = require(path.resolve(__dirname, '../js-minifier/script'));
             return h(JSMinifierApp, {});
         }
     },
     'jwt-builder-tool': {
         createAppNode: () => {
             const { h } = require('preact');
-            const { JwtBuilderApp } = require(path.resolve(__dirname, '../jwt-builder-tool/script'));
+            const { JwtBuilderApp } = require(path.resolve(__dirname, '../jwt-builder/script'));
             return h(JwtBuilderApp, {});
         }
     },
     'jwt-decoder-tool': {
         createAppNode: () => {
             const { h } = require('preact');
-            const { JwtDecoderApp } = require(path.resolve(__dirname, '../jwt-decoder-tool/script'));
+            const { JwtDecoderApp } = require(path.resolve(__dirname, '../jwt-decoder/script'));
             return h(JwtDecoderApp, {});
         }
     },
     'text-analyzer-tool': {
         createAppNode: () => {
             const { h } = require('preact');
-            const { TextAnalyzerApp } = require(path.resolve(__dirname, '../text-analyzer-tool/script'));
+            const { TextAnalyzerApp } = require(path.resolve(__dirname, '../text-analyzer/script'));
             return h(TextAnalyzerApp, {});
         }
     },

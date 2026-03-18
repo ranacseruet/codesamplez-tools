@@ -171,7 +171,7 @@ class Base64Codec {
         }
     }
 
-    // URL-safe Base64 methods adapted from jwt-builder-tool/base64.js
+    // URL-safe Base64 methods adapted from jwt-builder/base64.js
     base64UrlToBase64(str: string): string {
         let output = str.replace(/-/g, '+').replace(/_/g, '/');
         switch (output.length % 4) {

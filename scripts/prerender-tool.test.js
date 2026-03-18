@@ -114,8 +114,8 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="related-tools-heading"');
         expect(markup).toContain('JWT Builder');
         expect(markup).toContain('Base64 Converter');
-        expect(markup).toContain('href="/jwt-builder-tool/"');
-        expect(markup).toContain('href="/base64-converter-tool/"');
+        expect(markup).toContain('href="/jwt-builder/"');
+        expect(markup).toContain('href="/base64-converter/"');
         expect(markup).toContain('Open tool');
     });
 });
