@@ -40,10 +40,12 @@ The repo is on a post-migration steady-state workflow.
 - Runtime foundation: `preact`
 - Shared shell/layout primitives: `common/app-shell`
 - Shared bootstrap and prerender contracts: `common/tooling-contracts.ts`
+- Shared tool catalog + root-page metadata: tool-local `tool.meta.json` files plus `config/tooling-root.json`
 - Shared design tokens and reusable primitives:
   - `common/material-theme.css`
   - `common/shared-styles.css`
 - Prerender pipeline: `scripts/prerender-tool.js`
+- HTML document generation: `scripts/tool-document.js` and `scripts/root-document.js`
 - Mixed TypeScript/JavaScript codebase with required repo-wide typecheck
 - Stable per-tool production output contract:
   - `build/<tool>/index.html`
@@ -90,7 +92,7 @@ Engineering constraints:
 - Serve the production build locally: `npm start`
 - Dev server: `npm run dev`
 
-The build preserves the standalone deployment contract for each tool and prerenders supported tool UI into static HTML before client hydration.
+The build preserves the standalone deployment contract for each tool, prerenders supported tool UI into static HTML before client hydration, and generates the root landing page from manifest metadata rather than a hand-authored source HTML file.
 
 ## Tool Release Metadata
 

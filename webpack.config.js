@@ -6,7 +6,8 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const { generateToolDocument } = require('./scripts/tool-document');
+const { getAppShellCatalogDefinition, getAppShellCatalogDependencies } = require('./scripts/app-shell-catalog');
+const { GeneratedHtmlPlugin } = require('./scripts/generated-html-plugin');
 const {
   DEFAULT_FEATURED_IMAGE_DIRECTORY,
   DEFAULT_FEATURED_IMAGE_EXTENSION,
@@ -54,13 +55,6 @@ const createTerserMinimizer = (toolId) => {
     }
   });
 };
-const createToolDocumentPattern = (tool) => ({
-  from: path.join(__dirname, tool.sourceRoot, 'tool.meta.json'),
-  to: path.join(__dirname, tool.outputPath, 'index.html'),
-  transform() {
-    return generateToolDocument(tool.id);
-  }
-});
 const getToolFeaturedImageSourceName = (tool) => {
   const imagesDir = path.join(__dirname, tool.sourceRoot, 'images');
   if (!fs.existsSync(imagesDir)) {
@@ -99,10 +93,27 @@ const createToolFeaturedImagePattern = (tool) => {
   };
 };
 
-const createRootAssetPatterns = () => getRootAssets().map((asset) => ({
-  from: asset,
-  to: path.join(__dirname, 'build', asset)
-}));
+const createRootAssetPatterns = () => getRootAssets()
+  .filter((asset) => path.extname(asset) !== '.html')
+  .map((asset) => ({
+    from: asset,
+    to: path.join(__dirname, 'build', asset)
+  }));
+
+const createToolHtmlAssets = (selectedTools, emitInsideToolDirectory) => selectedTools.reduce((toolHtmlAssets, tool) => {
+  toolHtmlAssets[tool.id] = emitInsideToolDirectory ? 'index.html' : `${tool.outputDir}/index.html`;
+  return toolHtmlAssets;
+}, {});
+const createAppShellCatalogRuntimeValue = () => webpack.DefinePlugin.runtimeValue(
+  () => JSON.stringify(getAppShellCatalogDefinition()),
+  getAppShellCatalogDependencies()
+);
+const createDefinePlugin = (mode) => new webpack.DefinePlugin({
+  'process.env.NODE_ENV': JSON.stringify(mode || process.env.NODE_ENV || 'development'),
+  'process.env.BABEL_TYPES_8_BREAKING': JSON.stringify(false),
+  'process.platform': JSON.stringify(process.platform),
+  'globalThis.__CST_APP_SHELL_CATALOG__': createAppShellCatalogRuntimeValue()
+});
 
 const readSelectedToolsFromEnv = (env = {}) => {
   const requestedTools = Array.isArray(env.tools)
@@ -177,6 +188,7 @@ const getToolConfig = (tool) => ({
       ...(baseConfig.resolve.alias || {}),
       ...(tool.id === 'js-minifier-tool'
         ? {
+            process: path.resolve(__dirname, 'common/shims/process-browser.js'),
             debug: path.resolve(__dirname, 'common/shims/debug-noop.js'),
             '@babel/code-frame': path.resolve(__dirname, 'common/shims/babel-code-frame-noop.js'),
             '@jridgewell/gen-mapping': path.resolve(__dirname, 'common/shims/jridgewell-gen-mapping-noop.js'),
@@ -196,11 +208,11 @@ const getToolConfig = (tool) => ({
   },
   plugins: [
     new CleanWebpackPlugin({
-      cleanOnceBeforeBuildPatterns: ['**/*', '!*.html']
+      cleanOnceBeforeBuildPatterns: ['**/*']
     }),
-    new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-      'process.platform': JSON.stringify(process.platform)
+    createDefinePlugin(),
+    new GeneratedHtmlPlugin({
+      toolHtmlAssets: createToolHtmlAssets([tool], true)
     }),
     new MiniCssExtractPlugin({
       filename: 'styles.main.css'
@@ -228,9 +240,6 @@ const getToolConfig = (tool) => ({
       : []),
     new CopyPlugin({
       patterns: [
-        {
-          ...createToolDocumentPattern(tool)
-        },
         ...(() => {
           const imagePattern = createToolFeaturedImagePattern(tool);
           return imagePattern ? [imagePattern] : [];
@@ -255,9 +264,10 @@ const getRootShellConfig = (includeRootAssets = true) => ({
     new CleanWebpackPlugin({
       cleanOnceBeforeBuildPatterns: ['**/*']
     }),
-    new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-      'process.platform': JSON.stringify(process.platform)
+    createDefinePlugin(),
+    new GeneratedHtmlPlugin({
+      includeRootAssets,
+      rootHtmlAsset: includeRootAssets ? '../index.html' : null
     }),
     new MiniCssExtractPlugin({
       filename: 'styles.main.css'
@@ -288,30 +298,22 @@ const developmentConfig = {
   },
   plugins: [
     new CleanWebpackPlugin({
-      cleanOnceBeforeBuildPatterns: ['**/*', '!*.html']
+      cleanOnceBeforeBuildPatterns: ['**/*']
     }),
-    new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-      'process.platform': JSON.stringify(process.platform)
+    createDefinePlugin(),
+    new GeneratedHtmlPlugin({
+      includeRootAssets: true,
+      rootHtmlAsset: 'index.html',
+      toolHtmlAssets: createToolHtmlAssets(tools, false)
     }),
     new MiniCssExtractPlugin({
       filename: '[name]/styles.main.css'
     }),
     new CopyPlugin({
       patterns: [
-        {
-          from: 'index.html',
-          to: 'index.html'
-        },
-        {
-          from: 'styles.css',
-          to: 'styles.css'
-        },
+        ...createRootAssetPatterns(),
         ...tools.reduce((patterns, tool) => {
           return patterns.concat([
-            {
-              ...createToolDocumentPattern(tool)
-            },
             ...(() => {
               const imagePattern = createToolFeaturedImagePattern(tool);
               return imagePattern ? [imagePattern] : [];
@@ -348,10 +350,7 @@ module.exports = (env = {}, argv = {}) => {
     devtool: mode === 'development' ? 'eval-cheap-module-source-map' : false,
     plugins: config.plugins.map((plugin) => {
       if (plugin instanceof webpack.DefinePlugin) {
-        return new webpack.DefinePlugin({
-          'process.env': JSON.stringify({ NODE_ENV: mode }),
-          'process.platform': JSON.stringify(process.platform)
-        });
+        return createDefinePlugin(mode);
       }
       return plugin;
     })
@@ -366,6 +365,14 @@ module.exports = (env = {}, argv = {}) => {
       return entries;
     }, includeRootShell ? { [rootShellEntryName]: getRootShellEntry() } : {}),
     plugins: developmentConfig.plugins.map((plugin) => {
+      if (plugin instanceof GeneratedHtmlPlugin) {
+        return new GeneratedHtmlPlugin({
+          includeRootAssets,
+          rootHtmlAsset: includeRootAssets ? 'index.html' : null,
+          toolHtmlAssets: createToolHtmlAssets(selectedTools, false)
+        });
+      }
+
       if (!(plugin instanceof CopyPlugin)) {
         return plugin;
       }
@@ -375,9 +382,6 @@ module.exports = (env = {}, argv = {}) => {
           ...(includeRootAssets ? createRootAssetPatterns() : []),
           ...selectedTools.reduce((patterns, tool) => {
             return patterns.concat([
-              {
-                ...createToolDocumentPattern(tool)
-              },
               ...(() => {
                 const imagePattern = createToolFeaturedImagePattern(tool);
                 return imagePattern ? [imagePattern] : [];

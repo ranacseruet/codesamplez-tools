@@ -1,5 +1,25 @@
 {
   "siteBaseUrl": "https://tools.codesamplez.com",
+  "siteName": "CodeSamplez Tools",
+  "siteDescription": "Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.",
+  "rootPage": {
+    "title": "CodeSamplez Tools",
+    "description": "Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow."
+  },
+  "catalogGroups": [
+    {
+      "id": "code-formatters",
+      "label": "Code Formatters & Validators"
+    },
+    {
+      "id": "encoders-decoders",
+      "label": "Encoders & Decoders"
+    },
+    {
+      "id": "text-analysis",
+      "label": "Text Analysis & Diff Tools"
+    }
+  ],
   "rootShell": {
     "id": "root-shell",
     "outputPath": "build/root-shell"

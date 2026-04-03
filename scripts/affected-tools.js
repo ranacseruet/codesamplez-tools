@@ -1,7 +1,7 @@
 // @ts-check
 
 const path = require('path');
-const { getRootAssets, getRootShellDefinition, getToolById, getToolDefinitions, getToolIds } = require('./tool-manifest');
+const { TOOL_METADATA_FILENAME, getRootAssets, getRootShellDefinition, getToolById, getToolDefinitions, getToolIds } = require('./tool-manifest');
 
 const ALL_TOOL_TRIGGER_FILES = new Set([
     'babel.config.js',
@@ -12,7 +12,10 @@ const ALL_TOOL_TRIGGER_FILES = new Set([
     'webpack.config.js',
     'config/tooling-root.json',
     'scripts/build-tools.js',
+    'scripts/document-helpers.js',
     'scripts/prerender-tool.js',
+    'scripts/root-document.js',
+    'scripts/structured-data.js',
     'scripts/tool-document.js',
     'scripts/tool-manifest.js'
 ]);
@@ -79,6 +82,36 @@ function getToolIdForPath(filePath) {
 }
 
 /**
+ * @returns {Map<string, string[]>}
+ */
+function buildReverseRelatedToolMap() {
+    const reverseRelatedToolMap = new Map();
+
+    getToolDefinitions().forEach((tool) => {
+        tool.relatedToolIds.forEach((relatedToolId) => {
+            const reverseRelatedToolIds = reverseRelatedToolMap.get(relatedToolId) || [];
+            reverseRelatedToolIds.push(tool.id);
+            reverseRelatedToolMap.set(relatedToolId, reverseRelatedToolIds);
+        });
+    });
+
+    return new Map(
+        Array.from(reverseRelatedToolMap.entries()).map(([toolId, reverseRelatedToolIds]) => [
+            toolId,
+            Array.from(new Set(reverseRelatedToolIds)).sort()
+        ])
+    );
+}
+
+/**
+ * @param {string} filePath
+ * @returns {boolean}
+ */
+function isToolMetadataPath(filePath) {
+    return filePath.endsWith(`/${TOOL_METADATA_FILENAME}`);
+}
+
+/**
  * @param {string} filePath
  * @returns {boolean}
  */
@@ -134,6 +167,7 @@ function finalizeAffectedTargets(result) {
 function detectAffectedTargets(changedFiles) {
     const normalizedFiles = Array.from(new Set(changedFiles.map(normalizeGitPath).filter(Boolean))).sort();
     const affectedTools = new Set();
+    const reverseRelatedToolMap = buildReverseRelatedToolMap();
     let includeRootShell = false;
     let includeRootAssets = false;
     let affectsAllTools = false;
@@ -156,8 +190,23 @@ function detectAffectedTargets(changedFiles) {
         }
 
         const toolId = getToolIdForPath(filePath);
+        if (!toolId && isToolMetadataPath(filePath)) {
+            affectsAllTools = true;
+            includeRootShell = true;
+            includeRootAssets = true;
+            shouldBuild = true;
+            continue;
+        }
+
         if (toolId && isToolRuntimeChange(filePath)) {
             affectedTools.add(toolId);
+            if (isToolMetadataPath(filePath)) {
+                (reverseRelatedToolMap.get(toolId) || []).forEach((reverseRelatedToolId) => {
+                    affectedTools.add(reverseRelatedToolId);
+                });
+                includeRootShell = true;
+                includeRootAssets = true;
+            }
             shouldBuild = true;
         }
     }
@@ -192,8 +241,10 @@ function detectAffectedTargets(changedFiles) {
 }
 
 module.exports = {
+    buildReverseRelatedToolMap,
     detectAffectedTargets,
     getToolIdForPath,
+    isToolMetadataPath,
     isAllToolsTrigger,
     isRootOnlyTrigger,
     isToolDocPath,

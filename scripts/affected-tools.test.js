@@ -1,5 +1,5 @@
 const { getToolDefinitions, getToolIds, parseToolSelectionArgs } = require('./tool-manifest');
-const { detectAffectedTargets } = require('./affected-tools');
+const { buildReverseRelatedToolMap, detectAffectedTargets, isToolMetadataPath } = require('./affected-tools');
 
 describe('parseToolSelectionArgs', () => {
   it('parses single and multi-tool selections with root flags', () => {
@@ -63,6 +63,35 @@ describe('detectAffectedTargets', () => {
     });
   });
 
+  it('treats tool metadata changes as affecting the tool, root shell, and root assets', () => {
+    expect(isToolMetadataPath('jwt-decoder/tool.meta.json')).toBe(true);
+    expect(detectAffectedTargets(['jwt-builder/tool.meta.json'])).toEqual({
+      scope: 'selected-tools',
+      changedFiles: ['jwt-builder/tool.meta.json'],
+      affectedTools: ['base64-converter-tool', 'jwt-builder-tool', 'jwt-decoder-tool'],
+      includeRootShell: true,
+      includeRootAssets: true,
+      shouldBuild: true,
+      shouldDeploy: true,
+      deployPaths: ['base64-converter', 'index.html', 'jwt-builder', 'jwt-decoder', 'robots.txt', 'root-shell', 'styles.css'],
+      invalidationPaths: ['/', '/base64-converter/', '/base64-converter/*', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/robots.txt', '/root-shell/', '/root-shell/*', '/styles.css']
+    });
+  });
+
+  it('escalates unknown tool metadata paths to an all-tools rebuild so add/remove cases do not drift', () => {
+    expect(detectAffectedTargets(['future-tool/tool.meta.json'])).toEqual({
+      scope: 'all-tools',
+      changedFiles: ['future-tool/tool.meta.json'],
+      affectedTools: getToolIds(),
+      includeRootShell: true,
+      includeRootAssets: true,
+      shouldBuild: true,
+      shouldDeploy: true,
+      deployPaths: expect.arrayContaining(['index.html', 'root-shell', 'styles.css', 'robots.txt']),
+      invalidationPaths: expect.arrayContaining(['/', '/index.html', '/root-shell/', '/root-shell/*', '/styles.css', '/robots.txt'])
+    });
+  });
+
   it('treats shared runtime changes as affecting all tools and root assets', () => {
     const result = detectAffectedTargets(['common/shared-styles.css']);
 
@@ -73,10 +102,10 @@ describe('detectAffectedTargets', () => {
     expect(result.deployPaths).toEqual(expect.arrayContaining(['root-shell', 'index.html', 'styles.css', 'robots.txt']));
   });
 
-  it('treats landing-page changes as root-only runtime changes', () => {
-    expect(detectAffectedTargets(['index.html'])).toEqual({
+  it('treats root stylesheet changes as root-only runtime changes', () => {
+    expect(detectAffectedTargets(['styles.css'])).toEqual({
       scope: 'root-only',
-      changedFiles: ['index.html'],
+      changedFiles: ['styles.css'],
       affectedTools: [],
       includeRootShell: true,
       includeRootAssets: true,
@@ -127,5 +156,12 @@ describe('detectAffectedTargets', () => {
 
     jest.dontMock('./tool-manifest');
     jest.resetModules();
+  });
+
+  it('tracks reverse related-tool metadata dependencies', () => {
+    expect(buildReverseRelatedToolMap().get('jwt-builder-tool')).toEqual([
+      'base64-converter-tool',
+      'jwt-decoder-tool'
+    ]);
   });
 });

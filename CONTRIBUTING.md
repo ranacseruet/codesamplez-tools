@@ -7,7 +7,7 @@ The repo contains individual browser-based tools plus shared runtime, styling, a
 Typical tool structure:
 
 - `tool-name/`
-  - `index.html`
+  - `tool.meta.json`
   - `styles.css`
   - `script.tsx` or `script.js`
   - optional logic modules such as `*.ts` or `*.js`
@@ -44,14 +44,14 @@ Shared foundation:
 
 1. Create a new tool directory.
 2. Add the standard assets:
-   - `index.html`
+   - `tool.meta.json`
    - `styles.css`
    - `script.tsx` when JSX is used, otherwise `script.js` or `script.ts`
    - `README.md`
    - `images/` if needed
 3. Reuse the shared shell and shared UI primitives before creating new local patterns.
 4. Keep tool URLs, output shape, and standalone deployment assumptions consistent with existing tools.
-5. Add the tool to the root landing page and any build/prerender registry locations required by the current architecture.
+5. Add the tool to the prerender/runtime registries required by the current architecture and fill in its catalog metadata so the generated root landing page and navigation pick it up correctly.
 
 ## Code Style
 
@@ -111,7 +111,7 @@ The build:
 
 - emits standalone production assets per tool
 - prerenders supported tool UI into static HTML before hydration
-- copies static assets into `build/`
+- generates the root landing page from manifest metadata and copies the remaining root static assets into `build/`
 
 Always run `npm run verify-build` after build changes or when touching output-affecting code.
 

@@ -1,39 +1,13 @@
 // @ts-check
 
-const { getToolById } = require('./tool-manifest');
+const { getToolById, loadManifest } = require('./tool-manifest');
 const { renderRelatedToolsPrerenderMarkup, renderToolPrerenderMarkup } = require('./prerender-tool');
+const { escapeAttribute, escapeHtml, joinUrl } = require('./document-helpers');
+const { buildToolStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
 
 /**
  * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
  */
-
-/**
- * @param {string} value
- * @returns {string}
- */
-function escapeHtml(value) {
-    return value
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-}
-
-/**
- * @param {string} value
- * @returns {string}
- */
-function escapeAttribute(value) {
-    return escapeHtml(value).replace(/"/g, '&quot;');
-}
-
-/**
- * @param {string} baseUrl
- * @param {string} pathName
- * @returns {string}
- */
-function joinUrl(baseUrl, pathName) {
-    return new URL(pathName.replace(/^\.\//, ''), baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`).toString();
-}
 
 /**
  * @param {ToolDefinition} tool
@@ -42,6 +16,7 @@ function joinUrl(baseUrl, pathName) {
  * @returns {string}
  */
 function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '') {
+    const manifest = loadManifest();
     const absolutePageUrl = joinUrl(tool.siteBaseUrl, tool.publicPath);
     const absoluteFeaturedImageUrl = joinUrl(tool.siteBaseUrl, `${tool.publicPath.replace(/\/$/, '')}/${tool.featuredImagePath}`);
     const escapedTitle = escapeAttribute(tool.title);
@@ -51,6 +26,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '') {
     const escapedFeaturedImagePath = escapeAttribute(tool.featuredImagePath);
     const escapedFeaturedImageUrl = escapeAttribute(absoluteFeaturedImageUrl);
     const escapedFeaturedAlt = escapeAttribute(`${tool.title} featured image`);
+    const structuredDataScript = renderStructuredDataScript(buildToolStructuredDataGraph(manifest, tool));
     const scriptTypeAttribute = tool.scriptType === 'module' ? ' type="module"' : '';
 
     return `<!DOCTYPE html>
@@ -75,6 +51,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '') {
     <meta name="twitter:image" content="${escapedFeaturedImageUrl}">
     <meta name="twitter:image:alt" content="${escapedFeaturedAlt}">
     <link rel="image_src" href="${escapedFeaturedImagePath}">
+    ${structuredDataScript}
 </head>
 
 <body class="standalone-app">

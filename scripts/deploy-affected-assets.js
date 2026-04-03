@@ -153,11 +153,14 @@ function syncDirectoryExcludingHtml(bucket, sourceDir, destPrefix, dryRun) {
 }
 
 /**
- * @param {string[]} rootAssets
- * @returns {string[]}
+ * @param {string} bucket
+ * @param {string} sourcePath
+ * @param {string} destinationPath
+ * @param {boolean} dryRun
+ * @returns {void}
  */
-function getDeployableRootAssets(rootAssets) {
-    return rootAssets.filter((asset) => path.extname(asset) !== '.html');
+function copyAsset(bucket, sourcePath, destinationPath, dryRun) {
+    runCommand('aws', ['s3', 'cp', sourcePath, `s3://${bucket}/${destinationPath}`], dryRun);
 }
 
 function main() {
@@ -181,6 +184,9 @@ function main() {
         const sourceDir = path.join(args.buildDir, tool.outputDir);
         assertExists(sourceDir);
         syncDirectoryExcludingHtml(args.bucket, sourceDir, tool.outputDir, args.dryRun);
+        const htmlPath = path.join(sourceDir, 'index.html');
+        assertExists(htmlPath);
+        copyAsset(args.bucket, htmlPath, `${tool.outputDir}/index.html`, args.dryRun);
         invalidationPaths.push(`${tool.publicPath}*`);
     });
 
@@ -193,12 +199,12 @@ function main() {
     }
 
     if (args.selection.includeRootAssets) {
-        getDeployableRootAssets(getRootAssets()).forEach((asset) => {
+        getRootAssets().forEach((asset) => {
             const sourcePath = path.join(args.buildDir, asset);
             assertExists(sourcePath);
-            runCommand('aws', ['s3', 'cp', sourcePath, `s3://${args.bucket}/${asset}`], args.dryRun);
+            copyAsset(args.bucket, sourcePath, asset, args.dryRun);
         });
-        invalidationPaths.push('/styles.css', '/robots.txt');
+        invalidationPaths.push('/', '/index.html', '/styles.css', '/robots.txt');
     }
 
     if (invalidationPaths.length > 0) {

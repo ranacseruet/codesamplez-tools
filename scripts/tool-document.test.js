@@ -19,6 +19,15 @@ describe('tool document generation', () => {
         expect(html).toContain('<meta name="description" content="Compare two texts or code snippets and highlight the differences between them.">');
         expect(html).toContain('<link rel="canonical" href="https://tools.codesamplez.com/diff-checker/">');
         expect(html).toContain('<meta property="og:image" content="https://tools.codesamplez.com/diff-checker/images/featured.png">');
+        expect(html).toContain('<script type="application/ld+json">');
+        expect(html).toContain('"@type":"WebPage"');
+        expect(html).toContain('"@type":"WebApplication"');
+        expect(html).toContain('"@type":"BreadcrumbList"');
+        expect(html).toContain('"operatingSystem":"Any"');
+        expect(html).toContain('"price":"0"');
+        expect(html).toContain('"priceCurrency":"USD"');
+        expect(html).toContain('"url":"https://tools.codesamplez.com/diff-checker/"');
+        expect(html).toContain('"image":"https://tools.codesamplez.com/diff-checker/images/featured.png"');
         expect(html).toContain('<div id="app-shell-header"></div>');
         expect(html).toContain('<div id="diff-checker-app"><section>SSR payload</section></div>');
         expect(html).toContain('<section class="c-related-tools">Related</section>');
@@ -43,5 +52,8 @@ describe('tool document generation', () => {
         expect(html).toContain('Related tools');
         expect(html).toContain('href="/jwt-decoder/"');
         expect(html).toContain('https://tools.codesamplez.com/base64-converter/images/featured.png');
+        expect(html).toContain('"@type":"WebSite"');
+        expect(html).toContain('"name":"Base64 Converter"');
+        expect(html).toContain('"keywords":"base64, encode, decode, text, files"');
     });
 });

@@ -146,6 +146,39 @@ function verifyBuild(buildDir) {
 }
 
 /**
+ * @param {string[]} buildTools
+ * @param {{ requestedTools: string[], includeRootShell: boolean }} selection
+ * @returns {string[]}
+ */
+function filterBuildTools(buildTools, selection) {
+    if (selection.requestedTools.length === 0) {
+        return buildTools;
+    }
+
+    const allowedTools = new Set(selection.requestedTools.map((toolId) => {
+        const tool = getToolById(toolId);
+        return tool ? tool.outputDir : toolId;
+    }));
+
+    if (selection.includeRootShell) {
+        allowedTools.add(getRootShellDefinition().id);
+    }
+
+    return buildTools.filter((tool) => allowedTools.has(tool));
+}
+
+/**
+ * @param {string[]} tools
+ * @param {string} buildDir
+ * @returns {void}
+ */
+function assertBuildTargetsExist(tools, buildDir) {
+    if (tools.length === 0) {
+        throw new Error(`No built tool bundles found in ${buildDir}. Run 'npm run build' first.`);
+    }
+}
+
+/**
  * @param {string[]} argv
  * @returns {{ buildDir: string, selection: ReturnType<typeof parseToolSelectionArgs> }}
  */
@@ -190,16 +223,14 @@ function main() {
         process.exit(1);
     }
 
-    let tools = getBuildTools(args.buildDir);
-    if (args.selection.requestedTools.length > 0) {
-        const allowedTools = new Set(args.selection.requestedTools.map((toolId) => {
-            const tool = getToolById(toolId);
-            return tool ? tool.outputDir : toolId;
-        }));
-        if (args.selection.includeRootShell) {
-            allowedTools.add(getRootShellDefinition().id);
-        }
-        tools = tools.filter((tool) => allowedTools.has(tool));
+    let tools;
+    try {
+        tools = filterBuildTools(getBuildTools(args.buildDir), args.selection);
+        assertBuildTargetsExist(tools, args.buildDir);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`${colors.red}${message}${colors.reset}`);
+        process.exit(1);
     }
 
     const results = tools.map((tool) => verifyToolBundle(args.buildDir, tool));
@@ -217,11 +248,12 @@ function main() {
     }
 }
 
-main();
-
 module.exports = {
+    assertBuildTargetsExist,
+    filterBuildTools,
     getBuildTools,
     installBrowserLikeGlobals,
+    main,
     parseArgs,
     verifyToolBundle,
     verifyBuild

@@ -1,3 +1,5 @@
+import { TOOL_CATALOG_ENTRIES, TOOL_CATALOG_GROUPS } from './toolCatalog';
+
 export interface ToolNavigationItem {
     label: string;
     href: string;
@@ -8,30 +10,13 @@ export interface ToolNavigationGroup {
     tools: ToolNavigationItem[];
 }
 
-export const TOOL_NAVIGATION_GROUPS: ToolNavigationGroup[] = [
-    {
-        label: 'Code Formatters & Validators',
-        tools: [
-            { label: 'JSON Formatter', href: '/json-formatter/' },
-            { label: 'JavaScript Minifier', href: '/js-minifier/' },
-            { label: 'CSS Minifier', href: '/css-minifier/' }
-        ]
-    },
-    {
-        label: 'Encoders & Decoders',
-        tools: [
-            { label: 'Base64 Converter', href: '/base64-converter/' },
-            { label: 'JWT Decoder', href: '/jwt-decoder/' },
-            { label: 'JWT Builder', href: '/jwt-builder/' },
-            { label: 'QR Code Generator', href: '/qr-code-generator/' },
-            { label: 'Data Format Converter', href: '/data-format-converter/' }
-        ]
-    },
-    {
-        label: 'Text Analysis & Diff Tools',
-        tools: [
-            { label: 'Diff Checker', href: '/diff-checker/' },
-            { label: 'Text Analyzer', href: '/text-analyzer/' }
-        ]
-    }
-];
+export const TOOL_NAVIGATION_GROUPS: ToolNavigationGroup[] = TOOL_CATALOG_GROUPS.map((group) => ({
+    label: group.label,
+    tools: TOOL_CATALOG_ENTRIES
+        .filter((tool) => tool.catalogGroupId === group.id)
+        .sort((left, right) => left.catalogOrder - right.catalogOrder || left.title.localeCompare(right.title))
+        .map((tool) => ({
+            label: tool.title,
+            href: tool.publicPath
+        }))
+}));

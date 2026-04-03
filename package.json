@@ -38,7 +38,7 @@
     "dev": "NODE_ENV=development webpack serve --mode development",
     "build": "node scripts/build-tools.js --mode production",
     "build:dev": "node scripts/build-tools.js --mode development",
-    "verify-build": "node scripts/build-verification.js",
+    "verify-build": "node scripts/run-build-verification.js",
     "detect-affected-tools": "node scripts/detect-affected-tools.js",
     "typecheck": "tsc --project tsconfig.json",
     "audit:deps": "npm audit --audit-level=high",

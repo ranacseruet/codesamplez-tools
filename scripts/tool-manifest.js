@@ -16,8 +16,29 @@ const DEFAULT_FEATURED_IMAGE_PATH = path.posix.join(DEFAULT_FEATURED_IMAGE_DIREC
  */
 
 /**
+ * @typedef {{ id: string, label: string }} CatalogGroupDefinition
+ * @typedef {{ title: string, description: string, absoluteUrl: string }} RootPageDefinition
+ * @typedef {{ id: string, outputPath: string }} RootShellDefinition
  * @typedef {{
  *   siteBaseUrl: string,
+ *   siteName: string,
+ *   siteDescription: string,
+ *   rootPage: RootPageDefinition,
+ *   catalogGroups: CatalogGroupDefinition[],
+ *   tools: ToolDefinition[],
+ *   rootShell: RootShellDefinition,
+ *   rootAssets: string[]
+ * }} ToolManifest
+ * @typedef {{ requestedTools: string[], includeRootShell: boolean, includeRootAssets: boolean }} ToolSelection
+ * @typedef {{
+ *   id: string,
+ *   label: string,
+ *   tools: ToolDefinition[]
+ * }} GroupedToolDefinition
+ * @typedef {{
+ *   siteBaseUrl: string,
+ *   siteName: string,
+ *   siteDescription: string,
  *   id: string,
  *   version: string,
  *   sourceRoot: string,
@@ -25,37 +46,205 @@ const DEFAULT_FEATURED_IMAGE_PATH = path.posix.join(DEFAULT_FEATURED_IMAGE_DIREC
  *   outputPath: string,
  *   title: string,
  *   description: string,
+ *   indexDescription: string,
+ *   keywords: string[],
  *   appRootId: string,
  *   publicPath: string,
+ *   absolutePageUrl: string,
  *   scriptType: ToolScriptType,
  *   featuredImagePath: string,
+ *   absoluteFeaturedImageUrl: string,
+ *   catalogGroupId: string,
+ *   catalogOrder: number,
  *   dependencyScopes: string[],
  *   relatedToolIds: string[]
  * }} ToolDefinition
- * @typedef {{ id: string, outputPath: string }} RootShellDefinition
- * @typedef {{ siteBaseUrl: string, tools: ToolDefinition[], rootShell: RootShellDefinition, rootAssets: string[] }} ToolManifest
- * @typedef {{ requestedTools: string[], includeRootShell: boolean, includeRootAssets: boolean }} ToolSelection
- */
-
-/**
  * @typedef {{
-  *   id: string,
-  *   version: string,
+ *   siteBaseUrl: string,
+ *   siteName: string,
+ *   siteDescription: string,
+ *   rootPage: {
+ *     title: string,
+ *     description: string
+ *   },
+ *   catalogGroups: CatalogGroupDefinition[],
+ *   rootShell: RootShellDefinition,
+ *   rootAssets: string[]
+ * }} RootConfig
+ * @typedef {{
+ *   id: string,
+ *   version: string,
  *   title: string,
  *   description: string,
+ *   indexDescription: string,
+ *   keywords?: string[],
+ *   catalogGroupId: string,
+ *   catalogOrder: number,
  *   appRootId: string,
  *   publicPath: string,
  *   scriptType: ToolScriptType,
-  *   dependencyScopes: string[],
-  *   relatedToolIds: string[]
+ *   dependencyScopes: string[],
+ *   relatedToolIds: string[]
  * }} RawToolMetadata
  */
 
 /**
- * @returns {{ siteBaseUrl: string, rootShell: RootShellDefinition, rootAssets: string[] }}
+ * @param {unknown} value
+ * @param {string} label
+ * @returns {string}
+ */
+function requireNonEmptyString(value, label) {
+    if (typeof value !== 'string' || value.trim().length === 0) {
+        throw new Error(`${label} must be a non-empty string`);
+    }
+
+    return value.trim();
+}
+
+/**
+ * @param {unknown} value
+ * @param {string} label
+ * @returns {number}
+ */
+function requirePositiveInteger(value, label) {
+    if (!Number.isInteger(value)) {
+        throw new Error(`${label} must be a positive integer`);
+    }
+
+    const numericValue = /** @type {number} */ (value);
+
+    if (numericValue <= 0) {
+        throw new Error(`${label} must be a positive integer`);
+    }
+
+    return numericValue;
+}
+
+/**
+ * @param {unknown} baseUrl
+ * @returns {string}
+ */
+function normalizeBaseUrl(baseUrl) {
+    const normalizedBaseUrl = requireNonEmptyString(baseUrl, 'Root siteBaseUrl').replace(/\/+$/, '');
+
+    try {
+        return new URL(normalizedBaseUrl).toString().replace(/\/+$/, '');
+    } catch (error) {
+        throw new Error(`Root siteBaseUrl must be a valid absolute URL: ${normalizedBaseUrl}`);
+    }
+}
+
+/**
+ * @param {string} baseUrl
+ * @param {string} pathName
+ * @returns {string}
+ */
+function buildAbsoluteUrl(baseUrl, pathName) {
+    return new URL(pathName.replace(/^\.\//, ''), `${baseUrl}/`).toString();
+}
+
+/**
+ * @param {unknown} value
+ * @param {string} label
+ * @returns {string[]}
+ */
+function normalizeStringArray(value, label) {
+    if (!Array.isArray(value)) {
+        throw new Error(`${label} must be an array`);
+    }
+
+    return value.map((entry, index) => requireNonEmptyString(entry, `${label}[${index}]`));
+}
+
+/**
+ * @param {unknown} value
+ * @param {string} label
+ * @returns {string[]}
+ */
+function normalizeOptionalStringArray(value, label) {
+    if (typeof value === 'undefined') {
+        return [];
+    }
+
+    const normalizedValues = normalizeStringArray(value, label);
+    const seenValues = new Set();
+
+    normalizedValues.forEach((entry) => {
+        if (seenValues.has(entry)) {
+            throw new Error(`${label} contains a duplicate value: ${entry}`);
+        }
+        seenValues.add(entry);
+    });
+
+    return normalizedValues;
+}
+
+/**
+ * @returns {RootConfig}
  */
 function loadRootConfig() {
-    return JSON.parse(fs.readFileSync(ROOT_CONFIG_PATH, 'utf8'));
+    /** @type {unknown} */
+    const rawRootConfig = JSON.parse(fs.readFileSync(ROOT_CONFIG_PATH, 'utf8'));
+    if (!rawRootConfig || typeof rawRootConfig !== 'object') {
+        throw new Error('Root config must be an object');
+    }
+
+    const parsedRootConfig = /** @type {Record<string, unknown>} */ (rawRootConfig);
+    const siteBaseUrl = normalizeBaseUrl(parsedRootConfig.siteBaseUrl);
+    const siteName = requireNonEmptyString(parsedRootConfig.siteName, 'Root siteName');
+    const siteDescription = requireNonEmptyString(parsedRootConfig.siteDescription, 'Root siteDescription');
+    const rootPage = parsedRootConfig.rootPage;
+    const rootShell = parsedRootConfig.rootShell;
+
+    if (!rootPage || typeof rootPage !== 'object') {
+        throw new Error('Root rootPage must be an object');
+    }
+
+    if (!rootShell || typeof rootShell !== 'object') {
+        throw new Error('Root rootShell must be an object');
+    }
+
+    const catalogGroups = Array.isArray(parsedRootConfig.catalogGroups) ? parsedRootConfig.catalogGroups : null;
+    if (!catalogGroups || catalogGroups.length === 0) {
+        throw new Error('Root catalogGroups must be a non-empty array');
+    }
+
+    const seenCatalogGroupIds = new Set();
+    const normalizedCatalogGroups = catalogGroups.map((group, index) => {
+        if (!group || typeof group !== 'object') {
+            throw new Error(`Root catalogGroups[${index}] must be an object`);
+        }
+
+        const groupRecord = /** @type {Record<string, unknown>} */ (group);
+        const groupId = requireNonEmptyString(groupRecord.id, `Root catalogGroups[${index}].id`);
+        const groupLabel = requireNonEmptyString(groupRecord.label, `Root catalogGroups[${index}].label`);
+
+        if (seenCatalogGroupIds.has(groupId)) {
+            throw new Error(`Duplicate catalog group id detected: ${groupId}`);
+        }
+        seenCatalogGroupIds.add(groupId);
+
+        return {
+            id: groupId,
+            label: groupLabel
+        };
+    });
+
+    return {
+        siteBaseUrl,
+        siteName,
+        siteDescription,
+        rootPage: {
+            title: requireNonEmptyString((/** @type {Record<string, unknown>} */ (rootPage)).title, 'Root rootPage.title'),
+            description: requireNonEmptyString((/** @type {Record<string, unknown>} */ (rootPage)).description, 'Root rootPage.description')
+        },
+        catalogGroups: normalizedCatalogGroups,
+        rootShell: {
+            id: requireNonEmptyString((/** @type {Record<string, unknown>} */ (rootShell)).id, 'Root rootShell.id'),
+            outputPath: requireNonEmptyString((/** @type {Record<string, unknown>} */ (rootShell)).outputPath, 'Root rootShell.outputPath')
+        },
+        rootAssets: normalizeStringArray(parsedRootConfig.rootAssets, 'Root rootAssets')
+    };
 }
 
 /**
@@ -74,7 +263,29 @@ function listToolMetadataPaths() {
  * @returns {RawToolMetadata}
  */
 function readToolMetadata(metadataPath) {
-    return JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+    /** @type {unknown} */
+    const rawMetadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+    if (!rawMetadata || typeof rawMetadata !== 'object') {
+        throw new Error(`Tool metadata at ${metadataPath} must be an object`);
+    }
+
+    const metadataRecord = /** @type {Record<string, unknown>} */ (rawMetadata);
+
+    return {
+        id: requireNonEmptyString(metadataRecord.id, 'Tool id'),
+        version: requireNonEmptyString(metadataRecord.version, 'Tool version'),
+        title: requireNonEmptyString(metadataRecord.title, 'Tool title'),
+        description: requireNonEmptyString(metadataRecord.description, 'Tool description'),
+        indexDescription: requireNonEmptyString(metadataRecord.indexDescription, 'Tool indexDescription'),
+        keywords: normalizeOptionalStringArray(metadataRecord.keywords, 'Tool keywords'),
+        catalogGroupId: requireNonEmptyString(metadataRecord.catalogGroupId, 'Tool catalogGroupId'),
+        catalogOrder: requirePositiveInteger(metadataRecord.catalogOrder, 'Tool catalogOrder'),
+        appRootId: requireNonEmptyString(metadataRecord.appRootId, 'Tool appRootId'),
+        publicPath: requireNonEmptyString(metadataRecord.publicPath, 'Tool publicPath'),
+        scriptType: /** @type {ToolScriptType} */ (requireNonEmptyString(metadataRecord.scriptType, 'Tool scriptType')),
+        dependencyScopes: normalizeStringArray(metadataRecord.dependencyScopes, 'Tool dependencyScopes'),
+        relatedToolIds: normalizeStringArray(metadataRecord.relatedToolIds, 'Tool relatedToolIds')
+    };
 }
 
 /**
@@ -112,9 +323,17 @@ function createToolDefinition(metadataPath) {
     const rootConfig = loadRootConfig();
     const publicPath = normalizePublicPath(metadata.publicPath);
     const outputDir = getOutputDirFromPublicPath(publicPath);
+    const absolutePageUrl = buildAbsoluteUrl(rootConfig.siteBaseUrl, publicPath);
+    const absoluteFeaturedImageUrl = buildAbsoluteUrl(rootConfig.siteBaseUrl, `${publicPath.replace(/^\//, '')}${DEFAULT_FEATURED_IMAGE_PATH}`);
+
+    if (metadata.scriptType !== 'module' && metadata.scriptType !== 'classic') {
+        throw new Error(`Tool ${metadata.id} scriptType must be "module" or "classic"`);
+    }
 
     return {
         siteBaseUrl: rootConfig.siteBaseUrl,
+        siteName: rootConfig.siteName,
+        siteDescription: rootConfig.siteDescription,
         id: metadata.id,
         version: metadata.version,
         sourceRoot,
@@ -122,23 +341,32 @@ function createToolDefinition(metadataPath) {
         outputPath: path.join('build', outputDir),
         title: metadata.title,
         description: metadata.description,
+        indexDescription: metadata.indexDescription,
+        keywords: metadata.keywords || [],
         appRootId: metadata.appRootId,
         publicPath,
+        absolutePageUrl,
         scriptType: metadata.scriptType,
         featuredImagePath: DEFAULT_FEATURED_IMAGE_PATH,
+        absoluteFeaturedImageUrl,
+        catalogGroupId: metadata.catalogGroupId,
+        catalogOrder: metadata.catalogOrder,
         dependencyScopes: metadata.dependencyScopes.slice(),
-        relatedToolIds: metadata.relatedToolIds
+        relatedToolIds: metadata.relatedToolIds.slice()
     };
 }
 
 /**
  * @param {ToolDefinition[]} toolDefinitions
+ * @param {CatalogGroupDefinition[]} [catalogGroups]
  * @returns {ToolDefinition[]}
  */
-function validateToolDefinitions(toolDefinitions) {
+function validateToolDefinitions(toolDefinitions, catalogGroups = loadRootConfig().catalogGroups) {
     const knownToolIds = new Set(toolDefinitions.map((tool) => tool.id));
     const knownPublicPaths = new Map();
     const knownOutputDirs = new Map();
+    const knownCatalogGroups = new Set(catalogGroups.map((group) => group.id));
+    const seenCatalogOrdersByGroup = new Map();
 
     toolDefinitions.forEach((tool) => {
         if (knownPublicPaths.has(tool.publicPath)) {
@@ -152,9 +380,37 @@ function validateToolDefinitions(toolDefinitions) {
         knownPublicPaths.set(tool.publicPath, tool.id);
         knownOutputDirs.set(tool.outputDir, tool.id);
 
+        if (!knownCatalogGroups.has(tool.catalogGroupId)) {
+            throw new Error(`Tool ${tool.id} references an unknown catalog group id: ${tool.catalogGroupId}`);
+        }
+
+        const catalogOrdersForGroup = seenCatalogOrdersByGroup.get(tool.catalogGroupId) || new Map();
+        if (catalogOrdersForGroup.has(tool.catalogOrder)) {
+            throw new Error(`Duplicate catalogOrder ${tool.catalogOrder} detected for catalog group ${tool.catalogGroupId}`);
+        }
+        catalogOrdersForGroup.set(tool.catalogOrder, tool.id);
+        seenCatalogOrdersByGroup.set(tool.catalogGroupId, catalogOrdersForGroup);
+
         if (!Array.isArray(tool.relatedToolIds)) {
             throw new Error(`Tool ${tool.id} must define relatedToolIds as an array`);
         }
+
+        if (!Array.isArray(tool.keywords)) {
+            throw new Error(`Tool ${tool.id} must define keywords as an array`);
+        }
+
+        const seenKeywords = new Set();
+        tool.keywords.forEach((keyword) => {
+            if (typeof keyword !== 'string' || keyword.length === 0) {
+                throw new Error(`Tool ${tool.id} contains an invalid keyword`);
+            }
+
+            if (seenKeywords.has(keyword)) {
+                throw new Error(`Tool ${tool.id} contains a duplicate keyword: ${keyword}`);
+            }
+
+            seenKeywords.add(keyword);
+        });
 
         const seenRelatedToolIds = new Set();
         tool.relatedToolIds.forEach((relatedToolId) => {
@@ -189,12 +445,51 @@ function getToolDefinitions() {
 }
 
 /**
+ * @returns {CatalogGroupDefinition[]}
+ */
+function getCatalogGroups() {
+    return loadRootConfig().catalogGroups.slice();
+}
+
+/**
+ * @returns {GroupedToolDefinition[]}
+ */
+function getGroupedToolDefinitions() {
+    const catalogGroups = getCatalogGroups();
+    const tools = getToolDefinitions();
+
+    return catalogGroups.map((group) => ({
+        id: group.id,
+        label: group.label,
+        tools: tools
+            .filter((tool) => tool.catalogGroupId === group.id)
+            .sort((left, right) => left.catalogOrder - right.catalogOrder || left.title.localeCompare(right.title))
+    }));
+}
+
+/**
+ * @returns {RootPageDefinition}
+ */
+function getRootPageDefinition() {
+    const rootConfig = loadRootConfig();
+    return {
+        title: rootConfig.rootPage.title,
+        description: rootConfig.rootPage.description,
+        absoluteUrl: `${rootConfig.siteBaseUrl}/`
+    };
+}
+
+/**
  * @returns {ToolManifest}
  */
 function loadManifest() {
     const rootConfig = loadRootConfig();
     return {
         siteBaseUrl: rootConfig.siteBaseUrl,
+        siteName: rootConfig.siteName,
+        siteDescription: rootConfig.siteDescription,
+        rootPage: getRootPageDefinition(),
+        catalogGroups: rootConfig.catalogGroups.slice(),
         tools: getToolDefinitions(),
         rootShell: rootConfig.rootShell,
         rootAssets: rootConfig.rootAssets.slice()
@@ -271,6 +566,20 @@ function getRootShellDefinition() {
  */
 function getSiteBaseUrl() {
     return loadRootConfig().siteBaseUrl;
+}
+
+/**
+ * @returns {string}
+ */
+function getSiteName() {
+    return loadRootConfig().siteName;
+}
+
+/**
+ * @returns {string}
+ */
+function getSiteDescription() {
+    return loadRootConfig().siteDescription;
 }
 
 /**
@@ -390,11 +699,17 @@ module.exports = {
     REPO_ROOT,
     TOOL_METADATA_FILENAME,
     assertValidToolIds,
+    buildAbsoluteUrl,
     dedupeToolIds,
+    getCatalogGroups,
+    getGroupedToolDefinitions,
     getRootAssets,
     getRelatedTools,
+    getRootPageDefinition,
     getRootShellDefinition,
     getSiteBaseUrl,
+    getSiteDescription,
+    getSiteName,
     getToolById,
     getToolByOutputDir,
     getToolDefinitions,
