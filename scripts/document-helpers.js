@@ -25,7 +25,10 @@ function escapeAttribute(value) {
  * @returns {string}
  */
 function joinUrl(baseUrl, pathName) {
-    return new URL(pathName.replace(/^\.\//, ''), baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`).toString();
+    return new URL(
+        pathName.replace(/^\.\//, '').replace(/^\/+/, ''),
+        baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+    ).toString();
 }
 
 /**

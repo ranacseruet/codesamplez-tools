@@ -140,7 +140,7 @@ function normalizeBaseUrl(baseUrl) {
  * @returns {string}
  */
 function buildAbsoluteUrl(baseUrl, pathName) {
-    return new URL(pathName.replace(/^\.\//, ''), `${baseUrl}/`).toString();
+    return new URL(pathName.replace(/^\.\//, '').replace(/^\/+/, ''), `${baseUrl}/`).toString();
 }
 
 /**

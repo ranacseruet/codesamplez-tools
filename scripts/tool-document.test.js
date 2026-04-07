@@ -5,10 +5,10 @@ const { getToolById } = require('./tool-manifest');
 
 describe('tool document generation', () => {
     it('joins urls without dropping nested paths', () => {
-        expect(joinUrl('https://tools.codesamplez.com', '/json-formatter/'))
-            .toBe('https://tools.codesamplez.com/json-formatter/');
-        expect(joinUrl('https://tools.codesamplez.com/', 'text-analyzer/images/featured.png'))
-            .toBe('https://tools.codesamplez.com/text-analyzer/images/featured.png');
+        expect(joinUrl('https://codesamplez.com/tools', '/json-formatter/'))
+            .toBe('https://codesamplez.com/tools/json-formatter/');
+        expect(joinUrl('https://codesamplez.com/tools/', 'text-analyzer/images/featured.png'))
+            .toBe('https://codesamplez.com/tools/text-analyzer/images/featured.png');
     });
 
     it('renders a module tool document with metadata and shell placeholders', () => {
@@ -17,8 +17,8 @@ describe('tool document generation', () => {
 
         expect(html).toContain('<title>Diff Checker</title>');
         expect(html).toContain('<meta name="description" content="Compare two texts or code snippets and highlight the differences between them.">');
-        expect(html).toContain('<link rel="canonical" href="https://tools.codesamplez.com/diff-checker/">');
-        expect(html).toContain('<meta property="og:image" content="https://tools.codesamplez.com/diff-checker/images/featured.png">');
+        expect(html).toContain('<link rel="canonical" href="https://codesamplez.com/tools/diff-checker/">');
+        expect(html).toContain('<meta property="og:image" content="https://codesamplez.com/tools/diff-checker/images/featured.png">');
         expect(html).toContain('<script type="application/ld+json">');
         expect(html).toContain('"@type":"WebPage"');
         expect(html).toContain('"@type":"WebApplication"');
@@ -27,8 +27,8 @@ describe('tool document generation', () => {
         expect(html).toContain('"operatingSystem":"Any"');
         expect(html).toContain('"price":"0"');
         expect(html).toContain('"priceCurrency":"USD"');
-        expect(html).toContain('"url":"https://tools.codesamplez.com/diff-checker/"');
-        expect(html).toContain('"image":"https://tools.codesamplez.com/diff-checker/images/featured.png"');
+        expect(html).toContain('"url":"https://codesamplez.com/tools/diff-checker/"');
+        expect(html).toContain('"image":"https://codesamplez.com/tools/diff-checker/images/featured.png"');
         expect(html).not.toContain('"@type":"FAQPage"');
         expect(html).toContain('<div id="app-shell-header"></div>');
         expect(html).toContain('<div id="diff-checker-app"><section>SSR payload</section></div>');
@@ -53,7 +53,7 @@ describe('tool document generation', () => {
         expect(html).toContain('id="related-tools-heading"');
         expect(html).toContain('Related tools');
         expect(html).toContain('href="/jwt-decoder/"');
-        expect(html).toContain('https://tools.codesamplez.com/base64-converter/images/featured.png');
+        expect(html).toContain('https://codesamplez.com/tools/base64-converter/images/featured.png');
         expect(html).toContain('"@type":"WebSite"');
         expect(html).toContain('"name":"Base64 Converter"');
         expect(html).toContain('"keywords":"base64, encode, decode, text, files"');
@@ -66,6 +66,6 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"Is the Text Analyzer tool free to use?"');
         expect(html).toContain('"name":"What\'s the difference between a text analyzer and a word counter?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes. The CodeSamplez Text Analyzer is completely free to use.');
-        expect(html).toContain('"isPartOf":{"@id":"https://tools.codesamplez.com/text-analyzer/#webpage"}');
+        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/text-analyzer/#webpage"}');
     });
 });
