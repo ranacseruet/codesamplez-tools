@@ -4,6 +4,14 @@
   margin: 0;
 }
 
+.text-analyzer-tool .c-tool-article {
+  margin: 0;
+}
+
+.text-analyzer-tool .c-tool-article__cta-row .c-button {
+  width: fit-content;
+}
+
 .text-analyzer-tool .ta-panel {
   min-height: 21rem;
 }
@@ -213,6 +221,10 @@
   }
 
   .text-analyzer-tool .ta-load-sample-btn {
+    width: 100%;
+  }
+
+  .text-analyzer-tool .c-tool-article__cta-row .c-button {
     width: 100%;
   }
 

@@ -4,6 +4,7 @@ const { getToolById, loadManifest } = require('./tool-manifest');
 const { renderRelatedToolsPrerenderMarkup, renderToolPrerenderMarkup } = require('./prerender-tool');
 const { escapeAttribute, escapeHtml, joinUrl } = require('./document-helpers');
 const { buildToolStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
+const { getToolFaqItems } = require('./tool-faq-metadata');
 
 /**
  * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
@@ -26,7 +27,9 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '') {
     const escapedFeaturedImagePath = escapeAttribute(tool.featuredImagePath);
     const escapedFeaturedImageUrl = escapeAttribute(absoluteFeaturedImageUrl);
     const escapedFeaturedAlt = escapeAttribute(`${tool.title} featured image`);
-    const structuredDataScript = renderStructuredDataScript(buildToolStructuredDataGraph(manifest, tool));
+    const structuredDataScript = renderStructuredDataScript(buildToolStructuredDataGraph(manifest, tool, {
+        faqItems: getToolFaqItems(tool.id)
+    }));
     const scriptTypeAttribute = tool.scriptType === 'module' ? ' type="module"' : '';
 
     return `<!DOCTYPE html>

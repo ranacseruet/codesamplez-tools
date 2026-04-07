@@ -2,36 +2,12 @@
 
 const path = require('path');
 const { getRelatedTools } = require('./tool-manifest');
+const { ensureBabelRegister } = require('./register-node-transforms');
 
 /**
  * @typedef {import('../common/tooling-contracts').ToolPrerenderConfig} ToolPrerenderConfig
  * @typedef {import('../common/tooling-contracts').ToolPrerenderRegistry} ToolPrerenderRegistry
  */
-
-let babelRegistered = false;
-
-/**
- * @returns {void}
- */
-function ensureBabelRegister() {
-    if (babelRegistered) {
-        return;
-    }
-
-    require('@babel/register')({
-        extensions: ['.js', '.jsx', '.ts', '.tsx'],
-        ignore: [/node_modules/],
-        babelrc: false,
-        configFile: false,
-        presets: [
-            ['@babel/preset-env', { targets: { node: 'current' }, modules: 'commonjs' }],
-            ['@babel/preset-react', { runtime: 'automatic', importSource: 'preact' }],
-            ['@babel/preset-typescript', { allowDeclareFields: true }]
-        ]
-    });
-
-    babelRegistered = true;
-}
 
 /** @type {ToolPrerenderRegistry} */
 const TOOL_PRERENDER_REGISTRY = {

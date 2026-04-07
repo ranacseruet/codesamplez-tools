@@ -5,6 +5,7 @@ const { escapeJsonForHtml } = require('./document-helpers');
 /**
  * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
  * @typedef {import('./tool-manifest').ToolManifest} ToolManifest
+ * @typedef {{ question: string, structuredDataAnswer: string }} StructuredFaqItem
  */
 
 /**
@@ -65,6 +66,14 @@ function getToolAppId(tool) {
  */
 function getToolBreadcrumbId(tool) {
     return `${tool.absolutePageUrl}#breadcrumb`;
+}
+
+/**
+ * @param {ToolDefinition} tool
+ * @returns {string}
+ */
+function getToolFaqPageId(tool) {
+    return `${tool.absolutePageUrl}#faqpage`;
 }
 
 /**
@@ -159,16 +168,44 @@ function createToolBreadcrumbNode(manifest, tool) {
 }
 
 /**
+ * @param {ToolDefinition} tool
+ * @param {StructuredFaqItem[]} faqItems
+ * @returns {Record<string, unknown>}
+ */
+function createToolFaqPageNode(tool, faqItems) {
+    return {
+        '@type': 'FAQPage',
+        '@id': getToolFaqPageId(tool),
+        url: tool.absolutePageUrl,
+        isPartOf: {
+            '@id': getToolPageId(tool)
+        },
+        mainEntity: faqItems.map((item) => ({
+            '@type': 'Question',
+            name: item.question,
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: item.structuredDataAnswer
+            }
+        }))
+    };
+}
+
+/**
  * @param {ToolManifest} manifest
  * @param {ToolDefinition} tool
+ * @param {{ faqItems?: StructuredFaqItem[] }} [options]
  * @returns {Record<string, unknown>[]}
  */
-function buildToolStructuredDataGraph(manifest, tool) {
+function buildToolStructuredDataGraph(manifest, tool, options = {}) {
+    const faqItems = Array.isArray(options.faqItems) ? options.faqItems : [];
+
     return [
         createWebsiteNode(manifest),
         createToolWebPageNode(manifest, tool),
         createToolApplicationNode(tool),
-        createToolBreadcrumbNode(manifest, tool)
+        createToolBreadcrumbNode(manifest, tool),
+        ...(faqItems.length > 0 ? [createToolFaqPageNode(tool, faqItems)] : [])
     ];
 }
 

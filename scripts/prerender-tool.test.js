@@ -98,6 +98,11 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="textInput"');
         expect(markup).toContain('id="wordFrequencyChart"');
         expect(markup).toContain('id="load-sample"');
+        expect(markup).toContain('The CodeSamplez Text Analyzer is a <strong>free online text analysis tool</strong>');
+        expect(markup).toContain('What is a Text Analyzer?');
+        expect(markup).toContain('Text Analyzer FAQs:');
+        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('renders qr-code-generator app markup for server-side prerender', () => {

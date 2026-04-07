@@ -4,6 +4,7 @@ import { NotificationManager } from '../common/notification-manager';
 import ClearButton from '../common/clear-button/ClearButton';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { analyzeText } from './TextAnalyzer';
+import { TextAnalyzerArticle, TextAnalyzerIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 const SAMPLE_TEXT = "This is a sample text for analysis. It has multiple sentences and paragraphs.\n\nLet's see how well it works!";
@@ -96,6 +97,8 @@ export function TextAnalyzerApp() {
 
     return (
         <div className="tool-container text-analyzer-tool c-tool-stack">
+            <TextAnalyzerIntro />
+
             <div className="text-analyzer-editor-container ta-editor-container">
                 <div className="text-analyzer-panel ta-panel ta-input-panel c-surface-card c-surface-panel">
                     <div className="text-analyzer-panel-header ta-panel-header c-surface-panel__header">
@@ -156,6 +159,8 @@ export function TextAnalyzerApp() {
             </div>
 
             <div id="notification" className="c-notification" role="status" aria-live="polite" />
+
+            <TextAnalyzerArticle />
         </div>
     );
 }

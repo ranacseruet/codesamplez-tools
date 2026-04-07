@@ -28,6 +28,7 @@ describe('tool document generation', () => {
         expect(html).toContain('"priceCurrency":"USD"');
         expect(html).toContain('"url":"https://tools.codesamplez.com/diff-checker/"');
         expect(html).toContain('"image":"https://tools.codesamplez.com/diff-checker/images/featured.png"');
+        expect(html).not.toContain('"@type":"FAQPage"');
         expect(html).toContain('<div id="app-shell-header"></div>');
         expect(html).toContain('<div id="diff-checker-app"><section>SSR payload</section></div>');
         expect(html).toContain('<section class="c-related-tools">Related</section>');
@@ -55,5 +56,15 @@ describe('tool document generation', () => {
         expect(html).toContain('"@type":"WebSite"');
         expect(html).toContain('"name":"Base64 Converter"');
         expect(html).toContain('"keywords":"base64, encode, decode, text, files"');
+    });
+
+    it('renders FAQPage structured data for text-analyzer', () => {
+        const html = generateToolDocument('text-analyzer-tool');
+
+        expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('"name":"Is the Text Analyzer tool free to use?"');
+        expect(html).toContain('"name":"What\'s the difference between a text analyzer and a word counter?"');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes. The CodeSamplez Text Analyzer is completely free to use.');
+        expect(html).toContain('"isPartOf":{"@id":"https://tools.codesamplez.com/text-analyzer/#webpage"}');
     });
 });
