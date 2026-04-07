@@ -1,5 +1,6 @@
 import { render } from 'preact';
 import { ToolShellFooter, ToolShellHeader } from './AppShell';
+import { TOOL_CATALOG_ROOT_PATH } from './toolCatalog';
 import type { MountToolShellOptions } from '../tooling-contracts';
 
 const STANDALONE_THEME_STORAGE_KEY = 'cst-standalone-theme-mode';
@@ -69,7 +70,7 @@ function persistStandaloneThemeMode(themeMode: ThemeMode): void {
 export function mountToolShell({
     title,
     description,
-    homeHref = '/',
+    homeHref = TOOL_CATALOG_ROOT_PATH,
     headerRootId = 'app-shell-header',
     footerRootId = 'app-shell-footer',
     showThemeToggle = false
@@ -85,6 +86,7 @@ export function mountToolShell({
     }
 
     let currentThemeMode: ThemeMode = THEME_LIGHT;
+    const resolvedHomeHref = homeHref === '/' ? TOOL_CATALOG_ROOT_PATH : homeHref;
 
     if (shouldEnableThemeToggle) {
         currentThemeMode = applyStandaloneThemeMode(
@@ -108,7 +110,7 @@ export function mountToolShell({
             <ToolShellHeader
                 title={title}
                 description={description}
-                homeHref={homeHref}
+                homeHref={resolvedHomeHref}
                 showThemeToggle={shouldEnableThemeToggle}
                 themeMode={currentThemeMode}
                 onToggleTheme={shouldEnableThemeToggle ? handleThemeToggle : undefined}
@@ -120,7 +122,7 @@ export function mountToolShell({
     renderHeader();
 
     if (footerRoot) {
-        render(<ToolShellFooter />, footerRoot);
+        render(<ToolShellFooter homeHref={resolvedHomeHref} />, footerRoot);
     }
 
     if (shouldEnableThemeToggle && typeof MutationObserver !== 'undefined' && document.documentElement) {

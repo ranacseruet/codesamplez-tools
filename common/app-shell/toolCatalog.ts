@@ -15,6 +15,7 @@ export interface AppShellToolCatalogEntry {
 export interface AppShellRootPageMetadata {
     title: string;
     description: string;
+    rootPath: string;
 }
 
 interface AppShellRootConfig {
@@ -35,6 +36,25 @@ interface AppShellToolCatalog {
     rootPage: AppShellRootPageMetadata;
     groups: AppShellCatalogGroup[];
     entries: AppShellToolCatalogEntry[];
+}
+
+function normalizeRootPath(rootPath: string): string {
+    const trimmedRootPath = rootPath.trim();
+
+    if (!trimmedRootPath || trimmedRootPath === '/') {
+        return '/';
+    }
+
+    return `/${trimmedRootPath.replace(/^\/+|\/+$/g, '')}/`;
+}
+
+export function resolveCatalogHref(pathName: string, rootPath: string): string {
+    const normalizedRootPath = normalizeRootPath(rootPath);
+    const normalizedPathName = pathName.replace(/^\/+/, '');
+
+    return normalizedRootPath === '/'
+        ? `/${normalizedPathName}`
+        : `${normalizedRootPath}${normalizedPathName}`;
 }
 
 export function normalizeToolCatalog(
@@ -81,5 +101,6 @@ function getInjectedToolCatalog(): AppShellToolCatalog {
 const TOOL_CATALOG = getInjectedToolCatalog();
 
 export const ROOT_PAGE_METADATA = TOOL_CATALOG.rootPage;
+export const TOOL_CATALOG_ROOT_PATH = normalizeRootPath(TOOL_CATALOG.rootPage.rootPath);
 export const TOOL_CATALOG_GROUPS: AppShellCatalogGroup[] = TOOL_CATALOG.groups;
 export const TOOL_CATALOG_ENTRIES: AppShellToolCatalogEntry[] = TOOL_CATALOG.entries;

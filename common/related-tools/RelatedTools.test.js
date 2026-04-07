@@ -36,8 +36,8 @@ describe('RelatedToolsSection', () => {
 
         const links = Array.from(root.querySelectorAll('a.c-related-tools__cta'));
         expect(links.map((link) => link.getAttribute('href'))).toEqual([
-            '/jwt-builder/',
-            '/base64-converter/'
+            '/tools/jwt-builder/',
+            '/tools/base64-converter/'
         ]);
         expect(links.every((link) => link.textContent === 'Open tool')).toBe(true);
     });

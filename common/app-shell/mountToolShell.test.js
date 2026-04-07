@@ -23,7 +23,8 @@ describe('mountToolShell', () => {
         expect(document.querySelector('#app-shell-header .cst-shell__title')?.textContent).toBe('Data Format Converter');
         expect(document.querySelector('#app-shell-header .cst-shell__description')?.textContent)
             .toContain('Convert JSON, XML, YAML, and Properties formats');
-        expect(document.querySelector('#app-shell-footer .cst-shell__footer-link')?.getAttribute('href')).toBe('/');
+        expect(document.querySelector('#app-shell-header .cst-shell__brand')?.getAttribute('href')).toBe('/tools/');
+        expect(document.querySelector('#app-shell-footer .cst-shell__footer-link')?.getAttribute('href')).toBe('/tools/');
         expect(document.querySelector('#app-shell-header .cst-shell__tool-menu-trigger')?.textContent).toContain('Browse Tools');
     });
 
@@ -43,7 +44,7 @@ describe('mountToolShell', () => {
 
         expect(document.querySelector('#custom-header .cst-shell__title')?.textContent).toBe('Custom Tool');
         expect(document.querySelector('#custom-header .cst-shell__brand')?.getAttribute('href')).toBe('/custom');
-        expect(document.querySelector('#custom-footer .cst-shell__footer-link')).not.toBeNull();
+        expect(document.querySelector('#custom-footer .cst-shell__footer-link')?.getAttribute('href')).toBe('/custom');
     });
 
     it('is a no-op when mount roots are missing', () => {

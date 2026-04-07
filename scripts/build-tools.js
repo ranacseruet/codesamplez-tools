@@ -115,7 +115,10 @@ function main() {
 
     const result = spawnSync(process.execPath, [...cliArgs, ...args.passthroughArgs], {
         cwd: process.cwd(),
-        env: process.env,
+        env: {
+            ...process.env,
+            NODE_ENV: args.mode
+        },
         stdio: 'inherit'
     });
 

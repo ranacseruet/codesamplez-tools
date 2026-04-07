@@ -35,7 +35,7 @@ describe('structured data rendering', () => {
     const script = renderStructuredDataScript(graph);
 
     expect(script).toContain('"@type":"FAQPage"');
-    expect(script).toContain('"url":"https://tools.codesamplez.com/text-analyzer/"');
+    expect(script).toContain('"url":"https://codesamplez.com/tools/text-analyzer/"');
     expect(script).toContain('"name":"Is the Text Analyzer tool free to use?"');
     expect(script).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes. It is free."}');
     expect(script).not.toContain('"@type":"BreadcrumbList"');
