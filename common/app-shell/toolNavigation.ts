@@ -1,4 +1,4 @@
-import { TOOL_CATALOG_ENTRIES, TOOL_CATALOG_GROUPS } from './toolCatalog';
+import { resolveCatalogHref, TOOL_CATALOG_ENTRIES, TOOL_CATALOG_GROUPS, TOOL_CATALOG_ROOT_PATH } from './toolCatalog';
 
 export interface ToolNavigationItem {
     label: string;
@@ -17,6 +17,6 @@ export const TOOL_NAVIGATION_GROUPS: ToolNavigationGroup[] = TOOL_CATALOG_GROUPS
         .sort((left, right) => left.catalogOrder - right.catalogOrder || left.title.localeCompare(right.title))
         .map((tool) => ({
             label: tool.title,
-            href: tool.publicPath
+            href: resolveCatalogHref(tool.publicPath, TOOL_CATALOG_ROOT_PATH)
         }))
 }));

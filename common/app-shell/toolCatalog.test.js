@@ -31,7 +31,8 @@ describe('tool catalog runtime data', () => {
 
         expect(ROOT_PAGE_METADATA).toEqual({
             title: rootPageDefinition.title,
-            description: rootPageDefinition.description
+            description: rootPageDefinition.description,
+            rootPath: new URL(rootPageDefinition.absoluteUrl).pathname
         });
         expect(TOOL_CATALOG_GROUPS).toEqual(getCatalogGroups());
         expect(TOOL_CATALOG_ENTRIES.map((entry) => entry.id)).toEqual(
@@ -44,7 +45,8 @@ describe('tool catalog runtime data', () => {
             {
                 rootPage: {
                     title: 'Fixture',
-                    description: 'Fixture description'
+                    description: 'Fixture description',
+                    rootPath: '/tools/'
                 },
                 catalogGroups: [
                     { id: 'group-b', label: 'Group B' },
@@ -80,7 +82,8 @@ describe('tool catalog runtime data', () => {
             {
                 rootPage: {
                     title: 'Fixture',
-                    description: 'Fixture description'
+                    description: 'Fixture description',
+                    rootPath: '/tools/'
                 },
                 catalogGroups: [
                     { id: 'group-a', label: 'Group A' }

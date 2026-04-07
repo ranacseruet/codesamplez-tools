@@ -1,4 +1,5 @@
 import type { JSX } from 'preact';
+import { resolveCatalogHref, TOOL_CATALOG_ROOT_PATH } from '../app-shell/toolCatalog';
 
 export interface RelatedToolSummary {
     id: string;
@@ -27,7 +28,10 @@ export function RelatedToolsSection({ tools }: RelatedToolsSectionProps): JSX.El
                     <article className="c-related-tools__card c-surface-card" key={tool.id}>
                         <h3 className="c-related-tools__card-title">{tool.title}</h3>
                         <p className="c-related-tools__card-copy">{tool.description}</p>
-                        <a className="c-button c-button--secondary c-button--small c-related-tools__cta" href={tool.publicPath}>
+                        <a
+                            className="c-button c-button--secondary c-button--small c-related-tools__cta"
+                            href={resolveCatalogHref(tool.publicPath, TOOL_CATALOG_ROOT_PATH)}
+                        >
                             Open tool
                         </a>
                     </article>

@@ -1,5 +1,6 @@
 import { render } from 'preact';
 import { ToolShellFooter, ToolShellHeader } from './AppShell';
+import { TOOL_CATALOG_ROOT_PATH } from './toolCatalog';
 
 describe('AppShell components', () => {
     beforeEach(() => {
@@ -43,7 +44,7 @@ describe('AppShell components', () => {
         const dataFormatConverterLink = Array.from(root.querySelectorAll('.cst-shell__tool-menu-link'))
             .find((link) => link.textContent === 'Data Format Converter');
         expect(dataFormatConverterLink).not.toBeNull();
-        expect(dataFormatConverterLink?.getAttribute('href')).toBe('/data-format-converter/');
+        expect(dataFormatConverterLink?.getAttribute('href')).toBe('/tools/data-format-converter/');
     });
 
     it('renders a theme toggle when enabled', () => {
@@ -83,6 +84,6 @@ describe('AppShell components', () => {
         const allToolsLink = root.querySelector('a.cst-shell__footer-link');
         expect(allToolsLink).not.toBeNull();
         expect(allToolsLink.textContent).toBe('All Tools');
-        expect(allToolsLink.getAttribute('href')).toBe('/');
+        expect(allToolsLink.getAttribute('href')).toBe(TOOL_CATALOG_ROOT_PATH);
     });
 });

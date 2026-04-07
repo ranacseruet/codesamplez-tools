@@ -52,7 +52,7 @@ describe('tool document generation', () => {
         expect(html).toContain('id="base64converter-convert"');
         expect(html).toContain('id="related-tools-heading"');
         expect(html).toContain('Related tools');
-        expect(html).toContain('href="/jwt-decoder/"');
+        expect(html).toContain('href="/tools/jwt-decoder/"');
         expect(html).toContain('https://codesamplez.com/tools/base64-converter/images/featured.png');
         expect(html).toContain('"@type":"WebSite"');
         expect(html).toContain('"name":"Base64 Converter"');

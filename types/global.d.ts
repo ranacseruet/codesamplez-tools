@@ -9,6 +9,7 @@ declare var __CST_APP_SHELL_CATALOG__: {
     rootPage: {
         title: string;
         description: string;
+        rootPath: string;
     };
     groups: Array<{
         id: string;
