@@ -61,6 +61,17 @@ function getToolAppId(tool) {
 }
 
 /**
+ * Breadcrumb structured data is temporarily disabled until the matching breadcrumb UI ships.
+ * Keep the ID builder in place so re-enabling the existing schema path is a small change later.
+ *
+ * @param {ToolDefinition} tool
+ * @returns {string}
+ */
+function getToolBreadcrumbId(tool) {
+    return `${tool.absolutePageUrl}#breadcrumb`;
+}
+
+/**
  * @param {ToolDefinition} tool
  * @returns {string}
  */
@@ -126,7 +137,37 @@ function createToolWebPageNode(manifest, tool) {
         mainEntity: {
             '@id': getToolAppId(tool)
         },
+        // Breadcrumb schema stays disabled until the site has a matching breadcrumb UI.
         primaryImageOfPage: tool.absoluteFeaturedImageUrl
+    };
+}
+
+/**
+ * Breadcrumb structured data is intentionally kept but not currently emitted.
+ * Re-enable it together with the matching breadcrumb UI by wiring this node back into the graph.
+ *
+ * @param {ToolManifest} manifest
+ * @param {ToolDefinition} tool
+ * @returns {Record<string, unknown>}
+ */
+function createToolBreadcrumbNode(manifest, tool) {
+    return {
+        '@type': 'BreadcrumbList',
+        '@id': getToolBreadcrumbId(tool),
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: manifest.rootPage.title,
+                item: manifest.rootPage.absoluteUrl
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: tool.title,
+                item: tool.absolutePageUrl
+            }
+        ]
     };
 }
 
@@ -167,6 +208,7 @@ function buildToolStructuredDataGraph(manifest, tool, options = {}) {
         createWebsiteNode(manifest),
         createToolWebPageNode(manifest, tool),
         createToolApplicationNode(tool),
+        // Intentionally not calling createToolBreadcrumbNode() until the breadcrumb UI exists.
         ...(faqItems.length > 0 ? [createToolFaqPageNode(tool, faqItems)] : [])
     ];
 }
