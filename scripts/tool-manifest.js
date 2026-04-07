@@ -10,6 +10,8 @@ const DEFAULT_FEATURED_IMAGE_DIRECTORY = 'images';
 const DEFAULT_FEATURED_IMAGE_FILENAME = 'featured.png';
 const DEFAULT_FEATURED_IMAGE_EXTENSION = '.png';
 const DEFAULT_FEATURED_IMAGE_PATH = path.posix.join(DEFAULT_FEATURED_IMAGE_DIRECTORY, DEFAULT_FEATURED_IMAGE_FILENAME);
+const SITE_BASE_URL_ENV_KEY = 'CST_SITE_BASE_URL';
+const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
 
 /**
  * @typedef {'module' | 'classic'} ToolScriptType
@@ -135,6 +137,36 @@ function normalizeBaseUrl(baseUrl) {
 }
 
 /**
+ * @returns {string}
+ */
+function getDevelopmentSiteBaseUrl() {
+    const port = requireNonEmptyString(process.env.PORT || '8081', 'Development port');
+
+    if (!/^\d+$/.test(port)) {
+        throw new Error(`Development port must be numeric: ${port}`);
+    }
+
+    return normalizeBaseUrl(`${DEFAULT_DEVELOPMENT_SITE_ORIGIN.replace(/:\d+$/, '')}:${port}`);
+}
+
+/**
+ * @param {unknown} configuredBaseUrl
+ * @returns {string}
+ */
+function resolveSiteBaseUrl(configuredBaseUrl) {
+    const configuredSiteBaseUrl = normalizeBaseUrl(configuredBaseUrl);
+    const overriddenSiteBaseUrl = process.env[SITE_BASE_URL_ENV_KEY];
+
+    if (typeof overriddenSiteBaseUrl === 'string' && overriddenSiteBaseUrl.trim().length > 0) {
+        return normalizeBaseUrl(overriddenSiteBaseUrl);
+    }
+
+    return process.env.NODE_ENV === 'development'
+        ? getDevelopmentSiteBaseUrl()
+        : configuredSiteBaseUrl;
+}
+
+/**
  * @param {string} baseUrl
  * @param {string} pathName
  * @returns {string}
@@ -190,7 +222,7 @@ function loadRootConfig() {
     }
 
     const parsedRootConfig = /** @type {Record<string, unknown>} */ (rawRootConfig);
-    const siteBaseUrl = normalizeBaseUrl(parsedRootConfig.siteBaseUrl);
+    const siteBaseUrl = resolveSiteBaseUrl(parsedRootConfig.siteBaseUrl);
     const siteName = requireNonEmptyString(parsedRootConfig.siteName, 'Root siteName');
     const siteDescription = requireNonEmptyString(parsedRootConfig.siteDescription, 'Root siteDescription');
     const rootPage = parsedRootConfig.rootPage;
@@ -710,6 +742,7 @@ module.exports = {
     getSiteBaseUrl,
     getSiteDescription,
     getSiteName,
+    getDevelopmentSiteBaseUrl,
     getToolById,
     getToolByOutputDir,
     getToolDefinitions,
@@ -721,6 +754,7 @@ module.exports = {
     normalizeSelection,
     normalizePublicPath,
     parseToolSelectionArgs,
+    resolveSiteBaseUrl,
     selectTools,
     splitCsv,
     validateToolDefinitions

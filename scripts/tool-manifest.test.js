@@ -13,6 +13,7 @@ const {
   getRelatedTools,
   getRootPageDefinition,
   getRootShellDefinition,
+  getDevelopmentSiteBaseUrl,
   getSiteBaseUrl,
   getSiteDescription,
   getSiteName,
@@ -27,6 +28,7 @@ const {
   normalizeSelection,
   normalizePublicPath,
   parseToolSelectionArgs,
+  resolveSiteBaseUrl,
   selectTools,
   splitCsv,
   validateToolDefinitions
@@ -154,6 +156,26 @@ function withMockedManifestFiles({ rootConfig = createMockRootConfig(), metadata
   }
 }
 
+function withEnv(overrides, run) {
+  const originalEnv = { ...process.env };
+
+  Object.keys(overrides).forEach((key) => {
+    const value = overrides[key];
+    if (typeof value === 'undefined') {
+      delete process.env[key];
+      return;
+    }
+
+    process.env[key] = value;
+  });
+
+  try {
+    return run();
+  } finally {
+    process.env = originalEnv;
+  }
+}
+
 describe('tool-manifest', () => {
   it('loads the shared root config', () => {
     expect(ROOT_CONFIG_PATH).toBe(path.resolve(__dirname, '../config/tooling-root.json'));
@@ -175,6 +197,53 @@ describe('tool-manifest', () => {
         outputPath: 'build/root-shell'
       },
       rootAssets: ['index.html', 'styles.css', 'robots.txt']
+    });
+  });
+
+  it('resolves production, development, and explicit override site base urls', () => {
+    expect(resolveSiteBaseUrl('https://codesamplez.com/tools')).toBe('https://codesamplez.com/tools');
+
+    expect(withEnv({
+      NODE_ENV: 'development',
+      PORT: '8081',
+      CST_SITE_BASE_URL: undefined
+    }, () => resolveSiteBaseUrl('https://codesamplez.com/tools'))).toBe('http://localhost:8081');
+
+    expect(withEnv({
+      NODE_ENV: 'development',
+      PORT: '9090',
+      CST_SITE_BASE_URL: undefined
+    }, () => getDevelopmentSiteBaseUrl())).toBe('http://localhost:9090');
+
+    expect(withEnv({
+      NODE_ENV: 'development',
+      PORT: '8081',
+      CST_SITE_BASE_URL: 'https://preview.codesamplez.com/tools'
+    }, () => resolveSiteBaseUrl('https://codesamplez.com/tools'))).toBe('https://preview.codesamplez.com/tools');
+  });
+
+  it('uses the development site base url in root config and tool definitions when NODE_ENV=development', () => {
+    expect(withEnv({
+      NODE_ENV: 'development',
+      PORT: '8081',
+      CST_SITE_BASE_URL: undefined
+    }, () => loadRootConfig().siteBaseUrl)).toBe('http://localhost:8081');
+
+    expect(withEnv({
+      NODE_ENV: 'development',
+      PORT: '8081',
+      CST_SITE_BASE_URL: undefined
+    }, () => {
+      const tool = getToolById('jwt-decoder-tool');
+      return {
+        siteBaseUrl: tool.siteBaseUrl,
+        absolutePageUrl: tool.absolutePageUrl,
+        absoluteFeaturedImageUrl: tool.absoluteFeaturedImageUrl
+      };
+    })).toEqual({
+      siteBaseUrl: 'http://localhost:8081',
+      absolutePageUrl: 'http://localhost:8081/jwt-decoder/',
+      absoluteFeaturedImageUrl: 'http://localhost:8081/jwt-decoder/images/featured.png'
     });
   });
 

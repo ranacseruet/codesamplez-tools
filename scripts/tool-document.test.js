@@ -3,6 +3,26 @@
 const { generateToolDocument, joinUrl, renderToolDocument } = require('./tool-document.js');
 const { getToolById } = require('./tool-manifest');
 
+function withEnv(overrides, run) {
+    const originalEnv = { ...process.env };
+
+    Object.keys(overrides).forEach((key) => {
+        const value = overrides[key];
+        if (typeof value === 'undefined') {
+            delete process.env[key];
+            return;
+        }
+
+        process.env[key] = value;
+    });
+
+    try {
+        return run();
+    } finally {
+        process.env = originalEnv;
+    }
+}
+
 describe('tool document generation', () => {
     it('joins urls without dropping nested paths', () => {
         expect(joinUrl('https://codesamplez.com/tools', '/json-formatter/'))
@@ -67,5 +87,34 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"What\'s the difference between a text analyzer and a word counter?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes. The CodeSamplez Text Analyzer is completely free to use.');
         expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/text-analyzer/#webpage"}');
+    });
+
+    it('uses localhost metadata and root-relative internal links in development mode', () => {
+        const html = withEnv({
+            NODE_ENV: 'development',
+            PORT: '8081',
+            CST_SITE_BASE_URL: undefined
+        }, () => {
+            let isolatedHtml = '';
+            const previousCatalog = global.__CST_APP_SHELL_CATALOG__;
+
+            try {
+                jest.isolateModules(() => {
+                    const { getAppShellCatalogDefinition } = require('./app-shell-catalog');
+                    global.__CST_APP_SHELL_CATALOG__ = getAppShellCatalogDefinition();
+                    const { generateToolDocument: generateIsolatedToolDocument } = require('./tool-document.js');
+                    isolatedHtml = generateIsolatedToolDocument('jwt-decoder-tool');
+                });
+            } finally {
+                global.__CST_APP_SHELL_CATALOG__ = previousCatalog;
+            }
+
+            return isolatedHtml;
+        });
+
+        expect(html).toContain('<link rel="canonical" href="http://localhost:8081/jwt-decoder/">');
+        expect(html).toContain('"url":"http://localhost:8081/jwt-decoder/"');
+        expect(html).toContain('href="/jwt-builder/"');
+        expect(html).not.toContain('href="/tools/jwt-builder/"');
     });
 });

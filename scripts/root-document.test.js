@@ -2,6 +2,26 @@
 
 const { generateRootDocument } = require('./root-document');
 
+function withEnv(overrides, run) {
+  const originalEnv = { ...process.env };
+
+  Object.keys(overrides).forEach((key) => {
+    const value = overrides[key];
+    if (typeof value === 'undefined') {
+      delete process.env[key];
+      return;
+    }
+
+    process.env[key] = value;
+  });
+
+  try {
+    return run();
+  } finally {
+    process.env = originalEnv;
+  }
+}
+
 describe('root document generation', () => {
   it('renders the generated landing page with structured data and grouped tool cards', () => {
     const html = generateRootDocument();
@@ -23,5 +43,17 @@ describe('root document generation', () => {
     expect(html).toContain('src="json-formatter/images/featured.png"');
     expect(html).toContain('href="jwt-decoder/"');
     expect(html).toContain('<script src="root-shell/bundle.main.js" defer></script>');
+  });
+
+  it('uses localhost canonical and tool urls in development mode', () => {
+    const html = withEnv({
+      NODE_ENV: 'development',
+      PORT: '8081',
+      CST_SITE_BASE_URL: undefined
+    }, () => generateRootDocument());
+
+    expect(html).toContain('<link rel="canonical" href="http://localhost:8081/">');
+    expect(html).toContain('"url":"http://localhost:8081/json-formatter/"');
+    expect(html).toContain('"url":"http://localhost:8081/text-analyzer/"');
   });
 });
