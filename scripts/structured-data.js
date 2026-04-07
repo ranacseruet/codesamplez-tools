@@ -61,6 +61,9 @@ function getToolAppId(tool) {
 }
 
 /**
+ * Breadcrumb structured data is temporarily disabled until the matching breadcrumb UI ships.
+ * Keep the ID builder in place so re-enabling the existing schema path is a small change later.
+ *
  * @param {ToolDefinition} tool
  * @returns {string}
  */
@@ -134,14 +137,15 @@ function createToolWebPageNode(manifest, tool) {
         mainEntity: {
             '@id': getToolAppId(tool)
         },
-        primaryImageOfPage: tool.absoluteFeaturedImageUrl,
-        breadcrumb: {
-            '@id': getToolBreadcrumbId(tool)
-        }
+        // Breadcrumb schema stays disabled until the site has a matching breadcrumb UI.
+        primaryImageOfPage: tool.absoluteFeaturedImageUrl
     };
 }
 
 /**
+ * Breadcrumb structured data is intentionally kept but not currently emitted.
+ * Re-enable it together with the matching breadcrumb UI by wiring this node back into the graph.
+ *
  * @param {ToolManifest} manifest
  * @param {ToolDefinition} tool
  * @returns {Record<string, unknown>}
@@ -204,7 +208,7 @@ function buildToolStructuredDataGraph(manifest, tool, options = {}) {
         createWebsiteNode(manifest),
         createToolWebPageNode(manifest, tool),
         createToolApplicationNode(tool),
-        createToolBreadcrumbNode(manifest, tool),
+        // Intentionally not calling createToolBreadcrumbNode() until the breadcrumb UI exists.
         ...(faqItems.length > 0 ? [createToolFaqPageNode(tool, faqItems)] : [])
     ];
 }

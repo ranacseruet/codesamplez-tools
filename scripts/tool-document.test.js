@@ -22,7 +22,8 @@ describe('tool document generation', () => {
         expect(html).toContain('<script type="application/ld+json">');
         expect(html).toContain('"@type":"WebPage"');
         expect(html).toContain('"@type":"WebApplication"');
-        expect(html).toContain('"@type":"BreadcrumbList"');
+        expect(html).not.toContain('"@type":"BreadcrumbList"');
+        expect(html).not.toContain('"breadcrumb"');
         expect(html).toContain('"operatingSystem":"Any"');
         expect(html).toContain('"price":"0"');
         expect(html).toContain('"priceCurrency":"USD"');
