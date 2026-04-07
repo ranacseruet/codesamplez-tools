@@ -64,14 +64,6 @@ function getToolAppId(tool) {
  * @param {ToolDefinition} tool
  * @returns {string}
  */
-function getToolBreadcrumbId(tool) {
-    return `${tool.absolutePageUrl}#breadcrumb`;
-}
-
-/**
- * @param {ToolDefinition} tool
- * @returns {string}
- */
 function getToolFaqPageId(tool) {
     return `${tool.absolutePageUrl}#faqpage`;
 }
@@ -134,36 +126,7 @@ function createToolWebPageNode(manifest, tool) {
         mainEntity: {
             '@id': getToolAppId(tool)
         },
-        primaryImageOfPage: tool.absoluteFeaturedImageUrl,
-        breadcrumb: {
-            '@id': getToolBreadcrumbId(tool)
-        }
-    };
-}
-
-/**
- * @param {ToolManifest} manifest
- * @param {ToolDefinition} tool
- * @returns {Record<string, unknown>}
- */
-function createToolBreadcrumbNode(manifest, tool) {
-    return {
-        '@type': 'BreadcrumbList',
-        '@id': getToolBreadcrumbId(tool),
-        itemListElement: [
-            {
-                '@type': 'ListItem',
-                position: 1,
-                name: manifest.rootPage.title,
-                item: manifest.rootPage.absoluteUrl
-            },
-            {
-                '@type': 'ListItem',
-                position: 2,
-                name: tool.title,
-                item: tool.absolutePageUrl
-            }
-        ]
+        primaryImageOfPage: tool.absoluteFeaturedImageUrl
     };
 }
 
@@ -204,7 +167,6 @@ function buildToolStructuredDataGraph(manifest, tool, options = {}) {
         createWebsiteNode(manifest),
         createToolWebPageNode(manifest, tool),
         createToolApplicationNode(tool),
-        createToolBreadcrumbNode(manifest, tool),
         ...(faqItems.length > 0 ? [createToolFaqPageNode(tool, faqItems)] : [])
     ];
 }
