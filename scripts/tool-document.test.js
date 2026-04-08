@@ -65,6 +65,16 @@ describe('tool document generation', () => {
         expect(html).not.toContain('<script src="bundle.main.js" type="module"></script>');
     });
 
+    it('renders FAQPage structured data for qr-code-generator', () => {
+        const html = generateToolDocument('qr-code-generator');
+
+        expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('"name":"What is a QR code?"');
+        expect(html).toContain('"name":"Can I customize my QR code with this tool?"');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"A QR code, short for Quick Response code, is a two-dimensional barcode');
+        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/qr-code-generator/#webpage"}');
+    });
+
     it('renders prerendered markup for a representative module tool', () => {
         const html = generateToolDocument('base64-converter-tool');
 

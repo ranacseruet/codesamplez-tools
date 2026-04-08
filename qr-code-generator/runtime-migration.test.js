@@ -68,6 +68,8 @@ describe('QRCodeGenerator Preact runtime', () => {
 
         expect(document.getElementById('qr-text')?.value).toBe('https://codesamplez.com');
         expect(document.getElementById('size-label')?.textContent).toBe('256px');
+        expect(document.body.textContent).toContain('About This Tool');
+        expect(document.body.textContent).toContain('Frequently Asked Questions (FAQs)');
         expect(QRCode.toCanvas).toHaveBeenCalledTimes(1);
     });
 
