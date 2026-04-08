@@ -54,7 +54,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
     "@babel/core": "^7.23.3",
-    "@babel/preset-env": "^7.23.3",
+    "@babel/preset-env": "^7.29.2",
     "@babel/preset-react": "^7.28.5",
     "@babel/preset-typescript": "^7.28.5",
     "@babel/register": "^7.28.6",

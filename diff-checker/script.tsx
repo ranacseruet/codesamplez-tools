@@ -62,7 +62,7 @@ class DiffDisplay {
   // Helper function to escape HTML but preserve word-level diff spans
   escapeHtmlPreserveDiff(html) {
     // If the content already has word-level diff spans, we need to handle them specially
-    if (html.includes('class="word-added"') || html.includes('class="word-removed"')) {
+    if (html.indexOf('class="word-added"') !== -1 || html.indexOf('class="word-removed"') !== -1) {
       // Split the string by the opening and closing tags of word-level diff spans
       const parts = [];
       let currentIndex = 0;
