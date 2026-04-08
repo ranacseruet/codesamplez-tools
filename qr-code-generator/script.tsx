@@ -4,6 +4,7 @@ import ClearButton from '../common/clear-button/ClearButton';
 import { hydrate, render } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { QRCodeGeneratorArticle, QRCodeGeneratorIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 const QR_EMPTY_INPUT_MESSAGE = 'Please enter text or a URL to generate a QR code.';
@@ -279,6 +280,8 @@ export function QRCodeGeneratorApp() {
 
   return (
     <div id="qr-code-generator-tool" className="tool-container qr-tool c-tool-stack">
+      <QRCodeGeneratorIntro />
+
       <main className="qr-tool__main-content">
         <div className="qr-tool__controls c-surface-card">
           <h3 className="qr-tool__section-title">Configuration</h3>
@@ -362,6 +365,8 @@ export function QRCodeGeneratorApp() {
           </p>
         </div>
       </main>
+
+      <QRCodeGeneratorArticle />
 
       <footer className="qr-tool__footer" />
     </div>

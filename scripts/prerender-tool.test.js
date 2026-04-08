@@ -111,6 +111,11 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="qr-text"');
         expect(markup).toContain('id="qr-canvas"');
         expect(markup).toContain('id="download-btn"');
+        expect(markup).toContain('The CodeSamplez QR Code Generator is a <strong>free online QR code creator</strong>');
+        expect(markup).toContain('How To Generate QR Code With This Tool:');
+        expect(markup).toContain('Frequently Asked Questions (FAQs)');
+        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('renders related-tools markup for a representative tool', () => {
