@@ -33,7 +33,8 @@ jest.mock('../common/copy-button/CopyButton', () => ({
     })
 }));
 
-import { DataFormatConverterUI } from './script';
+import { DataFormatConverterUI, getSelectedFormat } from './script';
+import { DataFormatConverter } from './DataFormatConverter';
 import { NotificationManager } from '../common/notification-manager';
 import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
@@ -96,6 +97,17 @@ describe('DataFormatConverterUI Integration', () => {
         expect(CopyButton).toHaveBeenCalledWith(document.getElementById('outputText'));
         expect(mockClearButtonInstances).toHaveLength(1);
         expect(mockCopyButtonInstances).toHaveLength(1);
+    });
+
+    it('returns the active selected format from a format button group', () => {
+        expect(getSelectedFormat('.input-section', 'properties')).toBe('json');
+    });
+
+    it('falls back when no active format button is available', () => {
+        preactRender(null, document.getElementById('data-format-converter-app'));
+        document.body.innerHTML = '<div class="input-section"></div>';
+
+        expect(getSelectedFormat('.input-section', 'properties')).toBe('properties');
     });
 
     it('renders the shared article and faq content around the converter UI', () => {

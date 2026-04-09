@@ -91,7 +91,7 @@ function createSampleInput(converter: DataFormatConverter, format: SupportedForm
     return converter.formatOutput(SAMPLE_RECORD, format);
 }
 
-function getSelectedFormat(
+export function getSelectedFormat(
     sectionSelector: string,
     fallback: SupportedFormat
 ): SupportedFormat {
