@@ -54,7 +54,7 @@ jobs:
 
       - name: Run visual PR diff
         id: visual_diff
-        uses: ranacseruet/snapdrift/actions/pr-diff@v0.1.0
+        uses: ranacseruet/snapdrift/actions/pr-diff@v0.2.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           force-run: ${{ github.event_name == 'workflow_dispatch' }}
