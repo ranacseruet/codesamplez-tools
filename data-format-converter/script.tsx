@@ -231,9 +231,9 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
     };
 
     const loadSampleData = ({
-        nextInputFormat = stateRef.current.inputFormat,
-        nextOutputFormat = stateRef.current.outputFormat
-    }: Pick<ConvertDataOptions, 'nextInputFormat' | 'nextOutputFormat'> = {}) => {
+        nextInputFormat,
+        nextOutputFormat
+    }: Required<Pick<ConvertDataOptions, 'nextInputFormat' | 'nextOutputFormat'>>) => {
         const sampleInput = createSampleInput(converter, nextInputFormat);
         clearTimeout(debounceTimerRef.current as ReturnType<typeof setTimeout>);
         setInputText(sampleInput);
