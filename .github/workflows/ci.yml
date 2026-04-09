@@ -131,7 +131,7 @@ jobs:
 
     - name: Publish main visual baseline
       if: github.ref == 'refs/heads/main' && steps.affected.outputs.scope == 'all-tools'
-      uses: ranacseruet/snapdrift/actions/baseline@v0.1.0
+      uses: ranacseruet/snapdrift/actions/baseline@v0.2.0
 
     - name: Stop Local QA Server
       if: always() && github.ref == 'refs/heads/main' && steps.affected.outputs.affected_tool_count != '0'

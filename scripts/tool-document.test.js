@@ -75,6 +75,16 @@ describe('tool document generation', () => {
         expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/qr-code-generator/#webpage"}');
     });
 
+    it('renders FAQPage structured data for data-format-converter', () => {
+        const html = generateToolDocument('data-format-converter');
+
+        expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('"name":"Does the tool support batch conversion?"');
+        expect(html).toContain('"name":"How secure is the online converter?"');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Currently, our data format conversion tool focuses on single-file conversions');
+        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/data-format-converter/#webpage"}');
+    });
+
     it('renders prerendered markup for a representative module tool', () => {
         const html = generateToolDocument('base64-converter-tool');
 

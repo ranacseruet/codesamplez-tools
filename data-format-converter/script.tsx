@@ -6,6 +6,7 @@ import CopyButton from '../common/copy-button/CopyButton';
 import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { DataFormatConverterArticle, DataFormatConverterIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 type SupportedFormat = 'json' | 'xml' | 'yaml' | 'properties';
@@ -18,6 +19,7 @@ interface ConverterStateSnapshot {
     inputFormat: SupportedFormat;
     outputFormat: SupportedFormat;
     autoConvert: boolean;
+    useSampleData: boolean;
 }
 
 interface ConvertDataOptions {
@@ -45,6 +47,13 @@ const EXTENSIONS: Record<SupportedFormat, string> = {
     xml: 'xml',
     yaml: 'yaml',
     properties: 'properties'
+};
+const SAMPLE_RECORD: Record<string, string> = {
+    app: 'codesamplez-tools',
+    owner: 'alex',
+    environment: 'staging',
+    region: 'ca-central-1',
+    version: '2026.04'
 };
 
 const formatLabel = (format: SupportedFormat): string =>
@@ -78,25 +87,39 @@ async function copyToClipboard(text: string): Promise<void> {
     }
 }
 
+function createSampleInput(converter: DataFormatConverter, format: SupportedFormat): string {
+    return converter.formatOutput(SAMPLE_RECORD, format);
+}
+
+export function getSelectedFormat(
+    sectionSelector: string,
+    fallback: SupportedFormat
+): SupportedFormat {
+    const activeButton = document.querySelector(`${sectionSelector} .format-btn[aria-pressed="true"]`) as HTMLButtonElement | null;
+    const activeFormat = activeButton?.dataset.format as SupportedFormat | undefined;
+    return FORMATS.includes(activeFormat as SupportedFormat) ? activeFormat as SupportedFormat : fallback;
+}
+
 export function DataFormatConverterApp({ converter }: DataFormatConverterAppProps) {
     const [inputFormat, setInputFormat] = useState<SupportedFormat>(converter.inputFormat);
     const [outputFormat, setOutputFormat] = useState<SupportedFormat>(converter.outputFormat);
     const [inputText, setInputText] = useState('');
     const [outputText, setOutputText] = useState('');
     const [autoConvert, setAutoConvert] = useState(true);
+    const [useSampleData, setUseSampleData] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const stateRef = useRef<ConverterStateSnapshot>({ inputFormat, outputFormat, autoConvert });
+    const stateRef = useRef<ConverterStateSnapshot>({ inputFormat, outputFormat, autoConvert, useSampleData });
     const inputTextAreaRef = useRef<HTMLTextAreaElement | null>(null);
     const outputTextAreaRef = useRef<HTMLTextAreaElement | null>(null);
     const clearOverlayButtonRef = useRef<ClearButton | null>(null);
     const copyOverlayButtonRef = useRef<CopyButton | null>(null);
 
     useEffect(() => {
-        stateRef.current = { inputFormat, outputFormat, autoConvert };
+        stateRef.current = { inputFormat, outputFormat, autoConvert, useSampleData };
         converter.inputFormat = inputFormat;
         converter.outputFormat = outputFormat;
-    }, [inputFormat, outputFormat, autoConvert, converter]);
+    }, [inputFormat, outputFormat, autoConvert, useSampleData, converter]);
 
     useEffect(() => {
         return () => {
@@ -169,6 +192,13 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
         setErrorMessage('');
     };
 
+    const clearConverterData = () => {
+        clearTimeout(debounceTimerRef.current as ReturnType<typeof setTimeout>);
+        setInputText('');
+        setOutputText('');
+        setErrorMessage('');
+    };
+
     const convertData = ({
         silent = false,
         nextInput = inputText,
@@ -198,6 +228,22 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
         } catch (error: unknown) {
             showError(`Conversion failed: ${getErrorMessage(error)}`, silent);
         }
+    };
+
+    const loadSampleData = ({
+        nextInputFormat,
+        nextOutputFormat
+    }: Required<Pick<ConvertDataOptions, 'nextInputFormat' | 'nextOutputFormat'>>) => {
+        const sampleInput = createSampleInput(converter, nextInputFormat);
+        clearTimeout(debounceTimerRef.current as ReturnType<typeof setTimeout>);
+        setInputText(sampleInput);
+        setErrorMessage('');
+        convertData({
+            silent: true,
+            nextInput: sampleInput,
+            nextInputFormat,
+            nextOutputFormat
+        });
     };
 
     const handleInputChange = (event: Event) => {
@@ -235,12 +281,22 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
     };
 
     const handleInputFormatChange = (nextFormat: SupportedFormat) => {
+        const sampleModeEnabled = (document.getElementById('useSampleData') as HTMLInputElement | null)?.checked
+            ?? stateRef.current.useSampleData;
         stateRef.current = {
             ...stateRef.current,
             inputFormat: nextFormat
         };
         setInputFormat(nextFormat);
         setErrorMessage('');
+
+        if (sampleModeEnabled) {
+            loadSampleData({
+                nextInputFormat: nextFormat,
+                nextOutputFormat: stateRef.current.outputFormat
+            });
+            return;
+        }
 
         if (inputText) {
             setInputText('');
@@ -281,6 +337,32 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
                 nextOutputFormat: outputFormat
             });
         }
+    };
+
+    const handleUseSampleDataToggle = (event: Event) => {
+        const target = event.target as HTMLInputElement | null;
+        const checked = Boolean(target?.checked);
+        const selectedInputFormat = getSelectedFormat('.input-section', stateRef.current.inputFormat);
+        const selectedOutputFormat = getSelectedFormat('.output-section', stateRef.current.outputFormat);
+        stateRef.current = {
+            ...stateRef.current,
+            inputFormat: selectedInputFormat,
+            outputFormat: selectedOutputFormat,
+            useSampleData: checked
+        };
+        setUseSampleData(checked);
+
+        if (checked) {
+            setInputFormat(selectedInputFormat);
+            setOutputFormat(selectedOutputFormat);
+            loadSampleData({
+                nextInputFormat: selectedInputFormat,
+                nextOutputFormat: selectedOutputFormat
+            });
+            return;
+        }
+
+        clearConverterData();
     };
 
     const handleSwap = () => {
@@ -341,128 +423,143 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
     };
 
     return (
-        <div className="tool-container dfc-tool c-tool-stack">
-            <div className="converter-section o-grid-2col swap-container-wrapper">
-                <div className="input-section o-panel c-surface-card c-surface-panel">
-                    <h3 className="dfc-panel-title">Input Format</h3>
-                    <div className="format-selector dfc-format-selector" role="group" aria-label="Input Format">
-                        {FORMATS.map((format) => (
+        <div id="data-format-converter-tool" className="tool-container dfc-tool c-tool-stack">
+            <DataFormatConverterIntro />
+
+            <main className="dfc-main-content">
+                <div className="converter-section o-grid-2col swap-container-wrapper">
+                    <div className="input-section o-panel c-surface-card c-surface-panel">
+                        <h3 className="dfc-panel-title">Input Format</h3>
+                        <div className="format-selector dfc-format-selector" role="group" aria-label="Input Format">
+                            {FORMATS.map((format) => (
+                                <button
+                                    key={`input-${format}`}
+                                    className={`format-btn c-button c-button--small ${inputFormat === format ? 'active' : ''}`}
+                                    data-format={format}
+                                    aria-pressed={inputFormat === format ? 'true' : 'false'}
+                                    onClick={() => handleInputFormatChange(format)}
+                                >
+                                    {formatLabel(format)}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="textarea-actions dfc-textarea-actions dfc-legacy-inline-action">
                             <button
-                                key={`input-${format}`}
-                                className={`format-btn c-button c-button--small ${inputFormat === format ? 'active' : ''}`}
-                                data-format={format}
-                                aria-pressed={inputFormat === format ? 'true' : 'false'}
-                                onClick={() => handleInputFormatChange(format)}
+                                id="clearInputBtn"
+                                className="c-button c-button--small c-button--outline"
+                                type="button"
+                                tabIndex={-1}
+                                aria-hidden="true"
+                                onClick={handleClearInput}
                             >
-                                {formatLabel(format)}
+                                Clear
                             </button>
-                        ))}
+                        </div>
+                        <textarea
+                            id="inputText"
+                            ref={inputTextAreaRef}
+                            className="text-area c-input c-input--textarea"
+                            placeholder={INPUT_PLACEHOLDERS[inputFormat]}
+                            aria-label="Input data"
+                            value={inputText}
+                            onInput={handleInputChange}
+                        />
                     </div>
-                    <div className="textarea-actions dfc-textarea-actions dfc-legacy-inline-action">
+
+                    <div className="swap-action-container">
                         <button
-                            id="clearInputBtn"
+                            id="swapBtn"
                             className="c-button c-button--small c-button--outline"
-                            type="button"
-                            tabIndex={-1}
-                            aria-hidden="true"
-                            onClick={handleClearInput}
+                            title="Swap Input and Output"
+                            aria-label="Swap Input and Output"
+                            onClick={handleSwap}
                         >
-                            Clear
+                            Swap ⇄
                         </button>
                     </div>
-                    <textarea
-                        id="inputText"
-                        ref={inputTextAreaRef}
-                        className="text-area c-input c-input--textarea"
-                        placeholder={INPUT_PLACEHOLDERS[inputFormat]}
-                        aria-label="Input data"
-                        value={inputText}
-                        onInput={handleInputChange}
-                    />
+
+                    <div className="output-section o-panel c-surface-card c-surface-panel">
+                        <h3 className="dfc-panel-title">Output Format</h3>
+                        <div className="format-selector dfc-format-selector" role="group" aria-label="Output Format">
+                            {FORMATS.map((format) => (
+                                <button
+                                    key={`output-${format}`}
+                                    className={`format-btn c-button c-button--small ${outputFormat === format ? 'active' : ''}`}
+                                    data-format={format}
+                                    aria-pressed={outputFormat === format ? 'true' : 'false'}
+                                    onClick={() => handleOutputFormatChange(format)}
+                                >
+                                    {formatLabel(format)}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="textarea-actions dfc-textarea-actions dfc-legacy-inline-action">
+                            <button
+                                id="copyOutputBtn"
+                                className="c-button c-button--small c-button--outline"
+                                type="button"
+                                tabIndex={-1}
+                                aria-hidden="true"
+                                onClick={() => void handleCopyOutput()}
+                            >
+                                Copy
+                            </button>
+                        </div>
+                        <textarea
+                            id="outputText"
+                            ref={outputTextAreaRef}
+                            className="text-area c-input c-input--textarea"
+                            placeholder="Converted data will appear here..."
+                            readOnly
+                            aria-label="Output data"
+                            value={outputText}
+                        />
+                    </div>
                 </div>
 
-                <div className="swap-action-container">
+                <div className="c-options-panel c-action-strip u-text-center dfc-primary-actions">
+                    <label className="c-checkbox dfc-sample-data-label">
+                        <input
+                            type="checkbox"
+                            id="useSampleData"
+                            checked={useSampleData}
+                            onChange={handleUseSampleDataToggle}
+                        />
+                        <span>Use sample data</span>
+                    </label>
+                    <label className="c-checkbox dfc-auto-convert-label">
+                        <input
+                            type="checkbox"
+                            id="autoConvert"
+                            checked={autoConvert}
+                            onChange={handleAutoConvertToggle}
+                        />
+                        <span>Auto-convert</span>
+                    </label>
+                    <button id="convertBtn" className="convert-btn c-button dfc-convert-btn" onClick={() => convertData()}>
+                        Convert Data
+                    </button>
                     <button
-                        id="swapBtn"
-                        className="c-button c-button--small c-button--outline"
-                        title="Swap Input and Output"
-                        aria-label="Swap Input and Output"
-                        onClick={handleSwap}
+                        id="downloadBtn"
+                        type="button"
+                        className="c-button c-button--small c-button--icon-download"
+                        onClick={handleDownload}
                     >
-                        Swap ⇄
+                        Download
                     </button>
                 </div>
 
-                <div className="output-section o-panel c-surface-card c-surface-panel">
-                    <h3 className="dfc-panel-title">Output Format</h3>
-                    <div className="format-selector dfc-format-selector" role="group" aria-label="Output Format">
-                        {FORMATS.map((format) => (
-                            <button
-                                key={`output-${format}`}
-                                className={`format-btn c-button c-button--small ${outputFormat === format ? 'active' : ''}`}
-                                data-format={format}
-                                aria-pressed={outputFormat === format ? 'true' : 'false'}
-                                onClick={() => handleOutputFormatChange(format)}
-                            >
-                                {formatLabel(format)}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="textarea-actions dfc-textarea-actions dfc-legacy-inline-action">
-                        <button
-                            id="copyOutputBtn"
-                            className="c-button c-button--small c-button--outline"
-                            type="button"
-                            tabIndex={-1}
-                            aria-hidden="true"
-                            onClick={() => void handleCopyOutput()}
-                        >
-                            Copy
-                        </button>
-                    </div>
-                    <textarea
-                        id="outputText"
-                        ref={outputTextAreaRef}
-                        className="text-area c-input c-input--textarea"
-                        placeholder="Converted data will appear here..."
-                        readOnly
-                        aria-label="Output data"
-                        value={outputText}
-                    />
-                </div>
-            </div>
-
-            <div className="c-options-panel c-action-strip u-text-center dfc-primary-actions">
-                <label className="c-checkbox dfc-auto-convert-label">
-                    <input
-                        type="checkbox"
-                        id="autoConvert"
-                        checked={autoConvert}
-                        onChange={handleAutoConvertToggle}
-                    />
-                    <span>Auto-convert</span>
-                </label>
-                <button id="convertBtn" className="convert-btn c-button dfc-convert-btn" onClick={() => convertData()}>
-                    Convert Data
-                </button>
-                <button
-                    id="downloadBtn"
-                    type="button"
-                    className="c-button c-button--small c-button--icon-download"
-                    onClick={handleDownload}
+                <div
+                    id="inputError"
+                    className="error dfc-status-banner c-status-banner"
+                    style={{ display: errorMessage ? 'block' : 'none' }}
                 >
-                    Download
-                </button>
-            </div>
+                    {errorMessage}
+                </div>
+                <div id="notification" className="c-notification" role="status" aria-live="polite" />
+            </main>
 
-            <div
-                id="inputError"
-                className="error dfc-status-banner c-status-banner"
-                style={{ display: errorMessage ? 'block' : 'none' }}
-            >
-                {errorMessage}
-            </div>
-            <div id="notification" className="c-notification" role="status" aria-live="polite" />
+            <DataFormatConverterArticle />
         </div>
     );
 }
