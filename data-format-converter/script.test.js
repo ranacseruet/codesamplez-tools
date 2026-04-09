@@ -4,6 +4,10 @@ import { render as preactRender } from 'preact';
 
 const mockClearButtonInstances = [];
 const mockCopyButtonInstances = [];
+const SAMPLE_JSON_FRAGMENT = '"app": "codesamplez-tools"';
+const SAMPLE_XML_FRAGMENT = '<app>codesamplez-tools</app>';
+const SAMPLE_YAML_FRAGMENT = 'app: codesamplez-tools';
+const SAMPLE_PROPERTIES_FRAGMENT = 'app=codesamplez-tools';
 
 jest.mock('../common/clear-button/ClearButton', () => ({
     __esModule: true,
@@ -100,6 +104,79 @@ describe('DataFormatConverterUI Integration', () => {
         expect(document.body.textContent).toContain('Frequently Asked Questions (FAQs)');
         expect(document.querySelector('a[href="https://codesamplez.com/tools"]')).not.toBeNull();
         expect(document.querySelector('a[href="https://codesamplez.com/contact"]')).not.toBeNull();
+    });
+
+    it('keeps sample mode disabled by default', () => {
+        expect(document.getElementById('useSampleData')?.checked).toBe(false);
+        expect(document.getElementById('inputText')?.value).toBe('');
+        expect(document.getElementById('outputText')?.value).toBe('');
+    });
+
+    it('loads sample input and output immediately when sample mode is enabled', async () => {
+        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: true } });
+        await flush();
+
+        expect(document.getElementById('useSampleData')?.checked).toBe(true);
+        expect(document.getElementById('inputText')?.value).toContain(SAMPLE_JSON_FRAGMENT);
+        expect(document.getElementById('outputText')?.value).toContain(SAMPLE_XML_FRAGMENT);
+    });
+
+    it('replaces the input with matching sample data when input format changes in sample mode', async () => {
+        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: true } });
+        await flush();
+
+        fireEvent.click(document.querySelector('.input-section .format-btn[data-format="yaml"]'));
+        await flush();
+
+        expect(document.querySelector('.input-section .format-btn[data-format="yaml"]')?.getAttribute('aria-pressed')).toBe('true');
+        expect(document.getElementById('inputText')?.value).toContain(SAMPLE_YAML_FRAGMENT);
+        expect(document.getElementById('outputText')?.value).toContain(SAMPLE_XML_FRAGMENT);
+    });
+
+    it('reconverts sample output without replacing the current sample input on output format changes', async () => {
+        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: true } });
+        await flush();
+
+        const originalInput = document.getElementById('inputText')?.value;
+        fireEvent.click(document.querySelector('.output-section .format-btn[data-format="yaml"]'));
+        await flush();
+
+        expect(document.getElementById('inputText')?.value).toBe(originalInput);
+        expect(document.querySelector('.output-section .format-btn[data-format="yaml"]')?.getAttribute('aria-pressed')).toBe('true');
+        expect(document.getElementById('outputText')?.value).toContain(SAMPLE_YAML_FRAGMENT);
+    });
+
+    it('clears input, output, and error state when sample mode is disabled', async () => {
+        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: true } });
+        await flush();
+
+        fireEvent.input(document.getElementById('inputText'), { target: { value: 'invalid' } });
+        await flush();
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+        expect(document.getElementById('inputError')?.style.display).toBe('block');
+
+        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: false } });
+        await flush();
+
+        expect(document.getElementById('useSampleData')?.checked).toBe(false);
+        expect(document.getElementById('inputText')?.value).toBe('');
+        expect(document.getElementById('outputText')?.value).toBe('');
+        expect(document.getElementById('inputError')?.style.display).toBe('none');
+        expect(document.getElementById('inputError')?.textContent).toBe('');
+    });
+
+    it('restores sample data when sample mode is re-enabled after being cleared', async () => {
+        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: true } });
+        await flush();
+        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: false } });
+        await flush();
+
+        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: true } });
+        await flush();
+
+        expect(document.getElementById('inputText')?.value).toContain(SAMPLE_JSON_FRAGMENT);
+        expect(document.getElementById('outputText')?.value).toContain(SAMPLE_XML_FRAGMENT);
     });
 
     it('should initialize aria attributes', () => {
@@ -371,6 +448,17 @@ describe('DataFormatConverterUI Integration', () => {
 
         expect(ui.converter.parseInput).toHaveBeenCalled();
         expect(document.getElementById('outputText').value).toBe('{\n  "a": 1\n}');
+    });
+
+    it('should load properties sample input when sample mode is enabled after selecting properties', async () => {
+        fireEvent.click(document.querySelector('.input-section .format-btn[data-format="properties"]'));
+        await flush();
+
+        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: true } });
+        await flush();
+
+        expect(document.getElementById('inputText')?.value).toContain(SAMPLE_PROPERTIES_FRAGMENT);
+        expect(document.getElementById('outputText')?.value).toContain(SAMPLE_XML_FRAGMENT);
     });
 
     it('should auto-detect and switch input format during auto-convert', async () => {

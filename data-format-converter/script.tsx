@@ -19,6 +19,7 @@ interface ConverterStateSnapshot {
     inputFormat: SupportedFormat;
     outputFormat: SupportedFormat;
     autoConvert: boolean;
+    useSampleData: boolean;
 }
 
 interface ConvertDataOptions {
@@ -46,6 +47,13 @@ const EXTENSIONS: Record<SupportedFormat, string> = {
     xml: 'xml',
     yaml: 'yaml',
     properties: 'properties'
+};
+const SAMPLE_RECORD: Record<string, string> = {
+    app: 'codesamplez-tools',
+    owner: 'alex',
+    environment: 'staging',
+    region: 'ca-central-1',
+    version: '2026.04'
 };
 
 const formatLabel = (format: SupportedFormat): string =>
@@ -79,25 +87,39 @@ async function copyToClipboard(text: string): Promise<void> {
     }
 }
 
+function createSampleInput(converter: DataFormatConverter, format: SupportedFormat): string {
+    return converter.formatOutput(SAMPLE_RECORD, format);
+}
+
+function getSelectedFormat(
+    sectionSelector: string,
+    fallback: SupportedFormat
+): SupportedFormat {
+    const activeButton = document.querySelector(`${sectionSelector} .format-btn[aria-pressed="true"]`) as HTMLButtonElement | null;
+    const activeFormat = activeButton?.dataset.format as SupportedFormat | undefined;
+    return FORMATS.includes(activeFormat as SupportedFormat) ? activeFormat as SupportedFormat : fallback;
+}
+
 export function DataFormatConverterApp({ converter }: DataFormatConverterAppProps) {
     const [inputFormat, setInputFormat] = useState<SupportedFormat>(converter.inputFormat);
     const [outputFormat, setOutputFormat] = useState<SupportedFormat>(converter.outputFormat);
     const [inputText, setInputText] = useState('');
     const [outputText, setOutputText] = useState('');
     const [autoConvert, setAutoConvert] = useState(true);
+    const [useSampleData, setUseSampleData] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const stateRef = useRef<ConverterStateSnapshot>({ inputFormat, outputFormat, autoConvert });
+    const stateRef = useRef<ConverterStateSnapshot>({ inputFormat, outputFormat, autoConvert, useSampleData });
     const inputTextAreaRef = useRef<HTMLTextAreaElement | null>(null);
     const outputTextAreaRef = useRef<HTMLTextAreaElement | null>(null);
     const clearOverlayButtonRef = useRef<ClearButton | null>(null);
     const copyOverlayButtonRef = useRef<CopyButton | null>(null);
 
     useEffect(() => {
-        stateRef.current = { inputFormat, outputFormat, autoConvert };
+        stateRef.current = { inputFormat, outputFormat, autoConvert, useSampleData };
         converter.inputFormat = inputFormat;
         converter.outputFormat = outputFormat;
-    }, [inputFormat, outputFormat, autoConvert, converter]);
+    }, [inputFormat, outputFormat, autoConvert, useSampleData, converter]);
 
     useEffect(() => {
         return () => {
@@ -170,6 +192,13 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
         setErrorMessage('');
     };
 
+    const clearConverterData = () => {
+        clearTimeout(debounceTimerRef.current as ReturnType<typeof setTimeout>);
+        setInputText('');
+        setOutputText('');
+        setErrorMessage('');
+    };
+
     const convertData = ({
         silent = false,
         nextInput = inputText,
@@ -199,6 +228,22 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
         } catch (error: unknown) {
             showError(`Conversion failed: ${getErrorMessage(error)}`, silent);
         }
+    };
+
+    const loadSampleData = ({
+        nextInputFormat = stateRef.current.inputFormat,
+        nextOutputFormat = stateRef.current.outputFormat
+    }: Pick<ConvertDataOptions, 'nextInputFormat' | 'nextOutputFormat'> = {}) => {
+        const sampleInput = createSampleInput(converter, nextInputFormat);
+        clearTimeout(debounceTimerRef.current as ReturnType<typeof setTimeout>);
+        setInputText(sampleInput);
+        setErrorMessage('');
+        convertData({
+            silent: true,
+            nextInput: sampleInput,
+            nextInputFormat,
+            nextOutputFormat
+        });
     };
 
     const handleInputChange = (event: Event) => {
@@ -236,12 +281,22 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
     };
 
     const handleInputFormatChange = (nextFormat: SupportedFormat) => {
+        const sampleModeEnabled = (document.getElementById('useSampleData') as HTMLInputElement | null)?.checked
+            ?? stateRef.current.useSampleData;
         stateRef.current = {
             ...stateRef.current,
             inputFormat: nextFormat
         };
         setInputFormat(nextFormat);
         setErrorMessage('');
+
+        if (sampleModeEnabled) {
+            loadSampleData({
+                nextInputFormat: nextFormat,
+                nextOutputFormat: stateRef.current.outputFormat
+            });
+            return;
+        }
 
         if (inputText) {
             setInputText('');
@@ -282,6 +337,32 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
                 nextOutputFormat: outputFormat
             });
         }
+    };
+
+    const handleUseSampleDataToggle = (event: Event) => {
+        const target = event.target as HTMLInputElement | null;
+        const checked = Boolean(target?.checked);
+        const selectedInputFormat = getSelectedFormat('.input-section', stateRef.current.inputFormat);
+        const selectedOutputFormat = getSelectedFormat('.output-section', stateRef.current.outputFormat);
+        stateRef.current = {
+            ...stateRef.current,
+            inputFormat: selectedInputFormat,
+            outputFormat: selectedOutputFormat,
+            useSampleData: checked
+        };
+        setUseSampleData(checked);
+
+        if (checked) {
+            setInputFormat(selectedInputFormat);
+            setOutputFormat(selectedOutputFormat);
+            loadSampleData({
+                nextInputFormat: selectedInputFormat,
+                nextOutputFormat: selectedOutputFormat
+            });
+            return;
+        }
+
+        clearConverterData();
     };
 
     const handleSwap = () => {
@@ -437,6 +518,15 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
                 </div>
 
                 <div className="c-options-panel c-action-strip u-text-center dfc-primary-actions">
+                    <label className="c-checkbox dfc-sample-data-label">
+                        <input
+                            type="checkbox"
+                            id="useSampleData"
+                            checked={useSampleData}
+                            onChange={handleUseSampleDataToggle}
+                        />
+                        <span>Use sample data</span>
+                    </label>
                     <label className="c-checkbox dfc-auto-convert-label">
                         <input
                             type="checkbox"
