@@ -9,6 +9,14 @@ const { ensureBabelRegister } = require('./register-node-transforms');
 
 /** @type {Record<string, () => StructuredFaqItem[]>} */
 const TOOL_FAQ_REGISTRY = {
+    'data-format-converter': () => {
+        ensureBabelRegister();
+        const { FAQ_ITEMS } = require(path.resolve(__dirname, '../data-format-converter/content'));
+        return FAQ_ITEMS.map((item) => ({
+            question: item.question,
+            structuredDataAnswer: item.structuredDataAnswer
+        }));
+    },
     'qr-code-generator': () => {
         ensureBabelRegister();
         const { FAQ_ITEMS } = require(path.resolve(__dirname, '../qr-code-generator/content'));

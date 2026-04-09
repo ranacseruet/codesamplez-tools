@@ -94,6 +94,14 @@ describe('DataFormatConverterUI Integration', () => {
         expect(mockCopyButtonInstances).toHaveLength(1);
     });
 
+    it('renders the shared article and faq content around the converter UI', () => {
+        expect(document.body.textContent).toContain('About This Tool');
+        expect(document.body.textContent).toContain('How To Use The Data Format Converter:');
+        expect(document.body.textContent).toContain('Frequently Asked Questions (FAQs)');
+        expect(document.querySelector('a[href="https://codesamplez.com/tools"]')).not.toBeNull();
+        expect(document.querySelector('a[href="https://codesamplez.com/contact"]')).not.toBeNull();
+    });
+
     it('should initialize aria attributes', () => {
         const jsonBtn = document.querySelector('.input-section .format-btn[data-format="json"]');
         expect(jsonBtn.getAttribute('aria-pressed')).toBe('true');

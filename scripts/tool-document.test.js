@@ -75,6 +75,16 @@ describe('tool document generation', () => {
         expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/qr-code-generator/#webpage"}');
     });
 
+    it('renders FAQPage structured data for data-format-converter', () => {
+        const html = generateToolDocument('data-format-converter');
+
+        expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('"name":"What formats can this converter handle?"');
+        expect(html).toContain('"name":"Does the converter auto-detect my input format?"');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"This tool converts between JSON, XML, YAML, and Java properties formats.');
+        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/data-format-converter/#webpage"}');
+    });
+
     it('renders prerendered markup for a representative module tool', () => {
         const html = generateToolDocument('base64-converter-tool');
 
