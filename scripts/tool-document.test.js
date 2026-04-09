@@ -79,9 +79,9 @@ describe('tool document generation', () => {
         const html = generateToolDocument('data-format-converter');
 
         expect(html).toContain('"@type":"FAQPage"');
-        expect(html).toContain('"name":"What formats can this converter handle?"');
-        expect(html).toContain('"name":"Does the converter auto-detect my input format?"');
-        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"This tool converts between JSON, XML, YAML, and Java properties formats.');
+        expect(html).toContain('"name":"Does the tool support batch conversion?"');
+        expect(html).toContain('"name":"How secure is the online converter?"');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Currently, our data format conversion tool focuses on single-file conversions');
         expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/data-format-converter/#webpage"}');
     });
 

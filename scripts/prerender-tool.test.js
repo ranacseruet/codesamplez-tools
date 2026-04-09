@@ -28,11 +28,10 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="inputText"');
         expect(markup).toContain('id="outputText"');
         expect(markup).toContain('Convert Data');
-        expect(markup).toContain('The CodeSamplez Data Format Converter is a <strong>free online format conversion tool</strong>');
-        expect(markup).toContain('How To Use The Data Format Converter:');
-        expect(markup).toContain('Frequently Asked Questions (FAQs)');
+        expect(markup).toContain('The Online Data Format Converter Tool is a web-based utility that converts between JSON, XML, Properties and YAML data formats.');
+        expect(markup).toContain('Data Format Converter Usage Example');
+        expect(markup).toContain('Data Format Converter FAQs');
         expect(markup).toContain('href="https://codesamplez.com/tools"');
-        expect(markup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('throws when attempting to render a tool without prerender config', () => {

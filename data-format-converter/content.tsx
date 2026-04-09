@@ -11,28 +11,24 @@ function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
 
 export const FAQ_ITEMS: ToolFaqItem[] = [
     createPlainTextFaqItem(
-        'What formats can this converter handle?',
-        'This tool converts between JSON, XML, YAML, and Java properties formats. You can paste data in one supported format and export it to any of the others.'
+        'Does the tool support batch conversion?',
+        'Currently, our data format conversion tool focuses on single-file conversions, perfect for quick JSON to YAML tasks. Stay tuned for future updates that might include batch data conversion for multiple files at once.'
     ),
     createPlainTextFaqItem(
-        'Does the converter auto-detect my input format?',
-        'Yes. When auto-convert is enabled, the tool attempts to detect whether your input is JSON, XML, YAML, or properties data and updates the selected input format before converting.'
+        'How secure is the online converter?',
+        'Your data’s safety is our priority with this secure online converter. We don’t store or share any uploaded data, ensuring complete privacy during every JSON to YAML or XML conversion process. Due to 100% client-side processing, your data doesn’t leave your browser.'
     ),
     createPlainTextFaqItem(
-        'Is the Data Format Converter free to use?',
-        'Yes. The CodeSamplez Data Format Converter is free to use with no signup, subscription, or installation required.'
+        'What file formats can your tool convert between?',
+        'Our free online XML converter seamlessly transforms data between XML, YAML, and JSON formats, making it the go-to solution for developers and data enthusiasts. Whether you need a JSON to YAML conversion or XML to JSON conversion, our tool handles it all with ease.'
     ),
     createPlainTextFaqItem(
-        'Is my data uploaded to a server?',
-        'No. All parsing and conversion happen locally in your browser, so your input is not uploaded to a remote server by this tool.'
+        'How does the tool handle errors in input data?',
+        'Our invalid XML fix feature detects errors in your input and displays clear messages, guiding you to correct issues before conversion. This ensures smooth JSON to XML or YAML processing every time.'
     ),
     createPlainTextFaqItem(
-        'Why does conversion fail for some XML or YAML input?',
-        'Conversion usually fails when the input is not valid for the selected format, such as malformed XML tags, invalid JSON syntax, or unsupported YAML structure. The tool shows an error message so you can fix the source data and try again.'
-    ),
-    createPlainTextFaqItem(
-        'Can I download the converted result?',
-        'Yes. After conversion, you can download the result using the appropriate file extension for the selected output format, such as .json, .xml, .yaml, or .properties.'
+        'Can I use the tool for specific use cases?',
+        'Absolutely! Our tool excels in use cases like Kubernetes YAML to JSON conversion for DevOps or API data transformation. It’s your ultimate solution for configuration files and more, boosting productivity effortlessly.'
     )
 ];
 
@@ -45,10 +41,10 @@ export function DataFormatConverterIntro(): JSX.Element {
             <div className="c-tool-article__content">
                 <h2 id="data-format-converter-intro-heading" className="c-tool-article__eyebrow">About This Tool</h2>
                 <p className="c-tool-article__lead">
-                    The CodeSamplez Data Format Converter is a <strong>free online format conversion tool</strong> for
-                    translating structured data between <strong>JSON</strong>, <strong>XML</strong>,{' '}
-                    <strong>YAML</strong>, and <strong>Java properties</strong>. It validates your input, converts it
-                    locally in the browser, and lets you copy or download the result without sending data to a server.
+                    The Online Data Format Converter Tool is a web-based utility that converts between JSON, XML,
+                    Properties and YAML data formats. It provides a simple interface for users to paste data in one
+                    format and convert it to another, with validation and error handling. The tool performs all
+                    processing client-side, ensuring data privacy and security.
                 </p>
             </div>
         </section>
@@ -63,31 +59,54 @@ export function DataFormatConverterArticle(): JSX.Element {
                     Data Format Converter Guide
                 </h2>
 
-                <ToolArticleSection id="data-format-converter-how-to-use" title="How To Use The Data Format Converter:">
+                <ToolArticleSection id="data-format-converter-features" title="Supported Features">
                     <ol>
                         <li>
-                            <strong>Select or confirm the input format</strong>. Pick JSON, XML, YAML, or Properties,
-                            or leave auto-convert enabled so the tool can detect the format from the pasted data.
+                            <strong>Format Conversion</strong>
+                            <ul>
+                                <li>Convert between JSON, XML, and YAML formats</li>
+                                <li>Bidirectional conversion between all supported formats</li>
+                                <li>JSON XML conversion</li>
+                                <li>JSON to YAML conversion</li>
+                                <li>XML to JSON conversion</li>
+                                <li>XML to YAML conversion</li>
+                                <li>... and so on</li>
+                                <li>Preserves data structure and hierarchy during conversion</li>
+                            </ul>
                         </li>
                         <li>
-                            <strong>Paste your source data</strong> into the input area. Placeholder examples show the
-                            expected structure for each supported format.
+                            <strong>Input Validation</strong>
+                            <ul>
+                                <li>Validates input data before conversion</li>
+                                <li>Provides clear error messages for invalid formats</li>
+                                <li>Handles common formatting issues</li>
+                            </ul>
                         </li>
                         <li>
-                            <strong>Choose the output format</strong> and convert. The converted result appears in the
-                            output panel, where you can copy or download it immediately.
+                            <strong>Output Formatting</strong>
+                            <ul>
+                                <li>Pretty-prints output with proper indentation</li>
+                                <li>Ensures valid output format according to specifications</li>
+                                <li>Supports downloading converted data</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>User Experience</strong>
+                            <ul>
+                                <li>Example placeholders for each input format</li>
+                                <li>Copy to clipboard functionality</li>
+                                <li>Download converted data with proper file extension</li>
+                                <li>Visual feedback for successful operations</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>Cross-Browser Compatibility</strong>
+                            <ul>
+                                <li>Works in all modern browsers</li>
+                                <li>No external dependencies required</li>
+                            </ul>
                         </li>
                     </ol>
-                </ToolArticleSection>
-
-                <ToolArticleSection id="data-format-converter-features" title="Supported Features">
-                    <ul>
-                        <li><strong>Bidirectional conversion</strong> between JSON, XML, YAML, and Properties formats.</li>
-                        <li><strong>Automatic input detection</strong> when auto-convert is enabled.</li>
-                        <li><strong>Formatted output</strong> for readable JSON, XML, YAML, and properties files.</li>
-                        <li><strong>Clipboard and download actions</strong> for quick reuse in other workflows.</li>
-                        <li><strong>Client-side processing</strong> so conversion stays fast and private.</li>
-                    </ul>
 
                     <div className="c-tool-article__cta-row">
                         <a className="c-button" href="https://codesamplez.com/tools">
@@ -96,56 +115,189 @@ export function DataFormatConverterArticle(): JSX.Element {
                     </div>
                 </ToolArticleSection>
 
-                <ToolArticleSection id="data-format-converter-use-cases" title="Common Use Cases">
-                    <ul>
-                        <li>Convert API payload samples between JSON and XML during integration work.</li>
-                        <li>Translate application configuration files between YAML and Properties formats.</li>
-                        <li>Normalize sample data before documentation, debugging, or support handoff.</li>
-                        <li>Inspect how the same data structure is represented across multiple serialization formats.</li>
-                    </ul>
+                <ToolArticleSection id="data-format-converter-usage" title="Data Format Converter Usage Example">
+                    <h3>Step-by-Step Guide</h3>
+                    <ol>
+                        <li>
+                            <strong>Select Input Format</strong>
+                            <ul>
+                                <li>Click the format button (JSON, XML, Properties or YAML) above the input box to specify your input format</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>Enter Data</strong>
+                            <ul>
+                                <li>Paste your data into the input textarea</li>
+                                <li>Example templates are provided in the placeholder text</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>Select Output Format</strong>
+                            <ul>
+                                <li>Click the desired output format button below the output box</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>Convert Data</strong>
+                            <ul>
+                                <li>Click the &ldquo;Convert&rdquo; button to perform the conversion</li>
+                                <li>The converted data will appear in the output textarea</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>Use Results</strong>
+                            <ul>
+                                <li>Copy the output to clipboard using the &ldquo;Copy&rdquo; button</li>
+                                <li>Download the output as a file using the &ldquo;Download&rdquo; button</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <h3>Example Conversion</h3>
+                    <p><strong>Input (JSON):</strong></p>
+                    <pre><code>{`{
+  "name": "John",
+  "age": 30,
+  "city": "New York"
+}`}</code></pre>
+
+                    <p><strong>Output (XML):</strong></p>
+                    <pre><code>{`<root>
+  <name>John</name>
+  <age>30</age>
+  <city>New York</city>
+</root>`}</code></pre>
+
+                    <p><strong>Output (YAML):</strong></p>
+                    <pre><code>{`name: John
+age: 30
+city: New York`}</code></pre>
+
+                    <p><strong>Output (.properties):</strong></p>
+                    <pre><code>{`name=John
+age=30
+city=New York`}</code></pre>
                 </ToolArticleSection>
 
-                <ToolArticleSection id="data-format-converter-technology" title="Technology">
+                <ToolArticleSection id="data-format-converter-technology" title="Technology Stack">
                     <p>
-                        The converter uses browser-side JavaScript plus format-specific parsers for YAML and XML. JSON
-                        conversion relies on native parsing and serialization, while download and copy actions are
-                        handled in the client runtime.
+                        Implements the core conversion logic is 100% client-side Javascript only. It uses:
                     </p>
-                </ToolArticleSection>
-
-                <ToolArticleSection id="data-format-converter-error-handling" title="Error Handling">
                     <ul>
-                        <li>Shows clear validation errors when the selected input format does not match the pasted data.</li>
-                        <li>Prevents empty conversions and prompts you to enter content before converting.</li>
-                        <li>Lets you retry immediately after fixing malformed JSON, XML, YAML, or properties input.</li>
-                    </ul>
-                </ToolArticleSection>
-
-                <ToolArticleSection id="data-format-converter-privacy" title="Privacy & Security">
-                    <ul>
-                        <li>100% client-side processing in the browser.</li>
-                        <li>No server upload or account requirement.</li>
-                        <li>No data storage by the converter itself.</li>
-                        <li>Suitable for offline use after the page assets are loaded.</li>
+                        <li><code>js-yaml</code> for YAML parsing/formatting</li>
+                        <li><code>fast-xml-parser</code> for XML parsing/formatting</li>
+                        <li>Native <code>JSON</code> methods for JSON handling</li>
                     </ul>
                 </ToolArticleSection>
 
                 <ToolArticleSection id="data-format-converter-limitations" title="Known Limitations">
+                    <ol>
+                        <li>
+                            <strong>Large Data Sets</strong>
+                            <ul>
+                                <li>Very large data structures may impact performance</li>
+                                <li>Complex nested structures may take longer to convert</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>XML Specifics</strong>
+                            <ul>
+                                <li>XML attributes are converted to object properties with <code>@</code> prefix</li>
+                                <li>XML namespaces are not fully supported</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>YAML Specifics</strong>
+                            <ul>
+                                <li>Some advanced YAML features may not be supported</li>
+                                <li>Multi-document YAML is not supported</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>Properties specifics</strong>
+                            <ul>
+                                <li>Data with more than a level deeper can&apos;t be converted to properties properly</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </ToolArticleSection>
+
+                <ToolArticleSection id="data-format-converter-future" title="Data Format Converter Future Enhancements">
+                    <ol>
+                        <li>
+                            <strong>Additional Formats</strong>
+                            <ul>
+                                <li>Support for CSV, TOML, and other common formats</li>
+                                <li>Custom format templates</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>Advanced Features</strong>
+                            <ul>
+                                <li>Schema validation</li>
+                                <li>Format auto-detection</li>
+                                <li>Batch conversion</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>UI Improvements</strong>
+                            <ul>
+                                <li>Syntax highlighting</li>
+                                <li>Side-by-side comparison view</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>Performance Optimizations</strong>
+                            <ul>
+                                <li>Web Workers for large conversions</li>
+                                <li>Streaming processing for very large files</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </ToolArticleSection>
+
+                <ToolArticleSection id="data-format-converter-privacy" title="Privacy & Security">
                     <ul>
-                        <li>Very large documents may feel slower in the browser than small and medium payloads.</li>
-                        <li>Advanced YAML constructs and multi-document YAML are not the primary target of this tool.</li>
-                        <li>XML namespaces, attributes, and mixed-content documents may not map perfectly to simpler formats.</li>
+                        <li>100% Client-Side Processing: All conversions happen in your browser</li>
+                        <li>No Data Storage: Your data is never saved or transmitted to any server</li>
+                        <li>Offline Capability: Works without an internet connection once loaded</li>
+                        <li>Data Privacy: No cookies, tracking, or data collection of any kind</li>
+                    </ul>
+                </ToolArticleSection>
+
+                <ToolArticleSection id="data-format-converter-troubleshooting" title="Troubleshooting">
+                    <h3>Conversion fails with &ldquo;Invalid format&rdquo; error</h3>
+                    <ul>
+                        <li>Cause: Input data doesn&apos;t match the selected format</li>
+                        <li>Solution: Verify the input format is correctly selected</li>
+                        <li>Solution: Check for syntax errors in the input data</li>
+                        <li>Solution: Use the example templates as reference</li>
+                    </ul>
+
+                    <h3>Output looks incorrect</h3>
+                    <ul>
+                        <li>Cause: Different formats handle data structures differently</li>
+                        <li>Solution: Check for known format differences such as XML attributes vs JSON properties</li>
+                        <li>Solution: Try converting back to original format to verify round-trip consistency</li>
+                    </ul>
+
+                    <h3>Tool doesn&apos;t respond</h3>
+                    <ul>
+                        <li>Cause: Possible JavaScript error or conflict</li>
+                        <li>Solution: Check browser console for errors</li>
+                        <li>Solution: Refresh the page</li>
+                        <li>Solution: Ensure all required scripts are loaded</li>
                     </ul>
                 </ToolArticleSection>
 
                 <ToolArticleSection id="data-format-converter-feedback" title="Feedback">
                     <p>
-                        Have a bug report or want support for another data format such as CSV or TOML? Please{' '}
-                        <a href="https://codesamplez.com/contact">contact us</a>.
+                        Want more tools like this? Explore the full developer tools collection on{' '}
+                        <a href="https://codesamplez.com/tools">CodeSamplez Tools</a>.
                     </p>
                 </ToolArticleSection>
 
-                <ToolArticleSection id="data-format-converter-faqs" title="Frequently Asked Questions (FAQs)">
+                <ToolArticleSection id="data-format-converter-faqs" title="Data Format Converter FAQs">
                     <ToolFaqList items={FAQ_ITEMS} />
                 </ToolArticleSection>
             </div>

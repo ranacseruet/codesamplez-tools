@@ -112,10 +112,9 @@ describe('DataFormatConverterUI Integration', () => {
 
     it('renders the shared article and faq content around the converter UI', () => {
         expect(document.body.textContent).toContain('About This Tool');
-        expect(document.body.textContent).toContain('How To Use The Data Format Converter:');
-        expect(document.body.textContent).toContain('Frequently Asked Questions (FAQs)');
+        expect(document.body.textContent).toContain('Data Format Converter Usage Example');
+        expect(document.body.textContent).toContain('Data Format Converter FAQs');
         expect(document.querySelector('a[href="https://codesamplez.com/tools"]')).not.toBeNull();
-        expect(document.querySelector('a[href="https://codesamplez.com/contact"]')).not.toBeNull();
     });
 
     it('keeps sample mode disabled by default', () => {
