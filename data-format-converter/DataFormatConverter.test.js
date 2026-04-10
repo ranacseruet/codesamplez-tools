@@ -36,6 +36,15 @@ describe('DataFormatConverter', () => {
             });
         });
 
+        it('should preserve dotted numeric strings from XML text nodes', () => {
+            const xml = `<root><version>2026.04</version></root>`;
+            const result = converter.parseInput(xml, 'xml');
+
+            expect(result).toEqual({
+                version: '2026.04'
+            });
+        });
+
         it('should throw error for invalid XML input', () => {
             const invalidXml = '<root><name>test</root>';
             expect(() => converter.parseInput(invalidXml, 'xml')).toThrow();
@@ -201,6 +210,13 @@ age=30`;
             const result = converter.formatOutput(testData, 'xml');
             expect(result).toContain('<name>test</name>');
             expect(result).toContain('<value>123</value>');
+        });
+
+        it('should round-trip XML output through the XML parser', () => {
+            const data = { version: '2026.04', owner: 'alex' };
+            const xml = converter.formatOutput(data, 'xml');
+
+            expect(converter.parseInput(xml, 'xml')).toEqual(data);
         });
 
         it('should format to YAML', () => {
