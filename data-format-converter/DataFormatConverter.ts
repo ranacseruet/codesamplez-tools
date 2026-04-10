@@ -69,10 +69,26 @@ export class DataFormatConverter {
     }
 
     parseXML(xmlString: string): unknown {
-        // Validate XML structure
+        if (typeof DOMParser === 'function') {
+            const doc = new DOMParser().parseFromString(xmlString, 'application/xml');
+            const parserError = doc.getElementsByTagName('parsererror')[0];
+
+            if (parserError) {
+                const message = (parserError.textContent || '').trim();
+                throw new Error(message || 'Invalid XML format');
+            }
+
+            const root = doc.documentElement;
+            if (!root) {
+                throw new Error('Invalid XML format');
+            }
+
+            return this.xmlElementToObject(root);
+        }
+
+        // Fallback for non-DOM environments.
         const validation = XMLValidator.validate(xmlString) as true | { err?: { msg?: string } };
         if (validation !== true) {
-            // Provide specific error from validator if available, or generic message
             const msg = validation.err ? validation.err.msg : 'Invalid XML format';
             throw new Error(msg);
         }
@@ -80,14 +96,14 @@ export class DataFormatConverter {
         const parser = new XMLParser({
             ignoreAttributes: false,
             attributeNamePrefix: '@_',
-            isArray: (name, jpath, isLeafNode, isAttribute) => false,
+            isArray: () => false,
             numberParseOptions: {
-                skipLike: /^[0-9]+$/ // Keep numbers as strings to match tests
+                skipLike: /^[0-9]+$/
             } as any
         });
+
         try {
-            const result = parser.parse(xmlString);
-            // Remove root wrapper and return direct child properties
+            const result = parser.parse(xmlString) as Record<string, unknown>;
             const rootKey = Object.keys(result)[0];
             return result[rootKey];
         } catch (_e) {
@@ -154,6 +170,47 @@ export class DataFormatConverter {
         // Convert DOM node to XML string first
         const xmlString = new XMLSerializer().serializeToString(xmlNode);
         return this.parseXML(xmlString);
+    }
+
+    xmlElementToObject(element: Element): unknown {
+        const result: Record<string, unknown> = {};
+        const childElements = Array.from(element.children);
+        const textContent = Array.from(element.childNodes)
+            .filter((node) => node.nodeType === Node.TEXT_NODE || node.nodeType === Node.CDATA_SECTION_NODE)
+            .map((node) => node.textContent || '')
+            .join('')
+            .trim();
+
+        Array.from(element.attributes).forEach((attribute) => {
+            result[`@_${attribute.name}`] = attribute.value;
+        });
+
+        childElements.forEach((child) => {
+            const childValue = this.xmlElementToObject(child);
+            const existingValue = result[child.tagName];
+
+            if (existingValue === undefined) {
+                result[child.tagName] = childValue;
+                return;
+            }
+
+            if (Array.isArray(existingValue)) {
+                existingValue.push(childValue);
+                return;
+            }
+
+            result[child.tagName] = [existingValue, childValue];
+        });
+
+        if (!childElements.length && !Object.keys(result).length) {
+            return textContent;
+        }
+
+        if (textContent) {
+            result['#text'] = textContent;
+        }
+
+        return result;
     }
 
     formatXML(obj: unknown, rootName = 'root'): string {
