@@ -1,10 +1,17 @@
+import { XMLParser, XMLValidator } from 'fast-xml-parser';
 import { DataFormatConverter } from './DataFormatConverter';
 
 describe('DataFormatConverter', () => {
     let converter;
+    const originalDOMParser = global.DOMParser;
 
     beforeEach(() => {
         converter = new DataFormatConverter();
+    });
+
+    afterEach(() => {
+        global.DOMParser = originalDOMParser;
+        jest.restoreAllMocks();
     });
 
     it('should initialize with default formats', () => {
@@ -50,6 +57,74 @@ describe('DataFormatConverter', () => {
             expect(() => converter.parseInput(invalidXml, 'xml')).toThrow();
         });
 
+        it('should throw when DOMParser returns no document element', () => {
+            global.DOMParser = class MockDOMParser {
+                parseFromString() {
+                    return {
+                        getElementsByTagName: () => [],
+                        documentElement: null
+                    };
+                }
+            };
+
+            expect(() => converter.parseInput('<root><name>test</name></root>', 'xml'))
+                .toThrow('Invalid XML format');
+        });
+
+        it('should fall back to the generic XML message when parsererror has no text', () => {
+            global.DOMParser = class MockDOMParser {
+                parseFromString() {
+                    return {
+                        getElementsByTagName: () => [{ textContent: '' }],
+                        documentElement: { nodeName: 'parsererror' }
+                    };
+                }
+            };
+
+            expect(() => converter.parseInput('<root><name>test</name></root>', 'xml'))
+                .toThrow('Invalid XML format');
+        });
+
+        it('should parse XML through the non-DOM fallback path', () => {
+            global.DOMParser = undefined;
+            jest.spyOn(XMLValidator, 'validate').mockReturnValue(true);
+
+            expect(converter.parseInput('<root><name>test</name></root>', 'xml')).toEqual({
+                name: 'test'
+            });
+        });
+
+        it('should surface fallback XML validator errors without DOMParser', () => {
+            global.DOMParser = undefined;
+            jest.spyOn(XMLValidator, 'validate').mockReturnValue({
+                err: {
+                    msg: 'Bad fallback XML'
+                }
+            });
+
+            expect(() => converter.parseInput('<root><name>test</name></root>', 'xml'))
+                .toThrow('Bad fallback XML');
+        });
+
+        it('should use the generic fallback XML message when validator omits details', () => {
+            global.DOMParser = undefined;
+            jest.spyOn(XMLValidator, 'validate').mockReturnValue({});
+
+            expect(() => converter.parseInput('<root><name>test</name></root>', 'xml'))
+                .toThrow('Invalid XML format');
+        });
+
+        it('should throw generic XML error when fallback parser throws', () => {
+            global.DOMParser = undefined;
+            jest.spyOn(XMLValidator, 'validate').mockReturnValue(true);
+            jest.spyOn(XMLParser.prototype, 'parse').mockImplementation(() => {
+                throw new Error('parse failed');
+            });
+
+            expect(() => converter.parseInput('<root><name>test</name></root>', 'xml'))
+                .toThrow('Invalid XML format');
+        });
+
         it('should parse valid YAML input', () => {
             const yaml = `name: test\nvalue: 123`;
             const result = converter.parseInput(yaml, 'yaml');
@@ -68,6 +143,15 @@ describe('DataFormatConverter', () => {
 
             expect(() => converter.parseInput('name: test', 'yaml'))
                 .toThrow('Invalid YAML format: string-yaml-error');
+
+            loadSpy.mockRestore();
+        });
+
+        it('should convert undefined YAML parses into empty objects', () => {
+            const yaml = require('js-yaml');
+            const loadSpy = jest.spyOn(yaml, 'load').mockReturnValue(undefined);
+
+            expect(converter.parseInput('key:', 'yaml')).toEqual({});
 
             loadSpy.mockRestore();
         });
@@ -229,6 +313,12 @@ age=30`;
             expect(() => converter.formatOutput(testData, 'csv')).toThrow('Unsupported output format: csv');
         });
 
+        it('should throw when generated output fails validation', () => {
+            jest.spyOn(converter, 'validateOutput').mockReturnValue(false);
+
+            expect(() => converter.formatOutput(testData, 'json')).toThrow('Invalid JSON output format');
+        });
+
         it('should throw error for invalid properties input', () => {
             expect(() => converter.formatOutput(null, 'properties')).toThrow('Cannot format to properties');
         });
@@ -273,6 +363,28 @@ age=30`;
             const result = converter.xmlToObject(doc.documentElement);
             expect(Array.isArray(result.item)).toBe(true);
             expect(result.item).toEqual(['1', '2']);
+        });
+
+        it('should append to an existing XML child array for repeated tags beyond two items', () => {
+            const xml = `<root>
+                <item>1</item>
+                <item>2</item>
+                <item>3</item>
+            </root>`;
+            const doc = new DOMParser().parseFromString(xml, 'text/xml');
+            const result = converter.xmlToObject(doc.documentElement);
+
+            expect(result.item).toEqual(['1', '2', '3']);
+        });
+
+        it('should treat null text nodes as empty strings when building XML objects', () => {
+            const result = converter.xmlElementToObject({
+                children: [],
+                childNodes: [{ nodeType: Node.TEXT_NODE, textContent: null }],
+                attributes: []
+            });
+
+            expect(result).toBe('');
         });
 
         it('should handle empty XML nodes', () => {
