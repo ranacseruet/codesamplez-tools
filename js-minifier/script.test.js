@@ -94,6 +94,11 @@ describe('JavaScript Minifier Preact runtime', () => {
     expect(document.getElementById('js-minifier-mangle-properties')?.checked).toBe(false);
     expect(document.getElementById('js-minifier-compression-ratio')?.textContent).toBe('0.00%');
     expect(document.querySelectorAll('#js-minifier-tool h1')).toHaveLength(0);
+    expect(document.body.textContent).toContain('About This Tool');
+    expect(document.body.textContent).toContain('Why Minify JavaScript?');
+    expect(document.body.textContent).toContain('JavaScript Minifier FAQs');
+    expect(document.querySelector('#js-minifier-tool a[href="https://codesamplez.com/tools"]')).not.toBeNull();
+    expect(document.querySelector('#js-minifier-tool a[href="https://codesamplez.com/contact"]')).not.toBeNull();
   });
 
   it('minifies valid input and updates output/stats', async () => {

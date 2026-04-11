@@ -7,6 +7,7 @@ import { scheduleTask } from '../common/scheduler-utils';
 import { hydrate, render } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { JSMinifierArticle, JSMinifierIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 const DEFAULT_OPTIONS = {
@@ -176,9 +177,7 @@ export function JSMinifierApp() {
 
   return (
     <div id="js-minifier-tool" className="js-minifier-container tool-container c-tool-stack">
-      <header className="js-minifier-header c-tool-header c-surface-card">
-        <p className="o-description c-tool-description">Minify your JavaScript code to reduce file size and improve load times</p>
-      </header>
+      <JSMinifierIntro />
 
       <div className="js-minifier-options c-options-panel c-surface-card">
         <h3>Minification Options</h3>
@@ -304,6 +303,8 @@ export function JSMinifierApp() {
       <div id="notification" className="c-notification" role="status" aria-live="polite">
         Copied to clipboard!
       </div>
+
+      <JSMinifierArticle />
     </div>
   );
 }

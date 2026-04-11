@@ -85,6 +85,16 @@ describe('tool document generation', () => {
         expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/data-format-converter/#webpage"}');
     });
 
+    it('renders FAQPage structured data for js-minifier', () => {
+        const html = generateToolDocument('js-minifier-tool');
+
+        expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('"name":"What is JavaScript minification and why is it important?"');
+        expect(html).toContain('"name":"Is minification the same as obfuscation?"');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"JavaScript minification is the process of compressing code by removing unnecessary characters like spaces, line breaks, and comments');
+        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/js-minifier/#webpage"}');
+    });
+
     it('renders prerendered markup for a representative module tool', () => {
         const html = generateToolDocument('base64-converter-tool');
 
