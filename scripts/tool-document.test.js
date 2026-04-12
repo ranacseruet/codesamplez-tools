@@ -95,6 +95,16 @@ describe('tool document generation', () => {
         expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/js-minifier/#webpage"}');
     });
 
+    it('renders FAQPage structured data for css-minifier', () => {
+        const html = generateToolDocument('css-minifier-tool');
+
+        expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('"name":"Does minifying CSS affect how my styles work?"');
+        expect(html).toContain('"name":"Can I unminify (beautify) the CSS again later?"');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"No. Minification does not change the CSS functionality - it only removes characters that are unnecessary for the browser');
+        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/css-minifier/#webpage"}');
+    });
+
     it('renders prerendered markup for a representative module tool', () => {
         const html = generateToolDocument('base64-converter-tool');
 

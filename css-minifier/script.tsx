@@ -15,6 +15,7 @@ import { scheduleTask } from '../common/scheduler-utils';
 import { hydrate, render } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { CssMinifierArticle, CssMinifierIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 const DEFAULT_OPTIONS = {
@@ -247,6 +248,8 @@ export function CssMinifierApp() {
 
   return (
     <div id="css-minifier-tool" className="css-minifier-container tool-container cssm-tool c-tool-stack">
+      <CssMinifierIntro />
+
       <div className="o-grid-2col cssm-grid">
         <div className="o-panel cssm-panel cssm-input-panel c-surface-card c-surface-panel">
           <div className="o-panel-header cssm-panel-header c-surface-panel__header">
@@ -353,6 +356,8 @@ export function CssMinifierApp() {
       <div id="notification" className="c-notification" role="status" aria-live="polite">
         Copied to clipboard!
       </div>
+
+      <CssMinifierArticle />
     </div>
   );
 }
