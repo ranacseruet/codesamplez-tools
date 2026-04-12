@@ -99,6 +99,11 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="css-minifier-input"');
         expect(markup).toContain('id="css-minifier-output"');
         expect(markup).toContain('id="minify-btn"');
+        expect(markup).toContain('CSS Minification is the process of removing unnecessary characters such as spaces, line breaks, and comments from CSS code.');
+        expect(markup).toContain('What is a CSS Minifier?');
+        expect(markup).toContain('CSS Minifier FAQs');
+        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/tools/javascript-minifier"');
     });
 
     it('renders text-analyzer app markup for server-side prerender', () => {

@@ -9,6 +9,14 @@ const { ensureBabelRegister } = require('./register-node-transforms');
 
 /** @type {Record<string, () => StructuredFaqItem[]>} */
 const TOOL_FAQ_REGISTRY = {
+    'css-minifier-tool': () => {
+        ensureBabelRegister();
+        const { FAQ_ITEMS } = require(path.resolve(__dirname, '../css-minifier/content'));
+        return FAQ_ITEMS.map((item) => ({
+            question: item.question,
+            structuredDataAnswer: item.structuredDataAnswer
+        }));
+    },
     'data-format-converter': () => {
         ensureBabelRegister();
         const { FAQ_ITEMS } = require(path.resolve(__dirname, '../data-format-converter/content'));
