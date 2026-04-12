@@ -17,6 +17,14 @@ const TOOL_FAQ_REGISTRY = {
             structuredDataAnswer: item.structuredDataAnswer
         }));
     },
+    'js-minifier-tool': () => {
+        ensureBabelRegister();
+        const { FAQ_ITEMS } = require(path.resolve(__dirname, '../js-minifier/content'));
+        return FAQ_ITEMS.map((item) => ({
+            question: item.question,
+            structuredDataAnswer: item.structuredDataAnswer
+        }));
+    },
     'qr-code-generator': () => {
         ensureBabelRegister();
         const { FAQ_ITEMS } = require(path.resolve(__dirname, '../qr-code-generator/content'));

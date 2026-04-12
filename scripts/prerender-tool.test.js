@@ -61,6 +61,11 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="js-minifier-minify-btn"');
         expect(markup).toContain('id="js-minifier-input"');
         expect(markup).toContain('id="js-minifier-remove-comments"');
+        expect(markup).toContain('Minify your JavaScript code online to dramatically reduce file size and improve web performance.');
+        expect(markup).toContain('Why Minify JavaScript?');
+        expect(markup).toContain('JavaScript Minifier FAQs');
+        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('renders jwt-decoder app markup for server-side prerender', () => {
