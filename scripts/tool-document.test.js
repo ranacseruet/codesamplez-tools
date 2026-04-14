@@ -115,6 +115,16 @@ describe('tool document generation', () => {
         expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/jwt-builder/#webpage"}');
     });
 
+    it('renders FAQPage structured data for jwt-decoder', () => {
+        const html = generateToolDocument('jwt-decoder-tool');
+
+        expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('"name":"Is it safe to decode JWTs using an online tool?"');
+        expect(html).toContain('"name":"Can this tool create JWTs or just decode?"');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes. This tool doesn’t store anything, neither sends to any server for processing.');
+        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/jwt-decoder/#webpage"}');
+    });
+
     it('renders prerendered markup for a representative module tool', () => {
         const html = generateToolDocument('base64-converter-tool');
 
