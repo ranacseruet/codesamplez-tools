@@ -105,6 +105,16 @@ describe('tool document generation', () => {
         expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/css-minifier/#webpage"}');
     });
 
+    it('renders FAQPage structured data for jwt-builder', () => {
+        const html = generateToolDocument('jwt-builder-tool');
+
+        expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('"name":"Is this JWT generator free to use?"');
+        expect(html).toContain('"name":"Is using an online JWT generator safe?"');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes. The CodeSamplez JWT Generator is completely free to use and runs directly in your browser.');
+        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/jwt-builder/#webpage"}');
+    });
+
     it('renders prerendered markup for a representative module tool', () => {
         const html = generateToolDocument('base64-converter-tool');
 

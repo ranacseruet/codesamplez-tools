@@ -33,6 +33,14 @@ const TOOL_FAQ_REGISTRY = {
             structuredDataAnswer: item.structuredDataAnswer
         }));
     },
+    'jwt-builder-tool': () => {
+        ensureBabelRegister();
+        const { FAQ_ITEMS } = require(path.resolve(__dirname, '../jwt-builder/content'));
+        return FAQ_ITEMS.map((item) => ({
+            question: item.question,
+            structuredDataAnswer: item.structuredDataAnswer
+        }));
+    },
     'qr-code-generator': () => {
         ensureBabelRegister();
         const { FAQ_ITEMS } = require(path.resolve(__dirname, '../qr-code-generator/content'));

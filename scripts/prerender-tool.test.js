@@ -82,6 +82,12 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="jwtForm"');
         expect(markup).toContain('id="buildJwtBtn"');
         expect(markup).toContain('id="customClaims"');
+        expect(markup).toContain('JWT Generator is a free browser-based tool to quickly create signed JSON Web Tokens.');
+        expect(markup).toContain('What is a JWT Generator?');
+        expect(markup).toContain('JWT Generator FAQs (Frequently Asked Questions)');
+        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/tools/jwt-decoder"');
+        expect(markup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('renders diff-checker app markup for server-side prerender', () => {
