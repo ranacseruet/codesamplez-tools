@@ -3,6 +3,7 @@ import { NotificationManager } from '../common/notification-manager';
 import CopyButton from '../common/copy-button/CopyButton';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { JwtBuilderArticle, JwtBuilderIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 type JwtBuilderWindow = Window & {
@@ -259,6 +260,7 @@ export function JwtBuilderApp() {
   return (
     <div id="jwt-builder-tool" className="tool-container jwt-builder-container c-tool-stack">
       <div id="notification" className="c-notification" role="status" aria-live="polite" />
+      <JwtBuilderIntro />
       <div className="o-header jwt-builder-header c-tool-header c-surface-card">
         <p className="o-description c-tool-description">Create and sign JSON Web Tokens with standard and custom claims</p>
       </div>
@@ -407,6 +409,8 @@ export function JwtBuilderApp() {
           <pre id="result" className="c-code-output jwt-token-output" title="Generated JWT token" />
         </div>
       </div>
+
+      <JwtBuilderArticle />
     </div>
   );
 }
