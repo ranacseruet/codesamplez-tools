@@ -74,6 +74,12 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="jwtInputToken"');
         expect(markup).toContain('id="jwt-decoder-validate-btn"');
         expect(markup).toContain('id="jwtSignatureStatus"');
+        expect(markup).toContain('This free online JWT Decoder lets you paste any JSON Web Token to instantly see its header and payload');
+        expect(markup).toContain('What is a JSON Web Token (JWT)?');
+        expect(markup).toContain('JWT Decoder FAQs (Frequently Asked Questions)');
+        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/tools/jwt-builder"');
+        expect(markup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('renders jwt-builder app markup for server-side prerender', () => {

@@ -4,6 +4,7 @@ import { NotificationManager } from '../common/notification-manager';
 import ClearButton from '../common/clear-button/ClearButton';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { JwtDecoderArticle, JwtDecoderIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 type StatusType = 'default' | 'success' | 'error' | 'warning';
@@ -370,6 +371,7 @@ export class JWTDecoderUI {
 export function JwtDecoderApp() {
     return (
         <div id="jwt-decoder-tool" className="tool-container jwt-decoder-tool c-tool-stack">
+            <JwtDecoderIntro />
             <div className="c-options-panel jwt-decoder-options-panel c-surface-card">
                 <h3>Signature Options</h3>
                 <div className="c-form-group jwt-decoder-options-group">
@@ -491,6 +493,8 @@ export function JwtDecoderApp() {
             <footer className="jwt-decoder-footer c-tool-footer">
                 <p>JWT Decoder - Safely decode and verify your JWT tokens. No tokens are stored or transmitted</p>
             </footer>
+
+            <JwtDecoderArticle />
 
             <div id="notification" className="c-notification" role="status" aria-live="polite" />
         </div>
