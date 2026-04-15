@@ -53,6 +53,11 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="formatJsonBtn"');
         expect(markup).toContain('id="jsonErrorStatus"');
         expect(markup).toContain('id="treeView"');
+        expect(markup).toContain('Struggling to read messy JSON? Our free Online JSON Formatter beautifies raw JSON instantly');
+        expect(markup).toContain('Why Use A JSON Formatter Tool?');
+        expect(markup).toContain('JSON Formatter FAQs');
+        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('renders js-minifier app markup for server-side prerender', () => {

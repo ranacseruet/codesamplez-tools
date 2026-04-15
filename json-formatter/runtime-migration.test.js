@@ -62,6 +62,11 @@ describe('JSON Formatter Preact runtime', () => {
     expect(document.getElementById('copyOutputBtn')?.disabled).toBe(true);
     expect(document.getElementById('downloadOutputBtn')?.disabled).toBe(true);
     expect(document.querySelector('#treeView .c-code-output code')).not.toBeNull();
+    expect(document.body.textContent).toContain('About This Tool');
+    expect(document.body.textContent).toContain('Why Use A JSON Formatter Tool?');
+    expect(document.body.textContent).toContain('JSON Formatter FAQs');
+    expect(document.querySelector('#json-formatter-tool a[href="https://codesamplez.com/tools"]')).not.toBeNull();
+    expect(document.querySelector('#json-formatter-tool a[href="https://codesamplez.com/contact"]')).not.toBeNull();
   });
 
   it('formats valid JSON and populates tree/plain views', async () => {
