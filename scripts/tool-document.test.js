@@ -95,6 +95,16 @@ describe('tool document generation', () => {
         expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/js-minifier/#webpage"}');
     });
 
+    it('renders FAQPage structured data for json-formatter', () => {
+        const html = generateToolDocument('json-formatter-tool');
+
+        expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('"name":"What is a JSON Formatter?"');
+        expect(html).toContain('"name":"Can a JSON Formatter also validate JSON?"');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"A JSON Formatter is an online tool that takes unformatted or minified JSON data and beautifies it by adding proper indentation and line breaks.');
+        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/json-formatter/#webpage"}');
+    });
+
     it('renders FAQPage structured data for css-minifier', () => {
         const html = generateToolDocument('css-minifier-tool');
 

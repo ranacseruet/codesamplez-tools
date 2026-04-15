@@ -5,6 +5,7 @@ import ClearButton from '../common/clear-button/ClearButton';
 import { scheduleTask, nextFrame } from '../common/scheduler-utils';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { JsonFormatterArticle, JsonFormatterIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 interface RenderContext {
@@ -21,6 +22,8 @@ const browserWindow = typeof window !== 'undefined' ? (window as JsonFormatterWi
 export function JsonFormatterApp() {
   return (
     <div id="json-formatter-tool" className="tool-container jsonf-tool c-tool-stack">
+      <JsonFormatterIntro />
+
       <div className="o-panel jsonf-panel jsonf-input-panel c-surface-card c-surface-panel">
         <h3>Input JSON</h3>
         <div className="o-panel-content jsonf-panel-content">
@@ -95,6 +98,8 @@ export function JsonFormatterApp() {
 
       <div id="notification" className="c-notification" role="status" aria-live="polite" />
       <div className="jsonf-footer c-tool-footer">Made by Developer, for developers with ❤️</div>
+
+      <JsonFormatterArticle />
     </div>
   );
 }
