@@ -135,6 +135,16 @@ describe('tool document generation', () => {
         expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/jwt-decoder/#webpage"}');
     });
 
+    it('renders FAQPage structured data for base64-converter', () => {
+        const html = generateToolDocument('base64-converter-tool');
+
+        expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('"name":"Is Base64 encoding secure?"');
+        expect(html).toContain('"name":"Does this tool send my data to a server?"');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"No. Base64 is not encryption. It is an encoding scheme for data representation, not meant for security.');
+        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/base64-converter/#webpage"}');
+    });
+
     it('renders prerendered markup for a representative module tool', () => {
         const html = generateToolDocument('base64-converter-tool');
 

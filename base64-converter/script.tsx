@@ -6,6 +6,7 @@ import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { Base64ConverterArticle, Base64ConverterIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 const BASE64_DATA_URL_REGEX = /^data:([a-zA-Z0-9/\-+.-\w]+)?(?:;charset=([a-zA-Z0-9/\-+.-\w]+))?;base64,(.*)$/;
@@ -398,11 +399,7 @@ export default createConverter;
 export function Base64ConverterApp() {
     return (
         <div id="base64converter-tool" className="tool-container b64-tool c-tool-stack">
-            <div className="o-header b64-header c-tool-header c-surface-card">
-                <p className="o-description c-tool-description">
-                    Convert text and files to and from Base64 encoding with support for multiple character encodings.
-                </p>
-            </div>
+            <Base64ConverterIntro />
 
             <div className="o-controls b64-settings-panel c-surface-card">
                 <div className="u-flex u-gap-sm b64-settings-row">
@@ -486,6 +483,8 @@ export function Base64ConverterApp() {
             <div id="notification" className="c-notification" role="status" aria-live="polite">
                 Copied to clipboard!
             </div>
+
+            <Base64ConverterArticle />
         </div>
     );
 }
