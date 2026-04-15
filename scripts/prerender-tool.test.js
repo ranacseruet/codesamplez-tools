@@ -45,6 +45,11 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="base64converter-mode"');
         expect(markup).toContain('id="base64converter-input"');
         expect(markup).toContain('id="base64converter-convert"');
+        expect(markup).toContain('Base64 Converter is a free online tool to quickly encode or decode text and files in Base64 format.');
+        expect(markup).toContain('What is Base64 encoding and why use it?');
+        expect(markup).toContain('Base64 Converter FAQs (Frequently Asked Questions)');
+        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('renders json-formatter app markup for server-side prerender', () => {
