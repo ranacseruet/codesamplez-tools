@@ -41,6 +41,16 @@ const TOOL_PRERENDER_REGISTRY = {
             const { h } = require('preact');
             const { DiffCheckerApp } = require(path.resolve(__dirname, '../diff-checker/script'));
             return h(DiffCheckerApp, {});
+        },
+        createBeforeAppNode: () => {
+            const { h } = require('preact');
+            const { DiffCheckerIntro } = require(path.resolve(__dirname, '../diff-checker/content'));
+            return h(DiffCheckerIntro, {});
+        },
+        createAfterAppNode: () => {
+            const { h } = require('preact');
+            const { DiffCheckerArticle } = require(path.resolve(__dirname, '../diff-checker/content'));
+            return h(DiffCheckerArticle, {});
         }
     },
     'json-formatter-tool': {
@@ -122,6 +132,32 @@ function renderToolPrerenderMarkup(toolName) {
  * @param {string} toolName
  * @returns {string}
  */
+function renderToolBeforeAppPrerenderMarkup(toolName) {
+    const config = getPrerenderConfig(toolName);
+    if (!config) {
+        throw new Error(`No prerender config found for tool: ${toolName}`);
+    }
+
+    return renderNodeToMarkup(() => config.createBeforeAppNode?.() || null);
+}
+
+/**
+ * @param {string} toolName
+ * @returns {string}
+ */
+function renderToolAfterAppPrerenderMarkup(toolName) {
+    const config = getPrerenderConfig(toolName);
+    if (!config) {
+        throw new Error(`No prerender config found for tool: ${toolName}`);
+    }
+
+    return renderNodeToMarkup(() => config.createAfterAppNode?.() || null);
+}
+
+/**
+ * @param {string} toolName
+ * @returns {string}
+ */
 function renderRelatedToolsPrerenderMarkup(toolName) {
     const relatedTools = getRelatedTools(toolName);
 
@@ -152,5 +188,7 @@ module.exports = {
     getPrerenderConfig,
     getPrerenderToolNames,
     renderRelatedToolsPrerenderMarkup,
+    renderToolAfterAppPrerenderMarkup,
+    renderToolBeforeAppPrerenderMarkup,
     renderToolPrerenderMarkup
 };

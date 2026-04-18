@@ -15,6 +15,8 @@ export interface ToolCleanupHandle {
 
 export interface ToolPrerenderConfig {
   createAppNode: () => VNode;
+  createBeforeAppNode?: () => VNode | null;
+  createAfterAppNode?: () => VNode | null;
 }
 
 export type ToolPrerenderRegistry = Record<string, ToolPrerenderConfig>;

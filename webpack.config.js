@@ -93,6 +93,25 @@ const createToolFeaturedImagePattern = (tool) => {
   };
 };
 
+const createToolAdditionalImagePatterns = (tool) => {
+  const imagesDir = path.join(__dirname, tool.sourceRoot, 'images');
+  if (!fs.existsSync(imagesDir)) {
+    return [];
+  }
+
+  const featuredImageName = getToolFeaturedImageSourceName(tool);
+
+  return fs.readdirSync(imagesDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .filter((name) => name !== featuredImageName)
+    .sort()
+    .map((name) => ({
+      from: path.join(imagesDir, name),
+      to: path.join(__dirname, tool.outputPath, DEFAULT_FEATURED_IMAGE_DIRECTORY, name)
+    }));
+};
+
 const createRootAssetPatterns = () => getRootAssets()
   .filter((asset) => path.extname(asset) !== '.html')
   .map((asset) => ({
@@ -242,7 +261,10 @@ const getToolConfig = (tool) => ({
       patterns: [
         ...(() => {
           const imagePattern = createToolFeaturedImagePattern(tool);
-          return imagePattern ? [imagePattern] : [];
+          return [
+            ...(imagePattern ? [imagePattern] : []),
+            ...createToolAdditionalImagePatterns(tool)
+          ];
         })()
       ]
     })
@@ -316,7 +338,10 @@ const developmentConfig = {
           return patterns.concat([
             ...(() => {
               const imagePattern = createToolFeaturedImagePattern(tool);
-              return imagePattern ? [imagePattern] : [];
+              return [
+                ...(imagePattern ? [imagePattern] : []),
+                ...createToolAdditionalImagePatterns(tool)
+              ];
             })()
           ]);
         }, [])

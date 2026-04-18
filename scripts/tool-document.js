@@ -1,7 +1,12 @@
 // @ts-check
 
 const { getToolById, loadManifest } = require('./tool-manifest');
-const { renderRelatedToolsPrerenderMarkup, renderToolPrerenderMarkup } = require('./prerender-tool');
+const {
+    renderRelatedToolsPrerenderMarkup,
+    renderToolAfterAppPrerenderMarkup,
+    renderToolBeforeAppPrerenderMarkup,
+    renderToolPrerenderMarkup
+} = require('./prerender-tool');
 const { escapeAttribute, escapeHtml, joinUrl } = require('./document-helpers');
 const { buildToolStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
 const { getToolFaqItems } = require('./tool-faq-metadata');
@@ -14,9 +19,11 @@ const { getToolFaqItems } = require('./tool-faq-metadata');
  * @param {ToolDefinition} tool
  * @param {string} prerenderedMarkup
  * @param {string} relatedToolsMarkup
+ * @param {string} beforeAppMarkup
+ * @param {string} afterAppMarkup
  * @returns {string}
  */
-function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '') {
+function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', beforeAppMarkup = '', afterAppMarkup = '') {
     const manifest = loadManifest();
     const absolutePageUrl = joinUrl(tool.siteBaseUrl, tool.publicPath);
     const absoluteFeaturedImageUrl = joinUrl(tool.siteBaseUrl, `${tool.publicPath.replace(/\/$/, '')}/${tool.featuredImagePath}`);
@@ -31,6 +38,12 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '') {
         faqItems: getToolFaqItems(tool.id)
     }));
     const scriptTypeAttribute = tool.scriptType === 'module' ? ' type="module"' : '';
+    const wrappedBeforeMarkup = beforeAppMarkup
+        ? `<div class="c-tool-static-shell c-tool-static-shell--before">${beforeAppMarkup}</div>`
+        : '';
+    const wrappedAfterMarkup = afterAppMarkup
+        ? `<div class="c-tool-static-shell c-tool-static-shell--after">${afterAppMarkup}</div>`
+        : '';
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -59,7 +72,9 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '') {
 
 <body class="standalone-app">
     <div id="app-shell-header"></div>
+    ${wrappedBeforeMarkup}
     <div id="${escapedAppRootId}">${prerenderedMarkup}</div>
+    ${wrappedAfterMarkup}
     ${relatedToolsMarkup}
     <div id="app-shell-footer"></div>
     <script src="bundle.main.js"${scriptTypeAttribute}></script>
@@ -79,7 +94,13 @@ function generateToolDocument(toolId) {
         throw new Error(`Unknown tool id: ${toolId}`);
     }
 
-    return renderToolDocument(tool, renderToolPrerenderMarkup(toolId), renderRelatedToolsPrerenderMarkup(toolId));
+    return renderToolDocument(
+        tool,
+        renderToolPrerenderMarkup(toolId),
+        renderRelatedToolsPrerenderMarkup(toolId),
+        renderToolBeforeAppPrerenderMarkup(toolId),
+        renderToolAfterAppPrerenderMarkup(toolId)
+    );
 }
 
 module.exports = {

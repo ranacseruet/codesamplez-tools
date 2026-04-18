@@ -33,6 +33,14 @@ const TOOL_FAQ_REGISTRY = {
             structuredDataAnswer: item.structuredDataAnswer
         }));
     },
+    'diff-checker-tool': () => {
+        ensureBabelRegister();
+        const { FAQ_ITEMS } = require(path.resolve(__dirname, '../diff-checker/content'));
+        return FAQ_ITEMS.map((item) => ({
+            question: item.question,
+            structuredDataAnswer: item.structuredDataAnswer
+        }));
+    },
     'js-minifier-tool': () => {
         ensureBabelRegister();
         const { FAQ_ITEMS } = require(path.resolve(__dirname, '../js-minifier/content'));

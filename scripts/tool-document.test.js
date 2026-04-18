@@ -33,7 +33,13 @@ describe('tool document generation', () => {
 
     it('renders a module tool document with metadata and shell placeholders', () => {
         const tool = getToolById('diff-checker-tool');
-        const html = renderToolDocument(tool, '<section>SSR payload</section>', '<section class="c-related-tools">Related</section>');
+        const html = renderToolDocument(
+            tool,
+            '<section>SSR payload</section>',
+            '<section class="c-related-tools">Related</section>',
+            '<section>Before payload</section>',
+            '<section>After payload</section>'
+        );
 
         expect(html).toContain('<title>Diff Checker</title>');
         expect(html).toContain('<meta name="description" content="Compare two texts or code snippets and highlight the differences between them.">');
@@ -49,11 +55,23 @@ describe('tool document generation', () => {
         expect(html).toContain('"priceCurrency":"USD"');
         expect(html).toContain('"url":"https://codesamplez.com/tools/diff-checker/"');
         expect(html).toContain('"image":"https://codesamplez.com/tools/diff-checker/images/featured.png"');
-        expect(html).not.toContain('"@type":"FAQPage"');
         expect(html).toContain('<div id="app-shell-header"></div>');
+        expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--before"><section>Before payload</section></div>');
         expect(html).toContain('<div id="diff-checker-app"><section>SSR payload</section></div>');
+        expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--after"><section>After payload</section></div>');
         expect(html).toContain('<section class="c-related-tools">Related</section>');
         expect(html).toContain('<script src="bundle.main.js" type="module"></script>');
+    });
+
+    it('renders FAQPage structured data for diff-checker', () => {
+        const html = generateToolDocument('diff-checker-tool');
+
+        expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('"name":"Does the tool work offline?"');
+        expect(html).toContain('"name":"Is the diff checker free to use?"');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes! Once the page loads, all comparisons happen locally in your browser, so you can use it without an internet connection.');
+        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/diff-checker/#webpage"}');
+        expect(html).toContain('src="https://tools.codesamplez.com/diff-checker/images/diff-result-view-example.webp"');
     });
 
     it('renders a classic-script document for qr-code-generator', () => {

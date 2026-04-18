@@ -4,6 +4,8 @@ const {
     getPrerenderConfig,
     getPrerenderToolNames,
     renderRelatedToolsPrerenderMarkup,
+    renderToolAfterAppPrerenderMarkup,
+    renderToolBeforeAppPrerenderMarkup,
     renderToolPrerenderMarkup
 } = require('./prerender-tool.js');
 
@@ -107,12 +109,21 @@ describe('generic tool prerender helpers', () => {
     });
 
     it('renders diff-checker app markup for server-side prerender', () => {
-        const markup = renderToolPrerenderMarkup('diff-checker-tool');
+        const appMarkup = renderToolPrerenderMarkup('diff-checker-tool');
+        const beforeMarkup = renderToolBeforeAppPrerenderMarkup('diff-checker-tool');
+        const afterMarkup = renderToolAfterAppPrerenderMarkup('diff-checker-tool');
 
-        expect(markup).toContain('id="text1"');
-        expect(markup).toContain('id="text2"');
-        expect(markup).toContain('id="compare-button"');
-        expect(markup).toContain('id="diff-result"');
+        expect(appMarkup).toContain('id="text1"');
+        expect(appMarkup).toContain('id="text2"');
+        expect(appMarkup).toContain('id="compare-button"');
+        expect(appMarkup).toContain('id="diff-result"');
+        expect(beforeMarkup).toContain('The Diff Checker Tool is a lightweight, web-based utility designed to compare two blocks of text');
+        expect(afterMarkup).toContain('Diff Checker Tool Features:');
+        expect(afterMarkup).toContain('Diff Checker FAQs');
+        expect(afterMarkup).toContain('Example diff checker result output:');
+        expect(afterMarkup).toContain('src="https://tools.codesamplez.com/diff-checker/images/diff-result-view-example.webp"');
+        expect(afterMarkup).toContain('href="https://codesamplez.com/tools"');
+        expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('renders css-minifier app markup for server-side prerender', () => {

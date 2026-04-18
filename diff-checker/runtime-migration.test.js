@@ -43,7 +43,16 @@ describe('Diff Checker Preact runtime', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     clearButtonInstances.length = 0;
-    document.body.innerHTML = '<div id="diff-checker-app"></div>';
+    document.body.innerHTML = `
+      <section id="diff-checker-static-before">About This Tool</section>
+      <div id="diff-checker-app"></div>
+      <section id="diff-checker-static-after">
+        What is a Diff Checker?
+        Diff Checker FAQs
+        <a href="https://codesamplez.com/tools">Explore More Dev Tools</a>
+        <a href="https://codesamplez.com/contact">message us</a>
+      </section>
+    `;
     if (!HTMLElement.prototype.scrollIntoView) {
       HTMLElement.prototype.scrollIntoView = jest.fn();
     } else {
@@ -66,6 +75,11 @@ describe('Diff Checker Preact runtime', () => {
     expect(document.getElementById('text2')).not.toBeNull();
     expect(document.getElementById('compare-button')?.textContent).toBe('Compare');
     expect(document.getElementById('ignore-whitespace')?.checked).toBe(true);
+    expect(document.body.textContent).toContain('About This Tool');
+    expect(document.body.textContent).toContain('What is a Diff Checker?');
+    expect(document.body.textContent).toContain('Diff Checker FAQs');
+    expect(document.querySelector('a[href="https://codesamplez.com/tools"]')).not.toBeNull();
+    expect(document.querySelector('a[href="https://codesamplez.com/contact"]')).not.toBeNull();
     expect(window.diffCheckerCleanup).toEqual(expect.any(Function));
   });
 

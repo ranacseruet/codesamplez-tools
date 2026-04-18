@@ -449,10 +449,6 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
 export function DiffCheckerApp() {
   return (
     <div id="diff-checker-tool" className="tool-container diffc-tool c-tool-stack">
-      <div className="o-header c-tool-header c-surface-card">
-        <p className="o-description c-tool-description">Compare two texts or code snippets and highlight the differences between them.</p>
-      </div>
-
       <div className="o-grid-2col diffc-grid">
         <div className="o-panel diffc-panel c-surface-card c-surface-panel">
           <div className="diff-checker-panel-header diffc-panel-header c-surface-panel__header">
