@@ -82,7 +82,7 @@ describe('JWT Decoder Preact runtime', () => {
     expect(document.body.textContent).toContain('About This Tool');
     expect(document.body.textContent).toContain('What is a JSON Web Token (JWT)?');
     expect(document.body.textContent).toContain('JWT Decoder FAQs (Frequently Asked Questions)');
-    expect(document.querySelector('#jwt-decoder-tool a[href="https://codesamplez.com/tools"]')).not.toBeNull();
+    expect(document.querySelector('#jwt-decoder-tool a[href="https://codesamplez.com/tools/"]')).not.toBeNull();
     expect(document.querySelector('#jwt-decoder-tool a[href="https://codesamplez.com/tools/jwt-builder"]')).not.toBeNull();
     expect(document.querySelector('#jwt-decoder-tool a[href="https://codesamplez.com/contact"]')).not.toBeNull();
     expect(window.jwtDecoderApp).toBe(ui.app);

@@ -114,7 +114,7 @@ describe('DataFormatConverterUI Integration', () => {
         expect(document.body.textContent).toContain('About This Tool');
         expect(document.body.textContent).toContain('Data Format Converter Usage Example');
         expect(document.body.textContent).toContain('Data Format Converter FAQs');
-        expect(document.querySelector('a[href="https://codesamplez.com/tools"]')).not.toBeNull();
+        expect(document.querySelector('a[href="https://codesamplez.com/tools/"]')).not.toBeNull();
     });
 
     it('keeps sample mode disabled by default', () => {

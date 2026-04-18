@@ -10,6 +10,7 @@ declare var __CST_APP_SHELL_CATALOG__: {
         title: string;
         description: string;
         rootPath: string;
+        absoluteUrl: string;
     };
     groups: Array<{
         id: string;

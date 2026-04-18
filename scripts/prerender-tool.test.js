@@ -33,7 +33,7 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('The Online Data Format Converter Tool is a web-based utility that converts between JSON, XML, Properties and YAML data formats.');
         expect(markup).toContain('Data Format Converter Usage Example');
         expect(markup).toContain('Data Format Converter FAQs');
-        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/tools/"');
     });
 
     it('throws when attempting to render a tool without prerender config', () => {
@@ -50,7 +50,7 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('Base64 Converter is a free online tool to quickly encode or decode text and files in Base64 format.');
         expect(markup).toContain('What is Base64 encoding and why use it?');
         expect(markup).toContain('Base64 Converter FAQs (Frequently Asked Questions)');
-        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/tools/"');
         expect(markup).toContain('href="https://codesamplez.com/contact"');
     });
 
@@ -63,7 +63,7 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('Struggling to read messy JSON? Our free Online JSON Formatter beautifies raw JSON instantly');
         expect(markup).toContain('Why Use A JSON Formatter Tool?');
         expect(markup).toContain('JSON Formatter FAQs');
-        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/tools/"');
         expect(markup).toContain('href="https://codesamplez.com/contact"');
     });
 
@@ -76,7 +76,7 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('Minify your JavaScript code online to dramatically reduce file size and improve web performance.');
         expect(markup).toContain('Why Minify JavaScript?');
         expect(markup).toContain('JavaScript Minifier FAQs');
-        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/tools/"');
         expect(markup).toContain('href="https://codesamplez.com/contact"');
     });
 
@@ -89,7 +89,7 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('This free online JWT Decoder lets you paste any JSON Web Token to instantly see its header and payload');
         expect(markup).toContain('What is a JSON Web Token (JWT)?');
         expect(markup).toContain('JWT Decoder FAQs (Frequently Asked Questions)');
-        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/tools/"');
         expect(markup).toContain('href="https://codesamplez.com/tools/jwt-builder"');
         expect(markup).toContain('href="https://codesamplez.com/contact"');
     });
@@ -103,7 +103,7 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('JWT Generator is a free browser-based tool to quickly create signed JSON Web Tokens.');
         expect(markup).toContain('What is a JWT Generator?');
         expect(markup).toContain('JWT Generator FAQs (Frequently Asked Questions)');
-        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/tools/"');
         expect(markup).toContain('href="https://codesamplez.com/tools/jwt-decoder"');
         expect(markup).toContain('href="https://codesamplez.com/contact"');
     });
@@ -122,7 +122,7 @@ describe('generic tool prerender helpers', () => {
         expect(afterMarkup).toContain('Diff Checker FAQs');
         expect(afterMarkup).toContain('Example diff checker result output:');
         expect(afterMarkup).toContain('src="https://tools.codesamplez.com/diff-checker/images/diff-result-view-example.webp"');
-        expect(afterMarkup).toContain('href="https://codesamplez.com/tools"');
+        expect(afterMarkup).toContain('href="https://codesamplez.com/tools/"');
         expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
     });
 
@@ -135,7 +135,7 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('CSS Minification is the process of removing unnecessary characters such as spaces, line breaks, and comments from CSS code.');
         expect(markup).toContain('What is a CSS Minifier?');
         expect(markup).toContain('CSS Minifier FAQs');
-        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/tools/"');
         expect(markup).toContain('href="https://codesamplez.com/tools/javascript-minifier"');
     });
 
@@ -148,7 +148,7 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('The CodeSamplez Text Analyzer is a <strong>free online text analysis tool</strong>');
         expect(markup).toContain('What is a Text Analyzer?');
         expect(markup).toContain('Text Analyzer FAQs:');
-        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/tools/"');
         expect(markup).toContain('href="https://codesamplez.com/contact"');
     });
 
@@ -161,7 +161,7 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('The CodeSamplez QR Code Generator is a <strong>free online QR code creator</strong>');
         expect(markup).toContain('How To Generate QR Code With This Tool:');
         expect(markup).toContain('Frequently Asked Questions (FAQs)');
-        expect(markup).toContain('href="https://codesamplez.com/tools"');
+        expect(markup).toContain('href="https://codesamplez.com/tools/"');
         expect(markup).toContain('href="https://codesamplez.com/contact"');
     });
 

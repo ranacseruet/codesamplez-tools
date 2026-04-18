@@ -82,7 +82,7 @@ describe('JWT Builder Preact runtime', () => {
     expect(document.body.textContent).toContain('About This Tool');
     expect(document.body.textContent).toContain('What is a JWT Generator?');
     expect(document.body.textContent).toContain('JWT Generator FAQs (Frequently Asked Questions)');
-    expect(document.querySelector('#jwt-builder-tool a[href="https://codesamplez.com/tools"]')).not.toBeNull();
+    expect(document.querySelector('#jwt-builder-tool a[href="https://codesamplez.com/tools/"]')).not.toBeNull();
     expect(document.querySelector('#jwt-builder-tool a[href="https://codesamplez.com/tools/jwt-decoder"]')).not.toBeNull();
     expect(document.querySelector('#jwt-builder-tool a[href="https://codesamplez.com/contact"]')).not.toBeNull();
     expect(document.querySelectorAll('#jwt-builder-tool h1')).toHaveLength(0);

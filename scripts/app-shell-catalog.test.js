@@ -40,7 +40,8 @@ describe('app-shell catalog helper', () => {
         expect(catalog.rootPage).toEqual({
             title: rootPageDefinition.title,
             description: rootPageDefinition.description,
-            rootPath: new URL(rootPageDefinition.absoluteUrl).pathname
+            rootPath: new URL(rootPageDefinition.absoluteUrl).pathname,
+            absoluteUrl: rootPageDefinition.absoluteUrl
         });
         expect(catalog.groups).toEqual(getCatalogGroups());
         expect(catalog.entries).toEqual(

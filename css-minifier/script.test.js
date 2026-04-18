@@ -94,7 +94,7 @@ describe('CSS Minifier Preact runtime', () => {
     expect(document.body.textContent).toContain('About This Tool');
     expect(document.body.textContent).toContain('What is a CSS Minifier?');
     expect(document.body.textContent).toContain('CSS Minifier FAQs');
-    expect(document.querySelector('#css-minifier-tool a[href="https://codesamplez.com/tools"]')).not.toBeNull();
+    expect(document.querySelector('#css-minifier-tool a[href="https://codesamplez.com/tools/"]')).not.toBeNull();
     expect(document.querySelector('#css-minifier-tool a[href="https://codesamplez.com/tools/javascript-minifier"]')).not.toBeNull();
   });
 

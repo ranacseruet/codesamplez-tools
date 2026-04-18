@@ -79,7 +79,7 @@ describe('Base64 Converter Preact runtime', () => {
     expect(document.body.textContent).toContain('About This Tool');
     expect(document.body.textContent).toContain('What is Base64 encoding and why use it?');
     expect(document.body.textContent).toContain('Base64 Converter FAQs (Frequently Asked Questions)');
-    expect(document.querySelector('#base64converter-tool a[href="https://codesamplez.com/tools"]')).not.toBeNull();
+    expect(document.querySelector('#base64converter-tool a[href="https://codesamplez.com/tools/"]')).not.toBeNull();
     expect(document.querySelector('#base64converter-tool a[href="https://codesamplez.com/contact"]')).not.toBeNull();
     expect(window.base64ConverterInstance).toBe(ui.converter);
   });

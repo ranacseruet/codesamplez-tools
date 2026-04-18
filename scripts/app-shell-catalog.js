@@ -51,7 +51,8 @@ function getAppShellCatalogDefinition() {
         rootPage: {
             title: rootPage.title,
             description: rootPage.description,
-            rootPath: new URL(rootPage.absoluteUrl).pathname
+            rootPath: new URL(rootPage.absoluteUrl).pathname,
+            absoluteUrl: rootPage.absoluteUrl
         },
         groups,
         entries: sortCatalogEntries(

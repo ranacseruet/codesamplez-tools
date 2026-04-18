@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { SITE_BASE_URL, ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -109,7 +109,7 @@ export function DataFormatConverterArticle(): JSX.Element {
                     </ol>
 
                     <div className="c-tool-article__cta-row">
-                        <a className="c-button" href="https://codesamplez.com/tools">
+                        <a className="c-button" href={SITE_BASE_URL}>
                             Explore More Dev Tools
                         </a>
                     </div>
