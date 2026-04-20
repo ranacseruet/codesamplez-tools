@@ -85,7 +85,7 @@ function createMockRootConfig(overrides = {}) {
       id: 'root-shell',
       outputPath: 'build/root-shell'
     },
-    rootAssets: ['index.html', 'styles.css', 'robots.txt'],
+    rootAssets: ['index.html', 'styles.css', 'robots.txt', 'sitemap.xml'],
     ...overrides
   };
 }
@@ -201,7 +201,7 @@ describe('tool-manifest', () => {
         id: 'root-shell',
         outputPath: 'build/root-shell'
       },
-      rootAssets: ['index.html', 'styles.css', 'robots.txt']
+      rootAssets: ['index.html', 'styles.css', 'robots.txt', 'sitemap.xml']
     });
   });
 
@@ -352,7 +352,7 @@ describe('tool-manifest', () => {
         id: 'root-shell',
         outputPath: 'build/root-shell'
       },
-      rootAssets: ['index.html', 'styles.css', 'robots.txt']
+      rootAssets: ['index.html', 'styles.css', 'robots.txt', 'sitemap.xml']
     });
   });
 
@@ -479,7 +479,7 @@ describe('tool-manifest', () => {
     );
     expect(() => getToolMetadataPath('not-a-real-tool')).toThrow('Unknown tool id');
 
-    expect(getRootAssets()).toEqual(['index.html', 'styles.css', 'robots.txt']);
+    expect(getRootAssets()).toEqual(['index.html', 'styles.css', 'robots.txt', 'sitemap.xml']);
     expect(getRootPageDefinition()).toEqual({
       title: 'CodeSamplez Tools',
       description: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',

@@ -114,6 +114,7 @@ const createToolAdditionalImagePatterns = (tool) => {
 
 const createRootAssetPatterns = () => getRootAssets()
   .filter((asset) => path.extname(asset) !== '.html')
+  .filter((asset) => fs.existsSync(path.join(__dirname, asset)))
   .map((asset) => ({
     from: asset,
     to: path.join(__dirname, 'build', asset)

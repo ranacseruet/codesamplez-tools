@@ -204,7 +204,7 @@ function main() {
             assertExists(sourcePath);
             copyAsset(args.bucket, sourcePath, asset, args.dryRun);
         });
-        invalidationPaths.push('/', '/index.html', '/styles.css', '/robots.txt');
+        invalidationPaths.push('/', '/index.html', '/sitemap.xml', '/styles.css', '/robots.txt');
     }
 
     if (invalidationPaths.length > 0) {

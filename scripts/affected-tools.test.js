@@ -73,8 +73,8 @@ describe('detectAffectedTargets', () => {
       includeRootAssets: true,
       shouldBuild: true,
       shouldDeploy: true,
-      deployPaths: ['base64-converter', 'index.html', 'jwt-builder', 'jwt-decoder', 'robots.txt', 'root-shell', 'styles.css'],
-      invalidationPaths: ['/', '/base64-converter/', '/base64-converter/*', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/robots.txt', '/root-shell/', '/root-shell/*', '/styles.css']
+      deployPaths: ['base64-converter', 'index.html', 'jwt-builder', 'jwt-decoder', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
+      invalidationPaths: ['/', '/base64-converter/', '/base64-converter/*', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
     });
   });
 
@@ -87,8 +87,8 @@ describe('detectAffectedTargets', () => {
       includeRootAssets: true,
       shouldBuild: true,
       shouldDeploy: true,
-      deployPaths: expect.arrayContaining(['index.html', 'root-shell', 'styles.css', 'robots.txt']),
-      invalidationPaths: expect.arrayContaining(['/', '/index.html', '/root-shell/', '/root-shell/*', '/styles.css', '/robots.txt'])
+      deployPaths: expect.arrayContaining(['index.html', 'root-shell', 'styles.css', 'robots.txt', 'sitemap.xml']),
+      invalidationPaths: expect.arrayContaining(['/', '/index.html', '/root-shell/', '/root-shell/*', '/styles.css', '/robots.txt', '/sitemap.xml'])
     });
   });
 
@@ -99,7 +99,7 @@ describe('detectAffectedTargets', () => {
     expect(result.affectedTools).toEqual(getToolIds());
     expect(result.includeRootShell).toBe(true);
     expect(result.includeRootAssets).toBe(true);
-    expect(result.deployPaths).toEqual(expect.arrayContaining(['root-shell', 'index.html', 'styles.css', 'robots.txt']));
+    expect(result.deployPaths).toEqual(expect.arrayContaining(['root-shell', 'index.html', 'styles.css', 'robots.txt', 'sitemap.xml']));
   });
 
   it('treats root stylesheet changes as root-only runtime changes', () => {
@@ -111,8 +111,8 @@ describe('detectAffectedTargets', () => {
       includeRootAssets: true,
       shouldBuild: true,
       shouldDeploy: true,
-      deployPaths: ['index.html', 'robots.txt', 'root-shell', 'styles.css'],
-      invalidationPaths: ['/', '/index.html', '/robots.txt', '/root-shell/', '/root-shell/*', '/styles.css']
+      deployPaths: ['index.html', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
+      invalidationPaths: ['/', '/index.html', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
     });
   });
 

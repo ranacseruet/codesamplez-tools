@@ -3,7 +3,8 @@
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
-const { normalizeSelection, parseToolSelectionArgs, selectTools } = require('./tool-manifest');
+const { getToolIds, normalizeSelection, parseToolSelectionArgs, selectTools } = require('./tool-manifest');
+const { writeGeneratedSiteAssets } = require('./generated-site-assets');
 
 function printHelp() {
     console.log('Usage: node scripts/build-tools.js [options] [-- <webpack args>]');
@@ -84,6 +85,14 @@ function removeLegacyToolBuildDirs(selection) {
 }
 
 function main() {
+    return mainAsync().catch((error) => {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(message);
+        process.exit(1);
+    });
+}
+
+async function mainAsync() {
     const args = parseArgs(process.argv.slice(2));
     const selection = parseToolSelectionArgs(args.selectionArgv);
     const hasExplicitSelection = args.selectionArgv.length > 0;
@@ -123,7 +132,21 @@ function main() {
     });
 
     if (typeof result.status === 'number') {
-        process.exit(result.status);
+        if (result.status !== 0) {
+            process.exit(result.status);
+        }
+
+        const shouldGenerateRootAssets = selection.includeRootAssets
+            || selection.requestedTools.length === 0
+            || selection.requestedTools.length === getToolIds().length;
+
+        if (shouldGenerateRootAssets) {
+            await writeGeneratedSiteAssets({
+                buildDir: path.resolve(process.cwd(), 'build')
+            });
+        }
+
+        process.exit(0);
     }
 
     process.exit(1);

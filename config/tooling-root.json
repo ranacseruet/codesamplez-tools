@@ -27,6 +27,7 @@
   "rootAssets": [
     "index.html",
     "styles.css",
-    "robots.txt"
+    "robots.txt",
+    "sitemap.xml"
   ]
 }

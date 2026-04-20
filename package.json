@@ -125,6 +125,7 @@
     "preact": "^10.29.0",
     "preact-render-to-string": "^6.6.6",
     "prismjs": "^1.30.0",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "sitemap": "^9.0.1"
   }
 }

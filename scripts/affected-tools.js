@@ -149,6 +149,7 @@ function finalizeAffectedTargets(result) {
         getRootAssets().forEach((asset) => deployPaths.add(asset));
         invalidationPaths.add('/');
         invalidationPaths.add('/index.html');
+        invalidationPaths.add('/sitemap.xml');
         invalidationPaths.add('/styles.css');
         invalidationPaths.add('/robots.txt');
     }
