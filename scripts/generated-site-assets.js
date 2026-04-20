@@ -177,7 +177,7 @@ function buildRobotsTxt() {
         'User-agent: *',
         'Allow: /',
         '',
-        `Sitemap: ${buildAbsoluteUrl(getSiteBaseUrl(), SITEMAP_FILENAME)}`
+        `Sitemap: ${SITEMAP_FILENAME}`
     ].join('\n');
 }
 
