@@ -1,6 +1,6 @@
 import { render } from 'preact';
 import { ToolShellFooter, ToolShellHeader } from './AppShell';
-import { TOOL_CATALOG_ROOT_PATH } from './toolCatalog';
+import { SITE_BASE_URL, buildSiteHref } from '../siteBaseUrl';
 
 describe('AppShell components', () => {
     beforeEach(() => {
@@ -44,7 +44,23 @@ describe('AppShell components', () => {
         const dataFormatConverterLink = Array.from(root.querySelectorAll('.cst-shell__tool-menu-link'))
             .find((link) => link.textContent === 'Data Format Converter');
         expect(dataFormatConverterLink).not.toBeNull();
-        expect(dataFormatConverterLink?.getAttribute('href')).toBe('/tools/data-format-converter/');
+        expect(dataFormatConverterLink?.getAttribute('href')).toBe(buildSiteHref('/data-format-converter/'));
+    });
+
+    it('defaults the header home link to the shared site base URL', () => {
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+
+        render(
+            <ToolShellHeader
+                title="Data Format Converter"
+            />,
+            root
+        );
+
+        const homeLink = root.querySelector('a.cst-shell__brand');
+        expect(homeLink).not.toBeNull();
+        expect(homeLink?.getAttribute('href')).toBe(SITE_BASE_URL);
     });
 
     it('renders a theme toggle when enabled', () => {
@@ -84,6 +100,6 @@ describe('AppShell components', () => {
         const allToolsLink = root.querySelector('a.cst-shell__footer-link');
         expect(allToolsLink).not.toBeNull();
         expect(allToolsLink.textContent).toBe('All Tools');
-        expect(allToolsLink.getAttribute('href')).toBe(TOOL_CATALOG_ROOT_PATH);
+        expect(allToolsLink.getAttribute('href')).toBe(SITE_BASE_URL);
     });
 });

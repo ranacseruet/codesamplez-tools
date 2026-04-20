@@ -1,5 +1,6 @@
 import { render } from 'preact';
 import { RelatedToolsSection } from './RelatedTools';
+import { buildSiteHref } from '../siteBaseUrl';
 
 describe('RelatedToolsSection', () => {
     beforeEach(() => {
@@ -36,8 +37,8 @@ describe('RelatedToolsSection', () => {
 
         const links = Array.from(root.querySelectorAll('a.c-related-tools__cta'));
         expect(links.map((link) => link.getAttribute('href'))).toEqual([
-            '/tools/jwt-builder/',
-            '/tools/base64-converter/'
+            buildSiteHref('/jwt-builder/'),
+            buildSiteHref('/base64-converter/')
         ]);
         expect(links.every((link) => link.textContent === 'Open tool')).toBe(true);
     });

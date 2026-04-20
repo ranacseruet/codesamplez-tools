@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL, ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { buildSiteHref, SITE_BASE_URL } from '../common/siteBaseUrl';
+import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -61,7 +62,7 @@ export function JwtBuilderArticle(): JSX.Element {
                     </p>
                     <p>
                         Need to inspect an existing token instead? Use the{' '}
-                        <a href="https://codesamplez.com/tools/jwt-decoder">JWT Decoder and validator</a>.
+                        <a href={buildSiteHref('/jwt-decoder/')}>JWT Decoder and validator</a>.
                     </p>
                 </ToolArticleSection>
 

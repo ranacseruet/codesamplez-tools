@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL, ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { buildSiteHref, SITE_BASE_URL } from '../common/siteBaseUrl';
+import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -100,7 +101,7 @@ export function JwtDecoderArticle(): JSX.Element {
                     </ul>
                     <p>
                         Need to generate a new JWT token instead? Use our{' '}
-                        <a href="https://codesamplez.com/tools/jwt-builder">JWT Generator Tool</a>.
+                        <a href={buildSiteHref('/jwt-builder/')}>JWT Generator Tool</a>.
                     </p>
                 </ToolArticleSection>
 

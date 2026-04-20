@@ -1,6 +1,6 @@
 import { render } from 'preact';
 import { ToolShellFooter, ToolShellHeader } from './AppShell';
-import { TOOL_CATALOG_ROOT_PATH } from './toolCatalog';
+import { SITE_BASE_URL } from '../siteBaseUrl';
 import type { MountToolShellOptions } from '../tooling-contracts';
 
 const STANDALONE_THEME_STORAGE_KEY = 'cst-standalone-theme-mode';
@@ -70,7 +70,7 @@ function persistStandaloneThemeMode(themeMode: ThemeMode): void {
 export function mountToolShell({
     title,
     description,
-    homeHref = TOOL_CATALOG_ROOT_PATH,
+    homeHref = SITE_BASE_URL,
     headerRootId = 'app-shell-header',
     footerRootId = 'app-shell-footer',
     showThemeToggle = false
@@ -86,7 +86,7 @@ export function mountToolShell({
     }
 
     let currentThemeMode: ThemeMode = THEME_LIGHT;
-    const resolvedHomeHref = homeHref === '/' ? TOOL_CATALOG_ROOT_PATH : homeHref;
+    const resolvedHomeHref = homeHref === '/' ? SITE_BASE_URL : homeHref;
 
     if (shouldEnableThemeToggle) {
         currentThemeMode = applyStandaloneThemeMode(

@@ -39,6 +39,7 @@ import { NotificationManager } from '../common/notification-manager';
 import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
+import { SITE_BASE_URL } from '../common/siteBaseUrl';
 
 // Mock the NotificationManager
 jest.mock('../common/notification-manager', () => ({
@@ -114,7 +115,9 @@ describe('DataFormatConverterUI Integration', () => {
         expect(document.body.textContent).toContain('About This Tool');
         expect(document.body.textContent).toContain('Data Format Converter Usage Example');
         expect(document.body.textContent).toContain('Data Format Converter FAQs');
-        expect(document.querySelector('a[href="https://codesamplez.com/tools/"]')).not.toBeNull();
+        const siteBaseUrlLinks = Array.from(document.querySelectorAll('a'))
+            .filter((link) => link.href === SITE_BASE_URL || link.getAttribute('href') === SITE_BASE_URL);
+        expect(siteBaseUrlLinks.length).toBeGreaterThan(0);
     });
 
     it('keeps sample mode disabled by default', () => {

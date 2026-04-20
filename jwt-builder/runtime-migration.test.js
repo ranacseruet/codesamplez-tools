@@ -44,6 +44,7 @@ jest.mock('../common/copy-button/CopyButton', () => ({
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { NotificationManager } from '../common/notification-manager';
 import CopyButton from '../common/copy-button/CopyButton';
+import { SITE_BASE_URL, buildSiteHref } from '../common/siteBaseUrl';
 import { JWTBuilderToolUI, jwtBuilder as scriptJwtBuilder } from './script';
 
 describe('JWT Builder Preact runtime', () => {
@@ -82,8 +83,8 @@ describe('JWT Builder Preact runtime', () => {
     expect(document.body.textContent).toContain('About This Tool');
     expect(document.body.textContent).toContain('What is a JWT Generator?');
     expect(document.body.textContent).toContain('JWT Generator FAQs (Frequently Asked Questions)');
-    expect(document.querySelector('#jwt-builder-tool a[href="https://codesamplez.com/tools/"]')).not.toBeNull();
-    expect(document.querySelector('#jwt-builder-tool a[href="https://codesamplez.com/tools/jwt-decoder"]')).not.toBeNull();
+    expect(document.querySelector(`#jwt-builder-tool a[href="${SITE_BASE_URL}"]`)).not.toBeNull();
+    expect(document.querySelector(`#jwt-builder-tool a[href="${buildSiteHref('/jwt-decoder/')}"]`)).not.toBeNull();
     expect(document.querySelector('#jwt-builder-tool a[href="https://codesamplez.com/contact"]')).not.toBeNull();
     expect(document.querySelectorAll('#jwt-builder-tool h1')).toHaveLength(0);
     expect(CopyButton).toHaveBeenCalledTimes(2);

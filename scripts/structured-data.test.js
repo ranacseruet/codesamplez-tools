@@ -2,6 +2,7 @@
 
 const { buildToolStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
 const { loadManifest, getToolById } = require('./tool-manifest');
+const { buildSiteHref } = require('../common/siteBaseUrl');
 
 describe('structured data rendering', () => {
   it('drops empty graph nodes and nested empty objects from the rendered graph', () => {
@@ -35,7 +36,7 @@ describe('structured data rendering', () => {
     const script = renderStructuredDataScript(graph);
 
     expect(script).toContain('"@type":"FAQPage"');
-    expect(script).toContain('"url":"https://codesamplez.com/tools/text-analyzer/"');
+    expect(script).toContain(`"url":"${buildSiteHref('/text-analyzer/')}"`);
     expect(script).toContain('"name":"Is the Text Analyzer tool free to use?"');
     expect(script).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes. It is free."}');
     expect(script).not.toContain('"@type":"BreadcrumbList"');

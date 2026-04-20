@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL, ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { buildSiteHref, SITE_BASE_URL } from '../common/siteBaseUrl';
+import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -183,7 +184,7 @@ body {
                 <ToolArticleSection id="css-minifier-related-tool" title="Related Tool">
                     <p>
                         Need to minify JavaScript code too? Try our{' '}
-                        <a href="https://codesamplez.com/tools/javascript-minifier">JavaScript Minifier</a>.
+                        <a href={buildSiteHref('/js-minifier/')}>JavaScript Minifier</a>.
                     </p>
                 </ToolArticleSection>
 

@@ -1,3 +1,4 @@
+import { SITE_BASE_URL } from '../siteBaseUrl';
 import { mountToolShell } from './mountToolShell';
 
 describe('mountToolShell', () => {
@@ -23,8 +24,8 @@ describe('mountToolShell', () => {
         expect(document.querySelector('#app-shell-header .cst-shell__title')?.textContent).toBe('Data Format Converter');
         expect(document.querySelector('#app-shell-header .cst-shell__description')?.textContent)
             .toContain('Convert JSON, XML, YAML, and Properties formats');
-        expect(document.querySelector('#app-shell-header .cst-shell__brand')?.getAttribute('href')).toBe('/tools/');
-        expect(document.querySelector('#app-shell-footer .cst-shell__footer-link')?.getAttribute('href')).toBe('/tools/');
+        expect(document.querySelector('#app-shell-header .cst-shell__brand')?.getAttribute('href')).toBe(SITE_BASE_URL);
+        expect(document.querySelector('#app-shell-footer .cst-shell__footer-link')?.getAttribute('href')).toBe(SITE_BASE_URL);
         expect(document.querySelector('#app-shell-header .cst-shell__tool-menu-trigger')?.textContent).toContain('Browse Tools');
     });
 

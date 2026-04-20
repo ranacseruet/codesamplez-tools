@@ -46,6 +46,7 @@ jest.mock('../common/clear-button/ClearButton', () => ({
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { NotificationManager } from '../common/notification-manager';
 import ClearButton from '../common/clear-button/ClearButton';
+import { SITE_BASE_URL, buildSiteHref } from '../common/siteBaseUrl';
 import { JWTDecoderToolUI } from './script';
 
 describe('JWT Decoder Preact runtime', () => {
@@ -82,8 +83,8 @@ describe('JWT Decoder Preact runtime', () => {
     expect(document.body.textContent).toContain('About This Tool');
     expect(document.body.textContent).toContain('What is a JSON Web Token (JWT)?');
     expect(document.body.textContent).toContain('JWT Decoder FAQs (Frequently Asked Questions)');
-    expect(document.querySelector('#jwt-decoder-tool a[href="https://codesamplez.com/tools/"]')).not.toBeNull();
-    expect(document.querySelector('#jwt-decoder-tool a[href="https://codesamplez.com/tools/jwt-builder"]')).not.toBeNull();
+    expect(document.querySelector(`#jwt-decoder-tool a[href="${SITE_BASE_URL}"]`)).not.toBeNull();
+    expect(document.querySelector(`#jwt-decoder-tool a[href="${buildSiteHref('/jwt-builder/')}"]`)).not.toBeNull();
     expect(document.querySelector('#jwt-decoder-tool a[href="https://codesamplez.com/contact"]')).not.toBeNull();
     expect(window.jwtDecoderApp).toBe(ui.app);
   });

@@ -35,11 +35,16 @@ const {
 } = require('./tool-manifest');
 
 const CATALOG_GROUPS = loadRootConfig().catalogGroups;
+const PROD_SITE_BASE_URL = getSiteBaseUrl();
 const SITE_DESCRIPTION = 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.';
+
+function buildProdSiteHref(publicPath) {
+  return new URL(publicPath.replace(/^\/+/, ''), `${PROD_SITE_BASE_URL}/`).toString();
+}
 
 function createBaseTool(overrides = {}) {
   return {
-    siteBaseUrl: 'https://codesamplez.com/tools',
+    siteBaseUrl: PROD_SITE_BASE_URL,
     siteName: 'CodeSamplez Tools',
     siteDescription: SITE_DESCRIPTION,
     sourceRoot: 'jwt-decoder',
@@ -52,10 +57,10 @@ function createBaseTool(overrides = {}) {
     keywords: ['jwt', 'decode'],
     appRootId: 'jwt-decoder-app',
     publicPath: '/jwt-decoder/',
-    absolutePageUrl: 'https://codesamplez.com/tools/jwt-decoder/',
+    absolutePageUrl: buildProdSiteHref('/jwt-decoder/'),
     scriptType: 'module',
     featuredImagePath: DEFAULT_FEATURED_IMAGE_PATH,
-    absoluteFeaturedImageUrl: 'https://codesamplez.com/tools/jwt-decoder/images/featured.png',
+    absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-decoder/images/featured.png'),
     catalogGroupId: 'encoders-decoders',
     catalogOrder: 1,
     dependencyScopes: ['build-system', 'shared-ui', 'shared-runtime'],
@@ -66,7 +71,7 @@ function createBaseTool(overrides = {}) {
 
 function createMockRootConfig(overrides = {}) {
   return {
-    siteBaseUrl: 'https://codesamplez.com/tools',
+    siteBaseUrl: PROD_SITE_BASE_URL,
     siteName: 'CodeSamplez Tools',
     siteDescription: SITE_DESCRIPTION,
     rootPage: {
@@ -180,7 +185,7 @@ describe('tool-manifest', () => {
   it('loads the shared root config', () => {
     expect(ROOT_CONFIG_PATH).toBe(path.resolve(__dirname, '../config/tooling-root.json'));
     expect(loadRootConfig()).toEqual({
-      siteBaseUrl: 'https://codesamplez.com/tools',
+      siteBaseUrl: PROD_SITE_BASE_URL,
       siteName: 'CodeSamplez Tools',
       siteDescription: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
       rootPage: {
@@ -201,13 +206,13 @@ describe('tool-manifest', () => {
   });
 
   it('resolves production, development, and explicit override site base urls', () => {
-    expect(resolveSiteBaseUrl('https://codesamplez.com/tools')).toBe('https://codesamplez.com/tools');
+    expect(resolveSiteBaseUrl(PROD_SITE_BASE_URL)).toBe(PROD_SITE_BASE_URL);
 
     expect(withEnv({
       NODE_ENV: 'development',
       PORT: '8081',
       CST_SITE_BASE_URL: undefined
-    }, () => resolveSiteBaseUrl('https://codesamplez.com/tools'))).toBe('http://localhost:8081');
+    }, () => resolveSiteBaseUrl(PROD_SITE_BASE_URL))).toBe('http://localhost:8081');
 
     expect(withEnv({
       NODE_ENV: 'development',
@@ -219,7 +224,7 @@ describe('tool-manifest', () => {
       NODE_ENV: 'development',
       PORT: '8081',
       CST_SITE_BASE_URL: 'https://preview.codesamplez.com/tools'
-    }, () => resolveSiteBaseUrl('https://codesamplez.com/tools'))).toBe('https://preview.codesamplez.com/tools');
+    }, () => resolveSiteBaseUrl(PROD_SITE_BASE_URL))).toBe('https://preview.codesamplez.com/tools');
   });
 
   it('uses the development site base url in root config and tool definitions when NODE_ENV=development', () => {
@@ -309,11 +314,11 @@ describe('tool-manifest', () => {
         keywords: ['jwt', 'decode', 'validate', 'token', 'auth'],
         appRootId: 'jwt-decoder-app',
         publicPath: '/jwt-decoder/',
-        absolutePageUrl: 'https://codesamplez.com/tools/jwt-decoder/',
+        absolutePageUrl: buildProdSiteHref('/jwt-decoder/'),
         scriptType: 'module',
         featuredImagePath: DEFAULT_FEATURED_IMAGE_PATH,
-        absoluteFeaturedImageUrl: 'https://codesamplez.com/tools/jwt-decoder/images/featured.png',
-        siteBaseUrl: 'https://codesamplez.com/tools',
+        absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-decoder/images/featured.png'),
+        siteBaseUrl: PROD_SITE_BASE_URL,
         siteName: 'CodeSamplez Tools',
         siteDescription: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
         catalogGroupId: 'encoders-decoders',
@@ -326,13 +331,13 @@ describe('tool-manifest', () => {
 
   it('builds a normalized manifest view', () => {
     expect(loadManifest()).toEqual({
-      siteBaseUrl: 'https://codesamplez.com/tools',
+      siteBaseUrl: PROD_SITE_BASE_URL,
       siteName: 'CodeSamplez Tools',
       siteDescription: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
       rootPage: {
         title: 'CodeSamplez Tools',
         description: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
-        absoluteUrl: 'https://codesamplez.com/tools/'
+        absoluteUrl: `${PROD_SITE_BASE_URL}/`
       },
       catalogGroups: [
         { id: 'code-formatters', label: 'Code Formatters & Validators' },
@@ -397,8 +402,8 @@ describe('tool-manifest', () => {
       expect.objectContaining({
         id: 'fixture-tool',
         keywords: [],
-        absolutePageUrl: 'https://codesamplez.com/tools/fixture-tool/',
-        absoluteFeaturedImageUrl: 'https://codesamplez.com/tools/fixture-tool/images/featured.png'
+        absolutePageUrl: buildProdSiteHref('/fixture-tool/'),
+        absoluteFeaturedImageUrl: buildProdSiteHref('/fixture-tool/images/featured.png')
       })
     ]);
 
@@ -478,9 +483,9 @@ describe('tool-manifest', () => {
     expect(getRootPageDefinition()).toEqual({
       title: 'CodeSamplez Tools',
       description: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
-      absoluteUrl: 'https://codesamplez.com/tools/'
+      absoluteUrl: `${PROD_SITE_BASE_URL}/`
     });
-    expect(getSiteBaseUrl()).toBe('https://codesamplez.com/tools');
+    expect(getSiteBaseUrl()).toBe(PROD_SITE_BASE_URL);
     expect(getSiteName()).toBe('CodeSamplez Tools');
     expect(getSiteDescription()).toBe('Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.');
     expect(getRootShellDefinition()).toEqual({
@@ -622,8 +627,8 @@ describe('tool-manifest', () => {
         indexDescription: 'Create and sign JWT tokens locally with standard and custom claims.',
         appRootId: 'jwt-builder-app',
         publicPath: '/jwt-builder/',
-        absolutePageUrl: 'https://codesamplez.com/tools/jwt-builder/',
-        absoluteFeaturedImageUrl: 'https://codesamplez.com/tools/jwt-builder/images/featured.png',
+        absolutePageUrl: buildProdSiteHref('/jwt-builder/'),
+        absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-builder/images/featured.png'),
         catalogOrder: 2,
         relatedToolIds: ['jwt-decoder-tool']
       })
@@ -644,8 +649,8 @@ describe('tool-manifest', () => {
         indexDescription: 'Create and sign JWT tokens locally with standard and custom claims.',
         appRootId: 'jwt-builder-app',
         publicPath: '/jwt-builder/',
-        absolutePageUrl: 'https://codesamplez.com/tools/jwt-builder/',
-        absoluteFeaturedImageUrl: 'https://codesamplez.com/tools/jwt-builder/images/featured.png',
+        absolutePageUrl: buildProdSiteHref('/jwt-builder/'),
+        absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-builder/images/featured.png'),
         catalogOrder: 2,
         relatedToolIds: ['jwt-decoder-tool']
       })
@@ -666,8 +671,8 @@ describe('tool-manifest', () => {
         indexDescription: 'Create and sign JWT tokens locally with standard and custom claims.',
         appRootId: 'jwt-builder-app',
         publicPath: '/jwt-builder/',
-        absolutePageUrl: 'https://codesamplez.com/tools/jwt-builder/',
-        absoluteFeaturedImageUrl: 'https://codesamplez.com/tools/jwt-builder/images/featured.png',
+        absolutePageUrl: buildProdSiteHref('/jwt-builder/'),
+        absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-builder/images/featured.png'),
         catalogOrder: 2,
         relatedToolIds: ['jwt-decoder-tool']
       })
@@ -688,8 +693,8 @@ describe('tool-manifest', () => {
         indexDescription: 'Create and sign JWT tokens locally with standard and custom claims.',
         appRootId: 'jwt-builder-app',
         publicPath: '/jwt-builder/',
-        absolutePageUrl: 'https://codesamplez.com/tools/jwt-builder/',
-        absoluteFeaturedImageUrl: 'https://codesamplez.com/tools/jwt-builder/images/featured.png',
+        absolutePageUrl: buildProdSiteHref('/jwt-builder/'),
+        absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-builder/images/featured.png'),
         catalogOrder: 2,
         relatedToolIds: ['jwt-decoder-tool']
       })
@@ -710,8 +715,8 @@ describe('tool-manifest', () => {
         indexDescription: 'Create and sign JWT tokens locally with standard and custom claims.',
         appRootId: 'jwt-builder-app',
         publicPath: '/jwt-builder/',
-        absolutePageUrl: 'https://codesamplez.com/tools/jwt-builder/',
-        absoluteFeaturedImageUrl: 'https://codesamplez.com/tools/jwt-builder/images/featured.png',
+        absolutePageUrl: buildProdSiteHref('/jwt-builder/'),
+        absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-builder/images/featured.png'),
         catalogOrder: 2,
         relatedToolIds: ['jwt-decoder-tool']
       })
@@ -733,8 +738,8 @@ describe('tool-manifest', () => {
       indexDescription: 'Create and sign JWT tokens locally with standard and custom claims.',
       appRootId: 'jwt-builder-app',
       publicPath: '/jwt-builder/',
-      absolutePageUrl: 'https://codesamplez.com/tools/jwt-builder/',
-      absoluteFeaturedImageUrl: 'https://codesamplez.com/tools/jwt-builder/images/featured.png',
+      absolutePageUrl: buildProdSiteHref('/jwt-builder/'),
+      absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-builder/images/featured.png'),
       catalogOrder: 2,
       relatedToolIds: ['jwt-decoder-tool']
     });
@@ -796,8 +801,8 @@ describe('tool-manifest', () => {
       indexDescription: 'Create and sign JWT tokens locally with standard and custom claims.',
       appRootId: 'jwt-builder-app',
       publicPath: '/jwt-builder/',
-      absolutePageUrl: 'https://codesamplez.com/tools/jwt-builder/',
-      absoluteFeaturedImageUrl: 'https://codesamplez.com/tools/jwt-builder/images/featured.png',
+      absolutePageUrl: buildProdSiteHref('/jwt-builder/'),
+      absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-builder/images/featured.png'),
       catalogOrder: 2,
       relatedToolIds: ['jwt-decoder-tool']
     });

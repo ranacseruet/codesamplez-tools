@@ -59,6 +59,7 @@ import { scheduleTask } from '../common/scheduler-utils';
 import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { isValidCSS } from './minifier';
+import { SITE_BASE_URL, buildSiteHref } from '../common/siteBaseUrl';
 import { CssMinifierToolUI } from './script';
 
 describe('CSS Minifier Preact runtime', () => {
@@ -94,8 +95,8 @@ describe('CSS Minifier Preact runtime', () => {
     expect(document.body.textContent).toContain('About This Tool');
     expect(document.body.textContent).toContain('What is a CSS Minifier?');
     expect(document.body.textContent).toContain('CSS Minifier FAQs');
-    expect(document.querySelector('#css-minifier-tool a[href="https://codesamplez.com/tools/"]')).not.toBeNull();
-    expect(document.querySelector('#css-minifier-tool a[href="https://codesamplez.com/tools/javascript-minifier"]')).not.toBeNull();
+    expect(document.querySelector(`#css-minifier-tool a[href="${SITE_BASE_URL}"]`)).not.toBeNull();
+    expect(document.querySelector(`#css-minifier-tool a[href="${buildSiteHref('/js-minifier/')}"]`)).not.toBeNull();
   });
 
   it('minifies valid CSS and updates output/stats', async () => {

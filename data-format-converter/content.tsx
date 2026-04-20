@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL, ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { SITE_BASE_URL } from '../common/siteBaseUrl';
+import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -293,7 +294,7 @@ city=New York`}</code></pre>
                 <ToolArticleSection id="data-format-converter-feedback" title="Feedback">
                     <p>
                         Want more tools like this? Explore the full developer tools collection on{' '}
-                        <a href="https://codesamplez.com/tools">CodeSamplez Tools</a>.
+                        <a href={SITE_BASE_URL}>CodeSamplez Tools</a>.
                     </p>
                 </ToolArticleSection>
 

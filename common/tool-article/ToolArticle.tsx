@@ -1,5 +1,4 @@
 import type { ComponentChildren, JSX } from 'preact';
-import { ROOT_PAGE_METADATA } from '../app-shell/toolCatalog';
 
 export interface ToolArticleSectionProps {
     id: string;
@@ -16,8 +15,6 @@ export interface ToolFaqItem {
 export interface ToolFaqListProps {
     items: ToolFaqItem[];
 }
-
-export const SITE_BASE_URL = ROOT_PAGE_METADATA.absoluteUrl;
 
 export function ToolArticleSection({ id, title, children }: ToolArticleSectionProps): JSX.Element {
     return (

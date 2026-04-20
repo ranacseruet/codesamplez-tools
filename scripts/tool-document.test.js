@@ -2,6 +2,7 @@
 
 const { generateToolDocument, joinUrl, renderToolDocument } = require('./tool-document.js');
 const { getToolById } = require('./tool-manifest');
+const { SITE_BASE_URL, buildSiteHref } = require('../common/siteBaseUrl');
 
 function withEnv(overrides, run) {
     const originalEnv = { ...process.env };
@@ -25,10 +26,10 @@ function withEnv(overrides, run) {
 
 describe('tool document generation', () => {
     it('joins urls without dropping nested paths', () => {
-        expect(joinUrl('https://codesamplez.com/tools', '/json-formatter/'))
-            .toBe('https://codesamplez.com/tools/json-formatter/');
-        expect(joinUrl('https://codesamplez.com/tools/', 'text-analyzer/images/featured.png'))
-            .toBe('https://codesamplez.com/tools/text-analyzer/images/featured.png');
+        expect(joinUrl(SITE_BASE_URL.replace(/\/$/, ''), '/json-formatter/'))
+            .toBe(buildSiteHref('/json-formatter/'));
+        expect(joinUrl(SITE_BASE_URL, 'text-analyzer/images/featured.png'))
+            .toBe(buildSiteHref('/text-analyzer/images/featured.png'));
     });
 
     it('renders a module tool document with metadata and shell placeholders', () => {
@@ -43,8 +44,8 @@ describe('tool document generation', () => {
 
         expect(html).toContain('<title>Diff Checker</title>');
         expect(html).toContain('<meta name="description" content="Compare two texts or code snippets and highlight the differences between them.">');
-        expect(html).toContain('<link rel="canonical" href="https://codesamplez.com/tools/diff-checker/">');
-        expect(html).toContain('<meta property="og:image" content="https://codesamplez.com/tools/diff-checker/images/featured.png">');
+        expect(html).toContain(`<link rel="canonical" href="${buildSiteHref('/diff-checker/')}">`);
+        expect(html).toContain(`<meta property="og:image" content="${buildSiteHref('/diff-checker/images/featured.png')}">`);
         expect(html).toContain('<script type="application/ld+json">');
         expect(html).toContain('"@type":"WebPage"');
         expect(html).toContain('"@type":"WebApplication"');
@@ -53,8 +54,8 @@ describe('tool document generation', () => {
         expect(html).toContain('"operatingSystem":"Any"');
         expect(html).toContain('"price":"0"');
         expect(html).toContain('"priceCurrency":"USD"');
-        expect(html).toContain('"url":"https://codesamplez.com/tools/diff-checker/"');
-        expect(html).toContain('"image":"https://codesamplez.com/tools/diff-checker/images/featured.png"');
+        expect(html).toContain(`"url":"${buildSiteHref('/diff-checker/')}"`);
+        expect(html).toContain(`"image":"${buildSiteHref('/diff-checker/images/featured.png')}"`);
         expect(html).toContain('<div id="app-shell-header"></div>');
         expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--before"><section>Before payload</section></div>');
         expect(html).toContain('<div id="diff-checker-app"><section>SSR payload</section></div>');
@@ -70,7 +71,7 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"Does the tool work offline?"');
         expect(html).toContain('"name":"Is the diff checker free to use?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes! Once the page loads, all comparisons happen locally in your browser, so you can use it without an internet connection.');
-        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/diff-checker/#webpage"}');
+        expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/diff-checker/')}#webpage"}`);
         expect(html).toContain('src="https://tools.codesamplez.com/diff-checker/images/diff-result-view-example.webp"');
     });
 
@@ -90,7 +91,7 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"What is a QR code?"');
         expect(html).toContain('"name":"Can I customize my QR code with this tool?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"A QR code, short for Quick Response code, is a two-dimensional barcode');
-        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/qr-code-generator/#webpage"}');
+        expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/qr-code-generator/')}#webpage"}`);
     });
 
     it('renders FAQPage structured data for data-format-converter', () => {
@@ -100,7 +101,7 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"Does the tool support batch conversion?"');
         expect(html).toContain('"name":"How secure is the online converter?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Currently, our data format conversion tool focuses on single-file conversions');
-        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/data-format-converter/#webpage"}');
+        expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/data-format-converter/')}#webpage"}`);
     });
 
     it('renders FAQPage structured data for js-minifier', () => {
@@ -110,7 +111,7 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"What is JavaScript minification and why is it important?"');
         expect(html).toContain('"name":"Is minification the same as obfuscation?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"JavaScript minification is the process of compressing code by removing unnecessary characters like spaces, line breaks, and comments');
-        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/js-minifier/#webpage"}');
+        expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/js-minifier/')}#webpage"}`);
     });
 
     it('renders FAQPage structured data for json-formatter', () => {
@@ -120,7 +121,7 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"What is a JSON Formatter?"');
         expect(html).toContain('"name":"Can a JSON Formatter also validate JSON?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"A JSON Formatter is an online tool that takes unformatted or minified JSON data and beautifies it by adding proper indentation and line breaks.');
-        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/json-formatter/#webpage"}');
+        expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/json-formatter/')}#webpage"}`);
     });
 
     it('renders FAQPage structured data for css-minifier', () => {
@@ -130,7 +131,7 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"Does minifying CSS affect how my styles work?"');
         expect(html).toContain('"name":"Can I unminify (beautify) the CSS again later?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"No. Minification does not change the CSS functionality - it only removes characters that are unnecessary for the browser');
-        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/css-minifier/#webpage"}');
+        expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/css-minifier/')}#webpage"}`);
     });
 
     it('renders FAQPage structured data for jwt-builder', () => {
@@ -140,7 +141,7 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"Is this JWT generator free to use?"');
         expect(html).toContain('"name":"Is using an online JWT generator safe?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes. The CodeSamplez JWT Generator is completely free to use and runs directly in your browser.');
-        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/jwt-builder/#webpage"}');
+        expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/jwt-builder/')}#webpage"}`);
     });
 
     it('renders FAQPage structured data for jwt-decoder', () => {
@@ -150,7 +151,7 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"Is it safe to decode JWTs using an online tool?"');
         expect(html).toContain('"name":"Can this tool create JWTs or just decode?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes. This tool doesn’t store anything, neither sends to any server for processing.');
-        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/jwt-decoder/#webpage"}');
+        expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/jwt-decoder/')}#webpage"}`);
     });
 
     it('renders FAQPage structured data for base64-converter', () => {
@@ -160,7 +161,7 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"Is Base64 encoding secure?"');
         expect(html).toContain('"name":"Does this tool send my data to a server?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"No. Base64 is not encryption. It is an encoding scheme for data representation, not meant for security.');
-        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/base64-converter/#webpage"}');
+        expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/base64-converter/')}#webpage"}`);
     });
 
     it('renders prerendered markup for a representative module tool', () => {
@@ -170,8 +171,8 @@ describe('tool document generation', () => {
         expect(html).toContain('id="base64converter-convert"');
         expect(html).toContain('id="related-tools-heading"');
         expect(html).toContain('Related tools');
-        expect(html).toContain('href="/tools/jwt-decoder/"');
-        expect(html).toContain('https://codesamplez.com/tools/base64-converter/images/featured.png');
+        expect(html).toContain(`href="${buildSiteHref('/jwt-decoder/')}"`);
+        expect(html).toContain(buildSiteHref('/base64-converter/images/featured.png'));
         expect(html).toContain('"@type":"WebSite"');
         expect(html).toContain('"name":"Base64 Converter"');
         expect(html).toContain('"keywords":"base64, encode, decode, text, files"');
@@ -184,7 +185,7 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"Is the Text Analyzer tool free to use?"');
         expect(html).toContain('"name":"What\'s the difference between a text analyzer and a word counter?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes. The CodeSamplez Text Analyzer is completely free to use.');
-        expect(html).toContain('"isPartOf":{"@id":"https://codesamplez.com/tools/text-analyzer/#webpage"}');
+        expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/text-analyzer/')}#webpage"}`);
     });
 
     it('uses localhost metadata and root-relative internal links in development mode', () => {
@@ -212,7 +213,7 @@ describe('tool document generation', () => {
 
         expect(html).toContain('<link rel="canonical" href="http://localhost:8081/jwt-decoder/">');
         expect(html).toContain('"url":"http://localhost:8081/jwt-decoder/"');
-        expect(html).toContain('href="/jwt-builder/"');
-        expect(html).not.toContain('href="/tools/jwt-builder/"');
+        expect(html).toContain('href="http://localhost:8081/jwt-builder/"');
+        expect(html).not.toContain('href="/jwt-builder/"');
     });
 });

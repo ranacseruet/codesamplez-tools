@@ -1,5 +1,8 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL, ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { buildSiteHref, SITE_BASE_URL } from '../common/siteBaseUrl';
+import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+
+const SHAREABLE_LINK_EXAMPLE = `${buildSiteHref('/base64-converter/')}?data=YOUR_BASE64_OR_TEXT_DATA`;
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -117,7 +120,7 @@ export function Base64ConverterArticle(): JSX.Element {
                     </p>
 
                     <p><strong>Creating Shareable Links:</strong></p>
-                    <pre><code>{`https://codesamplez.com/tools/base64-converter?data=YOUR_BASE64_OR_TEXT_DATA`}</code></pre>
+                    <pre><code>{SHAREABLE_LINK_EXAMPLE}</code></pre>
 
                     <p><strong>Examples:</strong></p>
                     <ul>

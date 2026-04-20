@@ -1,6 +1,6 @@
 import type { JSX } from 'preact';
 import { TOOL_NAVIGATION_GROUPS } from './toolNavigation';
-import { TOOL_CATALOG_ROOT_PATH } from './toolCatalog';
+import { SITE_BASE_URL } from '../siteBaseUrl';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -16,7 +16,7 @@ interface ToolShellHeaderProps {
 export function ToolShellHeader({
     title,
     description,
-    homeHref = TOOL_CATALOG_ROOT_PATH,
+    homeHref = SITE_BASE_URL,
     showThemeToggle = false,
     themeMode = 'light',
     onToggleTheme
@@ -82,7 +82,7 @@ interface ToolShellFooterProps {
     homeHref?: string;
 }
 
-export function ToolShellFooter({ homeHref = TOOL_CATALOG_ROOT_PATH }: ToolShellFooterProps): JSX.Element {
+export function ToolShellFooter({ homeHref = SITE_BASE_URL }: ToolShellFooterProps): JSX.Element {
     return (
         <footer className="cst-shell__footer">
             <div className="cst-shell__footer-inner">
