@@ -123,7 +123,7 @@
     "fast-xml-parser": "^5.5.3",
     "js-yaml": "^4.1.1",
     "preact": "^10.29.0",
-    "preact-render-to-string": "^6.6.6",
+    "preact-render-to-string": "^6.6.7",
     "prismjs": "^1.30.0",
     "qrcode": "^1.5.4",
     "sitemap": "^9.0.1"
