@@ -52,7 +52,7 @@
     "deploy:affected": "node scripts/deploy-affected-assets.js"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.10.2",
+    "@axe-core/playwright": "^4.11.2",
     "@babel/core": "^7.23.3",
     "@babel/preset-env": "^7.29.2",
     "@babel/preset-react": "^7.28.5",
