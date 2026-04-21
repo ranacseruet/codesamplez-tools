@@ -114,7 +114,7 @@
   },
   "dependencies": {
     "@babel/generator": "^7.28.6",
-    "@babel/parser": "^7.28.6",
+    "@babel/parser": "^7.29.2",
     "@babel/traverse": "^7.29.0",
     "@babel/types": "^7.28.6",
     "@material/web": "^2.4.1",
