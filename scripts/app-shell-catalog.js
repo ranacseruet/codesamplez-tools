@@ -4,7 +4,7 @@ const { REPO_ROOT, ROOT_CONFIG_PATH, getCatalogGroups, getRootPageDefinition, ge
 
 /**
  * @typedef {{ id: string, label: string }} AppShellCatalogGroup
- * @typedef {{ title: string, description: string, rootPath: string }} AppShellRootPageMetadata
+ * @typedef {{ title: string, description: string, rootPath: string, absoluteUrl: string, staticRootUri: string }} AppShellRootPageMetadata
  * @typedef {{
  *   id: string,
  *   title: string,
@@ -52,7 +52,8 @@ function getAppShellCatalogDefinition() {
             title: rootPage.title,
             description: rootPage.description,
             rootPath: new URL(rootPage.absoluteUrl).pathname,
-            absoluteUrl: rootPage.absoluteUrl
+            absoluteUrl: rootPage.absoluteUrl,
+            staticRootUri: rootPage.staticRootUri
         },
         groups,
         entries: sortCatalogEntries(

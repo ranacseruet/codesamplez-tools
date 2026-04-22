@@ -26,12 +26,15 @@ const { getToolFaqItems } = require('./tool-faq-metadata');
 function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', beforeAppMarkup = '', afterAppMarkup = '') {
     const manifest = loadManifest();
     const absolutePageUrl = joinUrl(tool.siteBaseUrl, tool.publicPath);
-    const absoluteFeaturedImageUrl = joinUrl(tool.siteBaseUrl, `${tool.publicPath.replace(/\/$/, '')}/${tool.featuredImagePath}`);
+    const absoluteFeaturedImageUrl = joinUrl(tool.siteStaticRootUri, `${tool.publicPath.replace(/\/$/, '')}/${tool.featuredImagePath}`);
+    const absoluteStylesUrl = joinUrl(tool.siteStaticRootUri, `${tool.publicPath.replace(/\/$/, '')}/styles.main.css`);
+    const absoluteBundleUrl = joinUrl(tool.siteStaticRootUri, `${tool.publicPath.replace(/\/$/, '')}/bundle.main.js`);
     const escapedTitle = escapeAttribute(tool.title);
     const escapedDescription = escapeAttribute(tool.description);
     const escapedAppRootId = escapeAttribute(tool.appRootId);
     const escapedPageUrl = escapeAttribute(absolutePageUrl);
-    const escapedFeaturedImagePath = escapeAttribute(tool.featuredImagePath);
+    const escapedStylesUrl = escapeAttribute(absoluteStylesUrl);
+    const escapedBundleUrl = escapeAttribute(absoluteBundleUrl);
     const escapedFeaturedImageUrl = escapeAttribute(absoluteFeaturedImageUrl);
     const escapedFeaturedAlt = escapeAttribute(`${tool.title} featured image`);
     const structuredDataScript = renderStructuredDataScript(buildToolStructuredDataGraph(manifest, tool, {
@@ -54,7 +57,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     <title>${escapeHtml(tool.title)}</title>
     <meta name="description" content="${escapedDescription}">
     <link rel="canonical" href="${escapedPageUrl}">
-    <link rel="stylesheet" href="styles.main.css">
+    <link rel="stylesheet" href="${escapedStylesUrl}">
     <meta property="og:type" content="website">
     <meta property="og:title" content="${escapedTitle}">
     <meta property="og:description" content="${escapedDescription}">
@@ -66,7 +69,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     <meta name="twitter:description" content="${escapedDescription}">
     <meta name="twitter:image" content="${escapedFeaturedImageUrl}">
     <meta name="twitter:image:alt" content="${escapedFeaturedAlt}">
-    <link rel="image_src" href="${escapedFeaturedImagePath}">
+    <link rel="image_src" href="${escapedFeaturedImageUrl}">
     ${structuredDataScript}
 </head>
 
@@ -77,7 +80,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     ${wrappedAfterMarkup}
     ${relatedToolsMarkup}
     <div id="app-shell-footer"></div>
-    <script src="bundle.main.js"${scriptTypeAttribute}></script>
+    <script src="${escapedBundleUrl}"${scriptTypeAttribute}></script>
 </body>
 
 </html>

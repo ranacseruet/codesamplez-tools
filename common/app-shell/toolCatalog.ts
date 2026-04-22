@@ -17,6 +17,7 @@ export interface AppShellRootPageMetadata {
     description: string;
     rootPath: string;
     absoluteUrl: string;
+    staticRootUri: string;
 }
 
 interface AppShellRootConfig {

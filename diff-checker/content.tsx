@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL } from '../common/siteBaseUrl';
+import { SITE_BASE_URL, buildSiteAssetUri } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
@@ -152,7 +152,7 @@ export function DiffCheckerArticle(): JSX.Element {
                     <p><strong>Example diff checker result output:</strong></p>
                     <figure className="c-tool-article__figure">
                         <img
-                            src="https://tools.codesamplez.com/diff-checker/images/diff-result-view-example.webp"
+                            src={buildSiteAssetUri('/diff-checker/images/diff-result-view-example.webp')}
                             alt="Online Diff Checker interface code difference result example"
                             width="402"
                             height="137"

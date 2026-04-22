@@ -11,6 +11,7 @@ declare var __CST_APP_SHELL_CATALOG__: {
         description: string;
         rootPath: string;
         absoluteUrl: string;
+        staticRootUri: string;
     };
     groups: Array<{
         id: string;

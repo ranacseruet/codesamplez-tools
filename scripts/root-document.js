@@ -1,5 +1,6 @@
 // @ts-check
 
+const { buildAbsoluteUrl } = require('./tool-manifest');
 const { escapeAttribute, escapeHtml } = require('./document-helpers');
 const { getGroupedToolDefinitions, loadManifest } = require('./tool-manifest');
 const { buildRootStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
@@ -22,11 +23,10 @@ function getRootRelativeToolPath(tool) {
  */
 function renderToolCard(tool) {
     const relativeToolPath = getRootRelativeToolPath(tool);
-    const imagePath = `${relativeToolPath}${tool.featuredImagePath}`;
 
     return `      <article class="tool-card">
         <div class="tool-thumbnail">
-          <img src="${escapeAttribute(imagePath)}" alt="${escapeAttribute(`${tool.title} featured image`)}">
+          <img src="${escapeAttribute(tool.absoluteFeaturedImageUrl)}" alt="${escapeAttribute(`${tool.title} featured image`)}">
         </div>
         <div class="tool-content">
           <h3 class="tool-name">${escapeHtml(tool.title)}</h3>
@@ -46,6 +46,9 @@ function generateRootDocument() {
     const escapedTitle = escapeAttribute(manifest.rootPage.title);
     const escapedDescription = escapeAttribute(manifest.rootPage.description);
     const escapedCanonical = escapeAttribute(manifest.rootPage.absoluteUrl);
+    const escapedRootShellStylesUrl = escapeAttribute(buildAbsoluteUrl(manifest.siteStaticRootUri, '/root-shell/styles.main.css'));
+    const escapedRootStylesUrl = escapeAttribute(buildAbsoluteUrl(manifest.siteStaticRootUri, '/styles.css'));
+    const escapedRootShellBundleUrl = escapeAttribute(buildAbsoluteUrl(manifest.siteStaticRootUri, '/root-shell/bundle.main.js'));
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -62,8 +65,8 @@ function generateRootDocument() {
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="${escapedTitle}">
   <meta name="twitter:description" content="${escapedDescription}">
-  <link rel="stylesheet" href="root-shell/styles.main.css">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="${escapedRootShellStylesUrl}">
+  <link rel="stylesheet" href="${escapedRootStylesUrl}">
   ${structuredDataScript}
 </head>
 <body class="landing-page">
@@ -82,7 +85,7 @@ ${group.tools.map((tool) => renderToolCard(tool)).join('\n')}
   </main>
 
   <div id="app-shell-footer"></div>
-  <script src="root-shell/bundle.main.js" defer></script>
+  <script src="${escapedRootShellBundleUrl}" defer></script>
 </body>
 </html>
 `;

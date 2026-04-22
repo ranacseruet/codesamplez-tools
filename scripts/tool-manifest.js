@@ -11,6 +11,7 @@ const DEFAULT_FEATURED_IMAGE_FILENAME = 'featured.png';
 const DEFAULT_FEATURED_IMAGE_EXTENSION = '.png';
 const DEFAULT_FEATURED_IMAGE_PATH = path.posix.join(DEFAULT_FEATURED_IMAGE_DIRECTORY, DEFAULT_FEATURED_IMAGE_FILENAME);
 const SITE_BASE_URL_ENV_KEY = 'CST_SITE_BASE_URL';
+const SITE_STATIC_ROOT_URI_ENV_KEY = 'CST_SITE_STATIC_ROOT_URI';
 const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
 
 /**
@@ -19,10 +20,11 @@ const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
 
 /**
  * @typedef {{ id: string, label: string }} CatalogGroupDefinition
- * @typedef {{ title: string, description: string, absoluteUrl: string }} RootPageDefinition
+ * @typedef {{ title: string, description: string, absoluteUrl: string, staticRootUri: string }} RootPageDefinition
  * @typedef {{ id: string, outputPath: string }} RootShellDefinition
  * @typedef {{
  *   siteBaseUrl: string,
+ *   siteStaticRootUri: string,
  *   siteName: string,
  *   siteDescription: string,
  *   rootPage: RootPageDefinition,
@@ -39,6 +41,7 @@ const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
  * }} GroupedToolDefinition
  * @typedef {{
  *   siteBaseUrl: string,
+ *   siteStaticRootUri: string,
  *   siteName: string,
  *   siteDescription: string,
  *   id: string,
@@ -63,6 +66,7 @@ const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
  * }} ToolDefinition
  * @typedef {{
  *   siteBaseUrl: string,
+ *   siteStaticRootUri?: string,
  *   siteName: string,
  *   siteDescription: string,
  *   rootPage: {
@@ -167,6 +171,31 @@ function resolveSiteBaseUrl(configuredBaseUrl) {
 }
 
 /**
+ * @param {unknown} configuredStaticRootUri
+ * @param {string} resolvedSiteBaseUrl
+ * @returns {string}
+ */
+function resolveSiteStaticRootUri(configuredStaticRootUri, resolvedSiteBaseUrl) {
+    const overriddenStaticRootUri = process.env[SITE_STATIC_ROOT_URI_ENV_KEY];
+
+    if (typeof overriddenStaticRootUri === 'string' && overriddenStaticRootUri.trim().length > 0) {
+        return normalizeBaseUrl(overriddenStaticRootUri);
+    }
+
+    if (typeof configuredStaticRootUri !== 'undefined') {
+        const normalizedStaticRootUri = requireNonEmptyString(configuredStaticRootUri, 'Root siteStaticRootUri');
+
+        try {
+            return new URL(normalizedStaticRootUri).toString().replace(/\/+$/, '');
+        } catch (error) {
+            throw new Error(`Root siteStaticRootUri must be a valid absolute URL: ${normalizedStaticRootUri}`);
+        }
+    }
+
+    return resolvedSiteBaseUrl;
+}
+
+/**
  * @param {string} baseUrl
  * @param {string} pathName
  * @returns {string}
@@ -223,6 +252,7 @@ function loadRootConfig() {
 
     const parsedRootConfig = /** @type {Record<string, unknown>} */ (rawRootConfig);
     const siteBaseUrl = resolveSiteBaseUrl(parsedRootConfig.siteBaseUrl);
+    const siteStaticRootUri = resolveSiteStaticRootUri(parsedRootConfig.siteStaticRootUri, siteBaseUrl);
     const siteName = requireNonEmptyString(parsedRootConfig.siteName, 'Root siteName');
     const siteDescription = requireNonEmptyString(parsedRootConfig.siteDescription, 'Root siteDescription');
     const rootPage = parsedRootConfig.rootPage;
@@ -264,6 +294,7 @@ function loadRootConfig() {
 
     return {
         siteBaseUrl,
+        siteStaticRootUri,
         siteName,
         siteDescription,
         rootPage: {
@@ -356,7 +387,7 @@ function createToolDefinition(metadataPath) {
     const publicPath = normalizePublicPath(metadata.publicPath);
     const outputDir = getOutputDirFromPublicPath(publicPath);
     const absolutePageUrl = buildAbsoluteUrl(rootConfig.siteBaseUrl, publicPath);
-    const absoluteFeaturedImageUrl = buildAbsoluteUrl(rootConfig.siteBaseUrl, `${publicPath.replace(/^\//, '')}${DEFAULT_FEATURED_IMAGE_PATH}`);
+    const absoluteFeaturedImageUrl = buildAbsoluteUrl(rootConfig.siteStaticRootUri, `${publicPath.replace(/^\//, '')}${DEFAULT_FEATURED_IMAGE_PATH}`);
 
     if (metadata.scriptType !== 'module' && metadata.scriptType !== 'classic') {
         throw new Error(`Tool ${metadata.id} scriptType must be "module" or "classic"`);
@@ -364,6 +395,7 @@ function createToolDefinition(metadataPath) {
 
     return {
         siteBaseUrl: rootConfig.siteBaseUrl,
+        siteStaticRootUri: rootConfig.siteStaticRootUri,
         siteName: rootConfig.siteName,
         siteDescription: rootConfig.siteDescription,
         id: metadata.id,
@@ -507,7 +539,8 @@ function getRootPageDefinition() {
     return {
         title: rootConfig.rootPage.title,
         description: rootConfig.rootPage.description,
-        absoluteUrl: `${rootConfig.siteBaseUrl}/`
+        absoluteUrl: `${rootConfig.siteBaseUrl}/`,
+        staticRootUri: `${rootConfig.siteStaticRootUri}/`
     };
 }
 
@@ -518,6 +551,7 @@ function loadManifest() {
     const rootConfig = loadRootConfig();
     return {
         siteBaseUrl: rootConfig.siteBaseUrl,
+        siteStaticRootUri: rootConfig.siteStaticRootUri,
         siteName: rootConfig.siteName,
         siteDescription: rootConfig.siteDescription,
         rootPage: getRootPageDefinition(),
@@ -598,6 +632,13 @@ function getRootShellDefinition() {
  */
 function getSiteBaseUrl() {
     return loadRootConfig().siteBaseUrl;
+}
+
+/**
+ * @returns {string}
+ */
+function getSiteStaticRootUri() {
+    return loadRootConfig().siteStaticRootUri;
 }
 
 /**
@@ -740,6 +781,7 @@ module.exports = {
     getRootPageDefinition,
     getRootShellDefinition,
     getSiteBaseUrl,
+    getSiteStaticRootUri,
     getSiteDescription,
     getSiteName,
     getDevelopmentSiteBaseUrl,
@@ -755,6 +797,7 @@ module.exports = {
     normalizePublicPath,
     parseToolSelectionArgs,
     resolveSiteBaseUrl,
+    resolveSiteStaticRootUri,
     selectTools,
     splitCsv,
     validateToolDefinitions

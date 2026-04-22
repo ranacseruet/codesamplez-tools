@@ -2,7 +2,7 @@
 
 const { generateToolDocument, joinUrl, renderToolDocument } = require('./tool-document.js');
 const { getToolById } = require('./tool-manifest');
-const { SITE_BASE_URL, buildSiteHref } = require('../common/siteBaseUrl');
+const { SITE_BASE_URL, SITE_STATIC_ROOT_URI, buildSiteAssetUri, buildSiteHref } = require('../common/siteBaseUrl');
 
 function withEnv(overrides, run) {
     const originalEnv = { ...process.env };
@@ -28,8 +28,8 @@ describe('tool document generation', () => {
     it('joins urls without dropping nested paths', () => {
         expect(joinUrl(SITE_BASE_URL.replace(/\/$/, ''), '/json-formatter/'))
             .toBe(buildSiteHref('/json-formatter/'));
-        expect(joinUrl(SITE_BASE_URL, 'text-analyzer/images/featured.png'))
-            .toBe(buildSiteHref('/text-analyzer/images/featured.png'));
+        expect(joinUrl(SITE_STATIC_ROOT_URI, 'text-analyzer/images/featured.png'))
+            .toBe(buildSiteAssetUri('/text-analyzer/images/featured.png'));
     });
 
     it('renders a module tool document with metadata and shell placeholders', () => {
@@ -45,7 +45,8 @@ describe('tool document generation', () => {
         expect(html).toContain('<title>Diff Checker</title>');
         expect(html).toContain('<meta name="description" content="Compare two texts or code snippets and highlight the differences between them.">');
         expect(html).toContain(`<link rel="canonical" href="${buildSiteHref('/diff-checker/')}">`);
-        expect(html).toContain(`<meta property="og:image" content="${buildSiteHref('/diff-checker/images/featured.png')}">`);
+        expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/diff-checker/styles.main.css')}">`);
+        expect(html).toContain(`<meta property="og:image" content="${buildSiteAssetUri('/diff-checker/images/featured.png')}">`);
         expect(html).toContain('<script type="application/ld+json">');
         expect(html).toContain('"@type":"WebPage"');
         expect(html).toContain('"@type":"WebApplication"');
@@ -55,13 +56,14 @@ describe('tool document generation', () => {
         expect(html).toContain('"price":"0"');
         expect(html).toContain('"priceCurrency":"USD"');
         expect(html).toContain(`"url":"${buildSiteHref('/diff-checker/')}"`);
-        expect(html).toContain(`"image":"${buildSiteHref('/diff-checker/images/featured.png')}"`);
+        expect(html).toContain(`"image":"${buildSiteAssetUri('/diff-checker/images/featured.png')}"`);
         expect(html).toContain('<div id="app-shell-header"></div>');
         expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--before"><section>Before payload</section></div>');
         expect(html).toContain('<div id="diff-checker-app"><section>SSR payload</section></div>');
         expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--after"><section>After payload</section></div>');
         expect(html).toContain('<section class="c-related-tools">Related</section>');
-        expect(html).toContain('<script src="bundle.main.js" type="module"></script>');
+        expect(html).toContain(`<link rel="image_src" href="${buildSiteAssetUri('/diff-checker/images/featured.png')}">`);
+        expect(html).toContain(`<script src="${buildSiteAssetUri('/diff-checker/bundle.main.js')}" type="module"></script>`);
     });
 
     it('renders FAQPage structured data for diff-checker', () => {
@@ -72,7 +74,7 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"Is the diff checker free to use?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes! Once the page loads, all comparisons happen locally in your browser, so you can use it without an internet connection.');
         expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/diff-checker/')}#webpage"}`);
-        expect(html).toContain('src="https://tools.codesamplez.com/diff-checker/images/diff-result-view-example.webp"');
+        expect(html).toContain(`src="${buildSiteAssetUri('/diff-checker/images/diff-result-view-example.webp')}"`);
     });
 
     it('renders a classic-script document for qr-code-generator', () => {
@@ -80,8 +82,8 @@ describe('tool document generation', () => {
 
         expect(html).toContain('<title>QR Code Generator</title>');
         expect(html).toContain('<div id="qr-code-generator-app">');
-        expect(html).toContain('<script src="bundle.main.js"></script>');
-        expect(html).not.toContain('<script src="bundle.main.js" type="module"></script>');
+        expect(html).toContain(`<script src="${buildSiteAssetUri('/qr-code-generator/bundle.main.js')}"></script>`);
+        expect(html).not.toContain(`<script src="${buildSiteAssetUri('/qr-code-generator/bundle.main.js')}" type="module"></script>`);
     });
 
     it('renders FAQPage structured data for qr-code-generator', () => {
@@ -172,7 +174,7 @@ describe('tool document generation', () => {
         expect(html).toContain('id="related-tools-heading"');
         expect(html).toContain('Related tools');
         expect(html).toContain(`href="${buildSiteHref('/jwt-decoder/')}"`);
-        expect(html).toContain(buildSiteHref('/base64-converter/images/featured.png'));
+        expect(html).toContain(buildSiteAssetUri('/base64-converter/images/featured.png'));
         expect(html).toContain('"@type":"WebSite"');
         expect(html).toContain('"name":"Base64 Converter"');
         expect(html).toContain('"keywords":"base64, encode, decode, text, files"');

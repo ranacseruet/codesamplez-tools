@@ -8,7 +8,7 @@ const {
     renderToolBeforeAppPrerenderMarkup,
     renderToolPrerenderMarkup
 } = require('./prerender-tool.js');
-const { SITE_BASE_URL, buildSiteHref } = require('../common/siteBaseUrl');
+const { SITE_BASE_URL, buildSiteAssetUri, buildSiteHref } = require('../common/siteBaseUrl');
 
 describe('generic tool prerender helpers', () => {
     it('contains data-format-converter in prerender registry', () => {
@@ -122,7 +122,7 @@ describe('generic tool prerender helpers', () => {
         expect(afterMarkup).toContain('Diff Checker Tool Features:');
         expect(afterMarkup).toContain('Diff Checker FAQs');
         expect(afterMarkup).toContain('Example diff checker result output:');
-        expect(afterMarkup).toContain('src="https://tools.codesamplez.com/diff-checker/images/diff-result-view-example.webp"');
+        expect(afterMarkup).toContain(`src="${buildSiteAssetUri('/diff-checker/images/diff-result-view-example.webp')}"`);
         expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
         expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
     });

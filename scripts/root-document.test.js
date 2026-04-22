@@ -1,7 +1,7 @@
 /** @jest-environment node */
 
 const { generateRootDocument } = require('./root-document');
-const { SITE_BASE_URL, buildSiteHref } = require('../common/siteBaseUrl');
+const { SITE_BASE_URL, buildSiteAssetUri, buildSiteHref } = require('../common/siteBaseUrl');
 
 function withEnv(overrides, run) {
   const originalEnv = { ...process.env };
@@ -30,7 +30,8 @@ describe('root document generation', () => {
     expect(html).toContain('<title>CodeSamplez Tools</title>');
     expect(html).toContain('<meta name="description" content="Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.">');
     expect(html).toContain(`<link rel="canonical" href="${SITE_BASE_URL}">`);
-    expect(html).toContain('<link rel="stylesheet" href="root-shell/styles.main.css">');
+    expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/root-shell/styles.main.css')}">`);
+    expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/styles.css')}">`);
     expect(html).toContain('<script type="application/ld+json">');
     expect(html).toContain('"@type":"CollectionPage"');
     expect(html).toContain('"@type":"ItemList"');
@@ -41,9 +42,9 @@ describe('root document generation', () => {
     expect(html).toContain('Code Formatters &amp; Validators');
     expect(html).toContain('Encoders &amp; Decoders');
     expect(html).toContain('Text Analysis &amp; Diff Tools');
-    expect(html).toContain('src="json-formatter/images/featured.png"');
+    expect(html).toContain(`src="${buildSiteAssetUri('/json-formatter/images/featured.png')}"`);
     expect(html).toContain('href="jwt-decoder/"');
-    expect(html).toContain('<script src="root-shell/bundle.main.js" defer></script>');
+    expect(html).toContain(`<script src="${buildSiteAssetUri('/root-shell/bundle.main.js')}" defer></script>`);
   });
 
   it('uses localhost canonical and tool urls in development mode', () => {

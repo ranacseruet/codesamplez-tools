@@ -33,7 +33,8 @@ describe('tool catalog runtime data', () => {
             title: rootPageDefinition.title,
             description: rootPageDefinition.description,
             rootPath: new URL(rootPageDefinition.absoluteUrl).pathname,
-            absoluteUrl: rootPageDefinition.absoluteUrl
+            absoluteUrl: rootPageDefinition.absoluteUrl,
+            staticRootUri: rootPageDefinition.staticRootUri
         });
         expect(TOOL_CATALOG_GROUPS).toEqual(getCatalogGroups());
         expect(TOOL_CATALOG_ENTRIES.map((entry) => entry.id)).toEqual(
@@ -48,7 +49,8 @@ describe('tool catalog runtime data', () => {
                     title: 'Fixture',
                     description: 'Fixture description',
                     rootPath: '/tools/',
-                    absoluteUrl: 'https://example.com/tools/'
+                    absoluteUrl: 'https://example.com/tools/',
+                    staticRootUri: 'https://static.example.com/tools/'
                 },
                 catalogGroups: [
                     { id: 'group-b', label: 'Group B' },
@@ -86,7 +88,8 @@ describe('tool catalog runtime data', () => {
                     title: 'Fixture',
                     description: 'Fixture description',
                     rootPath: '/tools/',
-                    absoluteUrl: 'https://example.com/tools/'
+                    absoluteUrl: 'https://example.com/tools/',
+                    staticRootUri: 'https://static.example.com/tools/'
                 },
                 catalogGroups: [
                     { id: 'group-a', label: 'Group A' }

@@ -15,6 +15,7 @@ const {
   getRootShellDefinition,
   getDevelopmentSiteBaseUrl,
   getSiteBaseUrl,
+  getSiteStaticRootUri,
   getSiteDescription,
   getSiteName,
   getToolById,
@@ -29,6 +30,7 @@ const {
   normalizePublicPath,
   parseToolSelectionArgs,
   resolveSiteBaseUrl,
+  resolveSiteStaticRootUri,
   selectTools,
   splitCsv,
   validateToolDefinitions
@@ -36,15 +38,21 @@ const {
 
 const CATALOG_GROUPS = loadRootConfig().catalogGroups;
 const PROD_SITE_BASE_URL = getSiteBaseUrl();
+const PROD_SITE_STATIC_ROOT_URI = getSiteStaticRootUri();
 const SITE_DESCRIPTION = 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.';
 
 function buildProdSiteHref(publicPath) {
   return new URL(publicPath.replace(/^\/+/, ''), `${PROD_SITE_BASE_URL}/`).toString();
 }
 
+function buildProdStaticAssetUri(pathName) {
+  return new URL(pathName.replace(/^\/+/, ''), `${PROD_SITE_STATIC_ROOT_URI}/`).toString();
+}
+
 function createBaseTool(overrides = {}) {
   return {
     siteBaseUrl: PROD_SITE_BASE_URL,
+    siteStaticRootUri: PROD_SITE_STATIC_ROOT_URI,
     siteName: 'CodeSamplez Tools',
     siteDescription: SITE_DESCRIPTION,
     sourceRoot: 'jwt-decoder',
@@ -60,7 +68,7 @@ function createBaseTool(overrides = {}) {
     absolutePageUrl: buildProdSiteHref('/jwt-decoder/'),
     scriptType: 'module',
     featuredImagePath: DEFAULT_FEATURED_IMAGE_PATH,
-    absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-decoder/images/featured.png'),
+    absoluteFeaturedImageUrl: buildProdStaticAssetUri('/jwt-decoder/images/featured.png'),
     catalogGroupId: 'encoders-decoders',
     catalogOrder: 1,
     dependencyScopes: ['build-system', 'shared-ui', 'shared-runtime'],
@@ -72,6 +80,7 @@ function createBaseTool(overrides = {}) {
 function createMockRootConfig(overrides = {}) {
   return {
     siteBaseUrl: PROD_SITE_BASE_URL,
+    siteStaticRootUri: PROD_SITE_STATIC_ROOT_URI,
     siteName: 'CodeSamplez Tools',
     siteDescription: SITE_DESCRIPTION,
     rootPage: {
@@ -186,6 +195,7 @@ describe('tool-manifest', () => {
     expect(ROOT_CONFIG_PATH).toBe(path.resolve(__dirname, '../config/tooling-root.json'));
     expect(loadRootConfig()).toEqual({
       siteBaseUrl: PROD_SITE_BASE_URL,
+      siteStaticRootUri: PROD_SITE_STATIC_ROOT_URI,
       siteName: 'CodeSamplez Tools',
       siteDescription: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
       rootPage: {
@@ -207,6 +217,7 @@ describe('tool-manifest', () => {
 
   it('resolves production, development, and explicit override site base urls', () => {
     expect(resolveSiteBaseUrl(PROD_SITE_BASE_URL)).toBe(PROD_SITE_BASE_URL);
+    expect(resolveSiteStaticRootUri(undefined, PROD_SITE_BASE_URL)).toBe(PROD_SITE_BASE_URL);
 
     expect(withEnv({
       NODE_ENV: 'development',
@@ -225,6 +236,14 @@ describe('tool-manifest', () => {
       PORT: '8081',
       CST_SITE_BASE_URL: 'https://preview.codesamplez.com/tools'
     }, () => resolveSiteBaseUrl(PROD_SITE_BASE_URL))).toBe('https://preview.codesamplez.com/tools');
+
+    expect(resolveSiteStaticRootUri('https://static.codesamplez.com/tools-assets', PROD_SITE_BASE_URL))
+      .toBe('https://static.codesamplez.com/tools-assets');
+
+    expect(withEnv({
+      CST_SITE_STATIC_ROOT_URI: 'https://cdn.codesamplez.com/tools'
+    }, () => resolveSiteStaticRootUri('https://static.codesamplez.com/tools-assets', PROD_SITE_BASE_URL)))
+      .toBe('https://cdn.codesamplez.com/tools');
   });
 
   it('uses the development site base url in root config and tool definitions when NODE_ENV=development', () => {
@@ -237,19 +256,40 @@ describe('tool-manifest', () => {
     expect(withEnv({
       NODE_ENV: 'development',
       PORT: '8081',
-      CST_SITE_BASE_URL: undefined
+      CST_SITE_BASE_URL: undefined,
+      CST_SITE_STATIC_ROOT_URI: undefined
+    }, () => loadRootConfig().siteStaticRootUri)).toBe(PROD_SITE_STATIC_ROOT_URI);
+
+    expect(withEnv({
+      NODE_ENV: 'development',
+      PORT: '8081',
+      CST_SITE_BASE_URL: undefined,
+      CST_SITE_STATIC_ROOT_URI: undefined
     }, () => {
       const tool = getToolById('jwt-decoder-tool');
       return {
         siteBaseUrl: tool.siteBaseUrl,
+        siteStaticRootUri: tool.siteStaticRootUri,
         absolutePageUrl: tool.absolutePageUrl,
         absoluteFeaturedImageUrl: tool.absoluteFeaturedImageUrl
       };
     })).toEqual({
       siteBaseUrl: 'http://localhost:8081',
+      siteStaticRootUri: PROD_SITE_STATIC_ROOT_URI,
       absolutePageUrl: 'http://localhost:8081/jwt-decoder/',
-      absoluteFeaturedImageUrl: 'http://localhost:8081/jwt-decoder/images/featured.png'
+      absoluteFeaturedImageUrl: buildProdStaticAssetUri('/jwt-decoder/images/featured.png')
     });
+  });
+
+  it('defaults the static root to the development site base url when config and env overrides are absent', () => {
+    expect(withEnv({
+      NODE_ENV: 'development',
+      PORT: '8081',
+      CST_SITE_BASE_URL: undefined,
+      CST_SITE_STATIC_ROOT_URI: undefined
+    }, () => withMockedManifestFiles({
+      rootConfig: createMockRootConfig({ siteStaticRootUri: undefined })
+    }, () => loadRootConfig().siteStaticRootUri))).toBe('http://localhost:8081');
   });
 
   it('rejects malformed root config fields', () => {
@@ -264,6 +304,10 @@ describe('tool-manifest', () => {
     expect(() => withMockedManifestFiles({
       rootConfig: createMockRootConfig({ siteBaseUrl: 'not-a-url' })
     }, () => loadRootConfig())).toThrow('Root siteBaseUrl must be a valid absolute URL: not-a-url');
+
+    expect(() => withMockedManifestFiles({
+      rootConfig: createMockRootConfig({ siteStaticRootUri: 'not-a-url' })
+    }, () => loadRootConfig())).toThrow('Root siteStaticRootUri must be a valid absolute URL: not-a-url');
 
     expect(() => withMockedManifestFiles({
       rootConfig: createMockRootConfig({ rootPage: undefined })
@@ -317,8 +361,9 @@ describe('tool-manifest', () => {
         absolutePageUrl: buildProdSiteHref('/jwt-decoder/'),
         scriptType: 'module',
         featuredImagePath: DEFAULT_FEATURED_IMAGE_PATH,
-        absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-decoder/images/featured.png'),
+        absoluteFeaturedImageUrl: buildProdStaticAssetUri('/jwt-decoder/images/featured.png'),
         siteBaseUrl: PROD_SITE_BASE_URL,
+        siteStaticRootUri: PROD_SITE_STATIC_ROOT_URI,
         siteName: 'CodeSamplez Tools',
         siteDescription: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
         catalogGroupId: 'encoders-decoders',
@@ -332,12 +377,14 @@ describe('tool-manifest', () => {
   it('builds a normalized manifest view', () => {
     expect(loadManifest()).toEqual({
       siteBaseUrl: PROD_SITE_BASE_URL,
+      siteStaticRootUri: PROD_SITE_STATIC_ROOT_URI,
       siteName: 'CodeSamplez Tools',
       siteDescription: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
       rootPage: {
         title: 'CodeSamplez Tools',
         description: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
-        absoluteUrl: `${PROD_SITE_BASE_URL}/`
+        absoluteUrl: `${PROD_SITE_BASE_URL}/`,
+        staticRootUri: `${PROD_SITE_STATIC_ROOT_URI}/`
       },
       catalogGroups: [
         { id: 'code-formatters', label: 'Code Formatters & Validators' },
@@ -403,7 +450,7 @@ describe('tool-manifest', () => {
         id: 'fixture-tool',
         keywords: [],
         absolutePageUrl: buildProdSiteHref('/fixture-tool/'),
-        absoluteFeaturedImageUrl: buildProdSiteHref('/fixture-tool/images/featured.png')
+        absoluteFeaturedImageUrl: buildProdStaticAssetUri('/fixture-tool/images/featured.png')
       })
     ]);
 
@@ -483,9 +530,11 @@ describe('tool-manifest', () => {
     expect(getRootPageDefinition()).toEqual({
       title: 'CodeSamplez Tools',
       description: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
-      absoluteUrl: `${PROD_SITE_BASE_URL}/`
+      absoluteUrl: `${PROD_SITE_BASE_URL}/`,
+      staticRootUri: `${PROD_SITE_STATIC_ROOT_URI}/`
     });
     expect(getSiteBaseUrl()).toBe(PROD_SITE_BASE_URL);
+    expect(getSiteStaticRootUri()).toBe(PROD_SITE_STATIC_ROOT_URI);
     expect(getSiteName()).toBe('CodeSamplez Tools');
     expect(getSiteDescription()).toBe('Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.');
     expect(getRootShellDefinition()).toEqual({
@@ -628,7 +677,7 @@ describe('tool-manifest', () => {
         appRootId: 'jwt-builder-app',
         publicPath: '/jwt-builder/',
         absolutePageUrl: buildProdSiteHref('/jwt-builder/'),
-        absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-builder/images/featured.png'),
+        absoluteFeaturedImageUrl: buildProdStaticAssetUri('/jwt-builder/images/featured.png'),
         catalogOrder: 2,
         relatedToolIds: ['jwt-decoder-tool']
       })
@@ -650,7 +699,7 @@ describe('tool-manifest', () => {
         appRootId: 'jwt-builder-app',
         publicPath: '/jwt-builder/',
         absolutePageUrl: buildProdSiteHref('/jwt-builder/'),
-        absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-builder/images/featured.png'),
+        absoluteFeaturedImageUrl: buildProdStaticAssetUri('/jwt-builder/images/featured.png'),
         catalogOrder: 2,
         relatedToolIds: ['jwt-decoder-tool']
       })
@@ -672,7 +721,7 @@ describe('tool-manifest', () => {
         appRootId: 'jwt-builder-app',
         publicPath: '/jwt-builder/',
         absolutePageUrl: buildProdSiteHref('/jwt-builder/'),
-        absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-builder/images/featured.png'),
+        absoluteFeaturedImageUrl: buildProdStaticAssetUri('/jwt-builder/images/featured.png'),
         catalogOrder: 2,
         relatedToolIds: ['jwt-decoder-tool']
       })
@@ -694,7 +743,7 @@ describe('tool-manifest', () => {
         appRootId: 'jwt-builder-app',
         publicPath: '/jwt-builder/',
         absolutePageUrl: buildProdSiteHref('/jwt-builder/'),
-        absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-builder/images/featured.png'),
+        absoluteFeaturedImageUrl: buildProdStaticAssetUri('/jwt-builder/images/featured.png'),
         catalogOrder: 2,
         relatedToolIds: ['jwt-decoder-tool']
       })
@@ -716,7 +765,7 @@ describe('tool-manifest', () => {
         appRootId: 'jwt-builder-app',
         publicPath: '/jwt-builder/',
         absolutePageUrl: buildProdSiteHref('/jwt-builder/'),
-        absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-builder/images/featured.png'),
+        absoluteFeaturedImageUrl: buildProdStaticAssetUri('/jwt-builder/images/featured.png'),
         catalogOrder: 2,
         relatedToolIds: ['jwt-decoder-tool']
       })
@@ -739,7 +788,7 @@ describe('tool-manifest', () => {
       appRootId: 'jwt-builder-app',
       publicPath: '/jwt-builder/',
       absolutePageUrl: buildProdSiteHref('/jwt-builder/'),
-      absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-builder/images/featured.png'),
+      absoluteFeaturedImageUrl: buildProdStaticAssetUri('/jwt-builder/images/featured.png'),
       catalogOrder: 2,
       relatedToolIds: ['jwt-decoder-tool']
     });
@@ -802,7 +851,7 @@ describe('tool-manifest', () => {
       appRootId: 'jwt-builder-app',
       publicPath: '/jwt-builder/',
       absolutePageUrl: buildProdSiteHref('/jwt-builder/'),
-      absoluteFeaturedImageUrl: buildProdSiteHref('/jwt-builder/images/featured.png'),
+      absoluteFeaturedImageUrl: buildProdStaticAssetUri('/jwt-builder/images/featured.png'),
       catalogOrder: 2,
       relatedToolIds: ['jwt-decoder-tool']
     });
