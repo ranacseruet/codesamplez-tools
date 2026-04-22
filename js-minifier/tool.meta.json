@@ -5,7 +5,7 @@
   "description": "Minify JavaScript to reduce payload size while preserving functionality.",
   "catalogGroupId": "code-formatters",
   "catalogOrder": 2,
-  "indexDescription": "Minify JavaScript to reduce payload size while preserving functionality.",
+  "indexDescription": "Minify JavaScript code by removing comments, whitespace, and optionally shortening variable names (minification). Features real-time size statistics and clipboard integration.",
   "keywords": ["javascript", "minify", "compress", "bundle", "optimize"],
   "appRootId": "js-minifier-app",
   "publicPath": "/js-minifier/",

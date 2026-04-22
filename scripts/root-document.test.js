@@ -27,8 +27,8 @@ describe('root document generation', () => {
     it('renders the generated landing page with structured data and grouped tool cards', () => {
         const html = generateRootDocument();
 
-    expect(html).toContain('<title>CodeSamplez Tools</title>');
-    expect(html).toContain('<meta name="description" content="Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.">');
+    expect(html).toContain('<title>Online Developer Tools</title>');
+    expect(html).toContain('<meta name="description" content="Developers lose time on repetitive tasks - that\'s where free online developer tools come in. This page is a hub of browser-based utilities to speed up development: format code, debug errors, convert data, and more.">');
     expect(html).toContain(`<link rel="canonical" href="${SITE_BASE_URL}">`);
     expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/root-shell/styles.main.css')}">`);
     expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/styles.css')}">`);
@@ -39,12 +39,29 @@ describe('root document generation', () => {
     expect(html).toContain('"numberOfItems":10');
     expect(html).toContain(`"url":"${buildSiteHref('/json-formatter/')}"`);
     expect(html).toContain(`"url":"${buildSiteHref('/text-analyzer/')}"`);
+    expect(html).toContain('What are Online Developer Tools?');
+    expect(html).toContain('Why Use These Free Developer Tools?');
+    expect(html).toContain('When to Use These Online Developer Tools?');
+    expect(html).toContain('FAQs (Frequently Asked Questions):');
+    expect(html).toContain('href="json-formatter/"');
+    expect(html).toContain('href="https://codesamplez.com/contact"');
     expect(html).toContain('Code Formatters &amp; Validators');
     expect(html).toContain('Encoders &amp; Decoders');
     expect(html).toContain('Text Analysis &amp; Diff Tools');
+    expect(html).toContain('Format and validate JSON data with proper indentation and alphabetical key sorting.');
+    expect(html).toContain('Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.');
+    expect(html).toContain('Analyze text to get insights like character count, word count, line count, and other useful text statistics.');
     expect(html).toContain(`src="${buildSiteAssetUri('/json-formatter/images/featured.png')}"`);
     expect(html).toContain('href="jwt-decoder/"');
     expect(html).toContain(`<script src="${buildSiteAssetUri('/root-shell/bundle.main.js')}" defer></script>`);
+
+    const introIndex = html.indexOf('Whether you need to minify JavaScript or decode a secret message, these tools help you get it done fast, no installation required.');
+    const cardsIndex = html.indexOf('Code Formatters &amp; Validators');
+    const followupCopyIndex = html.indexOf('What are Online Developer Tools?');
+
+    expect(introIndex).toBeGreaterThan(-1);
+    expect(cardsIndex).toBeGreaterThan(introIndex);
+    expect(followupCopyIndex).toBeGreaterThan(cardsIndex);
   });
 
   it('uses localhost canonical and tool urls in development mode', () => {

@@ -5,7 +5,7 @@
   "description": "Analyze your text to get word count, character statistics, and more.",
   "catalogGroupId": "text-analysis",
   "catalogOrder": 2,
-  "indexDescription": "Analyze your text to get word count, character statistics, and more.",
+  "indexDescription": "Analyze text to get insights like character count, word count, line count, and other useful text statistics. Perfect for content writers and developers.",
   "keywords": ["text", "analyze", "word count", "characters", "statistics"],
   "appRootId": "text-analyzer-app",
   "publicPath": "/text-analyzer/",

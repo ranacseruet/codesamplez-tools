@@ -40,6 +40,8 @@ const CATALOG_GROUPS = loadRootConfig().catalogGroups;
 const PROD_SITE_BASE_URL = getSiteBaseUrl();
 const PROD_SITE_STATIC_ROOT_URI = getSiteStaticRootUri();
 const SITE_DESCRIPTION = 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.';
+const ROOT_PAGE_TITLE = 'Online Developer Tools';
+const ROOT_PAGE_DESCRIPTION = 'Developers lose time on repetitive tasks - that\'s where free online developer tools come in. This page is a hub of browser-based utilities to speed up development: format code, debug errors, convert data, and more.';
 
 function buildProdSiteHref(publicPath) {
   return new URL(publicPath.replace(/^\/+/, ''), `${PROD_SITE_BASE_URL}/`).toString();
@@ -84,8 +86,8 @@ function createMockRootConfig(overrides = {}) {
     siteName: 'CodeSamplez Tools',
     siteDescription: SITE_DESCRIPTION,
     rootPage: {
-      title: 'CodeSamplez Tools',
-      description: SITE_DESCRIPTION
+      title: ROOT_PAGE_TITLE,
+      description: ROOT_PAGE_DESCRIPTION
     },
     catalogGroups: [
       { id: 'encoders-decoders', label: 'Encoders & Decoders' }
@@ -199,8 +201,8 @@ describe('tool-manifest', () => {
       siteName: 'CodeSamplez Tools',
       siteDescription: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
       rootPage: {
-        title: 'CodeSamplez Tools',
-        description: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.'
+        title: ROOT_PAGE_TITLE,
+        description: ROOT_PAGE_DESCRIPTION
       },
       catalogGroups: [
         { id: 'code-formatters', label: 'Code Formatters & Validators' },
@@ -354,7 +356,7 @@ describe('tool-manifest', () => {
         version: '1.0.0',
         title: 'JWT Decoder & Validator',
         description: 'Decode and validate JWT tokens locally in your browser.',
-        indexDescription: 'Decode and validate JWT tokens locally in your browser.',
+        indexDescription: 'Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.',
         keywords: ['jwt', 'decode', 'validate', 'token', 'auth'],
         appRootId: 'jwt-decoder-app',
         publicPath: '/jwt-decoder/',
@@ -381,8 +383,8 @@ describe('tool-manifest', () => {
       siteName: 'CodeSamplez Tools',
       siteDescription: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
       rootPage: {
-        title: 'CodeSamplez Tools',
-        description: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
+        title: ROOT_PAGE_TITLE,
+        description: ROOT_PAGE_DESCRIPTION,
         absoluteUrl: `${PROD_SITE_BASE_URL}/`,
         staticRootUri: `${PROD_SITE_STATIC_ROOT_URI}/`
       },
@@ -528,8 +530,8 @@ describe('tool-manifest', () => {
 
     expect(getRootAssets()).toEqual(['index.html', 'styles.css', 'robots.txt', 'sitemap.xml']);
     expect(getRootPageDefinition()).toEqual({
-      title: 'CodeSamplez Tools',
-      description: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
+      title: ROOT_PAGE_TITLE,
+      description: ROOT_PAGE_DESCRIPTION,
       absoluteUrl: `${PROD_SITE_BASE_URL}/`,
       staticRootUri: `${PROD_SITE_STATIC_ROOT_URI}/`
     });

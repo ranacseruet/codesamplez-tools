@@ -5,7 +5,7 @@
   "description": "Convert text and files to and from Base64 with multiple encoding options.",
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 1,
-  "indexDescription": "Convert text and files to and from Base64 with multiple encoding options.",
+  "indexDescription": "Convert text and files to Base64 encoding and decode Base64 strings back to their original format. Supports multiple encodings and file uploads.",
   "keywords": ["base64", "encode", "decode", "text", "files"],
   "appRootId": "base64converter-app",
   "publicPath": "/base64-converter/",

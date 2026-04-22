@@ -5,7 +5,7 @@
   "description": "Create and customize your QR codes instantly.",
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 4,
-  "indexDescription": "Create and customize your QR codes instantly.",
+  "indexDescription": "Generate QR codes from any text input or URL. Customize QR code size, margin, and error correction level.",
   "keywords": ["qr code", "generator", "encode", "url", "text"],
   "appRootId": "qr-code-generator-app",
   "publicPath": "/qr-code-generator/",

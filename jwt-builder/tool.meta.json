@@ -5,7 +5,7 @@
   "description": "Create and sign JWT tokens locally with standard and custom claims.",
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 3,
-  "indexDescription": "Create and sign JWT tokens locally with standard and custom claims.",
+  "indexDescription": "Create and sign JSON Web Tokens (JWT) with custom headers and payloads. Generate secure tokens with various signing algorithms and secret keys.",
   "keywords": ["jwt", "token", "sign", "claims", "auth"],
   "appRootId": "jwt-builder-app",
   "publicPath": "/jwt-builder/",

@@ -3,6 +3,7 @@
 const { buildAbsoluteUrl } = require('./tool-manifest');
 const { escapeAttribute, escapeHtml } = require('./document-helpers');
 const { getGroupedToolDefinitions, loadManifest } = require('./tool-manifest');
+const { renderRootPageIntro, renderRootPagePostIndexSections } = require('./root-page-content');
 const { buildRootStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
 
 /**
@@ -74,13 +75,17 @@ function generateRootDocument() {
 
   <main class="main-container" aria-label="Tools index">
     <h2 class="main-title">${escapeHtml(manifest.rootPage.title)}</h2>
-    
+
+${renderRootPageIntro()}
+
 ${groupedTools.map((group) => `    <section aria-labelledby="${escapeAttribute(`group-${group.id}`)}">
       <h2 class="section-title" id="${escapeAttribute(`group-${group.id}`)}">${escapeHtml(group.label)}</h2>
       <div class="tools-grid">
 ${group.tools.map((tool) => renderToolCard(tool)).join('\n')}
       </div>
     </section>`).join('\n\n')}
+
+${renderRootPagePostIndexSections()}
 
   </main>
 

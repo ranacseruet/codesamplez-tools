@@ -5,7 +5,7 @@
   "description": "Decode and validate JWT tokens locally in your browser.",
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 2,
-  "indexDescription": "Decode and validate JWT tokens locally in your browser.",
+  "indexDescription": "Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.",
   "keywords": ["jwt", "decode", "validate", "token", "auth"],
   "appRootId": "jwt-decoder-app",
   "publicPath": "/jwt-decoder/",

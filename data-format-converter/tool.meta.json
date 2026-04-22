@@ -5,7 +5,7 @@
   "description": "Convert JSON, XML, YAML, and Properties formats",
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 5,
-  "indexDescription": "Convert JSON, XML, YAML, and Properties formats.",
+  "indexDescription": "Convert between JSON, XML, and YAML formats with real-time conversion. Perfect for working with different API formats and configuration files.",
   "keywords": ["json", "xml", "yaml", "properties", "convert"],
   "appRootId": "data-format-converter-app",
   "publicPath": "/data-format-converter/",

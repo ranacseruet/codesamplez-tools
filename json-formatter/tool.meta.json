@@ -5,7 +5,7 @@
   "description": "Format, validate, and beautify JSON with tree and plain views.",
   "catalogGroupId": "code-formatters",
   "catalogOrder": 1,
-  "indexDescription": "Format, validate, and beautify JSON with tree and plain views.",
+  "indexDescription": "Format and validate JSON data with proper indentation and alphabetical key sorting. Features syntax highlighting, error detection, and clipboard integration.",
   "keywords": ["json", "format", "validate", "beautify", "tree view"],
   "appRootId": "json-formatter-app",
   "publicPath": "/json-formatter/",
