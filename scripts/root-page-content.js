@@ -1,8 +1,17 @@
 // @ts-check
 
 const { escapeAttribute, escapeHtml } = require('./document-helpers');
+const { buildAbsoluteUrl, loadManifest } = require('./tool-manifest');
 
 const CONTACT_PAGE_URL = 'https://codesamplez.com/contact';
+const TOOL_LINKS = {
+    cssMinifier: '/css-minifier/',
+    diffChecker: '/diff-checker/',
+    jsMinifier: '/js-minifier/',
+    jsonFormatter: '/json-formatter/',
+    jwtBuilder: '/jwt-builder/',
+    jwtDecoder: '/jwt-decoder/'
+};
 
 /**
  * @typedef {{ href: string, label: string }} LinkPart
@@ -44,26 +53,26 @@ const ROOT_PAGE_USAGE_SECTION = {
         ],
         [
             'Need to quickly debug why your JSON isn\'t parsing? Use our ',
-            { href: 'json-formatter/', label: 'JSON Formatter and Validator' },
+            { href: TOOL_LINKS.jsonFormatter, label: 'JSON Formatter and Validator' },
             '.'
         ],
         [
             'Want to compare two code versions? Use ',
-            { href: 'diff-checker/', label: 'Diff Checker' },
+            { href: TOOL_LINKS.diffChecker, label: 'Diff Checker' },
             '.'
         ],
         [
             'Need to create a JWT Token or inspect an existing one? Try our ',
-            { href: 'jwt-builder/', label: 'JWT Generator' },
+            { href: TOOL_LINKS.jwtBuilder, label: 'JWT Generator' },
             ' and ',
-            { href: 'jwt-decoder/', label: 'JWT Decoder' },
+            { href: TOOL_LINKS.jwtDecoder, label: 'JWT Decoder' },
             '.'
         ],
         [
             'Want to reduce size of your javascript or css? Use the ',
-            { href: 'js-minifier/', label: 'Javascript Minifier' },
+            { href: TOOL_LINKS.jsMinifier, label: 'Javascript Minifier' },
             ' or the ',
-            { href: 'css-minifier/', label: 'CSS Minifier' },
+            { href: TOOL_LINKS.cssMinifier, label: 'CSS Minifier' },
             '.'
         ],
         [
@@ -104,26 +113,32 @@ const ROOT_PAGE_FAQ_ITEMS = [
 
 /**
  * @param {ContentPart[]} parts
+ * @param {string} siteBaseUrl
  * @returns {string}
  */
-function renderContentParts(parts) {
+function renderContentParts(parts, siteBaseUrl) {
     return parts.map((part) => {
         if (typeof part === 'string') {
             return escapeHtml(part);
         }
 
-        return `<a href="${escapeAttribute(part.href)}">${escapeHtml(part.label)}</a>`;
+        const href = part.href.startsWith('/')
+            ? buildAbsoluteUrl(siteBaseUrl, part.href)
+            : part.href;
+
+        return `<a href="${escapeAttribute(href)}">${escapeHtml(part.label)}</a>`;
     }).join('');
 }
 
 /**
  * @param {ContentSection} section
+ * @param {string} siteBaseUrl
  * @returns {string}
  */
-function renderContentSection(section) {
+function renderContentSection(section, siteBaseUrl) {
     return `    <section aria-labelledby="${escapeAttribute(section.id)}">
       <h2 class="section-title" id="${escapeAttribute(section.id)}">${escapeHtml(section.title)}</h2>
-${section.paragraphs.map((paragraph) => `      <p class="section-body">${renderContentParts(paragraph)}</p>`).join('\n')}
+${section.paragraphs.map((paragraph) => `      <p class="section-body">${renderContentParts(paragraph, siteBaseUrl)}</p>`).join('\n')}
     </section>`;
 }
 
@@ -131,20 +146,21 @@ ${section.paragraphs.map((paragraph) => `      <p class="section-body">${renderC
  * @returns {string}
  */
 function renderRootPageIntro() {
-    return `    <p class="section-intro">${renderContentParts(ROOT_PAGE_INTRO)}</p>`;
+    return `    <p class="section-intro">${renderContentParts(ROOT_PAGE_INTRO, loadManifest().siteBaseUrl)}</p>`;
 }
 
 /**
  * @returns {string}
  */
 function renderRootPagePostIndexSections() {
-    const overviewSections = ROOT_PAGE_OVERVIEW_SECTIONS.map((section) => renderContentSection(section)).join('\n\n');
-    const usageSection = renderContentSection(ROOT_PAGE_USAGE_SECTION);
+    const siteBaseUrl = loadManifest().siteBaseUrl;
+    const overviewSections = ROOT_PAGE_OVERVIEW_SECTIONS.map((section) => renderContentSection(section, siteBaseUrl)).join('\n\n');
+    const usageSection = renderContentSection(ROOT_PAGE_USAGE_SECTION, siteBaseUrl);
     const faqSection = `    <section class="faqs" aria-labelledby="tools-index-faqs">
       <h2 class="section-title" id="tools-index-faqs">FAQs (Frequently Asked Questions):</h2>
       <dl>
 ${ROOT_PAGE_FAQ_ITEMS.map((item) => `        <dt>${escapeHtml(item.question)}</dt>
-        <dd>${renderContentParts(item.answer)}</dd>`).join('\n')}
+        <dd>${renderContentParts(item.answer, siteBaseUrl)}</dd>`).join('\n')}
       </dl>
     </section>`;
 

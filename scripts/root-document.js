@@ -14,17 +14,7 @@ const { buildRootStructuredDataGraph, renderStructuredDataScript } = require('./
  * @param {ToolDefinition} tool
  * @returns {string}
  */
-function getRootRelativeToolPath(tool) {
-    return tool.publicPath.replace(/^\//, '');
-}
-
-/**
- * @param {ToolDefinition} tool
- * @returns {string}
- */
 function renderToolCard(tool) {
-    const relativeToolPath = getRootRelativeToolPath(tool);
-
     return `      <article class="tool-card">
         <div class="tool-thumbnail">
           <img src="${escapeAttribute(tool.absoluteFeaturedImageUrl)}" alt="${escapeAttribute(`${tool.title} featured image`)}">
@@ -32,7 +22,7 @@ function renderToolCard(tool) {
         <div class="tool-content">
           <h3 class="tool-name">${escapeHtml(tool.title)}</h3>
           <p class="tool-description">${escapeHtml(tool.indexDescription)}</p>
-          <a href="${escapeAttribute(relativeToolPath)}" class="cta-button">Try Tool</a>
+          <a href="${escapeAttribute(tool.absolutePageUrl)}" class="cta-button">Try Tool</a>
         </div>
       </article>`;
 }

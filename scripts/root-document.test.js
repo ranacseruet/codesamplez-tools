@@ -43,7 +43,7 @@ describe('root document generation', () => {
     expect(html).toContain('Why Use These Free Developer Tools?');
     expect(html).toContain('When to Use These Online Developer Tools?');
     expect(html).toContain('FAQs (Frequently Asked Questions):');
-    expect(html).toContain('href="json-formatter/"');
+    expect(html).toContain(`href="${buildSiteHref('/json-formatter/')}"`);
     expect(html).toContain('href="https://codesamplez.com/contact"');
     expect(html).toContain('Code Formatters &amp; Validators');
     expect(html).toContain('Encoders &amp; Decoders');
@@ -52,7 +52,7 @@ describe('root document generation', () => {
     expect(html).toContain('Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.');
     expect(html).toContain('Analyze text to get insights like character count, word count, line count, and other useful text statistics.');
     expect(html).toContain(`src="${buildSiteAssetUri('/json-formatter/images/featured.png')}"`);
-    expect(html).toContain('href="jwt-decoder/"');
+    expect(html).toContain(`href="${buildSiteHref('/jwt-decoder/')}"`);
     expect(html).toContain(`<script src="${buildSiteAssetUri('/root-shell/bundle.main.js')}" defer></script>`);
 
     const introIndex = html.indexOf('Whether you need to minify JavaScript or decode a secret message, these tools help you get it done fast, no installation required.');
@@ -74,5 +74,7 @@ describe('root document generation', () => {
     expect(html).toContain('<link rel="canonical" href="http://localhost:8081/">');
     expect(html).toContain('"url":"http://localhost:8081/json-formatter/"');
     expect(html).toContain('"url":"http://localhost:8081/text-analyzer/"');
+    expect(html).toContain('href="http://localhost:8081/json-formatter/"');
+    expect(html).toContain('href="http://localhost:8081/jwt-decoder/"');
   });
 });
