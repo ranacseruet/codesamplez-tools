@@ -120,7 +120,7 @@
     "@material/web": "^2.4.1",
     "core-js": "^3.49.0",
     "diff": "^8.0.4",
-    "fast-xml-parser": "^5.7.1",
+    "fast-xml-parser": "^5.7.3",
     "js-yaml": "^4.1.1",
     "preact": "^10.29.0",
     "preact-render-to-string": "^6.6.7",
