@@ -102,7 +102,7 @@ Directory-index routing is handled at the CloudFront viewer-request layer by the
 
 - The source lives at `infrastructure/cloudfront-functions/RewriteStaticURLs.js`.
 - CI/CD deploys the function from source when it changes, publishes it to `LIVE`, verifies the live source, and attaches it to the `tools.codesamplez.com` distribution's default cache behavior.
-- The function rewrites trailing-slash requests such as `/` and `/jwt-decoder/` to `/index.html` and `/jwt-decoder/index.html` before the request reaches the S3 REST origin.
+- The function redirects extensionless tool requests such as `/jwt-decoder` to the canonical trailing-slash URL `/jwt-decoder/` while preserving query string parameters, then rewrites trailing-slash requests such as `/` and `/jwt-decoder/` to `/index.html` and `/jwt-decoder/index.html` before the request reaches the S3 REST origin.
 - The deployment script syncs each selected tool directory as-is, including `build/<tool>/index.html`; the sync uses `--delete`, so stale tool HTML objects are pruned along with stale JS, CSS, and image assets.
 - Root-level assets such as `index.html`, `robots.txt`, and `sitemap.xml` are copied through the root-assets path because they are not inside a tool directory.
 

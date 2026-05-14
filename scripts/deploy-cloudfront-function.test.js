@@ -25,10 +25,11 @@ function loadCloudFrontFunctionHandler() {
   return context.handler;
 }
 
-function createEvent(uri) {
+function createEvent(uri, querystring = {}) {
   return {
     request: {
-      uri
+      uri,
+      querystring
     }
   };
 }
@@ -44,8 +45,30 @@ describe('RewriteStaticURLs CloudFront Function', () => {
     expect(handler(createEvent('/jwt-decoder/')).uri).toBe('/jwt-decoder/index.html');
   });
 
-  it('rewrites extensionless paths to html objects', () => {
-    expect(handler(createEvent('/jwt-decoder')).uri).toBe('/jwt-decoder.html');
+  it('redirects extensionless tool paths to their canonical directory URL', () => {
+    expect(handler(createEvent('/jwt-decoder'))).toEqual({
+      statusCode: 301,
+      statusDescription: 'Moved Permanently',
+      headers: {
+        location: {
+          value: '/jwt-decoder/'
+        }
+      }
+    });
+  });
+
+  it('preserves query string parameters when redirecting extensionless tool paths', () => {
+    expect(handler(createEvent('/jwt-decoder', {
+      utm_source: { value: 'twitter' },
+      search: { value: 'hello world' },
+      filter: {
+        value: 'first',
+        multiValue: [
+          { value: 'first' },
+          { value: 'second' }
+        ]
+      }
+    })).headers.location.value).toBe('/jwt-decoder/?utm_source=twitter&search=hello%20world&filter=first&filter=second');
   });
 
   it('leaves asset paths with file extensions unchanged', () => {
