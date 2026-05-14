@@ -98,14 +98,17 @@ The build preserves the standalone deployment contract for each tool, prerenders
 
 Production deploys publish the static build to the `tools.codesamplez.com` S3 bucket behind CloudFront.
 
-Directory-index routing is handled at the CloudFront viewer-request layer:
+Directory-index routing is handled at the CloudFront viewer-request layer by the repo-managed `RewriteStaticURLs` CloudFront Function:
 
-- Attach the existing `RewriteStaticURLs` CloudFront Function to the `tools.codesamplez.com` distribution's default cache behavior.
+- The source lives at `infrastructure/cloudfront-functions/RewriteStaticURLs.js`.
+- CI/CD deploys the function from source when it changes, publishes it to `LIVE`, verifies the live source, and attaches it to the `tools.codesamplez.com` distribution's default cache behavior.
 - The function rewrites trailing-slash requests such as `/` and `/jwt-decoder/` to `/index.html` and `/jwt-decoder/index.html` before the request reaches the S3 REST origin.
 - The deployment script syncs each selected tool directory as-is, including `build/<tool>/index.html`; the sync uses `--delete`, so stale tool HTML objects are pruned along with stale JS, CSS, and image assets.
 - Root-level assets such as `index.html`, `robots.txt`, and `sitemap.xml` are copied through the root-assets path because they are not inside a tool directory.
 
-The canonical checked build path remains `build/<tool>/index.html`; directory-index behavior belongs in CloudFront rather than duplicate S3 object keys. This repository documents the required CloudFront association, but does not provision or update the distribution config.
+The canonical checked build path remains `build/<tool>/index.html`; directory-index behavior belongs in CloudFront rather than duplicate S3 object keys.
+
+The CloudFront Function deployment uses the existing GitHub Actions AWS credentials and `CLOUDFRONT_DISTRIBUTION_ID` secret. Those credentials need permission for `cloudfront:DescribeFunction`, `cloudfront:CreateFunction`, `cloudfront:UpdateFunction`, `cloudfront:TestFunction`, `cloudfront:PublishFunction`, `cloudfront:GetFunction`, `cloudfront:GetDistributionConfig`, and `cloudfront:UpdateDistribution`.
 
 ## Tool Release Metadata
 

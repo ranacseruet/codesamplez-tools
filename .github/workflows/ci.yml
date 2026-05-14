@@ -160,6 +160,21 @@ jobs:
           --head "${{ github.sha }}" \
           --write-github-output
 
+    - name: Detect CloudFront Function changes
+      id: cloudfront_function
+      run: |
+        set -euo pipefail
+        BASE="${{ github.event.before }}"
+        HEAD="${{ github.sha }}"
+        if [[ "$BASE" =~ ^0+$ ]]; then
+          BASE="$(git rev-parse "$HEAD^")"
+        fi
+        if git diff --name-only "$BASE" "$HEAD" | grep -E '^(infrastructure/cloudfront-functions/RewriteStaticURLs\.js|scripts/deploy-cloudfront-function\.js|package\.json|package-lock\.json|\.github/workflows/ci\.yml)$' >/dev/null; then
+          echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+        fi
+
     - name: Restore build artifacts
       if: steps.affected.outputs.should_deploy == 'true'
       uses: actions/cache@v4
@@ -170,12 +185,17 @@ jobs:
           ${{ runner.os }}-build-${{ github.sha }}
 
     - name: Configure AWS credentials
-      if: steps.affected.outputs.should_deploy == 'true'
+      if: steps.affected.outputs.should_deploy == 'true' || steps.cloudfront_function.outputs.should_deploy == 'true'
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
+
+    - name: Deploy CloudFront Function
+      if: steps.cloudfront_function.outputs.should_deploy == 'true'
+      run: |
+        npm run deploy:cloudfront-function -- --distribution-id "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}"
 
     - name: Deploy affected assets
       if: steps.affected.outputs.should_deploy == 'true'

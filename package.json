@@ -49,7 +49,8 @@
     "tool:versions": "node scripts/tool-release.js list",
     "tool:version:bump": "node scripts/tool-release.js bump",
     "tool:tag-release": "node scripts/tool-release.js tag",
-    "deploy:affected": "node scripts/deploy-affected-assets.js"
+    "deploy:affected": "node scripts/deploy-affected-assets.js",
+    "deploy:cloudfront-function": "node scripts/deploy-cloudfront-function.js"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.2",
