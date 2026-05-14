@@ -140,15 +140,13 @@ function assertExists(filePath) {
  * @param {boolean} dryRun
  * @returns {void}
  */
-function syncDirectoryExcludingHtml(bucket, sourceDir, destPrefix, dryRun) {
+function syncDirectory(bucket, sourceDir, destPrefix, dryRun) {
     runCommand('aws', [
         's3',
         'sync',
         `${sourceDir}/`,
         `s3://${bucket}/${destPrefix}/`,
-        '--delete',
-        '--exclude',
-        '*.html'
+        '--delete'
     ], dryRun);
 }
 
@@ -183,10 +181,9 @@ function main() {
 
         const sourceDir = path.join(args.buildDir, tool.outputDir);
         assertExists(sourceDir);
-        syncDirectoryExcludingHtml(args.bucket, sourceDir, tool.outputDir, args.dryRun);
+        syncDirectory(args.bucket, sourceDir, tool.outputDir, args.dryRun);
         const htmlPath = path.join(sourceDir, 'index.html');
         assertExists(htmlPath);
-        copyAsset(args.bucket, htmlPath, `${tool.outputDir}/index.html`, args.dryRun);
         invalidationPaths.push(`${tool.publicPath}*`);
     });
 
@@ -194,7 +191,7 @@ function main() {
         const rootShell = getRootShellDefinition();
         const sourceDir = path.join(args.buildDir, rootShell.id);
         assertExists(sourceDir);
-        syncDirectoryExcludingHtml(args.bucket, sourceDir, rootShell.id, args.dryRun);
+        syncDirectory(args.bucket, sourceDir, rootShell.id, args.dryRun);
         invalidationPaths.push(`/${rootShell.id}/*`);
     }
 
