@@ -119,23 +119,24 @@ describe('generated site assets', () => {
         expect(entries.slice(1).every((entry) => entry.lastmod === sharedTimestamp)).toBe(true);
     });
 
-    it('builds an indexable robots file that points to the sitemap URL', () => {
+    it('builds an indexable robots file that points to the absolute static-root sitemap URL', () => {
         expect(buildRobotsTxt()).toBe([
             'User-agent: *',
             'Allow: /',
             '',
-            'Sitemap: sitemap.xml'
+            'Sitemap: https://tools.codesamplez.com/sitemap.xml'
         ].join('\n'));
     });
 
-    it('keeps the robots sitemap directive relative under site base url overrides', () => {
+    it('uses the static root override for the robots sitemap directive', () => {
         expect(withEnv({
-            CST_SITE_BASE_URL: 'https://tools.codesamplez.com'
+            CST_SITE_BASE_URL: 'https://codesamplez.com/tools',
+            CST_SITE_STATIC_ROOT_URI: 'https://static.example.test/tools-assets'
         }, () => buildRobotsTxt())).toBe([
             'User-agent: *',
             'Allow: /',
             '',
-            'Sitemap: sitemap.xml'
+            'Sitemap: https://static.example.test/tools-assets/sitemap.xml'
         ].join('\n'));
     });
 
@@ -218,7 +219,7 @@ describe('generated site assets', () => {
             expect(result.sitemapPath).toBe(path.join(buildDir, 'sitemap.xml'));
             expect(result.robotsPath).toBe(path.join(buildDir, 'robots.txt'));
             expect(fs.readFileSync(result.sitemapPath, 'utf8')).toContain('<urlset');
-            expect(fs.readFileSync(result.robotsPath, 'utf8')).toContain('Sitemap: sitemap.xml');
+            expect(fs.readFileSync(result.robotsPath, 'utf8')).toContain('Sitemap: https://tools.codesamplez.com/sitemap.xml');
         } finally {
             fs.rmSync(buildDir, { force: true, recursive: true });
         }
@@ -233,7 +234,7 @@ describe('generated site assets', () => {
             expect(result.sitemapPath).toBe(sitemapPath);
             expect(result.robotsPath).toBe(robotsPath);
             expect(fs.readFileSync(sitemapPath, 'utf8')).toContain('<urlset');
-            expect(fs.readFileSync(robotsPath, 'utf8')).toContain('Sitemap: sitemap.xml');
+            expect(fs.readFileSync(robotsPath, 'utf8')).toContain('Sitemap: https://tools.codesamplez.com/sitemap.xml');
         });
     });
 
@@ -244,7 +245,7 @@ describe('generated site assets', () => {
             expect(result.sitemapPath).toBe(sitemapPath);
             expect(result.robotsPath).toBe(robotsPath);
             expect(fs.readFileSync(sitemapPath, 'utf8')).toContain('<urlset');
-            expect(fs.readFileSync(robotsPath, 'utf8')).toContain('Sitemap: sitemap.xml');
+            expect(fs.readFileSync(robotsPath, 'utf8')).toContain('Sitemap: https://tools.codesamplez.com/sitemap.xml');
         });
     });
 });

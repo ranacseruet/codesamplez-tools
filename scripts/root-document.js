@@ -6,6 +6,8 @@ const { getGroupedToolDefinitions, loadManifest } = require('./tool-manifest');
 const { renderRootPageIntro, renderRootPagePostIndexSections } = require('./root-page-content');
 const { buildRootStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
 
+const THEME_COLOR = '#2563eb';
+
 /**
  * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
  */
@@ -37,6 +39,7 @@ function generateRootDocument() {
     const escapedTitle = escapeAttribute(manifest.rootPage.title);
     const escapedDescription = escapeAttribute(manifest.rootPage.description);
     const escapedCanonical = escapeAttribute(manifest.rootPage.absoluteUrl);
+    const escapedSiteName = escapeAttribute(manifest.siteName);
     const escapedRootShellStylesUrl = escapeAttribute(buildAbsoluteUrl(manifest.siteStaticRootUri, '/root-shell/styles.main.css'));
     const escapedRootStylesUrl = escapeAttribute(buildAbsoluteUrl(manifest.siteStaticRootUri, '/styles.css'));
     const escapedRootShellBundleUrl = escapeAttribute(buildAbsoluteUrl(manifest.siteStaticRootUri, '/root-shell/bundle.main.js'));
@@ -48,8 +51,10 @@ function generateRootDocument() {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(manifest.rootPage.title)}</title>
   <meta name="description" content="${escapedDescription}">
+  <meta name="theme-color" content="${THEME_COLOR}">
   <link rel="canonical" href="${escapedCanonical}">
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="${escapedSiteName}">
   <meta property="og:title" content="${escapedTitle}">
   <meta property="og:description" content="${escapedDescription}">
   <meta property="og:url" content="${escapedCanonical}">
@@ -64,7 +69,7 @@ function generateRootDocument() {
   <div id="app-shell-header"></div>
 
   <main class="main-container" aria-label="Tools index">
-    <h2 class="main-title">${escapeHtml(manifest.rootPage.title)}</h2>
+    <h1 class="main-title">${escapeHtml(manifest.rootPage.title)}</h1>
 
 ${renderRootPageIntro()}
 

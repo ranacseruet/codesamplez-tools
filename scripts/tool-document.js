@@ -10,6 +10,9 @@ const {
 const { escapeAttribute, escapeHtml, joinUrl } = require('./document-helpers');
 const { buildToolStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
 const { getToolFaqItems } = require('./tool-faq-metadata');
+const { ensureBabelRegister } = require('./register-node-transforms');
+
+const THEME_COLOR = '#2563eb';
 
 /**
  * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
@@ -32,6 +35,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     const escapedTitle = escapeAttribute(tool.title);
     const escapedDescription = escapeAttribute(tool.description);
     const escapedAppRootId = escapeAttribute(tool.appRootId);
+    const escapedSiteName = escapeAttribute(manifest.siteName);
     const escapedPageUrl = escapeAttribute(absolutePageUrl);
     const escapedStylesUrl = escapeAttribute(absoluteStylesUrl);
     const escapedBundleUrl = escapeAttribute(absoluteBundleUrl);
@@ -41,6 +45,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
         faqItems: getToolFaqItems(tool.id)
     }));
     const scriptTypeAttribute = tool.scriptType === 'module' ? ' type="module"' : '';
+    const shellHeaderMarkup = renderToolShellHeaderMarkup(tool);
     const wrappedBeforeMarkup = beforeAppMarkup
         ? `<div class="c-tool-static-shell c-tool-static-shell--before">${beforeAppMarkup}</div>`
         : '';
@@ -56,9 +61,11 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${escapeHtml(tool.title)}</title>
     <meta name="description" content="${escapedDescription}">
+    <meta name="theme-color" content="${THEME_COLOR}">
     <link rel="canonical" href="${escapedPageUrl}">
     <link rel="stylesheet" href="${escapedStylesUrl}">
     <meta property="og:type" content="website">
+    <meta property="og:site_name" content="${escapedSiteName}">
     <meta property="og:title" content="${escapedTitle}">
     <meta property="og:description" content="${escapedDescription}">
     <meta property="og:url" content="${escapedPageUrl}">
@@ -74,7 +81,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
 </head>
 
 <body class="standalone-app">
-    <div id="app-shell-header"></div>
+    <div id="app-shell-header">${shellHeaderMarkup}</div>
     ${wrappedBeforeMarkup}
     <div id="${escapedAppRootId}">${prerenderedMarkup}</div>
     ${wrappedAfterMarkup}
@@ -85,6 +92,25 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
 
 </html>
 `;
+}
+
+/**
+ * @param {ToolDefinition} tool
+ * @returns {string}
+ */
+function renderToolShellHeaderMarkup(tool) {
+    ensureBabelRegister();
+
+    const { h } = require('preact');
+    const renderToString = /** @type {(node: import('preact').VNode) => string} */ (
+        /** @type {unknown} */ (require('preact-render-to-string'))
+    );
+    const { ToolShellHeader } = require('../common/app-shell/AppShell');
+
+    return renderToString(h(ToolShellHeader, {
+        title: tool.title,
+        description: tool.description
+    }));
 }
 
 /**
@@ -109,5 +135,6 @@ function generateToolDocument(toolId) {
 module.exports = {
     generateToolDocument,
     joinUrl,
-    renderToolDocument
+    renderToolDocument,
+    renderToolShellHeaderMarkup
 };

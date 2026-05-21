@@ -11,6 +11,7 @@ const {
     buildAbsoluteUrl,
     getRootPageDefinition,
     getSiteBaseUrl,
+    getSiteStaticRootUri,
     getToolDefinitions
 } = require('./tool-manifest');
 
@@ -177,7 +178,7 @@ function buildRobotsTxt() {
         'User-agent: *',
         'Allow: /',
         '',
-        `Sitemap: ${SITEMAP_FILENAME}`
+        `Sitemap: ${buildAbsoluteUrl(getSiteStaticRootUri(), SITEMAP_FILENAME)}`
     ].join('\n');
 }
 

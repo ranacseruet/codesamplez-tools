@@ -3,6 +3,10 @@
 const { generateRootDocument } = require('./root-document');
 const { SITE_BASE_URL, buildSiteAssetUri, buildSiteHref } = require('../common/siteBaseUrl');
 
+function getHeadingMatches(html, level) {
+  return [...html.matchAll(new RegExp(`<h${level}\\b[^>]*>`, 'g'))];
+}
+
 function withEnv(overrides, run) {
   const originalEnv = { ...process.env };
 
@@ -29,9 +33,13 @@ describe('root document generation', () => {
 
     expect(html).toContain('<title>Online Developer Tools</title>');
     expect(html).toContain('<meta name="description" content="Developers lose time on repetitive tasks - that\'s where free online developer tools come in. This page is a hub of browser-based utilities to speed up development: format code, debug errors, convert data, and more.">');
+    expect(html).toContain('<meta name="theme-color" content="#2563eb">');
     expect(html).toContain(`<link rel="canonical" href="${SITE_BASE_URL}">`);
     expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/root-shell/styles.main.css')}">`);
     expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/styles.css')}">`);
+    expect(html).toContain('<meta property="og:site_name" content="CodeSamplez Tools">');
+    expect(html).toContain('<h1 class="main-title">Online Developer Tools</h1>');
+    expect(getHeadingMatches(html, 1)).toHaveLength(1);
     expect(html).toContain('<script type="application/ld+json">');
     expect(html).toContain('"@type":"CollectionPage"');
     expect(html).toContain('"@type":"ItemList"');

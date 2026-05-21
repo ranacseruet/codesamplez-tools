@@ -1,8 +1,21 @@
 /** @jest-environment node */
 
 const { generateToolDocument, joinUrl, renderToolDocument } = require('./tool-document.js');
-const { getToolById } = require('./tool-manifest');
+const { getToolById, getToolDefinitions } = require('./tool-manifest');
 const { SITE_BASE_URL, SITE_STATIC_ROOT_URI, buildSiteAssetUri, buildSiteHref } = require('../common/siteBaseUrl');
+
+function getHeadingMatches(html, level) {
+    return [...html.matchAll(new RegExp(`<h${level}\\b[^>]*>`, 'g'))];
+}
+
+function escapeHtml(value) {
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 function withEnv(overrides, run) {
     const originalEnv = { ...process.env };
@@ -44,8 +57,10 @@ describe('tool document generation', () => {
 
         expect(html).toContain('<title>Diff Checker</title>');
         expect(html).toContain('<meta name="description" content="Compare two texts or code snippets and highlight the differences between them.">');
+        expect(html).toContain('<meta name="theme-color" content="#2563eb">');
         expect(html).toContain(`<link rel="canonical" href="${buildSiteHref('/diff-checker/')}">`);
         expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/diff-checker/styles.main.css')}">`);
+        expect(html).toContain('<meta property="og:site_name" content="CodeSamplez Tools">');
         expect(html).toContain(`<meta property="og:image" content="${buildSiteAssetUri('/diff-checker/images/featured.png')}">`);
         expect(html).toContain('<script type="application/ld+json">');
         expect(html).toContain('"@type":"WebPage"');
@@ -57,13 +72,25 @@ describe('tool document generation', () => {
         expect(html).toContain('"priceCurrency":"USD"');
         expect(html).toContain(`"url":"${buildSiteHref('/diff-checker/')}"`);
         expect(html).toContain(`"image":"${buildSiteAssetUri('/diff-checker/images/featured.png')}"`);
-        expect(html).toContain('<div id="app-shell-header"></div>');
+        expect(html).toContain('<div id="app-shell-header"><header class="cst-shell__header">');
+        expect(html).toContain('<h1 class="cst-shell__title">Diff Checker</h1>');
+        expect(html).toContain('<p class="cst-shell__description">Compare two texts or code snippets and highlight the differences between them.</p>');
         expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--before"><section>Before payload</section></div>');
         expect(html).toContain('<div id="diff-checker-app"><section>SSR payload</section></div>');
         expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--after"><section>After payload</section></div>');
         expect(html).toContain('<section class="c-related-tools">Related</section>');
         expect(html).toContain(`<link rel="image_src" href="${buildSiteAssetUri('/diff-checker/images/featured.png')}">`);
         expect(html).toContain(`<script src="${buildSiteAssetUri('/diff-checker/bundle.main.js')}" type="module"></script>`);
+    });
+
+    it('renders exactly one visible h1 for every generated tool document', () => {
+        getToolDefinitions().forEach((tool) => {
+            const html = generateToolDocument(tool.id);
+
+            expect(getHeadingMatches(html, 1)).toHaveLength(1);
+            expect(html).toContain(`<h1 class="cst-shell__title">${escapeHtml(tool.title)}</h1>`);
+            expect(html).not.toContain('c-tool-page-heading');
+        });
     });
 
     it('renders FAQPage structured data for diff-checker', () => {
