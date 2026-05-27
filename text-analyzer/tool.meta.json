@@ -2,14 +2,28 @@
   "id": "text-analyzer-tool",
   "version": "1.0.0",
   "title": "Text Analyzer",
-  "description": "Analyze your text to get word count, character statistics, and more.",
+  "description": "Free online Text Analyzer tool that counts words, characters, sentences, paragraphs and more in your text. Get results instantly in real-time.",
   "catalogGroupId": "text-analysis",
   "catalogOrder": 2,
   "indexDescription": "Analyze text to get insights like character count, word count, line count, and other useful text statistics. Perfect for content writers and developers.",
-  "keywords": ["text", "analyze", "word count", "characters", "statistics"],
+  "keywords": [
+    "text",
+    "analyze",
+    "word count",
+    "characters",
+    "statistics"
+  ],
   "appRootId": "text-analyzer-app",
   "publicPath": "/text-analyzer/",
   "scriptType": "module",
-  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
-  "relatedToolIds": ["diff-checker-tool", "qr-code-generator", "json-formatter-tool"]
+  "dependencyScopes": [
+    "build-system",
+    "shared-ui",
+    "shared-runtime"
+  ],
+  "relatedToolIds": [
+    "diff-checker-tool",
+    "qr-code-generator",
+    "json-formatter-tool"
+  ]
 }

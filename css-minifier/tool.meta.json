@@ -2,14 +2,28 @@
   "id": "css-minifier-tool",
   "version": "1.0.0",
   "title": "CSS Minifier",
-  "description": "Optimize CSS by removing unnecessary characters without changing behavior.",
+  "description": "Free Online CSS Minifier Tool helps validate and optimize your CSS styles by removing unnecessary characters without changing functionality.",
   "catalogGroupId": "code-formatters",
   "catalogOrder": 3,
   "indexDescription": "Minify CSS code by removing unnecessary whitespace, comments, and optimizing style declarations (minification). Features real-time size reduction statistics and clipboard support.",
-  "keywords": ["css", "minify", "stylesheet", "optimize", "compress"],
+  "keywords": [
+    "css",
+    "minify",
+    "stylesheet",
+    "optimize",
+    "compress"
+  ],
   "appRootId": "css-minifier-app",
   "publicPath": "/css-minifier/",
   "scriptType": "module",
-  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
-  "relatedToolIds": ["js-minifier-tool", "json-formatter-tool", "diff-checker-tool"]
+  "dependencyScopes": [
+    "build-system",
+    "shared-ui",
+    "shared-runtime"
+  ],
+  "relatedToolIds": [
+    "js-minifier-tool",
+    "json-formatter-tool",
+    "diff-checker-tool"
+  ]
 }

@@ -56,7 +56,7 @@ describe('tool document generation', () => {
         );
 
         expect(html).toContain('<title>Diff Checker</title>');
-        expect(html).toContain('<meta name="description" content="Compare two texts or code snippets and highlight the differences between them.">');
+        expect(html).toContain('<meta name="description" content="Free online diff checker to quickly compare code or text differences. Perfect for developers, writers, and editors seeking instant results.">');
         expect(html).toContain('<meta name="theme-color" content="#2563eb">');
         expect(html).toContain(`<link rel="canonical" href="${buildSiteHref('/diff-checker/')}">`);
         expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/diff-checker/styles.main.css')}">`);
@@ -74,7 +74,7 @@ describe('tool document generation', () => {
         expect(html).toContain(`"image":"${buildSiteAssetUri('/diff-checker/images/featured.png')}"`);
         expect(html).toContain('<div id="app-shell-header"><header class="cst-shell__header">');
         expect(html).toContain('<h1 class="cst-shell__title">Diff Checker</h1>');
-        expect(html).toContain('<p class="cst-shell__description">Compare two texts or code snippets and highlight the differences between them.</p>');
+        expect(html).toContain('<p class="cst-shell__description">Free online diff checker to quickly compare code or text differences. Perfect for developers, writers, and editors seeking instant results.</p>');
         expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--before"><section>Before payload</section></div>');
         expect(html).toContain('<div id="diff-checker-app"><section>SSR payload</section></div>');
         expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--after"><section>After payload</section></div>');

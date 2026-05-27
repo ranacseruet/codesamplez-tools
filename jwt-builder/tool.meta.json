@@ -2,14 +2,28 @@
   "id": "jwt-builder-tool",
   "version": "1.0.0",
   "title": "JWT Builder",
-  "description": "Create and sign JWT tokens locally with standard and custom claims.",
+  "description": "Free online JWT Generator – create signed JSON Web Tokens instantly. Customize header/payload claims and get your JWT ready for use.",
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 3,
   "indexDescription": "Create and sign JSON Web Tokens (JWT) with custom headers and payloads. Generate secure tokens with various signing algorithms and secret keys.",
-  "keywords": ["jwt", "token", "sign", "claims", "auth"],
+  "keywords": [
+    "jwt",
+    "token",
+    "sign",
+    "claims",
+    "auth"
+  ],
   "appRootId": "jwt-builder-app",
   "publicPath": "/jwt-builder/",
   "scriptType": "module",
-  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
-  "relatedToolIds": ["jwt-decoder-tool", "base64-converter-tool", "json-formatter-tool"]
+  "dependencyScopes": [
+    "build-system",
+    "shared-ui",
+    "shared-runtime"
+  ],
+  "relatedToolIds": [
+    "jwt-decoder-tool",
+    "base64-converter-tool",
+    "json-formatter-tool"
+  ]
 }

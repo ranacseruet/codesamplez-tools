@@ -32,7 +32,7 @@ describe('root document generation', () => {
         const html = generateRootDocument();
 
     expect(html).toContain('<title>Online Developer Tools</title>');
-    expect(html).toContain('<meta name="description" content="Developers lose time on repetitive tasks - that\'s where free online developer tools come in. This page is a hub of browser-based utilities to speed up development: format code, debug errors, convert data, and more.">');
+    expect(html).toContain('<meta name="description" content="Free online developer tools for debugging, formatting and validation needs. Access 10+ utilities to help boost your day-to-day productivity.">');
     expect(html).toContain('<meta name="theme-color" content="#2563eb">');
     expect(html).toContain(`<link rel="canonical" href="${SITE_BASE_URL}">`);
     expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/root-shell/styles.main.css')}">`);

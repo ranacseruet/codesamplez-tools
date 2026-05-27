@@ -2,14 +2,28 @@
   "id": "base64-converter-tool",
   "version": "1.0.0",
   "title": "Base64 Converter",
-  "description": "Convert text and files to and from Base64 with multiple encoding options.",
+  "description": "Quickly encode or decode Base64 strings. No data sent to server – all in-browser. Supports files & multiple text encodings for convenience.",
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 1,
   "indexDescription": "Convert text and files to Base64 encoding and decode Base64 strings back to their original format. Supports multiple encodings and file uploads.",
-  "keywords": ["base64", "encode", "decode", "text", "files"],
+  "keywords": [
+    "base64",
+    "encode",
+    "decode",
+    "text",
+    "files"
+  ],
   "appRootId": "base64converter-app",
   "publicPath": "/base64-converter/",
   "scriptType": "module",
-  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
-  "relatedToolIds": ["jwt-decoder-tool", "jwt-builder-tool", "data-format-converter"]
+  "dependencyScopes": [
+    "build-system",
+    "shared-ui",
+    "shared-runtime"
+  ],
+  "relatedToolIds": [
+    "jwt-decoder-tool",
+    "jwt-builder-tool",
+    "data-format-converter"
+  ]
 }

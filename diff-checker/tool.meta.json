@@ -2,14 +2,28 @@
   "id": "diff-checker-tool",
   "version": "1.0.0",
   "title": "Diff Checker",
-  "description": "Compare two texts or code snippets and highlight the differences between them.",
+  "description": "Free online diff checker to quickly compare code or text differences. Perfect for developers, writers, and editors seeking instant results.",
   "catalogGroupId": "text-analysis",
   "catalogOrder": 1,
   "indexDescription": "Compare two texts side by side and highlight the differences (diff). Perfect for comparing code snippets, configurations, or any text-based content.",
-  "keywords": ["diff", "compare", "text", "code", "changes"],
+  "keywords": [
+    "diff",
+    "compare",
+    "text",
+    "code",
+    "changes"
+  ],
   "appRootId": "diff-checker-app",
   "publicPath": "/diff-checker/",
   "scriptType": "module",
-  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
-  "relatedToolIds": ["text-analyzer-tool", "json-formatter-tool", "js-minifier-tool"]
+  "dependencyScopes": [
+    "build-system",
+    "shared-ui",
+    "shared-runtime"
+  ],
+  "relatedToolIds": [
+    "text-analyzer-tool",
+    "json-formatter-tool",
+    "js-minifier-tool"
+  ]
 }

@@ -2,14 +2,28 @@
   "id": "json-formatter-tool",
   "version": "1.0.0",
   "title": "JSON Formatter",
-  "description": "Format, validate, and beautify JSON with tree and plain views.",
+  "description": "Instantly format & validate any JSON data with our free online JSON Formatter. Beautify JSON, highlight syntax, and sort keys alphabetically.",
   "catalogGroupId": "code-formatters",
   "catalogOrder": 1,
   "indexDescription": "Format and validate JSON data with proper indentation and alphabetical key sorting. Features syntax highlighting, error detection, and clipboard integration.",
-  "keywords": ["json", "format", "validate", "beautify", "tree view"],
+  "keywords": [
+    "json",
+    "format",
+    "validate",
+    "beautify",
+    "tree view"
+  ],
   "appRootId": "json-formatter-app",
   "publicPath": "/json-formatter/",
   "scriptType": "module",
-  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
-  "relatedToolIds": ["data-format-converter", "jwt-decoder-tool", "js-minifier-tool"]
+  "dependencyScopes": [
+    "build-system",
+    "shared-ui",
+    "shared-runtime"
+  ],
+  "relatedToolIds": [
+    "data-format-converter",
+    "jwt-decoder-tool",
+    "js-minifier-tool"
+  ]
 }

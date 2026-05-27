@@ -2,14 +2,28 @@
   "id": "jwt-decoder-tool",
   "version": "1.0.0",
   "title": "JWT Decoder & Validator",
-  "description": "Decode and validate JWT tokens locally in your browser.",
+  "description": "Free online JWT decoder – instantly reveal a token’s header, payload, and verify its signature. Paste your JWT to decode it now.",
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 2,
   "indexDescription": "Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.",
-  "keywords": ["jwt", "decode", "validate", "token", "auth"],
+  "keywords": [
+    "jwt",
+    "decode",
+    "validate",
+    "token",
+    "auth"
+  ],
   "appRootId": "jwt-decoder-app",
   "publicPath": "/jwt-decoder/",
   "scriptType": "module",
-  "dependencyScopes": ["build-system", "shared-ui", "shared-runtime"],
-  "relatedToolIds": ["jwt-builder-tool", "base64-converter-tool", "json-formatter-tool"]
+  "dependencyScopes": [
+    "build-system",
+    "shared-ui",
+    "shared-runtime"
+  ],
+  "relatedToolIds": [
+    "jwt-builder-tool",
+    "base64-converter-tool",
+    "json-formatter-tool"
+  ]
 }
