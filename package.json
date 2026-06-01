@@ -73,7 +73,7 @@
     "file-loader": "^6.2.0",
     "http-server": "^14.1.1",
     "jest": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0",
+    "jest-environment-jsdom": "^30.4.1",
     "jsdom": "^29.1.0",
     "mini-css-extract-plugin": "^2.10.2",
     "playwright": "^1.59.1",
