@@ -122,7 +122,7 @@
     "core-js": "^3.49.0",
     "diff": "^8.0.4",
     "fast-xml-parser": "^5.7.3",
-    "js-yaml": "^4.1.1",
+    "js-yaml": "^4.2.0",
     "preact": "^10.29.1",
     "preact-render-to-string": "^6.7.0",
     "prismjs": "^1.30.0",
