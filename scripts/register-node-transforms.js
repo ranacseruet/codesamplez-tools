@@ -10,6 +10,11 @@ function ensureBabelRegister() {
         return;
     }
 
+    if (process.env.JEST_WORKER_ID) {
+        babelRegistered = true;
+        return;
+    }
+
     require('@babel/register')({
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
         ignore: [/node_modules/],
