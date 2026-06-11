@@ -39,6 +39,7 @@
   --cst-color-danger-hover: #981b1b;
   --cst-color-success: #1d7f4f;
   --cst-color-success-hover: #15643d;
+  --cst-color-warning: #b06b00;
   --cst-color-shadow: rgba(15, 23, 42, 0.12);
   --cst-color-shadow-strong: rgba(15, 23, 42, 0.2);
   --cst-color-focus-ring: rgba(0, 95, 115, 0.22);
@@ -103,7 +104,8 @@
   --cst-shell-theme-toggle-border: rgba(63, 73, 76, 0.18);
   --cst-shell-theme-toggle-border-hover: rgba(63, 73, 76, 0.34);
   --cst-shell-theme-toggle-text: var(--md-sys-color-on-surface, #141c1e);
-  --cst-shell-theme-toggle-icon-active: #b06b00;
+  /* Light-mode active icon intentionally tracks the warning role (amber). */
+  --cst-shell-theme-toggle-icon-active: var(--cst-color-warning, #b06b00);
   --cst-color-mix-neutral: #ffffff;
 }
 

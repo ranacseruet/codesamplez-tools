@@ -3,6 +3,27 @@
 .diffc-tool {
   --sticky-offset-base: 58px;
   --diffc-options-height: 68px;
+
+  /* Diff accent palette: deliberately more saturated than the semantic
+     success/error tokens so added/removed fills stay legible at low
+     color-mix percentages in both themes. Single point of change. */
+  --diffc-added-accent: #16a34a;
+  --diffc-added-deep: #14532d;
+  --diffc-removed-accent: #dc2626;
+  --diffc-removed-deep: #7f1d1d;
+
+  /* Dark-theme syntax-highlight palette for the result pane (used by the
+     [data-theme="dark"] token rules below). */
+  --diffc-syntax-comment: #93a4ab;
+  --diffc-syntax-punctuation: #c3d0d4;
+  --diffc-syntax-property: #7dd3fc;
+  --diffc-syntax-number: #f6c177;
+  --diffc-syntax-string: #86efac;
+  --diffc-syntax-operator: #d2dce0;
+  --diffc-syntax-keyword: #c4b5fd;
+  --diffc-syntax-function: #f9a8d4;
+  /* Shared by regex/important and deleted tokens — a single "danger" hue. */
+  --diffc-syntax-danger: #fda4af;
 }
 
 .diffc-tool .diffc-grid {
@@ -178,12 +199,12 @@
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.prolog,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.doctype,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.cdata {
-  color: #93a4ab !important;
+  color: var(--diffc-syntax-comment, #93a4ab) !important;
 }
 
 :root[data-theme="dark"] .diffc-tool .diffc-result-output .token.punctuation,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.punctuation {
-  color: #c3d0d4 !important;
+  color: var(--diffc-syntax-punctuation, #c3d0d4) !important;
 }
 
 :root[data-theme="dark"] .diffc-tool .diffc-result-output .token.property,
@@ -194,14 +215,14 @@
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.tag,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.constant,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.symbol {
-  color: #7dd3fc !important;
+  color: var(--diffc-syntax-property, #7dd3fc) !important;
 }
 
 :root[data-theme="dark"] .diffc-tool .diffc-result-output .token.boolean,
 :root[data-theme="dark"] .diffc-tool .diffc-result-output .token.number,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.boolean,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.number {
-  color: #f6c177 !important;
+  color: var(--diffc-syntax-number, #f6c177) !important;
 }
 
 :root[data-theme="dark"] .diffc-tool .diffc-result-output .token.selector,
@@ -216,7 +237,7 @@
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.char,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.builtin,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.inserted {
-  color: #86efac !important;
+  color: var(--diffc-syntax-string, #86efac) !important;
 }
 
 :root[data-theme="dark"] .diffc-tool .diffc-result-output .token.operator,
@@ -227,7 +248,7 @@
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.entity,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.url,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.variable {
-  color: #d2dce0 !important;
+  color: var(--diffc-syntax-operator, #d2dce0) !important;
 }
 
 :root[data-theme="dark"] .diffc-tool .diffc-result-output .token.atrule,
@@ -236,26 +257,26 @@
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.atrule,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.attr-value,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.keyword {
-  color: #c4b5fd !important;
+  color: var(--diffc-syntax-keyword, #c4b5fd) !important;
 }
 
 :root[data-theme="dark"] .diffc-tool .diffc-result-output .token.function,
 :root[data-theme="dark"] .diffc-tool .diffc-result-output .token.class-name,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.function,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.class-name {
-  color: #f9a8d4 !important;
+  color: var(--diffc-syntax-function, #f9a8d4) !important;
 }
 
 :root[data-theme="dark"] .diffc-tool .diffc-result-output .token.regex,
 :root[data-theme="dark"] .diffc-tool .diffc-result-output .token.important,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.regex,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.important {
-  color: #fda4af !important;
+  color: var(--diffc-syntax-danger, #fda4af) !important;
 }
 
 :root[data-theme="dark"] .diffc-tool .diffc-result-output .token.deleted,
 :root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.deleted {
-  color: #fda4af !important;
+  color: var(--diffc-syntax-danger, #fda4af) !important;
   opacity: 0.9;
 }
 
@@ -295,13 +316,13 @@
 }
 
 .diffc-tool .diff-line:has(.diff-content.diff-added) {
-  background-color: color-mix(in srgb, #16a34a 10%, var(--cst-color-mix-neutral, white));
-  border-left-color: #16a34a;
+  background-color: color-mix(in srgb, var(--diffc-added-accent, #16a34a) 10%, var(--cst-color-mix-neutral, white));
+  border-left-color: var(--diffc-added-accent, #16a34a);
 }
 
 .diffc-tool .diff-line:has(.diff-content.diff-removed) {
-  background-color: color-mix(in srgb, #dc2626 10%, var(--cst-color-mix-neutral, white));
-  border-left-color: #dc2626;
+  background-color: color-mix(in srgb, var(--diffc-removed-accent, #dc2626) 10%, var(--cst-color-mix-neutral, white));
+  border-left-color: var(--diffc-removed-accent, #dc2626);
 }
 
 .diffc-tool .diff-content.diff-added {
@@ -313,34 +334,34 @@
 }
 
 .diffc-tool .word-added {
-  background-color: color-mix(in srgb, #16a34a 36%, var(--cst-color-mix-neutral, white));
+  background-color: color-mix(in srgb, var(--diffc-added-accent, #16a34a) 36%, var(--cst-color-mix-neutral, white));
   padding: 1px 2px;
   border-radius: 3px;
   color: color-mix(in srgb, var(--color-success, #1d7f4f) 90%, var(--color-text, #1f2937));
   font-weight: 600;
   box-shadow:
-    0 0 0 1px color-mix(in srgb, #16a34a 52%, var(--cst-color-mix-neutral, white)),
-    inset 0 -1px 0 color-mix(in srgb, #14532d 22%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--diffc-added-accent, #16a34a) 52%, var(--cst-color-mix-neutral, white)),
+    inset 0 -1px 0 color-mix(in srgb, var(--diffc-added-deep, #14532d) 22%, transparent);
 }
 
 .diffc-tool .word-removed {
-  background-color: color-mix(in srgb, #dc2626 34%, var(--cst-color-mix-neutral, white));
+  background-color: color-mix(in srgb, var(--diffc-removed-accent, #dc2626) 34%, var(--cst-color-mix-neutral, white));
   text-decoration: line-through;
   padding: 1px 2px;
   border-radius: 3px;
   color: color-mix(in srgb, var(--color-danger, #ba1a1a) 88%, var(--color-text, #1f2937));
   font-weight: 600;
   box-shadow:
-    0 0 0 1px color-mix(in srgb, #dc2626 48%, var(--cst-color-mix-neutral, white)),
-    inset 0 -1px 0 color-mix(in srgb, #7f1d1d 18%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--diffc-removed-accent, #dc2626) 48%, var(--cst-color-mix-neutral, white)),
+    inset 0 -1px 0 color-mix(in srgb, var(--diffc-removed-deep, #7f1d1d) 18%, transparent);
 }
 
 .diffc-tool .diff-line:has(.diff-content.diff-added):hover {
-  background-color: color-mix(in srgb, #16a34a 14%, var(--cst-color-mix-neutral, white));
+  background-color: color-mix(in srgb, var(--diffc-added-accent, #16a34a) 14%, var(--cst-color-mix-neutral, white));
 }
 
 .diffc-tool .diff-line:has(.diff-content.diff-removed):hover {
-  background-color: color-mix(in srgb, #dc2626 14%, var(--cst-color-mix-neutral, white));
+  background-color: color-mix(in srgb, var(--diffc-removed-accent, #dc2626) 14%, var(--cst-color-mix-neutral, white));
 }
 
 .diffc-tool .diff-line::before {

@@ -78,7 +78,7 @@ body.standalone-app {
   --color-danger: var(--default-color-danger);
   --color-danger-hover: var(--default-color-danger-hover);
   --color-shadow: var(--default-color-shadow);
-  --color-warning: #b06b00;
+  --color-warning: var(--cst-color-warning, #b06b00);
   --color-warning-soft: color-mix(
     in srgb,
     var(--color-warning) 14%,
@@ -139,7 +139,7 @@ body.standalone-app {
   --color-danger: var(--default-color-danger);
   --color-danger-hover: var(--default-color-danger-hover);
   --color-shadow: var(--default-color-shadow);
-  --color-warning: #b06b00;
+  --color-warning: var(--cst-color-warning, #b06b00);
   --color-warning-soft: color-mix(
     in srgb,
     var(--color-warning) 14%,
