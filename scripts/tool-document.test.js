@@ -57,7 +57,10 @@ describe('tool document generation', () => {
 
         expect(html).toContain('<title>Diff Checker</title>');
         expect(html).toContain('<meta name="description" content="Free online diff checker to quickly compare code or text differences. Perfect for developers, writers, and editors seeking instant results.">');
-        expect(html).toContain('<meta name="theme-color" content="#2563eb">');
+        expect(html).toContain('<meta name="theme-color" content="#f7f7fa">');
+        expect(html).toContain('<html lang="en" data-theme="light">');
+        expect(html).toContain('https://fonts.googleapis.com/css2?family=Geist');
+        expect(html).toContain('https://unpkg.com/lucide@latest');
         expect(html).toContain(`<link rel="canonical" href="${buildSiteHref('/diff-checker/')}">`);
         expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/diff-checker/styles.main.css')}">`);
         expect(html).toContain('<meta property="og:site_name" content="CodeSamplez Tools">');

@@ -1,59 +1,70 @@
+/* ==========================================================================
+   CodeSamplez Tools — Design System v2 (dark-first iris)
+   Canonical token palette. Mirrored by name in the claude.ai design system:
+   https://claude.ai/design/p/70ca769d-08d6-490f-9721-4991f21b3028
+   Dark is the default theme (:root). Light is opt-in via [data-theme="light"].
+   ========================================================================== */
+
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* Material-inspired semantic colors */
-  --md-sys-color-primary: #005f73;
+  /* Material-inspired semantic colors (dark — default) */
+  --md-sys-color-primary: #6f5bf0;
   --md-sys-color-on-primary: #ffffff;
-  --md-sys-color-primary-container: #bcecf2;
-  --md-sys-color-on-primary-container: #001f27;
-  --md-sys-color-secondary: #445f66;
-  --md-sys-color-on-secondary: #ffffff;
-  --md-sys-color-secondary-container: #c7e7ef;
-  --md-sys-color-on-secondary-container: #001f26;
-  --md-sys-color-tertiary: #5c567f;
-  --md-sys-color-on-tertiary: #ffffff;
-  --md-sys-color-tertiary-container: #e4deff;
-  --md-sys-color-on-tertiary-container: #191334;
-  --md-sys-color-error: #ba1a1a;
-  --md-sys-color-on-error: #ffffff;
-  --md-sys-color-error-container: #ffdad6;
-  --md-sys-color-on-error-container: #410002;
+  --md-sys-color-primary-container: #2a2550;
+  --md-sys-color-on-primary-container: #ded7ff;
+  --md-sys-color-secondary: #21222c;
+  --md-sys-color-on-secondary: #ededf2;
+  --md-sys-color-secondary-container: #1c1c25;
+  --md-sys-color-on-secondary-container: #c9cad6;
+  --md-sys-color-tertiary: #5fe0c2;
+  --md-sys-color-on-tertiary: #06231c;
+  --md-sys-color-tertiary-container: #133f36;
+  --md-sys-color-on-tertiary-container: #b6f5e6;
+  --md-sys-color-error: #ff6b6b;
+  --md-sys-color-on-error: #2a0606;
+  --md-sys-color-error-container: #4a1414;
+  --md-sys-color-on-error-container: #ffd2d2;
 
-  --md-sys-color-surface: #f4f7f8;
-  --md-sys-color-surface-dim: #dbe0e2;
-  --md-sys-color-surface-bright: #f9fbfc;
-  --md-sys-color-surface-container-low: #eef3f4;
-  --md-sys-color-surface-container: #e6ecee;
-  --md-sys-color-surface-container-high: #dde4e6;
-  --md-sys-color-surface-container-highest: #d3dbdd;
-  --md-sys-color-on-surface: #141c1e;
-  --md-sys-color-on-surface-variant: #3f494c;
-  --md-sys-color-outline: #6f797d;
-  --md-sys-color-outline-variant: #bfc9cd;
-  --md-sys-color-inverse-surface: #2a3133;
-  --md-sys-color-inverse-on-surface: #ecf2f3;
+  /* Near-black surface ramp with a faint violet undertone (#08080d → #24242f) */
+  --md-sys-color-surface: #0b0b11;
+  --md-sys-color-surface-dim: #08080d;
+  --md-sys-color-surface-bright: #131319;
+  --md-sys-color-surface-container-low: #0e0e14;
+  --md-sys-color-surface-container: #15151c;
+  --md-sys-color-surface-container-high: #1c1c25;
+  --md-sys-color-surface-container-highest: #24242f;
+  --md-sys-color-on-surface: #ededf2;
+  --md-sys-color-on-surface-variant: #9a9bab;
+  --md-sys-color-outline: #51515e;
+  --md-sys-color-outline-variant: #2b2b36;
+  --md-sys-color-inverse-surface: #ededf2;
+  --md-sys-color-inverse-on-surface: #15151c;
 
   /* Shared system tokens */
-  --cst-color-primary-hover: #004d5d;
-  --cst-color-secondary-hover: #354c52;
-  --cst-color-danger-hover: #981b1b;
-  --cst-color-success: #1d7f4f;
-  --cst-color-success-hover: #15643d;
-  --cst-color-warning: #b06b00;
-  --cst-color-shadow: rgba(15, 23, 42, 0.12);
-  --cst-color-shadow-strong: rgba(15, 23, 42, 0.2);
-  --cst-color-focus-ring: rgba(0, 95, 115, 0.22);
+  --cst-color-primary-hover: #7d6bff;
+  /* Bright foreground accent — links, titles, icons on near-black. */
+  --cst-color-accent: #a99cff;
+  --cst-color-accent-hover: #bcb2ff;
+  --cst-color-secondary-hover: #2a2b37;
+  --cst-color-danger-hover: #ff8585;
+  --cst-color-success: #4ade80;
+  --cst-color-success-hover: #6ee79b;
+  --cst-color-warning: #fbbf24;
+  --cst-color-shadow: rgba(0, 0, 0, 0.5);
+  --cst-color-shadow-strong: rgba(0, 0, 0, 0.66);
+  --cst-color-focus-ring: rgba(125, 107, 255, 0.55);
 
-  --cst-font-family-base: "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --cst-font-family-display: "Trebuchet MS", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
-  --cst-font-family-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  --cst-font-family-base: "Geist", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --cst-font-family-display: "Geist", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --cst-font-family-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
   --cst-font-size-1: 0.8125rem;
   --cst-font-size-2: 0.875rem;
   --cst-font-size-3: 1rem;
   --cst-font-size-4: 1.125rem;
   --cst-font-size-5: 1.5rem;
-  --cst-font-size-6: 1.875rem;
-  --cst-line-height-tight: 1.35;
+  --cst-font-size-6: 2.25rem;
+  --cst-line-height-tight: 1.3;
   --cst-line-height-base: 1.55;
 
   --cst-space-1: 0.25rem;
@@ -65,13 +76,14 @@
   --cst-space-7: 1.5rem;
   --cst-space-8: 2rem;
 
+  /* Tightened for a crisper surface: inputs 8 · panels/chips 10 · cards 14 · header 18 */
   --cst-radius-sm: 0.5rem;
-  --cst-radius-md: 0.75rem;
-  --cst-radius-lg: 1rem;
-  --cst-radius-xl: 1.25rem;
-  --cst-shadow-1: 0 1px 2px rgba(15, 23, 42, 0.08), 0 4px 14px rgba(15, 23, 42, 0.04);
-  --cst-shadow-2: 0 6px 20px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.06);
-  --cst-shadow-3: 0 12px 28px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(15, 23, 42, 0.08);
+  --cst-radius-md: 0.625rem;
+  --cst-radius-lg: 0.875rem;
+  --cst-radius-xl: 1.125rem;
+  --cst-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.35);
+  --cst-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --cst-shadow-3: 0 16px 36px rgba(0, 0, 0, 0.55), 0 4px 14px rgba(0, 0, 0, 0.45);
   --cst-focus-ring-width: 3px;
   --cst-focus-ring: 0 0 0 var(--cst-focus-ring-width) var(--cst-color-focus-ring);
 
@@ -86,178 +98,185 @@
   --cst-icon-button-size: 1.875rem;
 
   /* Shared themed surfaces (standalone shell + tool container chrome) */
-  --cst-page-backdrop-base: var(--md-sys-color-surface, #f4f7f8);
-  --cst-page-backdrop-spot-primary: rgba(188, 236, 242, 0.55);
-  --cst-page-backdrop-spot-secondary: rgba(228, 222, 255, 0.4);
-  --cst-tool-surface-overlay-top: rgba(255, 255, 255, 0.92);
-  --cst-tool-surface-overlay-bottom: rgba(255, 255, 255, 0.82);
-  --cst-shell-header-spot: rgba(188, 236, 242, 0.45);
-  --cst-shell-header-bg-start: rgba(255, 255, 255, 0.98);
-  --cst-shell-header-bg-end: var(--md-sys-color-surface-container, #e6ecee);
-  --cst-shell-footer-bg-start: rgba(255, 255, 255, 0.75);
-  --cst-shell-footer-bg-end: rgba(238, 243, 244, 0.9);
-  --cst-shell-brand-chip-bg: rgba(0, 95, 115, 0.08);
-  --cst-shell-brand-chip-border: rgba(0, 95, 115, 0.14);
-  --cst-shell-brand-chip-bg-hover: rgba(0, 95, 115, 0.12);
-  --cst-shell-theme-toggle-bg: rgba(255, 255, 255, 0.72);
-  --cst-shell-theme-toggle-bg-hover: rgba(255, 255, 255, 0.9);
-  --cst-shell-theme-toggle-border: rgba(63, 73, 76, 0.18);
-  --cst-shell-theme-toggle-border-hover: rgba(63, 73, 76, 0.34);
-  --cst-shell-theme-toggle-text: var(--md-sys-color-on-surface, #141c1e);
-  /* Light-mode active icon intentionally tracks the warning role (amber). */
-  --cst-shell-theme-toggle-icon-active: var(--cst-color-warning, #b06b00);
-  --cst-color-mix-neutral: #ffffff;
+  --cst-page-backdrop-base: var(--md-sys-color-surface, #0b0b11);
+  --cst-page-backdrop-spot-primary: rgba(111, 91, 240, 0.18);
+  --cst-page-backdrop-spot-secondary: rgba(95, 224, 194, 0.1);
+  --cst-page-grid-dot: rgba(169, 156, 255, 0.06);
+  --cst-tool-surface-overlay-top: rgba(19, 19, 25, 0.92);
+  --cst-tool-surface-overlay-bottom: rgba(11, 11, 17, 0.82);
+  --cst-shell-header-spot: rgba(111, 91, 240, 0.16);
+  --cst-shell-header-bg-start: rgba(21, 21, 28, 0.95);
+  --cst-shell-header-bg-end: #0e0e14;
+  --cst-shell-footer-bg-start: rgba(19, 19, 25, 0.7);
+  --cst-shell-footer-bg-end: rgba(11, 11, 17, 0.85);
+  --cst-shell-brand-chip-bg: rgba(111, 91, 240, 0.14);
+  --cst-shell-brand-chip-border: rgba(111, 91, 240, 0.28);
+  --cst-shell-brand-chip-bg-hover: rgba(111, 91, 240, 0.22);
+  --cst-shell-theme-toggle-bg: rgba(21, 21, 28, 0.7);
+  --cst-shell-theme-toggle-bg-hover: rgba(28, 28, 37, 0.92);
+  --cst-shell-theme-toggle-border: rgba(154, 155, 171, 0.2);
+  --cst-shell-theme-toggle-border-hover: rgba(154, 155, 171, 0.36);
+  --cst-shell-theme-toggle-text: var(--md-sys-color-on-surface, #ededf2);
+  /* Dark-mode active icon tracks the warning role (amber sun). */
+  --cst-shell-theme-toggle-icon-active: var(--cst-color-warning, #fbbf24);
+  --cst-color-mix-neutral: var(--md-sys-color-surface-container-highest, #24242f);
 }
 
 /* Embedded tools can live inside host pages that define their own Material-style
    `--md-sys-color-*` variables. Re-declare the palette on `.tool-container` so
    descendant tool styles resolve our token values instead of host values. */
 .tool-container {
-  color-scheme: light;
+  color-scheme: dark;
 
-  --md-sys-color-primary: #005f73;
+  --md-sys-color-primary: #6f5bf0;
   --md-sys-color-on-primary: #ffffff;
-  --md-sys-color-primary-container: #bcecf2;
-  --md-sys-color-on-primary-container: #001f27;
-  --md-sys-color-secondary: #445f66;
-  --md-sys-color-on-secondary: #ffffff;
-  --md-sys-color-secondary-container: #c7e7ef;
-  --md-sys-color-on-secondary-container: #001f26;
-  --md-sys-color-tertiary: #5c567f;
-  --md-sys-color-on-tertiary: #ffffff;
-  --md-sys-color-tertiary-container: #e4deff;
-  --md-sys-color-on-tertiary-container: #191334;
-  --md-sys-color-error: #ba1a1a;
-  --md-sys-color-on-error: #ffffff;
-  --md-sys-color-error-container: #ffdad6;
-  --md-sys-color-on-error-container: #410002;
+  --md-sys-color-primary-container: #2a2550;
+  --md-sys-color-on-primary-container: #ded7ff;
+  --md-sys-color-secondary: #21222c;
+  --md-sys-color-on-secondary: #ededf2;
+  --md-sys-color-secondary-container: #1c1c25;
+  --md-sys-color-on-secondary-container: #c9cad6;
+  --md-sys-color-tertiary: #5fe0c2;
+  --md-sys-color-on-tertiary: #06231c;
+  --md-sys-color-tertiary-container: #133f36;
+  --md-sys-color-on-tertiary-container: #b6f5e6;
+  --md-sys-color-error: #ff6b6b;
+  --md-sys-color-on-error: #2a0606;
+  --md-sys-color-error-container: #4a1414;
+  --md-sys-color-on-error-container: #ffd2d2;
 
-  --md-sys-color-surface: #f4f7f8;
-  --md-sys-color-surface-dim: #dbe0e2;
-  --md-sys-color-surface-bright: #f9fbfc;
-  --md-sys-color-surface-container-low: #eef3f4;
-  --md-sys-color-surface-container: #e6ecee;
-  --md-sys-color-surface-container-high: #dde4e6;
-  --md-sys-color-surface-container-highest: #d3dbdd;
-  --md-sys-color-on-surface: #141c1e;
-  --md-sys-color-on-surface-variant: #3f494c;
-  --md-sys-color-outline: #6f797d;
-  --md-sys-color-outline-variant: #bfc9cd;
-  --md-sys-color-inverse-surface: #2a3133;
-  --md-sys-color-inverse-on-surface: #ecf2f3;
-}
-
-:root[data-theme="light"],
-:root[data-cst-theme="light"] {
-  color-scheme: light;
+  --md-sys-color-surface: #0b0b11;
+  --md-sys-color-surface-dim: #08080d;
+  --md-sys-color-surface-bright: #131319;
+  --md-sys-color-surface-container-low: #0e0e14;
+  --md-sys-color-surface-container: #15151c;
+  --md-sys-color-surface-container-high: #1c1c25;
+  --md-sys-color-surface-container-highest: #24242f;
+  --md-sys-color-on-surface: #ededf2;
+  --md-sys-color-on-surface-variant: #9a9bab;
+  --md-sys-color-outline: #51515e;
+  --md-sys-color-outline-variant: #2b2b36;
+  --md-sys-color-inverse-surface: #ededf2;
+  --md-sys-color-inverse-on-surface: #15151c;
 }
 
 :root[data-theme="dark"],
 :root[data-cst-theme="dark"] {
   color-scheme: dark;
-
-  /* Material-inspired semantic colors (dark theme) */
-  --md-sys-color-primary: #7cd9e7;
-  --md-sys-color-on-primary: #00363f;
-  --md-sys-color-primary-container: #004f5a;
-  --md-sys-color-on-primary-container: #bcecf2;
-  --md-sys-color-secondary: #b2cbd1;
-  --md-sys-color-on-secondary: #1d343a;
-  --md-sys-color-secondary-container: #334a50;
-  --md-sys-color-on-secondary-container: #cde7ed;
-  --md-sys-color-tertiary: #c8bdf7;
-  --md-sys-color-on-tertiary: #30285c;
-  --md-sys-color-tertiary-container: #473f73;
-  --md-sys-color-on-tertiary-container: #e4deff;
-  --md-sys-color-error: #ffb4ab;
-  --md-sys-color-on-error: #690005;
-  --md-sys-color-error-container: #93000a;
-  --md-sys-color-on-error-container: #ffdad6;
-
-  --md-sys-color-surface: #10181a;
-  --md-sys-color-surface-dim: #10181a;
-  --md-sys-color-surface-bright: #182124;
-  --md-sys-color-surface-container-low: #1a2326;
-  --md-sys-color-surface-container: #202a2d;
-  --md-sys-color-surface-container-high: #283235;
-  --md-sys-color-surface-container-highest: #313b3e;
-  --md-sys-color-on-surface: #e1eaec;
-  --md-sys-color-on-surface-variant: #b7c3c6;
-  --md-sys-color-outline: #899397;
-  --md-sys-color-outline-variant: #404b4e;
-  --md-sys-color-inverse-surface: #dce5e7;
-  --md-sys-color-inverse-on-surface: #263032;
-
-  /* Shared system token adjustments */
-  --cst-color-primary-hover: #95e6f1;
-  --cst-color-secondary-hover: #c4dde3;
-  --cst-color-danger-hover: #ffcbc5;
-  --cst-color-success: #5fd89e;
-  --cst-color-success-hover: #79e6b0;
-  --cst-color-shadow: rgba(0, 0, 0, 0.35);
-  --cst-color-shadow-strong: rgba(0, 0, 0, 0.52);
-  --cst-color-focus-ring: rgba(124, 217, 231, 0.25);
-  --cst-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.32), 0 4px 14px rgba(0, 0, 0, 0.2);
-  --cst-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.32), 0 2px 8px rgba(0, 0, 0, 0.28);
-  --cst-shadow-3: 0 16px 32px rgba(0, 0, 0, 0.38), 0 4px 14px rgba(0, 0, 0, 0.3);
-
-  /* Shared themed surfaces (dark overrides) */
-  --cst-page-backdrop-base: #0d1416;
-  --cst-page-backdrop-spot-primary: rgba(0, 95, 115, 0.28);
-  --cst-page-backdrop-spot-secondary: rgba(92, 86, 127, 0.24);
-  --cst-tool-surface-overlay-top: rgba(28, 37, 40, 0.94);
-  --cst-tool-surface-overlay-bottom: rgba(20, 28, 31, 0.9);
-  --cst-shell-header-spot: rgba(0, 95, 115, 0.22);
-  --cst-shell-header-bg-start: rgba(26, 35, 38, 0.95);
-  --cst-shell-header-bg-end: rgba(20, 28, 31, 0.96);
-  --cst-shell-footer-bg-start: rgba(27, 35, 38, 0.9);
-  --cst-shell-footer-bg-end: rgba(17, 24, 26, 0.95);
-  --cst-shell-brand-chip-bg: rgba(124, 217, 231, 0.12);
-  --cst-shell-brand-chip-border: rgba(124, 217, 231, 0.2);
-  --cst-shell-brand-chip-bg-hover: rgba(124, 217, 231, 0.18);
-  --cst-shell-theme-toggle-bg: rgba(32, 42, 45, 0.86);
-  --cst-shell-theme-toggle-bg-hover: rgba(40, 50, 53, 0.95);
-  --cst-shell-theme-toggle-border: rgba(183, 195, 198, 0.16);
-  --cst-shell-theme-toggle-border-hover: rgba(183, 195, 198, 0.3);
-  --cst-shell-theme-toggle-text: #e1eaec;
-  --cst-shell-theme-toggle-icon-active: #ffd27a;
-  --cst-color-mix-neutral: var(--md-sys-color-surface-container-highest, #313b3e);
 }
 
-:root[data-theme="dark"] .tool-container,
-:root[data-cst-theme="dark"] .tool-container {
-  color-scheme: dark;
+/* -------------------------------------------------------------------------
+   Light theme — opt-in via data-theme="light" (the same iris system, in daylight)
+   ------------------------------------------------------------------------- */
+:root[data-theme="light"],
+:root[data-cst-theme="light"] {
+  color-scheme: light;
 
-  --md-sys-color-primary: #7cd9e7;
-  --md-sys-color-on-primary: #00363f;
-  --md-sys-color-primary-container: #004f5a;
-  --md-sys-color-on-primary-container: #bcecf2;
-  --md-sys-color-secondary: #b2cbd1;
-  --md-sys-color-on-secondary: #1d343a;
-  --md-sys-color-secondary-container: #334a50;
-  --md-sys-color-on-secondary-container: #cde7ed;
-  --md-sys-color-tertiary: #c8bdf7;
-  --md-sys-color-on-tertiary: #30285c;
-  --md-sys-color-tertiary-container: #473f73;
-  --md-sys-color-on-tertiary-container: #e4deff;
-  --md-sys-color-error: #ffb4ab;
-  --md-sys-color-on-error: #690005;
-  --md-sys-color-error-container: #93000a;
-  --md-sys-color-on-error-container: #ffdad6;
+  --md-sys-color-primary: #6450e6;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #e4dfff;
+  --md-sys-color-on-primary-container: #1a1147;
+  --md-sys-color-secondary: #5a5b6b;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #e6e6ee;
+  --md-sys-color-on-secondary-container: #1a1a22;
+  --md-sys-color-tertiary: #0f9d7d;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-tertiary-container: #b8f0e2;
+  --md-sys-color-on-tertiary-container: #00271d;
+  --md-sys-color-error: #d92020;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: #ffdad6;
+  --md-sys-color-on-error-container: #410002;
 
-  --md-sys-color-surface: #10181a;
-  --md-sys-color-surface-dim: #10181a;
-  --md-sys-color-surface-bright: #182124;
-  --md-sys-color-surface-container-low: #1a2326;
-  --md-sys-color-surface-container: #202a2d;
-  --md-sys-color-surface-container-high: #283235;
-  --md-sys-color-surface-container-highest: #313b3e;
-  --md-sys-color-on-surface: #e1eaec;
-  --md-sys-color-on-surface-variant: #b7c3c6;
-  --md-sys-color-outline: #899397;
-  --md-sys-color-outline-variant: #404b4e;
-  --md-sys-color-inverse-surface: #dce5e7;
-  --md-sys-color-inverse-on-surface: #263032;
+  --md-sys-color-surface: #f7f7fa;
+  --md-sys-color-surface-dim: #e2e2ea;
+  --md-sys-color-surface-bright: #ffffff;
+  --md-sys-color-surface-container-low: #f2f2f7;
+  --md-sys-color-surface-container: #ededf3;
+  --md-sys-color-surface-container-high: #e4e4ec;
+  --md-sys-color-surface-container-highest: #dadae4;
+  --md-sys-color-on-surface: #1a1a22;
+  --md-sys-color-on-surface-variant: #5a5a68;
+  --md-sys-color-outline: #8a8a98;
+  --md-sys-color-outline-variant: #d6d6e0;
+  --md-sys-color-inverse-surface: #2a2a34;
+  --md-sys-color-inverse-on-surface: #f2f2f7;
+
+  /* Shared system token adjustments */
+  --cst-color-primary-hover: #5341d6;
+  --cst-color-accent: #6450e6;
+  --cst-color-accent-hover: #5341d6;
+  --cst-color-secondary-hover: #45465a;
+  --cst-color-danger-hover: #b51818;
+  --cst-color-success: #1d9d63;
+  --cst-color-success-hover: #157a4c;
+  --cst-color-warning: #b06b00;
+  --cst-color-shadow: rgba(30, 27, 60, 0.12);
+  --cst-color-shadow-strong: rgba(30, 27, 60, 0.2);
+  --cst-color-focus-ring: rgba(100, 80, 230, 0.3);
+  --cst-shadow-1: 0 1px 2px rgba(30, 27, 60, 0.08), 0 4px 14px rgba(30, 27, 60, 0.05);
+  --cst-shadow-2: 0 6px 20px rgba(30, 27, 60, 0.1), 0 2px 6px rgba(30, 27, 60, 0.07);
+  --cst-shadow-3: 0 14px 30px rgba(30, 27, 60, 0.14), 0 4px 12px rgba(30, 27, 60, 0.1);
+
+  /* Shared themed surfaces (light overrides) */
+  --cst-page-backdrop-base: var(--md-sys-color-surface, #f7f7fa);
+  --cst-page-backdrop-spot-primary: rgba(111, 91, 240, 0.16);
+  --cst-page-backdrop-spot-secondary: rgba(15, 157, 125, 0.1);
+  --cst-page-grid-dot: rgba(100, 80, 230, 0.05);
+  --cst-tool-surface-overlay-top: rgba(255, 255, 255, 0.92);
+  --cst-tool-surface-overlay-bottom: rgba(255, 255, 255, 0.82);
+  --cst-shell-header-spot: rgba(111, 91, 240, 0.14);
+  --cst-shell-header-bg-start: rgba(255, 255, 255, 0.98);
+  --cst-shell-header-bg-end: var(--md-sys-color-surface-container, #ededf3);
+  --cst-shell-footer-bg-start: rgba(255, 255, 255, 0.75);
+  --cst-shell-footer-bg-end: rgba(242, 242, 247, 0.9);
+  --cst-shell-brand-chip-bg: rgba(100, 80, 230, 0.08);
+  --cst-shell-brand-chip-border: rgba(100, 80, 230, 0.16);
+  --cst-shell-brand-chip-bg-hover: rgba(100, 80, 230, 0.13);
+  --cst-shell-theme-toggle-bg: rgba(255, 255, 255, 0.72);
+  --cst-shell-theme-toggle-bg-hover: rgba(255, 255, 255, 0.9);
+  --cst-shell-theme-toggle-border: rgba(90, 90, 104, 0.18);
+  --cst-shell-theme-toggle-border-hover: rgba(90, 90, 104, 0.34);
+  --cst-shell-theme-toggle-text: var(--md-sys-color-on-surface, #1a1a22);
+  --cst-shell-theme-toggle-icon-active: var(--cst-color-warning, #b06b00);
+  --cst-color-mix-neutral: #ffffff;
+}
+
+:root[data-theme="light"] .tool-container,
+:root[data-cst-theme="light"] .tool-container {
+  color-scheme: light;
+
+  --md-sys-color-primary: #6450e6;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #e4dfff;
+  --md-sys-color-on-primary-container: #1a1147;
+  --md-sys-color-secondary: #5a5b6b;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #e6e6ee;
+  --md-sys-color-on-secondary-container: #1a1a22;
+  --md-sys-color-tertiary: #0f9d7d;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-tertiary-container: #b8f0e2;
+  --md-sys-color-on-tertiary-container: #00271d;
+  --md-sys-color-error: #d92020;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: #ffdad6;
+  --md-sys-color-on-error-container: #410002;
+
+  --md-sys-color-surface: #f7f7fa;
+  --md-sys-color-surface-dim: #e2e2ea;
+  --md-sys-color-surface-bright: #ffffff;
+  --md-sys-color-surface-container-low: #f2f2f7;
+  --md-sys-color-surface-container: #ededf3;
+  --md-sys-color-surface-container-high: #e4e4ec;
+  --md-sys-color-surface-container-highest: #dadae4;
+  --md-sys-color-on-surface: #1a1a22;
+  --md-sys-color-on-surface-variant: #5a5a68;
+  --md-sys-color-outline: #8a8a98;
+  --md-sys-color-outline-variant: #d6d6e0;
+  --md-sys-color-inverse-surface: #2a2a34;
+  --md-sys-color-inverse-on-surface: #f2f2f7;
 }
 
 @media (prefers-reduced-motion: reduce) {

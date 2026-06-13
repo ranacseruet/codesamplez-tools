@@ -4,8 +4,11 @@
 
 :root {
   /* Colors */
-  --color-primary: var(--md-sys-color-primary, #2563eb);
-  --color-primary-hover: var(--cst-color-primary-hover, #1d4ed8);
+  --color-primary: var(--md-sys-color-primary, #6f5bf0);
+  --color-primary-hover: var(--cst-color-primary-hover, #7d6bff);
+  /* Bright foreground accent for text/links/titles — legible on near-black. */
+  --color-accent: var(--cst-color-accent, #a99cff);
+  --color-accent-hover: var(--cst-color-accent-hover, #bcb2ff);
   --color-secondary: var(--md-sys-color-secondary, #6b7280);
   --color-secondary-hover: var(--cst-color-secondary-hover, #4b5563);
   --color-text: var(--md-sys-color-on-surface, #333);
@@ -62,9 +65,28 @@
   flex-direction: column;
   gap: var(--spacing-lg);
   background:
-    radial-gradient(circle at top right, var(--cst-page-backdrop-spot-primary, rgba(188, 236, 242, 0.55)), transparent 45%),
-    radial-gradient(circle at top left, var(--cst-page-backdrop-spot-secondary, rgba(228, 222, 255, 0.4)), transparent 40%),
-    var(--cst-page-backdrop-base, var(--color-bg-light));
+    radial-gradient(circle at top right, var(--cst-page-backdrop-spot-primary, rgba(111, 91, 240, 0.18)), transparent 45%),
+    radial-gradient(circle at top left, var(--cst-page-backdrop-spot-secondary, rgba(95, 224, 194, 0.1)), transparent 40%),
+    /* Subtle dot grid, masked toward the top so it never reads as loud. */
+    linear-gradient(var(--cst-page-backdrop-base, var(--color-bg-light)), var(--cst-page-backdrop-base, var(--color-bg-light)));
+  background-attachment: fixed;
+}
+
+.landing-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(var(--cst-page-grid-dot, rgba(169, 156, 255, 0.06)) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent 60%);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent 60%);
+}
+
+.landing-page > * {
+  position: relative;
+  z-index: 1;
 }
 
 body {
@@ -99,7 +121,7 @@ body {
 
 .main-container .main-title {
   text-align: center;
-  color: var(--color-primary);
+  color: var(--color-accent);
   margin-bottom: calc(var(--spacing-lg) * 2);
   font-family: var(--font-family-display);
   font-size: clamp(1.9rem, 4vw, 2.6rem);
@@ -127,7 +149,7 @@ body {
 
 .main-container .section-intro a,
 .main-container .section-body a {
-  color: var(--color-primary);
+  color: var(--color-accent);
   text-decoration: underline;
   text-decoration-color: var(--landing-link-underline);
   text-underline-offset: 0.16em;
@@ -213,7 +235,7 @@ body {
 .main-container .tool-name {
   margin: 0 0 var(--spacing-sm) 0;
   font-size: clamp(1.1rem, 1.6vw, 1.3rem);
-  color: var(--color-primary);
+  color: var(--color-accent);
   line-height: var(--line-height-tight);
 }
 
@@ -225,7 +247,7 @@ body {
 }
 
 .main-container .tool-description a {
-  color: var(--color-primary);
+  color: var(--color-accent);
   text-decoration: underline;
   text-decoration-color: var(--landing-link-underline);
   text-underline-offset: 0.16em;
@@ -240,7 +262,7 @@ body {
   align-items: center;
   justify-content: center;
   background-color: var(--color-primary);
-  color: var(--color-bg);
+  color: var(--md-sys-color-on-primary, #fff);
   padding: var(--spacing-sm) var(--spacing-lg);
   border-radius: var(--border-radius-sm);
   border: 1px solid transparent;
@@ -259,7 +281,7 @@ body {
 
 .main-container .cta-button:hover {
   background-color: var(--color-primary-hover);
-  color: var(--color-bg);
+  color: var(--md-sys-color-on-primary, #fff);
   transform: translateY(-1px);
   box-shadow: var(--cst-shadow-2, none);
 }
@@ -292,7 +314,7 @@ body {
 }
 
 .main-container .faqs a {
-  color: var(--color-primary);
+  color: var(--color-accent);
   text-decoration: none;
 }
 

@@ -28,20 +28,31 @@
   flex-wrap: wrap;
 }
 
+/* Inline-SVG / Lucide icon sizing, site-wide (app-shell.css loads on every page). */
+.cst-icon,
+[data-lucide] {
+  width: 1em;
+  height: 1em;
+  stroke-width: 1.75;
+  vertical-align: -0.125em;
+  flex: none;
+}
+
 .cst-shell__brand {
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
+  gap: 0.4rem;
   min-height: 1.85rem;
-  padding: 0.15rem 0.55rem;
+  padding: 0.15rem 0.6rem;
   border-radius: 999px;
-  background: var(--cst-shell-brand-chip-bg, rgba(0, 95, 115, 0.08));
-  border: 1px solid var(--cst-shell-brand-chip-border, rgba(0, 95, 115, 0.14));
+  background: var(--cst-shell-brand-chip-bg, rgba(111, 91, 240, 0.14));
+  border: 1px solid var(--cst-shell-brand-chip-border, rgba(111, 91, 240, 0.28));
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--md-sys-color-primary);
+  color: var(--cst-color-accent, var(--md-sys-color-primary));
   text-decoration: none;
   transition:
     background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
@@ -55,6 +66,15 @@
 .cst-shell__brand:focus-visible {
   outline: none;
   box-shadow: var(--cst-focus-ring, none);
+}
+
+.cst-shell__brand-mark {
+  font-family: var(--cst-font-family-mono, monospace);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 0.82rem;
+  color: var(--cst-color-accent, var(--md-sys-color-primary));
 }
 
 .cst-shell__title {
@@ -137,10 +157,10 @@
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.98),
-      var(--md-sys-color-surface-container-low, rgba(244, 247, 248, 0.98))
+      var(--md-sys-color-surface-bright, #131319),
+      var(--md-sys-color-surface-container-low, #0e0e14)
     );
-  box-shadow: var(--cst-shadow-3, 0 18px 40px rgba(19, 32, 37, 0.16));
+  box-shadow: var(--cst-shadow-3, 0 18px 40px rgba(0, 0, 0, 0.5));
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.9rem;
@@ -185,8 +205,8 @@
 }
 
 .cst-shell__tool-menu-link:hover {
-  background: color-mix(in srgb, var(--md-sys-color-primary, #005f73) 10%, transparent);
-  color: var(--md-sys-color-primary, #005f73);
+  background: color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 16%, transparent);
+  color: var(--cst-color-accent, var(--md-sys-color-primary, #6f5bf0));
 }
 
 .cst-shell__tool-menu-link:focus-visible {
@@ -273,7 +293,7 @@
 }
 
 .cst-shell__footer-link {
-  color: var(--md-sys-color-primary);
+  color: var(--cst-color-accent, var(--md-sys-color-primary));
   text-underline-offset: 0.16em;
 }
 

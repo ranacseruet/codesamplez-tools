@@ -33,6 +33,17 @@ function getSystemPreferredThemeMode(): ThemeMode {
     }
 }
 
+// Redraw any `<i data-lucide>` icons in static markup (e.g. landing CTAs) once
+// the Lucide CDN script has loaded. Shell header icons are inline SVGs, so this
+// never conflicts with Preact-owned DOM.
+function refreshLucideIcons(): void {
+    try {
+        (window as unknown as { lucide?: { createIcons: () => void } }).lucide?.createIcons();
+    } catch {
+        // Ignore — icons degrade to no glyph if the CDN script is unavailable.
+    }
+}
+
 function getDocumentThemeMode(): ThemeMode | null {
     if (typeof document === 'undefined' || !document.documentElement) {
         return null;
@@ -123,6 +134,12 @@ export function mountToolShell({
 
     if (footerRoot) {
         render(<ToolShellFooter homeHref={resolvedHomeHref} />, footerRoot);
+    }
+
+    // The Lucide CDN script loads deferred, so draw icons now and again on load.
+    refreshLucideIcons();
+    if (typeof window !== 'undefined') {
+        window.addEventListener('load', refreshLucideIcons, { once: true });
     }
 
     if (shouldEnableThemeToggle && typeof MutationObserver !== 'undefined' && document.documentElement) {

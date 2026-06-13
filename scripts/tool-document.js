@@ -12,7 +12,13 @@ const { buildToolStructuredDataGraph, renderStructuredDataScript } = require('./
 const { getToolFaqItems } = require('./tool-faq-metadata');
 const { ensureBabelRegister } = require('./register-node-transforms');
 
-const THEME_COLOR = '#2563eb';
+const THEME_COLOR = '#f7f7fa';
+
+// v2 design system: Geist webfonts + Lucide icons, loaded from CDN.
+const DESIGN_SYSTEM_HEAD_ASSETS = `<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap">
+    <script src="https://unpkg.com/lucide@latest" defer></script>`;
 
 /**
  * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
@@ -54,7 +60,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
         : '';
 
     return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
@@ -62,6 +68,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     <title>${escapeHtml(tool.title)}</title>
     <meta name="description" content="${escapedDescription}">
     <meta name="theme-color" content="${THEME_COLOR}">
+    ${DESIGN_SYSTEM_HEAD_ASSETS}
     <link rel="canonical" href="${escapedPageUrl}">
     <link rel="stylesheet" href="${escapedStylesUrl}">
     <meta property="og:type" content="website">

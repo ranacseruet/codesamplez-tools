@@ -4,6 +4,45 @@ import { SITE_BASE_URL } from '../siteBaseUrl';
 
 type ThemeMode = 'light' | 'dark';
 
+// The shell header re-renders on theme toggle, so its icons are rendered as
+// inline Lucide-geometry SVGs (Preact-owned) rather than `<i data-lucide>` nodes
+// that the CDN script would swap out from under Preact. Static surfaces (e.g. the
+// landing CTA) use real `<i data-lucide>` markup with lucide.createIcons().
+function SunIcon(): JSX.Element {
+    return (
+        <svg
+            className="cst-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.75}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+        >
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+        </svg>
+    );
+}
+
+function MoonIcon(): JSX.Element {
+    return (
+        <svg
+            className="cst-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.75}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+        >
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+        </svg>
+    );
+}
+
 interface ToolShellHeaderProps {
     title?: string;
     description?: string;
@@ -30,6 +69,7 @@ export function ToolShellHeader({
             <div className="cst-shell__header-inner">
                 <div className="cst-shell__header-top">
                     <a className="cst-shell__brand" href={homeHref} aria-label="Back to all tools">
+                        <span className="cst-shell__brand-mark" aria-hidden="true">{'</>'}</span>
                         CodeSamplez Tools
                     </a>
                     <div className="cst-shell__header-actions">
@@ -62,7 +102,7 @@ export function ToolShellHeader({
                                 onClick={onToggleTheme}
                             >
                                 <span className="cst-shell__theme-toggle-icon" aria-hidden="true">
-                                    {isDarkMode ? '☀' : '☾'}
+                                    {isDarkMode ? <SunIcon /> : <MoonIcon />}
                                 </span>
                                 <span className="cst-shell__theme-toggle-text">{themeToggleLabel}</span>
                             </button>

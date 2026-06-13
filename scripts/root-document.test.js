@@ -33,7 +33,10 @@ describe('root document generation', () => {
 
     expect(html).toContain('<title>Online Developer Tools</title>');
     expect(html).toContain('<meta name="description" content="Free online developer tools for debugging, formatting and validation needs. Access 10+ utilities to help boost your day-to-day productivity.">');
-    expect(html).toContain('<meta name="theme-color" content="#2563eb">');
+    expect(html).toContain('<meta name="theme-color" content="#f7f7fa">');
+    expect(html).toContain('<html lang="en" data-theme="light">');
+    expect(html).toContain('https://fonts.googleapis.com/css2?family=Geist');
+    expect(html).toContain('https://unpkg.com/lucide@latest');
     expect(html).toContain(`<link rel="canonical" href="${SITE_BASE_URL}">`);
     expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/root-shell/styles.main.css')}">`);
     expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/styles.css')}">`);

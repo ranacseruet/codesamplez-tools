@@ -6,7 +6,13 @@ const { getGroupedToolDefinitions, loadManifest } = require('./tool-manifest');
 const { renderRootPageIntro, renderRootPagePostIndexSections } = require('./root-page-content');
 const { buildRootStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
 
-const THEME_COLOR = '#2563eb';
+const THEME_COLOR = '#f7f7fa';
+
+// v2 design system: Geist webfonts + Lucide icons, loaded from CDN.
+const DESIGN_SYSTEM_HEAD_ASSETS = `<link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap">
+  <script src="https://unpkg.com/lucide@latest" defer></script>`;
 
 /**
  * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
@@ -24,7 +30,7 @@ function renderToolCard(tool) {
         <div class="tool-content">
           <h3 class="tool-name">${escapeHtml(tool.title)}</h3>
           <p class="tool-description">${escapeHtml(tool.indexDescription)}</p>
-          <a href="${escapeAttribute(tool.absolutePageUrl)}" class="cta-button">Try Tool</a>
+          <a href="${escapeAttribute(tool.absolutePageUrl)}" class="cta-button">Try Tool<i data-lucide="arrow-right" class="cst-icon" aria-hidden="true"></i></a>
         </div>
       </article>`;
 }
@@ -45,13 +51,14 @@ function generateRootDocument() {
     const escapedRootShellBundleUrl = escapeAttribute(buildAbsoluteUrl(manifest.siteStaticRootUri, '/root-shell/bundle.main.js'));
 
     return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(manifest.rootPage.title)}</title>
   <meta name="description" content="${escapedDescription}">
   <meta name="theme-color" content="${THEME_COLOR}">
+  ${DESIGN_SYSTEM_HEAD_ASSETS}
   <link rel="canonical" href="${escapedCanonical}">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="${escapedSiteName}">
