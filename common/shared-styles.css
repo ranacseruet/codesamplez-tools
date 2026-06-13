@@ -59,6 +59,13 @@ body.standalone-app {
   /* Map standard variables to defaults for standalone mode validity */
   --color-primary: var(--default-color-primary);
   --color-primary-hover: var(--default-color-primary-hover);
+  /* Bright foreground accent (iris) for text/links/active states — legible on
+     near-black; distinct from the solid --color-primary button fill. */
+  --color-accent: var(--cst-color-accent, var(--default-color-primary));
+  --color-accent-hover: var(--cst-color-accent-hover, var(--default-color-primary-hover));
+  --color-on-primary: var(--md-sys-color-on-primary, #fff);
+  --color-on-secondary: var(--md-sys-color-on-secondary, #fff);
+  --color-on-danger: var(--md-sys-color-on-error, #fff);
   --color-secondary: var(--default-color-secondary);
   --color-secondary-hover: var(--default-color-secondary-hover);
   --color-text: var(--default-color-text);
@@ -120,6 +127,11 @@ body.standalone-app {
      generic `--color-*` variables used by tool styles. */
   --color-primary: var(--default-color-primary);
   --color-primary-hover: var(--default-color-primary-hover);
+  --color-accent: var(--cst-color-accent, var(--default-color-primary));
+  --color-accent-hover: var(--cst-color-accent-hover, var(--default-color-primary-hover));
+  --color-on-primary: var(--md-sys-color-on-primary, #fff);
+  --color-on-secondary: var(--md-sys-color-on-secondary, #fff);
+  --color-on-danger: var(--md-sys-color-on-error, #fff);
   --color-secondary: var(--default-color-secondary);
   --color-secondary-hover: var(--default-color-secondary-hover);
   --color-text: var(--default-color-text);
@@ -427,7 +439,9 @@ body.standalone-app {
   gap: var(--spacing-xs, var(--default-spacing-xs));
   min-height: var(--cst-control-height, 40px);
   background-color: var(--color-primary, var(--default-color-primary));
-  color: var(--color-bg, #fff);
+  /* v2: solid fill takes the on-primary text role (white on iris) so it stays
+     legible in both themes — not the page background colour. */
+  color: var(--color-on-primary, #fff);
   border: 1px solid transparent;
   padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-lg, var(--default-spacing-lg));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
@@ -435,7 +449,8 @@ body.standalone-app {
   font-size: var(--font-size-base, var(--default-font-size-base));
   font-weight: 600;
   line-height: 1;
-  box-shadow: var(--cst-shadow-1, none);
+  /* v2: flat — no resting shadow, no hover lift. */
+  box-shadow: none;
   transition:
     background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
     transform var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
@@ -444,36 +459,41 @@ body.standalone-app {
 
 .c-button:hover {
   background-color: var(--color-primary-hover, var(--default-color-primary-hover));
-  transform: translateY(-1px);
-  box-shadow: var(--cst-shadow-2, none);
 }
 
+/* v2: buttons settle ~0.5px on press instead of bouncing up on hover. */
 .c-button:active {
-  transform: translateY(0);
-  box-shadow: var(--cst-shadow-1, none);
+  transform: translateY(0.5px);
 }
 
 .c-button:disabled {
   background-color: var(--color-secondary, var(--default-color-secondary));
+  color: var(--color-on-secondary, #fff);
   cursor: not-allowed;
   box-shadow: none;
   transform: none;
+  opacity: 0.7;
 }
 
 .c-button:focus-visible {
-  box-shadow: var(--cst-focus-ring, none), var(--cst-shadow-2, none);
+  box-shadow: var(--cst-focus-ring, none);
 }
 
 .c-button--secondary {
   background-color: var(--color-secondary, var(--default-color-secondary));
+  color: var(--color-on-secondary, #fff);
+  /* Hairline keeps the neutral fill legible when it sits on a same-tone surface. */
+  border-color: var(--md-sys-color-outline-variant, var(--color-border));
 }
 
 .c-button--secondary:hover {
   background-color: var(--color-secondary-hover, var(--default-color-secondary-hover));
+  border-color: var(--md-sys-color-outline, var(--color-border));
 }
 
 .c-button--danger {
   background-color: var(--color-danger, var(--default-color-danger));
+  color: var(--color-on-danger, #fff);
 }
 
 .c-button--danger:hover {
@@ -688,7 +708,8 @@ button.c-tooltip-container {
 .c-code-output {
   flex: 1;
   padding: var(--spacing-md, var(--default-spacing-md));
-  background-color: var(--color-bg, #fff);
+  /* v2: recessed code well — sits slightly below the surface, hairline border. */
+  background-color: var(--color-surface-subtle, var(--color-bg, #fff));
   border: 1px solid var(--color-border, rgba(128, 128, 128, 0.3));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   font-family: var(--font-family-mono, var(--default-font-family-mono));
@@ -783,7 +804,8 @@ button.c-tooltip-container {
       ),
       var(--color-surface, #fff)
     );
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  /* Theme-aware top highlight (was a hardcoded white line that broke on dark). */
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--cst-color-mix-neutral, #fff) 70%, transparent);
   align-items: var(--c-checkbox-card-align-items, flex-start);
 }
 
@@ -794,7 +816,7 @@ button.c-tooltip-container {
 }
 
 .c-checkbox-card input:checked + label {
-  color: var(--c-checkbox-card-active-label-color, var(--color-primary, #1d70b8));
+  color: var(--c-checkbox-card-active-label-color, var(--color-accent, var(--color-primary, #1d70b8)));
 }
 
 .c-checkbox-card:has(input:checked) {
@@ -957,11 +979,12 @@ button.c-tooltip-container {
 
 .c-tool-article__eyebrow {
   margin: 0;
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-family: var(--font-family-mono, ui-monospace, monospace);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--color-text-secondary, #4b5563);
+  color: var(--color-accent, var(--color-primary, #4b5563));
 }
 
 .c-tool-article__lead {
@@ -1274,40 +1297,43 @@ button.c-tooltip-container {
   display: none;
 }
 
+/* v2: segmented control — pill buttons inside a hairline track. */
 .c-tab-list {
-  display: flex;
-  gap: 0.35rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  display: inline-flex;
+  gap: 0.25rem;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.25rem;
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  border-radius: var(--radius-md, 10px);
+  background: var(--color-surface-subtle, #f5f7fa);
 }
 
 .c-tab-button {
   appearance: none;
   border: 1px solid transparent;
-  border-bottom: none;
   background: none;
   color: var(--color-text-secondary, #4b5563);
-  padding: 0.65rem 0.85rem;
-  margin-bottom: -1px;
-  border-radius: 0.65rem 0.65rem 0 0;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-sm, 8px);
   cursor: pointer;
   font: inherit;
   font-weight: 600;
+  white-space: nowrap;
   transition:
     color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
     background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
-    border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+    box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
 }
 
 .c-tab-button:hover {
-  color: var(--color-primary, #1d70b8);
-  background: color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 70%, var(--cst-color-mix-neutral, white));
+  color: var(--color-accent, var(--color-primary, #1d70b8));
 }
 
 .c-tab-button.active {
-  color: var(--color-primary, #1d70b8);
+  color: var(--color-accent, var(--color-primary, #1d70b8));
   background: var(--color-surface, #fff);
-  border-color: color-mix(in srgb, var(--color-primary, #1d70b8) 24%, var(--color-border, #d7dde4));
-  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--color-primary, #1d70b8) 28%, var(--cst-color-mix-neutral, white));
+  box-shadow: var(--cst-shadow-1, none);
 }
 
 .c-tab-button:focus-visible {
@@ -1513,6 +1539,10 @@ button.c-tooltip-container {
 
   .c-action-strip {
     padding: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .c-tab-list {
+    width: 100%;
   }
 
   .c-tab-button {

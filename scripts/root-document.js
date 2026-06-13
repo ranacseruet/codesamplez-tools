@@ -8,6 +8,10 @@ const { buildRootStructuredDataGraph, renderStructuredDataScript } = require('./
 
 const THEME_COLOR = '#f7f7fa';
 
+// Pre-paint theme init: apply the saved theme (default light) before CSS paints
+// so the choice persists across pages with no flash. Must run before stylesheets.
+const THEME_INIT_SCRIPT = `<script>(function(){try{var t=localStorage.getItem('cst-standalone-theme-mode');var m=t==='dark'?'dark':'light';var e=document.documentElement;e.setAttribute('data-theme',m);e.setAttribute('data-cst-theme',m);}catch(e){}})();</script>`;
+
 // v2 design system: Geist webfonts + Lucide icons, loaded from CDN.
 const DESIGN_SYSTEM_HEAD_ASSETS = `<link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,6 +59,7 @@ function generateRootDocument() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  ${THEME_INIT_SCRIPT}
   <title>${escapeHtml(manifest.rootPage.title)}</title>
   <meta name="description" content="${escapedDescription}">
   <meta name="theme-color" content="${THEME_COLOR}">
