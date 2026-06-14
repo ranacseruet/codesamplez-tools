@@ -146,12 +146,13 @@ function finalizeAffectedTargets(result) {
     }
 
     if (result.includeRootAssets) {
-        getRootAssets().forEach((asset) => deployPaths.add(asset));
+        // Derive invalidations from the actual root-asset list so newly added
+        // assets (e.g. self-hosted fonts) are invalidated, not just a fixed set.
+        getRootAssets().forEach((asset) => {
+            deployPaths.add(asset);
+            invalidationPaths.add(`/${asset}`);
+        });
         invalidationPaths.add('/');
-        invalidationPaths.add('/index.html');
-        invalidationPaths.add('/sitemap.xml');
-        invalidationPaths.add('/styles.css');
-        invalidationPaths.add('/robots.txt');
     }
 
     return {

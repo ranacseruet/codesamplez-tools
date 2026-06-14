@@ -29,6 +29,8 @@
     "index.html",
     "styles.css",
     "robots.txt",
-    "sitemap.xml"
+    "sitemap.xml",
+    "fonts/Geist-Variable.woff2",
+    "fonts/GeistMono-Variable.woff2"
   ]
 }

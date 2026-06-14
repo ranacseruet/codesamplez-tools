@@ -60,8 +60,9 @@ describe('tool document generation', () => {
         expect(html).toContain('<meta name="theme-color" content="#f7f7fa">');
         expect(html).toContain('<html lang="en" data-theme="light">');
         expect(html).toContain("localStorage.getItem('cst-standalone-theme-mode')");
-        expect(html).toContain('https://fonts.googleapis.com/css2?family=Geist');
-        expect(html).toContain('https://unpkg.com/lucide@latest');
+        expect(html).toContain(`<link rel="preload" href="${buildSiteAssetUri('/fonts/Geist-Variable.woff2')}" as="font" type="font/woff2" crossorigin>`);
+        expect(html).not.toContain('fonts.googleapis.com');
+        expect(html).not.toContain('unpkg.com');
         expect(html).toContain(`<link rel="canonical" href="${buildSiteHref('/diff-checker/')}">`);
         expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/diff-checker/styles.main.css')}">`);
         expect(html).toContain('<meta property="og:site_name" content="CodeSamplez Tools">');

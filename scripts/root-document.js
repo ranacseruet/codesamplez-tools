@@ -5,6 +5,7 @@ const { escapeAttribute, escapeHtml } = require('./document-helpers');
 const { getGroupedToolDefinitions, loadManifest } = require('./tool-manifest');
 const { renderRootPageIntro, renderRootPagePostIndexSections } = require('./root-page-content');
 const { buildRootStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
+const { renderInlineIcon } = require('./lucide-icons');
 
 const THEME_COLOR = '#f7f7fa';
 
@@ -12,11 +13,14 @@ const THEME_COLOR = '#f7f7fa';
 // so the choice persists across pages with no flash. Must run before stylesheets.
 const THEME_INIT_SCRIPT = `<script>(function(){try{var t=localStorage.getItem('cst-standalone-theme-mode');var m=t==='dark'?'dark':'light';var e=document.documentElement;e.setAttribute('data-theme',m);e.setAttribute('data-cst-theme',m);}catch(e){}})();</script>`;
 
-// v2 design system: Geist webfonts + Lucide icons, loaded from CDN.
-const DESIGN_SYSTEM_HEAD_ASSETS = `<link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap">
-  <script src="https://unpkg.com/lucide@latest" defer></script>`;
+// v2 design system: self-hosted Geist fonts (icons are inlined SVGs — no CDN).
+// Preloads use the configured static-root absolute URL so they resolve to the
+// same asset origin as the stylesheets (pages and assets can be cross-origin).
+function renderFontPreloads(staticRootUri) {
+    return ['Geist-Variable.woff2', 'GeistMono-Variable.woff2']
+        .map((file) => `<link rel="preload" href="${escapeAttribute(buildAbsoluteUrl(staticRootUri, `/fonts/${file}`))}" as="font" type="font/woff2" crossorigin>`)
+        .join('\n  ');
+}
 
 /**
  * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
@@ -33,13 +37,13 @@ function renderToolCard(tool) {
     const statusModifier = isLive ? 'tool-status--live' : 'tool-status--soon';
     return `      <article class="tool-card">
         <div class="tool-card__head">
-          <span class="tool-icon-tile" aria-hidden="true"><i data-lucide="${escapeAttribute(iconName)}"></i></span>
+          <span class="tool-icon-tile" aria-hidden="true">${renderInlineIcon(iconName)}</span>
           <span class="tool-status ${statusModifier}">${escapeHtml(statusLabel)}</span>
         </div>
         <div class="tool-content">
           <h3 class="tool-name">${escapeHtml(tool.title)}</h3>
           <p class="tool-description">${escapeHtml(tool.indexDescription)}</p>
-          <a href="${escapeAttribute(tool.absolutePageUrl)}" class="cta-button">Try Tool<i data-lucide="arrow-right" class="cst-icon" aria-hidden="true"></i></a>
+          <a href="${escapeAttribute(tool.absolutePageUrl)}" class="cta-button">Try Tool${renderInlineIcon('arrow-right')}</a>
         </div>
       </article>`;
 }
@@ -68,7 +72,7 @@ function generateRootDocument() {
   <title>${escapeHtml(manifest.rootPage.title)}</title>
   <meta name="description" content="${escapedDescription}">
   <meta name="theme-color" content="${THEME_COLOR}">
-  ${DESIGN_SYSTEM_HEAD_ASSETS}
+  ${renderFontPreloads(manifest.siteStaticRootUri)}
   <link rel="canonical" href="${escapedCanonical}">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="${escapedSiteName}">

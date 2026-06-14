@@ -36,8 +36,11 @@ describe('root document generation', () => {
     expect(html).toContain('<meta name="theme-color" content="#f7f7fa">');
     expect(html).toContain('<html lang="en" data-theme="light">');
     expect(html).toContain("localStorage.getItem('cst-standalone-theme-mode')");
-    expect(html).toContain('https://fonts.googleapis.com/css2?family=Geist');
-    expect(html).toContain('https://unpkg.com/lucide@latest');
+    expect(html).toContain(`<link rel="preload" href="${buildSiteAssetUri('/fonts/Geist-Variable.woff2')}" as="font" type="font/woff2" crossorigin>`);
+    expect(html).toContain(`<link rel="preload" href="${buildSiteAssetUri('/fonts/GeistMono-Variable.woff2')}" as="font" type="font/woff2" crossorigin>`);
+    // No third-party font/icon CDNs — assets are self-hosted/inlined.
+    expect(html).not.toContain('fonts.googleapis.com');
+    expect(html).not.toContain('unpkg.com');
     expect(html).toContain(`<link rel="canonical" href="${SITE_BASE_URL}">`);
     expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/root-shell/styles.main.css')}">`);
     expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/styles.css')}">`);
@@ -63,7 +66,7 @@ describe('root document generation', () => {
     expect(html).toContain('Format and validate JSON data with proper indentation and alphabetical key sorting.');
     expect(html).toContain('Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.');
     expect(html).toContain('Analyze text to get insights like character count, word count, line count, and other useful text statistics.');
-    expect(html).toContain('<span class="tool-icon-tile" aria-hidden="true"><i data-lucide="braces"></i></span>');
+    expect(html).toContain('<span class="tool-icon-tile" aria-hidden="true"><svg class="cst-icon"');
     expect(html).toContain('<span class="tool-status tool-status--live">Live</span>');
     expect(html).toContain(`href="${buildSiteHref('/jwt-decoder/')}"`);
     expect(html).toContain(`<script src="${buildSiteAssetUri('/root-shell/bundle.main.js')}" defer></script>`);

@@ -5,6 +5,27 @@
    Dark is the default theme (:root). Light is opt-in via [data-theme="light"].
    ========================================================================== */
 
+/* Self-hosted Geist + Geist Mono (variable, OFL) — no third-party font CDN.
+   url() is relative to the emitted CSS (/<tool>/ and /root-shell/ are one level
+   below the deployed /fonts/ dir), so it resolves correctly regardless of the
+   configured static-root host or path prefix. css-loader is configured to leave
+   these `fonts/` urls untouched (see webpack.config.js). */
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/Geist-Variable.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/GeistMono-Variable.woff2") format("woff2");
+}
+
 :root {
   color-scheme: dark;
 

@@ -18,11 +18,14 @@ const THEME_COLOR = '#f7f7fa';
 // so the choice persists across pages with no flash. Must run before stylesheets.
 const THEME_INIT_SCRIPT = `<script>(function(){try{var t=localStorage.getItem('cst-standalone-theme-mode');var m=t==='dark'?'dark':'light';var e=document.documentElement;e.setAttribute('data-theme',m);e.setAttribute('data-cst-theme',m);}catch(e){}})();</script>`;
 
-// v2 design system: Geist webfonts + Lucide icons, loaded from CDN.
-const DESIGN_SYSTEM_HEAD_ASSETS = `<link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap">
-    <script src="https://unpkg.com/lucide@latest" defer></script>`;
+// v2 design system: self-hosted Geist fonts (icons are inlined SVGs — no CDN).
+// Preloads use the configured static-root absolute URL so they resolve to the
+// same asset origin as the stylesheet (pages and assets can be cross-origin).
+function renderFontPreloads(staticRootUri) {
+    return ['Geist-Variable.woff2', 'GeistMono-Variable.woff2']
+        .map((file) => `<link rel="preload" href="${escapeAttribute(joinUrl(staticRootUri, `/fonts/${file}`))}" as="font" type="font/woff2" crossorigin>`)
+        .join('\n    ');
+}
 
 /**
  * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
@@ -73,7 +76,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     <title>${escapeHtml(tool.title)}</title>
     <meta name="description" content="${escapedDescription}">
     <meta name="theme-color" content="${THEME_COLOR}">
-    ${DESIGN_SYSTEM_HEAD_ASSETS}
+    ${renderFontPreloads(tool.siteStaticRootUri)}
     <link rel="canonical" href="${escapedPageUrl}">
     <link rel="stylesheet" href="${escapedStylesUrl}">
     <meta property="og:type" content="website">

@@ -179,7 +179,21 @@ const baseConfig = {
       },
       {
         test: /\.css$/,
-        use: [MiniCssExtractPlugin.loader, 'css-loader']
+        use: [
+          MiniCssExtractPlugin.loader,
+          {
+            loader: 'css-loader',
+            options: {
+              // Leave the self-hosted Geist `fonts/` url()s untouched so the
+              // @font-face resolves to the single deployed /fonts/ copy instead
+              // of being emitted as hashed per-bundle assets. Matches both the
+              // relative (../fonts/) and any root-absolute form.
+              url: {
+                filter: (url) => !/(^|\/)fonts\//.test(url)
+              }
+            }
+          }
+        ]
       },
       {
         test: /\.(png|svg|jpg|jpeg|gif)$/i,

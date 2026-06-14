@@ -200,8 +200,9 @@ function main() {
             const sourcePath = path.join(args.buildDir, asset);
             assertExists(sourcePath);
             copyAsset(args.bucket, sourcePath, asset, args.dryRun);
+            invalidationPaths.push(`/${asset}`);
         });
-        invalidationPaths.push('/', '/index.html', '/sitemap.xml', '/styles.css', '/robots.txt');
+        invalidationPaths.push('/');
     }
 
     if (invalidationPaths.length > 0) {
