@@ -47,7 +47,7 @@
       var(--color-bg, #fff) 100%
     );
   min-width: 0;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--cst-color-mix-neutral, #fff) 40%, transparent);
 }
 
 .js-minifier-options .c-checkbox-item input[type="checkbox"] {
@@ -111,7 +111,7 @@
 }
 
 .js-minifier-options .c-checkbox-item:has(input:focus-visible) {
-  box-shadow: var(--cst-focus-ring, none), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: var(--cst-focus-ring, none), inset 0 1px 0 color-mix(in srgb, var(--cst-color-mix-neutral, #fff) 40%, transparent);
 }
 
 .js-minifier-options .c-tooltip-container {

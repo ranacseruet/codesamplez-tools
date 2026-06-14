@@ -86,9 +86,9 @@
       var(--color-primary, #005f73) 0%,
       var(--cst-color-primary-accent, var(--color-primary-hover, #0a7f94)) 100%
     );
-  color: var(--color-bg, #fff);
+  color: var(--color-on-primary, #fff);
   border-color: transparent;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), var(--cst-shadow-1, none);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--cst-color-mix-neutral, #fff) 18%, transparent), var(--cst-shadow-1, none);
 }
 
 .dfc-tool .format-btn.c-button:focus-visible {
