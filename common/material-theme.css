@@ -230,8 +230,10 @@
   --cst-color-accent-hover: #5341d6;
   --cst-color-secondary-hover: #45465a;
   --cst-color-danger-hover: #b51818;
-  --cst-color-success: #1d9d63;
-  --cst-color-success-hover: #157a4c;
+  /* AA-compliant as small text on white and on success-tinted surfaces
+     (#1d9d63 failed at ~3.4:1; #157a4c is ~5.3:1 on white, ~4.7:1 on tint). */
+  --cst-color-success: #157a4c;
+  --cst-color-success-hover: #11633c;
   --cst-color-warning: #b06b00;
   --cst-color-shadow: rgba(30, 27, 60, 0.12);
   --cst-color-shadow-strong: rgba(30, 27, 60, 0.2);

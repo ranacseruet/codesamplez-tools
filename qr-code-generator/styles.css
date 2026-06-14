@@ -45,7 +45,7 @@
 }
 
 .qr-tool__label span {
-  color: var(--color-primary, #1d70b8);
+  color: var(--color-accent, var(--color-primary, #1d70b8));
   font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-weight: 700;
 }

@@ -142,7 +142,7 @@
 }
 
 .jsonf-tool .json-toggle:hover {
-  color: var(--color-primary, #1d70b8);
+  color: var(--color-accent, var(--color-primary, #1d70b8));
 }
 
 .jsonf-tool .json-children {
@@ -154,12 +154,12 @@
 }
 
 .jsonf-tool .json-key {
-  color: color-mix(in srgb, var(--color-primary, #1d70b8) 84%, var(--color-text, #1f2937));
+  color: color-mix(in srgb, var(--color-accent, var(--color-primary, #1d70b8)) 84%, var(--color-text, #1f2937));
   font-weight: 600;
 }
 
 .jsonf-tool .json-bracket {
-  color: var(--color-primary, #1d70b8);
+  color: var(--color-accent, var(--color-primary, #1d70b8));
   font-weight: 700;
 }
 

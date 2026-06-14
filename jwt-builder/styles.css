@@ -100,7 +100,7 @@
 
 .jwt-builder-secret-generate:hover {
   background: color-mix(in srgb, var(--color-bg, #fff) 82%, var(--jwtb-accent) 18%) !important;
-  color: var(--color-primary-hover, var(--default-color-primary-hover)) !important;
+  color: var(--color-accent-hover, var(--color-primary-hover, var(--default-color-primary-hover))) !important;
   transform: translateY(-1px);
 }
 

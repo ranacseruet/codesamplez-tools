@@ -1030,13 +1030,15 @@ button.c-tooltip-container {
 
 .c-tool-article__content a:not(.c-button),
 .c-tool-faq__answer a:not(.c-button) {
-  color: var(--color-primary, #1d70b8);
+  /* Bright accent so inline links stay AA-legible on the dark surface
+     (the solid --color-primary fill is only ~3.9:1 on near-black). */
+  color: var(--color-accent, var(--color-primary, #1d70b8));
   text-underline-offset: 0.14em;
 }
 
 .c-tool-article__content a:not(.c-button):hover,
 .c-tool-faq__answer a:not(.c-button):hover {
-  color: var(--color-primary-hover, #1d4ed8);
+  color: var(--color-accent-hover, var(--color-primary-hover, #1d4ed8));
 }
 
 .c-tool-article__cta-row {
