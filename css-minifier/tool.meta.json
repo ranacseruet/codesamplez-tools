@@ -6,6 +6,8 @@
   "catalogGroupId": "code-formatters",
   "catalogOrder": 3,
   "indexDescription": "Minify CSS code by removing unnecessary whitespace, comments, and optimizing style declarations (minification). Features real-time size reduction statistics and clipboard support.",
+  "icon": "palette",
+  "status": "live",
   "keywords": [
     "css",
     "minify",

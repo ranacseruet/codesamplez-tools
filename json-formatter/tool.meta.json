@@ -6,6 +6,8 @@
   "catalogGroupId": "code-formatters",
   "catalogOrder": 1,
   "indexDescription": "Format and validate JSON data with proper indentation and alphabetical key sorting. Features syntax highlighting, error detection, and clipboard integration.",
+  "icon": "braces",
+  "status": "live",
   "keywords": [
     "json",
     "format",

@@ -6,6 +6,8 @@
   "catalogGroupId": "text-analysis",
   "catalogOrder": 2,
   "indexDescription": "Analyze text to get insights like character count, word count, line count, and other useful text statistics. Perfect for content writers and developers.",
+  "icon": "case-sensitive",
+  "status": "live",
   "keywords": [
     "text",
     "analyze",

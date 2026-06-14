@@ -6,6 +6,8 @@
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 5,
   "indexDescription": "Convert between JSON, XML, and YAML formats with real-time conversion. Perfect for working with different API formats and configuration files.",
+  "icon": "repeat",
+  "status": "live",
   "keywords": [
     "json",
     "xml",

@@ -27,9 +27,14 @@ const DESIGN_SYSTEM_HEAD_ASSETS = `<link rel="preconnect" href="https://fonts.go
  * @returns {string}
  */
 function renderToolCard(tool) {
+    const iconName = tool.icon || 'wrench';
+    const isLive = tool.status !== 'soon';
+    const statusLabel = isLive ? 'Live' : 'Soon';
+    const statusModifier = isLive ? 'tool-status--live' : 'tool-status--soon';
     return `      <article class="tool-card">
-        <div class="tool-thumbnail">
-          <img src="${escapeAttribute(tool.absoluteFeaturedImageUrl)}" alt="${escapeAttribute(`${tool.title} featured image`)}">
+        <div class="tool-card__head">
+          <span class="tool-icon-tile" aria-hidden="true"><i data-lucide="${escapeAttribute(iconName)}"></i></span>
+          <span class="tool-status ${statusModifier}">${escapeHtml(statusLabel)}</span>
         </div>
         <div class="tool-content">
           <h3 class="tool-name">${escapeHtml(tool.title)}</h3>

@@ -6,6 +6,8 @@
   "catalogGroupId": "text-analysis",
   "catalogOrder": 1,
   "indexDescription": "Compare two texts side by side and highlight the differences (diff). Perfect for comparing code snippets, configurations, or any text-based content.",
+  "icon": "git-compare",
+  "status": "live",
   "keywords": [
     "diff",
     "compare",

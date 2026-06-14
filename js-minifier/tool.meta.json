@@ -6,6 +6,8 @@
   "catalogGroupId": "code-formatters",
   "catalogOrder": 2,
   "indexDescription": "Minify JavaScript code by removing comments, whitespace, and optionally shortening variable names (minification). Features real-time size statistics and clipboard integration.",
+  "icon": "file-code",
+  "status": "live",
   "keywords": [
     "javascript",
     "minify",

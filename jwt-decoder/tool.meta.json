@@ -6,6 +6,8 @@
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 2,
   "indexDescription": "Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.",
+  "icon": "key-round",
+  "status": "live",
   "keywords": [
     "jwt",
     "decode",

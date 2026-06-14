@@ -6,6 +6,8 @@
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 4,
   "indexDescription": "Generate QR codes from any text input or URL. Customize QR code size, margin, and error correction level.",
+  "icon": "qr-code",
+  "status": "live",
   "keywords": [
     "qr code",
     "generator",

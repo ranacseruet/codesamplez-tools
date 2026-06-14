@@ -6,6 +6,8 @@
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 1,
   "indexDescription": "Convert text and files to Base64 encoding and decode Base64 strings back to their original format. Supports multiple encodings and file uploads.",
+  "icon": "binary",
+  "status": "live",
   "keywords": [
     "base64",
     "encode",

@@ -6,6 +6,8 @@
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 3,
   "indexDescription": "Create and sign JSON Web Tokens (JWT) with custom headers and payloads. Generate secure tokens with various signing algorithms and secret keys.",
+  "icon": "file-key",
+  "status": "live",
   "keywords": [
     "jwt",
     "token",

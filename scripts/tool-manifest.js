@@ -52,6 +52,8 @@ const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
  *   title: string,
  *   description: string,
  *   indexDescription: string,
+ *   icon: string | null,
+ *   status: 'live' | 'soon',
  *   keywords: string[],
  *   appRootId: string,
  *   publicPath: string,
@@ -83,6 +85,8 @@ const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
  *   title: string,
  *   description: string,
  *   indexDescription: string,
+ *   icon: string | null,
+ *   status: 'live' | 'soon',
  *   keywords?: string[],
  *   catalogGroupId: string,
  *   catalogOrder: number,
@@ -218,6 +222,35 @@ function normalizeStringArray(value, label) {
 }
 
 /**
+ * Optional single string; returns null when absent. Used for presentation-only
+ * metadata such as the landing-card Lucide icon name.
+ * @param {unknown} value
+ * @param {string} label
+ * @returns {string | null}
+ */
+function normalizeOptionalString(value, label) {
+    if (typeof value === 'undefined' || value === null) {
+        return null;
+    }
+    return requireNonEmptyString(value, label);
+}
+
+/**
+ * Tool launch status shown as a landing-card badge. Defaults to "live".
+ * @param {unknown} value
+ * @returns {'live' | 'soon'}
+ */
+function normalizeToolStatus(value) {
+    if (typeof value === 'undefined' || value === null) {
+        return 'live';
+    }
+    if (value !== 'live' && value !== 'soon') {
+        throw new Error('Tool status must be "live" or "soon"');
+    }
+    return value;
+}
+
+/**
  * @param {unknown} value
  * @param {string} label
  * @returns {string[]}
@@ -340,6 +373,8 @@ function readToolMetadata(metadataPath) {
         title: requireNonEmptyString(metadataRecord.title, 'Tool title'),
         description: requireNonEmptyString(metadataRecord.description, 'Tool description'),
         indexDescription: requireNonEmptyString(metadataRecord.indexDescription, 'Tool indexDescription'),
+        icon: normalizeOptionalString(metadataRecord.icon, 'Tool icon'),
+        status: normalizeToolStatus(metadataRecord.status),
         keywords: normalizeOptionalStringArray(metadataRecord.keywords, 'Tool keywords'),
         catalogGroupId: requireNonEmptyString(metadataRecord.catalogGroupId, 'Tool catalogGroupId'),
         catalogOrder: requirePositiveInteger(metadataRecord.catalogOrder, 'Tool catalogOrder'),
@@ -406,6 +441,8 @@ function createToolDefinition(metadataPath) {
         title: metadata.title,
         description: metadata.description,
         indexDescription: metadata.indexDescription,
+        icon: metadata.icon,
+        status: metadata.status,
         keywords: metadata.keywords || [],
         appRootId: metadata.appRootId,
         publicPath,

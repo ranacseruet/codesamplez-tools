@@ -63,7 +63,8 @@ describe('root document generation', () => {
     expect(html).toContain('Format and validate JSON data with proper indentation and alphabetical key sorting.');
     expect(html).toContain('Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.');
     expect(html).toContain('Analyze text to get insights like character count, word count, line count, and other useful text statistics.');
-    expect(html).toContain(`src="${buildSiteAssetUri('/json-formatter/images/featured.png')}"`);
+    expect(html).toContain('<span class="tool-icon-tile" aria-hidden="true"><i data-lucide="braces"></i></span>');
+    expect(html).toContain('<span class="tool-status tool-status--live">Live</span>');
     expect(html).toContain(`href="${buildSiteHref('/jwt-decoder/')}"`);
     expect(html).toContain(`<script src="${buildSiteAssetUri('/root-shell/bundle.main.js')}" defer></script>`);
 

@@ -124,10 +124,15 @@ body {
   color: var(--color-accent);
   margin-bottom: calc(var(--spacing-lg) * 2);
   font-family: var(--font-family-display);
-  font-size: clamp(1.9rem, 4vw, 2.6rem);
-  font-weight: bold;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-size: clamp(2.1rem, 4.5vw, 3rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  /* Subtle iris gradient on the display title (falls back to the accent colour). */
+  background: linear-gradient(120deg, var(--color-accent) 0%, var(--md-sys-color-primary, #6f5bf0) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .main-container .section-intro,
@@ -166,8 +171,17 @@ body {
   color: var(--color-text);
   font-size: clamp(1.15rem, 2vw, 1.45rem);
   font-weight: 600;
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 22%, var(--color-border-light));
   padding-bottom: var(--spacing-sm);
+}
+
+/* Mono accent marker — a small developer-flavoured "section divider". */
+.main-container .section-title::before {
+  content: "//";
+  margin-right: 0.5ch;
+  font-family: var(--font-family-mono);
+  font-weight: 700;
+  color: var(--color-accent);
 }
 
 .main-container .section-title:first-of-type {
@@ -207,22 +221,56 @@ body {
   box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(0, 95, 115, 0.2)), var(--cst-shadow-3, var(--box-shadow));
 }
 
-.main-container .tool-thumbnail {
-  width: 100%;
-  height: 200px;
-  background:
-    linear-gradient(180deg, var(--md-sys-color-surface-container-low, #f4f6f8), var(--md-sys-color-surface-container, #eceff1));
-  overflow: hidden;
-  position: relative;
+.main-container .tool-card__head {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg) var(--spacing-lg) 0;
 }
 
-.main-container .tool-thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.main-container .tool-icon-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1.4rem;
+  border-radius: var(--border-radius-sm);
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 26%, transparent);
+}
+
+.main-container .tool-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-family: var(--font-family-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.main-container .tool-status::before {
+  content: "";
+  width: 0.45em;
+  height: 0.45em;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.main-container .tool-status--live {
+  color: var(--cst-color-success, #4ade80);
+  background: color-mix(in srgb, var(--cst-color-success, #4ade80) 14%, transparent);
+}
+
+.main-container .tool-status--soon {
+  color: var(--md-sys-color-on-surface-variant, #9a9bab);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #9a9bab) 14%, transparent);
 }
 
 .main-container .tool-content {
