@@ -25,7 +25,7 @@ A lightweight, browser-based text analysis tool that provides real-time statisti
 ## Usage
 
 ### Online
-1. Visit [Codesamplez.com/tools/text-analyzer](https://codesamplez.com/tools/text-analyzer)
+1. Visit [tools.codesamplez.com/text-analyzer](https://tools.codesamplez.com/text-analyzer)
 2. Enter or paste your text in the textarea
 3. View real-time statistics updating automatically as you type or modify the text
 

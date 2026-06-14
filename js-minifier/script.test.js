@@ -63,6 +63,7 @@ import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { JSMinifier } from './minifier';
 import { JSMinifierToolUI } from './script';
+import { SITE_BASE_URL } from '../common/siteBaseUrl';
 
 describe('JavaScript Minifier Preact runtime', () => {
   const flush = () => Promise.resolve();
@@ -97,7 +98,7 @@ describe('JavaScript Minifier Preact runtime', () => {
     expect(document.body.textContent).toContain('About This Tool');
     expect(document.body.textContent).toContain('Why Minify JavaScript?');
     expect(document.body.textContent).toContain('JavaScript Minifier FAQs');
-    expect(document.querySelector('#js-minifier-tool a[href="https://codesamplez.com/tools/"]')).not.toBeNull();
+    expect(document.querySelector(`#js-minifier-tool a[href="${SITE_BASE_URL}"]`)).not.toBeNull();
     expect(document.querySelector('#js-minifier-tool a[href="https://codesamplez.com/contact"]')).not.toBeNull();
   });
 

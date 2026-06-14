@@ -31,6 +31,7 @@ import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { TextAnalyzerToolUI } from './script';
 import ClearButton from '../common/clear-button/ClearButton';
 import { FAQ_ITEMS } from './content';
+import { SITE_BASE_URL } from '../common/siteBaseUrl';
 
 describe('TextAnalyzer Preact runtime', () => {
     const flush = () => Promise.resolve();
@@ -72,7 +73,7 @@ describe('TextAnalyzer Preact runtime', () => {
             expect(item.structuredDataAnswer.length).toBeGreaterThan(0);
         });
 
-        const toolsLink = document.querySelector('a[href="https://codesamplez.com/tools/"]');
+        const toolsLink = document.querySelector(`a[href="${SITE_BASE_URL}"]`);
         const contactLink = document.querySelector('a[href="https://codesamplez.com/contact"]');
 
         expect(toolsLink?.textContent).toContain('Explore More Dev Tools');

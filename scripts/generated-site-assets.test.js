@@ -130,7 +130,7 @@ describe('generated site assets', () => {
 
     it('uses the static root override for the robots sitemap directive', () => {
         expect(withEnv({
-            CST_SITE_BASE_URL: 'https://codesamplez.com/tools',
+            CST_SITE_BASE_URL: 'https://tools.codesamplez.com',
             CST_SITE_STATIC_ROOT_URI: 'https://static.example.test/tools-assets'
         }, () => buildRobotsTxt())).toBe([
             'User-agent: *',

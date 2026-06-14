@@ -236,16 +236,16 @@ describe('tool-manifest', () => {
     expect(withEnv({
       NODE_ENV: 'development',
       PORT: '8081',
-      CST_SITE_BASE_URL: 'https://preview.codesamplez.com/tools'
-    }, () => resolveSiteBaseUrl(PROD_SITE_BASE_URL))).toBe('https://preview.codesamplez.com/tools');
+      CST_SITE_BASE_URL: 'https://preview.tools.codesamplez.com'
+    }, () => resolveSiteBaseUrl(PROD_SITE_BASE_URL))).toBe('https://preview.tools.codesamplez.com');
 
-    expect(resolveSiteStaticRootUri('https://static.codesamplez.com/tools-assets', PROD_SITE_BASE_URL))
-      .toBe('https://static.codesamplez.com/tools-assets');
+    expect(resolveSiteStaticRootUri('https://static.example.test/tools-assets', PROD_SITE_BASE_URL))
+      .toBe('https://static.example.test/tools-assets');
 
     expect(withEnv({
-      CST_SITE_STATIC_ROOT_URI: 'https://cdn.codesamplez.com/tools'
-    }, () => resolveSiteStaticRootUri('https://static.codesamplez.com/tools-assets', PROD_SITE_BASE_URL)))
-      .toBe('https://cdn.codesamplez.com/tools');
+      CST_SITE_STATIC_ROOT_URI: 'https://cdn.example.test/tools'
+    }, () => resolveSiteStaticRootUri('https://static.example.test/tools-assets', PROD_SITE_BASE_URL)))
+      .toBe('https://cdn.example.test/tools');
   });
 
   it('uses the development site base url in root config and tool definitions when NODE_ENV=development', () => {

@@ -40,6 +40,7 @@ jest.mock('../common/clear-button/ClearButton', () => ({
 import { NotificationManager } from '../common/notification-manager';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { JSONFormatterToolUI } from './script';
+import { SITE_BASE_URL } from '../common/siteBaseUrl';
 
 describe('JSON Formatter Preact runtime', () => {
   const flush = () => Promise.resolve();
@@ -65,7 +66,7 @@ describe('JSON Formatter Preact runtime', () => {
     expect(document.body.textContent).toContain('About This Tool');
     expect(document.body.textContent).toContain('Why Use A JSON Formatter Tool?');
     expect(document.body.textContent).toContain('JSON Formatter FAQs');
-    expect(document.querySelector('#json-formatter-tool a[href="https://codesamplez.com/tools/"]')).not.toBeNull();
+    expect(document.querySelector(`#json-formatter-tool a[href="${SITE_BASE_URL}"]`)).not.toBeNull();
     expect(document.querySelector('#json-formatter-tool a[href="https://codesamplez.com/contact"]')).not.toBeNull();
   });
 

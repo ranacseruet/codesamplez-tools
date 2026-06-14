@@ -32,6 +32,7 @@ import ClearButton from '../common/clear-button/ClearButton';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { NotificationManager } from '../common/notification-manager';
 import { DiffCheckerToolUI } from './script';
+import { SITE_BASE_URL } from '../common/siteBaseUrl';
 
 describe('Diff Checker Preact runtime', () => {
   const flush = () => Promise.resolve();
@@ -49,7 +50,7 @@ describe('Diff Checker Preact runtime', () => {
       <section id="diff-checker-static-after">
         What is a Diff Checker?
         Diff Checker FAQs
-        <a href="https://codesamplez.com/tools/">Explore More Dev Tools</a>
+        <a href="${SITE_BASE_URL}">Explore More Dev Tools</a>
         <a href="https://codesamplez.com/contact">message us</a>
       </section>
     `;
@@ -78,7 +79,7 @@ describe('Diff Checker Preact runtime', () => {
     expect(document.body.textContent).toContain('About This Tool');
     expect(document.body.textContent).toContain('What is a Diff Checker?');
     expect(document.body.textContent).toContain('Diff Checker FAQs');
-    expect(document.querySelector('a[href="https://codesamplez.com/tools/"]')).not.toBeNull();
+    expect(document.querySelector(`a[href="${SITE_BASE_URL}"]`)).not.toBeNull();
     expect(document.querySelector('a[href="https://codesamplez.com/contact"]')).not.toBeNull();
     expect(window.diffCheckerCleanup).toEqual(expect.any(Function));
   });
