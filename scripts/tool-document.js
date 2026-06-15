@@ -27,6 +27,17 @@ function renderFontPreloads(staticRootUri) {
         .join('\n    ');
 }
 
+// Favicons resolve against the configured static-root absolute URL (same origin
+// as the stylesheet/fonts) so they work from every tool path even when pages and
+// assets are served cross-origin. SVG is the primary icon; ICO/PNG are fallbacks.
+function renderFaviconLinks(staticRootUri) {
+    return [
+        `<link rel="icon" href="${escapeAttribute(joinUrl(staticRootUri, '/favicon.ico'))}" sizes="any">`,
+        `<link rel="icon" type="image/svg+xml" href="${escapeAttribute(joinUrl(staticRootUri, '/favicon.svg'))}">`,
+        `<link rel="apple-touch-icon" href="${escapeAttribute(joinUrl(staticRootUri, '/apple-touch-icon.png'))}">`
+    ].join('\n    ');
+}
+
 /**
  * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
  */
@@ -59,6 +70,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     }));
     const scriptTypeAttribute = tool.scriptType === 'module' ? ' type="module"' : '';
     const shellHeaderMarkup = renderToolShellHeaderMarkup(tool);
+    const shellFooterMarkup = renderToolShellFooterMarkup(tool);
     const wrappedBeforeMarkup = beforeAppMarkup
         ? `<div class="c-tool-static-shell c-tool-static-shell--before">${beforeAppMarkup}</div>`
         : '';
@@ -76,6 +88,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     <title>${escapeHtml(tool.title)}</title>
     <meta name="description" content="${escapedDescription}">
     <meta name="theme-color" content="${THEME_COLOR}">
+    ${renderFaviconLinks(tool.siteStaticRootUri)}
     ${renderFontPreloads(tool.siteStaticRootUri)}
     <link rel="canonical" href="${escapedPageUrl}">
     <link rel="stylesheet" href="${escapedStylesUrl}">
@@ -101,7 +114,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     <div id="${escapedAppRootId}">${prerenderedMarkup}</div>
     ${wrappedAfterMarkup}
     ${relatedToolsMarkup}
-    <div id="app-shell-footer"></div>
+    <div id="app-shell-footer">${shellFooterMarkup}</div>
     <script src="${escapedBundleUrl}"${scriptTypeAttribute}></script>
 </body>
 
@@ -129,6 +142,24 @@ function renderToolShellHeaderMarkup(tool) {
 }
 
 /**
+ * @param {ToolDefinition} tool
+ * @returns {string}
+ */
+function renderToolShellFooterMarkup(tool) {
+    ensureBabelRegister();
+
+    const { h } = require('preact');
+    const renderToString = /** @type {(node: import('preact').VNode) => string} */ (
+        /** @type {unknown} */ (require('preact-render-to-string'))
+    );
+    const { ToolShellFooter } = require('../common/app-shell/AppShell');
+
+    return renderToString(h(ToolShellFooter, {
+        homeHref: tool.siteBaseUrl
+    }));
+}
+
+/**
  * @param {string} toolId
  * @returns {string}
  */
@@ -151,5 +182,6 @@ module.exports = {
     generateToolDocument,
     joinUrl,
     renderToolDocument,
+    renderToolShellFooterMarkup,
     renderToolShellHeaderMarkup
 };

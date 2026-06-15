@@ -1,6 +1,6 @@
 import type { JSX } from 'preact';
 import { TOOL_NAVIGATION_GROUPS } from './toolNavigation';
-import { SITE_BASE_URL } from '../siteBaseUrl';
+import { MAIN_SITE_URL, SITE_BASE_URL } from '../siteBaseUrl';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -129,6 +129,8 @@ export function ToolShellFooter({ homeHref = SITE_BASE_URL }: ToolShellFooterPro
                 <span>Client-side by design</span>
                 <span aria-hidden="true">|</span>
                 <a href={homeHref} className="cst-shell__footer-link">All Tools</a>
+                <span aria-hidden="true">|</span>
+                <a href={MAIN_SITE_URL} className="cst-shell__footer-link">CodeSamplez.com</a>
             </div>
         </footer>
     );

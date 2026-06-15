@@ -22,6 +22,16 @@ function renderFontPreloads(staticRootUri) {
         .join('\n  ');
 }
 
+// Favicons resolve against the configured static-root absolute URL (same origin
+// as the stylesheets/fonts). SVG is the primary icon; ICO/PNG are fallbacks.
+function renderFaviconLinks(staticRootUri) {
+    return [
+        `<link rel="icon" href="${escapeAttribute(buildAbsoluteUrl(staticRootUri, '/favicon.ico'))}" sizes="any">`,
+        `<link rel="icon" type="image/svg+xml" href="${escapeAttribute(buildAbsoluteUrl(staticRootUri, '/favicon.svg'))}">`,
+        `<link rel="apple-touch-icon" href="${escapeAttribute(buildAbsoluteUrl(staticRootUri, '/apple-touch-icon.png'))}">`
+    ].join('\n  ');
+}
+
 /**
  * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
  */
@@ -72,6 +82,7 @@ function generateRootDocument() {
   <title>${escapeHtml(manifest.rootPage.title)}</title>
   <meta name="description" content="${escapedDescription}">
   <meta name="theme-color" content="${THEME_COLOR}">
+  ${renderFaviconLinks(manifest.siteStaticRootUri)}
   ${renderFontPreloads(manifest.siteStaticRootUri)}
   <link rel="canonical" href="${escapedCanonical}">
   <meta property="og:type" content="website">

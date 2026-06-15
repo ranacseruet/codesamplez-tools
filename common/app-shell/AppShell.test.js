@@ -97,9 +97,12 @@ describe('AppShell components', () => {
 
         const footer = root.querySelector('footer.cst-shell__footer');
         expect(footer).not.toBeNull();
-        const allToolsLink = root.querySelector('a.cst-shell__footer-link');
-        expect(allToolsLink).not.toBeNull();
+        const footerLinks = root.querySelectorAll('a.cst-shell__footer-link');
+        expect(footerLinks).toHaveLength(2);
+        const [allToolsLink, mainSiteLink] = footerLinks;
         expect(allToolsLink.textContent).toBe('All Tools');
         expect(allToolsLink.getAttribute('href')).toBe(SITE_BASE_URL);
+        expect(mainSiteLink.textContent).toBe('CodeSamplez.com');
+        expect(mainSiteLink.getAttribute('href')).toBe('https://codesamplez.com');
     });
 });

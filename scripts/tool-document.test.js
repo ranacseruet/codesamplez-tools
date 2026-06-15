@@ -60,6 +60,9 @@ describe('tool document generation', () => {
         expect(html).toContain('<meta name="theme-color" content="#f7f7fa">');
         expect(html).toContain('<html lang="en" data-theme="light">');
         expect(html).toContain("localStorage.getItem('cst-standalone-theme-mode')");
+        expect(html).toContain(`<link rel="icon" href="${buildSiteAssetUri('/favicon.ico')}" sizes="any">`);
+        expect(html).toContain(`<link rel="icon" type="image/svg+xml" href="${buildSiteAssetUri('/favicon.svg')}">`);
+        expect(html).toContain(`<link rel="apple-touch-icon" href="${buildSiteAssetUri('/apple-touch-icon.png')}">`);
         expect(html).toContain(`<link rel="preload" href="${buildSiteAssetUri('/fonts/Geist-Variable.woff2')}" as="font" type="font/woff2" crossorigin>`);
         expect(html).not.toContain('fonts.googleapis.com');
         expect(html).not.toContain('unpkg.com');
@@ -78,6 +81,8 @@ describe('tool document generation', () => {
         expect(html).toContain(`"url":"${buildSiteHref('/diff-checker/')}"`);
         expect(html).toContain(`"image":"${buildSiteAssetUri('/diff-checker/images/featured.png')}"`);
         expect(html).toContain('<div id="app-shell-header"><header class="cst-shell__header">');
+        expect(html).toContain('<div id="app-shell-footer"><footer class="cst-shell__footer">');
+        expect(html).toContain('<a href="https://codesamplez.com" class="cst-shell__footer-link">CodeSamplez.com</a>');
         expect(html).toContain('<h1 class="cst-shell__title">Diff Checker</h1>');
         expect(html).toContain('<p class="cst-shell__description">Free online diff checker to quickly compare code or text differences. Perfect for developers, writers, and editors seeking instant results.</p>');
         expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--before"><section>Before payload</section></div>');

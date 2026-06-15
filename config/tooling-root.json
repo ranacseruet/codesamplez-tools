@@ -30,6 +30,9 @@
     "styles.css",
     "robots.txt",
     "sitemap.xml",
+    "favicon.ico",
+    "favicon.svg",
+    "apple-touch-icon.png",
     "fonts/Geist-Variable.woff2",
     "fonts/GeistMono-Variable.woff2"
   ]

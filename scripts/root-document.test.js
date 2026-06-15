@@ -36,6 +36,9 @@ describe('root document generation', () => {
     expect(html).toContain('<meta name="theme-color" content="#f7f7fa">');
     expect(html).toContain('<html lang="en" data-theme="light">');
     expect(html).toContain("localStorage.getItem('cst-standalone-theme-mode')");
+    expect(html).toContain(`<link rel="icon" href="${buildSiteAssetUri('/favicon.ico')}" sizes="any">`);
+    expect(html).toContain(`<link rel="icon" type="image/svg+xml" href="${buildSiteAssetUri('/favicon.svg')}">`);
+    expect(html).toContain(`<link rel="apple-touch-icon" href="${buildSiteAssetUri('/apple-touch-icon.png')}">`);
     expect(html).toContain(`<link rel="preload" href="${buildSiteAssetUri('/fonts/Geist-Variable.woff2')}" as="font" type="font/woff2" crossorigin>`);
     expect(html).toContain(`<link rel="preload" href="${buildSiteAssetUri('/fonts/GeistMono-Variable.woff2')}" as="font" type="font/woff2" crossorigin>`);
     // No third-party font/icon CDNs — assets are self-hosted/inlined.

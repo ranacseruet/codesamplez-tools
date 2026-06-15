@@ -45,6 +45,7 @@
     "bundle-metrics": "node scripts/measure-bundles.js --format markdown --write-default-json",
     "bundle-budget-check": "node scripts/check-bundle-budgets.js",
     "og:images": "node scripts/generate-og-images.mjs",
+    "favicons": "node scripts/generate-favicons.mjs",
     "qa:a11y:foundation": "node scripts/a11y-baseline-ui-foundation.mjs",
     "qa:cross-browser": "node scripts/cross-browser-signoff.mjs",
     "tool:versions": "node scripts/tool-release.js list",
