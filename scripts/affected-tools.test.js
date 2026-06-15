@@ -73,8 +73,8 @@ describe('detectAffectedTargets', () => {
       includeRootAssets: true,
       shouldBuild: true,
       shouldDeploy: true,
-      deployPaths: ['apple-touch-icon.png', 'base64-converter', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'jwt-builder', 'jwt-decoder', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
-      invalidationPaths: ['/', '/apple-touch-icon.png', '/base64-converter/', '/base64-converter/*', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
+      deployPaths: ['ads.txt', 'apple-touch-icon.png', 'base64-converter', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'jwt-builder', 'jwt-decoder', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
+      invalidationPaths: ['/', '/ads.txt', '/apple-touch-icon.png', '/base64-converter/', '/base64-converter/*', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
     });
   });
 
@@ -111,9 +111,20 @@ describe('detectAffectedTargets', () => {
       includeRootAssets: true,
       shouldBuild: true,
       shouldDeploy: true,
-      deployPaths: ['apple-touch-icon.png', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
-      invalidationPaths: ['/', '/apple-touch-icon.png', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
+      deployPaths: ['ads.txt', 'apple-touch-icon.png', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
+      invalidationPaths: ['/', '/ads.txt', '/apple-touch-icon.png', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
     });
+  });
+
+  it('treats the shared analytics head builder as an all-tools rebuild trigger', () => {
+    const result = detectAffectedTargets(['scripts/analytics.js']);
+
+    expect(result.scope).toBe('all-tools');
+    expect(result.affectedTools).toEqual(getToolIds());
+    expect(result.includeRootShell).toBe(true);
+    expect(result.includeRootAssets).toBe(true);
+    expect(result.shouldBuild).toBe(true);
+    expect(result.shouldDeploy).toBe(true);
   });
 
   it('skips docs-only changes', () => {

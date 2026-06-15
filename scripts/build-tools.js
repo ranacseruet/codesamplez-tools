@@ -94,6 +94,11 @@ function main() {
 
 async function mainAsync() {
     const args = parseArgs(process.argv.slice(2));
+    // The webpack child receives NODE_ENV explicitly, but the generated root
+    // assets (ads.txt, sitemap, robots) are produced in this parent process.
+    // Align the parent's NODE_ENV with the build mode so the analytics gate and
+    // dev/prod URL resolution stay consistent across both render paths.
+    process.env.NODE_ENV = args.mode;
     const selection = parseToolSelectionArgs(args.selectionArgv);
     const hasExplicitSelection = args.selectionArgv.length > 0;
     removeLegacyToolBuildDirs(selection);

@@ -6,12 +6,20 @@ const path = require('path');
 const REPO_ROOT = path.resolve(__dirname, '..');
 const ROOT_CONFIG_PATH = path.resolve(REPO_ROOT, 'config/tooling-root.json');
 const TOOL_METADATA_FILENAME = 'tool.meta.json';
+const ADS_TXT_FILENAME = 'ads.txt';
 const DEFAULT_FEATURED_IMAGE_DIRECTORY = 'images';
 const DEFAULT_FEATURED_IMAGE_FILENAME = 'featured.png';
 const DEFAULT_FEATURED_IMAGE_EXTENSION = '.png';
 const DEFAULT_FEATURED_IMAGE_PATH = path.posix.join(DEFAULT_FEATURED_IMAGE_DIRECTORY, DEFAULT_FEATURED_IMAGE_FILENAME);
 const SITE_BASE_URL_ENV_KEY = 'CST_SITE_BASE_URL';
 const SITE_STATIC_ROOT_URI_ENV_KEY = 'CST_SITE_STATIC_ROOT_URI';
+const GA_MEASUREMENT_ID_ENV_KEY = 'CST_GA_MEASUREMENT_ID';
+const ADSENSE_CLIENT_ID_ENV_KEY = 'CST_ADSENSE_CLIENT_ID';
+// GA4 measurement IDs look like "G-XXXXXXXXXX"; AdSense client IDs like
+// "ca-pub-1234567890123456". These are public values embedded in client HTML,
+// so they live in config (with env overrides), not in secret storage.
+const GA_MEASUREMENT_ID_PATTERN = /^G-[A-Z0-9]+$/;
+const ADSENSE_CLIENT_ID_PATTERN = /^ca-pub-\d+$/;
 const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
 
 /**
@@ -22,11 +30,13 @@ const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
  * @typedef {{ id: string, label: string }} CatalogGroupDefinition
  * @typedef {{ title: string, description: string, absoluteUrl: string, staticRootUri: string }} RootPageDefinition
  * @typedef {{ id: string, outputPath: string }} RootShellDefinition
+ * @typedef {{ googleAnalyticsId: string | null, adsenseClientId: string | null }} AnalyticsConfig
  * @typedef {{
  *   siteBaseUrl: string,
  *   siteStaticRootUri: string,
  *   siteName: string,
  *   siteDescription: string,
+ *   analytics: AnalyticsConfig,
  *   rootPage: RootPageDefinition,
  *   catalogGroups: CatalogGroupDefinition[],
  *   tools: ToolDefinition[],
@@ -71,6 +81,7 @@ const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
  *   siteStaticRootUri?: string,
  *   siteName: string,
  *   siteDescription: string,
+ *   analytics: AnalyticsConfig,
  *   rootPage: {
  *     title: string,
  *     description: string
@@ -197,6 +208,63 @@ function resolveSiteStaticRootUri(configuredStaticRootUri, resolvedSiteBaseUrl) 
     }
 
     return resolvedSiteBaseUrl;
+}
+
+/**
+ * Resolve a single analytics id with env override + format validation.
+ * @param {unknown} configuredValue
+ * @param {string | undefined} overrideValue
+ * @param {RegExp} pattern
+ * @param {string} label
+ * @returns {string | null}
+ */
+function resolveAnalyticsId(configuredValue, overrideValue, pattern, label) {
+    const rawValue = typeof overrideValue === 'string' && overrideValue.trim().length > 0
+        ? overrideValue
+        : configuredValue;
+
+    if (typeof rawValue !== 'string' || rawValue.trim().length === 0) {
+        return null;
+    }
+
+    const normalizedValue = rawValue.trim();
+    if (!pattern.test(normalizedValue)) {
+        throw new Error(`${label} must match ${pattern}`);
+    }
+
+    return normalizedValue;
+}
+
+/**
+ * Resolve the analytics/ads configuration. Env overrides win over config, and
+ * injection is disabled entirely in development so local builds stay tracker-free
+ * (mirrors the NODE_ENV gate used by resolveSiteBaseUrl).
+ * @param {unknown} configuredAnalytics
+ * @returns {AnalyticsConfig}
+ */
+function resolveAnalyticsConfig(configuredAnalytics) {
+    if (process.env.NODE_ENV === 'development') {
+        return { googleAnalyticsId: null, adsenseClientId: null };
+    }
+
+    const analyticsRecord = configuredAnalytics && typeof configuredAnalytics === 'object'
+        ? /** @type {Record<string, unknown>} */ (configuredAnalytics)
+        : {};
+
+    return {
+        googleAnalyticsId: resolveAnalyticsId(
+            analyticsRecord.googleAnalyticsId,
+            process.env[GA_MEASUREMENT_ID_ENV_KEY],
+            GA_MEASUREMENT_ID_PATTERN,
+            'Root analytics.googleAnalyticsId'
+        ),
+        adsenseClientId: resolveAnalyticsId(
+            analyticsRecord.adsenseClientId,
+            process.env[ADSENSE_CLIENT_ID_ENV_KEY],
+            ADSENSE_CLIENT_ID_PATTERN,
+            'Root analytics.adsenseClientId'
+        )
+    };
 }
 
 /**
@@ -330,6 +398,7 @@ function loadRootConfig() {
         siteStaticRootUri,
         siteName,
         siteDescription,
+        analytics: resolveAnalyticsConfig(parsedRootConfig.analytics),
         rootPage: {
             title: requireNonEmptyString((/** @type {Record<string, unknown>} */ (rootPage)).title, 'Root rootPage.title'),
             description: requireNonEmptyString((/** @type {Record<string, unknown>} */ (rootPage)).description, 'Root rootPage.description')
@@ -591,6 +660,7 @@ function loadManifest() {
         siteStaticRootUri: rootConfig.siteStaticRootUri,
         siteName: rootConfig.siteName,
         siteDescription: rootConfig.siteDescription,
+        analytics: rootConfig.analytics,
         rootPage: getRootPageDefinition(),
         catalogGroups: rootConfig.catalogGroups.slice(),
         tools: getToolDefinitions(),
@@ -693,10 +763,41 @@ function getSiteDescription() {
 }
 
 /**
+ * @returns {AnalyticsConfig}
+ */
+function getAnalyticsConfig() {
+    return loadRootConfig().analytics;
+}
+
+/**
+ * @returns {string | null}
+ */
+function getGoogleAnalyticsId() {
+    return getAnalyticsConfig().googleAnalyticsId;
+}
+
+/**
+ * @returns {string | null}
+ */
+function getAdsenseClientId() {
+    return getAnalyticsConfig().adsenseClientId;
+}
+
+/**
+ * Root assets deployed to the site root. `ads.txt` is appended only when AdSense
+ * is configured, because it is generated (not copied from source) and only then
+ * does the build emit it — keeping generation, listing, and deploy in lockstep.
  * @returns {string[]}
  */
 function getRootAssets() {
-    return loadManifest().rootAssets.slice();
+    const rootConfig = loadRootConfig();
+    const rootAssets = rootConfig.rootAssets.slice();
+
+    if (rootConfig.analytics.adsenseClientId && !rootAssets.includes(ADS_TXT_FILENAME)) {
+        rootAssets.push(ADS_TXT_FILENAME);
+    }
+
+    return rootAssets;
 }
 
 /**
@@ -801,6 +902,7 @@ function selectTools(requestedTools) {
 }
 
 module.exports = {
+    ADS_TXT_FILENAME,
     DEFAULT_FEATURED_IMAGE_DIRECTORY,
     DEFAULT_FEATURED_IMAGE_EXTENSION,
     DEFAULT_FEATURED_IMAGE_FILENAME,
@@ -811,6 +913,9 @@ module.exports = {
     assertValidToolIds,
     buildAbsoluteUrl,
     dedupeToolIds,
+    getAdsenseClientId,
+    getAnalyticsConfig,
+    getGoogleAnalyticsId,
     getCatalogGroups,
     getGroupedToolDefinitions,
     getRootAssets,
@@ -833,6 +938,7 @@ module.exports = {
     normalizeSelection,
     normalizePublicPath,
     parseToolSelectionArgs,
+    resolveAnalyticsConfig,
     resolveSiteBaseUrl,
     resolveSiteStaticRootUri,
     selectTools,

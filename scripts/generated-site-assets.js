@@ -6,14 +6,17 @@ const { Readable } = require('stream');
 const { spawnSync } = require('child_process');
 const { SitemapStream, streamToPromise } = require('sitemap');
 const {
+    ADS_TXT_FILENAME,
     REPO_ROOT,
     ROOT_CONFIG_PATH,
     buildAbsoluteUrl,
+    getAdsenseClientId,
     getRootPageDefinition,
     getSiteBaseUrl,
     getSiteStaticRootUri,
     getToolDefinitions
 } = require('./tool-manifest');
+const { buildAdsTxt } = require('./analytics');
 
 const SITEMAP_FILENAME = 'sitemap.xml';
 const ROBOTS_FILENAME = 'robots.txt';
@@ -22,6 +25,7 @@ const SHARED_TOOL_LASTMOD_INPUTS = [
     path.resolve(REPO_ROOT, 'common/material-theme.css'),
     path.resolve(REPO_ROOT, 'common/app-shell/app-shell.css'),
     path.resolve(REPO_ROOT, 'common/shared-styles.css'),
+    path.resolve(REPO_ROOT, 'scripts/analytics.js'),
     path.resolve(REPO_ROOT, 'scripts/document-helpers.js'),
     path.resolve(REPO_ROOT, 'scripts/structured-data.js'),
     path.resolve(REPO_ROOT, 'scripts/tool-document.js')
@@ -31,6 +35,7 @@ const ROOT_PAGE_LASTMOD_INPUTS = [
     path.resolve(REPO_ROOT, 'root-shell.ts'),
     path.resolve(REPO_ROOT, 'common/material-theme.css'),
     path.resolve(REPO_ROOT, 'common/app-shell/app-shell.css'),
+    path.resolve(REPO_ROOT, 'scripts/analytics.js'),
     path.resolve(REPO_ROOT, 'scripts/document-helpers.js'),
     path.resolve(REPO_ROOT, 'scripts/root-document.js'),
     path.resolve(REPO_ROOT, 'scripts/structured-data.js')
@@ -184,7 +189,7 @@ function buildRobotsTxt() {
 
 /**
  * @param {{ buildDir?: string, resolveLastmod?: (paths: string[], context: Record<string, unknown>) => string | null }} [options]
- * @returns {Promise<{ sitemapPath: string, robotsPath: string }>}
+ * @returns {Promise<{ sitemapPath: string, robotsPath: string, adsTxtPath: string | null }>}
  */
 async function writeGeneratedSiteAssets(options = {}) {
     const buildDir = path.resolve(options.buildDir || path.join(REPO_ROOT, 'build'));
@@ -199,13 +204,23 @@ async function writeGeneratedSiteAssets(options = {}) {
     fs.writeFileSync(sitemapPath, sitemapXml);
     fs.writeFileSync(robotsPath, `${robotsTxt}\n`);
 
+    // ads.txt only exists when AdSense is configured; skip the file otherwise so
+    // we never ship an empty authorization record.
+    const adsTxt = buildAdsTxt(getAdsenseClientId());
+    const adsTxtPath = adsTxt ? path.join(buildDir, ADS_TXT_FILENAME) : null;
+    if (adsTxtPath) {
+        fs.writeFileSync(adsTxtPath, `${adsTxt}\n`);
+    }
+
     return {
         sitemapPath,
-        robotsPath
+        robotsPath,
+        adsTxtPath
     };
 }
 
 module.exports = {
+    ADS_TXT_FILENAME,
     ROBOTS_FILENAME,
     SITEMAP_FILENAME,
     buildRobotsTxt,

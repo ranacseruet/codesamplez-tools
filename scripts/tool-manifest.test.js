@@ -29,6 +29,7 @@ const {
   normalizeSelection,
   normalizePublicPath,
   parseToolSelectionArgs,
+  resolveAnalyticsConfig,
   resolveSiteBaseUrl,
   resolveSiteStaticRootUri,
   selectTools,
@@ -200,6 +201,7 @@ describe('tool-manifest', () => {
       siteStaticRootUri: PROD_SITE_STATIC_ROOT_URI,
       siteName: 'CodeSamplez Tools',
       siteDescription: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
+      analytics: { googleAnalyticsId: 'G-75J9GJXH5K', adsenseClientId: 'ca-pub-3520433969377647' },
       rootPage: {
         title: ROOT_PAGE_TITLE,
         description: ROOT_PAGE_DESCRIPTION
@@ -215,6 +217,36 @@ describe('tool-manifest', () => {
       },
       rootAssets: ['index.html', 'styles.css', 'robots.txt', 'sitemap.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2']
     });
+  });
+
+  it('resolves analytics ids from config with env overrides and validation', () => {
+    expect(resolveAnalyticsConfig({ googleAnalyticsId: 'G-CONFIG123', adsenseClientId: 'ca-pub-1111111111111111' }))
+      .toEqual({ googleAnalyticsId: 'G-CONFIG123', adsenseClientId: 'ca-pub-1111111111111111' });
+
+    expect(resolveAnalyticsConfig({})).toEqual({ googleAnalyticsId: null, adsenseClientId: null });
+    expect(resolveAnalyticsConfig(undefined)).toEqual({ googleAnalyticsId: null, adsenseClientId: null });
+    expect(resolveAnalyticsConfig({ googleAnalyticsId: '', adsenseClientId: '' }))
+      .toEqual({ googleAnalyticsId: null, adsenseClientId: null });
+
+    expect(withEnv({
+      CST_GA_MEASUREMENT_ID: 'G-ENVOVERRIDE',
+      CST_ADSENSE_CLIENT_ID: 'ca-pub-2222222222222222'
+    }, () => resolveAnalyticsConfig({ googleAnalyticsId: 'G-CONFIG123', adsenseClientId: 'ca-pub-1111111111111111' })))
+      .toEqual({ googleAnalyticsId: 'G-ENVOVERRIDE', adsenseClientId: 'ca-pub-2222222222222222' });
+
+    expect(() => resolveAnalyticsConfig({ googleAnalyticsId: 'not-a-ga-id' }))
+      .toThrow(/googleAnalyticsId/);
+    expect(() => resolveAnalyticsConfig({ adsenseClientId: 'pub-missing-prefix' }))
+      .toThrow(/adsenseClientId/);
+  });
+
+  it('disables analytics entirely in development builds', () => {
+    expect(withEnv({
+      NODE_ENV: 'development',
+      CST_GA_MEASUREMENT_ID: 'G-ENVOVERRIDE',
+      CST_ADSENSE_CLIENT_ID: 'ca-pub-2222222222222222'
+    }, () => resolveAnalyticsConfig({ googleAnalyticsId: 'G-CONFIG123', adsenseClientId: 'ca-pub-1111111111111111' })))
+      .toEqual({ googleAnalyticsId: null, adsenseClientId: null });
   });
 
   it('resolves production, development, and explicit override site base urls', () => {
@@ -382,6 +414,7 @@ describe('tool-manifest', () => {
       siteStaticRootUri: PROD_SITE_STATIC_ROOT_URI,
       siteName: 'CodeSamplez Tools',
       siteDescription: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
+      analytics: { googleAnalyticsId: 'G-75J9GJXH5K', adsenseClientId: 'ca-pub-3520433969377647' },
       rootPage: {
         title: ROOT_PAGE_TITLE,
         description: ROOT_PAGE_DESCRIPTION,
@@ -528,7 +561,8 @@ describe('tool-manifest', () => {
     );
     expect(() => getToolMetadataPath('not-a-real-tool')).toThrow('Unknown tool id');
 
-    expect(getRootAssets()).toEqual(['index.html', 'styles.css', 'robots.txt', 'sitemap.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2']);
+    // ads.txt is appended dynamically because AdSense is configured in tooling-root.json.
+    expect(getRootAssets()).toEqual(['index.html', 'styles.css', 'robots.txt', 'sitemap.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'ads.txt']);
     expect(getRootPageDefinition()).toEqual({
       title: ROOT_PAGE_TITLE,
       description: ROOT_PAGE_DESCRIPTION,

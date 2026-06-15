@@ -11,6 +11,7 @@ const ALL_TOOL_TRIGGER_FILES = new Set([
     'tsconfig.test.json',
     'webpack.config.js',
     'config/tooling-root.json',
+    'scripts/analytics.js',
     'scripts/build-tools.js',
     'scripts/document-helpers.js',
     'scripts/prerender-tool.js',

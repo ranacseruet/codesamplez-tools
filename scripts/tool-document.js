@@ -9,6 +9,7 @@ const {
 } = require('./prerender-tool');
 const { escapeAttribute, escapeHtml, joinUrl } = require('./document-helpers');
 const { buildToolStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
+const { renderAnalyticsHeadMarkup } = require('./analytics');
 const { getToolFaqItems } = require('./tool-faq-metadata');
 const { ensureBabelRegister } = require('./register-node-transforms');
 
@@ -68,6 +69,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     const structuredDataScript = renderStructuredDataScript(buildToolStructuredDataGraph(manifest, tool, {
         faqItems: getToolFaqItems(tool.id)
     }));
+    const analyticsHeadMarkup = renderAnalyticsHeadMarkup(manifest.analytics);
     const scriptTypeAttribute = tool.scriptType === 'module' ? ' type="module"' : '';
     const shellHeaderMarkup = renderToolShellHeaderMarkup(tool);
     const shellFooterMarkup = renderToolShellFooterMarkup(tool);
@@ -105,7 +107,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     <meta name="twitter:image" content="${escapedFeaturedImageUrl}">
     <meta name="twitter:image:alt" content="${escapedFeaturedAlt}">
     <link rel="image_src" href="${escapedFeaturedImageUrl}">
-    ${structuredDataScript}
+    ${structuredDataScript}${analyticsHeadMarkup ? `\n    ${analyticsHeadMarkup}` : ''}
 </head>
 
 <body class="standalone-app">

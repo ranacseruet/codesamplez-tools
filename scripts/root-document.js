@@ -5,6 +5,7 @@ const { escapeAttribute, escapeHtml } = require('./document-helpers');
 const { getGroupedToolDefinitions, loadManifest } = require('./tool-manifest');
 const { renderRootPageIntro, renderRootPagePostIndexSections } = require('./root-page-content');
 const { buildRootStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
+const { renderAnalyticsHeadMarkup } = require('./analytics');
 const { renderInlineIcon } = require('./lucide-icons');
 
 const THEME_COLOR = '#f7f7fa';
@@ -65,6 +66,7 @@ function generateRootDocument() {
     const manifest = loadManifest();
     const groupedTools = getGroupedToolDefinitions();
     const structuredDataScript = renderStructuredDataScript(buildRootStructuredDataGraph(manifest));
+    const analyticsHeadMarkup = renderAnalyticsHeadMarkup(manifest.analytics);
     const escapedTitle = escapeAttribute(manifest.rootPage.title);
     const escapedDescription = escapeAttribute(manifest.rootPage.description);
     const escapedCanonical = escapeAttribute(manifest.rootPage.absoluteUrl);
@@ -95,7 +97,7 @@ function generateRootDocument() {
   <meta name="twitter:description" content="${escapedDescription}">
   <link rel="stylesheet" href="${escapedRootShellStylesUrl}">
   <link rel="stylesheet" href="${escapedRootStylesUrl}">
-  ${structuredDataScript}
+  ${structuredDataScript}${analyticsHeadMarkup ? `\n  ${analyticsHeadMarkup}` : ''}
 </head>
 <body class="landing-page">
   <div id="app-shell-header"></div>

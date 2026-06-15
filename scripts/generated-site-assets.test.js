@@ -225,6 +225,48 @@ describe('generated site assets', () => {
         }
     });
 
+    it('writes ads.txt only when an AdSense client id is configured', async () => {
+        const buildDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cst-generated-assets-'));
+        const previousClientId = process.env.CST_ADSENSE_CLIENT_ID;
+        process.env.CST_ADSENSE_CLIENT_ID = 'ca-pub-1234567890123456';
+
+        try {
+            const result = await writeGeneratedSiteAssets({ buildDir, resolveLastmod: () => null });
+
+            expect(result.adsTxtPath).toBe(path.join(buildDir, 'ads.txt'));
+            expect(fs.readFileSync(result.adsTxtPath, 'utf8'))
+                .toBe('google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\n');
+        } finally {
+            if (typeof previousClientId === 'undefined') {
+                delete process.env.CST_ADSENSE_CLIENT_ID;
+            } else {
+                process.env.CST_ADSENSE_CLIENT_ID = previousClientId;
+            }
+            fs.rmSync(buildDir, { force: true, recursive: true });
+        }
+    });
+
+    it('omits ads.txt when AdSense is disabled (development gate)', async () => {
+        const buildDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cst-generated-assets-'));
+        const previousNodeEnv = process.env.NODE_ENV;
+        // The dev gate nulls the analytics config regardless of the configured id.
+        process.env.NODE_ENV = 'development';
+
+        try {
+            const result = await writeGeneratedSiteAssets({ buildDir, resolveLastmod: () => null });
+
+            expect(result.adsTxtPath).toBeNull();
+            expect(fs.existsSync(path.join(buildDir, 'ads.txt'))).toBe(false);
+        } finally {
+            if (typeof previousNodeEnv === 'undefined') {
+                delete process.env.NODE_ENV;
+            } else {
+                process.env.NODE_ENV = previousNodeEnv;
+            }
+            fs.rmSync(buildDir, { force: true, recursive: true });
+        }
+    });
+
     it('uses the default build directory when one is not provided', async () => {
         await withTemporaryBuildArtifacts(async ({ sitemapPath, robotsPath }) => {
             const result = await writeGeneratedSiteAssets({

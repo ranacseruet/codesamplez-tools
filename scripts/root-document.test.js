@@ -96,4 +96,29 @@ describe('root document generation', () => {
     expect(html).toContain('href="http://localhost:8081/json-formatter/"');
     expect(html).toContain('href="http://localhost:8081/jwt-decoder/"');
   });
+
+  it('injects GA4 and AdSense head scripts when analytics ids are configured', () => {
+    const html = withEnv({
+      CST_GA_MEASUREMENT_ID: 'G-INDEXPAGE1',
+      CST_ADSENSE_CLIENT_ID: 'ca-pub-1234567890123456'
+    }, () => generateRootDocument());
+
+    expect(html).toContain('https://www.googletagmanager.com/gtag/js?id=G-INDEXPAGE1');
+    expect(html).toContain("gtag('config','G-INDEXPAGE1')");
+    expect(html).toContain('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456');
+  });
+
+  it('injects the configured GA4 and AdSense ids from tooling-root config', () => {
+    const html = generateRootDocument();
+
+    expect(html).toContain('https://www.googletagmanager.com/gtag/js?id=G-75J9GJXH5K');
+    expect(html).toContain('client=ca-pub-3520433969377647');
+  });
+
+  it('omits analytics head scripts in development even when ids are configured', () => {
+    const html = withEnv({ NODE_ENV: 'development' }, () => generateRootDocument());
+
+    expect(html).not.toContain('googletagmanager.com');
+    expect(html).not.toContain('googlesyndication.com');
+  });
 });

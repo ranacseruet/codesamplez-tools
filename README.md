@@ -104,9 +104,43 @@ Directory-index routing is handled at the CloudFront viewer-request layer by the
 - CI/CD deploys the function from source when it changes, publishes it to `LIVE`, verifies the live source, and attaches it to the `tools.codesamplez.com` distribution's default cache behavior.
 - The function redirects extensionless tool requests such as `/jwt-decoder` to the canonical trailing-slash URL `/jwt-decoder/` while preserving query string parameters, then rewrites trailing-slash requests such as `/` and `/jwt-decoder/` to `/index.html` and `/jwt-decoder/index.html` before the request reaches the S3 REST origin.
 - The deployment script syncs each selected tool directory as-is, including `build/<tool>/index.html`; the sync uses `--delete`, so stale tool HTML objects are pruned along with stale JS, CSS, and image assets.
-- Root-level assets such as `index.html`, `robots.txt`, and `sitemap.xml` are copied through the root-assets path because they are not inside a tool directory.
+- Root-level assets such as `index.html`, `robots.txt`, `sitemap.xml`, and `ads.txt` (when AdSense is configured) are copied through the root-assets path because they are not inside a tool directory.
 
 The canonical checked build path remains `build/<tool>/index.html`; directory-index behavior belongs in CloudFront rather than duplicate S3 object keys.
+
+## Analytics & Ads
+
+Google Analytics 4 and Google AdSense are injected into every generated page (the index and each tool page) from a single shared head builder, so both render paths stay in parity.
+
+### Configuration
+
+The IDs are **public** values embedded in client HTML — not secrets — so they live in `config/tooling-root.json`:
+
+```json
+"analytics": {
+  "googleAnalyticsId": "G-XXXXXXXXXX",
+  "adsenseClientId": "ca-pub-XXXXXXXXXXXXXXXX"
+}
+```
+
+- `googleAnalyticsId` — GA4 Measurement ID, validated against `^G-[A-Z0-9]+$`.
+- `adsenseClientId` — AdSense Publisher ID, validated against `^ca-pub-\d+$`.
+
+Each field is optional; leave a value empty to disable that channel. Environment variables override the config (useful for CI or staging): `CST_GA_MEASUREMENT_ID` and `CST_ADSENSE_CLIENT_ID`.
+
+### Behavior
+
+- **Production only.** Injection is disabled whenever `NODE_ENV=development`, so local/dev builds (`npm run dev`, `npm run build:dev`) never load trackers or ads — matching the existing `siteBaseUrl` gating.
+- **AdSense uses Auto ads.** Only the AdSense head snippet is emitted; ad placement is managed from the AdSense dashboard, so no per-tool markup is required.
+- **`ads.txt`** is generated into the build root (alongside `robots.txt`/`sitemap.xml`) **only when** an AdSense client id is configured, and is then auto-added to the deployable root assets. Its publisher record is derived from the client id: `google.com, pub-XXXX, DIRECT, f08c47fec0942fa0`.
+
+### Manual dashboard steps (one-time)
+
+These happen outside the repo, in the Google dashboards:
+
+1. **AdSense** — add and verify `tools.codesamplez.com`, then enable **Auto ads**.
+2. **AdSense privacy** — configure the GDPR/EU consent message (there is no in-repo consent banner; the site relies on AdSense's built-in message).
+3. **GA4** — no extra setup beyond supplying the Measurement ID.
 
 The CloudFront Function deployment uses the existing GitHub Actions AWS credentials and `CLOUDFRONT_DISTRIBUTION_ID` secret. Those credentials need permission for `cloudfront:DescribeFunction`, `cloudfront:CreateFunction`, `cloudfront:UpdateFunction`, `cloudfront:TestFunction`, `cloudfront:PublishFunction`, `cloudfront:GetFunction`, `cloudfront:GetDistributionConfig`, and `cloudfront:UpdateDistribution`.
 
