@@ -87,6 +87,10 @@ describe('tool document generation', () => {
         expect(html).toContain(`"url":"${buildSiteHref('/diff-checker/')}"`);
         expect(html).toContain(`"image":"${buildSiteAssetUri('/diff-checker/images/featured.png')}"`);
         expect(html).toContain('<div id="app-shell-header"><header class="cst-shell__header">');
+        expect(html).toContain('<div id="app-shell-share"><nav class="cst-share" aria-label="Share this tool">');
+        expect(html).toContain(`href="https://twitter.com/intent/tweet?text=${encodeURIComponent('Diff Checker')}&amp;url=${encodeURIComponent(buildSiteHref('/diff-checker/'))}"`);
+        expect(html).toContain(`href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(buildSiteHref('/diff-checker/'))}"`);
+        expect(html).toContain('<button type="button" class="cst-share__btn cst-share__btn--copy" aria-label="Copy link"');
         expect(html).toContain('<div id="app-shell-footer"><footer class="cst-shell__footer">');
         expect(html).toContain('<a href="https://codesamplez.com" class="cst-shell__footer-link">CodeSamplez.com</a>');
         expect(html).toContain('<h1 class="cst-shell__title">Diff Checker</h1>');

@@ -354,6 +354,81 @@
   border-radius: 4px;
 }
 
+/* Floating social share rail — fixed to the left edge on wide viewports, sticky
+   while scrolling. Collapses to a static horizontal bar above the footer once the
+   viewport is too narrow to give the rail its own gutter beside the 1280px-max
+   content container (see the max-width: 1400px block below). */
+.cst-share {
+  position: fixed;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cst-share__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--cst-shell-theme-toggle-border, var(--md-sys-color-outline-variant, #bfc9cd));
+  background: var(--cst-shell-theme-toggle-bg, rgba(255, 255, 255, 0.72));
+  color: var(--cst-shell-theme-toggle-text, var(--md-sys-color-on-surface, #141c1e));
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+.cst-share__btn:hover {
+  color: var(--cst-color-accent, var(--md-sys-color-primary));
+  border-color: var(--cst-color-accent, var(--md-sys-color-primary));
+  background: var(--cst-shell-brand-chip-bg, rgba(111, 91, 240, 0.14));
+}
+
+.cst-share__btn:focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, none);
+}
+
+.cst-share__btn.is-copied {
+  color: var(--cst-color-accent, var(--md-sys-color-primary));
+  border-color: var(--cst-color-accent, var(--md-sys-color-primary));
+}
+
+.cst-share__icon {
+  display: inline-flex;
+  font-size: 1.1rem;
+  line-height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cst-share__btn {
+    transition: none;
+  }
+}
+
+@media (max-width: 1400px) {
+  .cst-share {
+    position: static;
+    transform: none;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: var(--container-max-width, var(--default-container-max-width, 1280px));
+    margin: 1rem auto 0;
+  }
+}
+
 @media (max-width: 768px) {
   .cst-shell__header {
     padding: 0.8rem 0.85rem;

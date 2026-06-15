@@ -6,6 +6,7 @@ export interface MountToolShellOptions {
   homeHref?: string;
   headerRootId?: string;
   footerRootId?: string;
+  shareRootId?: string;
   showThemeToggle?: boolean;
 }
 

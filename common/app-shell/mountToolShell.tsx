@@ -1,5 +1,6 @@
 import { render } from 'preact';
 import { ToolShellFooter, ToolShellHeader, createToolBreadcrumbItems } from './AppShell';
+import { ShareBar } from './ShareBar';
 import { SITE_BASE_URL } from '../siteBaseUrl';
 import type { MountToolShellOptions } from '../tooling-contracts';
 
@@ -74,10 +75,12 @@ export function mountToolShell({
     homeHref = SITE_BASE_URL,
     headerRootId = 'app-shell-header',
     footerRootId = 'app-shell-footer',
+    shareRootId = 'app-shell-share',
     showThemeToggle = false
 }: MountToolShellOptions = {}): void {
     const headerRoot = document.getElementById(headerRootId);
     const footerRoot = document.getElementById(footerRootId);
+    const shareRoot = document.getElementById(shareRootId);
     const isStandaloneMode = document.body?.classList.contains('standalone-app');
     const shouldEnableThemeToggle = showThemeToggle || Boolean(isStandaloneMode);
 
@@ -131,6 +134,18 @@ export function mountToolShell({
 
     if (footerRoot) {
         render(<ToolShellFooter homeHref={resolvedHomeHref} />, footerRoot);
+    }
+
+    // The share rail lives only on standalone tool pages. Re-render it on the
+    // client (it survives the server markup being replaced) and derive the URL
+    // from the live location so no per-tool config is needed. Share only the
+    // canonical origin+pathname — never `search`/`hash` — so tools that encode
+    // user input into the URL (e.g. the Base64 converter's `#data=` links) don't
+    // leak that payload to the social platforms, keeping the no-transmission model.
+    if (shareRoot && isStandaloneMode) {
+        const shareTitle = title ?? document.title;
+        const shareUrl = `${window.location.origin}${window.location.pathname}`;
+        render(<ShareBar shareUrl={shareUrl} shareTitle={shareTitle} />, shareRoot);
     }
 
     if (shouldEnableThemeToggle && typeof MutationObserver !== 'undefined' && document.documentElement) {

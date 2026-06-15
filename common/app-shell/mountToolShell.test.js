@@ -30,6 +30,69 @@ describe('mountToolShell', () => {
         expect(document.querySelector('#app-shell-header .cst-shell__tool-menu-trigger')?.textContent).toContain('Browse Tools');
     });
 
+    it('mounts the share rail on standalone tool pages using the live location', () => {
+        document.body.className = 'standalone-app';
+        document.body.innerHTML = `
+            <div id="app-shell-header"></div>
+            <div id="app-shell-share"></div>
+            <div id="app-shell-footer"></div>
+        `;
+
+        mountToolShell({
+            title: 'Diff Checker',
+            description: 'Compare text',
+            homeHref: '/'
+        });
+
+        const shareNav = document.querySelector('#app-shell-share nav.cst-share');
+        expect(shareNav).not.toBeNull();
+        const canonicalUrl = `${window.location.origin}${window.location.pathname}`;
+        const xLink = document.querySelector('#app-shell-share a.cst-share__btn[aria-label="Share on X"]');
+        expect(xLink?.getAttribute('href')).toContain(encodeURIComponent(canonicalUrl));
+        expect(document.querySelector('#app-shell-share button.cst-share__btn--copy')).not.toBeNull();
+    });
+
+    it('strips query/hash payloads from the shared url to avoid leaking user data', () => {
+        window.history.pushState({}, '', '/base64-converter/?data=secret-payload#data=more-secret');
+        document.body.className = 'standalone-app';
+        document.body.innerHTML = `
+            <div id="app-shell-header"></div>
+            <div id="app-shell-share"></div>
+            <div id="app-shell-footer"></div>
+        `;
+
+        mountToolShell({
+            title: 'Base64 Converter',
+            description: 'Encode and decode Base64',
+            homeHref: '/'
+        });
+
+        const links = Array.from(document.querySelectorAll('#app-shell-share a.cst-share__btn'));
+        expect(links.length).toBeGreaterThan(0);
+        links.forEach((link) => {
+            expect(link.getAttribute('href')).not.toContain('secret');
+            expect(link.getAttribute('href')).toContain(encodeURIComponent('/base64-converter/'));
+        });
+
+        window.history.pushState({}, '', '/');
+    });
+
+    it('does not mount the share rail on the non-standalone tools index', () => {
+        document.body.innerHTML = `
+            <div id="app-shell-header"></div>
+            <div id="app-shell-share"></div>
+            <div id="app-shell-footer"></div>
+        `;
+
+        mountToolShell({
+            title: 'Online Developer Tools',
+            description: 'Tools index',
+            homeHref: '/'
+        });
+
+        expect(document.querySelector('#app-shell-share nav.cst-share')).toBeNull();
+    });
+
     it('renders a tool breadcrumb on standalone tool pages', () => {
         document.body.className = 'standalone-app';
         document.body.innerHTML = `

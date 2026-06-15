@@ -144,6 +144,13 @@ These happen outside the repo, in the Google dashboards:
 
 The CloudFront Function deployment uses the existing GitHub Actions AWS credentials and `CLOUDFRONT_DISTRIBUTION_ID` secret. Those credentials need permission for `cloudfront:DescribeFunction`, `cloudfront:CreateFunction`, `cloudfront:UpdateFunction`, `cloudfront:TestFunction`, `cloudfront:PublishFunction`, `cloudfront:GetFunction`, `cloudfront:GetDistributionConfig`, and `cloudfront:UpdateDistribution`.
 
+## Social Sharing
+
+Individual tool pages render a floating social share rail (`common/app-shell/ShareBar.tsx`) — X, LinkedIn, Reddit, Facebook, plus a copy-link button. It is theme-aware (reuses the shell's iris/dark tokens), fixed to the left edge on wide viewports, and collapses to a horizontal bar above the footer below 1200px.
+
+- It is server-rendered into `#app-shell-share` by `scripts/tool-document.js` and re-rendered on the client by `common/app-shell/mountToolShell.tsx`, which derives the share URL from `window.location` (no per-tool config).
+- The tools index has no share rail; the bar mounts only on standalone tool pages.
+
 ## Tool Release Metadata
 
 - List per-tool versions: `npm run tool:versions`

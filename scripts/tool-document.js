@@ -72,6 +72,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     const analyticsHeadMarkup = renderAnalyticsHeadMarkup(manifest.analytics);
     const scriptTypeAttribute = tool.scriptType === 'module' ? ' type="module"' : '';
     const shellHeaderMarkup = renderToolShellHeaderMarkup(tool);
+    const shellShareMarkup = renderToolShellShareMarkup(tool, absolutePageUrl);
     const shellFooterMarkup = renderToolShellFooterMarkup(tool);
     const wrappedBeforeMarkup = beforeAppMarkup
         ? `<div class="c-tool-static-shell c-tool-static-shell--before">${beforeAppMarkup}</div>`
@@ -116,6 +117,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     <div id="${escapedAppRootId}">${prerenderedMarkup}</div>
     ${wrappedAfterMarkup}
     ${relatedToolsMarkup}
+    <div id="app-shell-share">${shellShareMarkup}</div>
     <div id="app-shell-footer">${shellFooterMarkup}</div>
     <script src="${escapedBundleUrl}"${scriptTypeAttribute}></script>
 </body>
@@ -143,6 +145,26 @@ function renderToolShellHeaderMarkup(tool) {
         // Default home href (SITE_BASE_URL) so the server trail matches the client
         // re-render, which resolves homeHref '/' to the same shared base URL.
         breadcrumbItems: createToolBreadcrumbItems(tool.title)
+    }));
+}
+
+/**
+ * @param {ToolDefinition} tool
+ * @param {string} shareUrl
+ * @returns {string}
+ */
+function renderToolShellShareMarkup(tool, shareUrl) {
+    ensureBabelRegister();
+
+    const { h } = require('preact');
+    const renderToString = /** @type {(node: import('preact').VNode) => string} */ (
+        /** @type {unknown} */ (require('preact-render-to-string'))
+    );
+    const { ShareBar } = require('../common/app-shell/ShareBar');
+
+    return renderToString(h(ShareBar, {
+        shareUrl,
+        shareTitle: tool.title
     }));
 }
 
@@ -188,5 +210,6 @@ module.exports = {
     joinUrl,
     renderToolDocument,
     renderToolShellFooterMarkup,
-    renderToolShellHeaderMarkup
+    renderToolShellHeaderMarkup,
+    renderToolShellShareMarkup
 };
