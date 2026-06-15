@@ -1,7 +1,11 @@
 /* Phase E tool-scoped styles for Diff Checker */
 
 .diffc-tool {
-  --sticky-offset-base: 58px;
+  /* No floating/sticky page header on the tools site, so the sticky options
+     bar and result header pin flush to the viewport top — a non-zero offset
+     used to reserve space for a header that no longer exists, leaving a gap
+     above the bar on scroll. */
+  --sticky-offset-base: 0px;
   --diffc-options-height: 68px;
 
   /* Diff accent palette: deliberately more saturated than the semantic
@@ -81,7 +85,7 @@
 
 .diffc-tool .diffc-options {
   position: sticky;
-  top: var(--sticky-offset-base, 80px);
+  top: var(--sticky-offset-base, 0px);
   z-index: 10;
   gap: var(--spacing-sm, var(--default-spacing-sm));
   background:
@@ -121,7 +125,7 @@
   align-items: center;
   gap: 0.9rem;
   position: sticky;
-  top: calc(var(--sticky-offset-base, 58px) + var(--diffc-options-height, 68px));
+  top: calc(var(--sticky-offset-base, 0px) + var(--diffc-options-height, 68px));
   z-index: 9;
   margin: 0;
   padding: 0.85rem 1rem;
