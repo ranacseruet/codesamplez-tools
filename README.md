@@ -108,6 +108,8 @@ Directory-index routing is handled at the CloudFront viewer-request layer by the
 
 The canonical checked build path remains `build/<tool>/index.html`; directory-index behavior belongs in CloudFront rather than duplicate S3 object keys.
 
+Production deploys are **serialized** via a `deploy-main` concurrency group (`cancel-in-progress: false`). Affected-target detection diffs against the immediate predecessor commit (`github.event.before`), so back-to-back merges must deploy one at a time and must never be cancelled — otherwise a commit's changes would be skipped, and concurrent `publish-function` calls would race on the CloudFront Function ETag (`PreconditionFailed`). PR runs are deduplicated separately (stale commits cancelled); main builds still run independently.
+
 ## Analytics & Ads
 
 Google Analytics 4 and Google AdSense are injected into every generated page (the index and each tool page) from a single shared head builder, so both render paths stay in parity.

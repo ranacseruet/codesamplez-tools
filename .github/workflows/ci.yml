@@ -10,6 +10,13 @@ permissions:
   contents: read
   pull-requests: read
 
+# Cancel superseded PR runs (stale commits), but never cancel main runs: on push
+# the group key is unique per run (run_id), so concurrent main builds proceed
+# independently. Deploy serialization is handled separately on the deploy job.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
@@ -146,6 +153,14 @@ jobs:
     needs: test-and-build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    # Serialize production deploys. Affected-target detection diffs against the
+    # immediate predecessor (github.event.before), so back-to-back merges must
+    # deploy one-at-a-time — never cancelled — or a commit's changes would be
+    # skipped. Queuing (cancel-in-progress: false) also removes the CloudFront
+    # publish-function ETag race between concurrent deploys.
+    concurrency:
+      group: deploy-main
+      cancel-in-progress: false
 
     steps:
     - uses: actions/checkout@v4
