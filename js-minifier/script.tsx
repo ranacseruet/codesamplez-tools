@@ -177,8 +177,6 @@ export function JSMinifierApp() {
 
   return (
     <div id="js-minifier-tool" className="js-minifier-container tool-container c-tool-stack">
-      <JSMinifierIntro />
-
       <div className="js-minifier-options c-options-panel c-surface-card">
         <h3>Minification Options</h3>
         <div className="c-checkbox-group">
@@ -304,6 +302,8 @@ export function JSMinifierApp() {
         Copied to clipboard!
       </div>
 
+      {/* Tool-first ordering: About intro + guide below the interactive tool. */}
+      <JSMinifierIntro />
       <JSMinifierArticle />
     </div>
   );

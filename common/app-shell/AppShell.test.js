@@ -100,6 +100,33 @@ describe('AppShell components', () => {
         expect(root.querySelector('nav.cst-shell__breadcrumb')).toBeNull();
     });
 
+    it('omits the page-header band entirely when there is no title, description, or breadcrumb', () => {
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+
+        // The tools index mounts the shell with no title/description, so only the
+        // app bar should render — no page-header band, no h1.
+        render(<ToolShellHeader />, root);
+
+        expect(root.querySelector('.cst-appbar')).not.toBeNull();
+        expect(root.querySelector('a.cst-shell__brand')).not.toBeNull();
+        expect(root.querySelector('.cst-page-header')).toBeNull();
+        expect(root.querySelector('h1')).toBeNull();
+        expect(root.querySelector('.cst-shell__title-wrap')).toBeNull();
+    });
+
+    it('renders the page-header description without an h1 when only a description is provided', () => {
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+
+        render(<ToolShellHeader description="Standalone description" />, root);
+
+        expect(root.querySelector('.cst-page-header')).not.toBeNull();
+        expect(root.querySelector('.cst-shell__title-wrap')).not.toBeNull();
+        expect(root.querySelector('h1')).toBeNull();
+        expect(root.textContent).toContain('Standalone description');
+    });
+
     it('renders a theme toggle when enabled', () => {
         const root = document.createElement('div');
         document.body.appendChild(root);
@@ -124,6 +151,25 @@ describe('AppShell components', () => {
 
         themeToggle.click();
         expect(onToggleTheme).toHaveBeenCalledTimes(1);
+    });
+
+    it('renders the light-mode affordance (sun icon) when the current theme is dark', () => {
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+
+        render(
+            <ToolShellHeader
+                title="Data Format Converter"
+                showThemeToggle={true}
+                themeMode="dark"
+            />,
+            root
+        );
+
+        const themeToggle = root.querySelector('.cst-shell__theme-toggle');
+        expect(themeToggle).not.toBeNull();
+        expect(themeToggle.textContent).toContain('Light mode');
+        expect(themeToggle.getAttribute('aria-pressed')).toBe('true');
     });
 
     it('renders footer accessibility and navigation link', () => {

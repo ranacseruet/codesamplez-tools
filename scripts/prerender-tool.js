@@ -42,15 +42,13 @@ const TOOL_PRERENDER_REGISTRY = {
             const { DiffCheckerApp } = require(path.resolve(__dirname, '../diff-checker/script'));
             return h(DiffCheckerApp, {});
         },
-        createBeforeAppNode: () => {
-            const { h } = require('preact');
-            const { DiffCheckerIntro } = require(path.resolve(__dirname, '../diff-checker/content'));
-            return h(DiffCheckerIntro, {});
-        },
+        // Tool-first ordering: the About intro renders after the tool (alongside the
+        // guide article) rather than above it. Both stay prerendered, so the
+        // keyword-rich copy remains crawlable.
         createAfterAppNode: () => {
-            const { h } = require('preact');
-            const { DiffCheckerArticle } = require(path.resolve(__dirname, '../diff-checker/content'));
-            return h(DiffCheckerArticle, {});
+            const { Fragment, h } = require('preact');
+            const { DiffCheckerArticle, DiffCheckerIntro } = require(path.resolve(__dirname, '../diff-checker/content'));
+            return h(Fragment, null, h(DiffCheckerIntro, {}), h(DiffCheckerArticle, {}));
         }
     },
     'json-formatter-tool': {

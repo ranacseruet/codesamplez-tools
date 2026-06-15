@@ -130,7 +130,7 @@ async function run() {
       const rootDesktop = await desktop.newPage();
       await record('root-index desktop a11y baseline', async () => {
         await rootDesktop.goto(`${baseUrl}/`, { waitUntil: 'networkidle' });
-        await waitVisible(rootDesktop, '.cst-shell__header');
+        await waitVisible(rootDesktop, '.cst-appbar');
         await waitVisible(rootDesktop, '.main-container');
         const report = await analyzePageA11y(rootDesktop);
         return { page: '/', viewport: 'desktop', ...report };
@@ -139,7 +139,7 @@ async function run() {
       const rootMobile = await mobile.newPage();
       await record('root-index mobile a11y baseline', async () => {
         await rootMobile.goto(`${baseUrl}/`, { waitUntil: 'networkidle' });
-        await waitVisible(rootMobile, '.cst-shell__header');
+        await waitVisible(rootMobile, '.cst-appbar');
         await waitVisible(rootMobile, '.main-container');
         const report = await analyzePageA11y(rootMobile);
         return { page: '/', viewport: 'mobile-iphone12', ...report };
@@ -150,7 +150,7 @@ async function run() {
       const converterDesktop = await desktop.newPage();
       await record('data-format-converter desktop a11y baseline', async () => {
         await converterDesktop.goto(`${baseUrl}/data-format-converter/`, { waitUntil: 'networkidle' });
-        await waitVisible(converterDesktop, '#app-shell-header .cst-shell__header');
+        await waitVisible(converterDesktop, '#app-shell-header .cst-appbar');
         await waitVisible(converterDesktop, '#inputText');
         const report = await analyzePageA11y(converterDesktop);
         return { page: '/data-format-converter/', viewport: 'desktop', ...report };
@@ -159,7 +159,7 @@ async function run() {
       const converterMobile = await mobile.newPage();
       await record('data-format-converter mobile a11y baseline', async () => {
         await converterMobile.goto(`${baseUrl}/data-format-converter/`, { waitUntil: 'networkidle' });
-        await waitVisible(converterMobile, '#app-shell-header .cst-shell__header');
+        await waitVisible(converterMobile, '#app-shell-header .cst-appbar');
         await waitVisible(converterMobile, '#inputText');
         const report = await analyzePageA11y(converterMobile);
         return { page: '/data-format-converter/', viewport: 'mobile-iphone12', ...report };
@@ -170,7 +170,7 @@ async function run() {
       const jsMinifierDesktop = await desktop.newPage();
       await record('js-minifier-tool desktop a11y baseline', async () => {
         await jsMinifierDesktop.goto(`${baseUrl}/js-minifier/`, { waitUntil: 'networkidle' });
-        await waitVisible(jsMinifierDesktop, '#app-shell-header .cst-shell__header');
+        await waitVisible(jsMinifierDesktop, '#app-shell-header .cst-appbar');
         await waitVisible(jsMinifierDesktop, '#js-minifier-minify-btn');
         await waitVisible(jsMinifierDesktop, '#js-minifier-input');
         const report = await analyzePageA11y(jsMinifierDesktop);
@@ -180,7 +180,7 @@ async function run() {
       const jsMinifierMobile = await mobile.newPage();
       await record('js-minifier-tool mobile a11y baseline', async () => {
         await jsMinifierMobile.goto(`${baseUrl}/js-minifier/`, { waitUntil: 'networkidle' });
-        await waitVisible(jsMinifierMobile, '#app-shell-header .cst-shell__header');
+        await waitVisible(jsMinifierMobile, '#app-shell-header .cst-appbar');
         await waitVisible(jsMinifierMobile, '#js-minifier-minify-btn');
         await waitVisible(jsMinifierMobile, '#js-minifier-input');
         const report = await analyzePageA11y(jsMinifierMobile);
@@ -192,7 +192,7 @@ async function run() {
       const base64Desktop = await desktop.newPage();
       await record('base64-converter-tool desktop a11y baseline', async () => {
         await base64Desktop.goto(`${baseUrl}/base64-converter/`, { waitUntil: 'networkidle' });
-        await waitVisible(base64Desktop, '#app-shell-header .cst-shell__header');
+        await waitVisible(base64Desktop, '#app-shell-header .cst-appbar');
         await waitVisible(base64Desktop, '#base64converter-mode');
         await waitVisible(base64Desktop, '#base64converter-input');
         const report = await analyzePageA11y(base64Desktop);
@@ -202,7 +202,7 @@ async function run() {
       const base64Mobile = await mobile.newPage();
       await record('base64-converter-tool mobile a11y baseline', async () => {
         await base64Mobile.goto(`${baseUrl}/base64-converter/`, { waitUntil: 'networkidle' });
-        await waitVisible(base64Mobile, '#app-shell-header .cst-shell__header');
+        await waitVisible(base64Mobile, '#app-shell-header .cst-appbar');
         await waitVisible(base64Mobile, '#base64converter-mode');
         await waitVisible(base64Mobile, '#base64converter-input');
         const report = await analyzePageA11y(base64Mobile);
@@ -214,7 +214,7 @@ async function run() {
       const jwtBuilderDesktop = await desktop.newPage();
       await record('jwt-builder-tool desktop a11y baseline', async () => {
         await jwtBuilderDesktop.goto(`${baseUrl}/jwt-builder/`, { waitUntil: 'networkidle' });
-        await waitVisible(jwtBuilderDesktop, '#app-shell-header .cst-shell__header');
+        await waitVisible(jwtBuilderDesktop, '#app-shell-header .cst-appbar');
         await waitVisible(jwtBuilderDesktop, '#jwtForm');
         await waitVisible(jwtBuilderDesktop, '#buildJwtBtn');
         const report = await analyzePageA11y(jwtBuilderDesktop);
@@ -224,7 +224,7 @@ async function run() {
       const jwtBuilderMobile = await mobile.newPage();
       await record('jwt-builder-tool mobile a11y baseline', async () => {
         await jwtBuilderMobile.goto(`${baseUrl}/jwt-builder/`, { waitUntil: 'networkidle' });
-        await waitVisible(jwtBuilderMobile, '#app-shell-header .cst-shell__header');
+        await waitVisible(jwtBuilderMobile, '#app-shell-header .cst-appbar');
         await waitVisible(jwtBuilderMobile, '#jwtForm');
         await waitVisible(jwtBuilderMobile, '#buildJwtBtn');
         const report = await analyzePageA11y(jwtBuilderMobile);
@@ -236,7 +236,7 @@ async function run() {
       const jwtDecoderDesktop = await desktop.newPage();
       await record('jwt-decoder-tool desktop a11y baseline', async () => {
         await jwtDecoderDesktop.goto(`${baseUrl}/jwt-decoder/`, { waitUntil: 'networkidle' });
-        await waitVisible(jwtDecoderDesktop, '#app-shell-header .cst-shell__header');
+        await waitVisible(jwtDecoderDesktop, '#app-shell-header .cst-appbar');
         await waitVisible(jwtDecoderDesktop, '#jwtInputToken');
         await waitVisible(jwtDecoderDesktop, '#jwtSecretKey');
         const report = await analyzePageA11y(jwtDecoderDesktop);
@@ -246,7 +246,7 @@ async function run() {
       const jwtDecoderMobile = await mobile.newPage();
       await record('jwt-decoder-tool mobile a11y baseline', async () => {
         await jwtDecoderMobile.goto(`${baseUrl}/jwt-decoder/`, { waitUntil: 'networkidle' });
-        await waitVisible(jwtDecoderMobile, '#app-shell-header .cst-shell__header');
+        await waitVisible(jwtDecoderMobile, '#app-shell-header .cst-appbar');
         await waitVisible(jwtDecoderMobile, '#jwtInputToken');
         await waitVisible(jwtDecoderMobile, '#jwtSecretKey');
         const report = await analyzePageA11y(jwtDecoderMobile);
@@ -258,7 +258,7 @@ async function run() {
       const jsonFormatterDesktop = await desktop.newPage();
       await record('json-formatter-tool desktop a11y baseline', async () => {
         await jsonFormatterDesktop.goto(`${baseUrl}/json-formatter/`, { waitUntil: 'networkidle' });
-        await waitVisible(jsonFormatterDesktop, '#app-shell-header .cst-shell__header');
+        await waitVisible(jsonFormatterDesktop, '#app-shell-header .cst-appbar');
         await waitVisible(jsonFormatterDesktop, '#formatJsonBtn');
         await waitVisible(jsonFormatterDesktop, '#treeView');
         const report = await analyzePageA11y(jsonFormatterDesktop);
@@ -268,7 +268,7 @@ async function run() {
       const jsonFormatterMobile = await mobile.newPage();
       await record('json-formatter-tool mobile a11y baseline', async () => {
         await jsonFormatterMobile.goto(`${baseUrl}/json-formatter/`, { waitUntil: 'networkidle' });
-        await waitVisible(jsonFormatterMobile, '#app-shell-header .cst-shell__header');
+        await waitVisible(jsonFormatterMobile, '#app-shell-header .cst-appbar');
         await waitVisible(jsonFormatterMobile, '#formatJsonBtn');
         await waitVisible(jsonFormatterMobile, '#treeView');
         const report = await analyzePageA11y(jsonFormatterMobile);
@@ -280,7 +280,7 @@ async function run() {
       const cssMinifierDesktop = await desktop.newPage();
       await record('css-minifier-tool desktop a11y baseline', async () => {
         await cssMinifierDesktop.goto(`${baseUrl}/css-minifier/`, { waitUntil: 'networkidle' });
-        await waitVisible(cssMinifierDesktop, '#app-shell-header .cst-shell__header');
+        await waitVisible(cssMinifierDesktop, '#app-shell-header .cst-appbar');
         await waitVisible(cssMinifierDesktop, '#css-minifier-input');
         await waitVisible(cssMinifierDesktop, '#css-minifier-output');
         const report = await analyzePageA11y(cssMinifierDesktop);
@@ -290,7 +290,7 @@ async function run() {
       const cssMinifierMobile = await mobile.newPage();
       await record('css-minifier-tool mobile a11y baseline', async () => {
         await cssMinifierMobile.goto(`${baseUrl}/css-minifier/`, { waitUntil: 'networkidle' });
-        await waitVisible(cssMinifierMobile, '#app-shell-header .cst-shell__header');
+        await waitVisible(cssMinifierMobile, '#app-shell-header .cst-appbar');
         await waitVisible(cssMinifierMobile, '#css-minifier-input');
         await waitVisible(cssMinifierMobile, '#css-minifier-output');
         const report = await analyzePageA11y(cssMinifierMobile);
@@ -302,7 +302,7 @@ async function run() {
       const textAnalyzerDesktop = await desktop.newPage();
       await record('text-analyzer-tool desktop a11y baseline', async () => {
         await textAnalyzerDesktop.goto(`${baseUrl}/text-analyzer/`, { waitUntil: 'networkidle' });
-        await waitVisible(textAnalyzerDesktop, '#app-shell-header .cst-shell__header');
+        await waitVisible(textAnalyzerDesktop, '#app-shell-header .cst-appbar');
         await waitVisible(textAnalyzerDesktop, '#textInput');
         await waitVisible(textAnalyzerDesktop, '#wordFrequencyChart');
         const report = await analyzePageA11y(textAnalyzerDesktop);
@@ -312,7 +312,7 @@ async function run() {
       const textAnalyzerMobile = await mobile.newPage();
       await record('text-analyzer-tool mobile a11y baseline', async () => {
         await textAnalyzerMobile.goto(`${baseUrl}/text-analyzer/`, { waitUntil: 'networkidle' });
-        await waitVisible(textAnalyzerMobile, '#app-shell-header .cst-shell__header');
+        await waitVisible(textAnalyzerMobile, '#app-shell-header .cst-appbar');
         await waitVisible(textAnalyzerMobile, '#textInput');
         await waitVisible(textAnalyzerMobile, '#wordFrequencyChart');
         const report = await analyzePageA11y(textAnalyzerMobile);
@@ -324,7 +324,7 @@ async function run() {
       const qrDesktop = await desktop.newPage();
       await record('qr-code-generator desktop a11y baseline', async () => {
         await qrDesktop.goto(`${baseUrl}/qr-code-generator/`, { waitUntil: 'networkidle' });
-        await waitVisible(qrDesktop, '#app-shell-header .cst-shell__header');
+        await waitVisible(qrDesktop, '#app-shell-header .cst-appbar');
         await waitVisible(qrDesktop, '#qr-text');
         await waitVisible(qrDesktop, '#download-btn');
         const report = await analyzePageA11y(qrDesktop);
@@ -334,7 +334,7 @@ async function run() {
       const qrMobile = await mobile.newPage();
       await record('qr-code-generator mobile a11y baseline', async () => {
         await qrMobile.goto(`${baseUrl}/qr-code-generator/`, { waitUntil: 'networkidle' });
-        await waitVisible(qrMobile, '#app-shell-header .cst-shell__header');
+        await waitVisible(qrMobile, '#app-shell-header .cst-appbar');
         await waitVisible(qrMobile, '#qr-text');
         await waitVisible(qrMobile, '#download-btn');
         const report = await analyzePageA11y(qrMobile);
@@ -346,7 +346,7 @@ async function run() {
       const diffCheckerDesktop = await desktop.newPage();
       await record('diff-checker-tool desktop a11y baseline', async () => {
         await diffCheckerDesktop.goto(`${baseUrl}/diff-checker/`, { waitUntil: 'networkidle' });
-        await waitVisible(diffCheckerDesktop, '#app-shell-header .cst-shell__header');
+        await waitVisible(diffCheckerDesktop, '#app-shell-header .cst-appbar');
         await waitVisible(diffCheckerDesktop, '#text1');
         await waitVisible(diffCheckerDesktop, '#text2');
         await waitVisible(diffCheckerDesktop, '#diff-result');
@@ -357,7 +357,7 @@ async function run() {
       const diffCheckerMobile = await mobile.newPage();
       await record('diff-checker-tool mobile a11y baseline', async () => {
         await diffCheckerMobile.goto(`${baseUrl}/diff-checker/`, { waitUntil: 'networkidle' });
-        await waitVisible(diffCheckerMobile, '#app-shell-header .cst-shell__header');
+        await waitVisible(diffCheckerMobile, '#app-shell-header .cst-appbar');
         await waitVisible(diffCheckerMobile, '#text1');
         await waitVisible(diffCheckerMobile, '#text2');
         await waitVisible(diffCheckerMobile, '#diff-result');

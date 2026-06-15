@@ -185,17 +185,14 @@ body.standalone-app {
 
   max-width: var(--container-max-width, var(--default-container-max-width));
   margin: 0 auto;
-  background:
-    linear-gradient(
-      180deg,
-      var(--cst-tool-surface-overlay-top, rgba(255, 255, 255, 0.92)),
-      var(--cst-tool-surface-overlay-bottom, rgba(255, 255, 255, 0.82))
-    ),
-    var(--color-bg, transparent);
-  border: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.18));
-  border-radius: var(--border-radius-lg, var(--default-border-radius-lg));
-  box-shadow: var(--box-shadow, none);
-  padding: clamp(1rem, 2vw, var(--spacing-lg, var(--default-spacing-lg)));
+  /* v2 layout: the tool container is a transparent flow column — the inner
+     `c-surface-card` panels carry the borders/shadows so the page reads as one
+     cohesive workbench rather than a bordered box nested inside more boxes. */
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0 clamp(0.85rem, 2vw, var(--spacing-lg, var(--default-spacing-lg)));
   font-family: var(--font-family-base, var(--default-font-family-base));
   font-size: var(--font-size-base, var(--default-font-size-base));
   line-height: var(--line-height-base, var(--default-line-height-base));
@@ -849,6 +846,40 @@ button.c-tooltip-container {
   gap: var(--spacing-lg, var(--default-spacing-lg));
 }
 
+/* v2 workbench: input and output panels sit side-by-side on desktop and stack on
+   narrow screens. Panels stretch to equal height so the tool reads as one app
+   surface rather than a tall vertical stack of boxes. Pair with `.c-toolbar` for
+   the action controls placed above the two columns. */
+.c-workbench {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-md, var(--default-spacing-md));
+  align-items: stretch;
+}
+
+.c-workbench > * {
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .c-workbench--two-col {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Action toolbar: one cohesive strip of controls (reuses the c-action-strip look)
+   that spans the full workbench width above the columns. */
+.c-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.c-toolbar__spacer {
+  flex: 1 1 auto;
+}
+
 .c-surface-card {
   border-radius: var(--radius-lg, 14px);
   border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
@@ -1113,8 +1144,8 @@ button.c-tooltip-container {
 
 .c-related-tools {
   width: 100%;
-  max-width: calc(var(--container-max-width, var(--default-container-max-width, 1280px)) + 2rem + 2px);
-  margin: 1rem auto 0;
+  max-width: var(--container-max-width, var(--default-container-max-width, 1280px));
+  margin: clamp(1.25rem, 3vw, 2rem) auto 0;
   padding: clamp(1rem, 2vw, var(--spacing-lg, var(--default-spacing-lg)));
   box-sizing: border-box;
   background:
@@ -1124,9 +1155,11 @@ button.c-tooltip-container {
 
 .c-tool-static-shell {
   width: 100%;
-  max-width: calc(var(--container-max-width, var(--default-container-max-width, 1280px)) + 2rem + 2px);
+  max-width: var(--container-max-width, var(--default-container-max-width, 1280px));
   margin-left: auto;
   margin-right: auto;
+  padding-inline: clamp(0.85rem, 2vw, var(--spacing-lg, var(--default-spacing-lg)));
+  box-sizing: border-box;
 }
 
 .c-tool-static-shell--before {

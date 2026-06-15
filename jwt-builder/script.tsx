@@ -260,10 +260,6 @@ export function JwtBuilderApp() {
   return (
     <div id="jwt-builder-tool" className="tool-container jwt-builder-container c-tool-stack">
       <div id="notification" className="c-notification" role="status" aria-live="polite" />
-      <JwtBuilderIntro />
-      <div className="o-header jwt-builder-header c-tool-header c-surface-card">
-        <p className="o-description c-tool-description">Create and sign JSON Web Tokens with standard and custom claims</p>
-      </div>
 
       <form id="jwtForm" className="u-flex u-flex-column u-gap-lg jwt-builder-form" onSubmit={(e) => e.preventDefault()}>
         <div className="o-grid-2col jwt-builder-grid">
@@ -410,6 +406,8 @@ export function JwtBuilderApp() {
         </div>
       </div>
 
+      {/* Tool-first ordering: About intro + guide below the interactive tool. */}
+      <JwtBuilderIntro />
       <JwtBuilderArticle />
     </div>
   );

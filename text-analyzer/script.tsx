@@ -97,8 +97,6 @@ export function TextAnalyzerApp() {
 
     return (
         <div className="tool-container text-analyzer-tool c-tool-stack">
-            <TextAnalyzerIntro />
-
             <div className="text-analyzer-editor-container ta-editor-container">
                 <div className="text-analyzer-panel ta-panel ta-input-panel c-surface-card c-surface-panel">
                     <div className="text-analyzer-panel-header ta-panel-header c-surface-panel__header">
@@ -160,6 +158,8 @@ export function TextAnalyzerApp() {
 
             <div id="notification" className="c-notification" role="status" aria-live="polite" />
 
+            {/* Tool-first ordering: About intro + guide below the interactive tool. */}
+            <TextAnalyzerIntro />
             <TextAnalyzerArticle />
         </div>
     );

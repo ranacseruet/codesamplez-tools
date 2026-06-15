@@ -22,23 +22,7 @@ const browserWindow = typeof window !== 'undefined' ? (window as JsonFormatterWi
 export function JsonFormatterApp() {
   return (
     <div id="json-formatter-tool" className="tool-container jsonf-tool c-tool-stack">
-      <JsonFormatterIntro />
-
-      <div className="o-panel jsonf-panel jsonf-input-panel c-surface-card c-surface-panel">
-        <h3>Input JSON</h3>
-        <div className="o-panel-content jsonf-panel-content">
-          <textarea
-            className="c-input c-input--textarea jsonf-input-textarea"
-            placeholder="Paste your JSON here..."
-            aria-label="Input JSON"
-          />
-        </div>
-        <div className="o-panel-content jsonf-panel-content jsonf-status-content">
-          <div className="c-input-status jsonf-input-status" id="jsonErrorStatus" />
-        </div>
-      </div>
-
-      <div className="o-toolbar jsonf-controls-custom jsonf-toolbar c-action-strip">
+      <div className="o-toolbar jsonf-controls-custom jsonf-toolbar c-action-strip c-toolbar">
         <button className="c-button jsonf-format-btn" id="formatJsonBtn" type="button">Format JSON</button>
         <button className="c-button c-button--secondary jsonf-sample-btn" id="loadSampleBtn" type="button">Load Sample</button>
         <div className="c-checkbox-item jsonf-checkbox-item">
@@ -51,36 +35,52 @@ export function JsonFormatterApp() {
         </div>
       </div>
 
-      <div className="o-panel jsonf-panel jsonf-output-panel c-surface-card c-surface-panel">
-        <h3>Formatted Output</h3>
-        <div className="o-panel-header jsonf-panel-header">
-          <button className="c-button c-button--secondary jsonf-copy-btn" id="copyOutputBtn" type="button" disabled>Copy Output</button>
-          <button
-            className="c-button c-button--secondary c-button--icon-download jsonf-download-btn"
-            id="downloadOutputBtn"
-            type="button"
-            disabled
-          >
-            Download
-          </button>
-        </div>
-
-        <div className="jsonf-tabs c-tab-list" role="group" aria-label="Output View">
-          <button className="jsonf-tab c-tab-button active" data-view="tree" aria-pressed="true" type="button">Tree View</button>
-          <button className="jsonf-tab c-tab-button" data-view="plain" aria-pressed="false" type="button">Plain View</button>
-        </div>
-
-        <div className="o-panel-content jsonf-panel-content jsonf-output-content">
-          <div id="treeView" className="view-container active">
-            <pre className="c-code-output jsonf-code-output" tabIndex={0}><code /></pre>
-          </div>
-          <div id="plainView" className="view-container">
+      <div className="c-workbench c-workbench--two-col jsonf-workbench">
+        <div className="o-panel jsonf-panel jsonf-input-panel c-surface-card c-surface-panel">
+          <h3>Input JSON</h3>
+          <div className="o-panel-content jsonf-panel-content">
             <textarea
-              className="c-input c-input--textarea jsonf-plain-textarea"
-              readOnly
-              placeholder="Formatted JSON will appear here..."
-              aria-label="Formatted JSON Output"
+              className="c-input c-input--textarea jsonf-input-textarea"
+              placeholder="Paste your JSON here..."
+              aria-label="Input JSON"
             />
+          </div>
+          <div className="o-panel-content jsonf-panel-content jsonf-status-content">
+            <div className="c-input-status jsonf-input-status" id="jsonErrorStatus" />
+          </div>
+        </div>
+
+        <div className="o-panel jsonf-panel jsonf-output-panel c-surface-card c-surface-panel">
+          <h3>Formatted Output</h3>
+          <div className="o-panel-header jsonf-panel-header">
+            <button className="c-button c-button--secondary jsonf-copy-btn" id="copyOutputBtn" type="button" disabled>Copy Output</button>
+            <button
+              className="c-button c-button--secondary c-button--icon-download jsonf-download-btn"
+              id="downloadOutputBtn"
+              type="button"
+              disabled
+            >
+              Download
+            </button>
+          </div>
+
+          <div className="jsonf-tabs c-tab-list" role="group" aria-label="Output View">
+            <button className="jsonf-tab c-tab-button active" data-view="tree" aria-pressed="true" type="button">Tree View</button>
+            <button className="jsonf-tab c-tab-button" data-view="plain" aria-pressed="false" type="button">Plain View</button>
+          </div>
+
+          <div className="o-panel-content jsonf-panel-content jsonf-output-content">
+            <div id="treeView" className="view-container active">
+              <pre className="c-code-output jsonf-code-output" tabIndex={0}><code /></pre>
+            </div>
+            <div id="plainView" className="view-container">
+              <textarea
+                className="c-input c-input--textarea jsonf-plain-textarea"
+                readOnly
+                placeholder="Formatted JSON will appear here..."
+                aria-label="Formatted JSON Output"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -99,6 +99,9 @@ export function JsonFormatterApp() {
       <div id="notification" className="c-notification" role="status" aria-live="polite" />
       <div className="jsonf-footer c-tool-footer">Made by Developer, for developers with ❤️</div>
 
+      {/* Tool-first ordering: the About intro + guide article render below the
+          interactive tool (still prerendered, so SEO content is preserved). */}
+      <JsonFormatterIntro />
       <JsonFormatterArticle />
     </div>
   );

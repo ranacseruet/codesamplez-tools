@@ -1,31 +1,79 @@
+/* Slim app bar height — used for the fixed bar and the body offset that keeps
+   content clear of it. Lives on :root so both shells (tool + landing) share it. */
+:root {
+  --cst-appbar-height: 3.5rem;
+}
+
+/* Push page content below the fixed app bar, and offset in-page anchor scrolling
+   so hash targets (FAQ links, article sections) are never hidden under the bar.
+   app-shell.css loads on every page, so this covers both shells from one place.
+   Note: on the landing page, `styles.css` loads after this file and sets
+   `.landing-page { padding: ... }` (a shorthand). The `body.landing-page`
+   selector here is intentionally more specific (0,1,1 vs 0,1,0), so this
+   `padding-top` still wins — keep the `body.` prefix to preserve the offset. */
+html {
+  scroll-padding-top: calc(var(--cst-appbar-height) + 0.75rem);
+}
+
+body.standalone-app,
+body.landing-page {
+  padding-top: var(--cst-appbar-height);
+}
+
 .cst-shell__header {
+  display: block;
+}
+
+/* Lift the header wrapper above page content so the fixed app bar and its
+   "Browse Tools" dropdown always stack on top. Needed because the landing page's
+   `.landing-page > * { z-index: 1 }` rule otherwise traps this wrapper beneath
+   `.main-container` (a later sibling at the same z-index), hiding the dropdown. */
+#app-shell-header {
+  position: relative;
+  z-index: 50;
+}
+
+/* Full-bleed bar pinned to the top of the viewport. */
+.cst-appbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  height: var(--cst-appbar-height);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, var(--md-sys-color-outline));
+  background: color-mix(
+    in srgb,
+    var(--cst-shell-header-bg-end, var(--md-sys-color-surface-container)) 86%,
+    transparent
+  );
+  -webkit-backdrop-filter: saturate(140%) blur(12px);
+  backdrop-filter: saturate(140%) blur(12px);
+  box-shadow: var(--cst-shadow-1, none);
+}
+
+.cst-appbar__inner {
   max-width: var(--container-max-width, var(--default-container-max-width, 1280px));
-  margin: 0 auto 1.25rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--md-sys-color-outline-variant, var(--md-sys-color-outline));
-  border-radius: var(--cst-radius-xl, 14px);
-  background:
-    radial-gradient(circle at 100% 0%, var(--cst-shell-header-spot, rgba(188, 236, 242, 0.45)), transparent 50%),
-    linear-gradient(
-      145deg,
-      var(--cst-shell-header-bg-start, #ffffff) 0%,
-      var(--cst-shell-header-bg-end, var(--md-sys-color-surface-container)) 100%
-    );
-  box-shadow: var(--cst-shadow-2, none);
-}
-
-.cst-shell__header-inner {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.cst-shell__header-top {
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 clamp(0.85rem, 2vw, 1.25rem);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  flex-wrap: wrap;
+}
+
+/* Page-header band directly below the bar, constrained to the content column. */
+.cst-page-header {
+  max-width: var(--container-max-width, var(--default-container-max-width, 1280px));
+  margin: 0 auto;
+  padding: clamp(1rem, 2.4vw, 1.6rem) clamp(0.85rem, 2vw, 1.25rem) clamp(0.75rem, 1.6vw, 1rem);
+}
+
+.cst-page-header__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .cst-shell__breadcrumb {
@@ -90,7 +138,7 @@
 }
 
 .cst-shell__brand {
-  align-self: flex-start;
+  align-self: center;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -321,17 +369,16 @@
   line-height: var(--cst-line-height-base, 1.55);
 }
 
+/* v2 layout: the footer reads as a page footer (a hairline separator + breathing
+   room), not another floating card stacked under the content. */
 .cst-shell__footer {
   max-width: var(--container-max-width, var(--default-container-max-width, 1280px));
-  margin: 1rem auto 0;
-  padding: 0.9rem 1rem;
-  border: 1px solid var(--md-sys-color-outline-variant, #d6dfde);
-  border-radius: var(--cst-radius-lg, 12px);
-  background: linear-gradient(
-    180deg,
-    var(--cst-shell-footer-bg-start, rgba(255, 255, 255, 0.75)),
-    var(--cst-shell-footer-bg-end, rgba(238, 243, 244, 0.9))
-  );
+  margin: clamp(1.5rem, 4vw, 2.5rem) auto 0;
+  padding: clamp(1.1rem, 2vw, 1.5rem) clamp(0.85rem, 2vw, 1.25rem) clamp(1.5rem, 3vw, 2rem);
+  border: 0;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #d6dfde);
+  border-radius: 0;
+  background: transparent;
 }
 
 .cst-shell__footer-inner {
@@ -430,33 +477,20 @@
 }
 
 @media (max-width: 768px) {
-  .cst-shell__header {
-    padding: 0.8rem 0.85rem;
-    margin-bottom: 1rem;
-  }
-
-  .cst-shell__header-top {
+  /* The bar stays slim on mobile — brand left, compact actions right. */
+  .cst-appbar__inner {
     gap: 0.5rem;
   }
 
   .cst-shell__header-actions {
-    width: 100%;
-    justify-content: space-between;
+    gap: 0.4rem;
   }
 
-  .cst-shell__tool-menu {
-    width: 100%;
-  }
-
-  .cst-shell__tool-menu-trigger {
-    width: 100%;
-    justify-content: space-between;
-  }
-
+  /* Browse Tools panel drops as a near-full-width overlay below the trigger. */
   .cst-shell__tool-menu-panel {
-    left: 0;
-    right: auto;
-    width: 100%;
+    right: 0;
+    left: auto;
+    width: min(22rem, calc(100vw - 1.5rem));
     grid-template-columns: 1fr;
   }
 

@@ -1,11 +1,10 @@
 /* Phase E tool-scoped styles for Diff Checker */
 
 .diffc-tool {
-  /* No floating/sticky page header on the tools site, so the sticky options
-     bar and result header pin flush to the viewport top — a non-zero offset
-     used to reserve space for a header that no longer exists, leaving a gap
-     above the bar on scroll. */
-  --sticky-offset-base: 0px;
+  /* The shell now has a fixed app bar (`.cst-appbar`, height `--cst-appbar-height`).
+     The sticky options bar and result header must pin *below* that bar instead of
+     flush to the viewport top, otherwise they slide underneath it on scroll. */
+  --sticky-offset-base: var(--cst-appbar-height, 3.5rem);
   --diffc-options-height: 68px;
 
   /* Diff accent palette: deliberately more saturated than the semantic

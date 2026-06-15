@@ -86,10 +86,19 @@ export function ToolShellHeader({
     const themeToggleLabel = isDarkMode ? 'Light mode' : 'Dark mode';
     const themeToggleAriaLabel = isDarkMode ? 'Switch to light mode' : 'Switch to dark mode';
 
+    const hasBreadcrumb = Boolean(breadcrumbItems && breadcrumbItems.length > 0);
+    // The page-header band (breadcrumb + H1 + description) only renders when there
+    // is something to show. The tools index omits it — its own hero inside
+    // `.main-container` is the page H1 — so the bar sits directly above the hero.
+    const hasPageHeader = hasBreadcrumb || Boolean(title) || Boolean(description);
+
     return (
         <header className="cst-shell__header">
-            <div className="cst-shell__header-inner">
-                <div className="cst-shell__header-top">
+            {/* Slim, full-bleed bar pinned to the top of the viewport: brand left,
+                Browse Tools menu + theme toggle right. The page title/breadcrumb live
+                in the page-header band below so the bar stays compact while scrolling. */}
+            <div className="cst-appbar">
+                <div className="cst-appbar__inner">
                     <a className="cst-shell__brand" href={homeHref} aria-label="Back to all tools">
                         <span className="cst-shell__brand-mark" aria-hidden="true">{'</>'}</span>
                         CodeSamplez Tools
@@ -131,32 +140,43 @@ export function ToolShellHeader({
                         ) : null}
                     </div>
                 </div>
-                {breadcrumbItems && breadcrumbItems.length > 0 ? (
-                    <nav className="cst-shell__breadcrumb" aria-label="Breadcrumb">
-                        <ol className="cst-shell__breadcrumb-list">
-                            {breadcrumbItems.map((item, index) => {
-                                const isCurrent = index === breadcrumbItems.length - 1;
-                                return (
-                                    <li className="cst-shell__breadcrumb-item" key={`${item.label}-${index}`}>
-                                        {index > 0 ? (
-                                            <span className="cst-shell__breadcrumb-separator" aria-hidden="true">/</span>
-                                        ) : null}
-                                        {item.href && !isCurrent ? (
-                                            <a className="cst-shell__breadcrumb-link" href={item.href}>{item.label}</a>
-                                        ) : (
-                                            <span className="cst-shell__breadcrumb-current" aria-current="page">{item.label}</span>
-                                        )}
-                                    </li>
-                                );
-                            })}
-                        </ol>
-                    </nav>
-                ) : null}
-                <div className="cst-shell__title-wrap">
-                    <h1 className="cst-shell__title">{title}</h1>
-                    {description ? <p className="cst-shell__description">{description}</p> : null}
+            </div>
+            {/* Page-header band: breadcrumb + H1 + description, constrained to the
+                content column. Kept in the prerendered markup so the H1 and the
+                BreadcrumbList trail stay visible to crawlers. */}
+            {hasPageHeader ? (
+            <div className={`cst-page-header${hasBreadcrumb ? ' cst-page-header--with-breadcrumb' : ''}`}>
+                <div className="cst-page-header__inner">
+                    {hasBreadcrumb ? (
+                        <nav className="cst-shell__breadcrumb" aria-label="Breadcrumb">
+                            <ol className="cst-shell__breadcrumb-list">
+                                {breadcrumbItems!.map((item, index) => {
+                                    const isCurrent = index === breadcrumbItems!.length - 1;
+                                    return (
+                                        <li className="cst-shell__breadcrumb-item" key={`${item.label}-${index}`}>
+                                            {index > 0 ? (
+                                                <span className="cst-shell__breadcrumb-separator" aria-hidden="true">/</span>
+                                            ) : null}
+                                            {item.href && !isCurrent ? (
+                                                <a className="cst-shell__breadcrumb-link" href={item.href}>{item.label}</a>
+                                            ) : (
+                                                <span className="cst-shell__breadcrumb-current" aria-current="page">{item.label}</span>
+                                            )}
+                                        </li>
+                                    );
+                                })}
+                            </ol>
+                        </nav>
+                    ) : null}
+                    {title || description ? (
+                        <div className="cst-shell__title-wrap">
+                            {title ? <h1 className="cst-shell__title">{title}</h1> : null}
+                            {description ? <p className="cst-shell__description">{description}</p> : null}
+                        </div>
+                    ) : null}
                 </div>
             </div>
+            ) : null}
         </header>
     );
 }

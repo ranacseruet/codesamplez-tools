@@ -371,7 +371,6 @@ export class JWTDecoderUI {
 export function JwtDecoderApp() {
     return (
         <div id="jwt-decoder-tool" className="tool-container jwt-decoder-tool c-tool-stack">
-            <JwtDecoderIntro />
             <div className="c-options-panel jwt-decoder-options-panel c-surface-card">
                 <h3>Signature Options</h3>
                 <div className="c-form-group jwt-decoder-options-group">
@@ -494,6 +493,8 @@ export function JwtDecoderApp() {
                 <p>JWT Decoder - Safely decode and verify your JWT tokens. No tokens are stored or transmitted</p>
             </footer>
 
+            {/* Tool-first ordering: About intro + guide below the interactive tool. */}
+            <JwtDecoderIntro />
             <JwtDecoderArticle />
 
             <div id="notification" className="c-notification" role="status" aria-live="polite" />

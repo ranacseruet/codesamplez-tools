@@ -248,8 +248,6 @@ export function CssMinifierApp() {
 
   return (
     <div id="css-minifier-tool" className="css-minifier-container tool-container cssm-tool c-tool-stack">
-      <CssMinifierIntro />
-
       <div className="o-grid-2col cssm-grid">
         <div className="o-panel cssm-panel cssm-input-panel c-surface-card c-surface-panel">
           <div className="o-panel-header cssm-panel-header c-surface-panel__header">
@@ -357,6 +355,8 @@ export function CssMinifierApp() {
         Copied to clipboard!
       </div>
 
+      {/* Tool-first ordering: About intro + guide below the interactive tool. */}
+      <CssMinifierIntro />
       <CssMinifierArticle />
     </div>
   );

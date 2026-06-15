@@ -399,8 +399,6 @@ export default createConverter;
 export function Base64ConverterApp() {
     return (
         <div id="base64converter-tool" className="tool-container b64-tool c-tool-stack">
-            <Base64ConverterIntro />
-
             <div className="o-controls b64-settings-panel c-surface-card">
                 <div className="u-flex u-gap-sm b64-settings-row">
                     <select
@@ -484,6 +482,8 @@ export function Base64ConverterApp() {
                 Copied to clipboard!
             </div>
 
+            {/* Tool-first ordering: About intro + guide below the interactive tool. */}
+            <Base64ConverterIntro />
             <Base64ConverterArticle />
         </div>
     );
