@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { ToolShellFooter, ToolShellHeader } from './AppShell';
+import { ToolShellFooter, ToolShellHeader, createToolBreadcrumbItems } from './AppShell';
 import { SITE_BASE_URL } from '../siteBaseUrl';
 import type { MountToolShellOptions } from '../tooling-contracts';
 
@@ -88,6 +88,12 @@ export function mountToolShell({
 
     let currentThemeMode: ThemeMode = THEME_LIGHT;
     const resolvedHomeHref = homeHref === '/' ? SITE_BASE_URL : homeHref;
+    // The breadcrumb belongs to individual tool pages (standalone shell), not the
+    // tools index. Build it from the current tool title so the re-render on theme
+    // toggle keeps it in place, matching the server-rendered markup.
+    const breadcrumbItems = isStandaloneMode && title
+        ? createToolBreadcrumbItems(title, resolvedHomeHref)
+        : undefined;
 
     if (shouldEnableThemeToggle) {
         currentThemeMode = applyStandaloneThemeMode(
@@ -112,6 +118,7 @@ export function mountToolShell({
                 title={title}
                 description={description}
                 homeHref={resolvedHomeHref}
+                breadcrumbItems={breadcrumbItems}
                 showThemeToggle={shouldEnableThemeToggle}
                 themeMode={currentThemeMode}
                 onToggleTheme={shouldEnableThemeToggle ? handleThemeToggle : undefined}

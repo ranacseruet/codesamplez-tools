@@ -60,10 +60,11 @@ function getToolAppId(tool) {
     return `${tool.absolutePageUrl}#webapplication`;
 }
 
+// Visible breadcrumb root label — must match BREADCRUMB_HOME_LABEL in
+// common/app-shell/AppShell.tsx so the JSON-LD names mirror the on-page trail.
+const BREADCRUMB_HOME_LABEL = 'Home';
+
 /**
- * Breadcrumb structured data is temporarily disabled until the matching breadcrumb UI ships.
- * Keep the ID builder in place so re-enabling the existing schema path is a small change later.
- *
  * @param {ToolDefinition} tool
  * @returns {string}
  */
@@ -137,14 +138,16 @@ function createToolWebPageNode(manifest, tool) {
         mainEntity: {
             '@id': getToolAppId(tool)
         },
-        // Breadcrumb schema stays disabled until the site has a matching breadcrumb UI.
+        breadcrumb: {
+            '@id': getToolBreadcrumbId(tool)
+        },
         primaryImageOfPage: tool.absoluteFeaturedImageUrl
     };
 }
 
 /**
- * Breadcrumb structured data is intentionally kept but not currently emitted.
- * Re-enable it together with the matching breadcrumb UI by wiring this node back into the graph.
+ * BreadcrumbList for the tool page, matching the on-page breadcrumb trail
+ * rendered by ToolShellHeader (Home → tool).
  *
  * @param {ToolManifest} manifest
  * @param {ToolDefinition} tool
@@ -158,7 +161,7 @@ function createToolBreadcrumbNode(manifest, tool) {
             {
                 '@type': 'ListItem',
                 position: 1,
-                name: manifest.rootPage.title,
+                name: BREADCRUMB_HOME_LABEL,
                 item: manifest.rootPage.absoluteUrl
             },
             {
@@ -208,7 +211,7 @@ function buildToolStructuredDataGraph(manifest, tool, options = {}) {
         createWebsiteNode(manifest),
         createToolWebPageNode(manifest, tool),
         createToolApplicationNode(tool),
-        // Intentionally not calling createToolBreadcrumbNode() until the breadcrumb UI exists.
+        createToolBreadcrumbNode(manifest, tool),
         ...(faqItems.length > 0 ? [createToolFaqPageNode(tool, faqItems)] : [])
     ];
 }

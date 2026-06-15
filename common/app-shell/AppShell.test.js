@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { ToolShellFooter, ToolShellHeader } from './AppShell';
+import { ToolShellFooter, ToolShellHeader, createToolBreadcrumbItems } from './AppShell';
 import { SITE_BASE_URL, buildSiteHref } from '../siteBaseUrl';
 
 describe('AppShell components', () => {
@@ -61,6 +61,43 @@ describe('AppShell components', () => {
         const homeLink = root.querySelector('a.cst-shell__brand');
         expect(homeLink).not.toBeNull();
         expect(homeLink?.getAttribute('href')).toBe(SITE_BASE_URL);
+    });
+
+    it('renders a breadcrumb trail when breadcrumb items are provided', () => {
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+
+        render(
+            <ToolShellHeader
+                title="Data Format Converter"
+                homeHref="/"
+                breadcrumbItems={createToolBreadcrumbItems('Data Format Converter', SITE_BASE_URL)}
+            />,
+            root
+        );
+
+        const breadcrumb = root.querySelector('nav.cst-shell__breadcrumb');
+        expect(breadcrumb).not.toBeNull();
+        expect(breadcrumb.getAttribute('aria-label')).toBe('Breadcrumb');
+
+        const homeLink = breadcrumb.querySelector('a.cst-shell__breadcrumb-link');
+        expect(homeLink).not.toBeNull();
+        expect(homeLink.textContent).toBe('Home');
+        expect(homeLink.getAttribute('href')).toBe(SITE_BASE_URL);
+
+        const current = breadcrumb.querySelector('.cst-shell__breadcrumb-current');
+        expect(current).not.toBeNull();
+        expect(current.textContent).toBe('Data Format Converter');
+        expect(current.getAttribute('aria-current')).toBe('page');
+    });
+
+    it('omits the breadcrumb when no breadcrumb items are provided', () => {
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+
+        render(<ToolShellHeader title="Data Format Converter" />, root);
+
+        expect(root.querySelector('nav.cst-shell__breadcrumb')).toBeNull();
     });
 
     it('renders a theme toggle when enabled', () => {

@@ -39,8 +39,6 @@ describe('structured data rendering', () => {
     expect(script).toContain(`"url":"${buildSiteHref('/text-analyzer/')}"`);
     expect(script).toContain('"name":"Is the Text Analyzer tool free to use?"');
     expect(script).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes. It is free."}');
-    expect(script).not.toContain('"@type":"BreadcrumbList"');
-    expect(script).not.toContain('"breadcrumb"');
   });
 
   it('does not emit FAQPage JSON-LD when faq items are omitted', () => {
@@ -50,7 +48,17 @@ describe('structured data rendering', () => {
 
     expect(script).not.toContain('"@type":"FAQPage"');
     expect(script).not.toContain('"@type":"Question"');
-    expect(script).not.toContain('"@type":"BreadcrumbList"');
-    expect(script).not.toContain('"breadcrumb"');
+  });
+
+  it('emits a BreadcrumbList that links the tools index to the current tool', () => {
+    const manifest = loadManifest();
+    const tool = getToolById('diff-checker-tool');
+    const script = renderStructuredDataScript(buildToolStructuredDataGraph(manifest, tool));
+
+    expect(script).toContain('"@type":"BreadcrumbList"');
+    expect(script).toContain(`"@id":"${tool.absolutePageUrl}#breadcrumb"`);
+    expect(script).toContain(`"breadcrumb":{"@id":"${tool.absolutePageUrl}#breadcrumb"}`);
+    expect(script).toContain(`"position":1,"name":"Home","item":"${manifest.rootPage.absoluteUrl}"`);
+    expect(script).toContain(`"position":2,"name":"${tool.title}","item":"${tool.absolutePageUrl}"`);
   });
 });

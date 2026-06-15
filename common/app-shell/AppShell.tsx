@@ -4,6 +4,26 @@ import { MAIN_SITE_URL, SITE_BASE_URL } from '../siteBaseUrl';
 
 type ThemeMode = 'light' | 'dark';
 
+// Visible breadcrumb root label. Kept as a single source of truth so the tool
+// page UI and the BreadcrumbList JSON-LD (scripts/structured-data.js) stay in
+// sync — Google requires the structured-data names to match the on-page trail.
+export const BREADCRUMB_HOME_LABEL = 'Home';
+
+export interface BreadcrumbItem {
+    label: string;
+    href?: string;
+}
+
+// Two-level trail shown on every tool page: Home → <tool>. The default homeHref
+// mirrors the brand link so the breadcrumb root points at the tools index even
+// when a caller omits it.
+export function createToolBreadcrumbItems(toolTitle: string, homeHref: string = SITE_BASE_URL): BreadcrumbItem[] {
+    return [
+        { label: BREADCRUMB_HOME_LABEL, href: homeHref },
+        { label: toolTitle }
+    ];
+}
+
 // The shell header re-renders on theme toggle, so its icons are rendered as
 // inline Lucide-geometry SVGs (Preact-owned) rather than `<i data-lucide>` nodes
 // that the CDN script would swap out from under Preact. Static surfaces (e.g. the
@@ -47,6 +67,7 @@ interface ToolShellHeaderProps {
     title?: string;
     description?: string;
     homeHref?: string;
+    breadcrumbItems?: BreadcrumbItem[];
     showThemeToggle?: boolean;
     themeMode?: ThemeMode;
     onToggleTheme?: () => void;
@@ -56,6 +77,7 @@ export function ToolShellHeader({
     title,
     description,
     homeHref = SITE_BASE_URL,
+    breadcrumbItems,
     showThemeToggle = false,
     themeMode = 'light',
     onToggleTheme
@@ -109,6 +131,27 @@ export function ToolShellHeader({
                         ) : null}
                     </div>
                 </div>
+                {breadcrumbItems && breadcrumbItems.length > 0 ? (
+                    <nav className="cst-shell__breadcrumb" aria-label="Breadcrumb">
+                        <ol className="cst-shell__breadcrumb-list">
+                            {breadcrumbItems.map((item, index) => {
+                                const isCurrent = index === breadcrumbItems.length - 1;
+                                return (
+                                    <li className="cst-shell__breadcrumb-item" key={`${item.label}-${index}`}>
+                                        {index > 0 ? (
+                                            <span className="cst-shell__breadcrumb-separator" aria-hidden="true">/</span>
+                                        ) : null}
+                                        {item.href && !isCurrent ? (
+                                            <a className="cst-shell__breadcrumb-link" href={item.href}>{item.label}</a>
+                                        ) : (
+                                            <span className="cst-shell__breadcrumb-current" aria-current="page">{item.label}</span>
+                                        )}
+                                    </li>
+                                );
+                            })}
+                        </ol>
+                    </nav>
+                ) : null}
                 <div className="cst-shell__title-wrap">
                     <h1 className="cst-shell__title">{title}</h1>
                     {description ? <p className="cst-shell__description">{description}</p> : null}

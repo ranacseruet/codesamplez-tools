@@ -73,8 +73,14 @@ describe('tool document generation', () => {
         expect(html).toContain('<script type="application/ld+json">');
         expect(html).toContain('"@type":"WebPage"');
         expect(html).toContain('"@type":"WebApplication"');
-        expect(html).not.toContain('"@type":"BreadcrumbList"');
-        expect(html).not.toContain('"breadcrumb"');
+        expect(html).toContain('"@type":"BreadcrumbList"');
+        expect(html).toContain(`"breadcrumb":{"@id":"${buildSiteHref('/diff-checker/')}#breadcrumb"}`);
+        expect(html).toContain('"position":1,"name":"Home"');
+        expect(html).toContain('"position":2,"name":"Diff Checker"');
+        // The JSON-LD trail must mirror the visible breadcrumb in the prerendered header.
+        expect(html).toContain('<nav class="cst-shell__breadcrumb" aria-label="Breadcrumb">');
+        expect(html).toContain(`<a class="cst-shell__breadcrumb-link" href="${SITE_BASE_URL}">Home</a>`);
+        expect(html).toContain('<span class="cst-shell__breadcrumb-current" aria-current="page">Diff Checker</span>');
         expect(html).toContain('"operatingSystem":"Any"');
         expect(html).toContain('"price":"0"');
         expect(html).toContain('"priceCurrency":"USD"');

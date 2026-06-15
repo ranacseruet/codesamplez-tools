@@ -28,6 +28,57 @@
   flex-wrap: wrap;
 }
 
+.cst-shell__breadcrumb {
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.cst-shell__breadcrumb-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cst-shell__breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.cst-shell__breadcrumb-separator {
+  color: var(--md-sys-color-on-surface-variant, #596464);
+  opacity: 0.7;
+}
+
+.cst-shell__breadcrumb-link {
+  color: var(--cst-color-accent, var(--md-sys-color-primary));
+  text-decoration: none;
+  text-underline-offset: 0.16em;
+}
+
+.cst-shell__breadcrumb-link:hover {
+  text-decoration: underline;
+}
+
+.cst-shell__breadcrumb-link:focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, none);
+  border-radius: 4px;
+}
+
+.cst-shell__breadcrumb-current {
+  color: var(--md-sys-color-on-surface-variant, #495353);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: min(60vw, 28rem);
+}
+
 /* Inline-SVG / Lucide icon sizing, site-wide (app-shell.css loads on every page). */
 .cst-icon,
 [data-lucide] {

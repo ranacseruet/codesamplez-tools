@@ -133,11 +133,14 @@ function renderToolShellHeaderMarkup(tool) {
     const renderToString = /** @type {(node: import('preact').VNode) => string} */ (
         /** @type {unknown} */ (require('preact-render-to-string'))
     );
-    const { ToolShellHeader } = require('../common/app-shell/AppShell');
+    const { ToolShellHeader, createToolBreadcrumbItems } = require('../common/app-shell/AppShell');
 
     return renderToString(h(ToolShellHeader, {
         title: tool.title,
-        description: tool.description
+        description: tool.description,
+        // Default home href (SITE_BASE_URL) so the server trail matches the client
+        // re-render, which resolves homeHref '/' to the same shared base URL.
+        breadcrumbItems: createToolBreadcrumbItems(tool.title)
     }));
 }
 

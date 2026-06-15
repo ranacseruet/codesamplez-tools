@@ -4,6 +4,7 @@ import { mountToolShell } from './mountToolShell';
 describe('mountToolShell', () => {
     beforeEach(() => {
         document.body.innerHTML = '';
+        document.body.className = '';
         document.documentElement.removeAttribute('data-theme');
         document.documentElement.removeAttribute('data-cst-theme');
         window.localStorage.clear();
@@ -27,6 +28,40 @@ describe('mountToolShell', () => {
         expect(document.querySelector('#app-shell-header .cst-shell__brand')?.getAttribute('href')).toBe(SITE_BASE_URL);
         expect(document.querySelector('#app-shell-footer .cst-shell__footer-link')?.getAttribute('href')).toBe(SITE_BASE_URL);
         expect(document.querySelector('#app-shell-header .cst-shell__tool-menu-trigger')?.textContent).toContain('Browse Tools');
+    });
+
+    it('renders a tool breadcrumb on standalone tool pages', () => {
+        document.body.className = 'standalone-app';
+        document.body.innerHTML = `
+            <div id="app-shell-header"></div>
+            <div id="app-shell-footer"></div>
+        `;
+
+        mountToolShell({
+            title: 'Data Format Converter',
+            description: 'Convert JSON, XML, YAML, and Properties formats',
+            homeHref: '/'
+        });
+
+        const breadcrumb = document.querySelector('#app-shell-header nav.cst-shell__breadcrumb');
+        expect(breadcrumb).not.toBeNull();
+        expect(breadcrumb?.querySelector('a.cst-shell__breadcrumb-link')?.getAttribute('href')).toBe(SITE_BASE_URL);
+        expect(breadcrumb?.querySelector('.cst-shell__breadcrumb-current')?.textContent).toBe('Data Format Converter');
+    });
+
+    it('does not render a breadcrumb on the non-standalone tools index', () => {
+        document.body.innerHTML = `
+            <div id="app-shell-header"></div>
+            <div id="app-shell-footer"></div>
+        `;
+
+        mountToolShell({
+            title: 'Online Developer Tools',
+            description: 'Tools index',
+            homeHref: '/'
+        });
+
+        expect(document.querySelector('#app-shell-header nav.cst-shell__breadcrumb')).toBeNull();
     });
 
     it('supports custom mount root ids', () => {
