@@ -4,6 +4,7 @@ const {
     buildAdsTxt,
     renderAdsenseMarkup,
     renderAnalyticsHeadMarkup,
+    renderAnalyticsResourceHints,
     renderGoogleAnalyticsMarkup
 } = require('./analytics');
 
@@ -16,11 +17,23 @@ describe('analytics head markup', () => {
         expect(markup).toContain('window.dataLayer=window.dataLayer||[]');
     });
 
-    it('renders the AdSense Auto ads loader for a client id', () => {
+    it('lazily injects the AdSense Auto ads loader for a client id', () => {
         const markup = renderAdsenseMarkup('ca-pub-1234567890123456');
 
+        // Loader URL is present, but as a deferred script injection rather than a
+        // render-time <script src> on the critical path.
         expect(markup).toContain('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456');
-        expect(markup).toContain('crossorigin="anonymous"');
+        expect(markup).not.toContain('<script async src=');
+        expect(markup).toContain("s.crossOrigin='anonymous'");
+        // Deferred until first interaction or a short idle fallback.
+        expect(markup).toContain('addEventListener');
+        expect(markup).toContain('setTimeout(load,3500)');
+    });
+
+    it('escapes a script-breakout attempt in the AdSense client id', () => {
+        const markup = renderAdsenseMarkup('ca-pub-</script><script>x');
+        expect(markup).not.toContain('</script><script>x');
+        expect(markup).toContain('\\u003c/script');
     });
 
     it('combines GA4 and AdSense when both ids are configured', () => {
@@ -51,6 +64,26 @@ describe('analytics head markup', () => {
     it('escapes ids defensively when building markup', () => {
         const markup = renderGoogleAnalyticsMarkup('G-A"B');
         expect(markup).toContain('id=G-A&quot;B');
+    });
+});
+
+describe('analytics resource hints', () => {
+    it('preconnects to the ad origins when AdSense is configured', () => {
+        const hints = renderAnalyticsResourceHints({ googleAnalyticsId: null, adsenseClientId: 'ca-pub-1234567890123456' });
+        expect(hints).toContain('rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin');
+        expect(hints).toContain('rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin');
+        expect(hints).not.toContain('googletagmanager.com');
+    });
+
+    it('preconnects to the GA origin when analytics is configured', () => {
+        const hints = renderAnalyticsResourceHints({ googleAnalyticsId: 'G-ABC123XYZ', adsenseClientId: null });
+        expect(hints).toContain('rel="preconnect" href="https://www.googletagmanager.com"');
+        expect(hints).not.toContain('googlesyndication.com');
+    });
+
+    it('returns an empty string when nothing is configured', () => {
+        expect(renderAnalyticsResourceHints({ googleAnalyticsId: null, adsenseClientId: null })).toBe('');
+        expect(renderAnalyticsResourceHints()).toBe('');
     });
 });
 

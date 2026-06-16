@@ -133,7 +133,61 @@ function assertExists(filePath) {
     }
 }
 
+// Cache-Control policy by file type. Without these the S3 objects ship no
+// Cache-Control header, so browsers revalidate every static asset on every visit
+// (observed as a 304 round-trip per asset per load). Every deploy issues a
+// CloudFront invalidation for the changed paths, so the CDN edge is always purged
+// on release — the max-age values below only govern how long a *browser* may reuse
+// a cached copy, never how stale the CDN can get.
+//
+//   .woff2            immutable for a year — font files never change in place.
+//   .js / .css        1 day — bundle filenames are not content-hashed, but the
+//                     deploy invalidation purges the edge, so a returning visitor
+//                     is at most a day behind and JS+CSS move together.
+//   images / icons    1 week.
+//   .txt / .xml       1 hour (robots, sitemap, ads.txt).
+//   .html             must-revalidate, max-age 0 — HTML is the entry point and
+//                     must always reflect the latest deploy.
+const CACHE_CONTROL_HTML = 'public, max-age=0, must-revalidate';
+const CACHE_CONTROL_DIR_ASSETS = 'public, max-age=86400';
+
 /**
+ * Resolve the Cache-Control header value for a root asset based on its extension.
+ * @param {string} assetPath
+ * @returns {string}
+ */
+function cacheControlForAsset(assetPath) {
+    const ext = path.extname(assetPath).toLowerCase();
+    switch (ext) {
+        case '.woff2':
+            return 'public, max-age=31536000, immutable';
+        case '.js':
+        case '.css':
+            return 'public, max-age=86400';
+        case '.png':
+        case '.svg':
+        case '.ico':
+        case '.webp':
+        case '.jpg':
+        case '.jpeg':
+            return 'public, max-age=604800';
+        case '.txt':
+        case '.xml':
+            return 'public, max-age=3600';
+        case '.html':
+            return CACHE_CONTROL_HTML;
+        default:
+            return 'public, max-age=3600';
+    }
+}
+
+/**
+ * Sync a built directory (tool or root-shell) to S3. A single `aws s3 sync` keeps
+ * the HTML and its sibling JS/CSS in lockstep (so a half-deployed page is never
+ * served); the directory-level Cache-Control suits the JS/CSS bundles it carries,
+ * and a follow-up `cp` re-stamps any HTML entry point with the must-revalidate
+ * policy so navigations always pick up the newest deploy. Fonts are not in these
+ * directories — they ship as root assets with their own immutable policy.
  * @param {string} bucket
  * @param {string} sourceDir
  * @param {string} destPrefix
@@ -146,8 +200,24 @@ function syncDirectory(bucket, sourceDir, destPrefix, dryRun) {
         'sync',
         `${sourceDir}/`,
         `s3://${bucket}/${destPrefix}/`,
-        '--delete'
+        '--delete',
+        '--cache-control',
+        CACHE_CONTROL_DIR_ASSETS
     ], dryRun);
+
+    const htmlPath = path.join(sourceDir, 'index.html');
+    if (fs.existsSync(htmlPath)) {
+        runCommand('aws', [
+            's3',
+            'cp',
+            htmlPath,
+            `s3://${bucket}/${destPrefix}/index.html`,
+            '--content-type',
+            'text/html',
+            '--cache-control',
+            CACHE_CONTROL_HTML
+        ], dryRun);
+    }
 }
 
 /**
@@ -158,7 +228,14 @@ function syncDirectory(bucket, sourceDir, destPrefix, dryRun) {
  * @returns {void}
  */
 function copyAsset(bucket, sourcePath, destinationPath, dryRun) {
-    runCommand('aws', ['s3', 'cp', sourcePath, `s3://${bucket}/${destinationPath}`], dryRun);
+    runCommand('aws', [
+        's3',
+        'cp',
+        sourcePath,
+        `s3://${bucket}/${destinationPath}`,
+        '--cache-control',
+        cacheControlForAsset(destinationPath)
+    ], dryRun);
 }
 
 function main() {

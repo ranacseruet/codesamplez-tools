@@ -1,6 +1,6 @@
 // @ts-check
 
-const { escapeAttribute } = require('./document-helpers');
+const { escapeAttribute, escapeJsonForHtml } = require('./document-helpers');
 
 // AdSense ads.txt authorization record fields. The publisher number is derived
 // from the AdSense client id by stripping its "ca-" prefix (ca-pub-XXXX → pub-XXXX).
@@ -23,15 +23,49 @@ function renderGoogleAnalyticsMarkup(googleAnalyticsId) {
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${escapedId}');</script>`;
 }
 
+// Idle delay (ms) after which the AdSense loader is injected even if the visitor
+// has not interacted yet — keeps Auto ads viewable/monetised on bounce/scroll-less
+// sessions while still keeping the ~290 KB of ad JS off the critical path.
+const ADSENSE_IDLE_DELAY_MS = 3500;
+
 /**
- * AdSense Auto ads loader. Placement is managed entirely from the AdSense
- * dashboard, so the page only needs this single async script tag.
+ * AdSense Auto ads loader, lazily injected. Placement is still managed entirely
+ * from the AdSense dashboard, but instead of requesting the ~290 KB adsbygoogle.js
+ * synchronously on load (the dominant page-weight/main-thread cost), we defer the
+ * request until the first user interaction (scroll/pointer/key/touch) or a short
+ * idle fallback — whichever comes first. This unblocks the `load` event and keeps
+ * the ad iframe out of the initial render path without losing ad coverage.
  * @param {string} adsenseClientId
  * @returns {string}
  */
 function renderAdsenseMarkup(adsenseClientId) {
-    const escapedId = escapeAttribute(adsenseClientId);
-    return `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${escapedId}" crossorigin="anonymous"></script>`;
+    const loaderSrc = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`;
+    const jsSafeSrc = escapeJsonForHtml(JSON.stringify(loaderSrc));
+    return `<script>(function(){var d=document,loaded=false,events=['scroll','mousemove','keydown','touchstart','pointerdown'];function load(){if(loaded){return;}loaded=true;events.forEach(function(e){window.removeEventListener(e,load);});var s=d.createElement('script');s.async=true;s.crossOrigin='anonymous';s.src=${jsSafeSrc};(d.head||d.documentElement).appendChild(s);}events.forEach(function(e){window.addEventListener(e,load,{passive:true,once:true});});setTimeout(load,${ADSENSE_IDLE_DELAY_MS});})();</script>`;
+}
+
+/**
+ * Early connection warm-up for the analytics/ads third-party origins. Emitted in
+ * the document head so the TCP+TLS (and QUIC) handshakes to Google's ad/analytics
+ * hosts start before the lazily-injected loaders actually request from them,
+ * shaving the connection time off the ad iframe's first byte. Returns an empty
+ * string when neither channel is configured.
+ * @param {AnalyticsConfig} [analytics]
+ * @returns {string}
+ */
+function renderAnalyticsResourceHints(analytics = { googleAnalyticsId: null, adsenseClientId: null }) {
+    const hints = [];
+
+    if (analytics.adsenseClientId) {
+        hints.push('<link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>');
+        hints.push('<link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin>');
+    }
+
+    if (analytics.googleAnalyticsId) {
+        hints.push('<link rel="preconnect" href="https://www.googletagmanager.com">');
+    }
+
+    return hints.join('\n  ');
 }
 
 /**
@@ -75,5 +109,6 @@ module.exports = {
     buildAdsTxt,
     renderAdsenseMarkup,
     renderAnalyticsHeadMarkup,
+    renderAnalyticsResourceHints,
     renderGoogleAnalyticsMarkup
 };

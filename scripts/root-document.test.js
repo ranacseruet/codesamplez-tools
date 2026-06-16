@@ -40,7 +40,9 @@ describe('root document generation', () => {
     expect(html).toContain(`<link rel="icon" type="image/svg+xml" href="${buildSiteAssetUri('/favicon.svg')}">`);
     expect(html).toContain(`<link rel="apple-touch-icon" href="${buildSiteAssetUri('/apple-touch-icon.png')}">`);
     expect(html).toContain(`<link rel="preload" href="${buildSiteAssetUri('/fonts/Geist-Variable.woff2')}" as="font" type="font/woff2" crossorigin>`);
-    expect(html).toContain(`<link rel="preload" href="${buildSiteAssetUri('/fonts/GeistMono-Variable.woff2')}" as="font" type="font/woff2" crossorigin>`);
+    // The landing page renders no code, so GeistMono is intentionally NOT preloaded
+    // here (kept off the first-paint path); it still loads on demand via @font-face.
+    expect(html).not.toContain(`<link rel="preload" href="${buildSiteAssetUri('/fonts/GeistMono-Variable.woff2')}"`);
     // No third-party font/icon CDNs — assets are self-hosted/inlined.
     expect(html).not.toContain('fonts.googleapis.com');
     expect(html).not.toContain('unpkg.com');
@@ -114,6 +116,11 @@ describe('root document generation', () => {
     expect(html).toContain('https://www.googletagmanager.com/gtag/js?id=G-INDEXPAGE1');
     expect(html).toContain("gtag('config','G-INDEXPAGE1')");
     expect(html).toContain('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456');
+    // AdSense loader is deferred (no render-blocking async <script src>) and the
+    // ad origins are pre-connected in the head.
+    expect(html).not.toContain('<script async src="https://pagead2.googlesyndication.com');
+    expect(html).toContain('<link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>');
+    expect(html).toContain('<link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin>');
   });
 
   it('injects the configured GA4 and AdSense ids from tooling-root config', () => {

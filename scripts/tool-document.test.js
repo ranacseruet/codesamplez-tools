@@ -279,6 +279,11 @@ describe('tool document generation', () => {
         expect(html).toContain('https://www.googletagmanager.com/gtag/js?id=G-TOOLPAGE1');
         expect(html).toContain("gtag('config','G-TOOLPAGE1')");
         expect(html).toContain('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456');
+        // AdSense loader is deferred (no render-blocking async <script src>) and the
+        // ad origins are pre-connected in the head.
+        expect(html).not.toContain('<script async src="https://pagead2.googlesyndication.com');
+        expect(html).toContain('<link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>');
+        expect(html).toContain('<link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin>');
     });
 
     it('injects the configured GA4 and AdSense ids from tooling-root config', () => {

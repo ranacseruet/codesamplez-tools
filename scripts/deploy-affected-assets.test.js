@@ -23,7 +23,7 @@ describe('deploy-affected-assets', () => {
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it('syncs tool HTML with other tool assets instead of copying it separately', () => {
+  it('syncs the tool directory in one pass and stamps cache headers', () => {
     createToolBuild(tempDir, 'jwt-decoder');
 
     const result = spawnSync(process.execPath, [
@@ -39,9 +39,13 @@ describe('deploy-affected-assets', () => {
 
     expect(result.status).toBe(0);
     expect(result.stderr).toBe('');
-    expect(result.stdout).toContain(`[dry-run] aws s3 sync ${path.join(tempDir, 'jwt-decoder')}/ s3://tools.codesamplez.com/jwt-decoder/ --delete`);
+    // Single sync (with --delete) keeps HTML and its sibling JS/CSS in lockstep,
+    // tagged with the directory-level (bundle) cache policy.
+    expect(result.stdout).toContain(`[dry-run] aws s3 sync ${path.join(tempDir, 'jwt-decoder')}/ s3://tools.codesamplez.com/jwt-decoder/ --delete --cache-control public, max-age=86400`);
     expect(result.stdout).not.toContain('--exclude *.html');
-    expect(result.stdout).not.toContain(`aws s3 cp ${path.join(tempDir, 'jwt-decoder', 'index.html')}`);
+    // HTML is then re-stamped with the must-revalidate policy so navigations
+    // always reflect the newest deploy.
+    expect(result.stdout).toContain(`[dry-run] aws s3 cp ${path.join(tempDir, 'jwt-decoder', 'index.html')} s3://tools.codesamplez.com/jwt-decoder/index.html --content-type text/html --cache-control public, max-age=0, must-revalidate`);
     expect(result.stdout).toContain('[dry-run] aws cloudfront create-invalidation --distribution-id DIST123 --paths /jwt-decoder/*');
   });
 });

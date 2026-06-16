@@ -103,8 +103,9 @@ Directory-index routing is handled at the CloudFront viewer-request layer by the
 - The source lives at `infrastructure/cloudfront-functions/RewriteStaticURLs.js`.
 - CI/CD deploys the function from source when it changes, publishes it to `LIVE`, verifies the live source, and attaches it to the `tools.codesamplez.com` distribution's default cache behavior.
 - The function redirects extensionless tool requests such as `/jwt-decoder` to the canonical trailing-slash URL `/jwt-decoder/` while preserving query string parameters, then rewrites trailing-slash requests such as `/` and `/jwt-decoder/` to `/index.html` and `/jwt-decoder/index.html` before the request reaches the S3 REST origin.
-- The deployment script syncs each selected tool directory as-is, including `build/<tool>/index.html`; the sync uses `--delete`, so stale tool HTML objects are pruned along with stale JS, CSS, and image assets.
-- Root-level assets such as `index.html`, `404.html`, `robots.txt`, `sitemap.xml`, `og-home.png`, and `ads.txt` (when AdSense is configured) are copied through the root-assets path because they are not inside a tool directory.
+- The deployment script syncs each selected tool directory as-is, including `build/<tool>/index.html`; the sync uses `--delete`, so stale tool HTML objects are pruned along with stale JS, CSS, and image assets. The sync stamps the directory's JS/CSS with `Cache-Control: public, max-age=86400`, then re-uploads `index.html` with `public, max-age=0, must-revalidate` so navigations always reflect the newest deploy.
+- Root-level assets such as `index.html`, `404.html`, `robots.txt`, `sitemap.xml`, `og-home.png`, and `ads.txt` (when AdSense is configured) are copied through the root-assets path because they are not inside a tool directory. Each is stamped with a per-extension `Cache-Control` policy — fonts (`*.woff2`) get `max-age=31536000, immutable`, images one week, JS/CSS one day, `robots.txt`/`sitemap.xml` one hour, and HTML `max-age=0, must-revalidate`.
+- **CDN invalidation purges the edge on every deploy**, so the `max-age` values above only bound how long a *browser* may reuse a cached copy — the CDN is never stale. Without these headers the S3 objects shipped no `Cache-Control`, forcing a revalidation round-trip per asset on every visit.
 
 The canonical checked build path remains `build/<tool>/index.html`; directory-index behavior belongs in CloudFront rather than duplicate S3 object keys.
 
@@ -134,6 +135,7 @@ Each field is optional; leave a value empty to disable that channel. Environment
 
 - **Production only.** Injection is disabled whenever `NODE_ENV=development`, so local/dev builds (`npm run dev`, `npm run build:dev`) never load trackers or ads — matching the existing `siteBaseUrl` gating.
 - **AdSense uses Auto ads.** Only the AdSense head snippet is emitted; ad placement is managed from the AdSense dashboard, so no per-tool markup is required.
+- **AdSense loads lazily.** Rather than requesting the ~290 KB `adsbygoogle.js` loader synchronously on load (the dominant page weight and main-thread cost), the head emits a tiny inline bootstrap that injects the loader on the first user interaction (`scroll`/`mousemove`/`keydown`/`touchstart`/`pointerdown`) or after a 3.5 s idle fallback — whichever comes first. Auto ads behave identically once the loader runs; this only keeps it off the critical render path. The ad/analytics origins are warmed with `<link rel="preconnect">` so the deferred request still connects quickly.
 - **`ads.txt`** is generated into the build root (alongside `robots.txt`/`sitemap.xml`) **only when** an AdSense client id is configured, and is then auto-added to the deployable root assets. Its publisher record is derived from the client id: `google.com, pub-XXXX, DIRECT, f08c47fec0942fa0`.
 
 ### Manual dashboard steps (one-time)

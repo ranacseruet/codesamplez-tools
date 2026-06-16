@@ -5,7 +5,7 @@ const { escapeAttribute, escapeHtml, formatRootDocumentTitle } = require('./docu
 const { getGroupedToolDefinitions, loadManifest } = require('./tool-manifest');
 const { renderRootPageIntro, renderRootPagePostIndexSections } = require('./root-page-content');
 const { buildRootStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
-const { renderAnalyticsHeadMarkup } = require('./analytics');
+const { renderAnalyticsHeadMarkup, renderAnalyticsResourceHints } = require('./analytics');
 const { renderInlineIcon } = require('./lucide-icons');
 
 const THEME_COLOR = '#f7f7fa';
@@ -22,8 +22,13 @@ const THEME_INIT_SCRIPT = `<script>(function(){try{var t=localStorage.getItem('c
 // v2 design system: self-hosted Geist fonts (icons are inlined SVGs — no CDN).
 // Preloads use the configured static-root absolute URL so they resolve to the
 // same asset origin as the stylesheets (pages and assets can be cross-origin).
+// The landing page renders no code, so only the body/UI font (Geist) is on the
+// first-paint path — GeistMono (~71 KB woff2) is intentionally NOT preloaded here
+// and is still fetched on demand via @font-face (font-display: swap) if any
+// monospace text appears. Tool pages, which mount code editors above the fold,
+// preload both (see tool-document.js).
 function renderFontPreloads(staticRootUri) {
-    return ['Geist-Variable.woff2', 'GeistMono-Variable.woff2']
+    return ['Geist-Variable.woff2']
         .map((file) => `<link rel="preload" href="${escapeAttribute(buildAbsoluteUrl(staticRootUri, `/fonts/${file}`))}" as="font" type="font/woff2" crossorigin>`)
         .join('\n  ');
 }
@@ -72,6 +77,7 @@ function generateRootDocument() {
     const groupedTools = getGroupedToolDefinitions();
     const structuredDataScript = renderStructuredDataScript(buildRootStructuredDataGraph(manifest));
     const analyticsHeadMarkup = renderAnalyticsHeadMarkup(manifest.analytics);
+    const analyticsResourceHints = renderAnalyticsResourceHints(manifest.analytics);
     const escapedTitle = escapeAttribute(manifest.rootPage.title);
     const documentTitle = formatRootDocumentTitle(manifest.rootPage.title, manifest.organization.name);
     const escapedDescription = escapeAttribute(manifest.rootPage.description);
@@ -93,7 +99,7 @@ function generateRootDocument() {
   <meta name="description" content="${escapedDescription}">
   <meta name="theme-color" content="${THEME_COLOR}">
   ${renderFaviconLinks(manifest.siteStaticRootUri)}
-  ${renderFontPreloads(manifest.siteStaticRootUri)}
+  ${renderFontPreloads(manifest.siteStaticRootUri)}${analyticsResourceHints ? `\n  ${analyticsResourceHints}` : ''}
   <link rel="canonical" href="${escapedCanonical}">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="${escapedSiteName}">

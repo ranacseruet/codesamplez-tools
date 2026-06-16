@@ -9,7 +9,7 @@ const {
 } = require('./prerender-tool');
 const { escapeAttribute, escapeHtml, formatToolDocumentTitle, joinUrl } = require('./document-helpers');
 const { buildToolStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
-const { renderAnalyticsHeadMarkup } = require('./analytics');
+const { renderAnalyticsHeadMarkup, renderAnalyticsResourceHints } = require('./analytics');
 const { getToolFaqItems } = require('./tool-faq-metadata');
 const { ensureBabelRegister } = require('./register-node-transforms');
 
@@ -76,6 +76,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
         faqItems: getToolFaqItems(tool.id)
     }));
     const analyticsHeadMarkup = renderAnalyticsHeadMarkup(manifest.analytics);
+    const analyticsResourceHints = renderAnalyticsResourceHints(manifest.analytics);
     const scriptTypeAttribute = tool.scriptType === 'module' ? ' type="module"' : '';
     const shellHeaderMarkup = renderToolShellHeaderMarkup(tool);
     const shellShareMarkup = renderToolShellShareMarkup(tool, absolutePageUrl);
@@ -98,7 +99,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     <meta name="description" content="${escapedDescription}">
     <meta name="theme-color" content="${THEME_COLOR}">
     ${renderFaviconLinks(tool.siteStaticRootUri)}
-    ${renderFontPreloads(tool.siteStaticRootUri)}
+    ${renderFontPreloads(tool.siteStaticRootUri)}${analyticsResourceHints ? `\n    ${analyticsResourceHints}` : ''}
     <link rel="canonical" href="${escapedPageUrl}">
     <link rel="stylesheet" href="${escapedStylesUrl}">
     <meta property="og:type" content="website">
