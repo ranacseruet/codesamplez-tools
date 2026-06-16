@@ -45,6 +45,14 @@ function getWebsiteId(manifest) {
 }
 
 /**
+ * @param {ToolManifest} manifest
+ * @returns {string}
+ */
+function getOrganizationId(manifest) {
+    return `${manifest.siteBaseUrl}#organization`;
+}
+
+/**
  * @param {ToolDefinition} tool
  * @returns {string}
  */
@@ -81,6 +89,27 @@ function getToolFaqPageId(tool) {
 }
 
 /**
+ * Publisher entity. A single Organization node, referenced by @id from the
+ * WebSite/WebPage publisher slots, gives search engines a stable brand entity
+ * (name, logo, social profiles) to anchor the knowledge graph.
+ * @param {ToolManifest} manifest
+ * @returns {Record<string, unknown>}
+ */
+function createOrganizationNode(manifest) {
+    return {
+        '@type': 'Organization',
+        '@id': getOrganizationId(manifest),
+        name: manifest.organization.name,
+        url: manifest.organization.url,
+        logo: {
+            '@type': 'ImageObject',
+            url: manifest.organization.logo
+        },
+        sameAs: manifest.organization.sameAs.length > 0 ? manifest.organization.sameAs : undefined
+    };
+}
+
+/**
  * @param {ToolManifest} manifest
  * @returns {Record<string, unknown>}
  */
@@ -90,7 +119,10 @@ function createWebsiteNode(manifest) {
         '@id': getWebsiteId(manifest),
         name: manifest.siteName,
         description: manifest.siteDescription,
-        url: `${manifest.siteBaseUrl}/`
+        url: `${manifest.siteBaseUrl}/`,
+        publisher: {
+            '@id': getOrganizationId(manifest)
+        }
     };
 }
 
@@ -134,6 +166,9 @@ function createToolWebPageNode(manifest, tool) {
         description: tool.description,
         isPartOf: {
             '@id': getWebsiteId(manifest)
+        },
+        publisher: {
+            '@id': getOrganizationId(manifest)
         },
         mainEntity: {
             '@id': getToolAppId(tool)
@@ -208,6 +243,7 @@ function buildToolStructuredDataGraph(manifest, tool, options = {}) {
     const faqItems = Array.isArray(options.faqItems) ? options.faqItems : [];
 
     return [
+        createOrganizationNode(manifest),
         createWebsiteNode(manifest),
         createToolWebPageNode(manifest, tool),
         createToolApplicationNode(tool),
@@ -229,6 +265,7 @@ function buildRootStructuredDataGraph(manifest) {
     });
 
     return [
+        createOrganizationNode(manifest),
         createWebsiteNode(manifest),
         {
             '@type': 'CollectionPage',
@@ -238,6 +275,9 @@ function buildRootStructuredDataGraph(manifest) {
             description: manifest.rootPage.description,
             isPartOf: {
                 '@id': getWebsiteId(manifest)
+            },
+            publisher: {
+                '@id': getOrganizationId(manifest)
             },
             mainEntity: {
                 '@id': itemListId

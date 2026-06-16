@@ -55,7 +55,7 @@ describe('tool document generation', () => {
             '<section>After payload</section>'
         );
 
-        expect(html).toContain('<title>Diff Checker</title>');
+        expect(html).toContain('<title>Diff Checker – Free Online Tool | CodeSamplez</title>');
         expect(html).toContain('<meta name="description" content="Free online diff checker to quickly compare code or text differences. Perfect for developers, writers, and editors seeking instant results.">');
         expect(html).toContain('<meta name="theme-color" content="#f7f7fa">');
         expect(html).toContain('<html lang="en" data-theme="light">');
@@ -70,7 +70,11 @@ describe('tool document generation', () => {
         expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/diff-checker/styles.main.css')}">`);
         expect(html).toContain('<meta property="og:site_name" content="CodeSamplez Tools">');
         expect(html).toContain(`<meta property="og:image" content="${buildSiteAssetUri('/diff-checker/images/featured.png')}">`);
+        expect(html).toContain('<meta property="og:image:width" content="1200">');
+        expect(html).toContain('<meta property="og:image:height" content="630">');
         expect(html).toContain('<script type="application/ld+json">');
+        expect(html).toContain('"@type":"Organization"');
+        expect(html).toContain('"publisher":{"@id":"');
         expect(html).toContain('"@type":"WebPage"');
         expect(html).toContain('"@type":"WebApplication"');
         expect(html).toContain('"@type":"BreadcrumbList"');
@@ -127,7 +131,7 @@ describe('tool document generation', () => {
     it('renders a classic-script document for qr-code-generator', () => {
         const html = generateToolDocument('qr-code-generator');
 
-        expect(html).toContain('<title>QR Code Generator</title>');
+        expect(html).toContain('<title>QR Code Generator – Free Online Tool | CodeSamplez</title>');
         expect(html).toContain('<div id="qr-code-generator-app">');
         expect(html).toContain(`<script src="${buildSiteAssetUri('/qr-code-generator/bundle.main.js')}"></script>`);
         expect(html).not.toContain(`<script src="${buildSiteAssetUri('/qr-code-generator/bundle.main.js')}" type="module"></script>`);

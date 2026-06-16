@@ -86,9 +86,16 @@ function createMockRootConfig(overrides = {}) {
     siteStaticRootUri: PROD_SITE_STATIC_ROOT_URI,
     siteName: 'CodeSamplez Tools',
     siteDescription: SITE_DESCRIPTION,
+    organization: {
+      name: 'CodeSamplez',
+      url: 'https://codesamplez.com/',
+      logo: 'https://tools.codesamplez.com/apple-touch-icon.png',
+      sameAs: ['https://codesamplez.com/', 'https://github.com/ranacseruet/codesamplez-tools']
+    },
     rootPage: {
       title: ROOT_PAGE_TITLE,
-      description: ROOT_PAGE_DESCRIPTION
+      description: ROOT_PAGE_DESCRIPTION,
+      image: 'og-home.png'
     },
     catalogGroups: [
       { id: 'encoders-decoders', label: 'Encoders & Decoders' }
@@ -97,7 +104,7 @@ function createMockRootConfig(overrides = {}) {
       id: 'root-shell',
       outputPath: 'build/root-shell'
     },
-    rootAssets: ['index.html', 'styles.css', 'robots.txt', 'sitemap.xml'],
+    rootAssets: ['index.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml'],
     ...overrides
   };
 }
@@ -201,10 +208,17 @@ describe('tool-manifest', () => {
       siteStaticRootUri: PROD_SITE_STATIC_ROOT_URI,
       siteName: 'CodeSamplez Tools',
       siteDescription: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
+      organization: {
+        name: 'CodeSamplez',
+        url: 'https://codesamplez.com/',
+        logo: 'https://tools.codesamplez.com/apple-touch-icon.png',
+        sameAs: ['https://codesamplez.com/', 'https://github.com/ranacseruet/codesamplez-tools']
+      },
       analytics: { googleAnalyticsId: 'G-75J9GJXH5K', adsenseClientId: 'ca-pub-3520433969377647' },
       rootPage: {
         title: ROOT_PAGE_TITLE,
-        description: ROOT_PAGE_DESCRIPTION
+        description: ROOT_PAGE_DESCRIPTION,
+        image: 'og-home.png'
       },
       catalogGroups: [
         { id: 'code-formatters', label: 'Code Formatters & Validators' },
@@ -215,7 +229,7 @@ describe('tool-manifest', () => {
         id: 'root-shell',
         outputPath: 'build/root-shell'
       },
-      rootAssets: ['index.html', 'styles.css', 'robots.txt', 'sitemap.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2']
+      rootAssets: ['index.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2']
     });
   });
 
@@ -414,12 +428,19 @@ describe('tool-manifest', () => {
       siteStaticRootUri: PROD_SITE_STATIC_ROOT_URI,
       siteName: 'CodeSamplez Tools',
       siteDescription: 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.',
+      organization: {
+        name: 'CodeSamplez',
+        url: 'https://codesamplez.com/',
+        logo: 'https://tools.codesamplez.com/apple-touch-icon.png',
+        sameAs: ['https://codesamplez.com/', 'https://github.com/ranacseruet/codesamplez-tools']
+      },
       analytics: { googleAnalyticsId: 'G-75J9GJXH5K', adsenseClientId: 'ca-pub-3520433969377647' },
       rootPage: {
         title: ROOT_PAGE_TITLE,
         description: ROOT_PAGE_DESCRIPTION,
         absoluteUrl: `${PROD_SITE_BASE_URL}/`,
-        staticRootUri: `${PROD_SITE_STATIC_ROOT_URI}/`
+        staticRootUri: `${PROD_SITE_STATIC_ROOT_URI}/`,
+        imageUrl: `${PROD_SITE_STATIC_ROOT_URI}/og-home.png`
       },
       catalogGroups: [
         { id: 'code-formatters', label: 'Code Formatters & Validators' },
@@ -434,7 +455,7 @@ describe('tool-manifest', () => {
         id: 'root-shell',
         outputPath: 'build/root-shell'
       },
-      rootAssets: ['index.html', 'styles.css', 'robots.txt', 'sitemap.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2']
+      rootAssets: ['index.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2']
     });
   });
 
@@ -562,12 +583,13 @@ describe('tool-manifest', () => {
     expect(() => getToolMetadataPath('not-a-real-tool')).toThrow('Unknown tool id');
 
     // ads.txt is appended dynamically because AdSense is configured in tooling-root.json.
-    expect(getRootAssets()).toEqual(['index.html', 'styles.css', 'robots.txt', 'sitemap.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'ads.txt']);
+    expect(getRootAssets()).toEqual(['index.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'ads.txt']);
     expect(getRootPageDefinition()).toEqual({
       title: ROOT_PAGE_TITLE,
       description: ROOT_PAGE_DESCRIPTION,
       absoluteUrl: `${PROD_SITE_BASE_URL}/`,
-      staticRootUri: `${PROD_SITE_STATIC_ROOT_URI}/`
+      staticRootUri: `${PROD_SITE_STATIC_ROOT_URI}/`,
+      imageUrl: `${PROD_SITE_STATIC_ROOT_URI}/og-home.png`
     });
     expect(getSiteBaseUrl()).toBe(PROD_SITE_BASE_URL);
     expect(getSiteStaticRootUri()).toBe(PROD_SITE_STATIC_ROOT_URI);

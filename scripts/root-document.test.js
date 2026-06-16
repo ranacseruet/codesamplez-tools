@@ -31,7 +31,7 @@ describe('root document generation', () => {
     it('renders the generated landing page with structured data and grouped tool cards', () => {
         const html = generateRootDocument();
 
-    expect(html).toContain('<title>Online Developer Tools</title>');
+    expect(html).toContain('<title>Online Developer Tools | CodeSamplez</title>');
     expect(html).toContain('<meta name="description" content="Free online developer tools for debugging, formatting and validation needs. Access 10+ utilities to help boost your day-to-day productivity.">');
     expect(html).toContain('<meta name="theme-color" content="#f7f7fa">');
     expect(html).toContain('<html lang="en" data-theme="light">');
@@ -48,6 +48,14 @@ describe('root document generation', () => {
     expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/root-shell/styles.main.css')}">`);
     expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/styles.css')}">`);
     expect(html).toContain('<meta property="og:site_name" content="CodeSamplez Tools">');
+    expect(html).toContain(`<meta property="og:image" content="${buildSiteAssetUri('/og-home.png')}">`);
+    expect(html).toContain('<meta property="og:image:width" content="1200">');
+    expect(html).toContain('<meta property="og:image:height" content="630">');
+    expect(html).toContain('<meta name="twitter:card" content="summary_large_image">');
+    expect(html).toContain(`<meta name="twitter:image" content="${buildSiteAssetUri('/og-home.png')}">`);
+    expect(html).toContain(`<link rel="image_src" href="${buildSiteAssetUri('/og-home.png')}">`);
+    expect(html).toContain('"@type":"Organization"');
+    expect(html).toContain('"publisher":{"@id":"');
     expect(html).toContain('<h1 class="main-title">Online Developer Tools</h1>');
     expect(getHeadingMatches(html, 1)).toHaveLength(1);
     expect(html).toContain('<script type="application/ld+json">');

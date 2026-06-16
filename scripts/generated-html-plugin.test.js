@@ -20,7 +20,7 @@ describe('generated html plugin', () => {
     })).toEqual([
       expect.objectContaining({
         filename: '../index.html',
-        source: expect.stringContaining('<title>Online Developer Tools</title>')
+        source: expect.stringContaining('<title>Online Developer Tools | CodeSamplez</title>')
       }),
       expect.objectContaining({
         filename: 'index.html',
@@ -109,7 +109,7 @@ describe('generated html plugin', () => {
 
     expect(compilation.emitAsset).toHaveBeenCalledTimes(2);
     expect(compilation.emitAsset.mock.calls[0][0]).toBe('../index.html');
-    expect(String(compilation.emitAsset.mock.calls[0][1].source())).toContain('<title>Online Developer Tools</title>');
+    expect(String(compilation.emitAsset.mock.calls[0][1].source())).toContain('<title>Online Developer Tools | CodeSamplez</title>');
     expect(compilation.emitAsset.mock.calls[1][0]).toBe('index.html');
     expect(String(compilation.emitAsset.mock.calls[1][1].source())).toContain('JWT Decoder &amp; Validator');
     expect(compilation.fileDependencies.has(ROOT_CONFIG_PATH)).toBe(true);

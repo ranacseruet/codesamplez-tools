@@ -3,13 +3,23 @@
   "siteStaticRootUri": "https://tools.codesamplez.com/",
   "siteName": "CodeSamplez Tools",
   "siteDescription": "Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.",
+  "organization": {
+    "name": "CodeSamplez",
+    "url": "https://codesamplez.com/",
+    "logo": "https://tools.codesamplez.com/apple-touch-icon.png",
+    "sameAs": [
+      "https://codesamplez.com/",
+      "https://github.com/ranacseruet/codesamplez-tools"
+    ]
+  },
   "analytics": {
     "googleAnalyticsId": "G-75J9GJXH5K",
     "adsenseClientId": "ca-pub-3520433969377647"
   },
   "rootPage": {
     "title": "Online Developer Tools",
-    "description": "Free online developer tools for debugging, formatting and validation needs. Access 10+ utilities to help boost your day-to-day productivity."
+    "description": "Free online developer tools for debugging, formatting and validation needs. Access 10+ utilities to help boost your day-to-day productivity.",
+    "image": "og-home.png"
   },
   "catalogGroups": [
     {
@@ -32,6 +42,7 @@
   "rootAssets": [
     "index.html",
     "styles.css",
+    "og-home.png",
     "robots.txt",
     "sitemap.xml",
     "favicon.ico",

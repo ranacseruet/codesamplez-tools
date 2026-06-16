@@ -42,9 +42,35 @@ function escapeJsonForHtml(json) {
         .replace(/\u2029/g, '\\u2029');
 }
 
+/**
+ * SEO `<title>` for a tool page: tool name + value keyword + brand. Kept distinct
+ * from the on-page H1 / og:title (which stay the plain tool name) so the SERP
+ * snippet carries the "free online tool" intent and brand without altering the
+ * visible heading or structured-data names.
+ * @param {string} toolTitle
+ * @param {string} brandName
+ * @returns {string}
+ */
+function formatToolDocumentTitle(toolTitle, brandName) {
+    return `${toolTitle} \u2013 Free Online Tool | ${brandName}`;
+}
+
+/**
+ * SEO `<title>` for the landing page: page title + brand. The H1 stays the plain
+ * page title.
+ * @param {string} pageTitle
+ * @param {string} brandName
+ * @returns {string}
+ */
+function formatRootDocumentTitle(pageTitle, brandName) {
+    return `${pageTitle} | ${brandName}`;
+}
+
 module.exports = {
     escapeAttribute,
     escapeHtml,
     escapeJsonForHtml,
+    formatRootDocumentTitle,
+    formatToolDocumentTitle,
     joinUrl
 };

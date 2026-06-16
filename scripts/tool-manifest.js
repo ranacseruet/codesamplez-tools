@@ -28,7 +28,8 @@ const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
 
 /**
  * @typedef {{ id: string, label: string }} CatalogGroupDefinition
- * @typedef {{ title: string, description: string, absoluteUrl: string, staticRootUri: string }} RootPageDefinition
+ * @typedef {{ title: string, description: string, absoluteUrl: string, staticRootUri: string, imageUrl: string }} RootPageDefinition
+ * @typedef {{ name: string, url: string, logo: string, sameAs: string[] }} OrganizationDefinition
  * @typedef {{ id: string, outputPath: string }} RootShellDefinition
  * @typedef {{ googleAnalyticsId: string | null, adsenseClientId: string | null }} AnalyticsConfig
  * @typedef {{
@@ -36,6 +37,7 @@ const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
  *   siteStaticRootUri: string,
  *   siteName: string,
  *   siteDescription: string,
+ *   organization: OrganizationDefinition,
  *   analytics: AnalyticsConfig,
  *   rootPage: RootPageDefinition,
  *   catalogGroups: CatalogGroupDefinition[],
@@ -81,10 +83,12 @@ const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
  *   siteStaticRootUri?: string,
  *   siteName: string,
  *   siteDescription: string,
+ *   organization: OrganizationDefinition,
  *   analytics: AnalyticsConfig,
  *   rootPage: {
  *     title: string,
- *     description: string
+ *     description: string,
+ *     image: string
  *   },
  *   catalogGroups: CatalogGroupDefinition[],
  *   rootShell: RootShellDefinition,
@@ -268,6 +272,27 @@ function resolveAnalyticsConfig(configuredAnalytics) {
 }
 
 /**
+ * Publisher entity used for schema.org Organization markup. Required so every
+ * page can declare a consistent publisher (name, logo, social profiles).
+ * @param {unknown} configuredOrganization
+ * @returns {OrganizationDefinition}
+ */
+function resolveOrganization(configuredOrganization) {
+    if (!configuredOrganization || typeof configuredOrganization !== 'object') {
+        throw new Error('Root organization must be an object');
+    }
+
+    const organizationRecord = /** @type {Record<string, unknown>} */ (configuredOrganization);
+
+    return {
+        name: requireNonEmptyString(organizationRecord.name, 'Root organization.name'),
+        url: requireNonEmptyString(organizationRecord.url, 'Root organization.url'),
+        logo: requireNonEmptyString(organizationRecord.logo, 'Root organization.logo'),
+        sameAs: normalizeStringArray(organizationRecord.sameAs, 'Root organization.sameAs')
+    };
+}
+
+/**
  * @param {string} baseUrl
  * @param {string} pathName
  * @returns {string}
@@ -398,10 +423,12 @@ function loadRootConfig() {
         siteStaticRootUri,
         siteName,
         siteDescription,
+        organization: resolveOrganization(parsedRootConfig.organization),
         analytics: resolveAnalyticsConfig(parsedRootConfig.analytics),
         rootPage: {
             title: requireNonEmptyString((/** @type {Record<string, unknown>} */ (rootPage)).title, 'Root rootPage.title'),
-            description: requireNonEmptyString((/** @type {Record<string, unknown>} */ (rootPage)).description, 'Root rootPage.description')
+            description: requireNonEmptyString((/** @type {Record<string, unknown>} */ (rootPage)).description, 'Root rootPage.description'),
+            image: requireNonEmptyString((/** @type {Record<string, unknown>} */ (rootPage)).image, 'Root rootPage.image')
         },
         catalogGroups: normalizedCatalogGroups,
         rootShell: {
@@ -646,7 +673,8 @@ function getRootPageDefinition() {
         title: rootConfig.rootPage.title,
         description: rootConfig.rootPage.description,
         absoluteUrl: `${rootConfig.siteBaseUrl}/`,
-        staticRootUri: `${rootConfig.siteStaticRootUri}/`
+        staticRootUri: `${rootConfig.siteStaticRootUri}/`,
+        imageUrl: buildAbsoluteUrl(rootConfig.siteStaticRootUri, rootConfig.rootPage.image)
     };
 }
 
@@ -660,6 +688,7 @@ function loadManifest() {
         siteStaticRootUri: rootConfig.siteStaticRootUri,
         siteName: rootConfig.siteName,
         siteDescription: rootConfig.siteDescription,
+        organization: rootConfig.organization,
         analytics: rootConfig.analytics,
         rootPage: getRootPageDefinition(),
         catalogGroups: rootConfig.catalogGroups.slice(),

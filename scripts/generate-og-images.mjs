@@ -11,7 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
-const { getToolDefinitions } = require('./tool-manifest');
+const { getToolDefinitions, loadManifest } = require('./tool-manifest');
 const { renderInlineIcon } = require('./lucide-icons');
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -30,8 +30,8 @@ function escapeHtml(value) {
     return String(value).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
 
-function renderCardHtml(tool) {
-    const isLive = tool.status !== 'soon';
+function renderCardHtml(card) {
+    const isLive = card.status !== 'soon';
     const statusLabel = isLive ? 'Live' : 'Soon';
     const statusColor = isLive ? '#4ade80' : '#9a9bab';
     return `<!DOCTYPE html>
@@ -109,10 +109,10 @@ function renderCardHtml(tool) {
     <div class="brand"><span class="mark">&lt;/&gt;</span> CodeSamplez Tools</div>
     <div class="content">
       <div class="body">
-        <div class="tile">${renderInlineIcon(tool.icon || 'wrench')}</div>
-        <div class="title">${escapeHtml(tool.title)}</div>
+        <div class="tile">${renderInlineIcon(card.icon || 'wrench')}</div>
+        <div class="title">${escapeHtml(card.title)}</div>
       </div>
-      <p class="desc" style="margin-top: 30px;">${escapeHtml(tool.indexDescription)}</p>
+      <p class="desc" style="margin-top: 30px;">${escapeHtml(card.description)}</p>
     </div>
     <div class="footer">
       <span class="url">tools.codesamplez.com</span>
@@ -123,23 +123,45 @@ function renderCardHtml(tool) {
 </html>`;
 }
 
+async function renderCardToFile(page, card, outPath) {
+    await page.setContent(renderCardHtml(card), { waitUntil: 'load' });
+    await page.evaluate(() => document.fonts.ready);
+    mkdirSync(path.dirname(outPath), { recursive: true });
+    await page.screenshot({ path: outPath, clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT } });
+    console.log(`✓ ${path.relative(REPO_ROOT, outPath)}`);
+}
+
 async function main() {
     const tools = getToolDefinitions();
+    const manifest = loadManifest();
     const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage({ viewport: { width: WIDTH, height: HEIGHT }, deviceScaleFactor: 1 });
 
     for (const tool of tools) {
-        await page.setContent(renderCardHtml(tool), { waitUntil: 'load' });
-        await page.evaluate(() => document.fonts.ready);
-        const outDir = path.join(REPO_ROOT, tool.sourceRoot, 'images');
-        mkdirSync(outDir, { recursive: true });
-        const outPath = path.join(outDir, 'featured.png');
-        await page.screenshot({ path: outPath, clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT } });
-        console.log(`✓ ${tool.id} → ${path.relative(REPO_ROOT, outPath)}`);
+        await renderCardToFile(
+            page,
+            { title: tool.title, description: tool.indexDescription, icon: tool.icon, status: tool.status },
+            path.join(REPO_ROOT, tool.sourceRoot, 'images', 'featured.png')
+        );
     }
 
+    // Landing-page social card — referenced by rootPage.image and copied to the
+    // site root as a committed root asset. The local filename is the basename of
+    // the configured image URL (e.g. og-home.png).
+    const homeImageFilename = path.posix.basename(new URL(manifest.rootPage.imageUrl).pathname);
+    await renderCardToFile(
+        page,
+        {
+            title: manifest.rootPage.title,
+            description: manifest.rootPage.description,
+            icon: 'wrench',
+            status: 'live'
+        },
+        path.join(REPO_ROOT, homeImageFilename)
+    );
+
     await browser.close();
-    console.log(`\nGenerated ${tools.length} OG images (${WIDTH}x${HEIGHT}).`);
+    console.log(`\nGenerated ${tools.length + 1} OG images (${WIDTH}x${HEIGHT}).`);
 }
 
 main().catch((error) => {
