@@ -12,5 +12,14 @@ export default {
     ['@babel/preset-typescript', {
       allowDeclareFields: true
     }]
-  ]
+  ],
+  env: {
+    // Jest (NODE_ENV=test) compiles modules to CommonJS, where `import.meta` is a
+    // syntax error. Webpack relies on the literal `new Worker(new URL(..., import.meta.url))`
+    // to emit + locate worker chunks, so this rewrite is scoped to tests ONLY and
+    // must never run in the webpack build.
+    test: {
+      plugins: ['babel-plugin-transform-import-meta']
+    }
+  }
 };

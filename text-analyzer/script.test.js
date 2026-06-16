@@ -95,6 +95,28 @@ describe('TextAnalyzer Preact runtime', () => {
         expect(chart.textContent.toLowerCase()).toContain('hello');
     });
 
+    it('analyzes large inputs via the async (worker/fallback) path', async () => {
+        // jsdom has no `Worker`, so the worker-runner falls back to the
+        // main-thread `analyzeText`, but the component still routes large inputs
+        // (> WORKER_CHAR_THRESHOLD chars) through the async effect rather than the
+        // synchronous useMemo branch.
+        new TextAnalyzerToolUI();
+        await flushEffects();
+
+        const largeText = 'word '.repeat(1100); // 5500 chars, 1100 words
+        const input = document.getElementById('textInput');
+        fireEvent.input(input, { target: { value: largeText } });
+
+        // Poll for the async result to land.
+        for (let i = 0; i < 20 && document.getElementById('wordCount')?.textContent !== '1100'; i += 1) {
+            await flushEffects();
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+
+        expect(document.getElementById('wordCount')?.textContent).toBe('1100');
+        expect(document.getElementById('charCount')?.textContent).toBe('5500');
+    });
+
     it('updates punctuation statistics for commas and question marks', async () => {
         new TextAnalyzerToolUI();
         await flushEffects();

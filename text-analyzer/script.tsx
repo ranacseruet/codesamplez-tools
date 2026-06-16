@@ -3,11 +3,22 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { NotificationManager } from '../common/notification-manager';
 import ClearButton from '../common/clear-button/ClearButton';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
-import { analyzeText } from './TextAnalyzer';
+import { analyzeText, type TextAnalysisResult } from './TextAnalyzer';
+import type { WorkerRunner } from '../common/worker-runner';
 import { TextAnalyzerArticle, TextAnalyzerIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 const SAMPLE_TEXT = "This is a sample text for analysis. It has multiple sentences and paragraphs.\n\nLet's see how well it works!";
+
+/**
+ * Inputs at or below this length are analyzed synchronously on the main thread:
+ * the work is sub-millisecond and a worker round-trip would only add latency and
+ * a frame of flicker. Above it, analysis is offloaded to a Web Worker so typing
+ * stays responsive (INP) on very large texts. Kept here (not in analyzer-runner)
+ * so the SSR/prerender graph never imports the worker module, which uses
+ * `import.meta.url` and must only be evaluated in the browser.
+ */
+const WORKER_CHAR_THRESHOLD = 5_000;
 
 const PRIMARY_STATS = [
     ['wordCount', 'Word Count'],
@@ -30,7 +41,59 @@ export function TextAnalyzerApp() {
     const [text, setText] = useState('');
     const textAreaRef = useRef(null);
     const clearButtonRef = useRef(null);
-    const result = useMemo(() => analyzeText(text), [text]);
+    const runnerRef = useRef<WorkerRunner<string, TextAnalysisResult> | null>(null);
+
+    // Small inputs (and the initial paint) are analyzed synchronously: it is
+    // sub-millisecond work, keeps hydration deterministic, and avoids worker
+    // round-trip latency/flicker. Returns null for large inputs so they take the
+    // off-main-thread path below.
+    const syncResult = useMemo(
+        () => (text.length <= WORKER_CHAR_THRESHOLD ? analyzeText(text) : null),
+        [text]
+    );
+    const [asyncResult, setAsyncResult] = useState<TextAnalysisResult | null>(null);
+
+    // Large inputs are offloaded to the worker (with a main-thread fallback baked
+    // into the runner). The runner module is imported lazily so the worker code
+    // (and its `import.meta.url`) is code-split out of the main bundle and never
+    // pulled into the SSR/prerender graph. `active` drops superseded results so
+    // only the latest keystroke's analysis is rendered.
+    useEffect(() => {
+        if (text.length <= WORKER_CHAR_THRESHOLD) {
+            return undefined;
+        }
+        let active = true;
+        import('./analyzer-runner').then(({ createAnalyzerRunner }) => {
+            if (!active) {
+                return;
+            }
+            if (!runnerRef.current) {
+                runnerRef.current = createAnalyzerRunner();
+            }
+            runnerRef.current.run(text).then((analysis) => {
+                if (active) {
+                    setAsyncResult(analysis);
+                }
+            });
+        }).catch(() => {
+            // The lazy chunk itself failed to load (e.g. cache-skew deploy or a
+            // transient network error) — that is before the worker-runner's own
+            // fallback can engage, so degrade to a direct main-thread analysis
+            // rather than leaving large inputs stuck on a stale/empty result.
+            if (active) {
+                setAsyncResult(analyzeText(text));
+            }
+        });
+        return () => {
+            active = false;
+        };
+    }, [text]);
+
+    useEffect(() => () => runnerRef.current?.terminate(), []);
+
+    // Prefer the fresh synchronous result; for large inputs fall through to the
+    // most recent worker result until the next one arrives.
+    const result = syncResult ?? asyncResult ?? analyzeText('');
 
     useEffect(() => {
         if (!(textAreaRef.current instanceof HTMLTextAreaElement)) {
