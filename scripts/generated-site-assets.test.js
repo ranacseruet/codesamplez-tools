@@ -10,6 +10,7 @@ const {
     buildSitemapEntries,
     buildSitemapXml,
     resolveGitLastmodForPaths,
+    toSitemapUrlItem,
     writeGeneratedSiteAssets
 } = require('./generated-site-assets');
 
@@ -81,6 +82,63 @@ describe('generated site assets', () => {
         expect(locations.some((location) => location.endsWith('/index.html'))).toBe(false);
         expect(locations.some((location) => location.includes('/styles.css'))).toBe(false);
         expect(locations.some((location) => location.includes('/root-shell/'))).toBe(false);
+    });
+
+    it('attaches an image entry (loc, title, caption) to the root page and every tool page', async () => {
+        const xml = await buildSitemapXml({ resolveLastmod: () => null });
+
+        expect(xml).toContain('xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"');
+
+        const urls = parseSitemap(xml);
+        const rootImage = urls[0]['image:image'];
+        expect(rootImage['image:loc']).toBe(getRootPageDefinition().imageUrl);
+        expect(rootImage['image:title']).toBe(getRootPageDefinition().title);
+
+        urls.forEach((entry) => {
+            expect(entry['image:image']).toBeDefined();
+            expect(typeof entry['image:image']['image:loc']).toBe('string');
+        });
+
+        const [firstTool] = getToolDefinitions();
+        const firstToolEntry = urls.find((entry) => entry.loc === firstTool.absolutePageUrl);
+        expect(firstToolEntry['image:image']['image:loc']).toBe(firstTool.absoluteFeaturedImageUrl);
+        expect(firstToolEntry['image:image']['image:title']).toBe(firstTool.title);
+    });
+
+    it('maps sitemap url items, emitting lastmod and img only when present', () => {
+        expect(toSitemapUrlItem({
+            absoluteUrl: 'https://tools.codesamplez.com/diff-checker/',
+            lastmod: '2026-04-20T00:00:00.000Z',
+            images: [{ url: 'https://tools.codesamplez.com/diff-checker/images/featured.png', title: 'Diff Checker', caption: 'Compare text' }]
+        })).toEqual({
+            url: '/diff-checker/',
+            lastmod: '2026-04-20T00:00:00.000Z',
+            img: [{ url: 'https://tools.codesamplez.com/diff-checker/images/featured.png', title: 'Diff Checker', caption: 'Compare text' }]
+        });
+
+        // Image without title/caption keeps only the url; no lastmod key when absent.
+        expect(toSitemapUrlItem({
+            absoluteUrl: 'https://tools.codesamplez.com/diff-checker/',
+            images: [{ url: 'https://tools.codesamplez.com/diff-checker/images/featured.png' }]
+        })).toEqual({
+            url: '/diff-checker/',
+            img: [{ url: 'https://tools.codesamplez.com/diff-checker/images/featured.png' }]
+        });
+
+        // No images → no img key at all.
+        expect(toSitemapUrlItem({ absoluteUrl: 'https://tools.codesamplez.com/diff-checker/', images: [] }))
+            .toEqual({ url: '/diff-checker/' });
+        expect(toSitemapUrlItem({ absoluteUrl: 'https://tools.codesamplez.com/diff-checker/' }))
+            .toEqual({ url: '/diff-checker/' });
+    });
+
+    it('exposes images on built sitemap entries', () => {
+        const entries = buildSitemapEntries({ resolveLastmod: () => null });
+
+        expect(entries[0].images).toEqual([
+            { url: getRootPageDefinition().imageUrl, title: getRootPageDefinition().title, caption: getRootPageDefinition().description }
+        ]);
+        expect(entries.every((entry) => Array.isArray(entry.images) && entry.images.length === 1)).toBe(true);
     });
 
     it('includes per-entry lastmod values when the resolver returns them', async () => {

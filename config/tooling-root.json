@@ -41,6 +41,7 @@
   },
   "rootAssets": [
     "index.html",
+    "404.html",
     "styles.css",
     "og-home.png",
     "robots.txt",

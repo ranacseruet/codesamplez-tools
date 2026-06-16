@@ -73,8 +73,8 @@ describe('detectAffectedTargets', () => {
       includeRootAssets: true,
       shouldBuild: true,
       shouldDeploy: true,
-      deployPaths: ['ads.txt', 'apple-touch-icon.png', 'base64-converter', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'jwt-builder', 'jwt-decoder', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
-      invalidationPaths: ['/', '/ads.txt', '/apple-touch-icon.png', '/base64-converter/', '/base64-converter/*', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
+      deployPaths: ['404.html', 'ads.txt', 'apple-touch-icon.png', 'base64-converter', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'jwt-builder', 'jwt-decoder', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
+      invalidationPaths: ['/', '/404.html', '/ads.txt', '/apple-touch-icon.png', '/base64-converter/', '/base64-converter/*', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
     });
   });
 
@@ -111,8 +111,8 @@ describe('detectAffectedTargets', () => {
       includeRootAssets: true,
       shouldBuild: true,
       shouldDeploy: true,
-      deployPaths: ['ads.txt', 'apple-touch-icon.png', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
-      invalidationPaths: ['/', '/ads.txt', '/apple-touch-icon.png', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
+      deployPaths: ['404.html', 'ads.txt', 'apple-touch-icon.png', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
+      invalidationPaths: ['/', '/404.html', '/ads.txt', '/apple-touch-icon.png', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
     });
   });
 
@@ -122,6 +122,15 @@ describe('detectAffectedTargets', () => {
     expect(result.scope).toBe('all-tools');
     expect(result.affectedTools).toEqual(getToolIds());
     expect(result.includeRootShell).toBe(true);
+    expect(result.includeRootAssets).toBe(true);
+    expect(result.shouldBuild).toBe(true);
+    expect(result.shouldDeploy).toBe(true);
+  });
+
+  it('treats the 404 document generator as an all-tools rebuild trigger so the root asset redeploys', () => {
+    const result = detectAffectedTargets(['scripts/error-document.js']);
+
+    expect(result.scope).toBe('all-tools');
     expect(result.includeRootAssets).toBe(true);
     expect(result.shouldBuild).toBe(true);
     expect(result.shouldDeploy).toBe(true);

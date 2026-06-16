@@ -14,6 +14,7 @@ const ALL_TOOL_TRIGGER_FILES = new Set([
     'scripts/analytics.js',
     'scripts/build-tools.js',
     'scripts/document-helpers.js',
+    'scripts/error-document.js',
     'scripts/prerender-tool.js',
     'scripts/root-document.js',
     'scripts/structured-data.js',

@@ -117,7 +117,8 @@ function resolveGitLastmodForPaths(paths, options = {}) {
 }
 
 /**
- * @typedef {{ absoluteUrl: string, lastmod?: string }} SitemapEntry
+ * @typedef {{ url: string, title?: string, caption?: string }} SitemapImage
+ * @typedef {{ absoluteUrl: string, lastmod?: string, images?: SitemapImage[] }} SitemapEntry
  */
 
 /**
@@ -133,7 +134,8 @@ function buildSitemapEntries(options = {}) {
     return [
         {
             absoluteUrl: rootPage.absoluteUrl,
-            ...(rootLastmod ? { lastmod: rootLastmod } : {})
+            ...(rootLastmod ? { lastmod: rootLastmod } : {}),
+            images: [{ url: rootPage.imageUrl, title: rootPage.title, caption: rootPage.description }]
         },
         ...tools.map((tool) => {
             const lastmod = resolveLastmod(getToolPageLastmodPaths(tool), {
@@ -143,7 +145,8 @@ function buildSitemapEntries(options = {}) {
 
             return {
                 absoluteUrl: tool.absolutePageUrl,
-                ...(lastmod ? { lastmod } : {})
+                ...(lastmod ? { lastmod } : {}),
+                images: [{ url: tool.absoluteFeaturedImageUrl, title: tool.title, caption: tool.description }]
             };
         })
     ];
@@ -159,20 +162,37 @@ async function buildSitemapXml(options = {}) {
         xmlns: {
             news: false,
             xhtml: false,
-            image: false,
+            image: true,
             video: false
         }
     });
-    const entries = buildSitemapEntries(options).map((entry) => {
-        const location = new URL(entry.absoluteUrl);
-        const url = `${location.pathname}${location.search}`;
-
-        return entry.lastmod
-            ? { url, lastmod: entry.lastmod }
-            : { url };
-    });
+    const entries = buildSitemapEntries(options).map(toSitemapUrlItem);
 
     return String(await streamToPromise(Readable.from(entries).pipe(stream)));
+}
+
+/**
+ * Maps a {@link SitemapEntry} to the `sitemap` package's url-item shape, emitting
+ * `lastmod` and `img` only when present so optional fields never serialize empty.
+ * @param {SitemapEntry} entry
+ * @returns {{ url: string, lastmod?: string, img?: { url: string, title?: string, caption?: string }[] }}
+ */
+function toSitemapUrlItem(entry) {
+    const location = new URL(entry.absoluteUrl);
+    const url = `${location.pathname}${location.search}`;
+    const img = Array.isArray(entry.images) && entry.images.length > 0
+        ? entry.images.map((image) => ({
+            url: image.url,
+            ...(image.title ? { title: image.title } : {}),
+            ...(image.caption ? { caption: image.caption } : {})
+        }))
+        : undefined;
+
+    return {
+        url,
+        ...(entry.lastmod ? { lastmod: entry.lastmod } : {}),
+        ...(img ? { img } : {})
+    };
 }
 
 /**
@@ -229,5 +249,6 @@ module.exports = {
     getRootPageLastmodPaths,
     getToolPageLastmodPaths,
     resolveGitLastmodForPaths,
+    toSitemapUrlItem,
     writeGeneratedSiteAssets
 };

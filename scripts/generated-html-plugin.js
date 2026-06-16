@@ -4,7 +4,15 @@ const webpack = require('webpack');
 const { getAppShellCatalogDefinition } = require('./app-shell-catalog');
 const { REPO_ROOT, ROOT_CONFIG_PATH, getToolById, getToolDefinitions, getToolMetadataPath } = require('./tool-manifest');
 const { generateRootDocument } = require('./root-document');
+const { generateNotFoundDocument } = require('./error-document');
 const { generateToolDocument } = require('./tool-document');
+
+// The 404 page ships beside the root index.html, so its emit path mirrors the
+// configured rootHtmlAsset (which is '../index.html' from the root-shell build
+// and 'index.html' from the combined build).
+function resolveNotFoundFilename(rootHtmlAsset) {
+    return rootHtmlAsset.replace(/index\.html$/, '404.html');
+}
 
 /**
  * @typedef {{
@@ -55,6 +63,13 @@ function buildGeneratedHtmlAssets(options = {}) {
         assets.push({
             filename: options.rootHtmlAsset,
             source: generateRootDocument()
+        });
+
+        // Branded soft-404 served by CloudFront's custom error response. Emitted
+        // with the root assets so it ships and deploys alongside the landing page.
+        assets.push({
+            filename: resolveNotFoundFilename(options.rootHtmlAsset),
+            source: generateNotFoundDocument()
         });
     }
 

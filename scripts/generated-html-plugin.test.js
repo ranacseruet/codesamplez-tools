@@ -23,6 +23,10 @@ describe('generated html plugin', () => {
         source: expect.stringContaining('<title>Online Developer Tools | CodeSamplez</title>')
       }),
       expect.objectContaining({
+        filename: '../404.html',
+        source: expect.stringContaining('<title>Page Not Found | CodeSamplez</title>')
+      }),
+      expect.objectContaining({
         filename: 'index.html',
         source: expect.stringContaining('JWT Decoder &amp; Validator')
       }),
@@ -107,11 +111,13 @@ describe('generated html plugin', () => {
     expect(processAssetsTaps).toHaveLength(1);
     processAssetsTaps[0].handler();
 
-    expect(compilation.emitAsset).toHaveBeenCalledTimes(2);
+    expect(compilation.emitAsset).toHaveBeenCalledTimes(3);
     expect(compilation.emitAsset.mock.calls[0][0]).toBe('../index.html');
     expect(String(compilation.emitAsset.mock.calls[0][1].source())).toContain('<title>Online Developer Tools | CodeSamplez</title>');
-    expect(compilation.emitAsset.mock.calls[1][0]).toBe('index.html');
-    expect(String(compilation.emitAsset.mock.calls[1][1].source())).toContain('JWT Decoder &amp; Validator');
+    expect(compilation.emitAsset.mock.calls[1][0]).toBe('../404.html');
+    expect(String(compilation.emitAsset.mock.calls[1][1].source())).toContain('404 — Page Not Found');
+    expect(compilation.emitAsset.mock.calls[2][0]).toBe('index.html');
+    expect(String(compilation.emitAsset.mock.calls[2][1].source())).toContain('JWT Decoder &amp; Validator');
     expect(compilation.fileDependencies.has(ROOT_CONFIG_PATH)).toBe(true);
     expect(compilation.contextDependencies.has(REPO_ROOT)).toBe(true);
   });
