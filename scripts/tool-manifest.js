@@ -62,6 +62,7 @@ const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
  *   outputDir: string,
  *   outputPath: string,
  *   title: string,
+ *   seoTitle: string,
  *   description: string,
  *   indexDescription: string,
  *   icon: string | null,
@@ -98,6 +99,7 @@ const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
  *   id: string,
  *   version: string,
  *   title: string,
+ *   seoTitle: string | null,
  *   description: string,
  *   indexDescription: string,
  *   icon: string | null,
@@ -467,6 +469,7 @@ function readToolMetadata(metadataPath) {
         id: requireNonEmptyString(metadataRecord.id, 'Tool id'),
         version: requireNonEmptyString(metadataRecord.version, 'Tool version'),
         title: requireNonEmptyString(metadataRecord.title, 'Tool title'),
+        seoTitle: normalizeOptionalString(metadataRecord.seoTitle, 'Tool seoTitle'),
         description: requireNonEmptyString(metadataRecord.description, 'Tool description'),
         indexDescription: requireNonEmptyString(metadataRecord.indexDescription, 'Tool indexDescription'),
         icon: normalizeOptionalString(metadataRecord.icon, 'Tool icon'),
@@ -535,6 +538,9 @@ function createToolDefinition(metadataPath) {
         outputDir,
         outputPath: path.join('build', outputDir),
         title: metadata.title,
+        // SEO `<title>` override; falls back to the plain tool name when unset so
+        // the visible H1/og:title and structured-data names stay untouched.
+        seoTitle: metadata.seoTitle || metadata.title,
         description: metadata.description,
         indexDescription: metadata.indexDescription,
         icon: metadata.icon,

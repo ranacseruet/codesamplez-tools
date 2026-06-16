@@ -43,16 +43,17 @@ function escapeJsonForHtml(json) {
 }
 
 /**
- * SEO `<title>` for a tool page: tool name + value keyword + brand. Kept distinct
- * from the on-page H1 / og:title (which stay the plain tool name) so the SERP
- * snippet carries the "free online tool" intent and brand without altering the
- * visible heading or structured-data names.
- * @param {string} toolTitle
+ * SEO `<title>` for a tool page: SEO title + brand tagline. Kept distinct from the
+ * on-page H1 / og:title (which stay the plain tool name) so the SERP snippet can
+ * carry a keyword-rich title and brand without altering the visible heading or
+ * structured-data names. `seoTitle` is the tool's optional SEO override, falling
+ * back to the plain tool name at the call site.
+ * @param {string} seoTitle
  * @param {string} brandName
  * @returns {string}
  */
-function formatToolDocumentTitle(toolTitle, brandName) {
-    return `${toolTitle} \u2013 Free Online Tool | ${brandName}`;
+function formatToolDocumentTitle(seoTitle, brandName) {
+    return `${seoTitle} | Free Online Dev Tools by ${brandName}`;
 }
 
 /**
