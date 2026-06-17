@@ -604,6 +604,11 @@ describe('initializeDiffChecker', () => {
     expect(result.children.length).toBeGreaterThan(0);
   });
 
+  // The large-input offload path (lazy ./diff-runner import + worker/fallback)
+  // is covered end-to-end in the ESM specs diff-offload.test.js and
+  // diff-import-fallback.test.js, where dynamic import + module mocking behave
+  // deterministically. This CJS suite keeps the sub-threshold sync coverage.
+
   test('should show error validation if inputs empty', async () => {
     initializeDiffChecker();
     document.getElementById('compare-button').click();

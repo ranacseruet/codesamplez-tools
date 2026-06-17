@@ -109,7 +109,7 @@ To integrate this tool into another webpage:
 
 ## Known Limitations
 1. **Performance with Large Inputs**
-   - While the tool handles moderate-sized texts efficiently, extremely large inputs may impact performance due to the complexity of line and word diffing.
+   - Line + word diffing is inherently expensive on very large inputs. To keep the UI responsive, compares above ~20,000 combined characters offload the diff computation to a Web Worker (`diff.worker.ts` via `diff-runner.ts`), with an automatic main-thread fallback if the worker is unavailable. Smaller compares run synchronously. Rendering the result (DOM + syntax highlighting) still happens on the main thread.
 
 ---
 

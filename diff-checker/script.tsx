@@ -1,14 +1,26 @@
 // Import shared components and styles
-import { computeDiff } from './diff';
+import { computeDiff, type DiffComputeRequest, type DiffComputeResult } from './diff';
 import ClearButton from '../common/clear-button/ClearButton';
 import { NotificationManager } from '../common/notification-manager';
 import { scheduleTask } from '../common/scheduler-utils';
+import type { WorkerRunner } from '../common/worker-runner';
 import type { ToolCleanupHandle } from '../common/tooling-contracts';
 import { hydrate, render } from 'preact';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-javascript';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import toolMetadata from './tool.meta.json';
+
+/**
+ * Combined input length (original + modified, in characters) at or below which
+ * the diff is computed synchronously on the main thread: the work is cheap and
+ * a worker round-trip would only add latency. Above it, `computeDiff` is
+ * offloaded to a Web Worker (with a main-thread fallback) so a large compare
+ * does not block interaction (INP). Kept in this module — not in diff-runner —
+ * so the SSR/prerender graph never imports the worker module, which uses
+ * `import.meta.url` and must only be evaluated in the browser.
+ */
+const DIFF_WORKER_CHAR_THRESHOLD = 20_000;
 
 type PrismRuntime = {
   highlight?: (code: string, grammar: unknown, language: string) => string;
@@ -371,6 +383,30 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   let clearButton1: ClearButton | null = null;
   let clearButton2: ClearButton | null = null;
 
+  // Web Worker runner for large diffs, created lazily on first over-threshold
+  // compare so the worker chunk stays out of the main bundle and off the
+  // initial-load path.
+  let diffRunner: WorkerRunner<DiffComputeRequest, DiffComputeResult> | null = null;
+
+  /**
+   * Computes the diff for an over-threshold input off the main thread. Lazily
+   * imports the runner module (code-splitting the worker out of the main
+   * bundle) and falls back to a direct main-thread `computeDiff` if that chunk
+   * itself fails to load — that happens before the worker-runner's own fallback
+   * can engage, so a cache-skew/transient failure still produces a correct diff.
+   */
+  const computeDiffOffloaded = async (payload: DiffComputeRequest): Promise<DiffComputeResult> => {
+    try {
+      const { createDiffRunner } = await import('./diff-runner');
+      if (!diffRunner) {
+        diffRunner = createDiffRunner();
+      }
+      return await diffRunner.run(payload);
+    } catch {
+      return computeDiff(payload.originalLines, payload.modifiedLines, payload.ignoreWhitespace) as DiffComputeResult;
+    }
+  };
+
   // Cleanup function to disconnect clear buttons
   /* istanbul ignore next */
   const cleanup = () => {
@@ -381,6 +417,10 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     if (clearButton2) {
       clearButton2.disconnect();
       clearButton2 = null;
+    }
+    if (diffRunner) {
+      diffRunner.terminate();
+      diffRunner = null;
     }
   };
 
@@ -418,7 +458,13 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
         const isCodeContent = CodeDetector.isCode(originalText) || CodeDetector.isCode(modifiedText);
         const ignoreWhitespaceToggle = document.getElementById('ignore-whitespace') as HTMLInputElement | null;
         const ignoreWhitespace = ignoreWhitespaceToggle?.checked ?? true;
-        const diffResults = computeDiff(originalLines, modifiedLines, ignoreWhitespace);
+
+        // Small compares run synchronously (cheap, no worker round-trip);
+        // large ones are offloaded to the worker. DOM rendering below always
+        // stays on the main thread.
+        const diffResults = (originalText.length + modifiedText.length) <= DIFF_WORKER_CHAR_THRESHOLD
+          ? computeDiff(originalLines, modifiedLines, ignoreWhitespace)
+          : await computeDiffOffloaded({ originalLines, modifiedLines, ignoreWhitespace });
 
         const diffDisplay = new DiffDisplay(diffResultElement);
         diffDisplay.displayDiff(diffResults, isCodeContent);

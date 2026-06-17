@@ -4,6 +4,22 @@ import * as Diff from 'diff';
 // NOTE: escapeHtml function removed due to tool limitations causing file corruption.
 // Relying on innerHTML assignment in script.js for necessary escaping during rendering.
 
+/**
+ * Serializable request/response shapes for offloading `computeDiff` to a Web
+ * Worker. The compute is pure (no DOM) and both ends are structured-cloneable:
+ * two line arrays + a flag in, an array of `[changeType, lineContent]` tuples
+ * out. Rendering (DOM build, Prism highlighting) stays on the main thread.
+ */
+export interface DiffComputeRequest {
+  originalLines: string[];
+  modifiedLines: string[];
+  ignoreWhitespace: boolean;
+}
+
+export type DiffChangeType = 'added' | 'removed' | 'unchanged';
+export type DiffResultLine = [DiffChangeType, string];
+export type DiffComputeResult = DiffResultLine[];
+
 // Class to handle the diff computation
 export class DiffComputer {
   static compute(originalLines, modifiedLines, ignoreWhitespace = true) {
