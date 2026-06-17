@@ -4,7 +4,7 @@ import { NotificationManager } from '../common/notification-manager';
 import ClearButton from '../common/clear-button/ClearButton';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { analyzeText, type TextAnalysisResult } from './TextAnalyzer';
-import type { WorkerRunner } from '../common/worker-runner';
+import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
 import { TextAnalyzerArticle, TextAnalyzerIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
@@ -41,7 +41,7 @@ export function TextAnalyzerApp() {
     const [text, setText] = useState('');
     const textAreaRef = useRef(null);
     const clearButtonRef = useRef(null);
-    const runnerRef = useRef<WorkerRunner<string, TextAnalysisResult> | null>(null);
+    const runnerRef = useRef<LazyRunner<string, TextAnalysisResult> | null>(null);
 
     // Small inputs (and the initial paint) are analyzed synchronously: it is
     // sub-millisecond work, keeps hydration deterministic, and avoids worker
@@ -53,35 +53,28 @@ export function TextAnalyzerApp() {
     );
     const [asyncResult, setAsyncResult] = useState<TextAnalysisResult | null>(null);
 
-    // Large inputs are offloaded to the worker (with a main-thread fallback baked
-    // into the runner). The runner module is imported lazily so the worker code
-    // (and its `import.meta.url`) is code-split out of the main bundle and never
-    // pulled into the SSR/prerender graph. `active` drops superseded results so
-    // only the latest keystroke's analysis is rendered.
+    // Large inputs are offloaded to the worker. `createLazyRunner` handles the
+    // lazy import (code-splitting the worker out of the main bundle and off the
+    // SSR/prerender graph), instance reuse, and the main-thread fallback for
+    // both an unavailable worker and a failed chunk load. `active` drops
+    // superseded results so only the latest keystroke's analysis is rendered.
     useEffect(() => {
         if (text.length <= WORKER_CHAR_THRESHOLD) {
             return undefined;
         }
         let active = true;
-        import('./analyzer-runner').then(({ createAnalyzerRunner }) => {
-            if (!active) {
-                return;
-            }
-            if (!runnerRef.current) {
-                runnerRef.current = createAnalyzerRunner();
-            }
-            runnerRef.current.run(text).then((analysis) => {
-                if (active) {
-                    setAsyncResult(analysis);
-                }
-            });
-        }).catch(() => {
-            // The lazy chunk itself failed to load (e.g. cache-skew deploy or a
-            // transient network error) — that is before the worker-runner's own
-            // fallback can engage, so degrade to a direct main-thread analysis
-            // rather than leaving large inputs stuck on a stale/empty result.
+        if (!runnerRef.current) {
+            runnerRef.current = createLazyRunner(
+                () => import('./analyzer-runner').then((module) => module.createAnalyzerRunner),
+                analyzeText
+            );
+        }
+        // `shouldAbort` drops a run superseded while the worker chunk was still
+        // loading (don't dispatch stale text); the `active` guard then drops any
+        // result that lands after this effect was torn down.
+        runnerRef.current.run(text, () => !active).then((analysis) => {
             if (active) {
-                setAsyncResult(analyzeText(text));
+                setAsyncResult(analysis);
             }
         });
         return () => {

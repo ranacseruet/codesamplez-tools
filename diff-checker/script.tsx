@@ -3,7 +3,7 @@ import { computeDiff, type DiffComputeRequest, type DiffComputeResult } from './
 import ClearButton from '../common/clear-button/ClearButton';
 import { NotificationManager } from '../common/notification-manager';
 import { scheduleTask } from '../common/scheduler-utils';
-import type { WorkerRunner } from '../common/worker-runner';
+import { createLazyRunner } from '../common/lazy-runner';
 import type { ToolCleanupHandle } from '../common/tooling-contracts';
 import { hydrate, render } from 'preact';
 import Prism from 'prismjs';
@@ -383,29 +383,14 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   let clearButton1: ClearButton | null = null;
   let clearButton2: ClearButton | null = null;
 
-  // Web Worker runner for large diffs, created lazily on first over-threshold
-  // compare so the worker chunk stays out of the main bundle and off the
-  // initial-load path.
-  let diffRunner: WorkerRunner<DiffComputeRequest, DiffComputeResult> | null = null;
-
-  /**
-   * Computes the diff for an over-threshold input off the main thread. Lazily
-   * imports the runner module (code-splitting the worker out of the main
-   * bundle) and falls back to a direct main-thread `computeDiff` if that chunk
-   * itself fails to load — that happens before the worker-runner's own fallback
-   * can engage, so a cache-skew/transient failure still produces a correct diff.
-   */
-  const computeDiffOffloaded = async (payload: DiffComputeRequest): Promise<DiffComputeResult> => {
-    try {
-      const { createDiffRunner } = await import('./diff-runner');
-      if (!diffRunner) {
-        diffRunner = createDiffRunner();
-      }
-      return await diffRunner.run(payload);
-    } catch {
-      return computeDiff(payload.originalLines, payload.modifiedLines, payload.ignoreWhitespace) as DiffComputeResult;
-    }
-  };
+  // Web Worker runner for large diffs. Lazily imports the runner chunk on first
+  // over-threshold compare (keeping the worker out of the main bundle) and
+  // falls back to a direct main-thread computeDiff if that chunk fails to load.
+  const diffRunner = createLazyRunner<DiffComputeRequest, DiffComputeResult>(
+    () => import('./diff-runner').then((module) => module.createDiffRunner),
+    ({ originalLines, modifiedLines, ignoreWhitespace }) =>
+      computeDiff(originalLines, modifiedLines, ignoreWhitespace) as DiffComputeResult
+  );
 
   // Cleanup function to disconnect clear buttons
   /* istanbul ignore next */
@@ -418,10 +403,7 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
       clearButton2.disconnect();
       clearButton2 = null;
     }
-    if (diffRunner) {
-      diffRunner.terminate();
-      diffRunner = null;
-    }
+    diffRunner.terminate();
   };
 
 
@@ -464,7 +446,7 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
         // stays on the main thread.
         const diffResults = (originalText.length + modifiedText.length) <= DIFF_WORKER_CHAR_THRESHOLD
           ? computeDiff(originalLines, modifiedLines, ignoreWhitespace)
-          : await computeDiffOffloaded({ originalLines, modifiedLines, ignoreWhitespace });
+          : await diffRunner.run({ originalLines, modifiedLines, ignoreWhitespace });
 
         const diffDisplay = new DiffDisplay(diffResultElement);
         diffDisplay.displayDiff(diffResults, isCodeContent);

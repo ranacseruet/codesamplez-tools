@@ -168,7 +168,7 @@ Calculation methodology:
 - Shows success/error notifications
 
 ## Current Limitations
-- Large JSON files (>10MB) may impact performance
+- Very large JSON files may still impact performance, but formatting above ~50,000 characters is offloaded to a Web Worker (`format.worker.ts` via `format-runner.ts`) — the parse/sort/stringify runs off the main thread, with an automatic main-thread fallback if the worker is unavailable. Smaller inputs format synchronously. Building the tree view still happens on the main thread (chunked via `nextFrame`).
 - Array elements are never sorted (only object keys when enabled)
 - Clipboard operations require secure context (HTTPS or localhost)
 - Comments in JSON are not supported (as per JSON specification)

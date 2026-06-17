@@ -3,10 +3,30 @@ import { formatBytes } from '../common/format-utils';
 import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
 import { scheduleTask, nextFrame } from '../common/scheduler-utils';
+import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
+import {
+  autoFixJSON,
+  formatJson,
+  sortKeysAlphabetically,
+  type JsonFormatRequest,
+  type JsonFormatResult
+} from './json-format-core';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { JsonFormatterArticle, JsonFormatterIntro } from './content';
 import toolMetadata from './tool.meta.json';
+
+/**
+ * Trimmed input length (characters) at or below which formatting runs
+ * synchronously on the main thread — parse + stringify are cheap there and a
+ * worker round-trip (plus structured-cloning the parsed object back for the
+ * tree renderer) would only add latency. Above it, the compute is offloaded to
+ * a Web Worker so a large paste does not block interaction (INP). The tree
+ * render below always stays on the main thread (chunked via `nextFrame`). Kept
+ * here — not in format-runner — so the SSR/prerender graph never imports the
+ * worker module, which uses `import.meta.url` and must only run in the browser.
+ */
+const JSON_WORKER_CHAR_THRESHOLD = 50_000;
 
 interface RenderContext {
   count: number;
@@ -126,6 +146,14 @@ export class JSONFormatter {
   formattedSizeEl!: HTMLElement;
   clearButtonInstance!: ClearButton;
 
+  // Lazily-imported worker runner for large inputs. The import (and thus the
+  // worker chunk) only loads on the first over-threshold format; falls back to
+  // a main-thread `formatJson` if the worker/chunk is unavailable.
+  private lazyFormatRunner: LazyRunner<JsonFormatRequest, JsonFormatResult> = createLazyRunner(
+    () => import('./format-runner').then((module) => module.createFormatRunner),
+    formatJson
+  );
+
   constructor(initDom = true) {
     this.currentRunId = 0;
     if (initDom) {
@@ -214,7 +242,20 @@ export class JSONFormatter {
       // Abort if a newer run has started
       if (runId !== this.currentRunId) return;
 
-      const [formatted, formattedString] = this.prepareFormattedJson();
+      // Small inputs format synchronously; large ones are offloaded to the
+      // worker (with a main-thread fallback). Either way the result feeds the
+      // main-thread tree renderer below.
+      const request: JsonFormatRequest = {
+        input: inputValue,
+        autoFix: this.autoFixCheckbox.checked,
+        sortKeys: this.sortCheckbox.checked
+      };
+      const { formatted, formattedString } = inputValue.length <= JSON_WORKER_CHAR_THRESHOLD
+        ? formatJson(request)
+        : await this.lazyFormatRunner.run(request);
+
+      // Abort if a newer run started while the worker was computing.
+      if (runId !== this.currentRunId) return;
 
       // Clear previous output
       this.output.replaceChildren();
@@ -390,17 +431,10 @@ export class JSONFormatter {
 
 
 
+  // Kept as a static method for the public/test surface; the implementation
+  // lives in json-format-core so the worker can share it.
   static sortKeysAlphabetically(obj: unknown): unknown {
-    if (Array.isArray(obj)) return obj.map(item => this.sortKeysAlphabetically(item));
-    if (typeof obj !== 'object' || obj === null) return obj;
-
-    const record = obj as Record<string, unknown>;
-    return Object.keys(record)
-      .sort()
-      .reduce((sorted, key) => {
-        sorted[key] = this.sortKeysAlphabetically(record[key]);
-        return sorted;
-      }, {} as Record<string, unknown>);
+    return sortKeysAlphabetically(obj);
   }
 
   updateStats(original: string, formatted: string): void {
@@ -422,31 +456,20 @@ export class JSONFormatter {
 
 
 
+  // Kept as a static method for the public/test surface; the implementation
+  // lives in json-format-core so the worker can share it.
   static autoFixJSON(jsonString: string): string {
-    // Remove trailing commas
-    let fixedJson = jsonString.replace(/,\s*([}\]])/g, '$1');
-
-    // Convert single-quoted strings to double-quoted (handles escaped quotes)
-    fixedJson = fixedJson.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"');
-
-    // Add quotes to unquoted keys
-    fixedJson = fixedJson.replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":');
-
-    return fixedJson;
+    return autoFixJSON(jsonString);
   }
 
   prepareFormattedJson(): [unknown, string] {
-    let inputValue = this.input.value.trim();
-    if (this.autoFixCheckbox.checked) {
-      inputValue = JSONFormatter.autoFixJSON(inputValue);
-    }
+    const { formatted, formattedString } = formatJson({
+      input: this.input.value,
+      autoFix: this.autoFixCheckbox.checked,
+      sortKeys: this.sortCheckbox.checked
+    });
 
-    const parsed = JSON.parse(inputValue) as unknown;
-    const formatted = this.sortCheckbox.checked
-      ? JSONFormatter.sortKeysAlphabetically(parsed)
-      : parsed;
-
-    return [formatted, JSON.stringify(formatted, null, 2)];
+    return [formatted, formattedString];
   }
 
   getFormattedOutput(): string {
