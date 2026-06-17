@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getToolById, getToolByOutputDir, getToolDefinitions, parseToolSelectionArgs } = require('./tool-manifest');
+const { sumAsyncChunkRawBytes } = require('./bundle-chunk-utils');
 
 const DEFAULT_BUILD_DIR = path.resolve(__dirname, '../build');
 const DEFAULT_WARN_PERCENT = 5;
@@ -31,7 +32,7 @@ const JS_RAW_BASELINES = Object.freeze({
 /**
  * @typedef {{ buildDir: string, warnPct: number, failPct: number, waiverSpecs: string[], selection: ReturnType<typeof parseToolSelectionArgs> }} BudgetArgs
  * @typedef {'OK' | 'WARN' | 'FAIL' | 'WAIVED_FAIL' | 'MISSING'} BudgetStatus
- * @typedef {{ tool: string, baseline: number, current: number | null, warnThreshold: number, failThreshold: number, delta: number | null, status: BudgetStatus }} BudgetResult
+ * @typedef {{ tool: string, baseline: number, current: number | null, warnThreshold: number, failThreshold: number, delta: number | null, asyncBytes: number, status: BudgetStatus }} BudgetResult
  */
 
 function printHelp() {
@@ -246,7 +247,9 @@ function main() {
         const warnThreshold = createThreshold(baseline, args.warnPct);
         const failThreshold = createThreshold(baseline, args.failPct);
         const buildDirName = getToolById(tool)?.outputDir || tool;
-        const bundlePath = path.join(args.buildDir, buildDirName, 'bundle.main.js');
+        const toolDir = path.join(args.buildDir, buildDirName);
+        const bundlePath = path.join(toolDir, 'bundle.main.js');
+        const asyncBytes = sumAsyncChunkRawBytes(toolDir);
 
         if (!fs.existsSync(bundlePath)) {
             errors.push(`[missing] ${tool}: ${bundlePath} not found`);
@@ -257,6 +260,7 @@ function main() {
                 warnThreshold,
                 failThreshold,
                 delta: null,
+                asyncBytes,
                 status: 'MISSING'
             });
             return;
@@ -291,6 +295,7 @@ function main() {
             warnThreshold,
             failThreshold,
             delta,
+            asyncBytes,
             status
         });
     });
@@ -306,16 +311,18 @@ function main() {
     });
 
     console.log(`Bundle budget check (raw JS bytes): warn +${args.warnPct}% / fail +${args.failPct}%`);
+    console.log('Enforcement is on the main bundle only. Async = total raw bytes of worker/code-split chunks (informational).');
     console.log('');
-    console.log('| Tool | Baseline | Current | Warn | Fail | Delta | Status |');
-    console.log('|---|---:|---:|---:|---:|---:|---|');
+    console.log('| Tool | Baseline | Current | Warn | Fail | Delta | Async | Status |');
+    console.log('|---|---:|---:|---:|---:|---:|---:|---|');
     results.forEach((result) => {
         const deltaLabel = result.delta === null
             ? 'n/a'
             : `${result.delta >= 0 ? '+' : ''}${formatNumber(result.delta)}`;
         const currentLabel = result.current === null ? 'n/a' : formatNumber(result.current);
+        const asyncLabel = result.asyncBytes > 0 ? formatNumber(result.asyncBytes) : '—';
 
-        console.log(`| \`${result.tool}\` | ${formatNumber(result.baseline)} | ${currentLabel} | ${formatNumber(result.warnThreshold)} | ${formatNumber(result.failThreshold)} | ${deltaLabel} | ${result.status} |`);
+        console.log(`| \`${result.tool}\` | ${formatNumber(result.baseline)} | ${currentLabel} | ${formatNumber(result.warnThreshold)} | ${formatNumber(result.failThreshold)} | ${deltaLabel} | ${asyncLabel} | ${result.status} |`);
     });
 
     if (warnings.length > 0) {

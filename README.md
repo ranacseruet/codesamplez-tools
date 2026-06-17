@@ -187,11 +187,11 @@ Required local and CI gates:
 - `npm run audit:deps`
 - `npm run build`
 - `npm run verify-build`
-- `npm run bundle-budget-check`
+- `npm run bundle-budget-check` (enforces the main bundle per tool; worker/code-split chunks are reported in the `Async` column for visibility but not enforced)
 
 Supporting and report-oriented checks:
 
-- `npm run bundle-metrics`
+- `npm run bundle-metrics` (reports main bundle, CSS, HTML, and worker/code-split `Async JS` chunk totals per tool)
 - `npm run qa:a11y:foundation`
 - `npm run qa:cross-browser`
 - Review the PR visual diff workflow when a change affects UI or layout

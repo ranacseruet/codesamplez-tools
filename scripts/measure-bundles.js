@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 const { getRootShellDefinition, getToolById, getToolByOutputDir, getToolDefinitions, parseToolSelectionArgs } = require('./tool-manifest');
+const { listAsyncChunkPaths } = require('./bundle-chunk-utils');
 
 const BUILD_DIR = path.resolve(__dirname, '../build');
 const DEFAULT_JSON_OUT = path.resolve(__dirname, '../reports/bundle-metrics/latest.json');
@@ -13,9 +14,10 @@ const DEFAULT_JSON_OUT = path.resolve(__dirname, '../reports/bundle-metrics/late
  * @typedef {{ buildDir: string, jsonOut: string | null, markdownOut: string | null, format: ReportFormat, selection: ReturnType<typeof parseToolSelectionArgs> }} MeasureBundleArgs
  * @typedef {{ rawBytes: number, gzipBytes: number }} RawAndGzipMetric
  * @typedef {{ rawBytes: number }} RawOnlyMetric
- * @typedef {{ js: RawAndGzipMetric | null, css: RawAndGzipMetric | null, html: RawOnlyMetric | null }} ToolMetricFiles
+ * @typedef {{ name: string, rawBytes: number, gzipBytes: number }} AsyncChunkMetric
+ * @typedef {{ js: RawAndGzipMetric | null, css: RawAndGzipMetric | null, html: RawOnlyMetric | null, asyncChunks: AsyncChunkMetric[] }} ToolMetricFiles
  * @typedef {{ tool: string, files: ToolMetricFiles }} ToolMetricRow
- * @typedef {{ jsRawBytes: number, jsGzipBytes: number, cssRawBytes: number, cssGzipBytes: number, htmlRawBytes: number }} BundleMetricSummary
+ * @typedef {{ jsRawBytes: number, jsGzipBytes: number, cssRawBytes: number, cssGzipBytes: number, htmlRawBytes: number, asyncRawBytes: number, asyncGzipBytes: number, asyncChunkCount: number }} BundleMetricSummary
  */
 
 /**
@@ -217,13 +219,22 @@ function collectToolMetrics(buildDir, toolName) {
     const cssMetric = getMetric(readFileBufferIfExists(path.join(toolDir, 'styles.main.css')));
     const htmlBuffer = readFileBufferIfExists(path.join(toolDir, 'index.html'));
     const tool = getToolByOutputDir(toolName);
+    /** @type {AsyncChunkMetric[]} */
+    const asyncChunks = listAsyncChunkPaths(toolDir).reduce((chunks, chunkPath) => {
+        const metric = getMetric(readFileBufferIfExists(chunkPath));
+        if (metric) {
+            chunks.push({ name: path.basename(chunkPath), ...metric });
+        }
+        return chunks;
+    }, /** @type {AsyncChunkMetric[]} */ ([]));
 
     return {
         tool: tool ? tool.id : toolName,
         files: {
             js: jsMetric,
             css: cssMetric,
-            html: htmlBuffer ? { rawBytes: htmlBuffer.length } : null
+            html: htmlBuffer ? { rawBytes: htmlBuffer.length } : null,
+            asyncChunks
         }
     };
 }
@@ -249,6 +260,12 @@ function createSummary(tools) {
                 acc.htmlRawBytes += tool.files.html.rawBytes;
             }
 
+            tool.files.asyncChunks.forEach((chunk) => {
+                acc.asyncRawBytes += chunk.rawBytes;
+                acc.asyncGzipBytes += chunk.gzipBytes;
+                acc.asyncChunkCount += 1;
+            });
+
             return acc;
         },
         {
@@ -256,9 +273,27 @@ function createSummary(tools) {
             jsGzipBytes: 0,
             cssRawBytes: 0,
             cssGzipBytes: 0,
-            htmlRawBytes: 0
+            htmlRawBytes: 0,
+            asyncRawBytes: 0,
+            asyncGzipBytes: 0,
+            asyncChunkCount: 0
         }
     );
+}
+
+/**
+ * @param {AsyncChunkMetric[]} chunks
+ * @returns {string}
+ */
+function formatAsyncChunks(chunks) {
+    if (chunks.length === 0) {
+        return 'n/a';
+    }
+
+    const rawBytes = chunks.reduce((total, chunk) => total + chunk.rawBytes, 0);
+    const gzipBytes = chunks.reduce((total, chunk) => total + chunk.gzipBytes, 0);
+
+    return `${formatNumber(rawBytes)} / ${formatNumber(gzipBytes)} (${chunks.length})`;
 }
 
 /**
@@ -267,12 +302,12 @@ function createSummary(tools) {
  */
 function toMarkdownTableRows(tools) {
     const header = [
-        '| Tool | JS (raw/gzip bytes) | CSS (raw/gzip bytes) | HTML (bytes) |',
-        '|---|---:|---:|---:|'
+        '| Tool | JS (raw/gzip bytes) | Async JS (raw/gzip bytes, chunks) | CSS (raw/gzip bytes) | HTML (bytes) |',
+        '|---|---:|---:|---:|---:|'
     ];
 
     const rows = tools.map((tool) => {
-        return `| \`${tool.tool}\` | ${formatRawGzip(tool.files.js)} | ${formatRawGzip(tool.files.css)} | ${formatRaw(tool.files.html)} |`;
+        return `| \`${tool.tool}\` | ${formatRawGzip(tool.files.js)} | ${formatAsyncChunks(tool.files.asyncChunks)} | ${formatRawGzip(tool.files.css)} | ${formatRaw(tool.files.html)} |`;
     });
 
     return [...header, ...rows].join('\n');
@@ -334,7 +369,7 @@ function main() {
         console.log('');
         console.log(markdown);
         console.log('');
-        console.log(`Totals: JS ${formatNumber(summary.jsRawBytes)} / ${formatNumber(summary.jsGzipBytes)}, CSS ${formatNumber(summary.cssRawBytes)} / ${formatNumber(summary.cssGzipBytes)}, HTML ${formatNumber(summary.htmlRawBytes)} bytes`);
+        console.log(`Totals: JS ${formatNumber(summary.jsRawBytes)} / ${formatNumber(summary.jsGzipBytes)}, Async JS ${formatNumber(summary.asyncRawBytes)} / ${formatNumber(summary.asyncGzipBytes)} (${summary.asyncChunkCount} chunks), CSS ${formatNumber(summary.cssRawBytes)} / ${formatNumber(summary.cssGzipBytes)}, HTML ${formatNumber(summary.htmlRawBytes)} bytes`);
     }
 
     if (shouldPrintJson) {
