@@ -28,7 +28,7 @@ describe('AppShell components', () => {
         const homeLink = root.querySelector('a.cst-shell__brand');
         expect(homeLink).not.toBeNull();
         expect(homeLink.getAttribute('href')).toBe('/');
-        expect(homeLink.getAttribute('aria-label')).toBe('Back to all tools');
+        expect(homeLink.getAttribute('aria-label')).toBe('CodeSamplez Tools home');
 
         const menuTrigger = root.querySelector('summary.cst-shell__tool-menu-trigger');
         expect(menuTrigger).not.toBeNull();

@@ -9,6 +9,7 @@ const DEFAULT_FUNCTION_NAME = 'RewriteStaticURLs';
 const DEFAULT_SOURCE_PATH = path.resolve(process.cwd(), 'infrastructure/cloudfront-functions/RewriteStaticURLs.js');
 const DEFAULT_RUNTIME = 'cloudfront-js-2.0';
 const DEFAULT_EVENT_TYPE = 'viewer-request';
+const DEFAULT_VIEWER_PROTOCOL_POLICY = 'redirect-to-https';
 const DEFAULT_COMMENT = 'Rewrite static site URLs for SEO-friendly paths (managed by CI/CD)';
 
 /**
@@ -305,10 +306,15 @@ function ensureDefaultFunctionAssociation(distributionConfig, functionArn, event
         throw new Error('Distribution config is missing DefaultCacheBehavior');
     }
 
+    const viewerProtocolPolicy = defaultCacheBehavior.ViewerProtocolPolicy;
     const associations = defaultCacheBehavior.FunctionAssociations || { Quantity: 0 };
     const items = Array.isArray(associations.Items) ? associations.Items.slice() : [];
     const existingIndex = items.findIndex((item) => item.EventType === eventType);
     let changed = false;
+
+    if (viewerProtocolPolicy !== DEFAULT_VIEWER_PROTOCOL_POLICY) {
+        changed = true;
+    }
 
     if (existingIndex === -1) {
         items.push({ EventType: eventType, FunctionARN: functionArn });
@@ -330,6 +336,7 @@ function ensureDefaultFunctionAssociation(distributionConfig, functionArn, event
             ...distributionConfig,
             DefaultCacheBehavior: {
                 ...defaultCacheBehavior,
+                ViewerProtocolPolicy: DEFAULT_VIEWER_PROTOCOL_POLICY,
                 FunctionAssociations: nextAssociations
             }
         },
@@ -372,7 +379,7 @@ function ensureDistributionAssociation(distributionId, functionArn, eventType, d
     const current = parseJsonOutput(result.stdout);
     const next = ensureDefaultFunctionAssociation(current.DistributionConfig, functionArn, eventType);
     if (!next.changed) {
-        console.log(`CloudFront distribution ${distributionId} already has ${eventType} association for ${functionArn}`);
+        console.log(`CloudFront distribution ${distributionId} already has ${eventType} association for ${functionArn} and ${DEFAULT_VIEWER_PROTOCOL_POLICY} viewer policy`);
         return;
     }
 

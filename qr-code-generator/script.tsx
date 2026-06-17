@@ -280,7 +280,7 @@ export function QRCodeGeneratorApp() {
 
   return (
     <div id="qr-code-generator-tool" className="tool-container qr-tool c-tool-stack">
-      <main className="qr-tool__main-content">
+      <div className="qr-tool__main-content">
         <div className="qr-tool__controls c-surface-card">
           <h3 className="qr-tool__section-title">Configuration</h3>
 
@@ -362,7 +362,7 @@ export function QRCodeGeneratorApp() {
             {errorMessage}
           </p>
         </div>
-      </main>
+      </div>
 
       {/* Tool-first ordering: About intro + guide below the interactive tool. */}
       <QRCodeGeneratorIntro />

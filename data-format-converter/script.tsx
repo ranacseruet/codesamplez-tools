@@ -424,7 +424,7 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
 
     return (
         <div id="data-format-converter-tool" className="tool-container dfc-tool c-tool-stack">
-            <main className="dfc-main-content">
+            <div className="dfc-main-content">
                 <div className="converter-section o-grid-2col swap-container-wrapper">
                     <div className="input-section o-panel c-surface-card c-surface-panel">
                         <h3 className="dfc-panel-title">Input Format</h3>
@@ -555,7 +555,7 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
                     {errorMessage}
                 </div>
                 <div id="notification" className="c-notification" role="status" aria-live="polite" />
-            </main>
+            </div>
 
             {/* Tool-first ordering: About intro + guide below the interactive tool. */}
             <DataFormatConverterIntro />

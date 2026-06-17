@@ -409,6 +409,7 @@ describe('deploy-cloudfront-function helpers', () => {
     const result = ensureDefaultFunctionAssociation({
       DefaultCacheBehavior: {
         TargetOriginId: 's3-origin',
+        ViewerProtocolPolicy: 'redirect-to-https',
         FunctionAssociations: {
           Quantity: 0
         }
@@ -423,11 +424,13 @@ describe('deploy-cloudfront-function helpers', () => {
         FunctionARN: 'arn:aws:cloudfront::123:function/RewriteStaticURLs'
       }]
     });
+    expect(result.config.DefaultCacheBehavior.ViewerProtocolPolicy).toBe('redirect-to-https');
   });
 
   it('keeps an existing matching viewer-request association unchanged', () => {
     const result = ensureDefaultFunctionAssociation({
       DefaultCacheBehavior: {
+        ViewerProtocolPolicy: 'redirect-to-https',
         FunctionAssociations: {
           Quantity: 1,
           Items: [{
@@ -440,11 +443,31 @@ describe('deploy-cloudfront-function helpers', () => {
 
     expect(result.changed).toBe(false);
     expect(result.config.DefaultCacheBehavior.FunctionAssociations.Quantity).toBe(1);
+    expect(result.config.DefaultCacheBehavior.ViewerProtocolPolicy).toBe('redirect-to-https');
+  });
+
+  it('enforces redirect-to-https when the function association already matches', () => {
+    const result = ensureDefaultFunctionAssociation({
+      DefaultCacheBehavior: {
+        ViewerProtocolPolicy: 'allow-all',
+        FunctionAssociations: {
+          Quantity: 1,
+          Items: [{
+            EventType: 'viewer-request',
+            FunctionARN: 'arn:aws:cloudfront::123:function/RewriteStaticURLs'
+          }]
+        }
+      }
+    }, 'arn:aws:cloudfront::123:function/RewriteStaticURLs');
+
+    expect(result.changed).toBe(true);
+    expect(result.config.DefaultCacheBehavior.ViewerProtocolPolicy).toBe('redirect-to-https');
   });
 
   it('replaces a different viewer-request function association while preserving other event associations', () => {
     const result = ensureDefaultFunctionAssociation({
       DefaultCacheBehavior: {
+        ViewerProtocolPolicy: 'redirect-to-https',
         FunctionAssociations: {
           Quantity: 2,
           Items: [{
@@ -492,7 +515,47 @@ describe('deploy-cloudfront-function helpers', () => {
               DistributionConfig: {
                 CallerReference: 'ref',
                 DefaultCacheBehavior: {
+                  ViewerProtocolPolicy: 'redirect-to-https',
                   FunctionAssociations: { Quantity: 0 }
+                }
+              }
+            }),
+            stderr: ''
+          };
+        }
+        return { status: 0, stdout: '{}', stderr: '' };
+      }
+    );
+
+    const updateCall = calls.find((call) => call.includes('update-distribution'));
+    expect(updateCall).toEqual(expect.arrayContaining(['--if-match', 'DIST_ETAG']));
+  });
+
+  it('updates the distribution when only the viewer protocol policy is stale', () => {
+    const calls = [];
+    ensureDistributionAssociation(
+      'DIST123',
+      'arn:aws:cloudfront::123:function/RewriteStaticURLs',
+      'viewer-request',
+      false,
+      (command, args) => {
+        calls.push([command, ...args]);
+        if (args[1] === 'get-distribution-config') {
+          return {
+            status: 0,
+            stdout: JSON.stringify({
+              ETag: 'DIST_ETAG',
+              DistributionConfig: {
+                CallerReference: 'ref',
+                DefaultCacheBehavior: {
+                  ViewerProtocolPolicy: 'allow-all',
+                  FunctionAssociations: {
+                    Quantity: 1,
+                    Items: [{
+                      EventType: 'viewer-request',
+                      FunctionARN: 'arn:aws:cloudfront::123:function/RewriteStaticURLs'
+                    }]
+                  }
                 }
               }
             }),
@@ -525,6 +588,7 @@ describe('deploy-cloudfront-function helpers', () => {
               ETag: 'DIST_ETAG',
               DistributionConfig: {
                 DefaultCacheBehavior: {
+                  ViewerProtocolPolicy: 'redirect-to-https',
                   FunctionAssociations: {
                     Quantity: 1,
                     Items: [{
@@ -542,6 +606,7 @@ describe('deploy-cloudfront-function helpers', () => {
 
       expect(calls.some((call) => call.includes('update-distribution'))).toBe(false);
       expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('already has viewer-request association'));
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('redirect-to-https viewer policy'));
     } finally {
       logSpy.mockRestore();
     }

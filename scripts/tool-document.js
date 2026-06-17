@@ -66,6 +66,8 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     const documentTitle = formatToolDocumentTitle(tool.seoTitle, manifest.organization.name);
     const escapedDescription = escapeAttribute(tool.description);
     const escapedAppRootId = escapeAttribute(tool.appRootId);
+    const escapedMainHeadingId = escapeAttribute(`${tool.appRootId}-workspace-heading`);
+    const workspaceHeading = `${tool.title} workspace`;
     const escapedSiteName = escapeAttribute(manifest.siteName);
     const escapedPageUrl = escapeAttribute(absolutePageUrl);
     const escapedStylesUrl = escapeAttribute(absoluteStylesUrl);
@@ -122,11 +124,15 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
 
 <body class="standalone-app">
     <div id="app-shell-header">${shellHeaderMarkup}</div>
-    ${wrappedBeforeMarkup}
-    <div id="${escapedAppRootId}">${prerenderedMarkup}</div>
-    ${wrappedAfterMarkup}
-    ${relatedToolsMarkup}
-    <div id="app-shell-share">${shellShareMarkup}</div>
+    <!-- c-tool-page-main is an unstyled semantic landmark hook. -->
+    <main class="c-tool-page-main" aria-labelledby="${escapedMainHeadingId}">
+        <h2 id="${escapedMainHeadingId}" class="u-visually-hidden">${escapeHtml(workspaceHeading)}</h2>
+        ${wrappedBeforeMarkup}
+        <div id="${escapedAppRootId}">${prerenderedMarkup}</div>
+        ${wrappedAfterMarkup}
+        ${relatedToolsMarkup}
+        <div id="app-shell-share">${shellShareMarkup}</div>
+    </main>
     <div id="app-shell-footer">${shellFooterMarkup}</div>
     <script src="${escapedBundleUrl}"${scriptTypeAttribute}></script>
 </body>

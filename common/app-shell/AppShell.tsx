@@ -99,7 +99,7 @@ export function ToolShellHeader({
                 in the page-header band below so the bar stays compact while scrolling. */}
             <div className="cst-appbar">
                 <div className="cst-appbar__inner">
-                    <a className="cst-shell__brand" href={homeHref} aria-label="Back to all tools">
+                    <a className="cst-shell__brand" href={homeHref} aria-label="CodeSamplez Tools home">
                         <span className="cst-shell__brand-mark" aria-hidden="true">{'</>'}</span>
                         CodeSamplez Tools
                     </a>
