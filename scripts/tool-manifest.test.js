@@ -292,6 +292,21 @@ describe('tool-manifest', () => {
       CST_SITE_STATIC_ROOT_URI: 'https://cdn.example.test/tools'
     }, () => resolveSiteStaticRootUri('https://static.example.test/tools-assets', PROD_SITE_BASE_URL)))
       .toBe('https://cdn.example.test/tools');
+
+    // In development the configured production static root is ignored so assets
+    // resolve to the local dev origin and local edits are visible.
+    expect(withEnv({
+      NODE_ENV: 'development',
+      CST_SITE_STATIC_ROOT_URI: undefined
+    }, () => resolveSiteStaticRootUri('https://static.example.test/tools-assets', 'http://localhost:8081')))
+      .toBe('http://localhost:8081');
+
+    // An explicit override still wins, even in development.
+    expect(withEnv({
+      NODE_ENV: 'development',
+      CST_SITE_STATIC_ROOT_URI: 'https://cdn.example.test/tools'
+    }, () => resolveSiteStaticRootUri('https://static.example.test/tools-assets', 'http://localhost:8081')))
+      .toBe('https://cdn.example.test/tools');
   });
 
   it('uses the development site base url in root config and tool definitions when NODE_ENV=development', () => {
@@ -306,7 +321,7 @@ describe('tool-manifest', () => {
       PORT: '8081',
       CST_SITE_BASE_URL: undefined,
       CST_SITE_STATIC_ROOT_URI: undefined
-    }, () => loadRootConfig().siteStaticRootUri)).toBe(PROD_SITE_STATIC_ROOT_URI);
+    }, () => loadRootConfig().siteStaticRootUri)).toBe('http://localhost:8081');
 
     expect(withEnv({
       NODE_ENV: 'development',
@@ -323,9 +338,9 @@ describe('tool-manifest', () => {
       };
     })).toEqual({
       siteBaseUrl: 'http://localhost:8081',
-      siteStaticRootUri: PROD_SITE_STATIC_ROOT_URI,
+      siteStaticRootUri: 'http://localhost:8081',
       absolutePageUrl: 'http://localhost:8081/jwt-decoder/',
-      absoluteFeaturedImageUrl: buildProdStaticAssetUri('/jwt-decoder/images/featured.png')
+      absoluteFeaturedImageUrl: 'http://localhost:8081/jwt-decoder/images/featured.png'
     });
   });
 

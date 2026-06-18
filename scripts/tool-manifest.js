@@ -203,6 +203,16 @@ function resolveSiteStaticRootUri(configuredStaticRootUri, resolvedSiteBaseUrl) 
         return normalizeBaseUrl(overriddenStaticRootUri);
     }
 
+    // In development the local dev server emits every tool bundle, stylesheet,
+    // font and image under the dev origin and serves them at `/`, so static
+    // assets must resolve to that origin — not the configured production CDN.
+    // Otherwise `npm run dev` would load production assets and local edits would
+    // never appear. An explicit CST_SITE_STATIC_ROOT_URI override (handled above)
+    // still takes precedence for the rare case a dev wants to point elsewhere.
+    if (process.env.NODE_ENV === 'development') {
+        return resolvedSiteBaseUrl;
+    }
+
     if (typeof configuredStaticRootUri !== 'undefined') {
         const normalizedStaticRootUri = requireNonEmptyString(configuredStaticRootUri, 'Root siteStaticRootUri');
 

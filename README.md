@@ -90,7 +90,7 @@ Engineering constraints:
 - Verify build output: `npm run verify-build`
 - Verify selected tool builds: `npm run verify-build -- --tools jwt-decoder-tool,json-formatter-tool`
 - Serve the production build locally: `npm start`
-- Dev server: `npm run dev`
+- Dev server: `npm run dev` — serves every asset (stylesheets, bundles, fonts, images, favicons) from the local dev origin (`http://localhost:8081`), so local edits are reflected immediately. The production static root (`siteStaticRootUri`) is intentionally ignored in development; set `CST_SITE_STATIC_ROOT_URI` only if you need assets to resolve against a different origin.
 
 The build preserves the standalone deployment contract for each tool, prerenders supported tool UI into static HTML before client hydration, and generates the root landing page from manifest metadata rather than a hand-authored source HTML file.
 
