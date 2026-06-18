@@ -15,9 +15,14 @@ const DEFAULT_FAIL_PERCENT = 10;
 // inline brand SVGs + preact/hooks to every tool bundle, and main was already ~8%
 // over both original frozen baselines, so these values reflect the new expected
 // size rather than masking a regression.
+//
+// `js-minifier-tool` dropped from 857,058 to ~54 KB when the Babel engine was
+// code-split behind `./load-minifier` (issue #396): the engine is now a lazy
+// chunk (counted in the Async column, not enforced — see measure/budget split).
+// This baseline tracks the new initial bundle only.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
-    'js-minifier-tool': 857058,
+    'js-minifier-tool': 53969,
     'data-format-converter': 160784,
     'diff-checker-tool': 72558,
     'jwt-builder-tool': 77707,

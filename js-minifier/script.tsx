@@ -1,4 +1,3 @@
-import { JSMinifier } from './minifier';
 import { formatBytes } from '../common/format-utils';
 import { NotificationManager } from '../common/notification-manager';
 import ClearButton from '../common/clear-button/ClearButton';
@@ -8,7 +7,13 @@ import { hydrate, render } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { JSMinifierArticle, JSMinifierIntro } from './content';
+import { loadMinifier, type MinifierConstructor } from './load-minifier';
 import toolMetadata from './tool.meta.json';
+
+// The minifier engine is the Babel parser/traverse/generator stack (~803 KB
+// raw). It is loaded lazily via the `./load-minifier` seam on first minify so
+// it stays out of the initial page bundle — visitors who never minify never pay
+// for it. See GitHub issue #396.
 
 const DEFAULT_OPTIONS = {
   removeComments: true,
@@ -53,19 +58,37 @@ function calculateStats(original = '', minified = '') {
   };
 }
 
-if (typeof window !== 'undefined') {
-  (window as Window & { JSMinifier?: typeof JSMinifier }).JSMinifier = JSMinifier;
-}
-
 export function JSMinifierApp() {
   const [inputCode, setInputCode] = useState('');
   const [outputCode, setOutputCode] = useState('');
   const [options, setOptions] = useState(createDefaultOptions);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoadingEngine, setIsLoadingEngine] = useState(false);
   const inputRef = useRef(null);
   const outputRef = useRef(null);
   const clearButtonRef = useRef(null);
   const copyButtonRef = useRef(null);
+  const engineRef = useRef<MinifierConstructor | null>(null);
+  // Tracks the latest input synchronously (updated at every input source) so a
+  // minify whose engine load / yield finished after the user kept typing can
+  // drop its now-stale result instead of showing output for old input alongside
+  // stats computed from the new input.
+  const latestInputRef = useRef(inputCode);
+
+  // Lazily fetch + cache the Babel minifier engine chunk. First call shows the
+  // "Loading…" button state while the chunk downloads; later calls resolve from
+  // the in-memory cache (webpack also caches the chunk itself).
+  const loadMinifierEngine = async (): Promise<MinifierConstructor> => {
+    if (!engineRef.current) {
+      setIsLoadingEngine(true);
+      try {
+        engineRef.current = await loadMinifier();
+      } finally {
+        setIsLoadingEngine(false);
+      }
+    }
+    return engineRef.current;
+  };
 
   const stats = useMemo(() => calculateStats(inputCode, outputCode), [inputCode, outputCode]);
 
@@ -78,6 +101,7 @@ export function JSMinifierApp() {
     clearButtonRef.current = new ClearButton(inputEl);
 
     const handleTextCleared = () => {
+      latestInputRef.current = inputEl.value;
       setInputCode(inputEl.value);
       setOutputCode('');
       NotificationManager.show('Input cleared', 2000, { type: 'success' });
@@ -131,7 +155,17 @@ export function JSMinifierApp() {
     setIsProcessing(true);
 
     try {
+      // Lazy-load the Babel engine (kept out of the initial bundle), then yield
+      // so the busy/loading button state paints before the synchronous minify.
+      const JSMinifier = await loadMinifierEngine();
       await scheduleTask(20);
+
+      // The user may have kept typing while the engine loaded/yielded. Drop this
+      // run rather than show minified output for stale input next to stats
+      // computed from the current input.
+      if (code !== latestInputRef.current) {
+        return false;
+      }
 
       const minifier = new JSMinifier(optionsOverride);
       const minified = minifier.minify(code);
@@ -154,6 +188,7 @@ export function JSMinifierApp() {
 
   const handleInputChange = (event) => {
     const nextValue = event.target.value;
+    latestInputRef.current = nextValue;
     setInputCode(nextValue);
     if (nextValue === '') {
       setOutputCode('');
@@ -168,6 +203,7 @@ export function JSMinifierApp() {
   };
 
   const handleLoadSample = async () => {
+    latestInputRef.current = SAMPLE_CODE;
     setInputCode(SAMPLE_CODE);
     const success = await runMinify(SAMPLE_CODE, options);
     if (success) {
@@ -270,8 +306,8 @@ export function JSMinifierApp() {
       </div>
 
       <div className="js-minifier-toolbar o-toolbar c-action-strip">
-        <button id="js-minifier-minify-btn" className="c-button" onClick={() => void runMinify()} disabled={isProcessing}>
-          {isProcessing ? 'Minifying...' : 'Minify JavaScript'}
+        <button id="js-minifier-minify-btn" className="c-button" onClick={() => void runMinify()} disabled={isProcessing || isLoadingEngine}>
+          {isLoadingEngine ? 'Loading…' : isProcessing ? 'Minifying...' : 'Minify JavaScript'}
         </button>
         <button id="js-minifier-load-sample-btn" className="c-button c-button--secondary" onClick={() => void handleLoadSample()}>
           Load Sample

@@ -6,6 +6,14 @@ const mockClearButtonInstances = [];
 const mockCopyButtonInstances = [];
 const mockMinifierInstances = [];
 const mockMinifyImpl = jest.fn((code) => String(code).replace(/\s+/g, ' ').trim());
+const mockJSMinifier = jest.fn().mockImplementation((options = {}) => {
+  const instance = {
+    options,
+    minify: jest.fn((code) => mockMinifyImpl(code, options))
+  };
+  mockMinifierInstances.push(instance);
+  return instance;
+});
 
 jest.mock('../common/notification-manager', () => ({
   NotificationManager: {
@@ -45,15 +53,11 @@ jest.mock('../common/copy-button/CopyButton', () => ({
   })
 }));
 
-jest.mock('./minifier', () => ({
-  JSMinifier: jest.fn().mockImplementation((options = {}) => {
-    const instance = {
-      options,
-      minify: jest.fn((code) => mockMinifyImpl(code, options))
-    };
-    mockMinifierInstances.push(instance);
-    return instance;
-  })
+// script.tsx code-splits the Babel engine behind the `./load-minifier` seam
+// (issue #396). Mocking that seam keeps the real engine — and its dynamic
+// `import()`, which jest's ESM loader can't intercept — out of these tests.
+jest.mock('./load-minifier', () => ({
+  loadMinifier: jest.fn(async () => mockJSMinifier)
 }));
 
 import { NotificationManager } from '../common/notification-manager';
@@ -61,13 +65,17 @@ import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { scheduleTask } from '../common/scheduler-utils';
 import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
-import { JSMinifier } from './minifier';
 import { JSMinifierToolUI } from './script';
+import { loadMinifier } from './load-minifier';
 import { SITE_BASE_URL } from '../common/siteBaseUrl';
+
+// Alias for the assertions that check the engine constructor.
+const JSMinifier = mockJSMinifier;
 
 describe('JavaScript Minifier Preact runtime', () => {
   const flush = () => Promise.resolve();
   const flushEffects = async () => {
+    await flush();
     await flush();
     await flush();
   };
@@ -164,6 +172,43 @@ describe('JavaScript Minifier Preact runtime', () => {
     expect(consoleErrorSpy).toHaveBeenCalledWith('Minification error:', expect.any(Error));
 
     consoleErrorSpy.mockRestore();
+  });
+
+  it('drops a stale minify when the input changes while the engine is loading', async () => {
+    // Make the engine load hang until we resolve it, simulating a slow first
+    // fetch during which the user keeps editing.
+    let resolveEngine;
+    loadMinifier.mockImplementationOnce(
+      () => new Promise((resolve) => {
+        resolveEngine = () => resolve(mockJSMinifier);
+      })
+    );
+
+    new JSMinifierToolUI();
+    await flushEffects();
+
+    const input = document.getElementById('js-minifier-input');
+    fireEvent.input(input, { target: { value: 'const a = 1;' } });
+    await flushEffects();
+
+    fireEvent.click(document.getElementById('js-minifier-minify-btn'));
+    await flushEffects(); // runMinify is now parked on the hanging engine load
+
+    // User keeps typing while the engine loads.
+    fireEvent.input(input, { target: { value: 'const b = 2;' } });
+    await flushEffects();
+
+    // Engine finishes loading; the run for the old 'const a = 1;' must be dropped.
+    resolveEngine();
+    await flushEffects();
+    await flushEffects();
+
+    expect(document.getElementById('js-minifier-output')?.value).toBe('');
+    expect(NotificationManager.show).not.toHaveBeenCalledWith(
+      expect.stringContaining('minified successfully'),
+      expect.anything(),
+      expect.anything()
+    );
   });
 
   it('auto-minifies when options change using updated options', async () => {

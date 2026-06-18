@@ -115,6 +115,9 @@ The minifier includes several safety features:
 - No code is sent to external servers
 - Source code remains private and secure
 
+### Lazy-loaded engine
+- The minifier engine (the Babel parser/traverse/generator stack, ~803 KB raw) is **not** in the initial page bundle. It is code-split behind the `./load-minifier` seam and fetched on the first minify, so visitors who never minify don't download it. The initial `js-minifier` bundle is now in line with the other tools (~54 KB raw). The first minify shows a brief "Loading…" state on the button while the engine chunk downloads.
+
 ### Best Practices
 - Always test minified code thoroughly before deployment
 - Use source maps in development for easier debugging
