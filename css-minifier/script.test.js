@@ -157,6 +157,49 @@ describe('CSS Minifier Preact runtime', () => {
       expect.any(Number),
       expect.any(Object)
     );
+
+    const errorStatus = document.getElementById('css-minifier-error-status');
+    expect(errorStatus?.textContent).toBe('Invalid CSS input. Please check your CSS syntax.');
+    expect(errorStatus?.classList.contains('error')).toBe(true);
+    expect(errorStatus?.getAttribute('role')).toBe('alert');
+
+    // A subsequent valid minify must clear the inline error.
+    isValidCSS.mockReturnValueOnce(true);
+    fireEvent.input(input, { target: { value: 'body { color: red; }' } });
+    await flushEffects();
+    fireEvent.click(document.getElementById('minify-btn'));
+    await flushEffects();
+    await flushEffects();
+
+    expect(errorStatus?.textContent).toBe('');
+    expect(errorStatus?.classList.contains('error')).toBe(false);
+  });
+
+  it('surfaces an inline error when processing throws unexpectedly', async () => {
+    new CssMinifierToolUI();
+    await flushEffects();
+    isValidCSS.mockImplementationOnce(() => {
+      throw new Error('boom');
+    });
+
+    const input = document.getElementById('css-minifier-input');
+    fireEvent.input(input, { target: { value: 'body { color: red; }' } });
+    await flushEffects();
+
+    fireEvent.click(document.getElementById('minify-btn'));
+    await flushEffects();
+    await flushEffects();
+
+    expect(document.getElementById('css-minifier-output')?.value).toBe('');
+    expect(NotificationManager.show).toHaveBeenCalledWith(
+      'Error: Failed to process CSS. boom',
+      expect.any(Number),
+      expect.any(Object)
+    );
+
+    const errorStatus = document.getElementById('css-minifier-error-status');
+    expect(errorStatus?.textContent).toBe('Failed to process CSS. boom');
+    expect(errorStatus?.classList.contains('error')).toBe(true);
   });
 
   it('loads sample CSS and minifies it', async () => {

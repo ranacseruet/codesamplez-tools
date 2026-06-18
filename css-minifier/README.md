@@ -124,7 +124,7 @@ A powerful web-based tool for optimizing CSS code by intelligently removing redu
 
 The tool performs an initial validation of the input CSS. This is achieved by attempting to apply the CSS to a temporary style element in the document (or a simulated DOM environment during tests).
 - **Invalid CSS Syntax**: If the provided CSS is syntactically incorrect and cannot be successfully parsed and applied by the browser's engine (or the testing environment's CSS parser):
-    - An error message (e.g., "Error: Invalid CSS input. Please check your CSS syntax.") will be displayed in the output area.
+    - An error message (e.g., "Invalid CSS input. Please check your CSS syntax.") is shown as a persistent inline validation error beneath the input (in addition to a transient toast), so it stays visible while you fix the CSS.
     - The statistics (original size, minified size, savings) will be cleared or reflect an error state.
     - The minification process will not proceed.
 - This validation step helps catch significant syntax errors before attempting minification, ensuring that the minifier only processes structurally sound CSS.

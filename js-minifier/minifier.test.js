@@ -270,6 +270,20 @@ describe('JS Minifier', () => {
       expect(() => minifier.minify(invalidCode)).toThrow('Invalid JavaScript syntax');
     });
 
+    test('minify surfaces the parser message detail for invalid syntax', () => {
+      const invalidCode = `const x = ;`;
+      // The thrown error must carry the underlying SyntaxError detail so the UI
+      // can show a specific validation message instead of a generic notice.
+      expect(() => minifier.minify(invalidCode)).toThrow(/Invalid JavaScript syntax: .*Unexpected token/);
+    });
+
+    test('getSyntaxError returns the SyntaxError for invalid code and null for valid code', () => {
+      expect(minifier.getSyntaxError('const x = 1;')).toBeNull();
+      const error = minifier.getSyntaxError('const x = ;');
+      expect(error).toBeInstanceOf(SyntaxError);
+      expect(error.message).toContain('Unexpected token');
+    });
+
     test('should handle complex syntax structures', () => {
       const complexCode = `class Test { 
         #privateField = 1; 

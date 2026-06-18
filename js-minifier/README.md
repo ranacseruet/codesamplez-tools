@@ -104,6 +104,10 @@ const user={a:"John",b:"Doe",c:function(){return this.a+" "+this.b}};
 The minifier includes several safety features:
 
 - Validates input to ensure it's non-empty and string type
+- Validates JavaScript syntax before minifying; invalid input surfaces the
+  parser's message (including the line/column, e.g. `Unexpected token (1:6)`)
+  as a persistent inline validation error beneath the input, not just a
+  transient toast
 - Preserves necessary whitespace to prevent syntax errors
 - Skips shortening of reserved JavaScript keywords and built-ins
 - Maintains function and method names that could affect program behavior

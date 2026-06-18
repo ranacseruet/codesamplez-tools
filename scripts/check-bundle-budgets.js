@@ -20,6 +20,12 @@ const DEFAULT_FAIL_PERCENT = 10;
 // code-split behind `./load-minifier` (issue #396): the engine is now a lazy
 // chunk (counted in the Async column, not enforced — see measure/budget split).
 // This baseline tracks the new initial bundle only.
+//
+// `css-minifier-tool` was refreshed (issue #60) from 61,713: accumulated drift
+// from the ShareBar social rail + DS work had already pushed main to ~67.7 KB
+// (a tolerated WARN against the stale baseline), and the inline validation-error
+// markup added here is ~240 bytes more. This value reflects the new expected
+// size rather than masking a regression.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 53969,
@@ -29,7 +35,7 @@ const JS_RAW_BASELINES = Object.freeze({
     'jwt-decoder-tool': 78448,
     'base64-converter-tool': 100367,
     'json-formatter-tool': 79715,
-    'css-minifier-tool': 61713,
+    'css-minifier-tool': 67919,
     'text-analyzer-tool': 51949,
     'qr-code-generator': 91896
 });

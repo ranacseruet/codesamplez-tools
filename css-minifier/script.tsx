@@ -128,6 +128,7 @@ export function CssMinifierApp() {
   const [outputCss, setOutputCss] = useState('');
   const [options, setOptions] = useState(createDefaultOptions);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const inputRef = useRef(null);
   const outputRef = useRef(null);
   const clearButtonRef = useRef(null);
@@ -146,6 +147,7 @@ export function CssMinifierApp() {
     const handleTextCleared = () => {
       setInputCss(inputEl.value);
       setOutputCss('');
+      setErrorMessage('');
       NotificationManager.show('Input cleared', 2000, { type: 'success' });
     };
 
@@ -194,6 +196,7 @@ export function CssMinifierApp() {
 
     if (!originalCss) {
       setOutputCss('');
+      setErrorMessage('');
       NotificationManager.show('Error: Please enter CSS to minify', 3000, { type: 'error' });
       return false;
     }
@@ -206,19 +209,24 @@ export function CssMinifierApp() {
       const valid = await isValidCSS(originalCss);
       if (!valid) {
         setOutputCss('');
-        NotificationManager.show('Error: Invalid CSS input. Please check your CSS syntax.', 3000, { type: 'error' });
+        const invalidMessage = 'Invalid CSS input. Please check your CSS syntax.';
+        setErrorMessage(invalidMessage);
+        NotificationManager.show(`Error: ${invalidMessage}`, 3000, { type: 'error' });
         return false;
       }
 
       const result = applyCssMinificationPipeline(originalCss, options);
       setOutputCss(result);
+      setErrorMessage('');
 
       const savings = ((originalCss.length - result.length) / originalCss.length * 100).toFixed(1);
       NotificationManager.show(`CSS minified successfully! Reduced by ${savings}%`, 2000, { type: 'success' });
       return true;
     } catch (error) {
       setOutputCss('');
-      NotificationManager.show(`Error: Failed to process CSS. ${error.message}`, 3000, { type: 'error' });
+      const failureMessage = `Failed to process CSS. ${error.message}`;
+      setErrorMessage(failureMessage);
+      NotificationManager.show(`Error: ${failureMessage}`, 3000, { type: 'error' });
       return false;
     } finally {
       setIsProcessing(false);
@@ -238,6 +246,7 @@ export function CssMinifierApp() {
     setInputCss(nextValue);
     if (nextValue === '') {
       setOutputCss('');
+      setErrorMessage('');
     }
   };
 
@@ -263,6 +272,14 @@ export function CssMinifierApp() {
             value={inputCss}
             onInput={handleInputChange}
           />
+          <div
+            id="css-minifier-error-status"
+            className={`c-input-status cssm-input-status${errorMessage ? ' error' : ''}`}
+            role={errorMessage ? 'alert' : 'status'}
+            aria-live="polite"
+          >
+            {errorMessage}
+          </div>
         </div>
 
         <div className="o-panel cssm-panel cssm-output-panel c-surface-card c-surface-panel">

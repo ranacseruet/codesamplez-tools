@@ -24,19 +24,29 @@ export class JSMinifier {
     };
   }
 
-  // Validate JavaScript syntax
-  isValidJavaScript(code: string): boolean {
+  // Return the SyntaxError for invalid JavaScript, or null when the code parses.
+  // Non-syntax errors are re-thrown so genuine bugs are not silently swallowed.
+  getSyntaxError(code: string): SyntaxError | null {
     try {
       // eslint-disable-next-line no-new-func
       new Function(code);
-      return true;
+      return null;
     } catch (e: unknown) {
       if (e instanceof SyntaxError) {
-        console.log('Invalid JavaScript: ', e.message);
-        return false;
+        return e;
       }
       throw e; // Re-throw non-syntax errors
     }
+  }
+
+  // Validate JavaScript syntax
+  isValidJavaScript(code: string): boolean {
+    const syntaxError = this.getSyntaxError(code);
+    if (syntaxError) {
+      console.log('Invalid JavaScript: ', syntaxError.message);
+      return false;
+    }
+    return true;
   }
 
   // Main minify method
@@ -45,8 +55,11 @@ export class JSMinifier {
       return '';
     }
 
-    if (!this.isValidJavaScript(code)) {
-      throw new Error('Invalid JavaScript syntax');
+    const syntaxError = this.getSyntaxError(code);
+    if (syntaxError) {
+      // Surface the parser's message (with its line/column) so the UI can show a
+      // specific validation error instead of a generic "invalid" notice.
+      throw new Error(`Invalid JavaScript syntax: ${syntaxError.message}`);
     }
 
     let result = code;

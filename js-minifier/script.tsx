@@ -64,6 +64,7 @@ export function JSMinifierApp() {
   const [options, setOptions] = useState(createDefaultOptions);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoadingEngine, setIsLoadingEngine] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const inputRef = useRef(null);
   const outputRef = useRef(null);
   const clearButtonRef = useRef(null);
@@ -104,6 +105,7 @@ export function JSMinifierApp() {
       latestInputRef.current = inputEl.value;
       setInputCode(inputEl.value);
       setOutputCode('');
+      setErrorMessage('');
       NotificationManager.show('Input cleared', 2000, { type: 'success' });
     };
 
@@ -148,6 +150,7 @@ export function JSMinifierApp() {
 
     if (!code.trim()) {
       setOutputCode('');
+      setErrorMessage('');
       NotificationManager.show('Please enter JavaScript to minify', 2000, { type: 'error' });
       return false;
     }
@@ -170,6 +173,7 @@ export function JSMinifierApp() {
       const minifier = new JSMinifier(optionsOverride);
       const minified = minifier.minify(code);
       setOutputCode(minified);
+      setErrorMessage('');
 
       const originalBytes = new Blob([code]).size;
       const minifiedBytes = new Blob([minified]).size;
@@ -178,6 +182,7 @@ export function JSMinifierApp() {
       return true;
     } catch (error) {
       setOutputCode('');
+      setErrorMessage(error.message);
       NotificationManager.show(`Minification error: ${error.message}`, 3000, { type: 'error' });
       console.error('Minification error:', error);
       return false;
@@ -192,6 +197,7 @@ export function JSMinifierApp() {
     setInputCode(nextValue);
     if (nextValue === '') {
       setOutputCode('');
+      setErrorMessage('');
     }
   };
 
@@ -289,6 +295,14 @@ export function JSMinifierApp() {
             value={inputCode}
             onInput={handleInputChange}
           />
+          <div
+            id="js-minifier-error-status"
+            className={`c-input-status js-minifier-input-status${errorMessage ? ' error' : ''}`}
+            role={errorMessage ? 'alert' : 'status'}
+            aria-live="polite"
+          >
+            {errorMessage}
+          </div>
         </div>
 
         <div className="o-panel c-surface-card c-surface-panel">

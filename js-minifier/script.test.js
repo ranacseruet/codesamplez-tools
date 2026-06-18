@@ -171,6 +171,44 @@ describe('JavaScript Minifier Preact runtime', () => {
     expect(NotificationManager.show).toHaveBeenCalledWith('Minification error: Bad JS', 3000, { type: 'error' });
     expect(consoleErrorSpy).toHaveBeenCalledWith('Minification error:', expect.any(Error));
 
+    const errorStatus = document.getElementById('js-minifier-error-status');
+    expect(errorStatus?.textContent).toBe('Bad JS');
+    expect(errorStatus?.classList.contains('error')).toBe(true);
+    expect(errorStatus?.getAttribute('role')).toBe('alert');
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('clears the inline validation error after a successful minify', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockMinifyImpl.mockImplementationOnce(() => {
+      throw new Error('Invalid JavaScript syntax: Unexpected token (1:6)');
+    });
+
+    new JSMinifierToolUI();
+    await flushEffects();
+
+    const input = document.getElementById('js-minifier-input');
+    fireEvent.input(input, { target: { value: 'const =;' } });
+    await flushEffects();
+    fireEvent.click(document.getElementById('js-minifier-minify-btn'));
+    await flushEffects();
+    await flushEffects();
+
+    const errorStatus = document.getElementById('js-minifier-error-status');
+    expect(errorStatus?.textContent).toContain('Unexpected token');
+    expect(errorStatus?.classList.contains('error')).toBe(true);
+
+    // A subsequent valid minify must clear the inline error.
+    fireEvent.input(input, { target: { value: 'const x = 1;' } });
+    await flushEffects();
+    fireEvent.click(document.getElementById('js-minifier-minify-btn'));
+    await flushEffects();
+    await flushEffects();
+
+    expect(errorStatus?.textContent).toBe('');
+    expect(errorStatus?.classList.contains('error')).toBe(false);
+
     consoleErrorSpy.mockRestore();
   });
 
