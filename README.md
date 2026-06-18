@@ -197,7 +197,7 @@ Supporting and report-oriented checks:
 - Review the PR visual diff workflow when a change affects UI or layout
 - Review the main-branch visual baseline publish result when shared UI changes land
 
-Visual baseline publishing and PR visual diffs are CI-managed workflows in this repository rather than local npm scripts.
+Visual baseline publishing and PR visual diffs are CI-managed workflows in this repository rather than local npm scripts. The per-PR visual diff runs as a `visual-diff` job in the main CI workflow, gated on the `test-and-build` job passing — it won't run (or post a comment) until typecheck, tests, audit, budget, and build all succeed. An on-demand `PR Visual Diff (manual)` workflow is available via `workflow_dispatch` to force a diff without pushing a new commit.
 
 ## Contributing
 

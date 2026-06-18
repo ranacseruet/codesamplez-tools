@@ -1,9 +1,10 @@
-name: PR Visual Diff
+# Manual force-run only. The automatic per-PR visual diff is a gated job in
+# ci.yml (runs after test-and-build passes). This workflow stays for the
+# on-demand `workflow_dispatch` path — e.g. re-running a diff against the
+# current ref without pushing a new commit.
+name: PR Visual Diff (manual)
 
 on:
-  pull_request:
-    branches: [ main ]
-    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
@@ -14,14 +15,13 @@ permissions:
 
 jobs:
   visual-diff:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.pull_request.head.sha }}
+          ref: ${{ github.sha }}
 
       - uses: actions/setup-node@v4
         with:
@@ -57,7 +57,7 @@ jobs:
         uses: ranacseruet/snapdrift/actions/pr-diff@v0.2.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          force-run: ${{ github.event_name == 'workflow_dispatch' }}
+          force-run: true
 
       - name: Stop app
         if: always()

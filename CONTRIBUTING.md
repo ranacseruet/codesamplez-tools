@@ -93,7 +93,7 @@ Notes:
 - Jest runs in a JSDOM environment.
 - Test files typically live alongside the corresponding tool or shared module.
 - Playwright-based checks use the built site, usually served locally with `npm start`.
-- Visual baseline publishing and PR visual diffs are CI-managed workflows in this repository rather than local npm scripts.
+- Visual baseline publishing and PR visual diffs are CI-managed workflows in this repository rather than local npm scripts. The per-PR visual diff is a `visual-diff` job in the main CI workflow gated on `test-and-build`, so it only runs after typecheck, tests, audit, budget, and build pass. Use the `PR Visual Diff (manual)` `workflow_dispatch` workflow to force a diff on demand.
 
 ## Building
 
