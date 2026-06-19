@@ -83,8 +83,20 @@
   gap: 0.75rem;
 }
 
+/* Primary action lives on its own centered row below the input/output panes. */
+.jsonf-tool .jsonf-format-row {
+  display: flex;
+  justify-content: center;
+}
+
 .jsonf-tool .jsonf-format-btn {
-  min-width: 8.5rem;
+  min-width: 12rem;
+}
+
+/* The secondary neutral fill nearly matches the toolbar surface in dark mode, so
+   lift the hairline to the stronger outline token to keep the button legible. */
+.jsonf-tool .jsonf-sample-btn {
+  border-color: var(--md-sys-color-outline, var(--color-border));
 }
 
 .jsonf-tool .jsonf-checkbox-item {
@@ -103,6 +115,28 @@
   font-weight: 500;
 }
 
+/* Indentation selector, styled to sit alongside the pill checkboxes. */
+.jsonf-tool .jsonf-indent-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.3rem 0.5rem 0.3rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  background: color-mix(in srgb, var(--color-surface, #fff) 92%, var(--color-surface-subtle, #f5f7fa));
+}
+
+.jsonf-tool .jsonf-indent-item label {
+  color: var(--color-text-secondary, #4b5563);
+  font-weight: 500;
+}
+
+.jsonf-tool .jsonf-indent-select {
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+}
+
 .jsonf-tool .jsonf-download-btn {
   margin-left: 0;
 }
@@ -112,6 +146,27 @@
 .jsonf-tool .jsonf-output-bar .c-tab-button {
   padding: 0.32rem 0.7rem;
   font-size: 0.85rem;
+}
+
+/* Expand/Collapse-all float over the top-right of the tree well. Living inside
+   #treeView means they're hidden automatically in Plain View and never shift the
+   tab row in the output bar. */
+.jsonf-tool .jsonf-tree-actions {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.jsonf-tool .jsonf-tree-btn {
+  padding: 0.28rem 0.6rem;
+  font-size: 0.8rem;
+  /* Slightly translucent so a node behind the controls stays faintly visible. */
+  background: color-mix(in srgb, var(--color-secondary, #21222c) 88%, transparent);
+  backdrop-filter: blur(2px);
 }
 
 /* Idle Copy/Download: the global disabled style fills with the dark neutral
@@ -135,6 +190,11 @@
 
 .jsonf-tool .view-container.active {
   display: block;
+}
+
+/* Positioning context for the floating Expand/Collapse-all controls. */
+.jsonf-tool #treeView {
+  position: relative;
 }
 
 .jsonf-tool .jsonf-output-content {
@@ -251,12 +311,21 @@
     justify-content: stretch;
   }
 
-  .jsonf-tool .jsonf-format-btn,
   .jsonf-tool .jsonf-sample-btn {
     flex: 1 1 12rem;
   }
 
+  .jsonf-tool .jsonf-format-btn {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
   .jsonf-tool .jsonf-checkbox-item {
+    flex: 1 1 10rem;
+    justify-content: center;
+  }
+
+  .jsonf-tool .jsonf-indent-item {
     flex: 1 1 10rem;
     justify-content: center;
   }
@@ -265,6 +334,17 @@
      and let the footer actions stretch to fill the width. */
   .jsonf-tool .jsonf-output-footer .c-button {
     flex: 1 1 12rem;
+  }
+}
+
+/* At ≤768px the shared `.o-toolbar` switches to `flex-direction: column`, which
+   turns the row-oriented `flex: 1 1 Nrem` bases above into a vertical basis and
+   balloons every control to ~10rem tall. Pin the stacked controls to their
+   natural height and full width instead. */
+@media (max-width: 768px) {
+  .jsonf-tool .jsonf-toolbar > * {
+    flex: 0 0 auto;
+    width: 100%;
   }
 }
 

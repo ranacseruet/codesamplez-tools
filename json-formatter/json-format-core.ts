@@ -5,6 +5,13 @@
  * here, and `format.worker.ts` exposes `formatJson` directly.
  */
 
+/**
+ * Output indentation choice for the formatted string. `2` / `4` are space counts,
+ * `'tab'` indents with a tab character, and `'minify'` emits compact single-line JSON
+ * (no whitespace). Maps to the third argument of `JSON.stringify`.
+ */
+export type IndentOption = 2 | 4 | 'tab' | 'minify';
+
 export interface JsonFormatRequest {
     /** Raw textarea contents (untrimmed — `formatJson` trims). */
     input: string;
@@ -12,6 +19,15 @@ export interface JsonFormatRequest {
     autoFix: boolean;
     /** Sort object keys alphabetically (recursively). */
     sortKeys: boolean;
+    /** Output indentation; defaults to 2 spaces when omitted. */
+    indent?: IndentOption;
+}
+
+/** Map an `IndentOption` to the `space` argument of `JSON.stringify`. */
+export function indentSpacer(indent: IndentOption): string | number {
+    if (indent === 'tab') return '\t';
+    if (indent === 'minify') return 0; // 0 → compact, single-line output
+    return indent; // 2 or 4 spaces
 }
 
 export interface JsonFormatResult {
@@ -71,5 +87,8 @@ export function formatJson(request: JsonFormatRequest): JsonFormatResult {
     const parsed = JSON.parse(inputValue) as unknown;
     const formatted = request.sortKeys ? sortKeysAlphabetically(parsed) : parsed;
 
-    return { formatted, formattedString: JSON.stringify(formatted, null, 2) };
+    return {
+        formatted,
+        formattedString: JSON.stringify(formatted, null, indentSpacer(request.indent ?? 2))
+    };
 }

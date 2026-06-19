@@ -8,6 +8,7 @@ import {
   autoFixJSON,
   formatJson,
   sortKeysAlphabetically,
+  type IndentOption,
   type JsonFormatRequest,
   type JsonFormatResult
 } from './json-format-core';
@@ -43,7 +44,6 @@ export function JsonFormatterApp() {
   return (
     <div id="json-formatter-tool" className="tool-container jsonf-tool c-tool-stack">
       <div className="o-toolbar jsonf-controls-custom jsonf-toolbar c-action-strip c-toolbar">
-        <button className="c-button jsonf-format-btn" id="formatJsonBtn" type="button">Format JSON</button>
         <button className="c-button c-button--secondary jsonf-sample-btn" id="loadSampleBtn" type="button">Load Sample</button>
         <div className="c-checkbox-item jsonf-checkbox-item">
           <input type="checkbox" id="sortKeys" defaultChecked />
@@ -52,6 +52,15 @@ export function JsonFormatterApp() {
         <div className="c-checkbox-item jsonf-checkbox-item">
           <input type="checkbox" id="autoFix" defaultChecked />
           <label htmlFor="autoFix">Auto fix</label>
+        </div>
+        <div className="jsonf-indent-item">
+          <label htmlFor="indentSelect">Indent</label>
+          <select className="jsonf-indent-select" id="indentSelect" aria-label="Output indentation">
+            <option value="2" selected>2 spaces</option>
+            <option value="4">4 spaces</option>
+            <option value="tab">Tab</option>
+            <option value="minify">Minified</option>
+          </select>
         </div>
       </div>
 
@@ -83,6 +92,27 @@ export function JsonFormatterApp() {
 
           <div className="o-panel-content jsonf-panel-content jsonf-output-content">
             <div id="treeView" className="view-container active">
+              {/* Floating tree controls, pinned to the top-right of the tree well.
+                  They live inside #treeView so they're hidden automatically in
+                  Plain View and never shift the tab row. */}
+              <div className="jsonf-tree-actions" role="group" aria-label="Tree Controls">
+                <button
+                  className="c-button c-button--secondary jsonf-tree-btn"
+                  id="expandAllBtn"
+                  type="button"
+                  disabled
+                >
+                  Expand All
+                </button>
+                <button
+                  className="c-button c-button--secondary jsonf-tree-btn"
+                  id="collapseAllBtn"
+                  type="button"
+                  disabled
+                >
+                  Collapse All
+                </button>
+              </div>
               <pre className="c-code-output jsonf-code-output" tabIndex={0}><code /></pre>
             </div>
             <div id="plainView" className="view-container">
@@ -107,6 +137,10 @@ export function JsonFormatterApp() {
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="jsonf-format-row">
+        <button className="c-button jsonf-format-btn" id="formatJsonBtn" type="button">Format JSON</button>
       </div>
 
       <div className="c-stats-panel jsonf-stats-panel c-surface-card">
@@ -145,6 +179,9 @@ export class JSONFormatter {
   sampleBtn!: HTMLButtonElement;
   sortCheckbox!: HTMLInputElement;
   autoFixCheckbox!: HTMLInputElement;
+  indentSelect!: HTMLSelectElement;
+  expandAllBtn!: HTMLButtonElement;
+  collapseAllBtn!: HTMLButtonElement;
   errorStatus!: HTMLElement;
   originalSizeEl!: HTMLElement;
   formattedSizeEl!: HTMLElement;
@@ -177,6 +214,9 @@ export class JSONFormatter {
       this.sampleBtn = document.querySelector('#loadSampleBtn') as HTMLButtonElement;
       this.sortCheckbox = document.querySelector('#sortKeys') as HTMLInputElement;
       this.autoFixCheckbox = document.querySelector('#autoFix') as HTMLInputElement;
+      this.indentSelect = document.querySelector('#indentSelect') as HTMLSelectElement;
+      this.expandAllBtn = document.querySelector('#expandAllBtn') as HTMLButtonElement;
+      this.collapseAllBtn = document.querySelector('#collapseAllBtn') as HTMLButtonElement;
       this.errorStatus = document.querySelector('#jsonErrorStatus') as HTMLElement;
       this.originalSizeEl = document.querySelector('.jsonf-original-size') as HTMLElement;
       this.formattedSizeEl = document.querySelector('.jsonf-formatted-size') as HTMLElement;
@@ -203,6 +243,24 @@ export class JSONFormatter {
 
     if (this.sampleBtn) {
       this.sampleBtn.addEventListener('click', () => this.loadSampleData());
+    }
+
+    if (this.indentSelect) {
+      // Re-run formatting when the indentation choice changes so the output,
+      // copy/download text, and size stats immediately reflect it.
+      this.indentSelect.addEventListener('change', () => {
+        if (this.input.value.trim()) {
+          this.formatJSON();
+        }
+      });
+    }
+
+    if (this.expandAllBtn) {
+      this.expandAllBtn.addEventListener('click', () => this.setAllCollapsed(false));
+    }
+
+    if (this.collapseAllBtn) {
+      this.collapseAllBtn.addEventListener('click', () => this.setAllCollapsed(true));
     }
 
     if (this.input) {
@@ -252,7 +310,8 @@ export class JSONFormatter {
       const request: JsonFormatRequest = {
         input: inputValue,
         autoFix: this.autoFixCheckbox.checked,
-        sortKeys: this.sortCheckbox.checked
+        sortKeys: this.sortCheckbox.checked,
+        indent: this.getIndentOption()
       };
       const { formatted, formattedString } = inputValue.length <= JSON_WORKER_CHAR_THRESHOLD
         ? formatJson(request)
@@ -278,13 +337,24 @@ export class JSONFormatter {
 
       this.copyBtn.disabled = false;
       this.downloadBtn.disabled = false;
+      this.expandAllBtn.disabled = false;
+      this.collapseAllBtn.disabled = false;
       this.updateStats(this.input.value.trim(), formattedString);
+
+      // Minified output is identical in the tree view, so surface the effect by
+      // switching to the plain (single-line) view automatically.
+      if (request.indent === 'minify') {
+        this.switchView('plain');
+      }
+
       NotificationManager.show('JSON formatted successfully!', 2000, { type: 'success' });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       this.showError(`Invalid JSON: ${message}`);
       this.copyBtn.disabled = true;
       this.downloadBtn.disabled = true;
+      this.expandAllBtn.disabled = true;
+      this.collapseAllBtn.disabled = true;
       this.output.replaceChildren();
       this.plainViewTextarea.value = '';
       this.updateStats(this.input.value, '');
@@ -470,10 +540,42 @@ export class JSONFormatter {
     const { formatted, formattedString } = formatJson({
       input: this.input.value,
       autoFix: this.autoFixCheckbox.checked,
-      sortKeys: this.sortCheckbox.checked
+      sortKeys: this.sortCheckbox.checked,
+      indent: this.getIndentOption()
     });
 
     return [formatted, formattedString];
+  }
+
+  /** Read the indentation selector, mapping its string value to an `IndentOption`. */
+  getIndentOption(): IndentOption {
+    switch (this.indentSelect?.value) {
+      case '4':
+        return 4;
+      case 'tab':
+        return 'tab';
+      case 'minify':
+        return 'minify';
+      default:
+        return 2;
+    }
+  }
+
+  /**
+   * Expand or collapse every node in the tree view at once. Mirrors the per-node
+   * toggle handler in `renderJSONAsync`: flips the `.collapsed` class and keeps each
+   * toggle's `+`/`-` glyph and `aria-expanded` in sync. Empty objects/arrays have no
+   * toggle, so they are skipped.
+   */
+  setAllCollapsed(collapsed: boolean): void {
+    const nodes = this.output.querySelectorAll<HTMLElement>('.json-node');
+    nodes.forEach((node) => {
+      const toggle = node.querySelector<HTMLElement>(':scope > .json-toggle');
+      if (!toggle) return;
+      node.classList.toggle('collapsed', collapsed);
+      toggle.textContent = collapsed ? '+' : '-';
+      toggle.setAttribute('aria-expanded', String(!collapsed));
+    });
   }
 
   getFormattedOutput(): string {

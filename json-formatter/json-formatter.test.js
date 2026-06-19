@@ -89,6 +89,9 @@ describe('JSONFormatter', () => {
     ];
     formatter.copyBtn = { disabled: false, addEventListener: jest.fn() };
     formatter.downloadBtn = { disabled: false, addEventListener: jest.fn() };
+    formatter.expandAllBtn = { disabled: false, addEventListener: jest.fn() };
+    formatter.collapseAllBtn = { disabled: false, addEventListener: jest.fn() };
+    formatter.indentSelect = { value: '2', addEventListener: jest.fn() };
     formatter.errorStatus = { textContent: '', classList: { add: jest.fn(), remove: jest.fn() } };
     formatter.originalSizeEl = { textContent: '' };
     formatter.formattedSizeEl = { textContent: '' };
@@ -287,6 +290,43 @@ describe('JSONFormatter', () => {
       const keys = formatter.output.querySelectorAll('.json-key');
       expect(keys[0].textContent).toBe('"a": ');
       expect(keys[1].textContent).toBe('"b": ');
+    });
+
+    test('should auto-switch to plain view when minifying', async () => {
+      formatter.switchView = jest.fn();
+      formatter.indentSelect = { value: 'minify' };
+      formatter.input.value = '{"a":1}';
+      await formatter.formatJSON();
+
+      expect(formatter.switchView).toHaveBeenCalledWith('plain');
+      expect(formatter.plainViewTextarea.value).toBe('{"a":1}');
+    });
+
+    test('should not switch view for non-minify indentation', async () => {
+      formatter.switchView = jest.fn();
+      formatter.indentSelect = { value: '2' };
+      formatter.input.value = '{"a":1}';
+      await formatter.formatJSON();
+
+      expect(formatter.switchView).not.toHaveBeenCalled();
+    });
+
+    test('should enable expand/collapse controls after a successful format', async () => {
+      formatter.input.value = '{"a":1}';
+      await formatter.formatJSON();
+
+      expect(formatter.expandAllBtn.disabled).toBe(false);
+      expect(formatter.collapseAllBtn.disabled).toBe(false);
+    });
+
+    test('should disable expand/collapse controls on invalid JSON', async () => {
+      formatter.expandAllBtn.disabled = false;
+      formatter.collapseAllBtn.disabled = false;
+      formatter.input.value = '{"invalid": json}';
+      await formatter.formatJSON();
+
+      expect(formatter.expandAllBtn.disabled).toBe(true);
+      expect(formatter.collapseAllBtn.disabled).toBe(true);
     });
 
     test('should handle invalid JSON', async () => {
@@ -635,8 +675,15 @@ describe('JSONFormatter', () => {
         sampleBtn: { click: null },
         input: { input: null },
         clearInputBtn: { click: null },
-        clearOutputBtn: { click: null }
+        clearOutputBtn: { click: null },
+        indentSelect: { change: null },
+        expandAllBtn: { click: null },
+        collapseAllBtn: { click: null }
       };
+
+      const captureMock = (target, event) => jest.fn((evt, callback) => {
+        if (evt === event) target[event] = callback;
+      });
 
       formatBtnMock = jest.fn((event, callback) => {
         if (event === 'click') {
@@ -683,6 +730,9 @@ describe('JSONFormatter', () => {
       formatter.input = { addEventListener: inputMock, value: '{"key": "value"}' };
       formatter.clearInputBtn = { addEventListener: clearInputBtnMock };
       formatter.clearOutputBtn = { addEventListener: clearOutputBtnMock };
+      formatter.indentSelect = { addEventListener: captureMock(callbacks.indentSelect, 'change') };
+      formatter.expandAllBtn = { addEventListener: captureMock(callbacks.expandAllBtn, 'click') };
+      formatter.collapseAllBtn = { addEventListener: captureMock(callbacks.collapseAllBtn, 'click') };
     });
 
     test('should set up event listeners', () => {
@@ -758,9 +808,43 @@ describe('JSONFormatter', () => {
 
       formatter.initializeEvents();
 
-      // Callbacks are triggered immediately in my mock above, 
-      // but typically we'd capture them. 
+      // Callbacks are triggered immediately in my mock above,
+      // but typically we'd capture them.
       // Let's rewrite to capture.
+    });
+
+    test('should re-format on indent change when input is non-empty', () => {
+      formatter.formatJSON = jest.fn();
+      formatter.input = { addEventListener: inputMock, value: '{"a":1}' };
+      formatter.initializeEvents();
+
+      callbacks.indentSelect.change();
+      expect(formatter.formatJSON).toHaveBeenCalled();
+    });
+
+    test('should not re-format on indent change when input is empty', () => {
+      formatter.formatJSON = jest.fn();
+      formatter.input = { addEventListener: inputMock, value: '   ' };
+      formatter.initializeEvents();
+
+      callbacks.indentSelect.change();
+      expect(formatter.formatJSON).not.toHaveBeenCalled();
+    });
+
+    test('should expand all on expand button click', () => {
+      formatter.setAllCollapsed = jest.fn();
+      formatter.initializeEvents();
+
+      callbacks.expandAllBtn.click();
+      expect(formatter.setAllCollapsed).toHaveBeenCalledWith(false);
+    });
+
+    test('should collapse all on collapse button click', () => {
+      formatter.setAllCollapsed = jest.fn();
+      formatter.initializeEvents();
+
+      callbacks.collapseAllBtn.click();
+      expect(formatter.setAllCollapsed).toHaveBeenCalledWith(true);
     });
   });
 
@@ -827,13 +911,13 @@ describe('JSONFormatter', () => {
 
     test('should initialize DOM elements when initDom is true', () => {
       const formatter = new JSONFormatter(true);
-      expect(document.querySelector).toHaveBeenCalledTimes(14); // Updated count
+      expect(document.querySelector).toHaveBeenCalledTimes(17); // Updated count
       expect(document.querySelectorAll).toHaveBeenCalledTimes(1);
     });
 
     test('should use default initDom=true when no argument provided', () => {
       const formatter = new JSONFormatter();
-      expect(document.querySelector).toHaveBeenCalledTimes(14);
+      expect(document.querySelector).toHaveBeenCalledTimes(17);
       expect(document.querySelectorAll).toHaveBeenCalledTimes(1);
     });
 
@@ -1281,6 +1365,76 @@ describe('JSONFormatter', () => {
       // Outer array: [ ]
       // Inner arrays: [ ] [ ]
       expect(brackets.length).toBeGreaterThanOrEqual(4);
+    });
+  });
+
+  describe('getIndentOption', () => {
+    test('maps select values to indent options and defaults to 2', () => {
+      formatter.indentSelect = { value: '4' };
+      expect(formatter.getIndentOption()).toBe(4);
+
+      formatter.indentSelect = { value: 'tab' };
+      expect(formatter.getIndentOption()).toBe('tab');
+
+      formatter.indentSelect = { value: 'minify' };
+      expect(formatter.getIndentOption()).toBe('minify');
+
+      formatter.indentSelect = { value: '2' };
+      expect(formatter.getIndentOption()).toBe(2);
+
+      formatter.indentSelect = { value: 'unknown' };
+      expect(formatter.getIndentOption()).toBe(2);
+    });
+
+    test('feeds the indent choice into prepareFormattedJson (copy/download text)', () => {
+      formatter.input = { value: '{"b":2,"a":1}' };
+      formatter.autoFixCheckbox = { checked: false };
+      formatter.sortCheckbox = { checked: true };
+
+      formatter.indentSelect = { value: '4' };
+      expect(formatter.prepareFormattedJson()[1]).toBe('{\n    "a": 1,\n    "b": 2\n}');
+
+      formatter.indentSelect = { value: 'minify' };
+      expect(formatter.prepareFormattedJson()[1]).toBe('{"a":1,"b":2}');
+    });
+  });
+
+  describe('setAllCollapsed', () => {
+    beforeEach(() => {
+      formatter.output = document.createElement('div');
+    });
+
+    test('collapses then expands every node, syncing glyphs and aria', async () => {
+      await formatter.renderJSONAsync(
+        { user: { name: 'Alice', roles: ['admin'] } },
+        formatter.output,
+        0,
+        undefined,
+        'root'
+      );
+
+      const toggles = () => formatter.output.querySelectorAll('.json-toggle');
+      expect(toggles().length).toBeGreaterThan(1);
+
+      formatter.setAllCollapsed(true);
+      toggles().forEach((toggle) => {
+        expect(toggle.textContent).toBe('+');
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+      });
+      expect(formatter.output.querySelectorAll('.json-node.collapsed').length).toBe(toggles().length);
+
+      formatter.setAllCollapsed(false);
+      toggles().forEach((toggle) => {
+        expect(toggle.textContent).toBe('-');
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+      });
+      expect(formatter.output.querySelectorAll('.json-node.collapsed').length).toBe(0);
+    });
+
+    test('skips empty nodes that have no toggle', async () => {
+      await formatter.renderJSONAsync({}, formatter.output);
+      expect(() => formatter.setAllCollapsed(true)).not.toThrow();
+      expect(formatter.output.querySelector('.json-toggle')).toBeNull();
     });
   });
 

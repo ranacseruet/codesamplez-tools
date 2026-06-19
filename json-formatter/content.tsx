@@ -68,13 +68,14 @@ export function JsonFormatterArticle(): JSX.Element {
 
                 <ToolArticleSection id="json-formatter-features" title="JSON Formatter Features">
                     <ul>
-                        <li><strong>Pretty-print:</strong> Beautifies and formats JSON data with proper indentation.</li>
+                        <li><strong>Pretty-print:</strong> Beautifies and formats JSON data with selectable indentation (2 spaces, 4 spaces, or Tab).</li>
+                        <li><strong>Minify:</strong> Compacts JSON to a single line with no whitespace via the "Minified" indentation option.</li>
                         <li><strong>Key Sorting:</strong> Optionally sorts object keys alphabetically for consistent output.</li>
                         <li><strong>Validation:</strong> Validates JSON syntax with detailed error messages and specific error details.</li>
                         <li><strong>Auto Fix:</strong> Auto-fixes common JSON errors and is enabled by default.</li>
                         <li><strong>Copy to clipboard / Download:</strong> Copy formatted output with confirmation or download it as a <code>.json</code> file.</li>
                         <li><strong>Syntax highlighting:</strong> Color-coded keys and values improve readability in tree view.</li>
-                        <li><strong>Tree Node Expand/Collapse:</strong> Expand or collapse nested objects and arrays while preserving structure.</li>
+                        <li><strong>Tree Node Expand/Collapse:</strong> Expand or collapse nested objects and arrays while preserving structure, with Expand All / Collapse All controls.</li>
                         <li><strong>Size Comparison:</strong> Real-time size updates support bytes, KB, MB, and GB with accurate formatting.</li>
                     </ul>
                 </ToolArticleSection>
@@ -87,7 +88,7 @@ export function JsonFormatterArticle(): JSX.Element {
                         </li>
                         <li>
                             <strong>(Optional) Update Configuration</strong>
-                            <p>Toggle the &ldquo;Auto fix&rdquo; checkbox to enable or disable automatic error correction, and toggle &ldquo;Sort keys&rdquo; to enable or disable key sorting.</p>
+                            <p>Toggle the &ldquo;Auto fix&rdquo; checkbox to enable or disable automatic error correction, toggle &ldquo;Sort keys&rdquo; to enable or disable key sorting, and pick an &ldquo;Indent&rdquo; option (2 spaces, 4 spaces, Tab, or Minified).</p>
                         </li>
                         <li>
                             <strong>Validate and Format</strong>

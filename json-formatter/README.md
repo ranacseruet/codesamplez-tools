@@ -9,12 +9,13 @@ A tool for formatting and validating JSON data with optional alphabetical key so
 - 🔐 **Zero Data Collection**: No cookies, tracking, or data persistence of any kind
 
 ## Features
-- Pretty-print JSON with proper indentation (2 spaces)
+- Pretty-print JSON with selectable indentation (2 spaces, 4 spaces, or Tab)
+- Minify JSON to a compact single line (the "Minified" indentation option)
 - Optional alphabetical sorting of object keys (enabled by default)
 - Auto-fix common JSON errors (enabled by default)
 - Validate JSON syntax with detailed error messages
 - Copy formatted output to clipboard with success confirmation
-- Collapsible/expandable JSON nodes for better navigation
+- Collapsible/expandable JSON nodes, plus Expand All / Collapse All controls
 - Size comparison between original and formatted JSON
 - Load sample data for quick testing
 - Download formatted JSON as a file
@@ -25,18 +26,21 @@ A tool for formatting and validating JSON data with optional alphabetical key so
 1. Paste your JSON into the input area
 2. Toggle "Sort Keys" checkbox to enable/disable alphabetical sorting
 3. Toggle "Auto fix" checkbox to enable/disable automatic error correction.
-4. Click "Format JSON" to validate and format
+4. Choose an "Indent" option (2 spaces, 4 spaces, Tab, or Minified)
+5. Click "Format JSON" to validate and format
    - The tool will automatically validate the JSON syntax
-   - If valid, it will format with proper indentation (2 spaces)
+   - If valid, it will format with the selected indentation (defaults to 2 spaces)
+   - Choosing "Minified" produces compact single-line JSON and switches to Plain View
    - Object keys will be sorted alphabetically if enabled
-4. Use "Copy Output" button to copy formatted JSON
+6. In Tree View, use "Expand All" / "Collapse All" to fold or unfold every node at once
+7. Use "Copy Output" button to copy formatted JSON
    - Uses modern Clipboard API with execCommand fallback
    - A temporary success message will appear when copied
-5. Click "Download" to save formatted JSON as a file
+8. Click "Download" to save formatted JSON as a file
    - Downloads as "formatted.json" with application/json MIME type
-6. Click "Sample Data" to load example JSON for testing
+9. Click "Sample Data" to load example JSON for testing
    - Loads a comprehensive sample with nested objects and arrays
-7. Invalid JSON will show specific error messages
+10. Invalid JSON will show specific error messages
    - The error message will indicate the exact issue
    - Uses shared notification system for consistent display
 
@@ -138,6 +142,7 @@ Calculation methodology:
 
 ### Node Collapsing
 - Interactive toggle buttons (▼/▶) for each object/array
+- "Expand All" / "Collapse All" toolbar controls fold or unfold every node at once
 - Nested content is indented (15px per level)
 - Toggle state changes button text (+/-)
 - Uses CSS classes for expanded/collapsed states

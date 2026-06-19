@@ -1,4 +1,4 @@
-import { autoFixJSON, formatJson, sortKeysAlphabetically } from './json-format-core';
+import { autoFixJSON, formatJson, indentSpacer, sortKeysAlphabetically } from './json-format-core';
 
 describe('autoFixJSON', () => {
     it('removes trailing commas', () => {
@@ -58,5 +58,34 @@ describe('formatJson', () => {
     it('trims surrounding whitespace from the input', () => {
         const result = formatJson({ input: '  {"a":1}  ', autoFix: false, sortKeys: false });
         expect(result.formatted).toEqual({ a: 1 });
+    });
+
+    it('defaults to 2-space indent when indent is omitted', () => {
+        const result = formatJson({ input: '{"a":1}', autoFix: false, sortKeys: false });
+        expect(result.formattedString).toBe('{\n  "a": 1\n}');
+    });
+
+    it('honours a 4-space indent', () => {
+        const result = formatJson({ input: '{"a":1}', autoFix: false, sortKeys: false, indent: 4 });
+        expect(result.formattedString).toBe('{\n    "a": 1\n}');
+    });
+
+    it('honours tab indentation', () => {
+        const result = formatJson({ input: '{"a":1}', autoFix: false, sortKeys: false, indent: 'tab' });
+        expect(result.formattedString).toBe('{\n\t"a": 1\n}');
+    });
+
+    it('minifies to a single compact line', () => {
+        const result = formatJson({ input: '{\n  "a": 1,\n  "b": 2\n}', autoFix: false, sortKeys: false, indent: 'minify' });
+        expect(result.formattedString).toBe('{"a":1,"b":2}');
+    });
+});
+
+describe('indentSpacer', () => {
+    it('maps each indent option to a JSON.stringify spacer', () => {
+        expect(indentSpacer(2)).toBe(2);
+        expect(indentSpacer(4)).toBe(4);
+        expect(indentSpacer('tab')).toBe('\t');
+        expect(indentSpacer('minify')).toBe(0);
     });
 });
