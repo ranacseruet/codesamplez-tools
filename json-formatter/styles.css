@@ -1,8 +1,18 @@
 /* Phase E tool-scoped styles for JSON Formatter */
 
-.jsonf-tool .jsonf-panel > :is(h2, h3) {
+/* Unified panel header bar. Both panels carry one — input holds only its title,
+   output holds the title plus the view tabs. Equal `min-height` on both bars
+   makes the input textarea and the output well begin at the same vertical
+   position, so the two columns align at the top. */
+.jsonf-tool .jsonf-panel-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  min-height: 3.5rem;
   margin: 0;
-  padding: 0.95rem 1rem 0.85rem;
+  padding: 0.5rem 1rem;
   border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
   background:
     linear-gradient(
@@ -10,16 +20,44 @@
       color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 52%, var(--cst-color-mix-neutral, white)),
       color-mix(in srgb, var(--cst-color-mix-neutral, white) 92%, var(--color-primary-soft, #e9f3fb))
     );
+}
+
+.jsonf-tool .jsonf-panel-bar h3 {
+  margin: 0;
   font-size: 1rem;
   letter-spacing: 0.01em;
 }
 
-.jsonf-tool .jsonf-panel-content {
-  padding: var(--spacing-md, var(--default-spacing-md));
+/* Both panels mirror each other so the editing surfaces line up exactly:
+   [header bar] [content well] [footer]. Input footer holds the validation
+   status; output footer holds the Copy/Download actions. Equal bar heights
+   align the tops, equal-height wells align the bottoms, and equal-height
+   footers keep the action row level with the status row. */
+/* The shared `.o-panel-content` makes every panel section a `flex: 1` column
+   that fights for space. Pin them to their content height so the layout is
+   driven by the fixed-size bars, wells, and footers — that is what keeps both
+   panels the exact same height and their rows level. */
+.jsonf-tool .jsonf-panel .o-panel-content {
+  flex: none;
 }
 
-.jsonf-tool .jsonf-status-content {
-  padding-top: 0;
+.jsonf-tool .jsonf-status-content,
+.jsonf-tool .jsonf-output-footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-height: 3.5rem;
+  padding-top: var(--spacing-sm, var(--default-spacing-sm));
+  padding-bottom: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.jsonf-tool .jsonf-output-footer {
+  justify-content: flex-end;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.jsonf-tool .jsonf-panel-content {
+  padding: var(--spacing-md, var(--default-spacing-md));
 }
 
 .jsonf-tool .jsonf-input-textarea,
@@ -65,22 +103,30 @@
   font-weight: 500;
 }
 
-.jsonf-tool .jsonf-output-panel .jsonf-panel-header {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-sm, var(--default-spacing-sm));
-  margin: 0;
-  padding: var(--spacing-md, var(--default-spacing-md)) var(--spacing-md, var(--default-spacing-md)) 0;
-  background: transparent;
-}
-
 .jsonf-tool .jsonf-download-btn {
   margin-left: 0;
 }
 
-.jsonf-tool .jsonf-tabs {
-  margin: 0 var(--spacing-md, var(--default-spacing-md));
-  padding-top: 0.2rem;
+/* Compact the header tabs so the title + tabs stay on one line, keeping the
+   output bar the same height as the input bar (title only). */
+.jsonf-tool .jsonf-output-bar .c-tab-button {
+  padding: 0.32rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+/* Idle Copy/Download: the global disabled style fills with the dark neutral
+   `--color-secondary`, which reads as a heavy slab on the airy output panel.
+   Scope a lighter "ghost" so the not-yet-available actions recede in both themes. */
+.jsonf-tool .jsonf-output-panel .c-button--secondary:disabled {
+  background: color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 70%, transparent);
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  border-color: color-mix(in srgb, var(--color-border, #d7dde4) 80%, var(--cst-color-mix-neutral, white));
+  opacity: 1;
+}
+
+.jsonf-tool .jsonf-output-bar .jsonf-tabs {
+  margin: 0;
+  padding: 0.2rem;
 }
 
 .jsonf-tool .view-container {
@@ -92,13 +138,14 @@
 }
 
 .jsonf-tool .jsonf-output-content {
-  padding-top: var(--spacing-sm, var(--default-spacing-sm));
+  padding-top: var(--spacing-md, var(--default-spacing-md));
 }
 
 .jsonf-tool #treeView .jsonf-code-output {
   width: 100%;
-  min-height: 20rem;
-  max-height: 32rem;
+  /* Same fixed height as the input textarea so the output well's top and
+     bottom stay locked to it in every state; taller trees scroll inside. */
+  height: 20rem;
   margin: 0;
   padding: 0.95rem 1rem;
   border-radius: var(--radius-md, 10px);
@@ -126,6 +173,24 @@
   font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 0.9rem;
   line-height: 1.45;
+}
+
+/* Reactive empty state: the <code> is emptied on clear/error and filled on
+   success, so this placeholder appears and disappears without any JS. The shared
+   `.c-code-output:empty::before` rule never fires here because the <pre> always
+   wraps a <code> child — this targets the actually-empty <code>. */
+.jsonf-tool #treeView .jsonf-code-output code:empty::before {
+  content: "Formatted JSON will appear here…";
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding-top: 3.25rem;
+  text-align: center;
+  white-space: normal;
+  font-family: var(--font-family-base, ui-sans-serif, system-ui, sans-serif);
+  font-size: 0.95rem;
+  font-style: italic;
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
 }
 
 .jsonf-tool .json-node {
@@ -196,12 +261,9 @@
     justify-content: center;
   }
 
-  .jsonf-tool .jsonf-output-panel .jsonf-panel-header {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-
-  .jsonf-tool .jsonf-output-panel .jsonf-panel-header > .c-button {
+  /* Single-column layout: keep the title and tabs on their shared bar line,
+     and let the footer actions stretch to fill the width. */
+  .jsonf-tool .jsonf-output-footer .c-button {
     flex: 1 1 12rem;
   }
 }
@@ -212,12 +274,11 @@
     padding: var(--spacing-sm, var(--default-spacing-sm));
   }
 
-  .jsonf-tool .jsonf-panel > :is(h2, h3) {
-    padding: 0.85rem 0.9rem 0.75rem;
+  .jsonf-tool .jsonf-panel-bar {
+    padding: 0.5rem 0.9rem;
   }
 
-  .jsonf-tool .jsonf-tabs {
-    margin: 0 var(--spacing-sm, var(--default-spacing-sm));
+  .jsonf-tool .jsonf-output-bar .jsonf-tabs {
     gap: 0.25rem;
   }
 

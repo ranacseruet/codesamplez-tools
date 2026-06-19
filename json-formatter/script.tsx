@@ -57,7 +57,9 @@ export function JsonFormatterApp() {
 
       <div className="c-workbench c-workbench--two-col jsonf-workbench">
         <div className="o-panel jsonf-panel jsonf-input-panel c-surface-card c-surface-panel">
-          <h3>Input JSON</h3>
+          <div className="jsonf-panel-bar">
+            <h3>Input JSON</h3>
+          </div>
           <div className="o-panel-content jsonf-panel-content">
             <textarea
               className="c-input c-input--textarea jsonf-input-textarea"
@@ -71,22 +73,12 @@ export function JsonFormatterApp() {
         </div>
 
         <div className="o-panel jsonf-panel jsonf-output-panel c-surface-card c-surface-panel">
-          <h3>Formatted Output</h3>
-          <div className="o-panel-header jsonf-panel-header">
-            <button className="c-button c-button--secondary jsonf-copy-btn" id="copyOutputBtn" type="button" disabled>Copy Output</button>
-            <button
-              className="c-button c-button--secondary c-button--icon-download jsonf-download-btn"
-              id="downloadOutputBtn"
-              type="button"
-              disabled
-            >
-              Download
-            </button>
-          </div>
-
-          <div className="jsonf-tabs c-tab-list" role="group" aria-label="Output View">
-            <button className="jsonf-tab c-tab-button active" data-view="tree" aria-pressed="true" type="button">Tree View</button>
-            <button className="jsonf-tab c-tab-button" data-view="plain" aria-pressed="false" type="button">Plain View</button>
+          <div className="jsonf-panel-bar jsonf-output-bar">
+            <h3>Formatted Output</h3>
+            <div className="jsonf-tabs c-tab-list" role="group" aria-label="Output View">
+              <button className="jsonf-tab c-tab-button active" data-view="tree" aria-pressed="true" type="button">Tree View</button>
+              <button className="jsonf-tab c-tab-button" data-view="plain" aria-pressed="false" type="button">Plain View</button>
+            </div>
           </div>
 
           <div className="o-panel-content jsonf-panel-content jsonf-output-content">
@@ -101,6 +93,18 @@ export function JsonFormatterApp() {
                 aria-label="Formatted JSON Output"
               />
             </div>
+          </div>
+
+          <div className="o-panel-content jsonf-panel-content jsonf-output-footer">
+            <button className="c-button c-button--secondary jsonf-copy-btn" id="copyOutputBtn" type="button" disabled>Copy Output</button>
+            <button
+              className="c-button c-button--secondary c-button--icon-download jsonf-download-btn"
+              id="downloadOutputBtn"
+              type="button"
+              disabled
+            >
+              Download
+            </button>
           </div>
         </div>
       </div>
