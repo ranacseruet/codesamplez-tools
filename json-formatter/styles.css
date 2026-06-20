@@ -56,6 +56,29 @@
   gap: var(--spacing-sm, var(--default-spacing-sm));
 }
 
+/* Validation status row: message takes the space, the jump button sits at the end. */
+.jsonf-tool .jsonf-status-content {
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.jsonf-tool .jsonf-status-content .jsonf-input-status {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.jsonf-tool .jsonf-goto-error-btn {
+  flex: none;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* `.c-button` is `inline-flex`, which outranks the UA `[hidden] { display: none }`,
+   so restore it explicitly — the control only appears when an error is locatable. */
+.jsonf-tool .jsonf-goto-error-btn[hidden] {
+  display: none;
+}
+
 .jsonf-tool .jsonf-panel-content {
   padding: var(--spacing-md, var(--default-spacing-md));
 }

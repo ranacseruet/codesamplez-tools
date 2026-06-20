@@ -93,6 +93,7 @@ describe('JSONFormatter', () => {
     formatter.collapseAllBtn = { disabled: false, addEventListener: jest.fn() };
     formatter.indentSelect = { value: '2', addEventListener: jest.fn() };
     formatter.errorStatus = { textContent: '', classList: { add: jest.fn(), remove: jest.fn() } };
+    formatter.goToErrorBtn = { hidden: true, textContent: '', addEventListener: jest.fn() };
     formatter.originalSizeEl = { textContent: '' };
     formatter.formattedSizeEl = { textContent: '' };
     formatter.sortCheckbox = { checked: true };
@@ -869,6 +870,89 @@ describe('JSONFormatter', () => {
     });
   });
 
+  describe('jump to error', () => {
+    test('reveals the Go to error control with line/column for a locatable error', () => {
+      formatter.input = { value: '{"a": 1, "b" 2}' };
+      formatter.reportJsonError(formatter.input.value, false, 'fallback');
+
+      expect(formatter.errorStatus.textContent).toContain('Invalid JSON');
+      expect(formatter.goToErrorBtn.hidden).toBe(false);
+      expect(formatter.goToErrorBtn.textContent).toMatch(/Go to error \(line \d+, col \d+\)/);
+      expect(formatter.errorIndex).toBeGreaterThan(0);
+    });
+
+    test('falls back to the thrown message and hides the control when unlocatable', () => {
+      // A string that parses cleanly cannot be located, so no jump is offered.
+      formatter.input = { value: '{"a": 1}' };
+      formatter.goToErrorBtn.hidden = false;
+      formatter.reportJsonError(formatter.input.value, false, 'engine message');
+
+      expect(formatter.errorStatus.textContent).toBe('Invalid JSON: engine message');
+      expect(formatter.goToErrorBtn.hidden).toBe(true);
+      expect(formatter.errorIndex).toBeNull();
+    });
+
+    test('points the jump past an auto-fixable token when auto-fix is on', () => {
+      // `{a:1 b:2}` — auto-fix repairs the unquoted keys; the real error is the
+      // missing comma, so the jump must not land on the `a` (index 1).
+      formatter.input = { value: '{a:1 b:2}' };
+      formatter.reportJsonError(formatter.input.value, true, 'fallback');
+      expect(formatter.goToErrorBtn.hidden).toBe(false);
+      expect(formatter.errorIndex).toBeGreaterThan(1);
+    });
+
+    test('clearError hides the Go to error control and resets the index', () => {
+      formatter.goToErrorBtn.hidden = false;
+      formatter.errorIndex = 5;
+      formatter.clearError();
+      expect(formatter.goToErrorBtn.hidden).toBe(true);
+      expect(formatter.errorIndex).toBeNull();
+    });
+
+    test('goToError focuses the textarea and selects the offending character', () => {
+      const textarea = document.createElement('textarea');
+      textarea.value = '{"a": 1, "b" 2}';
+      document.body.appendChild(textarea);
+      formatter.input = textarea;
+      formatter.errorIndex = 13;
+
+      const focusSpy = jest.spyOn(textarea, 'focus');
+      formatter.goToError();
+
+      expect(focusSpy).toHaveBeenCalled();
+      expect(textarea.selectionStart).toBe(13);
+      expect(textarea.selectionEnd).toBe(14);
+
+      focusSpy.mockRestore();
+      document.body.removeChild(textarea);
+    });
+
+    test('goToError is a no-op when no error index is set', () => {
+      const textarea = document.createElement('textarea');
+      formatter.input = textarea;
+      formatter.errorIndex = null;
+      const focusSpy = jest.spyOn(textarea, 'focus');
+      formatter.goToError();
+      expect(focusSpy).not.toHaveBeenCalled();
+      focusSpy.mockRestore();
+    });
+
+    test('scrollInputToError moves the scroll position toward the error line', () => {
+      const textarea = document.createElement('textarea');
+      textarea.value = 'a\n'.repeat(200);
+      document.body.appendChild(textarea);
+      formatter.input = textarea;
+
+      // index near the end -> a positive scrollTop target (jsdom returns 0 sizes,
+      // so just assert it runs and assigns a non-negative number).
+      formatter.scrollInputToError(textarea.value.length - 1);
+      expect(typeof textarea.scrollTop).toBe('number');
+      expect(textarea.scrollTop).toBeGreaterThanOrEqual(0);
+
+      document.body.removeChild(textarea);
+    });
+  });
+
   describe('Edge Cases', () => {
     test('should handle empty objects in renderJSONAsync', async () => {
       formatter.output = document.createElement('div');
@@ -911,13 +995,13 @@ describe('JSONFormatter', () => {
 
     test('should initialize DOM elements when initDom is true', () => {
       const formatter = new JSONFormatter(true);
-      expect(document.querySelector).toHaveBeenCalledTimes(17); // Updated count
+      expect(document.querySelector).toHaveBeenCalledTimes(18); // Updated count
       expect(document.querySelectorAll).toHaveBeenCalledTimes(1);
     });
 
     test('should use default initDom=true when no argument provided', () => {
       const formatter = new JSONFormatter();
-      expect(document.querySelector).toHaveBeenCalledTimes(17);
+      expect(document.querySelector).toHaveBeenCalledTimes(18);
       expect(document.querySelectorAll).toHaveBeenCalledTimes(1);
     });
 

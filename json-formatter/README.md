@@ -13,7 +13,7 @@ A tool for formatting and validating JSON data with optional alphabetical key so
 - Minify JSON to a compact single line (the "Minified" indentation option)
 - Optional alphabetical sorting of object keys (enabled by default)
 - Auto-fix common JSON errors (enabled by default)
-- Validate JSON syntax with detailed error messages
+- Validate JSON syntax with detailed error messages, including the line/column and a "Go to error" jump
 - Copy formatted output to clipboard with success confirmation
 - Collapsible/expandable JSON nodes, plus Expand All / Collapse All controls
 - Size comparison between original and formatted JSON
@@ -157,6 +157,8 @@ Calculation methodology:
   - Number formatting issues
 - Preserves input during errors for easy correction
 - Disables output buttons on invalid JSON
+- Reports the exact line and column of the first syntax error
+- Shows a "Go to error" button that focuses the input, scrolls to the error line, and selects the offending character (jump-to-error)
 
 ### Clipboard Integration
 1. Attempts modern Clipboard API first (requires HTTPS/localhost)

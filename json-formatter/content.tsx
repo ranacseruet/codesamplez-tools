@@ -71,7 +71,7 @@ export function JsonFormatterArticle(): JSX.Element {
                         <li><strong>Pretty-print:</strong> Beautifies and formats JSON data with selectable indentation (2 spaces, 4 spaces, or Tab).</li>
                         <li><strong>Minify:</strong> Compacts JSON to a single line with no whitespace via the "Minified" indentation option.</li>
                         <li><strong>Key Sorting:</strong> Optionally sorts object keys alphabetically for consistent output.</li>
-                        <li><strong>Validation:</strong> Validates JSON syntax with detailed error messages and specific error details.</li>
+                        <li><strong>Validation:</strong> Validates JSON syntax with detailed error messages, the exact line and column, and a &ldquo;Go to error&rdquo; jump that highlights the offending character in your input.</li>
                         <li><strong>Auto Fix:</strong> Auto-fixes common JSON errors and is enabled by default.</li>
                         <li><strong>Copy to clipboard / Download:</strong> Copy formatted output with confirmation or download it as a <code>.json</code> file.</li>
                         <li><strong>Syntax highlighting:</strong> Color-coded keys and values improve readability in tree view.</li>
@@ -147,7 +147,7 @@ export function JsonFormatterArticle(): JSX.Element {
                         <li>Missing colons</li>
                         <li>Invalid values</li>
                     </ul>
-                    <p>You will see any errors below the input area, including the position where the tool detected the issue.</p>
+                    <p>You will see any errors below the input area, including the line and column where the tool detected the issue. Use the &ldquo;Go to error&rdquo; button to jump straight to that spot in your input, with the offending character selected.</p>
                 </ToolArticleSection>
 
                 <ToolArticleSection id="json-formatter-privacy" title="Privacy & Security">

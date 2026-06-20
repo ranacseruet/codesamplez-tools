@@ -7,6 +7,7 @@ import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
 import {
   autoFixJSON,
   formatJson,
+  locateJsonError,
   sortKeysAlphabetically,
   type IndentOption,
   type JsonFormatRequest,
@@ -78,6 +79,14 @@ export function JsonFormatterApp() {
           </div>
           <div className="o-panel-content jsonf-panel-content jsonf-status-content">
             <div className="c-input-status jsonf-input-status" id="jsonErrorStatus" />
+            <button
+              className="c-button c-button--secondary jsonf-goto-error-btn"
+              id="goToErrorBtn"
+              type="button"
+              hidden
+            >
+              Go to error
+            </button>
           </div>
         </div>
 
@@ -183,6 +192,9 @@ export class JSONFormatter {
   expandAllBtn!: HTMLButtonElement;
   collapseAllBtn!: HTMLButtonElement;
   errorStatus!: HTMLElement;
+  goToErrorBtn!: HTMLButtonElement;
+  // 0-based offset of the current syntax error in the input, or null when valid.
+  errorIndex: number | null = null;
   originalSizeEl!: HTMLElement;
   formattedSizeEl!: HTMLElement;
   clearButtonInstance!: ClearButton;
@@ -218,6 +230,7 @@ export class JSONFormatter {
       this.expandAllBtn = document.querySelector('#expandAllBtn') as HTMLButtonElement;
       this.collapseAllBtn = document.querySelector('#collapseAllBtn') as HTMLButtonElement;
       this.errorStatus = document.querySelector('#jsonErrorStatus') as HTMLElement;
+      this.goToErrorBtn = document.querySelector('#goToErrorBtn') as HTMLButtonElement;
       this.originalSizeEl = document.querySelector('.jsonf-original-size') as HTMLElement;
       this.formattedSizeEl = document.querySelector('.jsonf-formatted-size') as HTMLElement;
 
@@ -261,6 +274,10 @@ export class JSONFormatter {
 
     if (this.collapseAllBtn) {
       this.collapseAllBtn.addEventListener('click', () => this.setAllCollapsed(true));
+    }
+
+    if (this.goToErrorBtn) {
+      this.goToErrorBtn.addEventListener('click', () => this.goToError());
     }
 
     if (this.input) {
@@ -349,8 +366,8 @@ export class JSONFormatter {
 
       NotificationManager.show('JSON formatted successfully!', 2000, { type: 'success' });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.showError(`Invalid JSON: ${message}`);
+      const fallbackMessage = error instanceof Error ? error.message : String(error);
+      this.reportJsonError(this.input.value, this.autoFixCheckbox.checked, fallbackMessage);
       this.copyBtn.disabled = true;
       this.downloadBtn.disabled = true;
       this.expandAllBtn.disabled = true;
@@ -626,9 +643,66 @@ export class JSONFormatter {
     this.errorStatus.classList.add('error');
   }
 
+  /**
+   * Surface a formatting failure: show the message, and — when the syntax error can
+   * be located (against the same auto-fixed string `formatJson` parsed) — reveal a
+   * "Go to error" control and scroll the textarea to the offending line. Falls back
+   * to the thrown message and hides the jump when the error carries no usable
+   * position, so the engine's wording is never lost and we never offer a bogus jump.
+   */
+  reportJsonError(rawInput: string, autoFix: boolean, fallbackMessage: string): void {
+    const location = locateJsonError(rawInput, autoFix);
+    this.showError(`Invalid JSON: ${location ? location.message : fallbackMessage}`);
+
+    if (location && this.goToErrorBtn) {
+      this.errorIndex = location.index;
+      this.goToErrorBtn.textContent = `Go to error (line ${location.line}, col ${location.column})`;
+      this.goToErrorBtn.hidden = false;
+      // Bring the error into view without stealing focus while the user reads it.
+      this.scrollInputToError(location.index);
+    } else {
+      this.hideGoToError();
+    }
+  }
+
+  /** Focus the input and select the offending character so the error is unmistakable. */
+  goToError(): void {
+    const input = this.input;
+    if (this.errorIndex === null || !(input instanceof HTMLTextAreaElement)) return;
+
+    input.focus();
+    const end = Math.min(this.errorIndex + 1, input.value.length);
+    input.setSelectionRange(this.errorIndex, end);
+    this.scrollInputToError(this.errorIndex);
+  }
+
+  /** Scroll the input textarea so the line containing `index` is in view. */
+  scrollInputToError(index: number): void {
+    const input = this.input;
+    if (!(input instanceof HTMLTextAreaElement)) return;
+
+    const bound = Math.max(0, Math.min(index, input.value.length));
+    const line = (input.value.slice(0, bound).match(/\n/g) || []).length; // 0-based
+    const styles = getComputedStyle(input);
+    let lineHeight = parseFloat(styles.lineHeight);
+    if (!Number.isFinite(lineHeight)) {
+      lineHeight = (parseFloat(styles.fontSize) || 14) * 1.5;
+    }
+    // Center the error line roughly a third from the top of the visible area.
+    input.scrollTop = Math.max(0, line * lineHeight - input.clientHeight / 3);
+  }
+
+  hideGoToError(): void {
+    this.errorIndex = null;
+    if (this.goToErrorBtn) {
+      this.goToErrorBtn.hidden = true;
+    }
+  }
+
   clearError(): void {
     this.errorStatus.textContent = '';
     this.errorStatus.classList.remove('error');
+    this.hideGoToError();
   }
 
 
