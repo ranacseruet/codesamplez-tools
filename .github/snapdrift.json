@@ -197,5 +197,11 @@
   "diff": {
     "threshold": 0.01,
     "mode": "report-only"
+  },
+  "provider": "snap",
+  "snap": {
+    "apiKeyEnv": "SNAP_API_KEY",
+    "projectId": "prj_b62b73a4557b4314aeb669b0",
+    "onUnavailable": "fail"
   }
 }

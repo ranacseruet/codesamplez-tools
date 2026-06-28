@@ -17,7 +17,7 @@ Affected tools or surfaces:
 
 - [ ] This PR does not touch shared shell, shared tokens, shared styling, or shared primitives
 - [ ] This PR touches shared shell/tokens/styling/primitives and I reviewed the visual/a11y impact
-- [ ] I reviewed the PR visual diff summary artifact or documented why it was skipped
+- [ ] I reviewed the PR visual diff comment (including the linked Snap dashboard run) or documented why it was skipped
 - [ ] I ran `npm run qa:a11y:foundation` locally or documented why CI/report-only evidence is sufficient
 
 ## Validation

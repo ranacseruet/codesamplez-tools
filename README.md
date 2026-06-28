@@ -197,7 +197,7 @@ Supporting and report-oriented checks:
 - Review the PR visual diff workflow when a change affects UI or layout
 - Review the main-branch visual baseline publish result when shared UI changes land
 
-Visual baseline publishing and PR visual diffs are CI-managed workflows in this repository rather than local npm scripts. The per-PR visual diff runs as a `visual-diff` job in the main CI workflow, gated on the `test-and-build` job passing — it won't run (or post a comment) until typecheck, tests, audit, budget, and build all succeed. An on-demand `PR Visual Diff (manual)` workflow is available via `workflow_dispatch` to force a diff without pushing a new commit.
+Visual baseline publishing and PR visual diffs are CI-managed workflows in this repository rather than local npm scripts. They run on the [snapdrift](https://github.com/ranacseruet/snapdrift) actions configured against snapdrift's **hosted Snap backend** (`provider: "snap"` in `.github/snapdrift.json`): baselines are stored durably in the hosted service (not as expiring GitHub artifacts), and each PR comment links to the Snap dashboard ("View in dashboard →") where the captured frames and diffs can be reviewed. The integration authenticates with the `SNAP_API_KEY` repository secret. The per-PR visual diff runs as a `visual-diff` job in the main CI workflow, gated on the `test-and-build` job passing — it won't run (or post a comment) until typecheck, tests, audit, budget, and build all succeed. An on-demand `PR Visual Diff (manual)` workflow is available via `workflow_dispatch` to force a diff without pushing a new commit. To validate UI changes before pushing, you can also run the `snapdrift` CLI locally (`npx snapdrift diff --open`) against a local `npm start`.
 
 ## Contributing
 

@@ -54,10 +54,12 @@ jobs:
 
       - name: Run visual PR diff
         id: visual_diff
-        uses: ranacseruet/snapdrift/actions/pr-diff@v0.2.0
+        uses: ranacseruet/snapdrift/actions/pr-diff@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           force-run: true
+        env:
+          SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
 
       - name: Stop app
         if: always()

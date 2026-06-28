@@ -65,9 +65,11 @@ jobs:
 
       - name: Visual baseline snapshot capture (scheduled, report-only)
         id: visual_capture
-        uses: ranacseruet/snapdrift/actions/baseline@v0.2.0
+        uses: ranacseruet/snapdrift/actions/baseline@main
         with:
           upload-artifact: 'false'
+        env:
+          SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
         continue-on-error: true
 
       - name: Dependency audit capture (full JSON, report-only)

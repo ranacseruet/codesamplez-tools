@@ -143,7 +143,11 @@ jobs:
 
     - name: Publish main visual baseline
       if: github.ref == 'refs/heads/main' && steps.affected.outputs.scope == 'all-tools'
-      uses: ranacseruet/snapdrift/actions/baseline@v0.2.0
+      uses: ranacseruet/snapdrift/actions/baseline@main
+      with:
+        upload-artifact: 'false'
+      env:
+        SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
 
     - name: Stop Local QA Server
       if: always() && github.ref == 'refs/heads/main' && steps.affected.outputs.affected_tool_count != '0'
@@ -238,9 +242,16 @@ jobs:
   # running it on a PR that doesn't pass typecheck/tests/audit/budget/build.
   # PR-only; the manual force-run path lives in pr-visual-diff.yml. On push to
   # main the baseline is published inside test-and-build instead.
+  # Same-repo PRs only: forked-repo and Dependabot PRs don't receive repository
+  # secrets (GitHub passes only GITHUB_TOKEN), so SNAP_API_KEY would be empty and
+  # snapdrift's Snap provider throws at config load. Skip the job rather than fail
+  # CI after the gates for contributions that can't reach the hosted backend.
   visual-diff:
     needs: test-and-build
-    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.draft == false
+      && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -285,9 +296,11 @@ jobs:
 
       - name: Run visual PR diff
         id: visual_diff
-        uses: ranacseruet/snapdrift/actions/pr-diff@v0.2.0
+        uses: ranacseruet/snapdrift/actions/pr-diff@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
 
       - name: Stop app
         if: always()
