@@ -32,7 +32,11 @@ jobs:
         run: npm ci
 
       - name: Build app
+        # Local asset origin so the served build loads its own CSS/JS instead of
+        # the production CDN (see ci.yml visual-diff for the full rationale).
         run: npm run build
+        env:
+          CST_SITE_STATIC_ROOT_URI: http://127.0.0.1:8080
 
       - name: Start app
         run: |

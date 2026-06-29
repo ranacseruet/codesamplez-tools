@@ -25,6 +25,10 @@ concurrency:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    outputs:
+      scope: ${{ steps.affected.outputs.scope }}
+      affected_tools: ${{ steps.affected.outputs.affected_tools }}
+      affected_tool_count: ${{ steps.affected.outputs.affected_tool_count }}
 
     steps:
     - uses: actions/checkout@v4
@@ -140,14 +144,6 @@ jobs:
         QA_BASE_URL: http://127.0.0.1:8080
         QA_A11Y_FAIL_ON_VIOLATIONS: '0'
       continue-on-error: true
-
-    - name: Publish main visual baseline
-      if: github.ref == 'refs/heads/main' && steps.affected.outputs.scope == 'all-tools'
-      uses: ranacseruet/snapdrift/actions/baseline@main
-      with:
-        upload-artifact: 'false'
-      env:
-        SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
 
     - name: Stop Local QA Server
       if: always() && github.ref == 'refs/heads/main' && steps.affected.outputs.affected_tool_count != '0'
@@ -274,7 +270,13 @@ jobs:
         run: npm ci
 
       - name: Build app
+        # Point all asset URLs at the local origin so the served build loads its
+        # own CSS/JS/fonts instead of the production CDN. Without this, index.html
+        # references https://tools.codesamplez.com/... and SnapDrift captures the
+        # live site rather than the PR build, so local changes never show as drift.
         run: npm run build
+        env:
+          CST_SITE_STATIC_ROOT_URI: http://127.0.0.1:8080
 
       - name: Start app
         run: |
@@ -299,6 +301,65 @@ jobs:
         uses: ranacseruet/snapdrift/actions/pr-diff@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
+
+      - name: Stop app
+        if: always()
+        run: kill "$QA_SERVER_PID" || true
+
+  # Publishes the hosted Snap baseline on push to main when a shared/all-tools
+  # change lands. Runs in its own job (not test-and-build) because the baseline
+  # must be captured from a build whose asset URLs point at the local origin
+  # (CST_SITE_STATIC_ROOT_URI) — the test-and-build artifact uses production CDN
+  # URLs and is reused by deploy, so it can't be repurposed for capture.
+  publish-baseline:
+    needs: test-and-build
+    if: github.ref == 'refs/heads/main' && needs.test-and-build.outputs.scope == 'all-tools'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        # Local asset origin so the captured baseline loads this build's own
+        # CSS/JS instead of the production CDN (see visual-diff for rationale).
+        run: npm run build
+        env:
+          CST_SITE_STATIC_ROOT_URI: http://127.0.0.1:8080
+
+      - name: Start app
+        run: |
+          set -euo pipefail
+          npm start > /tmp/visual-baseline-start.log 2>&1 &
+          echo "QA_SERVER_PID=$!" >> "$GITHUB_ENV"
+          ready=0
+          for i in $(seq 1 45); do
+            if curl -sSf http://127.0.0.1:8080 >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/visual-baseline-start.log || true
+            exit 1
+          fi
+
+      - name: Publish main visual baseline
+        uses: ranacseruet/snapdrift/actions/baseline@main
+        with:
+          upload-artifact: 'false'
         env:
           SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
 

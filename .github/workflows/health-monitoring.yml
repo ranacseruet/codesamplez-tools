@@ -23,7 +23,12 @@ jobs:
         run: npm ci
 
       - name: Build production artifacts
+        # Local asset origin so the captured baseline loads this build's own
+        # CSS/JS instead of the production CDN — keeps baselines consistent with
+        # PR-diff captures (see ci.yml visual-diff for the full rationale).
         run: npm run build
+        env:
+          CST_SITE_STATIC_ROOT_URI: http://127.0.0.1:8080
 
       - name: Capture bundle metrics
         run: |
