@@ -10,7 +10,11 @@ const DEFAULT_SOURCE_PATH = path.resolve(process.cwd(), 'infrastructure/cloudfro
 const DEFAULT_RUNTIME = 'cloudfront-js-2.0';
 const DEFAULT_EVENT_TYPE = 'viewer-request';
 const DEFAULT_VIEWER_PROTOCOL_POLICY = 'redirect-to-https';
-const DEFAULT_COMMENT = 'Rewrite static site URLs for SEO-friendly paths (managed by CI/CD)';
+// NOTE: keep <=128 chars (CloudFront Function Comment limit). The repo name is
+// intentionally embedded so anyone (human or agent) inspecting this function in
+// the shared AWS account knows its owner and that manual publishes are clobbered
+// by CI. See infrastructure/cloudfront-functions/OWNERSHIP.md.
+const DEFAULT_COMMENT = 'OWNER ranacseruet/codesamplez-tools (CI: deploy-cloudfront-function.js). Do not edit/publish by hand.';
 
 /**
  * @typedef {{
