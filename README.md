@@ -98,9 +98,9 @@ The build preserves the standalone deployment contract for each tool, prerenders
 
 Production deploys publish the static build to the `tools.codesamplez.com` S3 bucket behind CloudFront.
 
-Directory-index routing is handled at the CloudFront viewer-request layer by the repo-managed `RewriteStaticURLs` CloudFront Function:
+Directory-index routing is handled at the CloudFront viewer-request layer by the repo-managed `codesamplez-tools-rewrite-static-urls` CloudFront Function (owner-prefixed so it is unmistakable in the shared AWS account):
 
-- The source lives at `infrastructure/cloudfront-functions/RewriteStaticURLs.js`.
+- The source lives at `infrastructure/cloudfront-functions/codesamplez-tools-rewrite-static-urls.js`.
 - CI/CD deploys the function from source when it changes, publishes it to `LIVE`, verifies the live source, attaches it to the `tools.codesamplez.com` distribution's default cache behavior, and enforces `ViewerProtocolPolicy=redirect-to-https`.
 - The function redirects extensionless tool requests such as `/jwt-decoder` to the canonical trailing-slash URL `/jwt-decoder/` while preserving query string parameters, then rewrites trailing-slash requests such as `/` and `/jwt-decoder/` to `/index.html` and `/jwt-decoder/index.html` before the request reaches the S3 REST origin.
 - The deployment script syncs each selected tool directory as-is, including `build/<tool>/index.html`; the sync uses `--delete`, so stale tool HTML objects are pruned along with stale JS, CSS, and image assets. The sync stamps the directory's JS/CSS with `Cache-Control: public, max-age=86400`, then re-uploads `index.html` with `public, max-age=0, must-revalidate` so navigations always reflect the newest deploy.
@@ -168,7 +168,7 @@ Every generated page ships a consistent SEO/social head, built server-side so cr
 - **Canonical, sitemap, robots** — each page self-references `<link rel="canonical">`; `sitemap.xml` lists the landing page and every tool URL; `robots.txt` allows all and points at the sitemap.
 - **Image sitemap** — each `sitemap.xml` URL carries an `<image:image>` entry (the page's social/featured image with title + caption) under the `sitemap-image` namespace, surfacing the cards to Google Images. Built in `scripts/generated-site-assets.js`.
 - **Branded 404** — `scripts/error-document.js` generates a `404.html` (emitted beside the root `index.html` by the generated-HTML plugin and shipped as a root asset). It reuses the landing-page shell (header/footer hydrate from the root-shell bundle), is marked `noindex, follow`, and carries no canonical/structured-data of its own. GA still loads so soft-404 hits are tracked.
-  - **CloudFront wiring (one-time, outside the repo):** the distribution needs custom error responses mapping **403** and **404** origin responses to `/404.html` with response code `404`. The S3 REST origin returns 403/404 for unmatched keys, so without this the user sees a raw S3 error instead of the branded page. This mirrors the other one-time dashboard steps (AdSense/GA) — the repo only ships the page and the `RewriteStaticURLs` function.
+  - **CloudFront wiring (one-time, outside the repo):** the distribution needs custom error responses mapping **403** and **404** origin responses to `/404.html` with response code `404`. The S3 REST origin returns 403/404 for unmatched keys, so without this the user sees a raw S3 error instead of the branded page. This mirrors the other one-time dashboard steps (AdSense/GA) — the repo only ships the page and the `codesamplez-tools-rewrite-static-urls` function.
 
 ## Tool Release Metadata
 

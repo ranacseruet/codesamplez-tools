@@ -5,8 +5,8 @@ const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
-const DEFAULT_FUNCTION_NAME = 'RewriteStaticURLs';
-const DEFAULT_SOURCE_PATH = path.resolve(process.cwd(), 'infrastructure/cloudfront-functions/RewriteStaticURLs.js');
+const DEFAULT_FUNCTION_NAME = 'codesamplez-tools-rewrite-static-urls';
+const DEFAULT_SOURCE_PATH = path.resolve(process.cwd(), 'infrastructure/cloudfront-functions/codesamplez-tools-rewrite-static-urls.js');
 const DEFAULT_RUNTIME = 'cloudfront-js-2.0';
 const DEFAULT_EVENT_TYPE = 'viewer-request';
 const DEFAULT_VIEWER_PROTOCOL_POLICY = 'redirect-to-https';

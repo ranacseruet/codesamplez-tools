@@ -17,7 +17,7 @@ const {
 } = require('./deploy-cloudfront-function');
 
 function loadCloudFrontFunctionHandler() {
-  const sourcePath = path.resolve(__dirname, '../infrastructure/cloudfront-functions/RewriteStaticURLs.js');
+  const sourcePath = path.resolve(__dirname, '../infrastructure/cloudfront-functions/codesamplez-tools-rewrite-static-urls.js');
   const source = fs.readFileSync(sourcePath, 'utf8');
   const context = {};
   vm.createContext(context);
@@ -34,7 +34,7 @@ function createEvent(uri, querystring = {}) {
   };
 }
 
-describe('RewriteStaticURLs CloudFront Function', () => {
+describe('codesamplez-tools-rewrite-static-urls CloudFront Function', () => {
   const handler = loadCloudFrontFunctionHandler();
 
   it('rewrites the root path to index.html', () => {
