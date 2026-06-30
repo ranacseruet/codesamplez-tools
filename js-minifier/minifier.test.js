@@ -1,5 +1,4 @@
 import { JSMinifier } from './minifier';
-import * as babelParser from '@babel/parser';
 
 describe('JS Minifier', () => {
   describe('configuration options', () => {
@@ -154,16 +153,15 @@ describe('JS Minifier', () => {
 
     test('should fall back to original code when AST parsing throws', () => {
       const minifier = new JSMinifier({ shortenVariables: true });
-      const parseSpy = jest.spyOn(babelParser, 'parse').mockImplementation(() => {
-        throw new Error('parser exploded');
-      });
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      const input = 'function sample(){return 1;}';
+      // Syntactically invalid JS the Babel parser rejects. shortenVariableNames is
+      // called directly here (not via minify), so it skips the upstream syntax
+      // guard and exercises the parser's own throw -> catch/fallback path.
+      const input = 'const = = =;';
 
       expect(minifier.shortenVariableNames(input)).toBe(input);
       expect(warnSpy).toHaveBeenCalledWith('AST Parse failed, falling back to original code', expect.any(Error));
 
-      parseSpy.mockRestore();
       warnSpy.mockRestore();
     });
 

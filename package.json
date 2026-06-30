@@ -20,7 +20,7 @@
     "preact"
   ],
   "engines": {
-    "node": "24.x"
+    "node": ">=24.11.0 <25"
   },
   "browserslist": [
     "last 2 Chrome major versions",
@@ -56,18 +56,23 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
-    "@babel/core": "^7.29.7",
-    "@babel/preset-env": "^7.29.2",
-    "@babel/preset-react": "^7.29.7",
-    "@babel/preset-typescript": "^7.29.7",
-    "@babel/register": "^7.29.7",
+    "@babel/core": "^8.0.1",
+    "@babel/generator": "^8.0.0",
+    "@babel/parser": "^8.0.0",
+    "@babel/preset-env": "^8.0.2",
+    "@babel/preset-react": "^8.0.1",
+    "@babel/preset-typescript": "^8.0.1",
+    "@babel/register": "^8.0.1",
+    "@babel/traverse": "^8.0.0",
+    "@babel/types": "^8.0.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.0.0",
     "babel-jest": "^30.3.0",
     "babel-loader": "^10.1.1",
-    "babel-plugin-transform-import-meta": "^2.3.3",
+    "babel-plugin-polyfill-corejs3": "^1.0.0",
+    "babel-plugin-transform-import-meta": "^3.0.0",
     "clean-webpack-plugin": "^4.0.0",
     "copy-webpack-plugin": "^14.0.0",
     "css-loader": "^7.1.4",
@@ -117,10 +122,6 @@
     }
   },
   "dependencies": {
-    "@babel/generator": "^7.28.6",
-    "@babel/parser": "^7.29.2",
-    "@babel/traverse": "^7.29.0",
-    "@babel/types": "^7.28.6",
     "@material/web": "^2.4.1",
     "core-js": "^3.49.0",
     "diff": "^9.0.0",

@@ -15,7 +15,12 @@ function ensureBabelRegister() {
         return;
     }
 
-    require('@babel/register')({
+    // @babel/register 8 ships as ESM, so the callable lives on `.default` under
+    // CommonJS interop.
+    const babelRegister = require('@babel/register').default;
+    // Babel 8's @babel/register ships a narrow Options type (extensions only), but
+    // still forwards the full transform options to @babel/core at runtime.
+    const registerOptions = /** @type {any} */ ({
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
         ignore: [/node_modules/],
         babelrc: false,
@@ -23,9 +28,11 @@ function ensureBabelRegister() {
         presets: [
             ['@babel/preset-env', { targets: { node: 'current' }, modules: 'commonjs' }],
             ['@babel/preset-react', { runtime: 'automatic', importSource: 'preact' }],
-            ['@babel/preset-typescript', { allowDeclareFields: true }]
+            // Babel 8 always enables allowDeclareFields; the option was removed.
+            '@babel/preset-typescript'
         ]
     });
+    babelRegister(registerOptions);
 
     babelRegistered = true;
 }
