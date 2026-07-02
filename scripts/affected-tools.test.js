@@ -73,8 +73,8 @@ describe('detectAffectedTargets', () => {
       includeRootAssets: true,
       shouldBuild: true,
       shouldDeploy: true,
-      deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'base64-converter', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'jwt-builder', 'jwt-decoder', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
-      invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/base64-converter/', '/base64-converter/*', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
+      deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'base64-converter', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'jwt-builder', 'jwt-decoder', 'llms.txt', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
+      invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/base64-converter/', '/base64-converter/*', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/llms.txt', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
     });
   });
 
@@ -111,9 +111,20 @@ describe('detectAffectedTargets', () => {
       includeRootAssets: true,
       shouldBuild: true,
       shouldDeploy: true,
-      deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
-      invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
+      deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'llms.txt', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
+      invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/llms.txt', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
     });
+  });
+
+  it('treats the generated-site-assets script as a root-only trigger so sitemap/robots/llms.txt redeploy', () => {
+    const result = detectAffectedTargets(['scripts/generated-site-assets.js']);
+
+    expect(result.scope).toBe('root-only');
+    expect(result.affectedTools).toEqual([]);
+    expect(result.includeRootAssets).toBe(true);
+    expect(result.shouldBuild).toBe(true);
+    expect(result.shouldDeploy).toBe(true);
+    expect(result.deployPaths).toEqual(expect.arrayContaining(['llms.txt', 'robots.txt', 'sitemap.xml']));
   });
 
   it('treats the shared analytics head builder as an all-tools rebuild trigger', () => {

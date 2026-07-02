@@ -229,7 +229,7 @@ describe('tool-manifest', () => {
         id: 'root-shell',
         outputPath: 'build/root-shell'
       },
-      rootAssets: ['index.html', '404.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2']
+      rootAssets: ['index.html', '404.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'llms.txt', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2']
     });
   });
 
@@ -470,7 +470,7 @@ describe('tool-manifest', () => {
         id: 'root-shell',
         outputPath: 'build/root-shell'
       },
-      rootAssets: ['index.html', '404.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2']
+      rootAssets: ['index.html', '404.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'llms.txt', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2']
     });
   });
 
@@ -598,7 +598,7 @@ describe('tool-manifest', () => {
     expect(() => getToolMetadataPath('not-a-real-tool')).toThrow('Unknown tool id');
 
     // ads.txt is appended dynamically because AdSense is configured in tooling-root.json.
-    expect(getRootAssets()).toEqual(['index.html', '404.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'ads.txt']);
+    expect(getRootAssets()).toEqual(['index.html', '404.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'llms.txt', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'ads.txt']);
     expect(getRootPageDefinition()).toEqual({
       title: ROOT_PAGE_TITLE,
       description: ROOT_PAGE_DESCRIPTION,

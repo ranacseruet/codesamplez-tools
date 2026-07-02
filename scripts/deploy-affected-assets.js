@@ -145,7 +145,7 @@ function assertExists(filePath) {
 //                     deploy invalidation purges the edge, so a returning visitor
 //                     is at most a day behind and JS+CSS move together.
 //   images / icons    1 week.
-//   .txt / .xml       1 hour (robots, sitemap, ads.txt).
+//   .txt / .xml       1 hour (robots, sitemap, ads.txt, llms.txt).
 //   .html             must-revalidate, max-age 0 — HTML is the entry point and
 //                     must always reflect the latest deploy.
 const CACHE_CONTROL_HTML = 'public, max-age=0, must-revalidate';

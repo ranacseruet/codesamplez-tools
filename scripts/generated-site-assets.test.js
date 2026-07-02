@@ -4,8 +4,9 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { XMLParser } = require('fast-xml-parser');
-const { getRootPageDefinition, getToolDefinitions } = require('./tool-manifest');
+const { getGroupedToolDefinitions, getRootPageDefinition, getToolDefinitions } = require('./tool-manifest');
 const {
+    buildLlmsTxt,
     buildRobotsTxt,
     buildSitemapEntries,
     buildSitemapXml,
@@ -43,25 +44,26 @@ function parseSitemap(xml) {
 
 function withTemporaryBuildArtifacts(run) {
     const buildDir = path.resolve(process.cwd(), 'build');
-    const sitemapPath = path.join(buildDir, 'sitemap.xml');
-    const robotsPath = path.join(buildDir, 'robots.txt');
-    const previousSitemap = fs.existsSync(sitemapPath) ? fs.readFileSync(sitemapPath, 'utf8') : null;
-    const previousRobots = fs.existsSync(robotsPath) ? fs.readFileSync(robotsPath, 'utf8') : null;
+    const artifactPaths = {
+        sitemapPath: path.join(buildDir, 'sitemap.xml'),
+        robotsPath: path.join(buildDir, 'robots.txt'),
+        llmsTxtPath: path.join(buildDir, 'llms.txt')
+    };
+    const previousContents = Object.fromEntries(Object.values(artifactPaths).map((artifactPath) => [
+        artifactPath,
+        fs.existsSync(artifactPath) ? fs.readFileSync(artifactPath, 'utf8') : null
+    ]));
 
     try {
-        return run({ sitemapPath, robotsPath });
+        return run(artifactPaths);
     } finally {
-        if (previousSitemap === null) {
-            fs.rmSync(sitemapPath, { force: true });
-        } else {
-            fs.writeFileSync(sitemapPath, previousSitemap);
-        }
-
-        if (previousRobots === null) {
-            fs.rmSync(robotsPath, { force: true });
-        } else {
-            fs.writeFileSync(robotsPath, previousRobots);
-        }
+        Object.entries(previousContents).forEach(([artifactPath, previousContent]) => {
+            if (previousContent === null) {
+                fs.rmSync(artifactPath, { force: true });
+            } else {
+                fs.writeFileSync(artifactPath, previousContent);
+            }
+        });
     }
 }
 
@@ -265,7 +267,31 @@ describe('generated site assets', () => {
         expect(urls).toHaveLength(getToolDefinitions().length + 1);
     });
 
-    it('writes generated sitemap and robots assets into the target build directory', async () => {
+    it('builds an llms.txt manifest with the site summary and every tool page exactly once', () => {
+        const llmsTxt = buildLlmsTxt();
+        const rootPage = getRootPageDefinition();
+        const tools = getToolDefinitions();
+
+        expect(llmsTxt.startsWith(`# ${rootPage.title}\n\n> ${rootPage.description}`)).toBe(true);
+        expect(llmsTxt).toContain(rootPage.absoluteUrl);
+        expect(llmsTxt).toContain('- [Sitemap](https://tools.codesamplez.com/sitemap.xml)');
+
+        tools.forEach((tool) => {
+            const link = `- [${tool.title}](${tool.absolutePageUrl}): ${tool.indexDescription}`;
+            expect(llmsTxt).toContain(link);
+            expect(llmsTxt.indexOf(link)).toBe(llmsTxt.lastIndexOf(link));
+        });
+    });
+
+    it('sections llms.txt by catalog group, omitting empty groups', () => {
+        const llmsTxt = buildLlmsTxt();
+
+        getGroupedToolDefinitions().forEach((group) => {
+            expect(llmsTxt.includes(`## ${group.label}`)).toBe(group.tools.length > 0);
+        });
+    });
+
+    it('writes generated sitemap, robots, and llms.txt assets into the target build directory', async () => {
         const buildDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cst-generated-assets-'));
 
         try {
@@ -276,8 +302,10 @@ describe('generated site assets', () => {
 
             expect(result.sitemapPath).toBe(path.join(buildDir, 'sitemap.xml'));
             expect(result.robotsPath).toBe(path.join(buildDir, 'robots.txt'));
+            expect(result.llmsTxtPath).toBe(path.join(buildDir, 'llms.txt'));
             expect(fs.readFileSync(result.sitemapPath, 'utf8')).toContain('<urlset');
             expect(fs.readFileSync(result.robotsPath, 'utf8')).toContain('Sitemap: https://tools.codesamplez.com/sitemap.xml');
+            expect(fs.readFileSync(result.llmsTxtPath, 'utf8')).toBe(`${buildLlmsTxt()}\n`);
         } finally {
             fs.rmSync(buildDir, { force: true, recursive: true });
         }
@@ -326,15 +354,17 @@ describe('generated site assets', () => {
     });
 
     it('uses the default build directory when one is not provided', async () => {
-        await withTemporaryBuildArtifacts(async ({ sitemapPath, robotsPath }) => {
+        await withTemporaryBuildArtifacts(async ({ sitemapPath, robotsPath, llmsTxtPath }) => {
             const result = await writeGeneratedSiteAssets({
                 resolveLastmod: () => null
             });
 
             expect(result.sitemapPath).toBe(sitemapPath);
             expect(result.robotsPath).toBe(robotsPath);
+            expect(result.llmsTxtPath).toBe(llmsTxtPath);
             expect(fs.readFileSync(sitemapPath, 'utf8')).toContain('<urlset');
             expect(fs.readFileSync(robotsPath, 'utf8')).toContain('Sitemap: https://tools.codesamplez.com/sitemap.xml');
+            expect(fs.readFileSync(llmsTxtPath, 'utf8')).toContain('## Metadata');
         });
     });
 

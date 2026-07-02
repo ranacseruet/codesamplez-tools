@@ -24,6 +24,10 @@ const ALL_TOOL_TRIGGER_FILES = new Set([
 
 const ROOT_ONLY_TRIGGER_FILES = new Set([
     'root-shell.ts',
+    // Generates the root-level SEO/crawler assets (sitemap.xml, robots.txt,
+    // llms.txt). Changing it must redeploy those assets; without this trigger a
+    // wording/grouping-only edit is classified as a no-op and production goes stale.
+    'scripts/generated-site-assets.js',
     ...getRootAssets()
 ]);
 

@@ -11,6 +11,7 @@ const {
     ROOT_CONFIG_PATH,
     buildAbsoluteUrl,
     getAdsenseClientId,
+    getGroupedToolDefinitions,
     getRootPageDefinition,
     getSiteBaseUrl,
     getSiteStaticRootUri,
@@ -20,6 +21,7 @@ const { buildAdsTxt } = require('./analytics');
 
 const SITEMAP_FILENAME = 'sitemap.xml';
 const ROBOTS_FILENAME = 'robots.txt';
+const LLMS_TXT_FILENAME = 'llms.txt';
 const SHARED_TOOL_LASTMOD_INPUTS = [
     ROOT_CONFIG_PATH,
     path.resolve(REPO_ROOT, 'common/material-theme.css'),
@@ -198,23 +200,69 @@ function toSitemapUrlItem(entry) {
 /**
  * @returns {string}
  */
+function buildSitemapUrl() {
+    return buildAbsoluteUrl(getSiteStaticRootUri(), SITEMAP_FILENAME);
+}
+
+/**
+ * @returns {string}
+ */
 function buildRobotsTxt() {
     return [
         'User-agent: *',
         'Allow: /',
         '',
-        `Sitemap: ${buildAbsoluteUrl(getSiteStaticRootUri(), SITEMAP_FILENAME)}`
+        `Sitemap: ${buildSitemapUrl()}`
+    ].join('\n');
+}
+
+/**
+ * Builds the llms.txt manifest (https://llmstxt.org/) so AI assistants and
+ * generative-search crawlers can discover every tool page without executing
+ * JavaScript. Derived from the tool catalog, so it stays in sync as tools
+ * are added, retired, or regrouped.
+ * @returns {string}
+ */
+function buildLlmsTxt() {
+    const rootPage = getRootPageDefinition();
+    const groupSections = getGroupedToolDefinitions()
+        .map((group) => ({
+            ...group,
+            // Coming-soon placeholders have no deployed page; listing them would
+            // hand crawlers dead links, so only live tools make the manifest.
+            tools: group.tools.filter((tool) => tool.status === 'live')
+        }))
+        .filter((group) => group.tools.length > 0)
+        .map((group) => [
+            `## ${group.label}`,
+            '',
+            ...group.tools.map((tool) => `- [${tool.title}](${tool.absolutePageUrl}): ${tool.indexDescription}`)
+        ].join('\n'));
+
+    return [
+        `# ${rootPage.title}`,
+        '',
+        `> ${rootPage.description}`,
+        '',
+        `All tools run entirely client-side in the browser: no registration, and no user data is sent to any server. Site root: ${rootPage.absoluteUrl}`,
+        '',
+        groupSections.join('\n\n'),
+        '',
+        '## Metadata',
+        '',
+        `- [Sitemap](${buildSitemapUrl()}): XML sitemap listing every tool page`
     ].join('\n');
 }
 
 /**
  * @param {{ buildDir?: string, resolveLastmod?: (paths: string[], context: Record<string, unknown>) => string | null }} [options]
- * @returns {Promise<{ sitemapPath: string, robotsPath: string, adsTxtPath: string | null }>}
+ * @returns {Promise<{ sitemapPath: string, robotsPath: string, llmsTxtPath: string, adsTxtPath: string | null }>}
  */
 async function writeGeneratedSiteAssets(options = {}) {
     const buildDir = path.resolve(options.buildDir || path.join(REPO_ROOT, 'build'));
     const sitemapPath = path.join(buildDir, SITEMAP_FILENAME);
     const robotsPath = path.join(buildDir, ROBOTS_FILENAME);
+    const llmsTxtPath = path.join(buildDir, LLMS_TXT_FILENAME);
     const [sitemapXml, robotsTxt] = await Promise.all([
         buildSitemapXml({ resolveLastmod: options.resolveLastmod }),
         Promise.resolve(buildRobotsTxt())
@@ -223,6 +271,7 @@ async function writeGeneratedSiteAssets(options = {}) {
     fs.mkdirSync(buildDir, { recursive: true });
     fs.writeFileSync(sitemapPath, sitemapXml);
     fs.writeFileSync(robotsPath, `${robotsTxt}\n`);
+    fs.writeFileSync(llmsTxtPath, `${buildLlmsTxt()}\n`);
 
     // ads.txt only exists when AdSense is configured; skip the file otherwise so
     // we never ship an empty authorization record.
@@ -235,14 +284,17 @@ async function writeGeneratedSiteAssets(options = {}) {
     return {
         sitemapPath,
         robotsPath,
+        llmsTxtPath,
         adsTxtPath
     };
 }
 
 module.exports = {
     ADS_TXT_FILENAME,
+    LLMS_TXT_FILENAME,
     ROBOTS_FILENAME,
     SITEMAP_FILENAME,
+    buildLlmsTxt,
     buildRobotsTxt,
     buildSitemapEntries,
     buildSitemapXml,
