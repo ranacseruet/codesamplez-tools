@@ -26,6 +26,30 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     createPlainTextFaqItem(
         'Can a JSON Formatter also validate JSON?',
         'Yes, this JSON Formatter also acts as a validator. If your JSON has a syntax error like a missing comma or quote, the tool will alert you and pinpoint the error so you can fix it and format again.'
+    ),
+    createPlainTextFaqItem(
+        'How do I fix "Unexpected token" errors in JSON?',
+        'An "Unexpected token" error means the parser hit a character it did not expect at that position - usually a stray comma, an unquoted key, single quotes instead of double quotes, or a missing bracket. Paste the JSON into this tool and click "Format JSON"; the validator reports the exact line and column, and "Go to error" jumps straight to the offending character so you can fix it.'
+    ),
+    createPlainTextFaqItem(
+        'What is the difference between JSON, JSON5, and JSONC?',
+        'JSON is the strict standard: double-quoted keys and strings only, no comments, and no trailing commas. JSON5 extends it with comments, trailing commas, unquoted keys, and single-quoted strings for easier hand-editing. JSONC ("JSON with Comments") is plain JSON plus // and /* */ comments, commonly used in editor config files like tsconfig.json. This tool parses strict JSON, so JSON5 or JSONC input should be converted to JSON first.'
+    ),
+    createPlainTextFaqItem(
+        'Is it safe to paste API keys or secrets into an online JSON formatter?',
+        'With this tool, yes - all formatting and validation happens entirely in your browser via JavaScript, and no JSON you paste is ever sent to a server. That said, avoid pasting secrets into formatters you have not verified are client-side, since some tools upload input for server-side processing.'
+    ),
+    createPlainTextFaqItem(
+        'How do I format JSON in VS Code or the terminal vs. online?',
+        'In VS Code, select the JSON and press Shift+Alt+F (Shift+Option+F on macOS), or right-click and choose "Format Document". In a terminal, pipe it through a tool like "python -m json.tool" or "jq .". An online formatter like this one needs no install, works on any device, and adds features like tree view, key sorting, and error highlighting that most editors and CLI tools do not.'
+    ),
+    createPlainTextFaqItem(
+        'How do I minify JSON, and why minify it?',
+        'To minify JSON with this tool, choose the "Minified" indentation option and click "Format JSON" - the output collapses to a single line with no extra whitespace. Minifying reduces payload size for network transfer and storage, which matters for API responses and config files where every byte counts; pretty-printed JSON is for humans, minified JSON is for machines.'
+    ),
+    createPlainTextFaqItem(
+        'What does a "trailing comma" or "expected property name" JSON error mean?',
+        'Browsers word this error differently (for example "Expected property name or \'}\'" in Firefox, or "Expected double-quoted property name" in Chrome), but the cause is the same: the parser expected a quoted property name or a closing brace at that position and found something else instead - commonly a trailing comma before a closing brace (e.g. {"a":1,}) or a missing key. Enable "Auto fix" before formatting to have the tool correct common cases like trailing commas automatically, or use "Go to error" to jump to the exact spot and fix it manually.'
     )
 ];
 
@@ -35,10 +59,15 @@ export function JsonFormatterIntro(): JSX.Element {
             <div className="c-tool-article__content">
                 <h2 id="json-formatter-intro-heading" className="c-tool-article__eyebrow">About This Tool</h2>
                 <p className="c-tool-article__lead">
-                    Struggling to read messy JSON? Our free Online JSON Formatter beautifies raw JSON instantly,
-                    adding indentation and color highlights so you can actually read it. Paste your JSON and get a
-                    clear, error-checked output in seconds. Bonus: it even sorts object keys alphabetically for
-                    consistency.
+                    A JSON formatter is a tool that takes raw or minified JSON and rewrites it with indentation,
+                    line breaks, and syntax highlighting so it is readable and easy to debug. Use one whenever you
+                    need to inspect an API response, validate a config file, or track down a syntax error in JSON
+                    that arrived as a single unreadable line.
+                </p>
+                <p className="c-tool-article__lead">
+                    Our free Online JSON Formatter beautifies raw JSON instantly, adding indentation and color
+                    highlights so you can actually read it. Paste your JSON and get a clear, error-checked output
+                    in seconds. Bonus: it even sorts object keys alphabetically for consistency.
                 </p>
             </div>
         </section>

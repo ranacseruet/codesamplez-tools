@@ -61,7 +61,7 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('id="formatJsonBtn"');
         expect(markup).toContain('id="jsonErrorStatus"');
         expect(markup).toContain('id="treeView"');
-        expect(markup).toContain('Struggling to read messy JSON? Our free Online JSON Formatter beautifies raw JSON instantly');
+        expect(markup).toContain('A JSON formatter is a tool that takes raw or minified JSON and rewrites it with indentation');
         expect(markup).toContain('Why Use A JSON Formatter Tool?');
         expect(markup).toContain('JSON Formatter FAQs');
         expect(markup).toContain(`href="${SITE_BASE_URL}"`);
