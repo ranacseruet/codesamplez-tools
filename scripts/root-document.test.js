@@ -63,7 +63,7 @@ describe('root document generation', () => {
     expect(html).toContain('<script type="application/ld+json">');
     expect(html).toContain('"@type":"CollectionPage"');
     expect(html).toContain('"@type":"ItemList"');
-    expect(html).toContain('"@type":"WebApplication"');
+    expect(html).toContain('"@type":["WebApplication","SoftwareApplication"]');
     expect(html).toContain('"numberOfItems":10');
     expect(html).toContain(`"url":"${buildSiteHref('/json-formatter/')}"`);
     expect(html).toContain(`"url":"${buildSiteHref('/text-analyzer/')}"`);

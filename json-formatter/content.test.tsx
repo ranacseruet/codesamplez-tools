@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { FAQ_ITEMS, JsonFormatterIntro } from './content';
+import { FAQ_ITEMS, FEATURE_LIST, HOWTO_STEPS, JsonFormatterArticle, JsonFormatterIntro } from './content';
 
 describe('json-formatter content', () => {
     it('expands the FAQ set into the 10-12 question-query range required for AEO', () => {
@@ -44,5 +44,31 @@ describe('json-formatter content', () => {
         expect(leadParagraphs.length).toBeGreaterThanOrEqual(1);
         expect(leadParagraphs[0].textContent).toContain('A JSON formatter is a tool that');
         expect(leadParagraphs[0].textContent).toContain('Use one whenever you need to');
+    });
+
+    it('exposes non-empty HowTo steps and feature list for structured data', () => {
+        expect(HOWTO_STEPS.length).toBeGreaterThan(0);
+        HOWTO_STEPS.forEach((step) => {
+            expect(step.name.length).toBeGreaterThan(0);
+            expect(step.text.length).toBeGreaterThan(0);
+        });
+
+        expect(FEATURE_LIST.length).toBeGreaterThan(0);
+        FEATURE_LIST.forEach((feature) => {
+            expect(typeof feature).toBe('string');
+            expect(feature.length).toBeGreaterThan(0);
+        });
+    });
+
+    it('renders the step-by-step how-to section from HOWTO_STEPS', () => {
+        document.body.innerHTML = '<div id="test-root"></div>';
+        const root = document.getElementById('test-root');
+
+        render(<JsonFormatterArticle />, root);
+
+        const howToSection = root.querySelector('#json-formatter-how-to-use').closest('section');
+        const stepHeadings = Array.from(howToSection.querySelectorAll('li strong'))
+            .map((node) => node.textContent);
+        expect(stepHeadings).toEqual(HOWTO_STEPS.map((step) => step.name));
     });
 });

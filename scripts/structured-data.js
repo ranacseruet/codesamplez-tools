@@ -6,6 +6,7 @@ const { escapeJsonForHtml } = require('./document-helpers');
  * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
  * @typedef {import('./tool-manifest').ToolManifest} ToolManifest
  * @typedef {{ question: string, structuredDataAnswer: string }} StructuredFaqItem
+ * @typedef {{ name: string, text: string }} StructuredHowToStep
  */
 
 /**
@@ -89,6 +90,14 @@ function getToolFaqPageId(tool) {
 }
 
 /**
+ * @param {ToolDefinition} tool
+ * @returns {string}
+ */
+function getToolHowToId(tool) {
+    return `${tool.absolutePageUrl}#howto`;
+}
+
+/**
  * Publisher entity. A single Organization node, referenced by @id from the
  * WebSite/WebPage publisher slots, gives search engines a stable brand entity
  * (name, logo, social profiles) to anchor the knowledge graph.
@@ -127,12 +136,16 @@ function createWebsiteNode(manifest) {
 }
 
 /**
+ * WebApplication is the primary type (it runs in-browser, no install); the
+ * secondary SoftwareApplication type widens matching for assistants/crawlers
+ * that only recognize the broader schema.org type when picking rich results.
  * @param {ToolDefinition} tool
+ * @param {{ featureList?: string[] }} [options]
  * @returns {Record<string, unknown>}
  */
-function createToolApplicationNode(tool) {
+function createToolApplicationNode(tool, options = {}) {
     return {
-        '@type': 'WebApplication',
+        '@type': ['WebApplication', 'SoftwareApplication'],
         '@id': getToolAppId(tool),
         name: tool.title,
         description: tool.description,
@@ -148,7 +161,8 @@ function createToolApplicationNode(tool) {
         },
         image: tool.absoluteFeaturedImageUrl,
         softwareVersion: tool.version,
-        keywords: tool.keywords.length > 0 ? tool.keywords.join(', ') : undefined
+        keywords: tool.keywords.length > 0 ? tool.keywords.join(', ') : undefined,
+        featureList: options.featureList && options.featureList.length > 0 ? options.featureList : undefined
     };
 }
 
@@ -234,21 +248,45 @@ function createToolFaqPageNode(tool, faqItems) {
 }
 
 /**
+ * @param {ToolDefinition} tool
+ * @param {StructuredHowToStep[]} steps
+ * @returns {Record<string, unknown>}
+ */
+function createToolHowToNode(tool, steps) {
+    return {
+        '@type': 'HowTo',
+        '@id': getToolHowToId(tool),
+        name: `How to Use ${tool.title}`,
+        isPartOf: {
+            '@id': getToolPageId(tool)
+        },
+        step: steps.map((step, index) => ({
+            '@type': 'HowToStep',
+            position: index + 1,
+            name: step.name,
+            text: step.text
+        }))
+    };
+}
+
+/**
  * @param {ToolManifest} manifest
  * @param {ToolDefinition} tool
- * @param {{ faqItems?: StructuredFaqItem[] }} [options]
+ * @param {{ faqItems?: StructuredFaqItem[], howToSteps?: StructuredHowToStep[], featureList?: string[] }} [options]
  * @returns {Record<string, unknown>[]}
  */
 function buildToolStructuredDataGraph(manifest, tool, options = {}) {
     const faqItems = Array.isArray(options.faqItems) ? options.faqItems : [];
+    const howToSteps = Array.isArray(options.howToSteps) ? options.howToSteps : [];
 
     return [
         createOrganizationNode(manifest),
         createWebsiteNode(manifest),
         createToolWebPageNode(manifest, tool),
-        createToolApplicationNode(tool),
+        createToolApplicationNode(tool, { featureList: options.featureList }),
         createToolBreadcrumbNode(manifest, tool),
-        ...(faqItems.length > 0 ? [createToolFaqPageNode(tool, faqItems)] : [])
+        ...(faqItems.length > 0 ? [createToolFaqPageNode(tool, faqItems)] : []),
+        ...(howToSteps.length > 0 ? [createToolHowToNode(tool, howToSteps)] : [])
     ];
 }
 

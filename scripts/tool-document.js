@@ -11,6 +11,8 @@ const { escapeAttribute, escapeHtml, formatToolDocumentTitle, joinUrl } = requir
 const { buildToolStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
 const { renderAnalyticsHeadMarkup, renderAnalyticsResourceHints } = require('./analytics');
 const { getToolFaqItems } = require('./tool-faq-metadata');
+const { getToolHowToSteps } = require('./tool-howto-metadata');
+const { getToolFeatureList } = require('./tool-feature-metadata');
 const { ensureBabelRegister } = require('./register-node-transforms');
 
 const THEME_COLOR = '#f7f7fa';
@@ -75,7 +77,9 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     const escapedFeaturedImageUrl = escapeAttribute(absoluteFeaturedImageUrl);
     const escapedFeaturedAlt = escapeAttribute(`${tool.title} featured image`);
     const structuredDataScript = renderStructuredDataScript(buildToolStructuredDataGraph(manifest, tool, {
-        faqItems: getToolFaqItems(tool.id)
+        faqItems: getToolFaqItems(tool.id),
+        howToSteps: getToolHowToSteps(tool.id),
+        featureList: getToolFeatureList(tool.id)
     }));
     const analyticsHeadMarkup = renderAnalyticsHeadMarkup(manifest.analytics);
     const analyticsResourceHints = renderAnalyticsResourceHints(manifest.analytics);

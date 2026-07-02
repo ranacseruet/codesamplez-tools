@@ -80,7 +80,7 @@ describe('tool document generation', () => {
         expect(html).toContain('"@type":"Organization"');
         expect(html).toContain('"publisher":{"@id":"');
         expect(html).toContain('"@type":"WebPage"');
-        expect(html).toContain('"@type":"WebApplication"');
+        expect(html).toContain('"@type":["WebApplication","SoftwareApplication"]');
         expect(html).toContain('"@type":"BreadcrumbList"');
         expect(html).toContain(`"breadcrumb":{"@id":"${buildSiteHref('/diff-checker/')}#breadcrumb"}`);
         expect(html).toContain('"position":1,"name":"Home"');
@@ -191,6 +191,17 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"Can a JSON Formatter also validate JSON?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"A JSON Formatter is an online tool that takes unformatted or minified JSON data and beautifies it by adding proper indentation and line breaks.');
         expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/json-formatter/')}#webpage"}`);
+    });
+
+    it('renders HowTo and SoftwareApplication structured data for json-formatter', () => {
+        const html = generateToolDocument('json-formatter-tool');
+
+        expect(html).toContain('"@type":"HowTo"');
+        expect(html).toContain('"name":"How to Use JSON Formatter"');
+        expect(html).toContain('"@type":"HowToStep","position":1,"name":"Enter JSON Data"');
+        expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/json-formatter/')}#webpage"}`);
+        expect(html).toContain('"@type":["WebApplication","SoftwareApplication"]');
+        expect(html).toContain('"featureList":["Pretty-print with selectable indentation"');
     });
 
     it('renders FAQPage structured data for css-minifier', () => {

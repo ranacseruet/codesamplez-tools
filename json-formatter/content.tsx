@@ -53,6 +53,50 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     )
 ];
 
+export interface ToolHowToStep {
+    name: string;
+    text: string;
+}
+
+export const HOWTO_STEPS: ToolHowToStep[] = [
+    {
+        name: 'Enter JSON Data',
+        text: 'Paste your JSON string into the input area, or use the "Load Sample" button if you are just trying out the tool.'
+    },
+    {
+        name: '(Optional) Update Configuration',
+        text: 'Toggle the "Auto fix" checkbox to enable or disable automatic error correction, toggle "Sort keys" to enable or disable key sorting, and pick an "Indent" option (2 spaces, 4 spaces, Tab, or Minified).'
+    },
+    {
+        name: 'Validate and Format',
+        text: 'Click "Format JSON" to validate and format the input with proper indentation.'
+    },
+    {
+        name: 'Pick your preferred result view',
+        text: 'Switch between tree view and plain text to inspect the formatted JSON the way you prefer.'
+    },
+    {
+        name: 'Copy formatted JSON',
+        text: 'Click "Copy Output" to copy the result after the tool confirms the operation succeeded.'
+    },
+    {
+        name: 'Handle errors',
+        text: 'If the JSON is invalid, the input is preserved and the error message indicates the issue so you can fix it quickly.'
+    }
+];
+
+export const FEATURE_LIST: string[] = [
+    'Pretty-print with selectable indentation',
+    'Minify to a single line',
+    'Alphabetical key sorting',
+    'Syntax validation with line/column error detail',
+    'Auto fix for common JSON errors',
+    'Copy to clipboard and download as .json',
+    'Syntax highlighting',
+    'Tree node expand/collapse',
+    'Real-time size comparison'
+];
+
 export function JsonFormatterIntro(): JSX.Element {
     return (
         <section className="c-tool-article c-tool-article--intro c-surface-card" aria-labelledby="json-formatter-intro-heading">
@@ -111,30 +155,12 @@ export function JsonFormatterArticle(): JSX.Element {
 
                 <ToolArticleSection id="json-formatter-how-to-use" title="How to Format JSON (Step-by-Step)">
                     <ol>
-                        <li>
-                            <strong>Enter JSON Data</strong>
-                            <p>Paste your JSON string into the input area, or use the &ldquo;Load Sample&rdquo; button if you are just trying out the tool.</p>
-                        </li>
-                        <li>
-                            <strong>(Optional) Update Configuration</strong>
-                            <p>Toggle the &ldquo;Auto fix&rdquo; checkbox to enable or disable automatic error correction, toggle &ldquo;Sort keys&rdquo; to enable or disable key sorting, and pick an &ldquo;Indent&rdquo; option (2 spaces, 4 spaces, Tab, or Minified).</p>
-                        </li>
-                        <li>
-                            <strong>Validate and Format</strong>
-                            <p>Click &ldquo;Format JSON&rdquo; to validate and format the input with proper indentation.</p>
-                        </li>
-                        <li>
-                            <strong>Pick your preferred result view</strong>
-                            <p>Switch between tree view and plain text to inspect the formatted JSON the way you prefer.</p>
-                        </li>
-                        <li>
-                            <strong>Copy formatted JSON</strong>
-                            <p>Click &ldquo;Copy Output&rdquo; to copy the result after the tool confirms the operation succeeded.</p>
-                        </li>
-                        <li>
-                            <strong>Handle errors</strong>
-                            <p>If the JSON is invalid, the input is preserved and the error message indicates the issue so you can fix it quickly.</p>
-                        </li>
+                        {HOWTO_STEPS.map((step) => (
+                            <li key={step.name}>
+                                <strong>{step.name}</strong>
+                                <p>{step.text}</p>
+                            </li>
+                        ))}
                     </ol>
 
                     <p><strong>Example Input:</strong></p>

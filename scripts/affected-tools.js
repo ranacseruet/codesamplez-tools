@@ -19,6 +19,9 @@ const ALL_TOOL_TRIGGER_FILES = new Set([
     'scripts/root-document.js',
     'scripts/structured-data.js',
     'scripts/tool-document.js',
+    'scripts/tool-faq-metadata.js',
+    'scripts/tool-feature-metadata.js',
+    'scripts/tool-howto-metadata.js',
     'scripts/tool-manifest.js'
 ]);
 

@@ -50,6 +50,52 @@ describe('structured data rendering', () => {
     expect(script).not.toContain('"@type":"Question"');
   });
 
+  it('emits HowTo JSON-LD when howTo steps are provided', () => {
+    const manifest = loadManifest();
+    const tool = getToolById('json-formatter-tool');
+    const graph = buildToolStructuredDataGraph(manifest, tool, {
+      howToSteps: [
+        { name: 'Enter JSON Data', text: 'Paste your JSON string into the input area.' },
+        { name: 'Validate and Format', text: 'Click Format JSON to validate and format the input.' }
+      ]
+    });
+    const script = renderStructuredDataScript(graph);
+
+    expect(script).toContain('"@type":"HowTo"');
+    expect(script).toContain(`"@id":"${tool.absolutePageUrl}#howto"`);
+    expect(script).toContain(`"isPartOf":{"@id":"${tool.absolutePageUrl}#webpage"}`);
+    expect(script).toContain('"@type":"HowToStep","position":1,"name":"Enter JSON Data","text":"Paste your JSON string into the input area."');
+    expect(script).toContain('"@type":"HowToStep","position":2,"name":"Validate and Format"');
+  });
+
+  it('does not emit HowTo JSON-LD when howTo steps are omitted', () => {
+    const manifest = loadManifest();
+    const tool = getToolById('diff-checker-tool');
+    const script = renderStructuredDataScript(buildToolStructuredDataGraph(manifest, tool));
+
+    expect(script).not.toContain('"@type":"HowTo"');
+  });
+
+  it('emits WebApplication/SoftwareApplication types with an optional featureList', () => {
+    const manifest = loadManifest();
+    const tool = getToolById('json-formatter-tool');
+    const graph = buildToolStructuredDataGraph(manifest, tool, {
+      featureList: ['Pretty-print with selectable indentation', 'Minify to a single line']
+    });
+    const script = renderStructuredDataScript(graph);
+
+    expect(script).toContain('"@type":["WebApplication","SoftwareApplication"]');
+    expect(script).toContain('"featureList":["Pretty-print with selectable indentation","Minify to a single line"]');
+  });
+
+  it('omits featureList when none is provided', () => {
+    const manifest = loadManifest();
+    const tool = getToolById('diff-checker-tool');
+    const script = renderStructuredDataScript(buildToolStructuredDataGraph(manifest, tool));
+
+    expect(script).not.toContain('"featureList"');
+  });
+
   it('emits a BreadcrumbList that links the tools index to the current tool', () => {
     const manifest = loadManifest();
     const tool = getToolById('diff-checker-tool');

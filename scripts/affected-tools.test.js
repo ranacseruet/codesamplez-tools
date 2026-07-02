@@ -147,6 +147,17 @@ describe('detectAffectedTargets', () => {
     expect(result.shouldDeploy).toBe(true);
   });
 
+  it('treats the per-tool FAQ/HowTo/feature content registries as all-tools rebuild triggers', () => {
+    ['scripts/tool-faq-metadata.js', 'scripts/tool-howto-metadata.js', 'scripts/tool-feature-metadata.js'].forEach((filePath) => {
+      const result = detectAffectedTargets([filePath]);
+
+      expect(result.scope).toBe('all-tools');
+      expect(result.affectedTools).toEqual(getToolIds());
+      expect(result.shouldBuild).toBe(true);
+      expect(result.shouldDeploy).toBe(true);
+    });
+  });
+
   it('skips docs-only changes', () => {
     expect(detectAffectedTargets(['README.md', 'jwt-decoder/README.md'])).toEqual({
       scope: 'none',
