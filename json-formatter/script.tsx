@@ -8,6 +8,7 @@ import {
   autoFixJSON,
   formatJson,
   locateJsonError,
+  parseIndentOption,
   sortKeysAlphabetically,
   type IndentOption,
   type JsonFormatRequest,
@@ -16,6 +17,7 @@ import {
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { JsonFormatterArticle, JsonFormatterIntro } from './content';
+import { buildShareUrl, resolveSharePayload, SHARE_URL_MAX_LENGTH, type ShareUrlPayload } from './share-url';
 import toolMetadata from './tool.meta.json';
 
 /**
@@ -46,6 +48,7 @@ export function JsonFormatterApp() {
     <div id="json-formatter-tool" className="tool-container jsonf-tool c-tool-stack">
       <div className="o-toolbar jsonf-controls-custom jsonf-toolbar c-action-strip c-toolbar">
         <button className="c-button c-button--secondary jsonf-sample-btn" id="loadSampleBtn" type="button">Load Sample</button>
+        <button className="c-button c-button--secondary jsonf-share-btn" id="shareUrlBtn" type="button">Share</button>
         <div className="c-checkbox-item jsonf-checkbox-item">
           <input type="checkbox" id="sortKeys" defaultChecked />
           <label htmlFor="sortKeys">Sort keys</label>
@@ -186,6 +189,7 @@ export class JSONFormatter {
   copyBtn!: HTMLButtonElement;
   downloadBtn!: HTMLButtonElement;
   sampleBtn!: HTMLButtonElement;
+  shareBtn!: HTMLButtonElement;
   sortCheckbox!: HTMLInputElement;
   autoFixCheckbox!: HTMLInputElement;
   indentSelect!: HTMLSelectElement;
@@ -224,6 +228,7 @@ export class JSONFormatter {
       this.copyBtn = document.querySelector('#copyOutputBtn') as HTMLButtonElement;
       this.downloadBtn = document.querySelector('#downloadOutputBtn') as HTMLButtonElement;
       this.sampleBtn = document.querySelector('#loadSampleBtn') as HTMLButtonElement;
+      this.shareBtn = document.querySelector('#shareUrlBtn') as HTMLButtonElement;
       this.sortCheckbox = document.querySelector('#sortKeys') as HTMLInputElement;
       this.autoFixCheckbox = document.querySelector('#autoFix') as HTMLInputElement;
       this.indentSelect = document.querySelector('#indentSelect') as HTMLSelectElement;
@@ -256,6 +261,10 @@ export class JSONFormatter {
 
     if (this.sampleBtn) {
       this.sampleBtn.addEventListener('click', () => this.loadSampleData());
+    }
+
+    if (this.shareBtn) {
+      this.shareBtn.addEventListener('click', () => this.shareUrl());
     }
 
     if (this.indentSelect) {
@@ -566,16 +575,7 @@ export class JSONFormatter {
 
   /** Read the indentation selector, mapping its string value to an `IndentOption`. */
   getIndentOption(): IndentOption {
-    switch (this.indentSelect?.value) {
-      case '4':
-        return 4;
-      case 'tab':
-        return 'tab';
-      case 'minify':
-        return 'minify';
-      default:
-        return 2;
-    }
+    return parseIndentOption(this.indentSelect?.value);
   }
 
   /**
@@ -774,6 +774,92 @@ export class JSONFormatter {
     this.formatJSON();
     NotificationManager.show('Sample data loaded successfully!', 2000, { type: 'success' });
   }
+
+  /**
+   * Build a shareable URL (current JSON + settings, LZ-compressed into the hash
+   * fragment — never sent to a server) and copy it to the clipboard. Guarded
+   * against empty input and against payloads too large to share as a URL.
+   */
+  async shareUrl(): Promise<void> {
+    const trimmedInput = this.input.value.trim();
+    if (!trimmedInput) {
+      NotificationManager.show('Enter some JSON before sharing.', 3000, { type: 'error' });
+      return;
+    }
+
+    const payload: ShareUrlPayload = {
+      input: this.input.value,
+      indent: this.getIndentOption(),
+      sortKeys: this.sortCheckbox.checked,
+      autoFix: this.autoFixCheckbox.checked
+    };
+    const url = buildShareUrl(window.location.href, payload);
+
+    if (url.length > SHARE_URL_MAX_LENGTH) {
+      NotificationManager.show(
+        `JSON is too large to share as a URL (limit ~${SHARE_URL_MAX_LENGTH} characters). Try Download instead.`,
+        4000,
+        { type: 'error' }
+      );
+      return;
+    }
+
+    try {
+      // Try modern Clipboard API first (matches copyOutput's fallback strategy).
+      if (globalThis.navigator?.clipboard) {
+        await globalThis.navigator.clipboard.writeText(url);
+        NotificationManager.show('Share link copied to clipboard!', 2000, { type: 'success' });
+        return;
+      }
+
+      const textarea = document.createElement('textarea');
+      textarea.value = url;
+      textarea.style.position = 'fixed';
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      try {
+        const successful = document.execCommand('copy');
+        if (!successful) {
+          throw new Error('Copy command failed');
+        }
+        NotificationManager.show('Share link copied to clipboard!', 2000, { type: 'success' });
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      NotificationManager.show(`Failed to copy share link. ${message}`, 3000, { type: 'error' });
+    }
+  }
+
+  /**
+   * Preload the input + settings from a shared link (hash fragment, or the
+   * legacy query-string fallback), if present, and format immediately.
+   * Silently no-ops when neither carries a payload. Awaits formatJSON so the
+   * "loaded" notification is not immediately overwritten by formatJSON's own
+   * success/error toast (they share a single notification element).
+   */
+  async loadFromShareLocation(locationLike: Pick<Location, 'hash' | 'search'>): Promise<void> {
+    const { payload, source } = resolveSharePayload(locationLike);
+    if (!payload) return;
+
+    this.input.value = payload.input;
+    this.sortCheckbox.checked = payload.sortKeys;
+    this.autoFixCheckbox.checked = payload.autoFix;
+    this.indentSelect.value = String(payload.indent);
+    this.clearButtonInstance.updateVisibility();
+    await this.formatJSON();
+    NotificationManager.show('Loaded JSON from shared link.', 2000, { type: 'success' });
+
+    if (source === 'query') {
+      NotificationManager.show(
+        'Legacy ?j= preload detected. Prefer #j= to avoid leaking content in URLs.',
+        4000,
+        { type: 'warning' }
+      );
+    }
+  }
 }
 
 export class JSONFormatterToolUI {
@@ -803,5 +889,6 @@ if (typeof document !== 'undefined' && typeof document.addEventListener === 'fun
     if (browserWindow) {
       browserWindow.jsonFormatter = tool.formatter;
     }
+    tool.formatter.loadFromShareLocation(window.location);
   });
 }

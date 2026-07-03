@@ -30,6 +30,19 @@ export function indentSpacer(indent: IndentOption): string | number {
     return indent; // 2 or 4 spaces
 }
 
+/**
+ * Parse an `IndentOption` from an arbitrary string-like value (a `<select>`'s
+ * `.value`, or a decoded share-URL field), defaulting to `2` for anything
+ * unrecognized. Shared by the indent `<select>` reader and the share-URL
+ * payload decoder so the two never drift out of sync.
+ */
+export function parseIndentOption(value: unknown): IndentOption {
+    if (value === '4') return 4;
+    if (value === 'tab') return 'tab';
+    if (value === 'minify') return 'minify';
+    return 2;
+}
+
 /** Where a JSON syntax error sits, located against the raw textarea contents. */
 export interface JsonErrorLocation {
     /** The raw `JSON.parse` error message. */

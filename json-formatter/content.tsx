@@ -50,6 +50,10 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     createPlainTextFaqItem(
         'What does a "trailing comma" or "expected property name" JSON error mean?',
         'Browsers word this error differently (for example "Expected property name or \'}\'" in Firefox, or "Expected double-quoted property name" in Chrome), but the cause is the same: the parser expected a quoted property name or a closing brace at that position and found something else instead - commonly a trailing comma before a closing brace (e.g. {"a":1,}) or a missing key. Enable "Auto fix" before formatting to have the tool correct common cases like trailing commas automatically, or use "Go to error" to jump to the exact spot and fix it manually.'
+    ),
+    createPlainTextFaqItem(
+        'Is sharing a JSON Formatter link private?',
+        'Yes. Clicking "Share" compresses your JSON and settings and puts them in the URL\'s hash fragment (the part after #), which browsers never send to a server - it is only readable by JavaScript running on the page. Nothing you share is uploaded, logged, or stored; the link works by decompressing that fragment back into the tool entirely in the recipient\'s browser.'
     )
 ];
 
@@ -94,7 +98,8 @@ export const FEATURE_LIST: string[] = [
     'Copy to clipboard and download as .json',
     'Syntax highlighting',
     'Tree node expand/collapse',
-    'Real-time size comparison'
+    'Real-time size comparison',
+    'Shareable URLs (compressed, client-side only)'
 ];
 
 export function JsonFormatterIntro(): JSX.Element {
@@ -150,6 +155,7 @@ export function JsonFormatterArticle(): JSX.Element {
                         <li><strong>Syntax highlighting:</strong> Color-coded keys and values improve readability in tree view.</li>
                         <li><strong>Tree Node Expand/Collapse:</strong> Expand or collapse nested objects and arrays while preserving structure, with Expand All / Collapse All controls.</li>
                         <li><strong>Size Comparison:</strong> Real-time size updates support bytes, KB, MB, and GB with accurate formatting.</li>
+                        <li><strong>Shareable URLs:</strong> Click &ldquo;Share&rdquo; to copy a link with your JSON and settings compressed into the URL&rsquo;s hash fragment, so it never leaves your browser.</li>
                     </ul>
                 </ToolArticleSection>
 
@@ -211,6 +217,7 @@ export function JsonFormatterArticle(): JSX.Element {
                         <li>No server storage: your JSON data is never saved or transmitted to any server.</li>
                         <li>Offline support: fully functional without an internet connection once loaded.</li>
                         <li>Zero data collection: no cookies, tracking, or data persistence of any kind.</li>
+                        <li>Private sharing: the &ldquo;Share&rdquo; link stores your JSON in the URL&rsquo;s hash fragment, which browsers never send to a server.</li>
                     </ul>
                 </ToolArticleSection>
 

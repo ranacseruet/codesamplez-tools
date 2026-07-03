@@ -7,6 +7,7 @@ A tool for formatting and validating JSON data with optional alphabetical key so
 - 🚫 **No Server Storage**: Your JSON data is never saved or transmitted to any server
 - 💻 **Offline Support**: Fully functional without internet connection once loaded
 - 🔐 **Zero Data Collection**: No cookies, tracking, or data persistence of any kind
+- 🔗 **Private Sharing**: The "Share" link stores your JSON in the URL's hash fragment, which browsers never send to a server
 
 ## Features
 - Pretty-print JSON with selectable indentation (2 spaces, 4 spaces, or Tab)
@@ -19,6 +20,7 @@ A tool for formatting and validating JSON data with optional alphabetical key so
 - Size comparison between original and formatted JSON
 - Load sample data for quick testing
 - Download formatted JSON as a file
+- Shareable URLs: compress the current JSON + settings into the URL's hash fragment for private, client-side-only sharing
 - Mobile-responsive design
 - Shared notification system for consistent user feedback
 
@@ -43,6 +45,10 @@ A tool for formatting and validating JSON data with optional alphabetical key so
 10. Invalid JSON will show specific error messages
    - The error message will indicate the exact issue
    - Uses shared notification system for consistent display
+11. Click "Share" to copy a shareable link with your current JSON and settings
+    - The JSON and settings (indent, sort keys, auto fix) are LZ-compressed into the URL's hash fragment (`#j=...`), which browsers never send to a server
+    - Opening the link auto-populates the input, restores the settings, and formats automatically
+    - Blocked with an error notification if the compressed payload would make the URL impractically long (over ~8,000 characters) — use Download instead for very large JSON
 
 ## Example Input
 ```json
@@ -165,6 +171,13 @@ Calculation methodology:
 2. Falls back to document.execCommand for older browsers
 3. Shows appropriate success/error notifications
 4. Handles special characters and newlines properly
+
+### Shareable URLs
+- Implemented in `share-url.ts`, imported by `script.tsx`, built on the shared hash/query-fallback and LZ-compression helpers in `common/share-url.ts` — the same module base64-converter's `#data=`/`?data=` preload links use, so both tools follow one convention instead of each reinventing it
+- The current input JSON plus the indent/sort-keys/auto-fix settings are JSON-stringified, then LZ-compressed via `common/share-url.ts`'s `compressJsonPayload` (`lz-string`'s `compressToEncodedURIComponent`)
+- The compressed payload is appended to the URL as a hash-fragment param (`#j=...`) — hash fragments are never transmitted to a server, preserving the 100% client-side privacy story. A legacy `?j=...` query-string fallback is also read (mirroring base64-converter's `?data=` fallback), with a notification recommending the hash form when a query-string link is used
+- On load, `script.tsx` calls `loadFromShareLocation(window.location)`, which resolves the payload from the hash (preferred) or query string, decompresses it, populates the input/settings, and formats automatically; malformed or tampered payloads are silently ignored rather than throwing
+- A size guard (`SHARE_URL_MAX_LENGTH`, ~8,000 characters, defined in `common/share-url.ts`) blocks generating a share link when the compressed payload would make the URL impractically long, showing an error notification suggesting Download instead
 
 ### Download Functionality
 - Creates Blob with application/json type

@@ -4,6 +4,7 @@ import { NotificationManager } from '../common/notification-manager';
 import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
+import { readHashOrQueryParam } from '../common/share-url';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { Base64ConverterArticle, Base64ConverterIntro } from './content';
@@ -16,11 +17,6 @@ type Base64Encoding = 'utf8' | 'ascii' | 'iso88591' | 'ucs2';
 interface ParsedDataUrl {
     mimeType: string | null;
     base64Payload: string;
-}
-
-interface PreloadedDataParam {
-    value: string | null;
-    source: 'hash' | 'query' | null;
 }
 
 interface Base64ConverterElements {
@@ -85,23 +81,6 @@ function parseBase64DataUrl(value: unknown): ParsedDataUrl | null {
         mimeType: parts[1] || null,
         base64Payload: parts[3].trim()
     };
-}
-
-function getPreloadedDataParam(locationLike: Pick<Location, 'hash' | 'search'>): PreloadedDataParam {
-    const hashValue = locationLike.hash.startsWith('#') ? locationLike.hash.slice(1) : locationLike.hash;
-    const hashParams = new URLSearchParams(hashValue);
-    const hashData = hashParams.get('data');
-    if (hashData !== null) {
-        return { value: hashData, source: 'hash' };
-    }
-
-    const searchParams = new URLSearchParams(locationLike.search);
-    const searchData = searchParams.get('data');
-    if (searchData !== null) {
-        return { value: searchData, source: 'query' };
-    }
-
-    return { value: null, source: null };
 }
 
 const BASE64_CONVERTER_ELEMENT_IDS = {
@@ -496,7 +475,7 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
     const converter = createConverter();
 
     // Handle fragment/query preload for external linking.
-    const preloadedData = getPreloadedDataParam(window.location);
+    const preloadedData = readHashOrQueryParam(window.location, 'data');
     const dataParam = preloadedData.value;
 
     let dataFromUrl = null;

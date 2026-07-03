@@ -66,6 +66,8 @@ https://your-domain.com/base64-converter/#data=YOUR_BASE64_OR_TEXT_DATA
 
 Legacy `?data=` links still work as a fallback, but they are discouraged because query strings are more likely to leak through browser history, logs, and shared URLs.
 
+The hash/query-fallback reading is implemented via the shared `readHashOrQueryParam` helper in `common/share-url.ts`, so other tools that add shareable-state links (e.g. json-formatter's `#j=` links) follow the same convention instead of reinventing it per tool.
+
 #### URL Encoding Requirements
 
 When creating links, ensure special characters are properly URL-encoded:

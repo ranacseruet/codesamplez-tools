@@ -1,6 +1,7 @@
 import { JSONFormatter } from './script';
 import * as NotificationManagerModule from '../common/notification-manager';
 import DownloadManager from '../common/DownloadManager';
+import { buildShareHash } from './share-url';
 
 jest.mock('../common/notification-manager', () => ({
   NotificationManager: {
@@ -57,6 +58,7 @@ describe('JSONFormatter', () => {
       if (selector === '#copyOutputBtn') return { disabled: false, addEventListener: jest.fn() };
       if (selector === '#downloadOutputBtn') return { disabled: false, addEventListener: jest.fn() };
       if (selector === '#loadSampleBtn') return { addEventListener: jest.fn() };
+      if (selector === '#shareUrlBtn') return { addEventListener: jest.fn() };
       if (selector === '#sortKeys') return { checked: true };
       if (selector === '#jsonErrorStatus') return {
         textContent: '',
@@ -102,6 +104,7 @@ describe('JSONFormatter', () => {
     formatter.formatBtn = { addEventListener: jest.fn() };
 
     formatter.sampleBtn = { addEventListener: jest.fn() };
+    formatter.shareBtn = { addEventListener: jest.fn() };
     formatter.clearButtonInstance = { updateVisibility: jest.fn(), disconnect: jest.fn() };
     mockNotificationManager = NotificationManagerModule.NotificationManager;
     mockDownloadManager = new DownloadManager(); // Get instance of the mocked DownloadManager
@@ -592,6 +595,216 @@ describe('JSONFormatter', () => {
     });
   });
 
+  describe('shareUrl', () => {
+    let originalNavigator;
+    let mockClipboard;
+
+    beforeEach(() => {
+      originalNavigator = global.navigator;
+      mockClipboard = { writeText: jest.fn().mockResolvedValue(undefined) };
+      global.navigator.clipboard = mockClipboard;
+
+      formatter.input = { value: '{"a":1}' };
+      formatter.sortCheckbox = { checked: true };
+      formatter.autoFixCheckbox = { checked: false };
+      formatter.indentSelect = { value: '2' };
+    });
+
+    afterEach(() => {
+      global.navigator = originalNavigator;
+      delete global.navigator.clipboard;
+    });
+
+    test('copies a share link with the current JSON and settings and notifies success', async () => {
+      await formatter.shareUrl();
+
+      expect(mockClipboard.writeText).toHaveBeenCalledTimes(1);
+      const [copiedUrl] = mockClipboard.writeText.mock.calls[0];
+      expect(copiedUrl).toContain('#j=');
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('Share link copied to clipboard!', 2000, { type: 'success' });
+    });
+
+    test('strips a legacy ?j= query payload from the page URL instead of carrying it into the new link', async () => {
+      // Simulates a user who opened the tool via a legacy `?j=<old>` link, then
+      // clicks Share: window.location.href still carries that query string.
+      const originalUrl = window.location.href;
+      window.history.replaceState({}, '', 'http://localhost/json-formatter/?j=stale-legacy-payload');
+
+      try {
+        await formatter.shareUrl();
+
+        const [copiedUrl] = mockClipboard.writeText.mock.calls[0];
+        expect(copiedUrl).not.toContain('?j=');
+        expect(copiedUrl).not.toContain('stale-legacy-payload');
+        expect(copiedUrl).toMatch(/^http:\/\/localhost\/json-formatter\/#j=/);
+      } finally {
+        window.history.replaceState({}, '', originalUrl);
+      }
+    });
+
+    test('rejects empty input without touching the clipboard', async () => {
+      formatter.input.value = '   ';
+
+      await formatter.shareUrl();
+
+      expect(mockClipboard.writeText).not.toHaveBeenCalled();
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('Enter some JSON before sharing.', 3000, { type: 'error' });
+    });
+
+    test('blocks share links that would exceed the practical URL length', async () => {
+      // High-entropy input so lz-string cannot compress it away — a repeated
+      // character would compress to a tiny payload and never trip the guard.
+      let randomChars = '';
+      for (let i = 0; i < 20000; i++) {
+        randomChars += Math.random().toString(36).charAt(2);
+      }
+      formatter.input.value = JSON.stringify(randomChars);
+
+      await formatter.shareUrl();
+
+      expect(mockClipboard.writeText).not.toHaveBeenCalled();
+      expect(mockNotificationManager.show).toHaveBeenCalledWith(
+        expect.stringContaining('too large to share as a URL'),
+        4000,
+        { type: 'error' }
+      );
+    });
+
+    test('shows an error notification when the clipboard write fails', async () => {
+      mockClipboard.writeText.mockRejectedValue(new Error('denied'));
+
+      await formatter.shareUrl();
+
+      expect(mockNotificationManager.show).toHaveBeenCalledWith(expect.stringContaining('Failed to copy share link'), 3000, { type: 'error' });
+    });
+
+    test('falls back to execCommand when the Clipboard API is unavailable', async () => {
+      delete global.navigator.clipboard;
+
+      document.execCommand = jest.fn().mockReturnValue(true);
+      const mockCreateElement = jest.spyOn(document, 'createElement').mockReturnValue({
+        value: '',
+        style: { position: '' },
+        select: jest.fn()
+      });
+      const mockAppendChild = jest.spyOn(document.body, 'appendChild').mockImplementation(() => { });
+      const mockRemoveChild = jest.spyOn(document.body, 'removeChild').mockImplementation(() => { });
+
+      await formatter.shareUrl();
+
+      expect(document.execCommand).toHaveBeenCalledWith('copy');
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('Share link copied to clipboard!', 2000, { type: 'success' });
+
+      mockCreateElement.mockRestore();
+      mockAppendChild.mockRestore();
+      mockRemoveChild.mockRestore();
+      delete document.execCommand;
+    });
+
+    test('shows an error notification when the execCommand fallback fails', async () => {
+      delete global.navigator.clipboard;
+
+      document.execCommand = jest.fn().mockReturnValue(false);
+      const mockCreateElement = jest.spyOn(document, 'createElement').mockReturnValue({
+        value: '',
+        style: { position: '' },
+        select: jest.fn()
+      });
+      const mockAppendChild = jest.spyOn(document.body, 'appendChild').mockImplementation(() => { });
+      const mockRemoveChild = jest.spyOn(document.body, 'removeChild').mockImplementation(() => { });
+
+      await formatter.shareUrl();
+
+      expect(mockNotificationManager.show).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to copy share link'),
+        3000,
+        { type: 'error' }
+      );
+
+      mockCreateElement.mockRestore();
+      mockAppendChild.mockRestore();
+      mockRemoveChild.mockRestore();
+      delete document.execCommand;
+    });
+  });
+
+  describe('loadFromShareLocation', () => {
+    beforeEach(() => {
+      formatter.input = { value: '' };
+      formatter.sortCheckbox = { checked: true };
+      formatter.autoFixCheckbox = { checked: false };
+      formatter.indentSelect = { value: '2' };
+      formatter.clearButtonInstance = { updateVisibility: jest.fn() };
+      formatter.formatJSON = jest.fn().mockResolvedValue(undefined);
+    });
+
+    test('populates input and settings from a valid share hash, awaits formatJSON, then notifies', async () => {
+      const hash = buildShareHash({
+        input: '{"b":2,"a":1}',
+        indent: 4,
+        sortKeys: false,
+        autoFix: true
+      });
+      const callOrder = [];
+      formatter.formatJSON = jest.fn().mockImplementation(() => {
+        callOrder.push('formatJSON');
+        return Promise.resolve();
+      });
+      mockNotificationManager.show.mockImplementation(() => callOrder.push('notify'));
+
+      await formatter.loadFromShareLocation({ hash: `#${hash}`, search: '' });
+
+      expect(formatter.input.value).toBe('{"b":2,"a":1}');
+      expect(formatter.sortCheckbox.checked).toBe(false);
+      expect(formatter.autoFixCheckbox.checked).toBe(true);
+      expect(formatter.indentSelect.value).toBe('4');
+      expect(formatter.formatJSON).toHaveBeenCalled();
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('Loaded JSON from shared link.', 2000, { type: 'success' });
+      // formatJSON must resolve before the "loaded" toast fires, so it isn't
+      // immediately overwritten by formatJSON's own success/error notification.
+      expect(callOrder).toEqual(['formatJSON', 'notify']);
+    });
+
+    test('shows a legacy-link warning when the payload came from the query string', async () => {
+      const hash = buildShareHash({ input: '{"a":1}', indent: 2, sortKeys: true, autoFix: false });
+
+      await formatter.loadFromShareLocation({ hash: '', search: `?${hash}` });
+
+      expect(formatter.input.value).toBe('{"a":1}');
+      expect(mockNotificationManager.show).toHaveBeenCalledWith('Loaded JSON from shared link.', 2000, { type: 'success' });
+      expect(mockNotificationManager.show).toHaveBeenCalledWith(
+        expect.stringContaining('Legacy ?j= preload detected'),
+        4000,
+        { type: 'warning' }
+      );
+    });
+
+    test('does not warn when the payload came from the hash', async () => {
+      const hash = buildShareHash({ input: '{"a":1}', indent: 2, sortKeys: true, autoFix: false });
+
+      await formatter.loadFromShareLocation({ hash: `#${hash}`, search: '' });
+
+      expect(mockNotificationManager.show).not.toHaveBeenCalledWith(
+        expect.stringContaining('Legacy'),
+        expect.anything(),
+        expect.anything()
+      );
+    });
+
+    test('no-ops when neither the hash nor query carries a payload', async () => {
+      await formatter.loadFromShareLocation({ hash: '#other=1', search: '' });
+
+      expect(formatter.input.value).toBe('');
+      expect(formatter.formatJSON).not.toHaveBeenCalled();
+    });
+
+    test('no-ops on an empty hash and search', async () => {
+      await formatter.loadFromShareLocation({ hash: '', search: '' });
+
+      expect(formatter.formatJSON).not.toHaveBeenCalled();
+    });
+  });
+
   describe('switchView', () => {
     test('should switch to tree view and update classes', () => {
       formatter.switchView('tree');
@@ -664,6 +877,7 @@ describe('JSONFormatter', () => {
     let formatBtnMock;
     let copyBtnMock;
     let sampleBtnMock;
+    let shareBtnMock;
     let inputMock;
     let clearInputBtnMock;
     let clearOutputBtnMock;
@@ -674,6 +888,7 @@ describe('JSONFormatter', () => {
 
         copyBtn: { click: null },
         sampleBtn: { click: null },
+        shareBtn: { click: null },
         input: { input: null },
         clearInputBtn: { click: null },
         clearOutputBtn: { click: null },
@@ -706,6 +921,12 @@ describe('JSONFormatter', () => {
         }
       });
 
+      shareBtnMock = jest.fn((event, callback) => {
+        if (event === 'click') {
+          callbacks.shareBtn.click = callback;
+        }
+      });
+
       inputMock = jest.fn((event, callback) => {
         if (event === 'input') {
           callbacks.input.input = callback;
@@ -728,6 +949,7 @@ describe('JSONFormatter', () => {
 
       formatter.copyBtn = { addEventListener: copyBtnMock };
       formatter.sampleBtn = { addEventListener: sampleBtnMock };
+      formatter.shareBtn = { addEventListener: shareBtnMock };
       formatter.input = { addEventListener: inputMock, value: '{"key": "value"}' };
       formatter.clearInputBtn = { addEventListener: clearInputBtnMock };
       formatter.clearOutputBtn = { addEventListener: clearOutputBtnMock };
@@ -741,6 +963,7 @@ describe('JSONFormatter', () => {
       expect(formatBtnMock).toHaveBeenCalledTimes(1);
       expect(copyBtnMock).toHaveBeenCalledTimes(1);
       expect(sampleBtnMock).toHaveBeenCalledTimes(1);
+      expect(shareBtnMock).toHaveBeenCalledTimes(1);
       expect(inputMock).toHaveBeenCalledTimes(1);
     });
 
@@ -774,6 +997,17 @@ describe('JSONFormatter', () => {
         expect(formatter.loadSampleData).toHaveBeenCalled();
       } else {
         throw new Error('sampleBtn callback not set');
+      }
+    });
+
+    test('should trigger shareUrl on share button click', () => {
+      formatter.shareUrl = jest.fn();
+      formatter.initializeEvents();
+      if (callbacks.shareBtn.click) {
+        callbacks.shareBtn.click();
+        expect(formatter.shareUrl).toHaveBeenCalled();
+      } else {
+        throw new Error('shareBtn callback not set');
       }
     });
 
@@ -995,13 +1229,13 @@ describe('JSONFormatter', () => {
 
     test('should initialize DOM elements when initDom is true', () => {
       const formatter = new JSONFormatter(true);
-      expect(document.querySelector).toHaveBeenCalledTimes(18); // Updated count
+      expect(document.querySelector).toHaveBeenCalledTimes(19); // Updated count (adds #shareUrlBtn)
       expect(document.querySelectorAll).toHaveBeenCalledTimes(1);
     });
 
     test('should use default initDom=true when no argument provided', () => {
       const formatter = new JSONFormatter();
-      expect(document.querySelector).toHaveBeenCalledTimes(18);
+      expect(document.querySelector).toHaveBeenCalledTimes(19);
       expect(document.querySelectorAll).toHaveBeenCalledTimes(1);
     });
 
