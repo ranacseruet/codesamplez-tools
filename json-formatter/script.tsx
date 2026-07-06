@@ -48,7 +48,6 @@ export function JsonFormatterApp() {
     <div id="json-formatter-tool" className="tool-container jsonf-tool c-tool-stack">
       <div className="o-toolbar jsonf-controls-custom jsonf-toolbar c-action-strip c-toolbar">
         <button className="c-button c-button--secondary jsonf-sample-btn" id="loadSampleBtn" type="button">Load Sample</button>
-        <button className="c-button c-button--secondary jsonf-share-btn" id="shareUrlBtn" type="button">Share</button>
         <div className="c-checkbox-item jsonf-checkbox-item">
           <input type="checkbox" id="sortKeys" defaultChecked />
           <label htmlFor="sortKeys">Sort keys</label>
@@ -147,6 +146,7 @@ export function JsonFormatterApp() {
             >
               Download
             </button>
+            <button className="c-button c-button--secondary c-button--icon-share jsonf-share-btn" id="shareUrlBtn" type="button">Share</button>
           </div>
         </div>
       </div>
