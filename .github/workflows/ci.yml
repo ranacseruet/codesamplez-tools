@@ -29,6 +29,7 @@ jobs:
       scope: ${{ steps.affected.outputs.scope }}
       affected_tools: ${{ steps.affected.outputs.affected_tools }}
       affected_tool_count: ${{ steps.affected.outputs.affected_tool_count }}
+      snapdrift_config_changed: ${{ steps.snapdrift_config.outputs.changed }}
 
     steps:
     - uses: actions/checkout@v4
@@ -60,6 +61,26 @@ jobs:
           --base "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}" \
           --head "${{ github.sha }}" \
           --write-github-output
+
+    # A config-only edit to the SnapDrift route map (path/slug fixes, new
+    # routes) yields scope=none, so publish-baseline would not re-capture and
+    # the hosted Snap baseline would stay stale (or, for renamed/added routes,
+    # missing) until the next all-tools change happens to land. Flag the change
+    # so publish-baseline runs on merge to main and refreshes the baseline.
+    - name: Detect SnapDrift config change
+      id: snapdrift_config
+      run: |
+        set -euo pipefail
+        BASE="${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}"
+        HEAD="${{ github.sha }}"
+        if [[ "$BASE" =~ ^0+$ ]]; then
+          BASE="$(git rev-parse "$HEAD^")"
+        fi
+        if git diff --name-only "$BASE" "$HEAD" | grep -qx '.github/snapdrift.json'; then
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "changed=false" >> "$GITHUB_OUTPUT"
+        fi
 
     - name: Build
       if: steps.affected.outputs.should_build == 'true'
@@ -309,13 +330,19 @@ jobs:
         run: kill "$QA_SERVER_PID" || true
 
   # Publishes the hosted Snap baseline on push to main when a shared/all-tools
-  # change lands. Runs in its own job (not test-and-build) because the baseline
+  # change lands, or when the SnapDrift route map (.github/snapdrift.json) itself
+  # changes so route path/slug fixes refresh the baseline immediately instead of
+  # waiting for the next all-tools change. Runs in its own job (not test-and-build)
+  # because the baseline
   # must be captured from a build whose asset URLs point at the local origin
   # (CST_SITE_STATIC_ROOT_URI) — the test-and-build artifact uses production CDN
   # URLs and is reused by deploy, so it can't be repurposed for capture.
   publish-baseline:
     needs: test-and-build
-    if: github.ref == 'refs/heads/main' && needs.test-and-build.outputs.scope == 'all-tools'
+    if: >-
+      github.ref == 'refs/heads/main'
+      && (needs.test-and-build.outputs.scope == 'all-tools'
+          || needs.test-and-build.outputs.snapdrift_config_changed == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

@@ -50,115 +50,115 @@
       ]
     },
     {
-      "id": "js-minifier-tool-desktop",
-      "path": "/js-minifier-tool/",
+      "id": "js-minifier-desktop",
+      "path": "/js-minifier/",
       "viewport": "desktop",
       "changePaths": [
-        "js-minifier-tool/"
+        "js-minifier/"
       ]
     },
     {
-      "id": "js-minifier-tool-mobile",
-      "path": "/js-minifier-tool/",
+      "id": "js-minifier-mobile",
+      "path": "/js-minifier/",
       "viewport": "mobile",
       "changePaths": [
-        "js-minifier-tool/"
+        "js-minifier/"
       ]
     },
     {
-      "id": "base64-converter-tool-desktop",
-      "path": "/base64-converter-tool/",
+      "id": "base64-converter-desktop",
+      "path": "/base64-converter/",
       "viewport": "desktop",
       "changePaths": [
-        "base64-converter-tool/"
+        "base64-converter/"
       ]
     },
     {
-      "id": "base64-converter-tool-mobile",
-      "path": "/base64-converter-tool/",
+      "id": "base64-converter-mobile",
+      "path": "/base64-converter/",
       "viewport": "mobile",
       "changePaths": [
-        "base64-converter-tool/"
+        "base64-converter/"
       ]
     },
     {
-      "id": "jwt-builder-tool-desktop",
-      "path": "/jwt-builder-tool/",
+      "id": "jwt-builder-desktop",
+      "path": "/jwt-builder/",
       "viewport": "desktop",
       "changePaths": [
-        "jwt-builder-tool/"
+        "jwt-builder/"
       ]
     },
     {
-      "id": "jwt-builder-tool-mobile",
-      "path": "/jwt-builder-tool/",
+      "id": "jwt-builder-mobile",
+      "path": "/jwt-builder/",
       "viewport": "mobile",
       "changePaths": [
-        "jwt-builder-tool/"
+        "jwt-builder/"
       ]
     },
     {
-      "id": "jwt-decoder-tool-desktop",
-      "path": "/jwt-decoder-tool/",
+      "id": "jwt-decoder-desktop",
+      "path": "/jwt-decoder/",
       "viewport": "desktop",
       "changePaths": [
-        "jwt-decoder-tool/"
+        "jwt-decoder/"
       ]
     },
     {
-      "id": "jwt-decoder-tool-mobile",
-      "path": "/jwt-decoder-tool/",
+      "id": "jwt-decoder-mobile",
+      "path": "/jwt-decoder/",
       "viewport": "mobile",
       "changePaths": [
-        "jwt-decoder-tool/"
+        "jwt-decoder/"
       ]
     },
     {
-      "id": "json-formatter-tool-desktop",
-      "path": "/json-formatter-tool/",
+      "id": "json-formatter-desktop",
+      "path": "/json-formatter/",
       "viewport": "desktop",
       "changePaths": [
-        "json-formatter-tool/"
+        "json-formatter/"
       ]
     },
     {
-      "id": "json-formatter-tool-mobile",
-      "path": "/json-formatter-tool/",
+      "id": "json-formatter-mobile",
+      "path": "/json-formatter/",
       "viewport": "mobile",
       "changePaths": [
-        "json-formatter-tool/"
+        "json-formatter/"
       ]
     },
     {
-      "id": "css-minifier-tool-desktop",
-      "path": "/css-minifier-tool/",
+      "id": "css-minifier-desktop",
+      "path": "/css-minifier/",
       "viewport": "desktop",
       "changePaths": [
-        "css-minifier-tool/"
+        "css-minifier/"
       ]
     },
     {
-      "id": "css-minifier-tool-mobile",
-      "path": "/css-minifier-tool/",
+      "id": "css-minifier-mobile",
+      "path": "/css-minifier/",
       "viewport": "mobile",
       "changePaths": [
-        "css-minifier-tool/"
+        "css-minifier/"
       ]
     },
     {
-      "id": "text-analyzer-tool-desktop",
-      "path": "/text-analyzer-tool/",
+      "id": "text-analyzer-desktop",
+      "path": "/text-analyzer/",
       "viewport": "desktop",
       "changePaths": [
-        "text-analyzer-tool/"
+        "text-analyzer/"
       ]
     },
     {
-      "id": "text-analyzer-tool-mobile",
-      "path": "/text-analyzer-tool/",
+      "id": "text-analyzer-mobile",
+      "path": "/text-analyzer/",
       "viewport": "mobile",
       "changePaths": [
-        "text-analyzer-tool/"
+        "text-analyzer/"
       ]
     },
     {
@@ -178,19 +178,19 @@
       ]
     },
     {
-      "id": "diff-checker-tool-desktop",
-      "path": "/diff-checker-tool/",
+      "id": "diff-checker-desktop",
+      "path": "/diff-checker/",
       "viewport": "desktop",
       "changePaths": [
-        "diff-checker-tool/"
+        "diff-checker/"
       ]
     },
     {
-      "id": "diff-checker-tool-mobile",
-      "path": "/diff-checker-tool/",
+      "id": "diff-checker-mobile",
+      "path": "/diff-checker/",
       "viewport": "mobile",
       "changePaths": [
-        "diff-checker-tool/"
+        "diff-checker/"
       ]
     }
   ],
