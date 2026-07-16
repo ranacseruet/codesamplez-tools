@@ -55,7 +55,7 @@
     "deploy:cloudfront-function": "node scripts/deploy-cloudfront-function.js"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.11.3",
+    "@axe-core/playwright": "^4.12.1",
     "@babel/core": "^8.0.1",
     "@babel/generator": "^8.0.0",
     "@babel/parser": "^8.0.0",
