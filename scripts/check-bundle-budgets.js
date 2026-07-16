@@ -25,11 +25,14 @@ const DEFAULT_FAIL_PERCENT = 10;
 // from the ShareBar social rail + DS work had already pushed main to ~67.7 KB
 // (a tolerated WARN against the stale baseline), and the inline validation-error
 // markup added here is ~240 bytes more. This value reflects the new expected
-// size rather than masking a regression.
+//
+// `data-format-converter` was refreshed from 160,784 to 181,680 (PR #442) due
+// to the upgrade of `fast-xml-parser` from 5.8.0 to 5.10.1, which pulled in new
+// transitive dependencies like `@nodable/entities@3`, `anynum`, and `is-unsafe`.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 53969,
-    'data-format-converter': 160784,
+    'data-format-converter': 181680,
     'diff-checker-tool': 72558,
     'jwt-builder-tool': 77707,
     'jwt-decoder-tool': 78448,
