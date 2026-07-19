@@ -5,11 +5,11 @@ const { escapeAttribute, escapeHtml, formatRootDocumentTitle } = require('./docu
 const { renderAnalyticsHeadMarkup } = require('./analytics');
 const { renderInlineIcon } = require('./lucide-icons');
 
-const THEME_COLOR = '#f7f7fa';
+const THEME_COLOR = '#0b0b11';
 
-// Pre-paint theme init: apply the saved theme (default light) before CSS paints
+// Pre-paint theme init: apply the saved theme (default dark) before CSS paints
 // so the choice persists across pages with no flash. Must run before stylesheets.
-const THEME_INIT_SCRIPT = `<script>(function(){try{var t=localStorage.getItem('cst-standalone-theme-mode');var m=t==='dark'?'dark':'light';var e=document.documentElement;e.setAttribute('data-theme',m);e.setAttribute('data-cst-theme',m);}catch(e){}})();</script>`;
+const THEME_INIT_SCRIPT = `<script>(function(){try{var t=localStorage.getItem('cst-standalone-theme-mode');var m=t==='light'?'light':'dark';var e=document.documentElement;e.setAttribute('data-theme',m);e.setAttribute('data-cst-theme',m);}catch(e){}})();</script>`;
 
 const NOT_FOUND_TITLE = 'Page Not Found';
 const NOT_FOUND_DESCRIPTION = 'The page you were looking for does not exist. Head back to the CodeSamplez developer tools to keep working.';
@@ -49,7 +49,7 @@ function generateNotFoundDocument() {
     const escapedRootShellBundleUrl = escapeAttribute(buildAbsoluteUrl(manifest.siteStaticRootUri, '/root-shell/bundle.main.js'));
 
     return `<!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">

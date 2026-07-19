@@ -26,7 +26,7 @@ describe('mountToolShell', () => {
         expect(document.querySelector('#app-shell-header .cst-shell__description')?.textContent)
             .toContain('Convert JSON, XML, YAML, and Properties formats');
         expect(document.querySelector('#app-shell-header .cst-shell__brand')?.getAttribute('href')).toBe(SITE_BASE_URL);
-        expect(document.querySelector('#app-shell-footer .cst-shell__footer-link')?.getAttribute('href')).toBe(SITE_BASE_URL);
+        expect(document.querySelector('#app-shell-footer .cst-shell__footer-brand-link')?.getAttribute('href')).toBe(SITE_BASE_URL);
         expect(document.querySelector('#app-shell-header .cst-shell__tool-menu-trigger')?.textContent).toContain('Browse Tools');
     });
 
@@ -143,7 +143,7 @@ describe('mountToolShell', () => {
 
         expect(document.querySelector('#custom-header .cst-shell__title')?.textContent).toBe('Custom Tool');
         expect(document.querySelector('#custom-header .cst-shell__brand')?.getAttribute('href')).toBe('/custom');
-        expect(document.querySelector('#custom-footer .cst-shell__footer-link')?.getAttribute('href')).toBe('/custom');
+        expect(document.querySelector('#custom-footer .cst-shell__footer-brand-link')?.getAttribute('href')).toBe('/custom');
     });
 
     it('is a no-op when mount roots are missing', () => {
@@ -171,16 +171,17 @@ describe('mountToolShell', () => {
 
         const themeToggle = document.querySelector('#app-shell-header .cst-shell__theme-toggle');
         expect(themeToggle).not.toBeNull();
-        expect(document.documentElement.getAttribute('data-theme')).toBe('light');
-        expect(document.documentElement.getAttribute('data-cst-theme')).toBe('light');
-        expect(themeToggle.textContent).toContain('Dark mode');
+        // Dark is the product default when no stored/document theme exists.
+        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+        expect(document.documentElement.getAttribute('data-cst-theme')).toBe('dark');
+        expect(themeToggle.textContent).toContain('Light mode');
 
         themeToggle.click();
 
-        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
-        expect(document.documentElement.getAttribute('data-cst-theme')).toBe('dark');
-        expect(window.localStorage.getItem('cst-standalone-theme-mode')).toBe('dark');
-        expect(document.querySelector('#app-shell-header .cst-shell__theme-toggle')?.textContent).toContain('Light mode');
+        expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+        expect(document.documentElement.getAttribute('data-cst-theme')).toBe('light');
+        expect(window.localStorage.getItem('cst-standalone-theme-mode')).toBe('light');
+        expect(document.querySelector('#app-shell-header .cst-shell__theme-toggle')?.textContent).toContain('Dark mode');
     });
 
     it('prefers an existing data-theme attribute during initialization', () => {
@@ -216,12 +217,7 @@ describe('mountToolShell', () => {
             homeHref: '/'
         });
 
-        expect(document.querySelector('#app-shell-header .cst-shell__theme-toggle')?.textContent).toContain('Dark mode');
-
-        document.documentElement.setAttribute('data-theme', 'dark');
-        await Promise.resolve();
-
-        expect(document.documentElement.getAttribute('data-cst-theme')).toBe('dark');
+        // Dark is the product default, so the toggle offers the switch to light.
         expect(document.querySelector('#app-shell-header .cst-shell__theme-toggle')?.textContent).toContain('Light mode');
 
         document.documentElement.setAttribute('data-theme', 'light');
@@ -229,6 +225,12 @@ describe('mountToolShell', () => {
 
         expect(document.documentElement.getAttribute('data-cst-theme')).toBe('light');
         expect(document.querySelector('#app-shell-header .cst-shell__theme-toggle')?.textContent).toContain('Dark mode');
+
+        document.documentElement.setAttribute('data-theme', 'dark');
+        await Promise.resolve();
+
+        expect(document.documentElement.getAttribute('data-cst-theme')).toBe('dark');
+        expect(document.querySelector('#app-shell-header .cst-shell__theme-toggle')?.textContent).toContain('Light mode');
     });
 
     it('supports forcing the shared theme toggle outside standalone tool pages', () => {
@@ -246,7 +248,7 @@ describe('mountToolShell', () => {
         });
 
         expect(document.querySelector('#app-shell-header .cst-shell__theme-toggle')).not.toBeNull();
-        expect(document.documentElement.getAttribute('data-theme')).toBe('light');
-        expect(document.documentElement.getAttribute('data-cst-theme')).toBe('light');
+        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+        expect(document.documentElement.getAttribute('data-cst-theme')).toBe('dark');
     });
 });

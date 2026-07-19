@@ -582,7 +582,7 @@ describe('DataFormatConverterUI Integration', () => {
         await flush();
 
         expect(document.querySelector('.cst-shell__title')?.textContent).toBe('Data Format Converter');
-        expect(document.querySelector('.cst-shell__footer-link')?.textContent).toBe('All Tools');
+        expect(document.querySelector('.cst-shell__footer-brand-link')?.getAttribute('href')).toBe(SITE_BASE_URL);
         expect(document.getElementById('convertBtn')).not.toBeNull();
     });
 });

@@ -262,9 +262,11 @@ body.standalone-app {
   height: auto;
 }
 
+/* v4: one focus-ring system — the token box-shadow ring (same as every .c-*
+   component) instead of a parallel solid-outline style. */
 .tool-container :is(button, a, input, select, textarea):focus-visible {
-  outline: var(--cst-focus-ring-width, 3px) solid var(--color-primary, var(--default-color-primary));
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(125, 107, 255, 0.55));
 }
 
 /* ==========================================================================
@@ -336,11 +338,8 @@ body.standalone-app {
   gap: var(--spacing-lg, var(--default-spacing-lg));
   margin: var(--spacing-lg, var(--default-spacing-lg)) 0;
   padding: var(--spacing-lg, var(--default-spacing-lg));
-  background: linear-gradient(
-    180deg,
-    var(--md-sys-color-surface-container-low, #f4f6f8) 0%,
-    var(--color-bg-light, #f0f2f4) 100%
-  );
+  /* v4: flat surface */
+  background-color: var(--md-sys-color-surface-container-low, var(--color-bg-light, #f0f2f4));
   border: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.2));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   box-shadow: var(--cst-shadow-1, none);
@@ -520,15 +519,113 @@ body.standalone-app {
   /* Added from jwt-builder styles */
 }
 
+/* v4: ghost/outline button — quiet secondary action (Load Sample, reset, etc.)
+   that must not compete with the solid primary action. */
+.c-button--ghost {
+  background-color: transparent;
+  color: var(--color-accent, var(--default-color-primary));
+  border-color: var(--md-sys-color-outline-variant, var(--color-border));
+}
+
+.c-button--ghost:hover {
+  background-color: var(--cst-color-accent-soft, rgba(128, 128, 128, 0.12));
+  border-color: var(--color-accent, var(--default-color-primary));
+  color: var(--color-accent-hover, var(--color-accent, var(--default-color-primary-hover)));
+}
+
+.c-button--ghost:disabled {
+  background-color: transparent;
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  border-color: var(--color-border-light, var(--default-color-border-light));
+}
+
+/* v4: icon-only button primitive (copy/clear/expand affordances). Pair with
+   aria-label; the svg inside sizes via .cst-icon or explicit width. */
+.c-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--cst-icon-button-size, 1.875rem);
+  height: var(--cst-icon-button-size, 1.875rem);
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  background-color: transparent;
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  cursor: pointer;
+  transition:
+    background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+.c-icon-button:hover {
+  background-color: var(--cst-color-accent-soft, rgba(128, 128, 128, 0.12));
+  color: var(--color-text, var(--default-color-text));
+}
+
+.c-icon-button:focus-visible {
+  box-shadow: var(--cst-focus-ring, none);
+}
+
+/* v4: keyboard hint chip (⌘⏎ on primary actions, ⌘K on search). */
+.c-kbd {
+  font-family: var(--font-family-mono, var(--default-font-family-mono));
+  font-size: 0.72em;
+  line-height: 1;
+  padding: 0.25em 0.45em;
+  border: 1px solid var(--color-border-light, var(--default-color-border-light));
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background-color: var(--color-surface-subtle, var(--default-color-bg-light));
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  white-space: nowrap;
+}
+
+/* On solid primary buttons the hint uses on-primary chrome instead. */
+.c-button .c-kbd {
+  border-color: rgba(255, 255, 255, 0.35);
+  background-color: rgba(255, 255, 255, 0.14);
+  color: var(--color-on-primary, #fff);
+}
+
+/* v4: designed empty state for output wells (icon + message + hint). */
+.c-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs, var(--default-spacing-xs));
+  min-height: 8rem;
+  padding: var(--spacing-lg, var(--default-spacing-lg)) var(--spacing-md, var(--default-spacing-md));
+  text-align: center;
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+}
+
+.c-empty-state__icon {
+  color: var(--color-accent, var(--default-color-primary));
+  opacity: 0.65;
+}
+
+.c-empty-state__message {
+  font-size: var(--font-size-base, var(--default-font-size-base));
+  font-weight: 600;
+  color: var(--color-text, var(--default-color-text));
+}
+
+.c-empty-state__hint {
+  font-size: var(--font-size-small, var(--default-font-size-small));
+}
+
 .c-notification {
   position: fixed;
   bottom: var(--spacing-lg, var(--default-spacing-lg));
   right: var(--spacing-lg, var(--default-spacing-lg));
-  background: linear-gradient(135deg, var(--color-success, var(--default-color-success)) 0%, var(--cst-color-success-hover, #1b6b45) 100%);
+  /* v4: flat semantic fill (no gradient, no white hairline). */
+  background-color: var(--color-success, var(--default-color-success));
   color: var(--color-bg, #fff);
   padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-lg, var(--default-spacing-lg));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
-  border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: var(--cst-shadow-3, var(--box-shadow, var(--default-box-shadow)));
   transform: translateY(100px);
   opacity: 0;
@@ -538,7 +635,7 @@ body.standalone-app {
 }
 
 .c-notification.notification-error {
-  background: linear-gradient(135deg, var(--color-danger, var(--default-color-danger)) 0%, var(--color-danger-hover, var(--default-color-danger-hover)) 100%);
+  background-color: var(--color-danger, var(--default-color-danger));
 }
 
 .c-notification.show {
@@ -581,6 +678,20 @@ body.standalone-app {
   box-shadow: var(--cst-focus-ring, none);
 }
 
+/* v4: validation state on the input itself (pairs with .c-input-status.error
+   messaging). */
+.c-input--error,
+.c-input--error:hover,
+.c-input--error:focus,
+.c-input--error:focus-visible {
+  border-color: var(--color-danger, var(--default-color-danger));
+}
+
+.c-input--error:focus-visible {
+  box-shadow: 0 0 0 var(--cst-focus-ring-width, 3px)
+    color-mix(in srgb, var(--color-danger, var(--default-color-danger)) 40%, transparent);
+}
+
 /* Modifier for textarea inputs */
 .c-input--textarea {
   /* height: 300px; */
@@ -596,11 +707,8 @@ body.standalone-app {
 }
 
 .c-form-group {
-  background: linear-gradient(
-    180deg,
-    var(--color-bg, #fff) 0%,
-    var(--md-sys-color-surface-container-low, #f4f6f8) 100%
-  );
+  /* v4: flat surface — structure comes from border + shadow, not gradients. */
+  background-color: var(--color-bg, #fff);
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   padding: var(--spacing-lg, var(--default-spacing-lg));
   border: 1px solid var(--color-border, rgba(128, 128, 128, 0.3));
@@ -673,7 +781,7 @@ body.standalone-app {
   z-index: 10;
   /* Ensure tooltip is above other elements */
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity var(--cst-motion-medium, 220ms) var(--cst-ease-standard, ease);
   font-size: var(--font-size-small, var(--default-font-size-small));
   font-weight: normal;
   /* Default positioning (adjust as needed, e.g., bottom, left) */
@@ -684,17 +792,18 @@ body.standalone-app {
   /* Center the tooltip */
 }
 
-/* Arrow for tooltip */
+/* v4: rotated-square arrow (crisper than the border trick, theming-safe). */
 .c-tooltip::after {
   content: "";
   position: absolute;
   top: 100%;
   /* At the bottom of the tooltip */
   left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: var(--color-secondary, var(--default-color-secondary)) transparent transparent transparent;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  background-color: var(--color-secondary, var(--default-color-secondary));
+  transform: rotate(45deg);
 }
 
 .c-tooltip-container:hover .c-tooltip,
@@ -805,16 +914,8 @@ button.c-tooltip-container {
   padding: var(--c-checkbox-card-padding, 0.75rem 0.8rem);
   border-radius: var(--c-checkbox-card-radius, var(--radius-md, 10px));
   border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(
-        in srgb,
-        var(--cst-color-mix-neutral, white) var(--c-checkbox-card-surface-mix, 92%),
-        var(--color-surface-subtle, #f5f7fa)
-      ),
-      var(--color-surface, #fff)
-    );
+  /* v4: flat surface */
+  background-color: var(--color-surface, #fff);
   /* Theme-aware top highlight (was a hardcoded white line that broke on dark). */
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--cst-color-mix-neutral, #fff) 70%, transparent);
   align-items: var(--c-checkbox-card-align-items, flex-start);
@@ -832,16 +933,8 @@ button.c-tooltip-container {
 
 .c-checkbox-card:has(input:checked) {
   border-color: color-mix(in srgb, var(--color-primary, #1d70b8) 26%, var(--color-border, #d7dde4));
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(
-        in srgb,
-        var(--color-primary-soft, #e9f3fb) var(--c-checkbox-card-active-top-mix, 62%),
-        var(--cst-color-mix-neutral, white)
-      ),
-      color-mix(in srgb, var(--cst-color-mix-neutral, white) 94%, var(--color-primary-soft, #e9f3fb))
-    );
+  /* v4: flat accent tint */
+  background-color: var(--color-primary-soft, #e9f3fb);
 }
 
 /* --- Options Panel (from js-minifier) --- */
@@ -915,12 +1008,8 @@ button.c-tooltip-container {
   margin: 0;
   padding: 0.9rem 1rem;
   border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 52%, var(--cst-color-mix-neutral, white)),
-      color-mix(in srgb, var(--cst-color-mix-neutral, white) 92%, var(--color-primary-soft, #e9f3fb))
-    );
+  /* v4: flat header band, one step below the card surface. */
+  background-color: var(--color-surface-subtle, #f5f7fa);
 }
 
 .c-surface-panel__header > :is(h2, h3, h4, .c-surface-panel__title) {
@@ -974,9 +1063,8 @@ button.c-tooltip-container {
   border-radius: var(--radius-lg, 14px);
   border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
   box-shadow: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.06));
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 10%, transparent), transparent 58%),
-    linear-gradient(180deg, color-mix(in srgb, var(--cst-color-mix-neutral, white) 88%, var(--color-primary-soft, #e9f3fb)), var(--cst-color-mix-neutral, white));
+  /* v4: flat surface */
+  background-color: var(--color-surface, #fff);
 }
 
 .c-panel-toolbar {
@@ -1005,9 +1093,8 @@ button.c-tooltip-container {
 }
 
 .c-tool-article--intro {
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 10%, transparent), transparent 62%),
-    linear-gradient(180deg, color-mix(in srgb, var(--cst-color-mix-neutral, white) 90%, var(--color-primary-soft, #e9f3fb)), var(--color-surface, #fff));
+  /* v4: flat surface */
+  background-color: var(--color-surface, #fff);
 }
 
 .c-tool-article__section + .c-tool-article__section {
@@ -1162,9 +1249,8 @@ button.c-tooltip-container {
   margin: clamp(1.25rem, 3vw, 2rem) auto 0;
   padding: clamp(1rem, 2vw, var(--spacing-lg, var(--default-spacing-lg)));
   box-sizing: border-box;
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 10%, transparent), transparent 58%),
-    linear-gradient(180deg, var(--color-surface, #fff), color-mix(in srgb, var(--color-surface-subtle, #f8f9fa) 78%, var(--cst-color-mix-neutral, white)));
+  /* v4: flat surface */
+  background-color: var(--color-surface, #fff);
 }
 
 .c-tool-static-shell {
@@ -1213,12 +1299,10 @@ button.c-tooltip-container {
   gap: var(--spacing-sm, var(--default-spacing-sm));
   min-height: 100%;
   padding: 1rem;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--cst-color-mix-neutral, white) 94%, var(--color-primary-soft, #e9f3fb)),
-      color-mix(in srgb, var(--color-surface, #fff) 88%, var(--color-surface-subtle, #f8f9fa))
-    );
+  /* v4: flat recessed card with its own hairline so it reads against the panel. */
+  background-color: var(--color-surface-subtle, var(--color-bg-light, #f8f9fa));
+  border: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.2));
+  border-radius: var(--radius-md, 10px);
 }
 
 .c-related-tools__card-title {
@@ -1258,15 +1342,11 @@ button.c-tooltip-container {
   );
   border-radius: var(--radius-lg, 14px);
   box-shadow: var(--cst-shadow-1, none);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-bg, #fff) 95%, var(--c-tool-header-accent, var(--color-primary, #1d70b8)) 5%) 0%,
-      var(
-        --c-tool-header-surface,
-        color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 90%, var(--cst-color-mix-neutral, white) 10%)
-      ) 100%
-    );
+  /* v4: flat surface with a faint brand tint kept via the accent mix. */
+  background-color: var(
+    --c-tool-header-surface,
+    color-mix(in srgb, var(--color-bg, #fff) 95%, var(--c-tool-header-accent, var(--color-primary, #1d70b8)) 5%)
+  );
 }
 
 /* Neutralize legacy `o-header` bottom-divider spacing when combined with the shared header card shell. */

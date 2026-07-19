@@ -27,7 +27,7 @@ describe('not found document generation', () => {
     it('renders a branded, noindex 404 page that links back to the tools index', () => {
         const html = generateNotFoundDocument();
 
-        expect(html).toContain('<html lang="en" data-theme="light">');
+        expect(html).toContain('<html lang="en" data-theme="dark">');
         expect(html).toContain('<title>Page Not Found | CodeSamplez</title>');
         expect(html).toContain('<meta name="robots" content="noindex, follow">');
         expect(html).toContain('<h1 class="main-title">404 — Page Not Found</h1>');

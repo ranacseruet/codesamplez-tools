@@ -180,12 +180,64 @@ describe('AppShell components', () => {
 
         const footer = root.querySelector('footer.cst-shell__footer');
         expect(footer).not.toBeNull();
-        const footerLinks = root.querySelectorAll('a.cst-shell__footer-link');
-        expect(footerLinks).toHaveLength(2);
-        const [allToolsLink, mainSiteLink] = footerLinks;
-        expect(allToolsLink.textContent).toBe('All Tools');
-        expect(allToolsLink.getAttribute('href')).toBe(SITE_BASE_URL);
-        expect(mainSiteLink.textContent).toBe('CodeSamplez.com');
-        expect(mainSiteLink.getAttribute('href')).toBe('https://codesamplez.com');
+        // Brand column links home.
+        const brandLink = root.querySelector('a.cst-shell__footer-brand-link');
+        expect(brandLink?.getAttribute('href')).toBe(SITE_BASE_URL);
+        // One nav column per catalog group, listing every tool.
+        const headings = [...root.querySelectorAll('.cst-shell__footer-heading')].map((node) => node.textContent);
+        expect(headings).toEqual([
+            'Code Formatters & Validators',
+            'Encoders & Decoders',
+            'Text Analysis & Diff Tools'
+        ]);
+        expect(root.querySelectorAll('.cst-shell__footer-list a.cst-shell__footer-link')).toHaveLength(10);
+        // Bottom row keeps the outbound links + privacy line.
+        const bottom = root.querySelector('.cst-shell__footer-bottom');
+        expect(bottom?.textContent).toContain('Client-side by design');
+        const bottomLinks = [...(bottom?.querySelectorAll('a.cst-shell__footer-link') ?? [])];
+        const mainSiteLink = bottomLinks.find((link) => link.textContent === 'CodeSamplez.com');
+        expect(mainSiteLink?.getAttribute('href')).toBe('https://codesamplez.com');
+        const repoLink = bottomLinks.find((link) => link.textContent === 'GitHub');
+        expect(repoLink?.getAttribute('href')).toBe('https://github.com/ranacseruet/codesamplez-tools');
+    });
+
+    it('closes the Browse Tools menu on outside click and Escape', () => {
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+
+        render(<ToolShellHeader breadcrumbItems={createToolBreadcrumbItems('JSON Formatter')} />, root);
+
+        const details = root.querySelector('details.cst-shell__tool-menu');
+        expect(details).not.toBeNull();
+        details.open = true;
+
+        // Click inside the panel keeps the menu open.
+        details.querySelector('.cst-shell__tool-menu-panel').dispatchEvent(
+            new MouseEvent('click', { bubbles: true })
+        );
+        expect(details.open).toBe(true);
+
+        // Outside click closes it.
+        document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        expect(details.open).toBe(false);
+
+        // Escape closes it too.
+        details.open = true;
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(details.open).toBe(false);
+    });
+
+    it('removes the Browse Tools menu listeners on unmount', () => {
+        const removeEventListenerSpy = jest.spyOn(document, 'removeEventListener');
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+
+        render(<ToolShellHeader breadcrumbItems={createToolBreadcrumbItems('JSON Formatter')} />, root);
+        render(null, root);
+
+        const removedTypes = removeEventListenerSpy.mock.calls.map(([type]) => type);
+        expect(removedTypes).toContain('click');
+        expect(removedTypes).toContain('keydown');
+        removeEventListenerSpy.mockRestore();
     });
 });

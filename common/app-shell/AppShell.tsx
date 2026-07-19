@@ -1,6 +1,9 @@
 import type { JSX } from 'preact';
+import { useLayoutEffect, useRef } from 'preact/hooks';
 import { TOOL_NAVIGATION_GROUPS } from './toolNavigation';
 import { MAIN_SITE_URL, SITE_BASE_URL } from '../siteBaseUrl';
+
+const REPO_URL = 'https://github.com/ranacseruet/codesamplez-tools';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -63,6 +66,63 @@ function MoonIcon(): JSX.Element {
     );
 }
 
+// Browse Tools dropdown. Progressive behavior on top of native <details>:
+// closes on outside click and on Escape (returning focus to the trigger);
+// works with zero JS otherwise. useLayoutEffect (not useEffect) so the
+// listeners attach synchronously at mount — deterministic in tests; effects
+// never run during SSR (renderToString skips them), so prerendered markup is
+// unchanged. The header re-renders on theme toggle; cleanup handles that.
+function ToolMenu(): JSX.Element {
+    const detailsRef = useRef<HTMLDetailsElement>(null);
+
+    useLayoutEffect(() => {
+        // Preact assigns object refs during commit, before layout effects run,
+        // so the element is guaranteed present here.
+        const details = detailsRef.current as HTMLDetailsElement;
+
+        const onDocumentClick = (event: MouseEvent) => {
+            if (details.open && event.target instanceof Node && !details.contains(event.target)) {
+                details.open = false;
+            }
+        };
+        const onDocumentKeydown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape' && details.open) {
+                details.open = false;
+                (details.querySelector('summary') as HTMLElement | null)?.focus();
+            }
+        };
+
+        document.addEventListener('click', onDocumentClick);
+        document.addEventListener('keydown', onDocumentKeydown);
+        return () => {
+            document.removeEventListener('click', onDocumentClick);
+            document.removeEventListener('keydown', onDocumentKeydown);
+        };
+    }, []);
+
+    return (
+        <details className="cst-shell__tool-menu" ref={detailsRef}>
+            <summary className="cst-shell__tool-menu-trigger">Browse Tools</summary>
+            <nav className="cst-shell__tool-menu-panel" aria-label="Tool directory">
+                {TOOL_NAVIGATION_GROUPS.map((group) => (
+                    <section className="cst-shell__tool-menu-group" key={group.label}>
+                        <h2 className="cst-shell__tool-menu-heading">{group.label}</h2>
+                        <ul className="cst-shell__tool-menu-list">
+                            {group.tools.map((tool) => (
+                                <li className="cst-shell__tool-menu-item" key={tool.href}>
+                                    <a className="cst-shell__tool-menu-link" href={tool.href}>
+                                        {tool.label}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                ))}
+            </nav>
+        </details>
+    );
+}
+
 interface ToolShellHeaderProps {
     title?: string;
     description?: string;
@@ -104,25 +164,7 @@ export function ToolShellHeader({
                         CodeSamplez Tools
                     </a>
                     <div className="cst-shell__header-actions">
-                        <details className="cst-shell__tool-menu">
-                            <summary className="cst-shell__tool-menu-trigger">Browse Tools</summary>
-                            <nav className="cst-shell__tool-menu-panel" aria-label="Tool directory">
-                                {TOOL_NAVIGATION_GROUPS.map((group) => (
-                                    <section className="cst-shell__tool-menu-group" key={group.label}>
-                                        <h2 className="cst-shell__tool-menu-heading">{group.label}</h2>
-                                        <ul className="cst-shell__tool-menu-list">
-                                            {group.tools.map((tool) => (
-                                                <li className="cst-shell__tool-menu-item" key={tool.href}>
-                                                    <a className="cst-shell__tool-menu-link" href={tool.href}>
-                                                        {tool.label}
-                                                    </a>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </section>
-                                ))}
-                            </nav>
-                        </details>
+                        <ToolMenu />
                         {showThemeToggle ? (
                             <button
                                 type="button"
@@ -186,14 +228,46 @@ interface ToolShellFooterProps {
 }
 
 export function ToolShellFooter({ homeHref = SITE_BASE_URL }: ToolShellFooterProps): JSX.Element {
+    const currentYear = new Date().getFullYear();
     return (
         <footer className="cst-shell__footer">
             <div className="cst-shell__footer-inner">
-                <span>Client-side by design</span>
-                <span aria-hidden="true">|</span>
-                <a href={homeHref} className="cst-shell__footer-link">All Tools</a>
-                <span aria-hidden="true">|</span>
-                <a href={MAIN_SITE_URL} className="cst-shell__footer-link">CodeSamplez.com</a>
+                {/* v4: directory footer — brand/tagline column + per-group tool
+                    columns. Doubles as crawlable internal linking on every page. */}
+                <div className="cst-shell__footer-grid">
+                    <div className="cst-shell__footer-brand">
+                        <a className="cst-shell__footer-brand-link" href={homeHref} aria-label="CodeSamplez Tools home">
+                            <span className="cst-shell__brand-mark" aria-hidden="true">{'</>'}</span>
+                            CodeSamplez Tools
+                        </a>
+                        <p className="cst-shell__footer-tagline">
+                            Free, fast, client-side developer tools — your data never leaves the browser.
+                        </p>
+                    </div>
+                    {TOOL_NAVIGATION_GROUPS.map((group) => (
+                        <nav className="cst-shell__footer-nav" key={group.label} aria-label={group.label}>
+                            <h2 className="cst-shell__footer-heading">{group.label}</h2>
+                            <ul className="cst-shell__footer-list">
+                                {group.tools.map((tool) => (
+                                    <li key={tool.href}>
+                                        <a className="cst-shell__footer-link" href={tool.href}>
+                                            {tool.label}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </nav>
+                    ))}
+                </div>
+                <div className="cst-shell__footer-bottom">
+                    <span>Client-side by design</span>
+                    <span aria-hidden="true">·</span>
+                    <a href={REPO_URL} className="cst-shell__footer-link">GitHub</a>
+                    <span aria-hidden="true">·</span>
+                    <a href={MAIN_SITE_URL} className="cst-shell__footer-link">CodeSamplez.com</a>
+                    <span aria-hidden="true">·</span>
+                    <span>© {currentYear} CodeSamplez</span>
+                </div>
             </div>
         </footer>
     );

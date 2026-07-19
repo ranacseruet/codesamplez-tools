@@ -383,22 +383,102 @@ body.landing-page {
 
 .cst-shell__footer-inner {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: clamp(1.5rem, 3vw, 2rem);
   color: var(--md-sys-color-on-surface-variant, #596464);
   font-size: 0.86rem;
 }
 
-.cst-shell__footer-link {
-  color: var(--cst-color-accent, var(--md-sys-color-primary));
-  text-underline-offset: 0.16em;
+/* v4: directory footer — brand/tagline column + one link column per catalog
+   group, collapsing to 2 → 1 columns on narrower viewports. */
+.cst-shell__footer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  gap: clamp(1.25rem, 3vw, 2rem);
 }
 
-.cst-shell__footer-link:focus-visible {
+.cst-shell__footer-brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--md-sys-color-on-surface, #141c1e);
+  font-size: 0.92rem;
+  font-weight: 650;
+  text-decoration: none;
+  width: fit-content;
+  border-radius: 4px;
+}
+
+.cst-shell__footer-brand-link:hover {
+  color: var(--cst-color-accent, var(--md-sys-color-primary));
+}
+
+.cst-shell__footer-brand-link .cst-shell__brand-mark {
+  font-size: 0.72rem;
+}
+
+.cst-shell__footer-tagline {
+  margin: 0.6rem 0 0;
+  max-width: 34ch;
+  line-height: 1.55;
+}
+
+.cst-shell__footer-heading {
+  margin: 0 0 0.6rem;
+  font-family: var(--cst-font-family-mono, ui-monospace, Menlo, monospace);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant, #596464);
+}
+
+.cst-shell__footer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+}
+
+.cst-shell__footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #d6dfde);
+}
+
+.cst-shell__footer-link {
+  color: var(--cst-color-accent, var(--md-sys-color-primary));
+  text-decoration: none;
+  text-underline-offset: 0.16em;
+  border-radius: 4px;
+}
+
+.cst-shell__footer-link:hover {
+  text-decoration: underline;
+}
+
+.cst-shell__footer-link:focus-visible,
+.cst-shell__footer-brand-link:focus-visible {
   outline: none;
   box-shadow: var(--cst-focus-ring, none);
-  border-radius: 4px;
+}
+
+@media (max-width: 900px) {
+  .cst-shell__footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .cst-shell__footer-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Floating social share rail — fixed to the left edge on wide viewports, sticky
@@ -500,10 +580,5 @@ body.landing-page {
 
   .cst-shell__theme-toggle-text {
     display: none;
-  }
-
-  .cst-shell__footer-inner {
-    flex-wrap: wrap;
-    gap: 0.35rem 0.6rem;
   }
 }

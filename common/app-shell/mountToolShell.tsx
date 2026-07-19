@@ -26,15 +26,6 @@ function getStoredStandaloneThemeMode(): ThemeMode | null {
     }
 }
 
-function getSystemPreferredThemeMode(): ThemeMode {
-    try {
-        return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? THEME_DARK : THEME_LIGHT;
-    } catch {
-        return THEME_LIGHT;
-    }
-}
-
-
 function getDocumentThemeMode(): ThemeMode | null {
     if (typeof document === 'undefined' || !document.documentElement) {
         return null;
@@ -89,7 +80,11 @@ export function mountToolShell({
         activeThemeObserver = null;
     }
 
-    let currentThemeMode: ThemeMode = THEME_LIGHT;
+    // Dark is the product default: it applies when the toggle is disabled (no
+    // resolution runs) and as the final fallback below — the generated documents'
+    // pre-paint init script normally sets data-theme (stored choice or dark)
+    // before this code executes.
+    let currentThemeMode: ThemeMode = THEME_DARK;
     const resolvedHomeHref = homeHref === '/' ? SITE_BASE_URL : homeHref;
     // The breadcrumb belongs to individual tool pages (standalone shell), not the
     // tools index. Build it from the current tool title so the re-render on theme
@@ -100,7 +95,7 @@ export function mountToolShell({
 
     if (shouldEnableThemeToggle) {
         currentThemeMode = applyStandaloneThemeMode(
-            getDocumentThemeMode() || getStoredStandaloneThemeMode() || getSystemPreferredThemeMode()
+            getDocumentThemeMode() || getStoredStandaloneThemeMode() || THEME_DARK
         );
     }
 
