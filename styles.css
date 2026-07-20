@@ -122,17 +122,96 @@ body {
 .main-container .main-title {
   text-align: center;
   color: var(--color-accent);
-  margin-bottom: calc(var(--spacing-lg) * 2);
+  margin-bottom: var(--spacing-md);
   font-family: var(--font-family-display);
-  font-size: clamp(2.1rem, 4.5vw, 3rem);
-  font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: -0.03em;
+  font-size: clamp(2.4rem, 5.5vw, 3.75rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
   /* Subtle iris gradient on the display title (falls back to the accent colour). */
   background: linear-gradient(120deg, var(--color-accent) 0%, var(--md-sys-color-primary, #6f5bf0) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+/* ==========================================================================
+   v4 Hero — aurora backdrop, mono eyebrow, tagline, CTA pair, search island
+   ========================================================================== */
+
+.hero {
+  position: relative;
+  text-align: center;
+  padding: clamp(1.5rem, 4vw, 3rem) 0 clamp(1rem, 3vw, 2rem);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Aurora: two soft colour fields drifting slowly behind the hero. Transform-
+   only motion; collapsed entirely under prefers-reduced-motion. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: -20% -10%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 32% 46% at 30% 38%, var(--cst-page-backdrop-spot-primary, rgba(111, 91, 240, 0.22)), transparent 70%),
+    radial-gradient(ellipse 28% 42% at 68% 30%, var(--cst-page-backdrop-spot-secondary, rgba(95, 224, 194, 0.14)), transparent 70%),
+    radial-gradient(ellipse 24% 36% at 55% 62%, var(--cst-color-category-text-soft, rgba(245, 197, 66, 0.1)), transparent 70%);
+  filter: blur(40px);
+  animation: hero-aurora-drift 26s ease-in-out infinite alternate;
+}
+
+@keyframes hero-aurora-drift {
+  from {
+    transform: translate3d(-2.5%, -1.5%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2.5%, 2%, 0) scale(1.06);
+  }
+}
+
+.hero-eyebrow {
+  margin: 0 0 var(--spacing-md);
+  font-family: var(--font-family-mono);
+  font-size: clamp(0.72rem, 1.4vw, 0.85rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+}
+
+.hero-tagline {
+  margin: 0 auto var(--spacing-lg);
+  max-width: 52ch;
+  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+  line-height: var(--line-height-tight);
+  color: var(--color-text);
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: clamp(1.25rem, 3vw, 2rem);
+}
+
+/* Ghost/outline CTA — quiet secondary action beside the solid primary. Needs
+   chained classes to out-specify the later base .cta-button fill (0,3,0). */
+.main-container .cta-button.cta-button--ghost {
+  background-color: transparent;
+  color: var(--color-accent);
+  border-color: var(--color-border);
+  box-shadow: none;
+}
+
+.main-container .cta-button.cta-button--ghost:hover {
+  background-color: var(--cst-color-accent-soft, rgba(169, 156, 255, 0.14));
+  border-color: var(--color-accent);
+  color: var(--color-accent-hover);
+  box-shadow: none;
+  transform: none;
 }
 
 .main-container .section-intro,
@@ -188,6 +267,255 @@ body {
   margin-top: var(--spacing-lg);
 }
 
+/* ==========================================================================
+   v4 Tool search — box, category chips, command palette
+   ========================================================================== */
+
+.tool-search {
+  position: relative;
+  max-width: 34rem;
+  margin: 0 auto;
+  z-index: 5;
+}
+
+.tool-search__box {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-sm) 0 var(--spacing-md);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  box-shadow: var(--cst-shadow-1, none);
+  transition:
+    border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+.tool-search__box:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(125, 107, 255, 0.55));
+}
+
+.tool-search__icon {
+  flex: none;
+  width: 1em;
+  height: 1em;
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+}
+
+.tool-search__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: 1;
+  padding: var(--spacing-sm) 0;
+  min-height: var(--cst-control-height, 40px);
+  outline: none;
+}
+
+.tool-search__input::placeholder {
+  color: var(--color-text-secondary);
+}
+
+/* Hide the native clear affordance; filtering is live anyway. */
+.tool-search__input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.tool-search__kbd {
+  flex: none;
+  font-family: var(--font-family-mono);
+  font-size: 0.68rem;
+  line-height: 1;
+  padding: 0.35em 0.55em;
+  border: 1px solid var(--color-border-light);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background-color: var(--color-bg-light);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.tool-search__chips {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs) var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.tool-search__chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.9rem;
+  padding: 0.15rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-light);
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+.tool-search__chip:hover {
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.tool-search__chip:focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(125, 107, 255, 0.55));
+}
+
+/* Active chips take their category accent. */
+.tool-search__chip--all[aria-pressed="true"] {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  background-color: var(--cst-color-accent-soft, rgba(169, 156, 255, 0.14));
+}
+
+.tool-search__chip--formatters[aria-pressed="true"] {
+  color: var(--cst-color-category-formatters, var(--color-accent));
+  border-color: var(--cst-color-category-formatters, var(--color-accent));
+  background-color: var(--cst-color-category-formatters-soft, transparent);
+}
+
+.tool-search__chip--encoders[aria-pressed="true"] {
+  color: var(--cst-color-category-encoders, var(--color-accent));
+  border-color: var(--cst-color-category-encoders, var(--color-accent));
+  background-color: var(--cst-color-category-encoders-soft, transparent);
+}
+
+.tool-search__chip--text[aria-pressed="true"] {
+  color: var(--cst-color-category-text, var(--color-accent));
+  border-color: var(--cst-color-category-text, var(--color-accent));
+  background-color: var(--cst-color-category-text-soft, transparent);
+}
+
+/* Command palette dropdown. */
+.tool-search__palette {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(34rem, calc(100vw - 3rem));
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--cst-shadow-3, var(--box-shadow));
+  padding: var(--spacing-xs);
+  text-align: left;
+}
+
+.tool-search__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.tool-search__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.tool-search__item--active,
+.tool-search__item:hover {
+  background-color: var(--cst-color-accent-soft, rgba(169, 156, 255, 0.14));
+}
+
+.tool-search__item:focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(125, 107, 255, 0.55));
+}
+
+.tool-search__item-icon {
+  flex: none;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+}
+
+.tool-search__item-icon--formatters {
+  background-color: var(--cst-color-category-formatters, var(--color-accent));
+}
+
+.tool-search__item-icon--encoders {
+  background-color: var(--cst-color-category-encoders, var(--color-accent));
+}
+
+.tool-search__item-icon--text {
+  background-color: var(--cst-color-category-text, var(--color-accent));
+}
+
+.tool-search__item-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tool-search__item-title {
+  font-weight: 600;
+  line-height: var(--line-height-tight);
+}
+
+.tool-search__item-group {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
+
+.tool-search__empty {
+  margin: 0;
+  padding: var(--spacing-md);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.tool-search__hints {
+  margin: 0;
+  padding: var(--spacing-xs) var(--spacing-md) var(--spacing-sm);
+  border-top: 1px solid var(--color-border-light);
+  font-family: var(--font-family-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.tool-search__count {
+  margin: var(--spacing-sm) 0 0;
+  font-family: var(--font-family-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}
+
+/* Grid filtering states (toggled by the search island). */
+.main-container .tool-card--hidden,
+.main-container .tool-group--hidden {
+  display: none;
+}
+
 .main-container .tools-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -196,6 +524,7 @@ body {
 }
 
 .main-container .tool-card {
+  position: relative;
   background:
     linear-gradient(180deg, var(--landing-card-bg-top) 0%, var(--landing-card-bg-bottom) 100%);
   border-radius: var(--border-radius-lg);
@@ -221,6 +550,19 @@ body {
   box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(0, 95, 115, 0.2)), var(--cst-shadow-3, var(--box-shadow));
 }
 
+/* v4: per-category hover accents. */
+.main-container .tool-card--formatters:hover {
+  border-color: color-mix(in srgb, var(--cst-color-category-formatters, #a99cff) 45%, var(--color-border-light));
+}
+
+.main-container .tool-card--encoders:hover {
+  border-color: color-mix(in srgb, var(--cst-color-category-encoders, #5fe0c2) 45%, var(--color-border-light));
+}
+
+.main-container .tool-card--text:hover {
+  border-color: color-mix(in srgb, var(--cst-color-category-text, #f5c542) 45%, var(--color-border-light));
+}
+
 .main-container .tool-card__head {
   display: flex;
   align-items: center;
@@ -240,6 +582,39 @@ body {
   color: var(--color-accent);
   background: color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 16%, transparent);
   border: 1px solid color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 26%, transparent);
+  transition: box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+/* v4: category-hued icon tiles — scanning by colour before reading. */
+.main-container .tool-card--formatters .tool-icon-tile {
+  color: var(--cst-color-category-formatters, var(--color-accent));
+  background: var(--cst-color-category-formatters-soft, color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 16%, transparent));
+  border-color: color-mix(in srgb, var(--cst-color-category-formatters, #a99cff) 34%, transparent);
+}
+
+.main-container .tool-card--encoders .tool-icon-tile {
+  color: var(--cst-color-category-encoders, var(--color-accent));
+  background: var(--cst-color-category-encoders-soft, color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 16%, transparent));
+  border-color: color-mix(in srgb, var(--cst-color-category-encoders, #5fe0c2) 34%, transparent);
+}
+
+.main-container .tool-card--text .tool-icon-tile {
+  color: var(--cst-color-category-text, var(--color-accent));
+  background: var(--cst-color-category-text-soft, color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 16%, transparent));
+  border-color: color-mix(in srgb, var(--cst-color-category-text, #f5c542) 34%, transparent);
+}
+
+/* Icon tile glow on card hover. */
+.main-container .tool-card--formatters:hover .tool-icon-tile {
+  box-shadow: 0 0 18px color-mix(in srgb, var(--cst-color-category-formatters, #a99cff) 32%, transparent);
+}
+
+.main-container .tool-card--encoders:hover .tool-icon-tile {
+  box-shadow: 0 0 18px color-mix(in srgb, var(--cst-color-category-encoders, #5fe0c2) 32%, transparent);
+}
+
+.main-container .tool-card--text:hover .tool-icon-tile {
+  box-shadow: 0 0 18px color-mix(in srgb, var(--cst-color-category-text, #f5c542) 32%, transparent);
 }
 
 .main-container .tool-status {
@@ -263,11 +638,6 @@ body {
   background: currentColor;
 }
 
-.main-container .tool-status--live {
-  color: var(--cst-color-success, #4ade80);
-  background: color-mix(in srgb, var(--cst-color-success, #4ade80) 14%, transparent);
-}
-
 .main-container .tool-status--soon {
   color: var(--md-sys-color-on-surface-variant, #9a9bab);
   background: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #9a9bab) 14%, transparent);
@@ -283,8 +653,31 @@ body {
 .main-container .tool-name {
   margin: 0 0 var(--spacing-sm) 0;
   font-size: clamp(1.1rem, 1.6vw, 1.3rem);
-  color: var(--color-accent);
   line-height: var(--line-height-tight);
+}
+
+/* v4 stretched link: the title anchor covers the whole card, so the card is
+   one accessible tab stop. The "Try Tool" control below is a visual affordance. */
+.main-container .tool-card__link {
+  color: var(--color-accent);
+  text-decoration: none;
+  border-radius: 2px;
+}
+
+.main-container .tool-card__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.main-container .tool-card__link:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--landing-link-underline);
+  text-underline-offset: 0.16em;
+}
+
+.main-container .tool-card__link:focus-visible {
+  outline: none;
 }
 
 .main-container .tool-description {
@@ -339,26 +732,97 @@ body {
   box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(0, 95, 115, 0.22)), var(--cst-shadow-2, none);
 }
 
+/* v4: the card CTA is a non-interactive affordance (the stretched title link
+   owns interaction); it lights up when the card is hovered/focused. */
+.main-container .cta-button--card {
+  pointer-events: none;
+}
+
+.main-container .tool-card:hover .cta-button--card,
+.main-container .tool-card:focus-within .cta-button--card {
+  background-color: var(--color-primary-hover);
+}
+
+/* v4: section markers pick up their category accent. */
+.main-container .section-title--formatters::before {
+  color: var(--cst-color-category-formatters, var(--color-accent));
+}
+
+.main-container .section-title--encoders::before {
+  color: var(--cst-color-category-encoders, var(--color-accent));
+}
+
+.main-container .section-title--text::before {
+  color: var(--cst-color-category-text, var(--color-accent));
+}
+
 .main-container .faqs {
   margin-top: calc(var(--spacing-lg) * 2);
 }
 
-.main-container .faqs dl {
-  margin: 0;
+/* v4: FAQ accordion — native <details> items; all Q&A copy stays in the
+   static HTML for crawlers, the accordion just compresses the wall of text. */
+.main-container .faq-list {
+  border-top: 1px solid var(--color-border-light);
 }
 
-.main-container .faqs dt {
+.main-container .faq-item {
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.main-container .faq-item__question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-sm);
+  cursor: pointer;
   font-weight: 600;
-  margin-top: var(--spacing-lg);
-  margin-bottom: var(--spacing-sm);
-  color: var(--color-text);
   font-size: var(--font-size-base);
+  color: var(--color-text);
+  list-style: none;
+  border-radius: var(--border-radius-sm);
+  transition: color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
 }
 
-.main-container .faqs dd {
-  margin: 0 0 var(--spacing-md) 0;
+.main-container .faq-item__question::-webkit-details-marker {
+  display: none;
+}
+
+.main-container .faq-item__question::after {
+  content: "";
+  flex: none;
+  width: 0.55em;
+  height: 0.55em;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.6;
+  transition: transform var(--cst-motion-medium, 220ms) var(--cst-ease-standard, ease);
+}
+
+.main-container .faq-item__question:hover {
+  color: var(--color-accent);
+}
+
+.main-container .faq-item__question:focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(125, 107, 255, 0.55));
+}
+
+.main-container .faq-item[open] .faq-item__question {
+  color: var(--color-accent);
+}
+
+.main-container .faq-item[open] .faq-item__question::after {
+  transform: rotate(225deg);
+}
+
+.main-container .faq-item__answer {
+  padding: 0 var(--spacing-sm) var(--spacing-md);
   color: var(--color-text-secondary);
   line-height: var(--line-height-base);
+  max-width: 72ch;
 }
 
 .main-container .faqs a {
@@ -399,5 +863,13 @@ body {
   .main-container .tool-card:hover,
   .main-container .cta-button:hover {
     transform: none;
+  }
+
+  .hero::before {
+    animation: none;
+  }
+
+  .main-container .faq-item__question::after {
+    transition: none;
   }
 }

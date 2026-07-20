@@ -80,12 +80,36 @@ describe('root document generation', () => {
     expect(html).toContain('Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.');
     expect(html).toContain('Analyze text to get insights like character count, word count, line count, and other useful text statistics.');
     expect(html).toContain('<span class="tool-icon-tile" aria-hidden="true"><svg class="cst-icon"');
-    expect(html).toContain('<span class="tool-status tool-status--live">Live</span>');
+    // v4: the "Live" badge was removed (all-live grids are noise); only
+    // non-live tools get a status badge.
+    expect(html).not.toContain('tool-status--live');
+    // v4 hero: eyebrow stats, tagline, CTA pair, search island shell.
+    expect(html).toContain('<p class="hero-eyebrow">// 10 tools · 100% client-side · 0 uploads</p>');
+    expect(html).toContain('your data never leaves the tab');
+    expect(html).toContain('<a class="cta-button" href="#tools">Browse tools');
+    expect(html).toContain('<a class="cta-button cta-button--ghost" href="#what-are-online-developer-tools">Why client-side?</a>');
+    expect(html).toContain('id="tool-search-root"');
+    expect(html).toContain('placeholder="Search tools…"');
+    expect(html).toContain('<a class="tool-search__chip tool-search__chip--all" role="button" href="#tools">All tools</a>');
+    expect(html).toContain('<a class="tool-search__chip tool-search__chip--formatters" role="button" href="#group-code-formatters">Code Formatters &amp; Validators</a>');
+    // v4 cards: whole-card stretched title link (one tab stop), category
+    // accent class, fake CTA affordance.
+    expect(html).toContain('class="tool-card tool-card--formatters" data-tool-id="json-formatter-tool"');
+    expect(html).toContain(`<a class="tool-card__link" href="${buildSiteHref('/json-formatter/')}">JSON Formatter</a>`);
+    expect(html).toContain('<span class="cta-button cta-button--card" aria-hidden="true">Try Tool');
+    // Tools index wrapper anchors the Browse-tools CTA and the All chip.
+    expect(html).toContain('<div id="tools" class="tools-index">');
+    expect(html).toContain('data-tool-group="code-formatters"');
+    // v4 FAQ accordion: native details, Q&A copy stays in static HTML.
+    expect(html).toContain('<details class="faq-item">');
+    expect(html).toContain('<summary class="faq-item__question">Are these online developer tools free to use?</summary>');
     expect(html).toContain(`href="${buildSiteHref('/jwt-decoder/')}"`);
     expect(html).toContain(`<script src="${buildSiteAssetUri('/root-shell/bundle.main.js')}" defer></script>`);
 
     const introIndex = html.indexOf('Whether you need to minify JavaScript or decode a secret message, these tools help you get it done fast, no installation required.');
-    const cardsIndex = html.indexOf('Code Formatters &amp; Validators');
+    // Anchor on the first tool-group section (group labels also appear earlier,
+    // in the hero search chips).
+    const cardsIndex = html.indexOf('data-tool-group="code-formatters"');
     const followupCopyIndex = html.indexOf('What are Online Developer Tools?');
 
     expect(introIndex).toBeGreaterThan(-1);

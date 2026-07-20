@@ -47,26 +47,93 @@ function renderFaviconLinks(staticRootUri) {
  * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
  */
 
+// Maps catalog group ids to the v4 category accent slug (icon tile hues,
+// section markers, search chips). Keep in sync with GROUP_CATEGORY_SLUGS in
+// common/app-shell/ToolSearch.tsx.
+const GROUP_CATEGORY_SLUGS = {
+    'code-formatters': 'formatters',
+    'encoders-decoders': 'encoders',
+    'text-analysis': 'text'
+};
+
 /**
- * @param {ToolDefinition} tool
+ * @param {string} groupId
  * @returns {string}
  */
-function renderToolCard(tool) {
+function getGroupCategorySlug(groupId) {
+    return GROUP_CATEGORY_SLUGS[groupId] || 'formatters';
+}
+
+/**
+ * v4 card: the whole card is clickable via the stretched title link (one tab
+ * stop); the "Try Tool" button is a visual affordance only. The status badge
+ * renders only for non-live tools — a "Live" pill on every card is noise.
+ * @param {ToolDefinition} tool
+ * @param {string} categorySlug
+ * @returns {string}
+ */
+function renderToolCard(tool, categorySlug) {
     const iconName = tool.icon || 'wrench';
-    const isLive = tool.status !== 'soon';
-    const statusLabel = isLive ? 'Live' : 'Soon';
-    const statusModifier = isLive ? 'tool-status--live' : 'tool-status--soon';
-    return `      <article class="tool-card">
+    const statusBadge = tool.status === 'soon'
+        ? '\n          <span class="tool-status tool-status--soon">Soon</span>'
+        : '';
+    return `      <article class="tool-card tool-card--${escapeAttribute(categorySlug)}" data-tool-id="${escapeAttribute(tool.id)}">
         <div class="tool-card__head">
-          <span class="tool-icon-tile" aria-hidden="true">${renderInlineIcon(iconName)}</span>
-          <span class="tool-status ${statusModifier}">${escapeHtml(statusLabel)}</span>
+          <span class="tool-icon-tile" aria-hidden="true">${renderInlineIcon(iconName)}</span>${statusBadge}
         </div>
         <div class="tool-content">
-          <h3 class="tool-name">${escapeHtml(tool.title)}</h3>
+          <h3 class="tool-name"><a class="tool-card__link" href="${escapeAttribute(tool.absolutePageUrl)}">${escapeHtml(tool.title)}</a></h3>
           <p class="tool-description">${escapeHtml(tool.indexDescription)}</p>
-          <a href="${escapeAttribute(tool.absolutePageUrl)}" class="cta-button">Try Tool${renderInlineIcon('arrow-right')}</a>
+          <span class="cta-button cta-button--card" aria-hidden="true">Try Tool${renderInlineIcon('arrow-right')}</span>
         </div>
       </article>`;
+}
+
+/**
+ * SSR'd search shell (input + category chip anchors). The root-shell bundle
+ * re-renders this with behavior (palette, filtering, shortcuts); without JS
+ * the chips still work as section anchors and the grid stays fully visible.
+ * @param {Array<{ id: string, label: string }>} catalogGroups
+ * @returns {string}
+ */
+function renderToolSearchShell(catalogGroups) {
+    const chips = catalogGroups.map((group) => {
+        const slug = getGroupCategorySlug(group.id);
+        return `      <a class="tool-search__chip tool-search__chip--${escapeAttribute(slug)}" role="button" href="#group-${escapeAttribute(group.id)}">${escapeHtml(group.label)}</a>`;
+    }).join('\n');
+    return `    <div class="tool-search" id="tool-search-root">
+      <div class="tool-search__box">
+        ${renderInlineIcon('search', 'tool-search__icon')}
+        <input class="tool-search__input" type="search" placeholder="Search tools…" aria-label="Search tools" autocomplete="off" spellcheck="false">
+        <kbd class="tool-search__kbd" aria-hidden="true">⌘K</kbd>
+      </div>
+      <div class="tool-search__chips">
+      <a class="tool-search__chip tool-search__chip--all" role="button" href="#tools">All tools</a>
+${chips}
+      </div>
+    </div>`;
+}
+
+/**
+ * v4 hero: mono eyebrow stats, gradient display title, one-line value prop,
+ * CTA pair, and the search island. The long-form intro paragraph stays below
+ * the hero (SEO copy is unchanged).
+ * @param {string} title
+ * @param {number} toolCount
+ * @param {Array<{ id: string, label: string }>} catalogGroups
+ * @returns {string}
+ */
+function renderHero(title, toolCount, catalogGroups) {
+    return `    <section class="hero" aria-label="Introduction">
+      <p class="hero-eyebrow">// ${toolCount} tools · 100% client-side · 0 uploads</p>
+      <h1 class="main-title">${escapeHtml(title)}</h1>
+      <p class="hero-tagline">Fast, free utilities that run entirely in your browser — your data never leaves the tab.</p>
+      <div class="hero-actions">
+        <a class="cta-button" href="#tools">Browse tools${renderInlineIcon('arrow-right')}</a>
+        <a class="cta-button cta-button--ghost" href="#what-are-online-developer-tools">Why client-side?</a>
+      </div>
+${renderToolSearchShell(catalogGroups)}
+    </section>`;
 }
 
 /**
@@ -124,16 +191,21 @@ function generateRootDocument() {
   <div id="app-shell-header"></div>
 
   <main class="main-container" aria-label="Tools index">
-    <h1 class="main-title">${escapeHtml(manifest.rootPage.title)}</h1>
+${renderHero(manifest.rootPage.title, groupedTools.reduce((count, group) => count + group.tools.length, 0), groupedTools)}
 
 ${renderRootPageIntro()}
 
-${groupedTools.map((group) => `    <section aria-labelledby="${escapeAttribute(`group-${group.id}`)}">
-      <h2 class="section-title" id="${escapeAttribute(`group-${group.id}`)}">${escapeHtml(group.label)}</h2>
+    <div id="tools" class="tools-index">
+${groupedTools.map((group) => {
+        const slug = getGroupCategorySlug(group.id);
+        return `    <section class="tool-group" data-tool-group="${escapeAttribute(group.id)}" aria-labelledby="${escapeAttribute(`group-${group.id}`)}">
+      <h2 class="section-title section-title--${escapeAttribute(slug)}" id="${escapeAttribute(`group-${group.id}`)}">${escapeHtml(group.label)}</h2>
       <div class="tools-grid">
-${group.tools.map((tool) => renderToolCard(tool)).join('\n')}
+${group.tools.map((tool) => renderToolCard(tool, slug)).join('\n')}
       </div>
-    </section>`).join('\n\n')}
+    </section>`;
+    }).join('\n\n')}
+    </div>
 
 ${renderRootPagePostIndexSections()}
 

@@ -156,12 +156,17 @@ function renderRootPagePostIndexSections() {
     const siteBaseUrl = loadManifest().siteBaseUrl;
     const overviewSections = ROOT_PAGE_OVERVIEW_SECTIONS.map((section) => renderContentSection(section, siteBaseUrl)).join('\n\n');
     const usageSection = renderContentSection(ROOT_PAGE_USAGE_SECTION, siteBaseUrl);
+    // v4: FAQ items render as a native <details> accordion. All Q&A copy stays
+    // in the static HTML (crawlable without JS), the accordion just compresses
+    // the visual wall of text.
     const faqSection = `    <section class="faqs" aria-labelledby="tools-index-faqs">
       <h2 class="section-title" id="tools-index-faqs">FAQs (Frequently Asked Questions):</h2>
-      <dl>
-${ROOT_PAGE_FAQ_ITEMS.map((item) => `        <dt>${escapeHtml(item.question)}</dt>
-        <dd>${renderContentParts(item.answer, siteBaseUrl)}</dd>`).join('\n')}
-      </dl>
+      <div class="faq-list">
+${ROOT_PAGE_FAQ_ITEMS.map((item) => `      <details class="faq-item">
+        <summary class="faq-item__question">${escapeHtml(item.question)}</summary>
+        <div class="faq-item__answer">${renderContentParts(item.answer, siteBaseUrl)}</div>
+      </details>`).join('\n')}
+      </div>
     </section>`;
 
     return [overviewSections, usageSection, faqSection].join('\n\n');
