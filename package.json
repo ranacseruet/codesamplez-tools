@@ -87,7 +87,7 @@
     "playwright": "^1.61.0",
     "postcss-cli": "^11.0.1",
     "style-loader": "^4.0.0",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "webpack": "^5.106.2",
     "webpack-cli": "^7.2.1",
     "webpack-dev-server": "^6.0.0"
