@@ -63,7 +63,7 @@
     "@babel/preset-react": "^8.0.1",
     "@babel/preset-typescript": "^8.0.1",
     "@babel/register": "^8.0.1",
-    "@babel/traverse": "^8.0.0",
+    "@babel/traverse": "^8.0.4",
     "@babel/types": "^8.0.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
