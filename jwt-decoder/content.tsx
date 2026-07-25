@@ -61,7 +61,7 @@ export function JwtDecoderArticle(): JSX.Element {
                     </p>
                     <p>
                         If you want to learn everything there’s to know about JWT, you can do so with our dedicated{' '}
-                        <a href="https://codesamplez.com/jwt-tutorial">JWT Crash Course</a>.
+                        <a href="https://codesamplez.com/development/json-web-token-crash-course">JWT Crash Course</a>.
                     </p>
                 </ToolArticleSection>
 
