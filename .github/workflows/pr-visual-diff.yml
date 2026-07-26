@@ -58,7 +58,7 @@ jobs:
 
       - name: Run visual PR diff
         id: visual_diff
-        uses: ranacseruet/snapdrift/actions/pr-diff@v0.6.0
+        uses: ranacseruet/snapdrift/actions/pr-diff@v0.7.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           force-run: true
