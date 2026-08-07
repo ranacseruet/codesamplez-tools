@@ -20,7 +20,7 @@
     "preact"
   ],
   "engines": {
-    "node": ">=24.11.0 <25"
+    "node": ">=24.15.0 <25"
   },
   "browserslist": [
     "last 2 Chrome major versions",
@@ -82,7 +82,7 @@
     "http-server": "^14.1.1",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.1",
     "mini-css-extract-plugin": "^2.10.2",
     "playwright": "^1.62.0",
     "postcss-cli": "^11.0.1",
