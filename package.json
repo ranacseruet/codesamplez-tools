@@ -124,7 +124,7 @@
   },
   "dependencies": {
     "@material/web": "^2.5.0",
-    "core-js": "^3.49.0",
+    "core-js": "^3.50.0",
     "diff": "^9.0.0",
     "fast-xml-parser": "^5.10.1",
     "js-yaml": "^4.2.0",
