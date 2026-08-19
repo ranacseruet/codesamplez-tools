@@ -9,10 +9,14 @@ const {
   deployCloudFrontFunction,
   ensureDistributionAssociation,
   ensureDefaultFunctionAssociation,
+  exportLiveSource,
   normalizeSource,
   parseJsonOutput,
   parseArgs,
+  readLiveSource,
   runCommand,
+  sleepSync,
+  updateFunctionWithRetry,
   verifyLiveSource
 } = require('./deploy-cloudfront-function');
 
@@ -610,5 +614,324 @@ describe('deploy-cloudfront-function helpers', () => {
     } finally {
       logSpy.mockRestore();
     }
+  });
+
+  it('reads the published source and cleans up the export directory', () => {
+    const exportDirs = [];
+    const source = readLiveSource('RewriteStaticURLs', (command, args) => {
+      const outputPath = args[args.indexOf('LIVE') + 1];
+      exportDirs.push(path.dirname(outputPath));
+      fs.writeFileSync(outputPath, 'function handler(event) {\r\n    return event.request;\r\n}\r\n', 'utf8');
+      return { status: 0, stdout: '{}', stderr: '' };
+    });
+
+    expect(source).toBe('function handler(event) {\n    return event.request;\n}');
+    expect(exportDirs).toHaveLength(1);
+    expect(fs.existsSync(exportDirs[0])).toBe(false);
+  });
+
+  it('returns null when the published function cannot be exported', () => {
+    expect(readLiveSource('RewriteStaticURLs', () => ({ status: 254, stdout: '', stderr: 'NoSuchFunctionExists' }))).toBeNull();
+  });
+
+  it('returns null when the export command succeeds without writing a file', () => {
+    expect(readLiveSource('RewriteStaticURLs', () => ({ status: 0, stdout: '{}', stderr: '' }))).toBeNull();
+  });
+
+  it('returns null for dry-run source exports', () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    try {
+      expect(exportLiveSource('RewriteStaticURLs', runCommand, { dryRun: true })).toBeNull();
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[dry-run] aws cloudfront get-function'));
+    } finally {
+      logSpy.mockRestore();
+    }
+  });
+
+  it('sleeps synchronously for the requested duration', () => {
+    const startedAt = Date.now();
+    sleepSync(5);
+    expect(Date.now() - startedAt).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe('deploy-cloudfront-function stale ETag handling', () => {
+  const updateArgs = {
+    name: 'RewriteStaticURLs',
+    sourcePath: '/tmp/RewriteStaticURLs.js',
+    distributionId: 'DIST123',
+    runtime: 'cloudfront-js-2.0',
+    eventType: 'viewer-request',
+    comment: 'Managed by CI',
+    dryRun: false,
+    skipAssociation: false
+  };
+  const functionConfig = JSON.stringify({ Comment: 'Managed by CI', Runtime: 'cloudfront-js-2.0' });
+
+  it('refreshes the ETag and retries when CloudFront reports a stale precondition', () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const sleep = jest.fn();
+    const usedETags = [];
+
+    try {
+      const result = updateFunctionWithRetry(updateArgs, functionConfig, 'STALE', {
+        commandRunner: (command, args) => {
+          usedETags.push(args[args.indexOf('--if-match') + 1]);
+          return usedETags.length === 1
+            ? { status: 254, stdout: '', stderr: 'An error occurred (PreconditionFailed) when calling the UpdateFunction operation' }
+            : { status: 0, stdout: '{"ETag":"NEXT"}', stderr: '' };
+        },
+        functionDescriber: () => ({ ETag: 'FRESH' }),
+        sleep,
+        retryDelayMs: 0
+      });
+
+      expect(usedETags).toEqual(['STALE', 'FRESH']);
+      expect(sleep).toHaveBeenCalledWith(0);
+      expect(parseJsonOutput(result.stdout).ETag).toBe('NEXT');
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Stale DEVELOPMENT ETag'));
+    } finally {
+      logSpy.mockRestore();
+    }
+  });
+
+  it('keeps the previous ETag when the refresh describes nothing', () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const sleep = jest.fn();
+    const usedETags = [];
+
+    try {
+      updateFunctionWithRetry(updateArgs, functionConfig, 'STALE', {
+        commandRunner: (command, args) => {
+          usedETags.push(args[args.indexOf('--if-match') + 1]);
+          return usedETags.length === 1
+            ? { status: 254, stdout: '', stderr: 'InvalidIfMatchVersion' }
+            : { status: 0, stdout: '{"ETag":"NEXT"}', stderr: '' };
+        },
+        functionDescriber: () => null,
+        sleep,
+        retryDelayMs: 0
+      });
+
+      expect(usedETags).toEqual(['STALE', 'STALE']);
+    } finally {
+      logSpy.mockRestore();
+    }
+  });
+
+  it('exits immediately for failures that are not ETag conflicts', () => {
+    const exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('process.exit');
+    });
+    const stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    let attempts = 0;
+
+    try {
+      expect(() => updateFunctionWithRetry(updateArgs, functionConfig, 'ETAG', {
+        commandRunner: () => {
+          attempts += 1;
+          return { status: 254, stdout: '', stderr: 'AccessDenied' };
+        },
+        functionDescriber: () => ({ ETag: 'FRESH' }),
+        sleep: jest.fn(),
+        retryDelayMs: 0
+      })).toThrow('process.exit');
+
+      expect(attempts).toBe(1);
+      expect(stderrSpy).toHaveBeenCalledWith('AccessDenied');
+      expect(exitSpy).toHaveBeenCalledWith(254);
+    } finally {
+      stderrSpy.mockRestore();
+      exitSpy.mockRestore();
+    }
+  });
+
+  it('exits after exhausting the stale ETag retry budget', () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('process.exit');
+    });
+    const stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    let attempts = 0;
+
+    try {
+      expect(() => updateFunctionWithRetry(updateArgs, functionConfig, 'ETAG', {
+        commandRunner: () => {
+          attempts += 1;
+          return { status: 254, stdout: '', stderr: 'PreconditionFailed' };
+        },
+        functionDescriber: () => ({ ETag: 'FRESH' }),
+        sleep: jest.fn(),
+        retryDelayMs: 0
+      })).toThrow('process.exit');
+
+      expect(attempts).toBe(3);
+      expect(exitSpy).toHaveBeenCalledWith(254);
+    } finally {
+      stderrSpy.mockRestore();
+      exitSpy.mockRestore();
+      logSpy.mockRestore();
+    }
+  });
+
+  it('throws when the retry loop cannot exit the process', () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => undefined);
+    const stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+    try {
+      expect(() => updateFunctionWithRetry(updateArgs, functionConfig, 'ETAG', {
+        commandRunner: () => ({ status: 254, stdout: '', stderr: 'PreconditionFailed' }),
+        functionDescriber: () => ({ ETag: 'FRESH' }),
+        sleep: jest.fn(),
+        retryDelayMs: 0
+      })).toThrow('Could not update CloudFront Function RewriteStaticURLs after 3 attempts');
+    } finally {
+      stderrSpy.mockRestore();
+      exitSpy.mockRestore();
+      logSpy.mockRestore();
+    }
+  });
+
+  it('returns the dry-run result without retrying', () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    let attempts = 0;
+
+    try {
+      const result = updateFunctionWithRetry({ ...updateArgs, dryRun: true }, functionConfig, '<development-etag>', {
+        commandRunner: (command, args, options) => {
+          attempts += 1;
+          expect(options.dryRun).toBe(true);
+          return { status: 0, stdout: '', stderr: '' };
+        },
+        functionDescriber: () => ({ ETag: 'FRESH' })
+      });
+
+      expect(attempts).toBe(1);
+      expect(result.status).toBe(0);
+    } finally {
+      logSpy.mockRestore();
+    }
+  });
+});
+
+describe('deploy-cloudfront-function idempotency', () => {
+  const publishedSource = 'function handler(event) {\n    return event.request;\n}\n';
+
+  function withSourceFile(run) {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'codesamplez-cloudfront-idempotent-'));
+    const sourcePath = path.join(tempDir, 'RewriteStaticURLs.js');
+    fs.writeFileSync(sourcePath, publishedSource, 'utf8');
+
+    try {
+      return run(sourcePath);
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  }
+
+  function deployWith(sourcePath, overrides) {
+    const commands = [];
+    const associate = jest.fn();
+
+    deployCloudFrontFunction({
+      name: 'RewriteStaticURLs',
+      sourcePath,
+      distributionId: 'DIST123',
+      runtime: 'cloudfront-js-2.0',
+      eventType: 'viewer-request',
+      comment: 'Managed by CI',
+      dryRun: false,
+      skipAssociation: false
+    }, {
+      describeFunction: (name, stage) => (stage === 'LIVE'
+        ? {
+          FunctionSummary: {
+            FunctionConfig: { Comment: 'Managed by CI', Runtime: 'cloudfront-js-2.0' },
+            FunctionMetadata: { FunctionARN: `arn:aws:cloudfront::123:function/${name}` }
+          }
+        }
+        : { ETag: 'DEV_ETAG' }),
+      runCommand: (command, args) => {
+        commands.push([command, ...args].join(' '));
+        return { status: 0, stdout: '{"ETag":"NEXT"}', stderr: '' };
+      },
+      verifyLiveSource: jest.fn(),
+      ensureDistributionAssociation: associate,
+      ...overrides
+    });
+
+    return { commands, associate };
+  }
+
+  it('skips update, test, and publish when the published function already matches', () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    try {
+      const { commands, associate } = withSourceFile((sourcePath) => deployWith(sourcePath, {
+        readLiveSource: () => normalizeSource(publishedSource)
+      }));
+
+      expect(commands.some((command) => command.includes('update-function'))).toBe(false);
+      expect(commands.some((command) => command.includes('test-function'))).toBe(false);
+      expect(commands.some((command) => command.includes('publish-function'))).toBe(false);
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('is already published'));
+      expect(associate).toHaveBeenCalled();
+    } finally {
+      logSpy.mockRestore();
+    }
+  });
+
+  it('publishes when the live source has drifted from the repo source', () => {
+    const { commands } = withSourceFile((sourcePath) => deployWith(sourcePath, {
+      readLiveSource: () => 'function handler(event) { return null; }'
+    }));
+
+    expect(commands.some((command) => command.includes('update-function'))).toBe(true);
+    expect(commands.some((command) => command.includes('publish-function'))).toBe(true);
+  });
+
+  it('publishes when only the function comment has drifted', () => {
+    const { commands } = withSourceFile((sourcePath) => deployWith(sourcePath, {
+      readLiveSource: () => normalizeSource(publishedSource),
+      describeFunction: (name, stage) => (stage === 'LIVE'
+        ? {
+          FunctionSummary: {
+            FunctionConfig: { Comment: 'Stale comment', Runtime: 'cloudfront-js-2.0' },
+            FunctionMetadata: { FunctionARN: `arn:aws:cloudfront::123:function/${name}` }
+          }
+        }
+        : { ETag: 'DEV_ETAG' })
+    }));
+
+    expect(commands.some((command) => command.includes('update-function'))).toBe(true);
+  });
+
+  it('publishes when only the function runtime has drifted', () => {
+    const { commands } = withSourceFile((sourcePath) => deployWith(sourcePath, {
+      readLiveSource: () => normalizeSource(publishedSource),
+      describeFunction: (name, stage) => (stage === 'LIVE'
+        ? {
+          FunctionSummary: {
+            FunctionConfig: { Comment: 'Managed by CI', Runtime: 'cloudfront-js-1.0' },
+            FunctionMetadata: { FunctionARN: `arn:aws:cloudfront::123:function/${name}` }
+          }
+        }
+        : { ETag: 'DEV_ETAG' })
+    }));
+
+    expect(commands.some((command) => command.includes('update-function'))).toBe(true);
+  });
+
+  it('publishes when the function has never been published', () => {
+    const { commands } = withSourceFile((sourcePath) => deployWith(sourcePath, {
+      readLiveSource: () => null,
+      describeFunction: (name, stage) => (stage === 'LIVE'
+        ? { FunctionSummary: { FunctionMetadata: { FunctionARN: `arn:aws:cloudfront::123:function/${name}` } } }
+        : { ETag: 'DEV_ETAG' })
+    }));
+
+    expect(commands.some((command) => command.includes('update-function'))).toBe(true);
   });
 });

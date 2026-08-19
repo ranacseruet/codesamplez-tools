@@ -201,6 +201,10 @@ jobs:
           --head "${{ github.sha }}" \
           --write-github-output
 
+    # Only the function source, its deploy script, and this workflow can change
+    # what gets published. package.json/package-lock.json are deliberately NOT
+    # listed: the function is standalone CloudFront-JS with no npm dependencies,
+    # so dependency bumps used to trigger a no-op re-publish on every merge.
     - name: Detect CloudFront Function changes
       id: cloudfront_function
       run: |
@@ -210,7 +214,7 @@ jobs:
         if [[ "$BASE" =~ ^0+$ ]]; then
           BASE="$(git rev-parse "$HEAD^")"
         fi
-        if git diff --name-only "$BASE" "$HEAD" | grep -E '^(infrastructure/cloudfront-functions/codesamplez-tools-rewrite-static-urls\.js|scripts/deploy-cloudfront-function\.js|package\.json|package-lock\.json|\.github/workflows/ci\.yml)$' >/dev/null; then
+        if git diff --name-only "$BASE" "$HEAD" | grep -E '^(infrastructure/cloudfront-functions/codesamplez-tools-rewrite-static-urls\.js|scripts/deploy-cloudfront-function\.js|\.github/workflows/ci\.yml)$' >/dev/null; then
           echo "should_deploy=true" >> "$GITHUB_OUTPUT"
         else
           echo "should_deploy=false" >> "$GITHUB_OUTPUT"
@@ -233,10 +237,14 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
+    # Invoked directly rather than through `npm run deploy:cloudfront-function`
+    # so the package.json script entry cannot change what CI deploys. That keeps
+    # the trigger set above exhaustive: only the three listed paths can affect
+    # this step.
     - name: Deploy CloudFront Function
       if: steps.cloudfront_function.outputs.should_deploy == 'true'
       run: |
-        npm run deploy:cloudfront-function -- --distribution-id "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}"
+        node scripts/deploy-cloudfront-function.js --distribution-id "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}"
 
     - name: Deploy affected assets
       if: steps.affected.outputs.should_deploy == 'true'
