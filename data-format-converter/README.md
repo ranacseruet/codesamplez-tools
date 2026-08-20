@@ -45,6 +45,14 @@ The **Data Format Converter Tool** is a web-based utility that converts between 
    - A drop counts as fresh input: sample mode switches off, and the conversion
      still honours the Auto-convert toggle
 
+7. **Shareable Links**
+   - The Share button copies a link carrying the input plus both format selections
+   - The payload is LZ-compressed into the URL's `#c=` fragment, which browsers never
+     send to a server, so the shared data stays local
+   - Opening the link restores the input and formats, then converts immediately
+   - Links over ~8,000 characters are refused; use Download instead
+   - The codec loads as a lazy chunk on first use
+
 ## Usage Example
 
 ### Step-by-Step Guide

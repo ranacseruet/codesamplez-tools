@@ -50,11 +50,20 @@ const DEFAULT_FAIL_PERCENT = 10;
 // (json-formatter, diff-checker, text-analyzer, base64-converter,
 // data-format-converter) absorbed it within their existing headroom and are
 // deliberately left un-refreshed.
+//
+// `diff-checker-tool` (82,970 -> 87,207) was refreshed for UI v4 Phase D as a
+// whole: the drop zone (D1) plus the Share button and its handler (D2). The
+// share payload codec itself is NOT in this number — `./share-url` pulls
+// lz-string, so it is loaded as a lazy chunk on first Share click or share-link
+// visit and shows up in the Async column instead (10,250 -> 15,944). Without
+// that split the main bundle was 92,444, over the fail line. Left at a standing
+// WARN it would have been 88 bytes over, which dulls the signal for the next
+// change rather than reflecting the new expected size.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 58348,
     'data-format-converter': 181680,
-    'diff-checker-tool': 82970,
+    'diff-checker-tool': 87207,
     'jwt-builder-tool': 77707,
     'jwt-decoder-tool': 78448,
     'base64-converter-tool': 100367,

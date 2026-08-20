@@ -70,6 +70,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             <span id="base64converter-copy-status"></span>
             <button id="base64converter-convert"></button>
             <button id="base64converter-load-sample"></button>
+            <button id="base64converter-share"></button>
             <button id="base64converter-download-decoded" disabled></button>
         `;
 
@@ -321,6 +322,89 @@ describe('Base64Converter UI (script.tsx)', () => {
                 'Error processing file: Invalid file reader result',
                 3000,
                 { type: 'error' }
+            );
+        });
+    });
+
+    describe('Share Links', () => {
+        const flushShare = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+        test('should copy a #data= link carrying the current input', async () => {
+            elements.input.value = 'Hello from CodeSamplez Tools!';
+
+            document.getElementById('base64converter-share').click();
+            await flushShare();
+
+            // Not a call-count assertion: this suite re-requires ./script and
+            // re-dispatches DOMContentLoaded in every beforeEach, and the
+            // document persists, so earlier bootstraps are still listening and
+            // each one copies the same URL.
+            expect(mockClipboard.writeText).toHaveBeenCalled();
+            const url = mockClipboard.writeText.mock.calls[0][0];
+            // Deliberately the legacy raw `data` format, not the LZ payload the
+            // newer tools use — third-party links already point at this param.
+            expect(url).toContain('#data=');
+            expect(url.split('#')[0]).not.toContain('data=');
+            const shared = new URLSearchParams(url.split('#')[1]).get('data');
+            expect(shared).toBe('Hello from CodeSamplez Tools!');
+        });
+
+        test('should round-trip through the existing preload reader', async () => {
+            elements.input.value = 'a+b/c=&d e';
+
+            document.getElementById('base64converter-share').click();
+            await flushShare();
+
+            const url = mockClipboard.writeText.mock.calls[0][0];
+            // What the preload path does with the value on the way back in.
+            const raw = url.split('#data=')[1];
+            expect(decodeURIComponent(raw)).toBe('a+b/c=&d e');
+            expect(encodeURIComponent(decodeURIComponent(raw))).toBe(raw);
+        });
+
+        test('should refuse to share a payload that would exceed the URL ceiling', async () => {
+            const liveNotificationManager = require('../common/notification-manager').NotificationManager;
+            // Raw encodeURIComponent, no compression, so length maps directly.
+            elements.input.value = 'a'.repeat(9000);
+
+            document.getElementById('base64converter-share').click();
+            await flushShare();
+
+            expect(mockClipboard.writeText).not.toHaveBeenCalled();
+            expect(liveNotificationManager.show).toHaveBeenCalledWith(
+                expect.stringContaining('too large to share'),
+                expect.any(Number),
+                expect.objectContaining({ type: 'error' })
+            );
+        });
+
+        test('should report a clipboard failure instead of claiming success', async () => {
+            const liveNotificationManager = require('../common/notification-manager').NotificationManager;
+            mockClipboard.writeText.mockRejectedValue(new Error('denied'));
+            elements.input.value = 'shareable';
+
+            document.getElementById('base64converter-share').click();
+            await flushShare();
+
+            expect(liveNotificationManager.show).toHaveBeenCalledWith(
+                expect.stringContaining('Failed to copy share link'),
+                expect.any(Number),
+                expect.objectContaining({ type: 'error' })
+            );
+        });
+
+        test('should refuse to share an empty input', async () => {
+            const liveNotificationManager = require('../common/notification-manager').NotificationManager;
+            elements.input.value = '   ';
+
+            document.getElementById('base64converter-share').click();
+            await flushShare();
+
+            expect(mockClipboard.writeText).not.toHaveBeenCalled();
+            expect(liveNotificationManager.show).toHaveBeenCalledWith(
+                expect.stringContaining('before sharing'),
+                expect.any(Number),
+                expect.objectContaining({ type: 'error' })
             );
         });
     });
@@ -838,46 +922,32 @@ describe('Base64Converter UI (script.tsx)', () => {
             jest.useRealTimers();
         });
 
-        test('should handle URL parameter with completely invalid encoding sequence', () => {
-            // Test the specific error handling that triggers console.error
-            // for malformed URL parameters when both decodeURIComponent calls fail
-            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-            // Mock decodeURIComponent to fail on both calls, triggering the error path
-            const originalDecodeURIComponent = global.decodeURIComponent;
-            let callCount = 0;
-            global.decodeURIComponent = jest.fn(() => {
-                callCount++;
-                throw new URIError('Malformed URI component');
-            });
-
-            // Use a URL parameter that would trigger the error handling
-            setTestUrl('?data=%25ZZinvalid');
+        test.each([
+            ['a literal percent escape', 'literal %20 marker'],
+            ['a bare percent sign', '100% sure'],
+            ['a percent sequence that is not valid UTF-8', 'a%FFb'],
+            ['plain text', 'plain text'],
+            ['reserved base64 characters', 'a+b/c=']
+        ])('should round-trip %s through a Share link', (_label, input) => {
+            // Share writes encodeURIComponent(input); readHashOrQueryParam
+            // resolves it through URLSearchParams, which decodes exactly once.
+            // A second decodeURIComponent used to corrupt or abort these:
+            // `100% sure` and `a%FFb` threw a URIError and preloaded nothing,
+            // and `literal %20 marker` came back with the escape turned into
+            // spaces.
+            setTestUrl('', `data=${encodeURIComponent(input)}`);
 
             jest.useFakeTimers();
-
             jest.resetModules();
             require('./script');
             document.dispatchEvent(new Event('DOMContentLoaded'));
-
             jest.runAllTimers();
 
-            // Verify that console.error was called with the URL decode error message
-            // This covers the console.error call in lines 319-323
-            expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to decode URL parameter:', expect.any(Error));
-
             const converter = window.base64ConverterInstance;
-
-            // With decodeURIComponent consistently failing, input should remain empty
-            // and result should be empty (no auto-processing) - covers fallback behavior
-            expect(converter.elements.input.value).toBe('');
-            expect(converter.elements.result.textContent).toBe('');
-            // Mode should remain default value since dataFromUrl is '', which is falsy
-            expect(converter.elements.mode.value).toBe('auto');
+            expect(converter.elements.input.value).toBe(input);
+            expect(converter.elements.result.textContent).not.toBe('');
 
             jest.useRealTimers();
-            consoleErrorSpy.mockRestore();
-            global.decodeURIComponent = originalDecodeURIComponent;
         });
 
     });

@@ -6,6 +6,8 @@ import { NotificationManager } from '../common/notification-manager';
 import { scheduleTask } from '../common/scheduler-utils';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { registerDropZone, type DropZoneCleanup } from '../common/drop-zone';
+import { copyTextToClipboard } from '../common/clipboard';
+import type { DiffSharePayload } from './share-url';
 import { createLazyRunner } from '../common/lazy-runner';
 import type { ToolCleanupHandle } from '../common/tooling-contracts';
 import { hydrate, render } from 'preact';
@@ -556,6 +558,102 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     });
   }
 
+  const ignoreWhitespaceToggle = document.getElementById('ignore-whitespace') as HTMLInputElement | null;
+
+  /**
+   * Copy a shareable link carrying both panes plus the whitespace option,
+   * LZ-compressed into the hash fragment so the compared text never reaches a
+   * server. Mirrors json-formatter's Share: guarded against an empty compare
+   * and against payloads too long to paste anywhere useful.
+   */
+  const shareDiffUrl = async () => {
+    if (!text1 || !text2) return;
+
+    if (!text1.value.trim() && !text2.value.trim()) {
+      NotificationManager.show('Enter text in at least one pane before sharing.', 3000, { type: 'error' });
+      return;
+    }
+
+    const payload: DiffSharePayload = {
+      original: text1.value,
+      modified: text2.value,
+      ignoreWhitespace: ignoreWhitespaceToggle?.checked ?? true
+    };
+    const { buildShareUrl, SHARE_URL_MAX_LENGTH } = await import('./share-url');
+    const url = buildShareUrl(window.location.href, payload);
+
+    if (url.length > SHARE_URL_MAX_LENGTH) {
+      NotificationManager.show(
+        `These texts are too large to share as a URL (limit ~${SHARE_URL_MAX_LENGTH} characters).`,
+        4000,
+        { type: 'error' }
+      );
+      return;
+    }
+
+    try {
+      await copyTextToClipboard(url);
+      NotificationManager.show('Share link copied to clipboard!', 2000, { type: 'success' });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      NotificationManager.show(`Failed to copy share link. ${message}`, 3000, { type: 'error' });
+    }
+  };
+
+  const shareButton = document.getElementById('diff-share-button') as HTMLButtonElement | null;
+  if (shareButton) {
+    shareButton.addEventListener('click', () => void shareDiffUrl());
+  }
+
+  /**
+   * Preload both panes from a shared link and run the compare immediately —
+   * unlike a dropped file (which fills one pane at a time), a share link
+   * always carries both sides, so there is nothing to wait for.
+   */
+  const loadFromShareLocation = async (locationLike: Pick<Location, 'hash' | 'search'>) => {
+    // Probe for the param before importing the share module: it pulls
+    // lz-string, and only the few visitors arriving via a share link need it.
+    // The literal must match `HASH_PARAM` in ./share-url (pinned by a test).
+    const hashValue = locationLike.hash.startsWith('#') ? locationLike.hash.slice(1) : locationLike.hash;
+    const carriesPayload =
+      new URLSearchParams(hashValue).get('d') !== null ||
+      new URLSearchParams(locationLike.search).get('d') !== null;
+    if (!carriesPayload || !text1 || !text2) return;
+
+    // Snapshot both panes across the await: on a slow chunk request the user
+    // can start typing before the codec arrives, and applying the payload then
+    // would replace their text and kick off a compare they did not ask for.
+    const originalBeforeLoad = text1.value;
+    const modifiedBeforeLoad = text2.value;
+
+    const { resolveSharePayload } = await import('./share-url');
+    if (text1.value !== originalBeforeLoad || text2.value !== modifiedBeforeLoad) return;
+
+    const { payload, source } = resolveSharePayload(locationLike);
+    if (!payload) return;
+
+    text1.value = payload.original;
+    text2.value = payload.modified;
+    clearButton1?.updateVisibility();
+    clearButton2?.updateVisibility();
+    if (ignoreWhitespaceToggle) {
+      ignoreWhitespaceToggle.checked = payload.ignoreWhitespace;
+    }
+    setInlineError('');
+    compareButton?.click();
+    NotificationManager.show('Loaded texts from shared link.', 2000, { type: 'success' });
+
+    if (source === 'query') {
+      NotificationManager.show(
+        'Legacy ?d= preload detected. Prefer #d= to avoid leaking content in URLs.',
+        4000,
+        { type: 'warning' }
+      );
+    }
+  };
+
+  void loadFromShareLocation(window.location);
+
   // Export cleanup function for testing
   const browserWindow = window as Window & { diffCheckerCleanup?: ToolCleanupHandle['cleanup'] };
   browserWindow.diffCheckerCleanup = cleanup;
@@ -605,6 +703,14 @@ export function DiffCheckerApp() {
             <label htmlFor="ignore-whitespace">Ignore whitespace differences</label>
           </div>
         </div>
+
+        <button
+          id="diff-share-button"
+          className="c-button c-button--secondary c-button--icon-share diffc-share-button"
+          type="button"
+        >
+          Share
+        </button>
 
         <span className="c-toolbar__spacer" />
         <button id="compare-button" className="c-button diffc-compare-button" type="button">

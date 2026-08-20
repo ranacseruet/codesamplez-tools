@@ -2,6 +2,7 @@ import { jest } from '@jest/globals';
 import { fireEvent } from '@testing-library/dom';
 import { render as preactRender } from 'preact';
 import { fireFileDragEvent, fireFileDrop, flushFileDrop } from '../common/drop-zone-test-utils';
+import { buildShareHash, parseShareHash } from './share-url';
 
 const mockClearButtonInstances = [];
 const mockCopyButtonInstances = [];
@@ -245,6 +246,203 @@ describe('DataFormatConverterUI Integration', () => {
             expect.any(Number),
             expect.objectContaining({ type: 'error' })
         );
+    });
+
+    describe('share links', () => {
+        const flushShare = async () => {
+            jest.useRealTimers();
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            jest.useFakeTimers();
+        };
+
+        it('copies a hash-fragment link carrying the input and both formats', async () => {
+            fireEvent.input(document.getElementById('inputText'), { target: { value: '{"a":1}' } });
+            await flush();
+
+            fireEvent.click(document.getElementById('shareBtn'));
+            await flushShare();
+
+            const writeText = window.navigator.clipboard.writeText;
+            expect(writeText).toHaveBeenCalledTimes(1);
+            const url = writeText.mock.calls[0][0];
+            expect(url).toContain('#c=');
+            // The shared data must live in the fragment, never the query string.
+            expect(url.split('#')[0]).not.toContain('c=');
+            expect(parseShareHash(`#${url.split('#')[1]}`)).toEqual({
+                input: '{"a":1}',
+                inputFormat: 'json',
+                outputFormat: 'xml'
+            });
+        });
+
+        it('refuses to share an empty input', async () => {
+            fireEvent.click(document.getElementById('shareBtn'));
+            await flushShare();
+
+            expect(window.navigator.clipboard.writeText).not.toHaveBeenCalled();
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                expect.stringContaining('before sharing'),
+                expect.any(Number),
+                expect.objectContaining({ type: 'error' })
+            );
+        });
+
+        it('refuses to share a payload that would exceed the URL ceiling', async () => {
+            // High-entropy text so LZ compression cannot bring it under the ceiling.
+            let bulky = '';
+            for (let i = 0; i < 30000; i += 1) {
+                bulky += Math.random().toString(36).slice(2, 6);
+            }
+            fireEvent.input(document.getElementById('inputText'), { target: { value: bulky } });
+            await flush();
+
+            fireEvent.click(document.getElementById('shareBtn'));
+            await flushShare();
+
+            expect(window.navigator.clipboard.writeText).not.toHaveBeenCalled();
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                expect.stringContaining('too large to share'),
+                expect.any(Number),
+                expect.objectContaining({ type: 'error' })
+            );
+        });
+
+        it('reports a clipboard failure instead of claiming success', async () => {
+            window.navigator.clipboard.writeText.mockRejectedValue(new Error('denied'));
+            fireEvent.input(document.getElementById('inputText'), { target: { value: '{"a":1}' } });
+            await flush();
+
+            fireEvent.click(document.getElementById('shareBtn'));
+            await flushShare();
+
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                expect.stringContaining('Failed to copy share link'),
+                expect.any(Number),
+                expect.objectContaining({ type: 'error' })
+            );
+        });
+
+        it('warns when a payload arrives via the legacy query string', async () => {
+            preactRender(null, document.getElementById('data-format-converter-app'));
+            document.body.innerHTML = '<div id="data-format-converter-app"></div>';
+            const { pathname } = window.location;
+            window.history.replaceState({}, '', `${pathname}?${buildShareHash({
+                input: '{"a":1}',
+                inputFormat: 'json',
+                outputFormat: 'yaml'
+            })}`);
+
+            jest.useRealTimers();
+            new DataFormatConverterUI();
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            jest.useFakeTimers();
+            await flush();
+
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                expect.stringContaining('Legacy ?c='),
+                expect.any(Number),
+                expect.objectContaining({ type: 'warning' })
+            );
+
+            window.history.replaceState({}, '', pathname);
+        });
+
+        it('does not overwrite input entered while the share chunk loads', async () => {
+            preactRender(null, document.getElementById('data-format-converter-app'));
+            document.body.innerHTML = '<div id="data-format-converter-app"></div>';
+            window.location.hash = `#${buildShareHash({
+                input: 'name: Ada\n',
+                inputFormat: 'yaml',
+                outputFormat: 'json'
+            })}`;
+
+            jest.useRealTimers();
+            new DataFormatConverterUI();
+            // Synchronously after mount — i.e. while the dynamic import of the
+            // share codec is still pending, which is the slow-connection case.
+            document.getElementById('inputText').value = 'typed while the chunk loaded';
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            jest.useFakeTimers();
+
+            expect(document.getElementById('inputText').value).toBe('typed while the chunk loaded');
+            expect(NotificationManager.show).not.toHaveBeenCalledWith(
+                'Loaded data from shared link.',
+                expect.any(Number),
+                expect.any(Object)
+            );
+
+            window.location.hash = '';
+        });
+
+        it('drops a share payload whose chunk resolves after unmount', async () => {
+            preactRender(null, document.getElementById('data-format-converter-app'));
+            document.body.innerHTML = '<div id="data-format-converter-app"></div>';
+            window.location.hash = `#${buildShareHash({
+                input: 'name: Ada\n',
+                inputFormat: 'yaml',
+                outputFormat: 'json'
+            })}`;
+
+            jest.useRealTimers();
+            new DataFormatConverterUI();
+            // Unmount before the lazy chunk can resolve: the payload must not
+            // be applied to a tree that no longer exists.
+            preactRender(null, document.getElementById('data-format-converter-app'));
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            jest.useFakeTimers();
+
+            expect(NotificationManager.show).not.toHaveBeenCalledWith(
+                'Loaded data from shared link.',
+                expect.any(Number),
+                expect.any(Object)
+            );
+
+            window.location.hash = '';
+        });
+
+        it('preloads input and formats from a shared link and converts on mount', async () => {
+            preactRender(null, document.getElementById('data-format-converter-app'));
+            document.body.innerHTML = '<div id="data-format-converter-app"></div>';
+            window.location.hash = `#${buildShareHash({
+                input: 'name: Ada\n',
+                inputFormat: 'yaml',
+                outputFormat: 'json'
+            })}`;
+
+            // The share module is a lazy chunk (it pulls lz-string), so the
+            // preload resolves a dynamic import and then re-renders. Run that
+            // stretch on real timers, as the drop-zone spec does.
+            jest.useRealTimers();
+            new DataFormatConverterUI();
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            jest.useFakeTimers();
+            await flush();
+
+            expect(document.getElementById('inputText')?.value).toBe('name: Ada\n');
+            expect(
+                document.querySelector('.input-section .format-btn[data-format="yaml"]')?.classList.contains('active')
+            ).toBe(true);
+            expect(document.getElementById('outputText')?.value).toContain('Ada');
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                'Loaded data from shared link.',
+                expect.any(Number),
+                expect.objectContaining({ type: 'success' })
+            );
+
+            window.location.hash = '';
+        });
+
+        it('ignores a malformed share hash instead of throwing', async () => {
+            preactRender(null, document.getElementById('data-format-converter-app'));
+            document.body.innerHTML = '<div id="data-format-converter-app"></div>';
+            window.location.hash = '#c=not-actually-compressed';
+
+            expect(() => new DataFormatConverterUI()).not.toThrow();
+            await flush();
+            expect(document.getElementById('inputText')?.value).toBe('');
+
+            window.location.hash = '';
+        });
     });
 
     it('restores sample data when the sample button is clicked again after typing', async () => {

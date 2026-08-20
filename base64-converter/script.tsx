@@ -4,7 +4,8 @@ import { NotificationManager } from '../common/notification-manager';
 import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
-import { readHashOrQueryParam } from '../common/share-url';
+import { buildShareUrl, readHashOrQueryParam, SHARE_URL_MAX_LENGTH } from '../common/share-url';
+import { copyTextToClipboard } from '../common/clipboard';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { registerDropZone } from '../common/drop-zone';
 import { hydrate, render } from 'preact';
@@ -438,6 +439,13 @@ export function Base64ConverterApp() {
                     <label className="c-button c-button--secondary b64-upload-button" htmlFor="base64converter-file">
                         Upload File
                     </label>
+                    <button
+                        type="button"
+                        id="base64converter-share"
+                        className="c-button c-button--secondary c-button--icon-share b64-share-button"
+                    >
+                        Share
+                    </button>
                 </div>
                 <span className="c-toolbar__spacer" />
                 <button type="button" id="base64converter-convert" className="c-button b64-convert-button">
@@ -481,29 +489,17 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
     let shouldAutoConvert = false;
 
     if (dataParam) {
-        try {
-            // Decode the URL parameter value
-            dataFromUrl = decodeURIComponent(dataParam);
-
-            // Additional validation: check if re-encoding matches original to detect malformed input
-            if (encodeURIComponent(dataFromUrl) !== dataParam) {
-                throw new Error('URL parameter contains invalid encoding');
-            }
-            // eslint-disable-next-line
-            shouldAutoConvert = true;
-        } catch (urlDecodeError) {
-            // If URL decoding fails, try with malformed URI handling
-            try {
-                dataFromUrl = decodeURIComponent(dataParam.replace(/%(?![0-9a-fA-F][0-9a-fA-F])/g, '%25'));
-                shouldAutoConvert = true;
-            } catch (secondError) {
-                console.error('Failed to decode URL parameter:', urlDecodeError);
-                NotificationManager.show('Invalid data parameter in URL', 3000, { type: 'error' });
-                // Fall back to empty string and disable auto-convert to avoid processing invalid data
-                dataFromUrl = '';
-                shouldAutoConvert = false;
-            }
-        }
+        // `readHashOrQueryParam` resolves the value through `URLSearchParams`,
+        // which has already applied exactly one percent-decoding pass. This
+        // used to run `decodeURIComponent` on top of that, which corrupted any
+        // input containing a percent sign — `100%` and `a%FFb` threw a URIError
+        // and aborted the preload outright, and `literal %20 marker` came back
+        // as `literal   marker`. Harmless while the param was only produced by
+        // hand, but Share now generates these links, so writer and reader have
+        // to agree on a single pass. Inputs with no percent sign are unaffected
+        // either way, so links already in the wild keep working.
+        dataFromUrl = dataParam;
+        shouldAutoConvert = true;
 
         if (shouldAutoConvert && preloadedData.source === 'query') {
             NotificationManager.show(
@@ -589,6 +585,46 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
 
     const downloadHandler = () => converter.handleDownload();
     typedElements.downloadDecodedButton.addEventListener('click', downloadHandler);
+
+    /**
+     * Copy a shareable link carrying the current input.
+     *
+     * This tool has had a documented `data` preload param since before the
+     * shared share-URL conventions existed, and third-party pages link to it,
+     * so Share writes that exact format (raw `encodeURIComponent`, hash form)
+     * rather than the LZ-compressed payload the newer tools use. Switching
+     * encodings would strand every link already in the wild.
+     */
+    const shareHandler = async () => {
+        const inputValue = (typedElements.input as HTMLTextAreaElement).value;
+        if (!inputValue.trim()) {
+            NotificationManager.show('Enter some text before sharing.', 3000, { type: 'error' });
+            return;
+        }
+
+        const url = buildShareUrl(window.location.href, `data=${encodeURIComponent(inputValue)}`);
+        if (url.length > SHARE_URL_MAX_LENGTH) {
+            NotificationManager.show(
+                `This text is too large to share as a URL (limit ~${SHARE_URL_MAX_LENGTH} characters).`,
+                4000,
+                { type: 'error' }
+            );
+            return;
+        }
+
+        try {
+            await copyTextToClipboard(url);
+            NotificationManager.show('Share link copied to clipboard!', 2000, { type: 'success' });
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error);
+            NotificationManager.show(`Failed to copy share link. ${message}`, 3000, { type: 'error' });
+        }
+    };
+
+    const shareButton = document.getElementById('base64converter-share');
+    if (shareButton) {
+        shareButton.addEventListener('click', () => void shareHandler());
+    }
 
     if (shouldAutoConvert && dataFromUrl && typeof converter.processInput === 'function') {
         setTimeout(() => {

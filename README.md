@@ -47,6 +47,11 @@ The repo is on a post-migration steady-state workflow.
 - Shared input behaviours: `common/shortcut-utils.ts` (Cmd/Ctrl+Enter primary
   action) and `common/drop-zone.ts` (drag-and-drop file loading; files are read
   in the browser and never uploaded)
+- Shared share/copy behaviours: `common/share-url.ts` (hash-fragment state
+  links, never sent to a server) and `common/clipboard.ts` (one
+  Clipboard-API-with-`execCommand`-fallback strategy). Per-tool payload codecs
+  live in each tool's `share-url.ts` and load as lazy chunks, since they pull
+  `lz-string`
 - Prerender pipeline: `scripts/prerender-tool.js`
 - HTML document generation: `scripts/tool-document.js` and `scripts/root-document.js`
 - Mixed TypeScript/JavaScript codebase with required repo-wide typecheck

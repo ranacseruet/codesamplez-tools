@@ -5,6 +5,7 @@ import ClearButton from '../common/clear-button/ClearButton';
 import { scheduleTask, nextFrame } from '../common/scheduler-utils';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { registerDropZone } from '../common/drop-zone';
+import { copyTextToClipboard } from '../common/clipboard';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
 import {
   autoFixJSON,
@@ -860,28 +861,8 @@ export class JSONFormatter {
     }
 
     try {
-      // Try modern Clipboard API first (matches copyOutput's fallback strategy).
-      if (globalThis.navigator?.clipboard) {
-        await globalThis.navigator.clipboard.writeText(url);
-        NotificationManager.show('Share link copied to clipboard!', 2000, { type: 'success' });
-        return;
-      }
-
-      const textarea = document.createElement('textarea');
-      textarea.value = url;
-      textarea.style.position = 'fixed';
-      document.body.appendChild(textarea);
-      textarea.select();
-
-      try {
-        const successful = document.execCommand('copy');
-        if (!successful) {
-          throw new Error('Copy command failed');
-        }
-        NotificationManager.show('Share link copied to clipboard!', 2000, { type: 'success' });
-      } finally {
-        document.body.removeChild(textarea);
-      }
+      await copyTextToClipboard(url);
+      NotificationManager.show('Share link copied to clipboard!', 2000, { type: 'success' });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       NotificationManager.show(`Failed to copy share link. ${message}`, 3000, { type: 'error' });

@@ -51,6 +51,15 @@ The **Diff Checker Tool** is a lightweight, web-based utility designed to compar
    - A drop deliberately does not auto-compare: it fills one pane at a time, and
      comparing against an empty pane would render the whole file as an insertion
 
+10. **Shareable Links**
+   - The Share button copies a link carrying both panes plus the whitespace option
+   - The payload is LZ-compressed into the URL's `#d=` fragment, which browsers never
+     send to a server, so the compared text stays local
+   - Opening the link restores both panes and the option, then runs the compare
+   - Links over ~8,000 characters are refused rather than silently truncated
+   - The codec loads as a lazy chunk on first use, so visitors who never share
+     do not download it
+
 ## Usage Example
 
 ### Step-by-Step Guide

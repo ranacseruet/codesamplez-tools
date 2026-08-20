@@ -2,6 +2,7 @@ import { DiffDisplay, DiffNavigator, CodeDetector, initializeDiffChecker } from 
 import { NotificationManager } from '../common/notification-manager';
 import { scheduleTask } from '../common/scheduler-utils';
 import { fireFileDragEvent, fireFileDrop, flushFileDrop } from '../common/drop-zone-test-utils';
+import { buildShareHash, parseShareHash } from './share-url';
 
 // Mock NotificationManager
 jest.mock('../common/notification-manager', () => ({
@@ -573,8 +574,12 @@ describe('initializeDiffChecker', () => {
       <button id="next-diff-button"></button>
       <span id="diff-counter"></span>
       <input type="checkbox" id="ignore-whitespace">
+      <button id="diff-share-button">Share</button>
     `;
     document.body.appendChild(container); // Using JSDOM document
+    // initializeDiffChecker reads window.location for a share payload, so the
+    // hash has to be clean unless a spec sets one deliberately.
+    window.location.hash = '';
     jest.clearAllMocks();
   });
 
@@ -634,6 +639,173 @@ describe('initializeDiffChecker', () => {
       expect.any(Number),
       expect.objectContaining({ type: 'error' })
     );
+  });
+
+  describe('share links', () => {
+    let writeText;
+
+    beforeEach(() => {
+      writeText = jest.fn().mockResolvedValue(undefined);
+      Object.defineProperty(global.navigator, 'clipboard', {
+        value: { writeText },
+        configurable: true,
+        writable: true
+      });
+    });
+
+    const flushShare = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    test('copies a hash-fragment link carrying both panes', async () => {
+      initializeDiffChecker();
+      document.getElementById('text1').value = 'alpha';
+      document.getElementById('text2').value = 'beta';
+      document.getElementById('ignore-whitespace').checked = false;
+
+      document.getElementById('diff-share-button').click();
+      await flushShare();
+
+      expect(writeText).toHaveBeenCalledTimes(1);
+      const url = writeText.mock.calls[0][0];
+      expect(url).toContain('#d=');
+      // The compared text must live in the fragment, never the query string.
+      expect(url.split('#')[0]).not.toContain('d=');
+      expect(parseShareHash(`#${url.split('#')[1]}`)).toEqual({
+        original: 'alpha',
+        modified: 'beta',
+        ignoreWhitespace: false
+      });
+    });
+
+    test('refuses to share when both panes are empty', async () => {
+      initializeDiffChecker();
+
+      document.getElementById('diff-share-button').click();
+      await flushShare();
+
+      expect(writeText).not.toHaveBeenCalled();
+      expect(NotificationManager.show).toHaveBeenCalledWith(
+        expect.stringContaining('before sharing'),
+        expect.any(Number),
+        expect.objectContaining({ type: 'error' })
+      );
+    });
+
+    test('reports a clipboard failure instead of claiming success', async () => {
+      writeText.mockRejectedValue(new Error('denied'));
+      initializeDiffChecker();
+      document.getElementById('text1').value = 'alpha';
+
+      document.getElementById('diff-share-button').click();
+      await flushShare();
+
+      expect(NotificationManager.show).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to copy share link'),
+        expect.any(Number),
+        expect.objectContaining({ type: 'error' })
+      );
+    });
+
+    test('refuses to share a payload that would exceed the URL ceiling', async () => {
+      initializeDiffChecker();
+      // High-entropy text so LZ compression cannot bring it under the ceiling.
+      let bulky = '';
+      for (let i = 0; i < 30000; i += 1) {
+        bulky += Math.random().toString(36).slice(2, 6);
+      }
+      document.getElementById('text1').value = bulky;
+
+      document.getElementById('diff-share-button').click();
+      await flushShare();
+
+      expect(writeText).not.toHaveBeenCalled();
+      expect(NotificationManager.show).toHaveBeenCalledWith(
+        expect.stringContaining('too large to share'),
+        expect.any(Number),
+        expect.objectContaining({ type: 'error' })
+      );
+    });
+
+    test('does nothing when the panes are missing from the DOM', async () => {
+      document.getElementById('text1').remove();
+      initializeDiffChecker();
+
+      document.getElementById('diff-share-button').click();
+      await flushShare();
+
+      expect(writeText).not.toHaveBeenCalled();
+    });
+
+    test('warns when a payload arrives via the legacy query string', async () => {
+      const { pathname } = window.location;
+      window.history.replaceState({}, '', `${pathname}?${buildShareHash({
+        original: 'a',
+        modified: 'b',
+        ignoreWhitespace: true
+      })}`);
+
+      initializeDiffChecker();
+      await new Promise((resolve) => setTimeout(resolve, 60));
+
+      expect(document.getElementById('text1').value).toBe('a');
+      expect(NotificationManager.show).toHaveBeenCalledWith(
+        expect.stringContaining('Legacy ?d='),
+        expect.any(Number),
+        expect.objectContaining({ type: 'warning' })
+      );
+
+      window.history.replaceState({}, '', pathname);
+    });
+
+    test('preloads both panes and the option from a shared link, then compares', async () => {
+      window.location.hash = `#${buildShareHash({
+        original: 'alpha\nbeta',
+        modified: 'alpha\ngamma',
+        ignoreWhitespace: false
+      })}`;
+
+      initializeDiffChecker();
+      await new Promise((resolve) => setTimeout(resolve, 60));
+
+      expect(document.getElementById('text1').value).toBe('alpha\nbeta');
+      expect(document.getElementById('text2').value).toBe('alpha\ngamma');
+      expect(document.getElementById('ignore-whitespace').checked).toBe(false);
+      expect(NotificationManager.show).toHaveBeenCalledWith(
+        'Loaded texts from shared link.',
+        expect.any(Number),
+        expect.objectContaining({ type: 'success' })
+      );
+      // The share link carries both sides, so the compare runs immediately.
+      expect(document.getElementById('diff-result').innerHTML.length).toBeGreaterThan(0);
+    });
+
+    test('does not overwrite text typed while the share chunk loads', async () => {
+      window.location.hash = `#${buildShareHash({
+        original: 'shared original',
+        modified: 'shared modified',
+        ignoreWhitespace: true
+      })}`;
+
+      initializeDiffChecker();
+      // Synchronously after init — i.e. while the dynamic import of the share
+      // codec is still pending, which is exactly the slow-connection case.
+      document.getElementById('text1').value = 'typed while the chunk loaded';
+      await new Promise((resolve) => setTimeout(resolve, 60));
+
+      expect(document.getElementById('text1').value).toBe('typed while the chunk loaded');
+      expect(document.getElementById('text2').value).toBe('');
+      expect(NotificationManager.show).not.toHaveBeenCalledWith(
+        'Loaded texts from shared link.',
+        expect.any(Number),
+        expect.any(Object)
+      );
+    });
+
+    test('ignores a malformed share hash instead of throwing', () => {
+      window.location.hash = '#d=not-actually-compressed';
+
+      expect(() => initializeDiffChecker()).not.toThrow();
+      expect(document.getElementById('text1').value).toBe('');
+    });
   });
 
   test('should fall back to textContent label writes when the button has no leading text node', async () => {

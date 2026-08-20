@@ -11,6 +11,11 @@ A powerful and user-friendly web tool for encoding and decoding Base64 strings w
 ## Features
 
 - 🔗 **URL Parameter Support**: Pre-load data directly from links (external site integration)
+- 📤 **Share**: Copies a link carrying the current input as `#data=<encoded>`. The
+  fragment is never sent to a server. This deliberately writes the same raw
+  `data` param the preload above has always read — third-party pages already
+  link to it, so it does not use the LZ-compressed payload format the newer
+  tools (diff-checker, data-format-converter) adopted
 - 🔄 Auto-detection of Base64 strings
 - 📝 Multiple encoding support (UTF-8, ASCII, ISO-8859-1, UCS-2)
 - 📁 File upload capability for encoding

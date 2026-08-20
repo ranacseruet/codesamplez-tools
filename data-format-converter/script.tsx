@@ -5,6 +5,8 @@ import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { registerDropZone } from '../common/drop-zone';
+import { copyTextToClipboard } from '../common/clipboard';
+import type { ConverterSharePayload } from './share-url';
 import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -342,6 +344,108 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
         });
     }, [useSampleData, autoConvert, inputFormat, outputFormat]);
 
+    /**
+     * Copy a shareable link carrying the input plus both format selections,
+     * LZ-compressed into the hash fragment so the data never reaches a server.
+     */
+    const handleShare = async () => {
+        if (!inputText.trim()) {
+            NotificationManager.show('Enter some data before sharing.', 3000, { type: 'error' });
+            return;
+        }
+
+        const payload: ConverterSharePayload = { input: inputText, inputFormat, outputFormat };
+        const { buildShareUrl, SHARE_URL_MAX_LENGTH } = await import('./share-url');
+        const url = buildShareUrl(window.location.href, payload);
+
+        if (url.length > SHARE_URL_MAX_LENGTH) {
+            NotificationManager.show(
+                `This data is too large to share as a URL (limit ~${SHARE_URL_MAX_LENGTH} characters). Try Download instead.`,
+                4000,
+                { type: 'error' }
+            );
+            return;
+        }
+
+        try {
+            await copyTextToClipboard(url);
+            NotificationManager.show('Share link copied to clipboard!', 2000, { type: 'success' });
+        } catch (error: unknown) {
+            NotificationManager.show(`Failed to copy share link. ${getErrorMessage(error)}`, 3000, { type: 'error' });
+        }
+    };
+
+    // Preload from a shared link once, on mount. A share link carries both
+    // formats, so it converts immediately regardless of the Auto-convert
+    // toggle: the sender already chose to share a finished conversion.
+    // `useLayoutEffect` so the shared data is in place before first paint —
+    // with `useEffect` the recipient sees an empty tool flash first (and it
+    // has not run yet when jsdom tests assert).
+    useLayoutEffect(() => {
+        // Probe for the param before importing the share module: it pulls
+        // lz-string, and only the few visitors arriving via a share link need
+        // it. The literal must match `HASH_PARAM` in ./share-url (pinned by a
+        // test).
+        const { hash, search } = window.location;
+        const hashValue = hash.startsWith('#') ? hash.slice(1) : hash;
+        const carriesPayload =
+            new URLSearchParams(hashValue).get('c') !== null ||
+            new URLSearchParams(search).get('c') !== null;
+        if (!carriesPayload) return;
+
+        let active = true;
+        void import('./share-url').then(({ resolveSharePayload }) => {
+            // The chunk is async, so the user may have typed, dropped a file,
+            // or loaded the sample while it downloaded. `active` alone only
+            // catches unmount — a live component with fresh input would still
+            // have been clobbered — so also require the input to be untouched.
+            // Read the textarea rather than state or a ref: it is the only
+            // source that is guaranteed current at this instant, with no
+            // render or effect scheduled in between.
+            const currentInput = inputTextAreaRef.current?.value ?? '';
+            if (!active || currentInput !== '') return;
+            applySharePayload(resolveSharePayload(window.location));
+        });
+
+        return () => {
+            active = false;
+        };
+        // Intentionally mount-only: a share link is read once, and re-running
+        // this would clobber whatever the user has typed since.
+    }, []);
+
+    const applySharePayload = ({ payload, source }: {
+        payload: ConverterSharePayload | null;
+        source: 'hash' | 'query' | null;
+    }) => {
+        if (!payload) return;
+
+        stateRef.current = {
+            ...stateRef.current,
+            inputFormat: payload.inputFormat,
+            outputFormat: payload.outputFormat
+        };
+        setInputFormat(payload.inputFormat);
+        setOutputFormat(payload.outputFormat);
+        setInputText(payload.input);
+        setErrorMessage('');
+        convertData({
+            silent: true,
+            nextInput: payload.input,
+            nextInputFormat: payload.inputFormat,
+            nextOutputFormat: payload.outputFormat
+        });
+        NotificationManager.show('Loaded data from shared link.', 2000, { type: 'success' });
+
+        if (source === 'query') {
+            NotificationManager.show(
+                'Legacy ?c= preload detected. Prefer #c= to avoid leaking content in URLs.',
+                4000,
+                { type: 'warning' }
+            );
+        }
+    };
+
     const handleInputFormatChange = (nextFormat: SupportedFormat) => {
         // Closure state (fresh per render), not stateRef — see handleInputChange.
         const sampleModeEnabled = useSampleData;
@@ -590,6 +694,14 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
                         onClick={handleDownload}
                     >
                         Download
+                    </button>
+                    <button
+                        id="shareBtn"
+                        type="button"
+                        className="c-button c-button--small c-button--icon-share dfc-share-btn"
+                        onClick={() => void handleShare()}
+                    >
+                        Share
                     </button>
                 </div>
 
