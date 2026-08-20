@@ -441,8 +441,20 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   };
 
 
-  // Handle page unload
-  window.addEventListener('unload', cleanup);
+  // Tear down on page hide rather than `unload`. Chrome blocks `unload` under a
+  // default permissions policy (it logs "Permissions policy violation: unload is
+  // not allowed in this document"), and registering one also disqualifies the
+  // page from the back/forward cache — so the deprecated event cost a bfcache
+  // restore on every visit while doing nothing the browser would not do anyway.
+  //
+  // `event.persisted` means the page is going *into* the bfcache and can be
+  // restored with its DOM and JS state intact; tearing down the clear/copy
+  // buttons and the diff worker there would hand the user a dead tool on
+  // restore, so that case is deliberately left alone.
+  window.addEventListener('pagehide', (event: PageTransitionEvent) => {
+    if (event.persisted) return;
+    cleanup();
+  });
 
   /* istanbul ignore next */
   if (text1 && text2) {

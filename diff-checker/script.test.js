@@ -2,6 +2,7 @@ import { DiffDisplay, DiffNavigator, CodeDetector, initializeDiffChecker } from 
 import { waitFor } from '@testing-library/dom';
 import { NotificationManager } from '../common/notification-manager';
 import { scheduleTask } from '../common/scheduler-utils';
+import ClearButton from '../common/clear-button/ClearButton';
 import { fireFileDragEvent, fireFileDrop, flushFileDrop } from '../common/drop-zone-test-utils';
 import { buildShareHash, parseShareHash } from './share-url';
 
@@ -638,6 +639,48 @@ describe('initializeDiffChecker', () => {
       expect.any(Number),
       expect.objectContaining({ type: 'error' })
     );
+  });
+
+  describe('teardown', () => {
+    const firePageHide = (persisted) => {
+      const event = new Event('pagehide');
+      Object.defineProperty(event, 'persisted', { value: persisted });
+      window.dispatchEvent(event);
+    };
+
+    test('never registers the deprecated unload listener', () => {
+      const addEventListenerSpy = jest.spyOn(window, 'addEventListener');
+
+      initializeDiffChecker();
+
+      // Chrome blocks `unload` under a default permissions policy and a
+      // registered listener also disqualifies the page from the bfcache.
+      const listenedEvents = addEventListenerSpy.mock.calls.map(([eventName]) => eventName);
+      expect(listenedEvents).not.toContain('unload');
+      expect(listenedEvents).toContain('pagehide');
+
+      addEventListenerSpy.mockRestore();
+    });
+
+    test('tears down on a terminal pagehide', () => {
+      initializeDiffChecker();
+      const clearButtonInstance = ClearButton.mock.results.at(-1).value;
+
+      firePageHide(false);
+
+      expect(clearButtonInstance.disconnect).toHaveBeenCalled();
+    });
+
+    test('leaves everything connected when the page enters the back/forward cache', () => {
+      initializeDiffChecker();
+      const clearButtonInstance = ClearButton.mock.results.at(-1).value;
+
+      firePageHide(true);
+
+      // A bfcache-restored page keeps its DOM and JS state, so tearing down the
+      // clear/copy buttons and the diff worker would hand back a dead tool.
+      expect(clearButtonInstance.disconnect).not.toHaveBeenCalled();
+    });
   });
 
   describe('share links', () => {
