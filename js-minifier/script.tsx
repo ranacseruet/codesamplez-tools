@@ -4,8 +4,9 @@ import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { scheduleTask } from '../common/scheduler-utils';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
+import { registerDropZone } from '../common/drop-zone';
 import { hydrate, render } from 'preact';
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { JSMinifierArticle, JSMinifierIntro } from './content';
 import { loadMinifier, type MinifierConstructor } from './load-minifier';
@@ -209,6 +210,27 @@ export function JSMinifierApp() {
     }
   };
 
+  // A dropped file behaves exactly like Load Sample carrying that file's
+  // contents — fill the input, then run the tool. Re-registered when `options`
+  // change so the minify call never uses a stale option set.
+  useLayoutEffect(() => {
+    if (!(inputRef.current instanceof HTMLTextAreaElement)) {
+      /* istanbul ignore next */
+      return undefined;
+    }
+
+    return registerDropZone(inputRef.current, {
+      onText: (text, file) => {
+        latestInputRef.current = text;
+        setInputCode(text);
+        setErrorMessage('');
+        NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
+        void runMinify(text, options);
+      },
+      onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
+    });
+  }, [options]);
+
   const updateOption = (key) => async (event) => {
     const checked = Boolean(event.target.checked);
     const nextOptions = { ...options, [key]: checked };
@@ -298,7 +320,7 @@ export function JSMinifierApp() {
             id="js-minifier-input"
             ref={inputRef}
             className="c-input c-input--textarea"
-            placeholder="Paste your JavaScript code here..."
+            placeholder="Paste your JavaScript code here, or drop a file..."
             aria-label="Input JavaScript"
             value={inputCode}
             onInput={handleInputChange}

@@ -44,6 +44,9 @@ The repo is on a post-migration steady-state workflow.
 - Shared design tokens and reusable primitives:
   - `common/material-theme.css`
   - `common/shared-styles.css`
+- Shared input behaviours: `common/shortcut-utils.ts` (Cmd/Ctrl+Enter primary
+  action) and `common/drop-zone.ts` (drag-and-drop file loading; files are read
+  in the browser and never uploaded)
 - Prerender pipeline: `scripts/prerender-tool.js`
 - HTML document generation: `scripts/tool-document.js` and `scripts/root-document.js`
 - Mixed TypeScript/JavaScript codebase with required repo-wide typecheck

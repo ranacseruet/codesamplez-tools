@@ -37,16 +37,29 @@ const DEFAULT_FAIL_PERCENT = 10;
 // markup — the same kind of sanctioned per-phase growth as the ShareBar rail
 // above. Main had already drifted to 77,284 (tolerated WARN), so this value
 // reflects the new expected size rather than masking a regression.
+//
+// `css-minifier-tool` (67,919 -> 71,459) and `js-minifier-tool` (53,969 ->
+// 58,348) were refreshed for UI v4 Phase D, which adds the shared
+// common/drop-zone.ts module (drag-and-drop file loading) plus each tool's
+// drop handler. Both were already sitting just under their warn lines
+// (js-minifier had 534 bytes of headroom), so the ~2 KB module tipped them
+// over. The module is deliberately polyfill-free — an early version used
+// `Array.from(...).includes(...)`, which dragged the core-js iterator chain
+// into every consuming bundle for ~15 KB each; see the comment on
+// `dragCarriesFiles`. The other five tools that gained the same module
+// (json-formatter, diff-checker, text-analyzer, base64-converter,
+// data-format-converter) absorbed it within their existing headroom and are
+// deliberately left un-refreshed.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
-    'js-minifier-tool': 53969,
+    'js-minifier-tool': 58348,
     'data-format-converter': 181680,
     'diff-checker-tool': 82970,
     'jwt-builder-tool': 77707,
     'jwt-decoder-tool': 78448,
     'base64-converter-tool': 100367,
     'json-formatter-tool': 79715,
-    'css-minifier-tool': 67919,
+    'css-minifier-tool': 71459,
     'text-analyzer-tool': 51949,
     'qr-code-generator': 91896
 });

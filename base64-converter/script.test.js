@@ -6,6 +6,7 @@ import Base64Codec from '../common/Base64Codec';
 import { NotificationManager } from '../common/notification-manager';
 import DownloadManager from '../common/DownloadManager';
 import CopyButton from '../common/copy-button/CopyButton';
+import { fireFileDragEvent } from '../common/drop-zone-test-utils';
 
 // Mock NotificationManager at the top level
 jest.mock('../common/notification-manager', () => ({
@@ -227,6 +228,37 @@ describe('Base64Converter UI (script.tsx)', () => {
             
             expect(elements.result.textContent).toBe('VGVzdCBjb250ZW50');
             expect(elements.input.value).toContain('[File: test.txt uploaded');
+        });
+
+        test('should encode a file dropped on the input through the upload path', () => {
+            const mockFile = new File(['Test content'], 'dropped.txt', { type: 'text/plain' });
+
+            // Unlike the text tools, base64-converter takes the raw File: it is
+            // the one tool that legitimately wants binary input.
+            fireFileDragEvent(elements.input, 'drop', [mockFile]);
+
+            mockFileReaderInstance.result = 'data:text/plain;base64,VGVzdCBjb250ZW50';
+            mockFileReaderInstance.onload();
+
+            expect(elements.result.textContent).toBe('VGVzdCBjb250ZW50');
+            expect(elements.input.value).toContain('[File: dropped.txt uploaded');
+        });
+
+        test('should surface a rejected drop as an error toast', async () => {
+            // This suite calls jest.resetModules() before re-requiring
+            // ./script, so the top-level NotificationManager import is a
+            // different mock instance than the one script.tsx received. Pull
+            // the live one out of the current registry.
+            const liveNotificationManager = require('../common/notification-manager').NotificationManager;
+
+            fireFileDragEvent(elements.input, 'drop', []);
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(liveNotificationManager.show).toHaveBeenCalledWith(
+                expect.stringContaining('No file'),
+                expect.any(Number),
+                expect.objectContaining({ type: 'error' })
+            );
         });
 
         test('should handle file read errors', () => {

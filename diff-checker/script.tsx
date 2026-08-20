@@ -5,6 +5,7 @@ import CopyButton from '../common/copy-button/CopyButton';
 import { NotificationManager } from '../common/notification-manager';
 import { scheduleTask } from '../common/scheduler-utils';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
+import { registerDropZone, type DropZoneCleanup } from '../common/drop-zone';
 import { createLazyRunner } from '../common/lazy-runner';
 import type { ToolCleanupHandle } from '../common/tooling-contracts';
 import { hydrate, render } from 'preact';
@@ -410,6 +411,7 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   // Initialize clear buttons with cleanup support
   let clearButton1: ClearButton | null = null;
   let clearButton2: ClearButton | null = null;
+  const dropZoneCleanups: DropZoneCleanup[] = [];
 
   // Web Worker runner for large diffs. Lazily imports the runner chunk on first
   // over-threshold compare (keeping the worker out of the main bundle) and
@@ -433,6 +435,7 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     }
     resultCopyButton?.disconnect();
     diffRunner.terminate();
+    dropZoneCleanups.splice(0).forEach((disposeDropZone) => disposeDropZone());
   };
 
 
@@ -466,6 +469,34 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
       clearButton2?.updateVisibility();
       compareButton.click();
     });
+  }
+
+  // Each pane is its own drop target, so comparing two files is two drops.
+  // Unlike the single-input tools this deliberately does not auto-compare:
+  // after the first drop only one side is filled, and running a compare
+  // against an empty pane would just render the whole file as an insertion.
+  const registerPaneDropZone = (
+    pane: HTMLTextAreaElement,
+    getClearButton: () => ClearButton | null
+  ) => {
+    dropZoneCleanups.push(
+      registerDropZone(pane, {
+        onText: (text, file) => {
+          pane.value = text;
+          getClearButton()?.updateVisibility();
+          setInlineError('');
+          NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
+        },
+        onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
+      })
+    );
+  };
+
+  if (text1) {
+    registerPaneDropZone(text1, () => clearButton1);
+  }
+  if (text2) {
+    registerPaneDropZone(text2, () => clearButton2);
   }
 
   if (compareButton && text1 && text2) {
@@ -543,7 +574,7 @@ export function DiffCheckerApp() {
             <textarea
               id="text1"
               className="c-input c-input--textarea c-editor-fill diffc-textarea diffc-textarea--original"
-              placeholder="Paste your first text here..."
+              placeholder="Paste your first text here, or drop a file..."
               title="Enter your original text or code here"
               aria-label="Original text input"
             />
@@ -558,7 +589,7 @@ export function DiffCheckerApp() {
             <textarea
               id="text2"
               className="c-input c-input--textarea c-editor-fill diffc-textarea diffc-textarea--modified"
-              placeholder="Paste your second text here..."
+              placeholder="Paste your second text here, or drop a file..."
               title="Enter your modified text or code here"
               aria-label="Modified text input"
             />

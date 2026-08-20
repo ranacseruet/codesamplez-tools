@@ -1,6 +1,7 @@
 import { DiffDisplay, DiffNavigator, CodeDetector, initializeDiffChecker } from './script';
 import { NotificationManager } from '../common/notification-manager';
 import { scheduleTask } from '../common/scheduler-utils';
+import { fireFileDragEvent, fireFileDrop, flushFileDrop } from '../common/drop-zone-test-utils';
 
 // Mock NotificationManager
 jest.mock('../common/notification-manager', () => ({
@@ -589,6 +590,50 @@ describe('initializeDiffChecker', () => {
     initializeDiffChecker();
 
     expect(addEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function));
+  });
+
+  test('loads a dropped file into each pane without auto-comparing', async () => {
+    initializeDiffChecker();
+
+    const original = document.getElementById('text1');
+    const modified = document.getElementById('text2');
+    const resultBefore = document.getElementById('diff-result').innerHTML;
+
+    fireFileDrop(original, 'first side', 'before.txt');
+    await flushFileDrop();
+    fireFileDrop(modified, 'second side', 'after.txt');
+    await flushFileDrop();
+
+    expect(original.value).toBe('first side');
+    expect(modified.value).toBe('second side');
+    expect(NotificationManager.show).toHaveBeenCalledWith(
+      'Loaded before.txt',
+      expect.any(Number),
+      expect.objectContaining({ type: 'success' })
+    );
+    expect(NotificationManager.show).toHaveBeenCalledWith(
+      'Loaded after.txt',
+      expect.any(Number),
+      expect.objectContaining({ type: 'success' })
+    );
+    // A drop fills one pane at a time, so the diff must wait for Compare.
+    expect(document.getElementById('diff-result').innerHTML).toBe(resultBefore);
+  });
+
+  test('reports an oversized dropped file as an error toast', async () => {
+    initializeDiffChecker();
+
+    const oversized = new File(['x'], 'huge.log');
+    Object.defineProperty(oversized, 'size', { value: 6 * 1024 * 1024 });
+    fireFileDragEvent(document.getElementById('text1'), 'drop', [oversized]);
+    await flushFileDrop();
+
+    expect(document.getElementById('text1').value).toBe('');
+    expect(NotificationManager.show).toHaveBeenCalledWith(
+      expect.stringContaining('too large'),
+      expect.any(Number),
+      expect.objectContaining({ type: 'error' })
+    );
   });
 
   test('should fall back to textContent label writes when the button has no leading text node', async () => {

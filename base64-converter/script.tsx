@@ -6,6 +6,7 @@ import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { readHashOrQueryParam } from '../common/share-url';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
+import { registerDropZone } from '../common/drop-zone';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { Base64ConverterArticle, Base64ConverterIntro } from './content';
@@ -409,7 +410,7 @@ export function Base64ConverterApp() {
                     <textarea
                         id="base64converter-input"
                         className="c-input c-input--textarea b64-textarea b64-input"
-                        placeholder="Enter text to encode or decode..."
+                        placeholder="Enter text to encode or decode, or drop a file..."
                         aria-label="Input text"
                     />
                 </div>
@@ -572,6 +573,19 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
 
     const fileUploadHandler = (e) => converter.handleFileUpload(e);
     typedElements.fileInput.addEventListener('change', fileUploadHandler);
+
+    // Drag-and-drop reuses the Upload File path rather than the text path:
+    // this tool is the one that legitimately wants binary input (images are
+    // encoded via readAsDataURL), so the raw File is handed straight to
+    // `handleFileUpload` in the same shape its change listener receives.
+    if (typedElements.input instanceof HTMLElement) {
+        registerDropZone(typedElements.input, {
+            onFile: (file) => {
+                void converter.handleFileUpload({ target: { files: [file], value: null } });
+            },
+            onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
+        });
+    }
 
     const downloadHandler = () => converter.handleDownload();
     typedElements.downloadDecodedButton.addEventListener('click', downloadHandler);

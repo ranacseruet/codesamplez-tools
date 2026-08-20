@@ -45,6 +45,12 @@ The **Diff Checker Tool** is a lightweight, web-based utility designed to compar
 
 ---
 
+9. **File Drop**
+   - Drag a file onto either pane to load it into that side
+   - The file is read in the browser and never uploaded (5 MB limit, binary files rejected)
+   - A drop deliberately does not auto-compare: it fills one pane at a time, and
+     comparing against an empty pane would render the whole file as an insertion
+
 ## Usage Example
 
 ### Step-by-Step Guide

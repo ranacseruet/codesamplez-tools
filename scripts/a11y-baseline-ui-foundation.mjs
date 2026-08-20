@@ -349,7 +349,10 @@ async function run() {
         await waitVisible(diffCheckerDesktop, '#app-shell-header .cst-appbar');
         await waitVisible(diffCheckerDesktop, '#text1');
         await waitVisible(diffCheckerDesktop, '#text2');
-        await waitVisible(diffCheckerDesktop, '#diff-result');
+        // Since UI v4 Phase C the result well is hidden while empty
+        // (`.diffc-result-output:empty`) and the empty state stands in for it,
+        // so that is what a freshly loaded page must show.
+        await waitVisible(diffCheckerDesktop, '#diff-empty-state');
         const report = await analyzePageA11y(diffCheckerDesktop);
         return { page: '/diff-checker/', viewport: 'desktop', ...report };
       });
@@ -360,7 +363,10 @@ async function run() {
         await waitVisible(diffCheckerMobile, '#app-shell-header .cst-appbar');
         await waitVisible(diffCheckerMobile, '#text1');
         await waitVisible(diffCheckerMobile, '#text2');
-        await waitVisible(diffCheckerMobile, '#diff-result');
+        // Since UI v4 Phase C the result well is hidden while empty
+        // (`.diffc-result-output:empty`) and the empty state stands in for it,
+        // so that is what a freshly loaded page must show.
+        await waitVisible(diffCheckerMobile, '#diff-empty-state');
         const report = await analyzePageA11y(diffCheckerMobile);
         return { page: '/diff-checker/', viewport: 'mobile-iphone12', ...report };
       });

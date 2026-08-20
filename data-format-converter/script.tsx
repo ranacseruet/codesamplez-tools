@@ -4,6 +4,7 @@ import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
+import { registerDropZone } from '../common/drop-zone';
 import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -32,10 +33,10 @@ interface ConvertDataOptions {
 
 const FORMATS: SupportedFormat[] = ['json', 'xml', 'yaml', 'properties'];
 const INPUT_PLACEHOLDERS: Record<SupportedFormat, string> = {
-    json: 'Paste your JSON data here...\n\nExample:\n{\n  "name": "John",\n  "age": 30,\n  "city": "New York"\n}',
-    xml: 'Paste your XML data here...\n\nExample:\n<person>\n  <name>John</name>\n  <age>30</age>\n  <city>New York</city>\n</person>',
-    yaml: 'Paste your YAML data here...\n\nExample:\nname: John\nage: 30\ncity: New York',
-    properties: 'Paste your Properties data here...\n\nExample:\nname=John\nage=30\ncity=New York'
+    json: 'Paste your JSON data here, or drop a file...\n\nExample:\n{\n  "name": "John",\n  "age": 30,\n  "city": "New York"\n}',
+    xml: 'Paste your XML data here, or drop a file...\n\nExample:\n<person>\n  <name>John</name>\n  <age>30</age>\n  <city>New York</city>\n</person>',
+    yaml: 'Paste your YAML data here, or drop a file...\n\nExample:\nname: John\nage: 30\ncity: New York',
+    properties: 'Paste your Properties data here, or drop a file...\n\nExample:\nname=John\nage=30\ncity=New York'
 };
 const MIME_TYPES: Record<SupportedFormat, string> = {
     json: 'application/json',
@@ -294,6 +295,52 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
             });
         }, 500);
     };
+
+    // A dropped file is fresh input, so it follows the typing path rather than
+    // the sample path: sample mode switches off, and the conversion still
+    // honours the Auto-convert toggle. The debounce is skipped — a drop is one
+    // discrete action, not a keystroke stream. Closure state (hence the deps),
+    // not stateRef — see handleInputChange.
+    useLayoutEffect(() => {
+        if (!(inputTextAreaRef.current instanceof HTMLTextAreaElement)) {
+            /* istanbul ignore next */
+            return undefined;
+        }
+
+        return registerDropZone(inputTextAreaRef.current, {
+            onText: (text, file) => {
+                clearTimeout(debounceTimerRef.current as ReturnType<typeof setTimeout>);
+                setInputText(text);
+                setErrorMessage('');
+                if (useSampleData) {
+                    setUseSampleData(false);
+                }
+                NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
+
+                const autoConvertElement = document.getElementById('autoConvert') as HTMLInputElement | null;
+                const shouldAutoConvert = autoConvertElement ? autoConvertElement.checked : autoConvert;
+                const trimmed = text.trim();
+                if (!shouldAutoConvert || !trimmed) {
+                    return;
+                }
+
+                let nextInputFormat = inputFormat;
+                const detected = converter.detectFormat(trimmed);
+                if (detected && detected !== inputFormat) {
+                    nextInputFormat = detected;
+                    setInputFormat(detected);
+                }
+
+                convertData({
+                    silent: true,
+                    nextInput: trimmed,
+                    nextInputFormat,
+                    nextOutputFormat: outputFormat
+                });
+            },
+            onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
+        });
+    }, [useSampleData, autoConvert, inputFormat, outputFormat]);
 
     const handleInputFormatChange = (nextFormat: SupportedFormat) => {
         // Closure state (fresh per render), not stateRef — see handleInputChange.

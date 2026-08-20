@@ -13,6 +13,8 @@ A tool to minify JavaScript code by removing comments, whitespace, and optionall
 - Real-time size and compression statistics
 - Copy to clipboard functionality
 - Clear all fields
+- Drag a `.js` file onto the input to load and minify it; the file is read in
+  the browser and never uploaded (5 MB limit, binary files rejected)
 
 ## Usage
 

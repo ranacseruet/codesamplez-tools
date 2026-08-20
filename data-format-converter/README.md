@@ -39,6 +39,12 @@ The **Data Format Converter Tool** is a web-based utility that converts between 
 
 ---
 
+6. **File Drop**
+   - Drag a file onto the input to load it
+   - The file is read in the browser and never uploaded (5 MB limit, binary files rejected)
+   - A drop counts as fresh input: sample mode switches off, and the conversion
+     still honours the Auto-convert toggle
+
 ## Usage Example
 
 ### Step-by-Step Guide

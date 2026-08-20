@@ -1,7 +1,8 @@
 import { hydrate, render } from 'preact';
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { NotificationManager } from '../common/notification-manager';
 import ClearButton from '../common/clear-button/ClearButton';
+import { registerDropZone } from '../common/drop-zone';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { analyzeText, type TextAnalysisResult } from './TextAnalyzer';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
@@ -119,6 +120,23 @@ export function TextAnalyzerApp() {
         clearButtonRef.current?.updateVisibility?.();
     }, [text]);
 
+    // A dropped file behaves exactly like Load Sample carrying that file's
+    // contents. Analysis is live here, so setting the text is the whole job.
+    useLayoutEffect(() => {
+        if (!(textAreaRef.current instanceof HTMLTextAreaElement)) {
+            /* istanbul ignore next */
+            return undefined;
+        }
+
+        return registerDropZone(textAreaRef.current, {
+            onText: (droppedText, file) => {
+                setText(droppedText);
+                NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
+            },
+            onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
+        });
+    }, []);
+
     const handleLoadSample = () => {
         setText(SAMPLE_TEXT);
         NotificationManager.show('Sample text loaded', 3000, { type: 'success' });
@@ -216,7 +234,7 @@ export function TextAnalyzerApp() {
                         id="textInput"
                         ref={textAreaRef}
                         className="c-input c-input--textarea c-editor-fill ta-input-textarea"
-                        placeholder="Enter your text here..."
+                        placeholder="Enter your text here, or drop a file..."
                         aria-label="Input text to analyze"
                         value={text}
                         onInput={handleTextInput}

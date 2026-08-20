@@ -4,6 +4,7 @@ import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
 import { scheduleTask, nextFrame } from '../common/scheduler-utils';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
+import { registerDropZone } from '../common/drop-zone';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
 import {
   autoFixJSON,
@@ -81,7 +82,7 @@ export function JsonFormatterApp() {
           <div className="o-panel-content jsonf-panel-content">
             <textarea
               className="c-input c-input--textarea jsonf-input-textarea"
-              placeholder="Paste your JSON here..."
+              placeholder="Paste your JSON here, or drop a file..."
               aria-label="Input JSON"
             />
           </div>
@@ -289,6 +290,13 @@ export class JSONFormatter {
 
     if (this.sampleBtn) {
       this.sampleBtn.addEventListener('click', () => this.loadSampleData());
+    }
+
+    if (this.input) {
+      registerDropZone(this.input, {
+        onText: (text, file) => this.loadDroppedText(text, file.name),
+        onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
+      });
     }
 
     if (this.shareBtn) {
@@ -806,6 +814,20 @@ export class JSONFormatter {
     this.clearButtonInstance.updateVisibility(); // Explicitly update ClearButton visibility
     this.formatJSON();
     NotificationManager.show('Sample data loaded successfully!', 2000, { type: 'success' });
+  }
+
+  /**
+   * Load a dropped file's contents as if they had been pasted. Reuses the
+   * Load Sample path so the tree, stats, and Clear button all refresh.
+   */
+  loadDroppedText(text: string, fileName: string): void {
+    this.input.value = text;
+    this.clearButtonInstance.updateVisibility();
+    // Toast before formatting, not after: `formatJSON` raises its own
+    // success toast, and they share one notification element — announcing the
+    // load first leaves the sequence in the order the user experiences it.
+    NotificationManager.show(`Loaded ${fileName}`, 2000, { type: 'success' });
+    this.formatJSON();
   }
 
   /**

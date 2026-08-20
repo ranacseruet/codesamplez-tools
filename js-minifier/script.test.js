@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 import { fireEvent } from '@testing-library/dom';
 import { render as preactRender } from 'preact';
+import { fireFileDragEvent, fireFileDrop, flushFileDrop } from '../common/drop-zone-test-utils';
 
 const mockClearButtonInstances = [];
 const mockCopyButtonInstances = [];
@@ -285,6 +286,39 @@ describe('JavaScript Minifier Preact runtime', () => {
     expect(document.getElementById('js-minifier-input')?.value).toContain('function calculateSum(numbers)');
     expect(document.getElementById('js-minifier-output')?.value.length).toBeGreaterThan(0);
     expect(NotificationManager.show).toHaveBeenCalledWith('Sample code loaded and minified', 1500, { type: 'success' });
+  });
+
+  it('loads a dropped file into the input and minifies it', async () => {
+    new JSMinifierToolUI();
+    await flushEffects();
+
+    fireFileDrop(document.getElementById('js-minifier-input'), 'const  a  =  1;', 'app.js');
+    await flushFileDrop();
+    await flushEffects();
+    await flushEffects();
+
+    expect(document.getElementById('js-minifier-input')?.value).toBe('const  a  =  1;');
+    expect(document.getElementById('js-minifier-output')?.value.length).toBeGreaterThan(0);
+    expect(NotificationManager.show).toHaveBeenCalledWith(
+      'Loaded app.js',
+      expect.any(Number),
+      expect.objectContaining({ type: 'success' })
+    );
+  });
+
+  it('surfaces a rejected drop as an error toast', async () => {
+    new JSMinifierToolUI();
+    await flushEffects();
+
+    fireFileDragEvent(document.getElementById('js-minifier-input'), 'drop', []);
+    await flushFileDrop();
+
+    expect(document.getElementById('js-minifier-input')?.value).toBe('');
+    expect(NotificationManager.show).toHaveBeenCalledWith(
+      expect.stringContaining('No file'),
+      expect.any(Number),
+      expect.objectContaining({ type: 'error' })
+    );
   });
 
   it('clears output and resets stats when input becomes empty', async () => {

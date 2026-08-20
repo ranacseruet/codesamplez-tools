@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 import { fireEvent } from '@testing-library/dom';
 import { render as preactRender } from 'preact';
+import { fireFileDragEvent, fireFileDrop, flushFileDrop } from '../common/drop-zone-test-utils';
 
 const mockClearButtonInstances = [];
 const mockCopyButtonInstances = [];
@@ -176,6 +177,74 @@ describe('DataFormatConverterUI Integration', () => {
         await flush();
         expect(document.getElementById('inputText')?.value).not.toContain(SAMPLE_JSON_FRAGMENT);
         expect(NotificationManager.show).toHaveBeenCalledWith('Input cleared', expect.any(Number), expect.any(Object));
+    });
+
+    it('loads a dropped file and disables sample mode like typed input does', async () => {
+        fireEvent.click(document.getElementById('loadSampleBtn'));
+        await flush();
+        expect(document.getElementById('inputText')?.value).toContain(SAMPLE_JSON_FRAGMENT);
+
+        // The drop pipeline reads the file through a promise that these specs'
+        // fake timers would stall, so run just that stretch on real timers.
+        jest.useRealTimers();
+        fireFileDrop(document.getElementById('inputText'), '{"dropped": true}', 'payload.json');
+        await flushFileDrop();
+        jest.useFakeTimers();
+        await flush();
+
+        expect(document.getElementById('inputText')?.value).toBe('{"dropped": true}');
+        expect(NotificationManager.show).toHaveBeenCalledWith(
+            'Loaded payload.json',
+            expect.any(Number),
+            expect.objectContaining({ type: 'success' })
+        );
+
+        // A dropped file is fresh input, so the one-way sample contract applies:
+        // a later format switch must not reload the sample.
+        fireEvent.click(document.querySelector('.input-section .format-btn[data-format="yaml"]'));
+        await flush();
+        expect(document.getElementById('inputText')?.value).not.toContain(SAMPLE_JSON_FRAGMENT);
+    });
+
+    it('re-detects the input format from a dropped file', async () => {
+        jest.useRealTimers();
+        // Input format is JSON by default; dropping YAML must switch it.
+        fireFileDrop(document.getElementById('inputText'), 'name: Ada\nage: 36\n', 'person.yaml');
+        await flushFileDrop();
+        jest.useFakeTimers();
+        await flush();
+
+        expect(
+            document.querySelector('.input-section .format-btn[data-format="yaml"]')?.classList.contains('active')
+        ).toBe(true);
+        expect(document.getElementById('outputText')?.value.length).toBeGreaterThan(0);
+    });
+
+    it('does not convert a dropped file while Auto-convert is off', async () => {
+        fireEvent.change(document.getElementById('autoConvert'), { target: { checked: false } });
+        await flush();
+
+        jest.useRealTimers();
+        fireFileDrop(document.getElementById('inputText'), '{"dropped": true}', 'payload.json');
+        await flushFileDrop();
+        jest.useFakeTimers();
+        await flush();
+
+        expect(document.getElementById('inputText')?.value).toBe('{"dropped": true}');
+        expect(document.getElementById('outputText')?.value).toBe('');
+    });
+
+    it('surfaces a rejected drop as an error toast', async () => {
+        jest.useRealTimers();
+        fireFileDragEvent(document.getElementById('inputText'), 'drop', []);
+        await flushFileDrop();
+        jest.useFakeTimers();
+
+        expect(NotificationManager.show).toHaveBeenCalledWith(
+            expect.stringContaining('No file'),
+            expect.any(Number),
+            expect.objectContaining({ type: 'error' })
+        );
     });
 
     it('restores sample data when the sample button is clicked again after typing', async () => {

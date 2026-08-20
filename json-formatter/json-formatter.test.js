@@ -964,7 +964,62 @@ describe('JSONFormatter', () => {
       expect(copyBtnMock).toHaveBeenCalledTimes(1);
       expect(sampleBtnMock).toHaveBeenCalledTimes(1);
       expect(shareBtnMock).toHaveBeenCalledTimes(1);
-      expect(inputMock).toHaveBeenCalledTimes(1);
+      // One 'input' listener plus the four drag events registerDropZone wires
+      // onto the same textarea (dragenter/dragover/dragleave/drop).
+      const inputEvents = inputMock.mock.calls.map(([eventName]) => eventName);
+      expect(inputEvents).toEqual(
+        expect.arrayContaining(['input', 'dragenter', 'dragover', 'dragleave', 'drop'])
+      );
+      expect(inputEvents.filter((eventName) => eventName === 'input')).toHaveLength(1);
+    });
+
+    describe('input drop zone', () => {
+      const flushDrop = async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      };
+
+      const dropOn = (files) => {
+        formatter.initializeEvents();
+        const dropHandler = inputMock.mock.calls.find(([eventName]) => eventName === 'drop')[1];
+        dropHandler({
+          preventDefault: jest.fn(),
+          dataTransfer: { types: ['Files'], files, dropEffect: '' }
+        });
+      };
+
+      beforeEach(() => {
+        // registerDropZone toggles a highlight class on its target.
+        formatter.input.classList = { toggle: jest.fn() };
+        formatter.clearButtonInstance = { updateVisibility: jest.fn() };
+        formatter.formatJSON = jest.fn();
+      });
+
+      test('loads a dropped file into the input and formats it', async () => {
+        dropOn([new File(['{"dropped": true}'], 'payload.json')]);
+        await flushDrop();
+
+        expect(formatter.input.value).toBe('{"dropped": true}');
+        expect(formatter.clearButtonInstance.updateVisibility).toHaveBeenCalled();
+        expect(formatter.formatJSON).toHaveBeenCalled();
+        expect(mockNotificationManager.show).toHaveBeenCalledWith(
+          'Loaded payload.json',
+          expect.any(Number),
+          expect.objectContaining({ type: 'success' })
+        );
+      });
+
+      test('surfaces a rejected drop as an error toast', async () => {
+        dropOn([]);
+        await flushDrop();
+
+        expect(formatter.formatJSON).not.toHaveBeenCalled();
+        expect(mockNotificationManager.show).toHaveBeenCalledWith(
+          expect.stringContaining('No file'),
+          expect.any(Number),
+          expect.objectContaining({ type: 'error' })
+        );
+      });
     });
 
     test('should trigger formatJSON on format button click', () => {

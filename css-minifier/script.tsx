@@ -13,8 +13,9 @@ import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { scheduleTask } from '../common/scheduler-utils';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
+import { registerDropZone } from '../common/drop-zone';
 import { hydrate, render } from 'preact';
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { CssMinifierArticle, CssMinifierIntro } from './content';
 import toolMetadata from './tool.meta.json';
@@ -257,6 +258,26 @@ export function CssMinifierApp() {
     }
   };
 
+  // A dropped file behaves exactly like Load Sample carrying that file's
+  // contents — fill the input, then run the tool. Re-registered when `options`
+  // change so `runMinify` never closes over a stale option set.
+  useLayoutEffect(() => {
+    if (!(inputRef.current instanceof HTMLTextAreaElement)) {
+      /* istanbul ignore next */
+      return undefined;
+    }
+
+    return registerDropZone(inputRef.current, {
+      onText: (text, file) => {
+        setInputCss(text);
+        setErrorMessage('');
+        NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
+        void runMinify(text);
+      },
+      onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
+    });
+  }, [options]);
+
   const updateOption = (key) => (event) => {
     const checked = Boolean(event.target.checked);
     setOptions((prev) => ({ ...prev, [key]: checked }));
@@ -273,7 +294,7 @@ export function CssMinifierApp() {
             id="css-minifier-input"
             ref={inputRef}
             className="c-input c-input--textarea c-editor-fill cssm-textarea cssm-input-textarea"
-            placeholder="Paste your CSS code here..."
+            placeholder="Paste your CSS code here, or drop a file..."
             aria-label="Input CSS"
             value={inputCss}
             onInput={handleInputChange}

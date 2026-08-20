@@ -4,6 +4,11 @@ A powerful web-based tool for optimizing CSS code by intelligently removing redu
 
 ## Features
 
+### Input
+- **File Drop**: Drag a `.css` file onto the input to load and minify it; the
+  file is read in the browser and never uploaded (5 MB limit, binary files
+  rejected)
+
 ### Core Optimizations
 - **Comment Removal**: Eliminates both single-line and multi-line `/* ... */` comments
 - **Whitespace Optimization**: 

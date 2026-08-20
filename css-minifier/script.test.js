@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 import { fireEvent } from '@testing-library/dom';
 import { render as preactRender } from 'preact';
+import { fireFileDragEvent, fireFileDrop, flushFileDrop } from '../common/drop-zone-test-utils';
 
 const clearButtonInstances = [];
 const copyButtonInstances = [];
@@ -270,6 +271,40 @@ describe('CSS Minifier Preact runtime', () => {
     await flushEffects();
 
     expect(NotificationManager.show).toHaveBeenCalledWith('Copied to clipboard!', expect.any(Number), expect.any(Object));
+  });
+
+  it('loads a dropped file into the input and minifies it', async () => {
+    new CssMinifierToolUI();
+    await flushEffects();
+
+    const input = document.getElementById('css-minifier-input');
+    fireFileDrop(input, 'body {  color:  #ffffff;  }', 'theme.css');
+    await flushFileDrop();
+    await flushEffects();
+
+    expect(input.value).toBe('body {  color:  #ffffff;  }');
+    expect(NotificationManager.show).toHaveBeenCalledWith(
+      'Loaded theme.css',
+      expect.any(Number),
+      expect.objectContaining({ type: 'success' })
+    );
+    expect(document.getElementById('css-minifier-output').value).not.toBe('');
+  });
+
+  it('reports a rejected drop without touching the input', async () => {
+    new CssMinifierToolUI();
+    await flushEffects();
+
+    const input = document.getElementById('css-minifier-input');
+    fireFileDragEvent(input, 'drop', []);
+    await flushFileDrop();
+
+    expect(input.value).toBe('');
+    expect(NotificationManager.show).toHaveBeenCalledWith(
+      expect.stringContaining('No file'),
+      expect.any(Number),
+      expect.objectContaining({ type: 'error' })
+    );
   });
 
   it('disconnects ClearButton and CopyButton on unmount', async () => {

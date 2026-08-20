@@ -19,6 +19,9 @@ A powerful and user-friendly web tool for encoding and decoding Base64 strings w
 - 🎨 Clean, responsive user interface
 - ⚡ Real-time conversion
 - ❌ Error handling and validation
+- 📄 **File Drop**: Drag any file onto the input to encode it — this tool takes the
+  raw file (binary included, same path as the Upload File button), unlike the
+  text tools which decode the contents first
 
 ## Usage
 

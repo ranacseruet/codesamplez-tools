@@ -700,6 +700,28 @@ body.standalone-app {
     color-mix(in srgb, var(--color-danger, var(--default-color-danger)) 40%, transparent);
 }
 
+/* v4 Phase D: drag-and-drop file target state, toggled by
+   common/drop-zone.ts while a file drag hovers the input. A textarea cannot
+   host an overlay child, so the affordance is carried by the field itself:
+   a dashed accent border plus a soft accent wash.
+
+   Specificity note: per-tool rules such as `.jsonf-tool .jsonf-input-textarea`
+   are 0,2,0 and set their own border and gradient `background`, so the plain
+   `.is-drop-active` class alone loses the cascade (browser-verified — it
+   rendered a solid border). The 0,3,0 chained form below wins, and uses the
+   `background` shorthand rather than `background-color` so a tool's gradient
+   background-image is cleared instead of painting over the wash. Same
+   precedent as the v4 Phase B ghost CTA fix. */
+.is-drop-active,
+.tool-container .c-input.is-drop-active,
+.tool-container .c-input.is-drop-active:hover,
+.tool-container .c-input.is-drop-active:focus,
+.tool-container .c-input.is-drop-active:focus-visible {
+  border: 1px dashed var(--color-accent, var(--default-color-primary));
+  background: var(--cst-color-accent-soft,
+    color-mix(in srgb, var(--color-accent, var(--default-color-primary)) 12%, transparent));
+}
+
 /* Modifier for textarea inputs */
 .c-input--textarea {
   /* height: 300px; */

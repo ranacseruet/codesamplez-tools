@@ -21,6 +21,7 @@ A lightweight, browser-based text analysis tool that provides real-time statisti
 - **Average Word Length**: Calculates the mean length of words (excluding punctuation)
 - **Average Sentence Length**: Computes the average number of words per sentence
 - **Punctuation Statistics**: Tracks usage frequency of common punctuation marks (periods, commas, question marks, exclamation marks)
+- **File Drop**: Drag a text file onto the input to analyze it; the file is read in the browser and never uploaded (5 MB limit, binary files rejected)
 
 ## Usage
 

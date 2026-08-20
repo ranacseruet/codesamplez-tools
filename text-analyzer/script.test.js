@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 import { fireEvent } from '@testing-library/dom';
 import { render as preactRender } from 'preact';
+import { fireFileDragEvent, fireFileDrop, flushFileDrop } from '../common/drop-zone-test-utils';
 
 const clearButtonInstances = [];
 
@@ -160,6 +161,41 @@ describe('TextAnalyzer Preact runtime', () => {
 
         expect(document.getElementById('textInput')?.value).toContain('This is a sample text for analysis.');
         expect(NotificationManager.show).toHaveBeenCalledWith('Sample text loaded', expect.any(Number), expect.any(Object));
+    });
+
+    it('analyzes a dropped file', async () => {
+        new TextAnalyzerToolUI();
+        await flushEffects();
+
+        fireFileDrop(document.getElementById('textInput'), 'one two three.', 'notes.txt');
+        await flushFileDrop();
+        await flushEffects();
+
+        expect(document.getElementById('textInput')?.value).toBe('one two three.');
+        expect(document.getElementById('wordCount')?.textContent).toBe('3');
+        expect(NotificationManager.show).toHaveBeenCalledWith(
+            'Loaded notes.txt',
+            expect.any(Number),
+            expect.objectContaining({ type: 'success' })
+        );
+    });
+
+    it('reports a dropped file that cannot be read', async () => {
+        new TextAnalyzerToolUI();
+        await flushEffects();
+
+        const unreadable = new File(['x'], 'locked.txt');
+        Object.defineProperty(unreadable, 'text', { value: () => Promise.reject(new Error('nope')) });
+        fireFileDragEvent(document.getElementById('textInput'), 'drop', [unreadable]);
+        await flushFileDrop();
+        await flushEffects();
+
+        expect(document.getElementById('textInput')?.value).toBe('');
+        expect(NotificationManager.show).toHaveBeenCalledWith(
+            expect.stringContaining('Could not read'),
+            expect.any(Number),
+            expect.objectContaining({ type: 'error' })
+        );
     });
 
     it('handles clear-button textCleared event and shows notification', async () => {

@@ -23,6 +23,8 @@ A tool for formatting and validating JSON data with optional alphabetical key so
 - Shareable URLs: compress the current JSON + settings into the URL's hash fragment for private, client-side-only sharing
 - Mobile-responsive design
 - Shared notification system for consistent user feedback
+- Drag a file onto the input to load and format it; the file is read in the
+  browser and never uploaded (5 MB limit, binary files rejected)
 
 ## Usage
 1. Paste your JSON into the input area
