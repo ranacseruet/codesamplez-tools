@@ -106,12 +106,7 @@
   gap: 0.75rem;
 }
 
-/* Primary action lives on its own centered row below the input/output panes. */
-.jsonf-tool .jsonf-format-row {
-  display: flex;
-  justify-content: center;
-}
-
+/* Primary action sits at the right end of the top action strip (Phase C). */
 .jsonf-tool .jsonf-format-btn {
   min-width: 12rem;
 }
@@ -220,6 +215,11 @@
   position: relative;
 }
 
+/* Empty tree well: the `.c-empty-state` block stands in for it. */
+.jsonf-tool #treeView .jsonf-code-output:has(> code:empty) {
+  display: none;
+}
+
 .jsonf-tool .jsonf-output-content {
   padding-top: var(--spacing-md, var(--default-spacing-md));
 }
@@ -256,24 +256,6 @@
   font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 0.9rem;
   line-height: 1.45;
-}
-
-/* Reactive empty state: the <code> is emptied on clear/error and filled on
-   success, so this placeholder appears and disappears without any JS. The shared
-   `.c-code-output:empty::before` rule never fires here because the <pre> always
-   wraps a <code> child — this targets the actually-empty <code>. */
-.jsonf-tool #treeView .jsonf-code-output code:empty::before {
-  content: "Formatted JSON will appear here…";
-  display: block;
-  width: 100%;
-  min-width: 0;
-  padding-top: 3.25rem;
-  text-align: center;
-  white-space: normal;
-  font-family: var(--font-family-base, ui-sans-serif, system-ui, sans-serif);
-  font-size: 0.95rem;
-  font-style: italic;
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
 }
 
 .jsonf-tool .json-node {
@@ -323,10 +305,6 @@
 .jsonf-tool .jsonf-formatted-size {
   font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   color: var(--color-text, #1f2937);
-}
-
-.jsonf-tool .jsonf-footer {
-  padding: 0.35rem 0.2rem 0;
 }
 
 @media (max-width: 900px) {

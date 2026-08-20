@@ -28,10 +28,15 @@ jest.mock('../common/app-shell/mountToolShell', () => ({
     mountToolShell: jest.fn()
 }));
 
+jest.mock('../common/notification-manager', () => ({
+    NotificationManager: { show: jest.fn() }
+}));
+
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import QRCode from 'qrcode';
 import { QRCodeGeneratorToolUI } from './script';
 import ClearButton from '../common/clear-button/ClearButton';
+import { NotificationManager } from '../common/notification-manager';
 
 describe('QRCodeGenerator Preact runtime', () => {
     const flush = () => Promise.resolve();
@@ -84,6 +89,21 @@ describe('QRCodeGenerator Preact runtime', () => {
 
         expect(document.getElementById('error-message')?.textContent).toContain('Please enter text or a URL');
         expect(document.getElementById('qr-canvas')?.style.display).toBe('none');
+    });
+
+    it('Load Sample restores the default URL and confirms via toast', async () => {
+        new QRCodeGeneratorToolUI();
+        await flushEffects();
+
+        fireEvent.input(document.getElementById('qr-text'), { target: { value: '' } });
+        await wait(300);
+        await flushEffects();
+
+        fireEvent.click(document.getElementById('qr-load-sample'));
+        await flushEffects();
+
+        expect(document.getElementById('qr-text')?.value).toBe('https://codesamplez.com');
+        expect(NotificationManager.show).toHaveBeenCalledWith('Sample URL loaded', 2000, { type: 'success' });
     });
 
     it('updates sliders and downloads generated QR image', async () => {

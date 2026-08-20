@@ -89,6 +89,23 @@ describe('JWT Decoder Preact runtime', () => {
     expect(window.jwtDecoderApp).toBe(ui.app);
   });
 
+  it('Load Sample restores the token/secret and re-decodes', async () => {
+    new JWTDecoderToolUI();
+    await flushEffects();
+
+    document.getElementById('jwtInputToken').value = '';
+    document.getElementById('jwtSecretKey').value = '';
+
+    fireEvent.click(document.getElementById('jwt-decoder-sample-btn'));
+    await flushEffects();
+    await flushEffects();
+
+    expect(document.getElementById('jwtInputToken')?.value).toContain('eyJhbGciOiJIUzI1Ni');
+    expect(document.getElementById('jwtSecretKey')?.value).toBe('your-256-bit-secret');
+    expect(document.getElementById('rawJsonViewer')?.innerHTML).toContain('header');
+    expect(NotificationManager.show).toHaveBeenCalledWith('Sample token loaded', 2000, { type: 'success' });
+  });
+
   it('decodes and validates through rendered controls', async () => {
     new JWTDecoderToolUI();
     await flushEffects();
@@ -98,7 +115,6 @@ describe('JWT Decoder Preact runtime', () => {
     const decodeBtn = document.getElementById('jwt-decoder-decode-btn');
     const validateBtn = document.getElementById('jwt-decoder-validate-btn');
     const status = document.getElementById('jwtSignatureStatus');
-
     fireEvent.input(tokenInput, { target: { value: 'valid.token.sig' } });
     fireEvent.input(secretInput, { target: { value: '' } });
     fireEvent.click(decodeBtn);

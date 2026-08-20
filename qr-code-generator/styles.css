@@ -18,15 +18,20 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md, var(--default-spacing-md));
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 10%, transparent), transparent 58%),
-    linear-gradient(180deg, color-mix(in srgb, var(--cst-color-mix-neutral, white) 90%, var(--color-primary-soft, #e9f3fb)), var(--cst-color-mix-neutral, white));
+  /* v4: flat surface — gradient chrome removed (Phase C). */
+}
+
+.qr-tool__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  padding: 0 0 0.8rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
 }
 
 .qr-tool__section-title {
   margin: 0;
-  padding: 0 0 0.8rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
   font-size: 1.05rem;
   letter-spacing: 0.01em;
 }

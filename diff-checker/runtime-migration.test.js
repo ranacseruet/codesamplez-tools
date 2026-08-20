@@ -74,7 +74,8 @@ describe('Diff Checker Preact runtime', () => {
     expect(ui.instance).toBeTruthy();
     expect(document.getElementById('text1')).not.toBeNull();
     expect(document.getElementById('text2')).not.toBeNull();
-    expect(document.getElementById('compare-button')?.textContent).toBe('Compare');
+    // Primary action label includes the ⌘⏎ kbd hint chip.
+    expect(document.getElementById('compare-button')?.textContent).toBe('Compare⌘⏎');
     expect(document.getElementById('ignore-whitespace')?.checked).toBe(true);
     expect(document.body.textContent).toContain('About This Tool');
     expect(document.body.textContent).toContain('What is a Diff Checker?');
@@ -95,7 +96,7 @@ describe('Diff Checker Preact runtime', () => {
     await flushEffects();
 
     expect(document.getElementById('diff-result')?.children.length).toBeGreaterThan(0);
-    expect(document.getElementById('compare-button')?.textContent).toBe('Compare');
+    expect(document.getElementById('compare-button')?.textContent).toBe('Compare⌘⏎');
     expect(document.getElementById('compare-button')?.disabled).toBe(false);
     expect(NotificationManager.show).toHaveBeenCalledWith('Diff computation complete!');
   });

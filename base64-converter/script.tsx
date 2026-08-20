@@ -5,6 +5,7 @@ import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { readHashOrQueryParam } from '../common/share-url';
+import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { Base64ConverterArticle, Base64ConverterIntro } from './content';
@@ -23,7 +24,6 @@ interface Base64ConverterElements {
     input: HTMLTextAreaElement;
     result: HTMLElement;
     status: HTMLElement;
-    copyStatus: HTMLElement;
     mode: HTMLSelectElement;
     encoding: HTMLSelectElement;
     fileInput: HTMLInputElement;
@@ -87,7 +87,6 @@ const BASE64_CONVERTER_ELEMENT_IDS = {
     input: 'base64converter-input',
     result: 'base64converter-result',
     status: 'base64converter-status',
-    copyStatus: 'base64converter-copy-status',
     mode: 'base64converter-mode',
     encoding: 'base64converter-encoding',
     fileInput: 'base64converter-file',
@@ -138,7 +137,8 @@ const createConverter = (): Base64ConverterInstance => {
                     this.currentMimeType = detectedMimeType; // Persist for download
                 } else {
                     this.elements.result.textContent = '';
-                    NotificationManager.show('Invalid Data URI format', 3000, { type: 'error' });
+                    // v4 contract: errors surface inline in the status chip.
+                    this.elements.status.textContent = 'Invalid Data URI format';
                     return;
                 }
             }
@@ -208,6 +208,7 @@ const createConverter = (): Base64ConverterInstance => {
                 }
 
                 this.elements.result.textContent = resultText;
+                this.elements.status.textContent = '';
                 // Update CopyButton visibility directly
                 this.copyButtonInstance.forceUpdateVisibility();
                 if (statusActionMessage === 'Decoded' && detectedMimeType && !detectedMimeType.startsWith('text/')) {
@@ -224,15 +225,12 @@ const createConverter = (): Base64ConverterInstance => {
                 console.error('Processing error:', error);
                 this.elements.result.textContent = '';
                 let errorMessage = '';
-                let isEncodingError = false;
                 const message = error instanceof Error ? error.message : String(error);
 
                 if (message.includes('UCS-2')) {
                     errorMessage = 'Invalid UCS-2 sequence - Input may be corrupted or not UCS-2 text.';
-                    isEncodingError = true;
                 } else if (message.includes('UTF-8')) {
                     errorMessage = 'Invalid UTF-8 sequence - Input may be corrupted or not UTF-8 text. Try a different encoding, or Download if binary.';
-                    isEncodingError = true;
                 } else if (message.includes('Invalid base64 input string')) {
                     errorMessage = 'Invalid base64 input';
                 } else if (message.includes('Invalid Data URI format')) {
@@ -243,11 +241,9 @@ const createConverter = (): Base64ConverterInstance => {
                     errorMessage = `Processing failed: ${message}`;
                 }
 
-                if (isEncodingError) {
-                    this.elements.status.textContent = errorMessage;
-                } else {
-                    NotificationManager.show('⚠ ' + errorMessage, 3000, { type: 'error' });
-                }
+                // v4 contract: all errors surface inline in the status chip;
+                // toasts are reserved for success confirmations.
+                this.elements.status.textContent = errorMessage;
                 this.elements.downloadDecodedButton.disabled = true;
             }
         },
@@ -427,39 +423,41 @@ export function Base64ConverterApp() {
                         className="c-input c-input--textarea b64-textarea b64-output"
                         readOnly
                         aria-label="Output text"
+                        placeholder="Converted output will appear here..."
                     />
                 </div>
             </div>
 
-            <div className="u-flex u-justify-between u-mt-md b64-action-row">
+            <div className="u-flex u-mt-md b64-action-row c-action-strip">
                 <div className="u-flex u-gap-sm b64-file-action">
+                    <button type="button" id="base64converter-load-sample" className="c-button c-button--ghost b64-load-sample-button">
+                        Load Sample
+                    </button>
                     <input type="file" id="base64converter-file" className="u-visually-hidden" />
                     <label className="c-button c-button--secondary b64-upload-button" htmlFor="base64converter-file">
                         Upload File
                     </label>
                 </div>
-                <div className="u-flex u-justify-center b64-convert-action">
-                    <button id="base64converter-convert" className="c-button b64-convert-button">Convert</button>
-                </div>
-                <div className="b64-download-action">
-                    <button
-                        id="base64converter-download-decoded"
-                        className="c-button c-button--secondary c-button--icon-download b64-download-button"
-                        disabled
-                    >
-                        Download
-                    </button>
-                </div>
+                <span className="c-toolbar__spacer" />
+                <button type="button" id="base64converter-convert" className="c-button b64-convert-button">
+                    Convert
+                    <span className="c-kbd" aria-hidden="true">⌘⏎</span>
+                </button>
+                <button
+                    type="button"
+                    id="base64converter-download-decoded"
+                    className="c-button c-button--secondary c-button--icon-download b64-download-button"
+                    disabled
+                >
+                    Download
+                </button>
             </div>
 
             <div className="o-controls b64-status-panel c-surface-card">
                 <span id="base64converter-status" className="b64-status-text c-status-chip" aria-live="polite" />
-                <span id="base64converter-copy-status" className="b64-status-text c-status-chip" aria-live="polite" />
             </div>
 
-            <div id="notification" className="c-notification" role="status" aria-live="polite">
-                Copied to clipboard!
-            </div>
+            <div id="notification" className="c-notification" role="status" aria-live="polite" />
 
             {/* Tool-first ordering: About intro + guide below the interactive tool. */}
             <Base64ConverterIntro />
@@ -548,12 +546,29 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
     }
 
     const convertHandler = () => {
-        if (!converter.elements.input.value.trim()) {
-            NotificationManager.show('Please enter some text or upload a file to convert', 3000, { type: 'error' });
-        }
         converter.processInput();
+        // v4 contract: errors surface inline in the status chip. processInput
+        // clears the chip on the empty path, so set the message after it.
+        if (!converter.elements.input.value.trim()) {
+            converter.elements.status.textContent = 'Please enter some text or upload a file to convert';
+        }
     };
     typedElements.convertButton.addEventListener('click', convertHandler);
+    if (typedElements.convertButton instanceof HTMLElement) {
+        registerPrimaryActionShortcut(typedElements.convertButton);
+    }
+
+    const sampleHandler = () => {
+        // Load Sample always demonstrates a valid encode: reset the mode to
+        // Auto so a plain-text sample isn't fed to Decode (which would error).
+        converter.elements.mode.value = 'auto';
+        converter.elements.input.value = 'Hello from CodeSamplez Tools!';
+        converter.processInput();
+    };
+    const sampleButton = document.getElementById('base64converter-load-sample');
+    if (sampleButton) {
+        sampleButton.addEventListener('click', sampleHandler);
+    }
 
     const fileUploadHandler = (e) => converter.handleFileUpload(e);
     typedElements.fileInput.addEventListener('change', fileUploadHandler);

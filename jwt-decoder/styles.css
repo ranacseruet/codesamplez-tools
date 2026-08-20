@@ -212,20 +212,22 @@
 }
 
 .jwt-decoder-tool .jwt-decoder-toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--spacing-md, var(--default-spacing-md));
-  align-items: center;
   margin: 0;
 }
 
 .jwt-decoder-tool .jwt-decoder-primary-actions {
   display: flex;
+  flex: 1 1 auto;
   gap: var(--spacing-sm, var(--default-spacing-sm));
   flex-wrap: wrap;
 }
 
 .jwt-decoder-tool .jwt-decoder-action-btn {
+  /* v4: ghost secondary actions keep natural width; only the primary
+     (Validate) stretches. */
+}
+
+.jwt-decoder-tool #jwt-decoder-validate-btn.jwt-decoder-action-btn {
   flex: 1 1 13.5rem;
 }
 
@@ -250,13 +252,9 @@
   font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
 }
 
-.jwt-decoder-tool .jwt-decoder-footer {
-  padding: 0.75rem 0.25rem 0;
-}
-
 @media (max-width: 900px) {
   .jwt-decoder-tool .jwt-decoder-toolbar {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     align-items: stretch;
   }
 

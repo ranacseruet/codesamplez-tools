@@ -131,11 +131,11 @@ describe('CSS Minifier Preact runtime', () => {
     await flushEffects();
 
     expect(document.getElementById('css-minifier-output')?.value).toBe('');
-    expect(NotificationManager.show).toHaveBeenCalledWith(
-      'Error: Please enter CSS to minify',
-      expect.any(Number),
-      expect.any(Object)
-    );
+    // v4 contract: errors surface inline, not as toasts.
+    expect(NotificationManager.show).not.toHaveBeenCalled();
+    const errorStatus = document.getElementById('css-minifier-error-status');
+    expect(errorStatus?.textContent).toBe('Please enter CSS to minify');
+    expect(errorStatus?.classList.contains('error')).toBe(true);
   });
 
   it('shows validation error for invalid CSS input', async () => {
@@ -152,11 +152,8 @@ describe('CSS Minifier Preact runtime', () => {
     await flushEffects();
 
     expect(document.getElementById('css-minifier-output')?.value).toBe('');
-    expect(NotificationManager.show).toHaveBeenCalledWith(
-      'Error: Invalid CSS input. Please check your CSS syntax.',
-      expect.any(Number),
-      expect.any(Object)
-    );
+    // v4 contract: errors surface inline, not as toasts.
+    expect(NotificationManager.show).not.toHaveBeenCalled();
 
     const errorStatus = document.getElementById('css-minifier-error-status');
     expect(errorStatus?.textContent).toBe('Invalid CSS input. Please check your CSS syntax.');
@@ -191,11 +188,8 @@ describe('CSS Minifier Preact runtime', () => {
     await flushEffects();
 
     expect(document.getElementById('css-minifier-output')?.value).toBe('');
-    expect(NotificationManager.show).toHaveBeenCalledWith(
-      'Error: Failed to process CSS. boom',
-      expect.any(Number),
-      expect.any(Object)
-    );
+    // v4 contract: errors surface inline, not as toasts.
+    expect(NotificationManager.show).not.toHaveBeenCalled();
 
     const errorStatus = document.getElementById('css-minifier-error-status');
     expect(errorStatus?.textContent).toBe('Failed to process CSS. boom');

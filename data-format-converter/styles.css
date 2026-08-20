@@ -182,13 +182,7 @@
 
 .dfc-tool .dfc-primary-actions.c-options-panel {
   margin: 0;
-  justify-content: center;
-  background:
-    linear-gradient(
-      180deg,
-      var(--md-sys-color-surface-container-low, #f5f7f9) 0%,
-      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 88%, var(--color-primary, #005f73) 12%) 100%
-    );
+  /* v4: flat surface from .c-action-strip; gradient removed. */
 }
 
 .dfc-tool .dfc-convert-btn {

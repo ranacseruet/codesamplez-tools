@@ -26,9 +26,20 @@ jest.mock('../common/clear-button/ClearButton', () => ({
     })
 }));
 
+// Controllable lazy runner: only the large-input (async) analysis path reaches
+// it, and no other test in this suite uses inputs above the worker threshold.
+var resolvePendingAnalysis = null;
+jest.mock('../common/lazy-runner', () => ({
+    createLazyRunner: jest.fn(() => ({
+        run: jest.fn(() => new Promise((resolve) => { resolvePendingAnalysis = resolve; })),
+        terminate: jest.fn()
+    }))
+}));
+
 import { NotificationManager } from '../common/notification-manager';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { TextAnalyzerToolUI } from './script';
+import { analyzeText } from './TextAnalyzer';
 import ClearButton from '../common/clear-button/ClearButton';
 import { FAQ_ITEMS } from './content';
 import { SITE_BASE_URL } from '../common/siteBaseUrl';
@@ -39,10 +50,21 @@ describe('TextAnalyzer Preact runtime', () => {
         await flush();
         await flush();
     };
+    // Preact flushes useEffect on a deferred (rAF/timer) schedule; poll across
+    // a few macrotasks rather than assuming a single tick is enough.
+    const waitFor = async (predicate, label) => {
+        for (let i = 0; i < 50; i += 1) {
+            if (predicate()) return;
+            await flushEffects();
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+        throw new Error(`Timed out waiting for ${label}`);
+    };
 
     beforeEach(() => {
         jest.clearAllMocks();
         clearButtonInstances.length = 0;
+        resolvePendingAnalysis = null;
         document.body.innerHTML = '<div id="text-analyzer-app"></div>';
     });
 
@@ -107,11 +129,10 @@ describe('TextAnalyzer Preact runtime', () => {
         const input = document.getElementById('textInput');
         fireEvent.input(input, { target: { value: largeText } });
 
-        // Poll for the async result to land.
-        for (let i = 0; i < 20 && document.getElementById('wordCount')?.textContent !== '1100'; i += 1) {
-            await flushEffects();
-            await new Promise((resolve) => setTimeout(resolve, 0));
-        }
+        await waitFor(() => typeof resolvePendingAnalysis === 'function', 'resolvePendingAnalysis is a function');
+
+        resolvePendingAnalysis(analyzeText(largeText));
+        await waitFor(() => document.getElementById('wordCount')?.textContent === '1100', 'wordCount === 1100');
 
         expect(document.getElementById('wordCount')?.textContent).toBe('1100');
         expect(document.getElementById('charCount')?.textContent).toBe('5500');
@@ -156,6 +177,103 @@ describe('TextAnalyzer Preact runtime', () => {
         expect(document.getElementById('textInput')?.value).toBe('');
         expect(document.getElementById('wordCount')?.textContent).toBe('0');
         expect(NotificationManager.show).toHaveBeenCalledWith('Text cleared', expect.any(Number), expect.any(Object));
+    });
+
+    it('copies serialized results via the Copy Results button', async () => {
+        // jsdom is not a secure context → the execCommand fallback path runs.
+        let capturedContent = '';
+        const execCommandMock = jest.fn((command) => {
+            if (command === 'copy') {
+                capturedContent = document.activeElement?.value || '';
+                return true;
+            }
+            return false;
+        });
+        document.execCommand = execCommandMock;
+
+        new TextAnalyzerToolUI();
+        await flushEffects();
+
+        fireEvent.input(document.getElementById('textInput'), { target: { value: 'Hello, world? Yes!' } });
+        await flushEffects();
+
+        fireEvent.click(document.getElementById('copy-results'));
+        await flushEffects();
+
+        expect(execCommandMock).toHaveBeenCalledWith('copy');
+        expect(capturedContent).toContain('Word Count: 3');
+        expect(capturedContent).toContain('Word Frequency (Top 5):');
+        expect(NotificationManager.show).toHaveBeenCalledWith('Results copied to clipboard!', 2000, { type: 'success' });
+
+        delete document.execCommand;
+    });
+
+    it('keeps Copy Results disabled while input is empty', async () => {
+        new TextAnalyzerToolUI();
+        await flushEffects();
+
+        expect(document.getElementById('copy-results')?.disabled).toBe(true);
+    });
+
+    it('copies results via the Clipboard API in a secure context', async () => {
+        const writeText = jest.fn().mockResolvedValue(undefined);
+        Object.defineProperty(window.navigator, 'clipboard', { configurable: true, value: { writeText } });
+        Object.defineProperty(window, 'isSecureContext', { configurable: true, value: true });
+
+        new TextAnalyzerToolUI();
+        await flushEffects();
+
+        fireEvent.input(document.getElementById('textInput'), { target: { value: 'Hello world' } });
+        await flushEffects();
+
+        fireEvent.click(document.getElementById('copy-results'));
+        await waitFor(() => writeText.mock.calls.length === 1, 'clipboard.writeText called');
+
+        expect(writeText.mock.calls[0][0]).toContain('Word Count: 2');
+        expect(NotificationManager.show).toHaveBeenCalledWith('Results copied to clipboard!', 2000, { type: 'success' });
+    });
+
+    it('shows an error toast when the copy fallback fails', async () => {
+        // Force the execCommand fallback path and make it fail.
+        Object.defineProperty(window, 'isSecureContext', { configurable: true, value: false });
+        Object.defineProperty(window.navigator, 'clipboard', { configurable: true, value: undefined });
+        document.execCommand = jest.fn(() => false);
+
+        new TextAnalyzerToolUI();
+        await flushEffects();
+
+        fireEvent.input(document.getElementById('textInput'), { target: { value: 'Hello world' } });
+        await flushEffects();
+
+        fireEvent.click(document.getElementById('copy-results'));
+        await waitFor(() => NotificationManager.show.mock.calls.some((c) => c[0] === 'Failed to copy results'), 'copy failure toast');
+
+        expect(NotificationManager.show).toHaveBeenCalledWith('Failed to copy results', 3000, { type: 'error' });
+
+        delete document.execCommand;
+    });
+
+    it('keeps Copy Results disabled until the async analysis resolves', async () => {
+        new TextAnalyzerToolUI();
+        await flushEffects();
+
+        const largeText = 'word '.repeat(1100); // 5500 chars → async worker path
+        fireEvent.input(document.getElementById('textInput'), { target: { value: largeText } });
+
+        // Wait until the async effect dispatched the runner AND the disabled
+        // state re-rendered (the pre-render empty-text state is also disabled,
+        // so check both signals to avoid a false pass).
+        await waitFor(
+            () => typeof resolvePendingAnalysis === 'function' && document.getElementById('copy-results')?.disabled === true,
+            'runner dispatched and copy-results disabled'
+        );
+
+        expect(document.getElementById('copy-results')?.disabled).toBe(true);
+
+        resolvePendingAnalysis({ wordCount: 1100, wordFrequency: [] });
+        await waitFor(() => document.getElementById('copy-results')?.disabled === false, 'copy-results is enabled');
+
+        expect(document.getElementById('copy-results')?.disabled).toBe(false);
     });
 
     it('unmounts cleanly without errors', async () => {

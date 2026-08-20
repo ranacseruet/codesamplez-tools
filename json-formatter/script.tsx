@@ -3,6 +3,7 @@ import { formatBytes } from '../common/format-utils';
 import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
 import { scheduleTask, nextFrame } from '../common/scheduler-utils';
+import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
 import {
   autoFixJSON,
@@ -47,7 +48,7 @@ export function JsonFormatterApp() {
   return (
     <div id="json-formatter-tool" className="tool-container jsonf-tool c-tool-stack">
       <div className="o-toolbar jsonf-controls-custom jsonf-toolbar c-action-strip c-toolbar">
-        <button className="c-button c-button--secondary jsonf-sample-btn" id="loadSampleBtn" type="button">Load Sample</button>
+        <button className="c-button c-button--ghost jsonf-sample-btn" id="loadSampleBtn" type="button">Load Sample</button>
         <div className="c-checkbox-item jsonf-checkbox-item">
           <input type="checkbox" id="sortKeys" defaultChecked />
           <label htmlFor="sortKeys">Sort keys</label>
@@ -65,6 +66,11 @@ export function JsonFormatterApp() {
             <option value="minify">Minified</option>
           </select>
         </div>
+        <span className="c-toolbar__spacer" />
+        <button className="c-button jsonf-format-btn" id="formatJsonBtn" type="button">
+          Format JSON
+          <span className="c-kbd" aria-hidden="true">⌘⏎</span>
+        </button>
       </div>
 
       <div className="c-workbench c-workbench--two-col jsonf-workbench">
@@ -124,6 +130,17 @@ export function JsonFormatterApp() {
                   Collapse All
                 </button>
               </div>
+              <div id="jsonfEmptyState" className="c-empty-state">
+                <span className="c-empty-state__icon" aria-hidden="true">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <path d="M14 2v6h6" />
+                    <path d="M9 13h6M9 17h6" />
+                  </svg>
+                </span>
+                <p className="c-empty-state__message">Formatted JSON will appear here</p>
+                <p className="c-empty-state__hint">Paste JSON or load a sample, then run Format JSON.</p>
+              </div>
               <pre className="c-code-output jsonf-code-output" tabIndex={0}><code /></pre>
             </div>
             <div id="plainView" className="view-container">
@@ -151,10 +168,6 @@ export function JsonFormatterApp() {
         </div>
       </div>
 
-      <div className="jsonf-format-row">
-        <button className="c-button jsonf-format-btn" id="formatJsonBtn" type="button">Format JSON</button>
-      </div>
-
       <div className="c-stats-panel jsonf-stats-panel c-surface-card">
         <div className="c-stat-row">
           <span>Original Size:</span>
@@ -167,7 +180,6 @@ export function JsonFormatterApp() {
       </div>
 
       <div id="notification" className="c-notification" role="status" aria-live="polite" />
-      <div className="jsonf-footer c-tool-footer">Made by Developer, for developers with ❤️</div>
 
       {/* Tool-first ordering: the About intro + guide article render below the
           interactive tool (still prerendered, so SEO content is preserved). */}
@@ -201,6 +213,7 @@ export class JSONFormatter {
   errorIndex: number | null = null;
   originalSizeEl!: HTMLElement;
   formattedSizeEl!: HTMLElement;
+  emptyStateEl: HTMLElement | null = null;
   clearButtonInstance!: ClearButton;
 
   // Lazily-imported worker runner for large inputs. The import (and thus the
@@ -238,6 +251,8 @@ export class JSONFormatter {
       this.goToErrorBtn = document.querySelector('#goToErrorBtn') as HTMLButtonElement;
       this.originalSizeEl = document.querySelector('.jsonf-original-size') as HTMLElement;
       this.formattedSizeEl = document.querySelector('.jsonf-formatted-size') as HTMLElement;
+      // getElementById keeps this off the querySelector-count-sensitive path.
+      this.emptyStateEl = document.getElementById('jsonfEmptyState');
 
       // Initialize ClearButton for the input textarea
       this.clearButtonInstance = new ClearButton(this.input);
@@ -246,9 +261,22 @@ export class JSONFormatter {
     }
   }
 
+  // Swap only the button's leading text node so the in-markup `.c-kbd` hint
+  // survives the loading-state label flips (a raw textContent write would
+  // destroy the span).
+  private setPrimaryButtonLabel(text: string): void {
+    const first = this.formatBtn.firstChild;
+    if (first && first.nodeType === 3 /* Node.TEXT_NODE */) {
+      first.textContent = text;
+    } else {
+      this.formatBtn.textContent = text;
+    }
+  }
+
   initializeEvents() {
     if (this.formatBtn) {
       this.formatBtn.addEventListener('click', () => this.formatJSON());
+      registerPrimaryActionShortcut(this.formatBtn);
     }
 
     if (this.copyBtn) {
@@ -318,9 +346,8 @@ export class JSONFormatter {
     try {
       let inputValue = this.input.value.trim();
 
-      // UI Feedback: Show loading state
-      const originalBtnText = this.formatBtn.textContent;
-      this.formatBtn.textContent = 'Formatting...';
+      // UI Feedback: Show loading state (first-text-node swap keeps `.c-kbd`)
+      this.setPrimaryButtonLabel('Formatting...');
       this.formatBtn.disabled = true;
       this.clearError();
 
@@ -358,6 +385,9 @@ export class JSONFormatter {
       if (runId !== this.currentRunId) return;
 
       this.output.appendChild(fragment);
+      if (this.emptyStateEl) {
+        this.emptyStateEl.style.display = 'none';
+      }
 
       this.plainViewTextarea.value = formattedString; // Populate plain view
 
@@ -383,11 +413,14 @@ export class JSONFormatter {
       this.collapseAllBtn.disabled = true;
       this.output.replaceChildren();
       this.plainViewTextarea.value = '';
+      if (this.emptyStateEl) {
+        this.emptyStateEl.style.display = '';
+      }
       this.updateStats(this.input.value, '');
     } finally {
       // Restore UI state ONLY if this is still the current run
       if (runId === this.currentRunId) {
-        this.formatBtn.textContent = 'Format JSON';
+        this.setPrimaryButtonLabel('Format JSON');
         this.formatBtn.disabled = false;
       }
     }

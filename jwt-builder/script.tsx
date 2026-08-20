@@ -1,5 +1,6 @@
 import { JWTBuilder } from './JWTBuilder';
 import { NotificationManager } from '../common/notification-manager';
+import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import CopyButton from '../common/copy-button/CopyButton';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -14,6 +15,7 @@ type JwtBuilderWindow = Window & {
   generateRandomSecret?: () => string | null;
   setExp?: (hours: number) => void;
   setNow?: (elementId: string) => void;
+  loadSampleClaims?: () => void;
 };
 
 const browserWindow = typeof window !== 'undefined' ? (window as JwtBuilderWindow) : null;
@@ -37,6 +39,29 @@ function getInputValue(id: string): string {
   return getInputElement(id)?.value || '';
 }
 
+// v4 contract: build errors surface inline; the empty-state well copy flips by
+// toggling the dedicated element rather than relying on a bare <pre>.
+function setInlineError(message: string): void {
+  const status = document.getElementById('jwt-builder-error-status');
+  /* istanbul ignore next */
+  if (!status) {
+    return;
+  }
+  status.textContent = message;
+  status.classList.toggle('error', message.length > 0);
+}
+
+function toggleEmptyState(show: boolean): void {
+  const emptyState = document.getElementById('jwt-builder-empty-state');
+  if (emptyState) {
+    emptyState.style.display = show ? '' : 'none';
+  }
+  const resultDiv = document.getElementById('result');
+  if (resultDiv) {
+    resultDiv.style.display = show ? 'none' : '';
+  }
+}
+
 function initializeDefaultClaims() {
   const now = new Date();
   const sixMonthsFromNow = new Date(now);
@@ -54,8 +79,23 @@ function initializeDefaultClaims() {
 
   const standardClaims: (keyof typeof payload)[] = ['iss', 'exp', 'sub', 'aud', 'iat', 'nbf', 'jti'];
   standardClaims.forEach((claim) => {
-    document.getElementById(claim)?.setAttribute('value', payload[claim]);
+    const input = getInputElement(claim);
+    if (input) {
+      input.value = payload[claim];
+    }
   });
+}
+
+// Load Sample resets the package to the shipped defaults (standard claims +
+// the bundled secret) — a uniform reset affordance across tools.
+export function loadSampleClaims() {
+  initializeDefaultClaims();
+  const keyInput = getInputElement('key');
+  if (keyInput) {
+    keyInput.value = 'your-jwt-secret-key';
+    keyCopyButton?.updateVisibility();
+  }
+  NotificationManager.show('Sample claims loaded', 2000, { type: 'success' });
 }
 
 function initializeCopyButtons() {
@@ -187,31 +227,37 @@ export async function buildJWT() {
 
   try {
     if (!key.trim()) {
-      NotificationManager.show('Error: Secret key is required for JWT signing', 3000, { type: 'error' });
+      setInlineError('Error: Secret key is required for JWT signing');
       resultDiv.textContent = '';
+      toggleEmptyState(true);
       return null;
     }
     if (!iss.trim()) {
-      NotificationManager.show('Error: Issuer (iss) is required for JWT', 3000, { type: 'error' });
+      setInlineError('Error: Issuer (iss) is required for JWT');
       resultDiv.textContent = '';
+      toggleEmptyState(true);
       return null;
     }
     if (!exp.trim()) {
-      NotificationManager.show('Error: Expiration Time (exp) is required for JWT', 3000, { type: 'error' });
+      setInlineError('Error: Expiration Time (exp) is required for JWT');
       resultDiv.textContent = '';
+      toggleEmptyState(true);
       return null;
     }
 
     const jwt = await jwtBuilder.buildJWT(payload, key);
     resultDiv.textContent = jwt;
+    setInlineError('');
+    toggleEmptyState(false);
     NotificationManager.show('JWT successfully built', 2000, { type: 'success' });
     return jwt;
   } catch (error: unknown) {
     const message = error instanceof SyntaxError
       ? 'Invalid JSON payload.'
       : `Error building JWT: ${error instanceof Error ? error.message : String(error)}`;
-    NotificationManager.show(message, 3000, { type: 'error' });
+    setInlineError(message);
     resultDiv.textContent = '';
+    toggleEmptyState(true);
     return null;
   }
 }
@@ -396,13 +442,35 @@ export function JwtBuilderApp() {
           </div>
         </div>
 
-        <button type="button" id="buildJwtBtn" className="c-button jwt-builder-build-btn" onClick={() => void buildJWT()}>Build JWT</button>
+        <div className="jwt-builder-actions c-action-strip">
+          <button type="button" id="jwt-builder-sample-btn" className="c-button c-button--ghost jwt-builder-sample-btn" onClick={() => void loadSampleClaims()}>
+            Load Sample
+          </button>
+          <span className="c-toolbar__spacer" />
+          <button type="button" id="buildJwtBtn" className="c-button jwt-builder-build-btn" onClick={() => void buildJWT()}>
+            Build JWT
+            <span className="c-kbd" aria-hidden="true">⌘⏎</span>
+          </button>
+        </div>
+
+        <div id="jwt-builder-error-status" className="c-input-status jwt-builder-error-status" role="status" aria-live="polite" />
       </form>
 
       <div className="c-form-group result-section jwt-builder-result-panel c-surface-card">
         <h3 className="c-form-group-header">Generated JWT</h3>
         <div className="u-flex u-gap-sm result-container jwt-builder-result-container">
-          <pre id="result" className="c-code-output jwt-token-output" title="Generated JWT token" />
+          <div id="jwt-builder-empty-state" className="c-empty-state">
+            <span className="c-empty-state__icon" aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <path d="M14 2v6h6" />
+                <path d="M9 13h6M9 17h6" />
+              </svg>
+            </span>
+            <p className="c-empty-state__message">Generated JWT will appear here</p>
+            <p className="c-empty-state__hint">Fill the claims or load the sample, then run Build JWT.</p>
+          </div>
+          <pre id="result" className="c-code-output jwt-token-output" title="Generated JWT token" style={{ display: 'none' }} />
         </div>
       </div>
 
@@ -416,6 +484,10 @@ export function JwtBuilderApp() {
 export function initializeJwtBuilderDom() {
   initializeDefaultClaims();
   initializeCopyButtons();
+  const buildButton = document.getElementById('buildJwtBtn');
+  if (buildButton) {
+    registerPrimaryActionShortcut(buildButton);
+  }
   return jwtBuilder;
 }
 

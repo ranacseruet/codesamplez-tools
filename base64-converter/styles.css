@@ -112,35 +112,18 @@
 }
 
 .b64-action-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: var(--spacing-sm, var(--default-spacing-sm));
   align-items: center;
   margin-top: 0;
-  padding: var(--spacing-sm, var(--default-spacing-sm));
-  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
-  border: 1px solid var(--b64-border-soft);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-bg, #fff) 94%, var(--b64-accent) 6%) 0%,
-      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 92%, var(--cst-color-mix-neutral, white) 8%) 100%
-    );
 }
 
-.b64-file-action,
-.b64-convert-action,
-.b64-download-action {
+.b64-file-action {
   min-width: 0;
-}
-
-.b64-convert-action {
-  justify-content: center;
 }
 
 .b64-upload-button,
 .b64-convert-button,
-.b64-download-button {
+.b64-download-button,
+.b64-load-sample-button {
   min-width: max-content;
 }
 
@@ -208,25 +191,20 @@
   }
 
   .b64-action-row {
-    grid-template-columns: 1fr;
+    flex-wrap: wrap;
     gap: var(--spacing-xs, var(--default-spacing-xs));
     padding: var(--spacing-xs, var(--default-spacing-xs));
   }
 
-  .b64-file-action,
-  .b64-convert-action,
-  .b64-download-action {
+  .b64-file-action {
     width: 100%;
   }
 
   .b64-upload-button,
   .b64-convert-button,
-  .b64-download-button {
-    width: 100%;
+  .b64-download-button,
+  .b64-load-sample-button {
+    flex: 1 1 auto;
     min-width: 0;
-  }
-
-  .b64-convert-action {
-    justify-content: stretch;
   }
 }

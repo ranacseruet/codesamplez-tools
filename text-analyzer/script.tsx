@@ -52,6 +52,10 @@ export function TextAnalyzerApp() {
         [text]
     );
     const [asyncResult, setAsyncResult] = useState<TextAnalysisResult | null>(null);
+    // True while a worker analysis for the current (large) input is still in
+    // flight — the displayed `result` is stale until it resolves, so Copy
+    // Results must stay disabled during that window.
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     // Large inputs are offloaded to the worker. `createLazyRunner` handles the
     // lazy import (code-splitting the worker out of the main bundle and off the
@@ -60,9 +64,11 @@ export function TextAnalyzerApp() {
     // superseded results so only the latest keystroke's analysis is rendered.
     useEffect(() => {
         if (text.length <= WORKER_CHAR_THRESHOLD) {
+            setIsAnalyzing(false);
             return undefined;
         }
         let active = true;
+        setIsAnalyzing(true);
         if (!runnerRef.current) {
             runnerRef.current = createLazyRunner(
                 () => import('./analyzer-runner').then((module) => module.createAnalyzerRunner),
@@ -75,6 +81,7 @@ export function TextAnalyzerApp() {
         runnerRef.current.run(text, () => !active).then((analysis) => {
             if (active) {
                 setAsyncResult(analysis);
+                setIsAnalyzing(false);
             }
         });
         return () => {
@@ -117,6 +124,44 @@ export function TextAnalyzerApp() {
         NotificationManager.show('Sample text loaded', 3000, { type: 'success' });
     };
 
+    // The stat wells are span-based (no single copyable element), so one
+    // explicit button serializes the results — the contract's "one pattern
+    // per output type" for structured outputs.
+    const handleCopyResults = async () => {
+        const lines = [...PRIMARY_STATS, ...PUNCTUATION_STATS].map(
+            ([key, label]) => `${label}: ${String(result[key])}`
+        );
+        const frequency = result.wordFrequency && result.wordFrequency.length > 0
+            ? result.wordFrequency.map((item) => `${item.word}: ${item.count}`).join(', ')
+            : 'No words to analyze';
+        const content = [...lines, `Word Frequency (Top 5): ${frequency}`].join('\n');
+
+        const onSuccess = () => NotificationManager.show('Results copied to clipboard!', 2000, { type: 'success' });
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(content);
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = content;
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-999999px';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                try {
+                    if (!document.execCommand('copy')) {
+                        throw new Error('execCommand copy failed');
+                    }
+                } finally {
+                    document.body.removeChild(textarea);
+                }
+            }
+            onSuccess();
+        } catch {
+            NotificationManager.show('Failed to copy results', 3000, { type: 'error' });
+        }
+    };
+
     const handleTextInput = (event) => {
         const input = event.target;
         setText(input instanceof HTMLTextAreaElement ? input.value : '');
@@ -126,7 +171,7 @@ export function TextAnalyzerApp() {
         const wordFrequency = result.wordFrequency;
         if (!wordFrequency || wordFrequency.length === 0) {
             return (
-                <div className="word-frequency-empty" role="listitem">
+                <div className="word-frequency-empty c-empty-state" role="listitem">
                     No words to analyze
                 </div>
             );
@@ -157,15 +202,15 @@ export function TextAnalyzerApp() {
                 <div className="text-analyzer-panel ta-panel ta-input-panel c-surface-card c-surface-panel">
                     <div className="text-analyzer-panel-header ta-panel-header c-surface-panel__header">
                         <h3>Input Text</h3>
-                        <div className="text-analyzer-toolbar ta-toolbar">
-                            <button
-                                className="c-button c-button--secondary ta-load-sample-btn"
-                                id="load-sample"
-                                onClick={handleLoadSample}
-                            >
-                                Load Sample
-                            </button>
-                        </div>
+                    <div className="text-analyzer-toolbar ta-toolbar">
+                        <button
+                            className="c-button c-button--ghost ta-load-sample-btn"
+                            id="load-sample"
+                            onClick={handleLoadSample}
+                        >
+                            Load Sample
+                        </button>
+                    </div>
                     </div>
                     <textarea
                         id="textInput"
@@ -180,6 +225,17 @@ export function TextAnalyzerApp() {
             </div>
 
             <div className="text-analyzer-stats ta-stats-panel c-surface-card">
+                <div className="text-analyzer-stats-header ta-stats-header">
+                    <h3 className="text-analyzer-stats-title ta-stats-title">Statistics</h3>
+                    <button
+                        id="copy-results"
+                        className="c-button c-button--secondary c-button--small ta-copy-results-btn"
+                        onClick={() => void handleCopyResults()}
+                        disabled={!text || isAnalyzing}
+                    >
+                        Copy Results
+                    </button>
+                </div>
                 {PRIMARY_STATS.map(([key, label]) => (
                     <div key={key} className="text-analyzer-stat-item ta-stat-item">
                         <span className="text-analyzer-stat-label">{label}</span>

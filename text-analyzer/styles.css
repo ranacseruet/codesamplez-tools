@@ -54,12 +54,21 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--spacing-sm, var(--default-spacing-sm));
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--cst-color-mix-neutral, white) 90%, var(--color-surface-subtle, #f5f7fa)),
-      var(--color-surface, #fff)
-    );
+  /* v4: flat surface — gradient removed (Phase C). */
+}
+
+.text-analyzer-tool .ta-stats-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.text-analyzer-tool .ta-stats-title {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-text, #1f2937);
 }
 
 .text-analyzer-tool .ta-punctuation-panel :is(h3, h4),

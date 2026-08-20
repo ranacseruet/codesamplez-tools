@@ -103,14 +103,19 @@
   --c-checkbox-card-active-top-mix: 60%;
 }
 
-.diffc-tool .diffc-options-toolbar {
-  margin: 0;
-  min-height: 0;
-}
-
 .diffc-tool .diffc-compare-button {
   min-width: 10rem;
   width: auto;
+}
+
+/* Inline error row: no stray empty band under the action strip. */
+.diffc-tool .diffc-error-status:empty {
+  display: none;
+}
+
+/* Empty output well: the `.c-empty-state` block stands in for it. */
+.diffc-tool .diffc-result-output:empty {
+  display: none;
 }
 
 .diffc-tool .diffc-result-panel {
@@ -436,11 +441,6 @@
 
   .diffc-tool .diffc-options {
     align-items: stretch;
-  }
-
-  .diffc-tool .diffc-options-toolbar {
-    width: 100%;
-    justify-content: stretch;
   }
 
   .diffc-tool .diffc-compare-button {

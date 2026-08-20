@@ -50,6 +50,8 @@ describe('JWT Builder UI Tests', () => {
         <button class="add-claim">+ Add Claim</button>
         <div id="customClaims"></div>
       </div>
+      <div id="jwt-builder-error-status"></div>
+      <div id="jwt-builder-empty-state"></div>
       <pre id="result"></pre>
       <input id="key" value="test-key">
       <input id="iss" value="test-issuer">
@@ -95,6 +97,24 @@ describe('JWT Builder UI Tests', () => {
       
       // Verify it was called with the key input element
       expect(CopyButton).toHaveBeenCalledWith(document.getElementById('key'));
+    });
+
+    test('loadSampleClaims resets dirty claim inputs and the secret', () => {
+      document.dispatchEvent(new Event('DOMContentLoaded'));
+
+      // Simulate user edits that dirty the fields.
+      document.getElementById('iss').value = 'edited-issuer';
+      document.getElementById('key').value = 'edited-secret';
+
+      scriptModule.loadSampleClaims();
+
+      expect(document.getElementById('iss').value).toBe('codesamplez.com');
+      expect(document.getElementById('sub').value).toBe('your-subject');
+      expect(document.getElementById('key').value).toBe('your-jwt-secret-key');
+      expect(mockCopyButton.updateVisibility).toHaveBeenCalled();
+      expect(NotificationManager.show).toHaveBeenCalledWith(
+        'Sample claims loaded', 2000, { type: 'success' }
+      );
     });
   });
 
@@ -307,7 +327,10 @@ describe('JWT Builder UI Tests', () => {
       const jwt = await scriptModule.buildJWT();
 
       expect(document.getElementById('result').textContent).toBe('');
-      expect(NotificationManager.show).toHaveBeenCalledWith('Invalid JSON payload.', 3000, { type: 'error' });
+      // v4 contract: build errors surface inline, not as toasts.
+      const errorStatus = document.getElementById('jwt-builder-error-status');
+      expect(errorStatus.textContent).toBe('Invalid JSON payload.');
+      expect(errorStatus.classList.contains('error')).toBe(true);
       expect(jwt).toBeNull();
     });
 
@@ -316,7 +339,8 @@ describe('JWT Builder UI Tests', () => {
       const jwt = await scriptModule.buildJWT();
 
       expect(document.getElementById('result').textContent).toBe('');
-      expect(NotificationManager.show).toHaveBeenCalledWith('Error building JWT: Generic error', 3000, { type: 'error' });
+      const errorStatus = document.getElementById('jwt-builder-error-status');
+      expect(errorStatus.textContent).toBe('Error building JWT: Generic error');
       expect(jwt).toBeNull();
     });
 
@@ -324,7 +348,8 @@ describe('JWT Builder UI Tests', () => {
       document.getElementById('key').value = '';
       const jwt = await scriptModule.buildJWT();
       expect(document.getElementById('result').textContent).toBe('');
-      expect(NotificationManager.show).toHaveBeenCalledWith('Error: Secret key is required for JWT signing', 3000, { type: 'error' });
+      const errorStatus = document.getElementById('jwt-builder-error-status');
+      expect(errorStatus.textContent).toBe('Error: Secret key is required for JWT signing');
       expect(jwt).toBeNull();
     });
 
@@ -332,7 +357,8 @@ describe('JWT Builder UI Tests', () => {
       document.getElementById('iss').value = '';
       const jwt = await scriptModule.buildJWT();
       expect(document.getElementById('result').textContent).toBe('');
-      expect(NotificationManager.show).toHaveBeenCalledWith('Error: Issuer (iss) is required for JWT', 3000, { type: 'error' });
+      const errorStatus = document.getElementById('jwt-builder-error-status');
+      expect(errorStatus.textContent).toBe('Error: Issuer (iss) is required for JWT');
       expect(jwt).toBeNull();
     });
 
@@ -340,7 +366,8 @@ describe('JWT Builder UI Tests', () => {
       document.getElementById('exp').value = '';
       const jwt = await scriptModule.buildJWT();
       expect(document.getElementById('result').textContent).toBe('');
-      expect(NotificationManager.show).toHaveBeenCalledWith('Error: Expiration Time (exp) is required for JWT', 3000, { type: 'error' });
+      const errorStatus = document.getElementById('jwt-builder-error-status');
+      expect(errorStatus.textContent).toBe('Error: Expiration Time (exp) is required for JWT');
       expect(jwt).toBeNull();
     });
 

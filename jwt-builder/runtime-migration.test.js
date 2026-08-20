@@ -107,6 +107,21 @@ describe('JWT Builder Preact runtime', () => {
     expect(NotificationManager.show).toHaveBeenCalledWith('JWT successfully built', 2000, { type: 'success' });
   });
 
+  it('Load Sample resets claims and the secret via the rendered button', async () => {
+    new JWTBuilderToolUI();
+    await flushEffects();
+
+    document.getElementById('iss').value = 'edited-issuer';
+    document.getElementById('key').value = 'edited-secret';
+
+    fireEvent.click(document.getElementById('jwt-builder-sample-btn'));
+    await flushEffects();
+
+    expect(document.getElementById('iss')?.value).toBe('codesamplez.com');
+    expect(document.getElementById('key')?.value).toBe('your-jwt-secret-key');
+    expect(NotificationManager.show).toHaveBeenCalledWith('Sample claims loaded', 2000, { type: 'success' });
+  });
+
   it('supports UI helpers from rendered buttons (add claim and random secret)', async () => {
     new JWTBuilderToolUI();
     await flushEffects();

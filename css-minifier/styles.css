@@ -50,7 +50,8 @@
 }
 
 .cssm-tool .cssm-actions {
-  justify-content: center;
+  /* v4 Phase C: ghost secondary action left, primary right (spacer layout). */
+  justify-content: flex-start;
 }
 
 .cssm-tool .cssm-minify-btn,

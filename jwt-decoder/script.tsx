@@ -1,6 +1,7 @@
 import { JWTDecoder } from './JWTDecoder';
 import { JsonTreeViewRenderer } from './JsonTreeViewRenderer';
 import { NotificationManager } from '../common/notification-manager';
+import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import ClearButton from '../common/clear-button/ClearButton';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -168,6 +169,19 @@ export class JWTDecoderUI {
         this.elements.copyBtn.addEventListener('click', this.copyDecoded.bind(this));
         this.elements.decodeBtn.addEventListener('click', () => this.decodeAndRender(false));
         this.elements.validateBtn.addEventListener('click', () => this.decodeAndRender(true));
+
+        // Primary action is Validate Signature: register the global shortcut.
+        registerPrimaryActionShortcut(this.elements.validateBtn);
+
+        // Load Sample restores the prefilled token + secret and re-decodes.
+        const sampleBtn = document.getElementById('jwt-decoder-sample-btn');
+        if (sampleBtn) {
+            sampleBtn.addEventListener('click', () => {
+                this.preloadData();
+                void this.decodeAndRender(false, true);
+                NotificationManager.show('Sample token loaded', 2000, { type: 'success' });
+            });
+        }
     }
 
     preloadData(): void {
@@ -252,7 +266,40 @@ export class JWTDecoderUI {
     }
 
     // --- UI Update Helpers ---
-    // Removed updateButtonStates, updateDecodeButtonState, updateVerifyButtonState
+    // The three viewer wells share one empty state (`.c-empty-state`); the
+    // helper rebuilds it after clears/errors because the renderer wipes the
+    // containers with innerHTML.
+    private createEmptyState(message: string, hint: string): HTMLDivElement {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'c-empty-state';
+
+        const icon = document.createElement('span');
+        icon.className = 'c-empty-state__icon';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.innerHTML = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg>';
+
+        const messageEl = document.createElement('p');
+        messageEl.className = 'c-empty-state__message';
+        messageEl.textContent = message;
+
+        const hintEl = document.createElement('p');
+        hintEl.className = 'c-empty-state__hint';
+        hintEl.textContent = hint;
+
+        wrapper.append(icon, messageEl, hintEl);
+        return wrapper;
+    }
+
+    private showViewerEmptyStates(message = 'Decoded token will appear here', hint = 'Paste a JWT token to decode it.'): void {
+        const containers = [
+            this.elements.rawJsonViewerContainer,
+            this.elements.headerJsonContainer,
+            this.elements.payloadJsonContainer
+        ];
+        containers.forEach((container) => {
+            container.replaceChildren(this.createEmptyState(message, hint));
+        });
+    }
 
     updateStatusOutput(message: string, type: StatusType = 'default', suppressNotification = false): void { // type: 'default', 'success', 'error', 'warning'
         const output = this.elements.statusOutput;
@@ -289,9 +336,7 @@ export class JWTDecoderUI {
 
     clearOutputs(): void {
         this.elements.decodedOutput.value = '';
-        this.elements.headerJsonContainer.innerHTML = '';
-        this.elements.payloadJsonContainer.innerHTML = '';
-        this.elements.rawJsonViewerContainer.innerHTML = '';
+        this.showViewerEmptyStates();
         // Status is updated in decodeAndRender or clearAll
     }
 
@@ -303,9 +348,7 @@ export class JWTDecoderUI {
     handleProcessingError(error: unknown): void {
         const message = error instanceof Error ? error.message : String(error);
         this.elements.decodedOutput.value = `Error: ${message}`;
-        this.elements.headerJsonContainer.innerHTML = '';
-        this.elements.payloadJsonContainer.innerHTML = '';
-        this.elements.rawJsonViewerContainer.innerHTML = '';
+        this.showViewerEmptyStates('Unable to decode token', 'Fix the token and try again.');
         this.updateStatusOutput(`Error: ${message}`, 'error');
         console.error('JWT Processing Error:', error);
     }
@@ -459,7 +502,19 @@ export function JwtDecoderApp() {
 
                             <div className="jwt-decoder-tab-content">
                                 <div id="rawTab" className="jwt-decoder-tab-pane active" role="tabpanel" aria-labelledby="tab-raw">
-                                    <div id="rawJsonViewer" className="jwt-decoder-json-viewer" tabIndex={0} aria-label="Decoded token raw JSON viewer" />
+                                    <div id="rawJsonViewer" className="jwt-decoder-json-viewer" tabIndex={0} aria-label="Decoded token raw JSON viewer">
+                                        <div className="c-empty-state">
+                                            <span className="c-empty-state__icon" aria-hidden="true">
+                                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                    <path d="M14 2v6h6" />
+                                                    <path d="M9 13h6M9 17h6" />
+                                                </svg>
+                                            </span>
+                                            <p className="c-empty-state__message">Decoded token will appear here</p>
+                                            <p className="c-empty-state__hint">Paste a JWT token to decode it.</p>
+                                        </div>
+                                    </div>
                                     <textarea id="jwtDecodedOutput" readOnly placeholder="Decoded token will appear here..." style={{ display: 'none' }} />
                                 </div>
                                 <div id="headerTab" className="jwt-decoder-tab-pane" role="tabpanel" aria-labelledby="tab-header">
@@ -474,12 +529,17 @@ export function JwtDecoderApp() {
                 </div>
             </div>
 
-            <div className="o-toolbar jwt-decoder-toolbar">
+            <div className="o-toolbar jwt-decoder-toolbar c-action-strip">
                 <div className="primary-actions jwt-decoder-primary-actions">
-                    <button id="jwt-decoder-decode-btn" className="c-button c-button--primary jwt-decoder-action-btn">Decode JWT Token</button>
-                    <button id="jwt-decoder-validate-btn" className="c-button c-button--primary jwt-decoder-action-btn">Validate Signature</button>
+                    <button id="jwt-decoder-sample-btn" type="button" className="c-button c-button--ghost jwt-decoder-sample-btn">Load Sample</button>
+                    <button id="jwt-decoder-decode-btn" type="button" className="c-button c-button--ghost jwt-decoder-action-btn">Decode JWT Token</button>
+                    <span className="c-toolbar__spacer" />
+                    <button id="jwt-decoder-validate-btn" type="button" className="c-button jwt-decoder-action-btn">
+                        Validate Signature
+                        <span className="c-kbd" aria-hidden="true">⌘⏎</span>
+                    </button>
                 </div>
-                <button id="jwt-decoder-copy-btn" className="c-button c-button--secondary jwt-decoder-copy-btn">Copy Decoded</button>
+                <button id="jwt-decoder-copy-btn" type="button" className="c-button c-button--secondary jwt-decoder-copy-btn">Copy Decoded</button>
             </div>
 
             <div className="c-stats-panel jwt-decoder-result-panel c-surface-card">
@@ -488,10 +548,6 @@ export function JwtDecoderApp() {
                     <div id="jwtSignatureStatus" className="jwt-decoder-status c-status-banner">Not verified</div>
                 </div>
             </div>
-
-            <footer className="jwt-decoder-footer c-tool-footer">
-                <p>JWT Decoder - Safely decode and verify your JWT tokens. No tokens are stored or transmitted</p>
-            </footer>
 
             {/* Tool-first ordering: About intro + guide below the interactive tool. */}
             <JwtDecoderIntro />

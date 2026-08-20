@@ -589,6 +589,14 @@ body.standalone-app {
   color: var(--color-on-primary, #fff);
 }
 
+/* v4 Phase C: keyboard hints are meaningless on touch devices — hide them.
+   The shortcut listener itself is harmless without a keyboard. */
+@media (pointer: coarse) {
+  .c-kbd {
+    display: none;
+  }
+}
+
 /* v4: designed empty state for output wells (icon + message + hint). */
 .c-empty-state {
   display: flex;
@@ -851,12 +859,8 @@ button.c-tooltip-container {
   /* Ensure container doesn't exceed parent width */
 }
 
-.c-code-output:empty::before {
-  content: "Output will appear here";
-  /* Generic placeholder */
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
-  font-style: italic;
-}
+/* Generic `pre:empty` placeholder removed in v4 Phase C: output wells use the
+   designed `.c-empty-state` block instead of ::before text. */
 
 
 /* --- Stats Panel (from js-minifier) --- */

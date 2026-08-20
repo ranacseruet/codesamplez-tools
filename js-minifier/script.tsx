@@ -3,6 +3,7 @@ import { NotificationManager } from '../common/notification-manager';
 import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { scheduleTask } from '../common/scheduler-utils';
+import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { hydrate, render } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -145,13 +146,21 @@ export function JSMinifierApp() {
     copyButtonRef.current?.updateVisibility?.();
   }, [outputCode]);
 
+  useEffect(() => {
+    const primaryButton = document.getElementById('js-minifier-minify-btn');
+    if (!primaryButton) {
+      /* istanbul ignore next */
+      return undefined;
+    }
+    return registerPrimaryActionShortcut(primaryButton);
+  }, []);
+
   const runMinify = async (codeOverride = inputCode, optionsOverride = options) => {
     const code = String(codeOverride ?? '');
 
     if (!code.trim()) {
       setOutputCode('');
-      setErrorMessage('');
-      NotificationManager.show('Please enter JavaScript to minify', 2000, { type: 'error' });
+      setErrorMessage('Please enter JavaScript to minify');
       return false;
     }
 
@@ -183,7 +192,6 @@ export function JSMinifierApp() {
     } catch (error) {
       setOutputCode('');
       setErrorMessage(error.message);
-      NotificationManager.show(`Minification error: ${error.message}`, 3000, { type: 'error' });
       console.error('Minification error:', error);
       return false;
     } finally {
@@ -320,11 +328,13 @@ export function JSMinifierApp() {
       </div>
 
       <div className="js-minifier-toolbar o-toolbar c-action-strip">
+        <button id="js-minifier-load-sample-btn" className="c-button c-button--ghost" onClick={() => void handleLoadSample()}>
+          Load Sample
+        </button>
+        <span className="c-toolbar__spacer" />
         <button id="js-minifier-minify-btn" className="c-button" onClick={() => void runMinify()} disabled={isProcessing || isLoadingEngine}>
           {isLoadingEngine ? 'Loading…' : isProcessing ? 'Minifying...' : 'Minify JavaScript'}
-        </button>
-        <button id="js-minifier-load-sample-btn" className="c-button c-button--secondary" onClick={() => void handleLoadSample()}>
-          Load Sample
+          {!(isProcessing || isLoadingEngine) && <span className="c-kbd" aria-hidden="true">⌘⏎</span>}
         </button>
       </div>
 
@@ -344,13 +354,7 @@ export function JSMinifierApp() {
         </div>
       </div>
 
-      <footer className="js-minifier-footer">
-        <p>JavaScript Minifier - Use at your own risk. Always test minified code before deployment.</p>
-      </footer>
-
-      <div id="notification" className="c-notification" role="status" aria-live="polite">
-        Copied to clipboard!
-      </div>
+      <div id="notification" className="c-notification" role="status" aria-live="polite" />
 
       {/* Tool-first ordering: About intro + guide below the interactive tool. */}
       <JSMinifierIntro />

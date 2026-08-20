@@ -121,22 +121,21 @@ describe('DataFormatConverterUI Integration', () => {
     });
 
     it('keeps sample mode disabled by default', () => {
-        expect(document.getElementById('useSampleData')?.checked).toBe(false);
+        expect(document.getElementById('loadSampleBtn')).not.toBeNull();
         expect(document.getElementById('inputText')?.value).toBe('');
         expect(document.getElementById('outputText')?.value).toBe('');
     });
 
-    it('loads sample input and output immediately when sample mode is enabled', async () => {
-        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: true } });
+    it('loads sample input and output immediately when the sample button is clicked', async () => {
+        fireEvent.click(document.getElementById('loadSampleBtn'));
         await flush();
 
-        expect(document.getElementById('useSampleData')?.checked).toBe(true);
         expect(document.getElementById('inputText')?.value).toContain(SAMPLE_JSON_FRAGMENT);
         expect(document.getElementById('outputText')?.value).toContain(SAMPLE_XML_FRAGMENT);
     });
 
     it('replaces the input with matching sample data when input format changes in sample mode', async () => {
-        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: true } });
+        fireEvent.click(document.getElementById('loadSampleBtn'));
         await flush();
 
         fireEvent.click(document.querySelector('.input-section .format-btn[data-format="yaml"]'));
@@ -148,7 +147,7 @@ describe('DataFormatConverterUI Integration', () => {
     });
 
     it('reconverts sample output without replacing the current sample input on output format changes', async () => {
-        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: true } });
+        fireEvent.click(document.getElementById('loadSampleBtn'));
         await flush();
 
         const originalInput = document.getElementById('inputText')?.value;
@@ -160,33 +159,32 @@ describe('DataFormatConverterUI Integration', () => {
         expect(document.getElementById('outputText')?.value).toContain(SAMPLE_YAML_FRAGMENT);
     });
 
-    it('clears input, output, and error state when sample mode is disabled', async () => {
-        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: true } });
+    it('disables sample mode when fresh input is typed', async () => {
+        fireEvent.click(document.getElementById('loadSampleBtn'));
+        await flush();
+        fireEvent.click(document.querySelector('.input-section .format-btn[data-format="yaml"]'));
+        await flush();
+        expect(document.getElementById('inputText')?.value).toContain(SAMPLE_YAML_FRAGMENT);
+
+        // Typing fresh input disables sample mode...
+        fireEvent.input(document.getElementById('inputText'), { target: { value: 'key: value' } });
         await flush();
 
-        fireEvent.input(document.getElementById('inputText'), { target: { value: 'invalid' } });
+        // ...so a later format switch no longer reloads the sample (it follows
+        // the existing clear-on-format-switch path for typed input).
+        fireEvent.click(document.querySelector('.input-section .format-btn[data-format="json"]'));
         await flush();
-        fireEvent.click(document.getElementById('convertBtn'));
-        await flush();
-        expect(document.getElementById('inputError')?.style.display).toBe('block');
-
-        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: false } });
-        await flush();
-
-        expect(document.getElementById('useSampleData')?.checked).toBe(false);
-        expect(document.getElementById('inputText')?.value).toBe('');
-        expect(document.getElementById('outputText')?.value).toBe('');
-        expect(document.getElementById('inputError')?.style.display).toBe('none');
-        expect(document.getElementById('inputError')?.textContent).toBe('');
+        expect(document.getElementById('inputText')?.value).not.toContain(SAMPLE_JSON_FRAGMENT);
+        expect(NotificationManager.show).toHaveBeenCalledWith('Input cleared', expect.any(Number), expect.any(Object));
     });
 
-    it('restores sample data when sample mode is re-enabled after being cleared', async () => {
-        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: true } });
+    it('restores sample data when the sample button is clicked again after typing', async () => {
+        fireEvent.click(document.getElementById('loadSampleBtn'));
         await flush();
-        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: false } });
+        fireEvent.input(document.getElementById('inputText'), { target: { value: 'custom input' } });
         await flush();
 
-        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: true } });
+        fireEvent.click(document.getElementById('loadSampleBtn'));
         await flush();
 
         expect(document.getElementById('inputText')?.value).toContain(SAMPLE_JSON_FRAGMENT);
@@ -234,11 +232,8 @@ describe('DataFormatConverterUI Integration', () => {
         fireEvent.click(document.getElementById('convertBtn'));
         await flush();
 
-        expect(NotificationManager.show).toHaveBeenCalledWith(
-            'Conversion failed: string-conversion-failure',
-            expect.any(Number),
-            expect.any(Object)
-        );
+        // v4 contract: conversion errors surface inline, not as toasts.
+        expect(NotificationManager.show).not.toHaveBeenCalled();
         expect(document.getElementById('inputError').textContent).toContain('Conversion failed: string-conversion-failure');
     });
 
@@ -468,7 +463,7 @@ describe('DataFormatConverterUI Integration', () => {
         fireEvent.click(document.querySelector('.input-section .format-btn[data-format="properties"]'));
         await flush();
 
-        fireEvent.change(document.getElementById('useSampleData'), { target: { checked: true } });
+        fireEvent.click(document.getElementById('loadSampleBtn'));
         await flush();
 
         expect(document.getElementById('inputText')?.value).toContain(SAMPLE_PROPERTIES_FRAGMENT);
@@ -502,11 +497,14 @@ describe('DataFormatConverterUI Integration', () => {
         expect(NotificationManager.show).toHaveBeenCalledWith('Input cleared', expect.any(Number), expect.any(Object));
     });
 
-    it('should show error on convert with empty input', () => {
+    it('should show error on convert with empty input', async () => {
         const input = document.getElementById('inputText');
         fireEvent.input(input, { target: { value: '' } });
         fireEvent.click(document.getElementById('convertBtn'));
-        expect(NotificationManager.show).toHaveBeenCalledWith(expect.stringContaining('Please enter some data'), expect.any(Number), expect.any(Object));
+        await flush();
+        // v4 contract: convert errors surface inline, not as toasts.
+        expect(NotificationManager.show).not.toHaveBeenCalled();
+        expect(document.getElementById('inputError').textContent).toContain('Please enter some data');
     });
 
     it('should handle conversion error', async () => {

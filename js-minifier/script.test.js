@@ -146,7 +146,11 @@ describe('JavaScript Minifier Preact runtime', () => {
     await flushEffects();
 
     expect(document.getElementById('js-minifier-output')?.value).toBe('');
-    expect(NotificationManager.show).toHaveBeenCalledWith('Please enter JavaScript to minify', 2000, { type: 'error' });
+    // v4 contract: errors surface inline, not as toasts.
+    expect(NotificationManager.show).not.toHaveBeenCalled();
+    const errorStatus = document.getElementById('js-minifier-error-status');
+    expect(errorStatus?.textContent).toBe('Please enter JavaScript to minify');
+    expect(errorStatus?.classList.contains('error')).toBe(true);
     expect(JSMinifier).not.toHaveBeenCalled();
   });
 
@@ -168,7 +172,8 @@ describe('JavaScript Minifier Preact runtime', () => {
     await flushEffects();
 
     expect(document.getElementById('js-minifier-output')?.value).toBe('');
-    expect(NotificationManager.show).toHaveBeenCalledWith('Minification error: Bad JS', 3000, { type: 'error' });
+    // v4 contract: errors surface inline, not as toasts.
+    expect(NotificationManager.show).not.toHaveBeenCalled();
     expect(consoleErrorSpy).toHaveBeenCalledWith('Minification error:', expect.any(Error));
 
     const errorStatus = document.getElementById('js-minifier-error-status');

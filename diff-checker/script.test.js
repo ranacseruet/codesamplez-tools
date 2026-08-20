@@ -17,7 +17,8 @@ jest.mock('../common/scheduler-utils', () => ({
 // Mock ClearButton
 jest.mock('../common/clear-button/ClearButton', () => {
   return jest.fn().mockImplementation(() => ({
-    disconnect: jest.fn()
+    disconnect: jest.fn(),
+    updateVisibility: jest.fn()
   }));
 });
 
@@ -562,7 +563,10 @@ describe('initializeDiffChecker', () => {
     container.innerHTML = `
       <textarea id="text1"></textarea>
       <textarea id="text2"></textarea>
+      <button id="load-sample">Load Sample</button>
       <button id="compare-button">Compare</button>
+      <div id="diff-error-status" aria-live="polite"></div>
+      <div id="diff-empty-state"></div>
       <div id="diff-result"></div>
       <button id="prev-diff-button"></button>
       <button id="next-diff-button"></button>
@@ -587,6 +591,20 @@ describe('initializeDiffChecker', () => {
     expect(addEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function));
   });
 
+  test('should fall back to textContent label writes when the button has no leading text node', async () => {
+    document.getElementById('compare-button').innerHTML = '<span>Compare</span>';
+    initializeDiffChecker();
+
+    document.getElementById('text1').value = 'foo';
+    document.getElementById('text2').value = 'bar';
+    document.getElementById('compare-button').click();
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    // Label flip ran through the fallback branch and was restored.
+    expect(document.getElementById('compare-button').textContent).toBe('Compare');
+    expect(document.getElementById('diff-result').children.length).toBeGreaterThan(0);
+  });
+
   test('should trigger diff computation on click', async () => {
     initializeDiffChecker();
 
@@ -604,6 +622,19 @@ describe('initializeDiffChecker', () => {
     expect(result.children.length).toBeGreaterThan(0);
   });
 
+  test('should fill both panes and compare via the Load Sample button', async () => {
+    initializeDiffChecker();
+
+    document.getElementById('load-sample').click();
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    const text1 = document.getElementById('text1');
+    const text2 = document.getElementById('text2');
+    expect(text1.value).toContain('function greet');
+    expect(text2.value).toContain('const message');
+    expect(NotificationManager.show).toHaveBeenCalledWith('Diff computation complete!');
+  });
+
   // The large-input offload path (lazy ./diff-runner import + worker/fallback)
   // is covered end-to-end in the ESM specs diff-offload.test.js and
   // diff-import-fallback.test.js, where dynamic import + module mocking behave
@@ -616,7 +647,11 @@ describe('initializeDiffChecker', () => {
     // Wait slightly
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    expect(NotificationManager.show).toHaveBeenCalledWith(expect.stringContaining('Please enter text'));
+    // v4 contract: validation errors surface inline, not as toasts.
+    expect(NotificationManager.show).not.toHaveBeenCalled();
+    const errorStatus = document.getElementById('diff-error-status');
+    expect(errorStatus.textContent).toContain('Please enter text');
+    expect(errorStatus.classList.contains('error')).toBe(true);
   });
 
   test('should safely return when diff result element is missing', () => {
@@ -643,6 +678,10 @@ describe('initializeDiffChecker', () => {
     document.getElementById('compare-button').click();
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(NotificationManager.show).toHaveBeenCalledWith('Error computing diff: scheduler failed');
+    // v4 contract: computation errors surface inline, not as toasts.
+    expect(NotificationManager.show).not.toHaveBeenCalled();
+    const errorStatus = document.getElementById('diff-error-status');
+    expect(errorStatus.textContent).toBe('Error computing diff: scheduler failed');
+    expect(errorStatus.classList.contains('error')).toBe(true);
   });
 });

@@ -1,8 +1,10 @@
 // Import shared components and styles
 import { computeDiff, type DiffComputeRequest, type DiffComputeResult } from './diff';
 import ClearButton from '../common/clear-button/ClearButton';
+import CopyButton from '../common/copy-button/CopyButton';
 import { NotificationManager } from '../common/notification-manager';
 import { scheduleTask } from '../common/scheduler-utils';
+import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { createLazyRunner } from '../common/lazy-runner';
 import type { ToolCleanupHandle } from '../common/tooling-contracts';
 import { hydrate, render } from 'preact';
@@ -367,9 +369,35 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   const text1 = document.getElementById('text1') as HTMLTextAreaElement | null;
   const text2 = document.getElementById('text2') as HTMLTextAreaElement | null;
   const diffResultElement = document.getElementById('diff-result') as HTMLElement | null;
+  const diffEmptyState = document.getElementById('diff-empty-state');
+  const diffErrorStatus = document.getElementById('diff-error-status');
   if (!diffResultElement) {
     return;
   }
+
+  // One-click copy for the rendered diff output (CopyButton targets <pre>).
+  const resultCopyButton = diffResultElement instanceof HTMLPreElement
+    ? new CopyButton(diffResultElement)
+    : null;
+
+  // `textContent` on the primary button would destroy its `.c-kbd` hint child;
+  // swap only the leading text node instead.
+  const setPrimaryButtonLabel = (text: string) => {
+    /* istanbul ignore next */
+    if (!compareButton) return;
+    const first = compareButton.firstChild;
+    if (first && first.nodeType === 3 /* Node.TEXT_NODE */) {
+      first.textContent = text;
+    } else {
+      compareButton.textContent = text;
+    }
+  };
+
+  const setInlineError = (message: string) => {
+    if (!diffErrorStatus) return;
+    diffErrorStatus.textContent = message;
+    diffErrorStatus.classList.toggle('error', message.length > 0);
+  };
 
   // Instantiate the navigator
   const diffNavigator = new DiffNavigator(
@@ -403,6 +431,7 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
       clearButton2.disconnect();
       clearButton2 = null;
     }
+    resultCopyButton?.disconnect();
     diffRunner.terminate();
   };
 
@@ -416,18 +445,43 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     clearButton2 = new ClearButton(text2);
   }
 
+  const SAMPLE_ORIGINAL = `function greet(name) {
+  console.log('Hello, ' + name);
+  return true;
+}`;
+
+  const SAMPLE_MODIFIED = `function greet(name) {
+  const message = \`Hello, \${name}!\`;
+  console.log(message);
+  return true;
+}`;
+
+  // Two-pane sample: fills both inputs so a first-time visitor sees a real diff.
+  const loadSampleButton = document.getElementById('load-sample') as HTMLButtonElement | null;
+  if (loadSampleButton && text1 && text2 && compareButton) {
+    loadSampleButton.addEventListener('click', () => {
+      text1.value = SAMPLE_ORIGINAL;
+      text2.value = SAMPLE_MODIFIED;
+      clearButton1?.updateVisibility();
+      clearButton2?.updateVisibility();
+      compareButton.click();
+    });
+  }
+
   if (compareButton && text1 && text2) {
+    registerPrimaryActionShortcut(compareButton);
     compareButton.addEventListener('click', async function () {
       const originalText = text1.value;
       const modifiedText = text2.value;
 
       if (!originalText && !modifiedText) {
-        NotificationManager.show('Please enter text in at least one of the fields');
+        setInlineError('Please enter text in at least one of the fields');
         return;
       }
+      setInlineError('');
 
-      // UI Feedback: Show loading state
-      compareButton.textContent = 'Computing Diff...';
+      // UI Feedback: Show loading state (first-text-node swap keeps `.c-kbd`)
+      setPrimaryButtonLabel('Computing Diff...');
       compareButton.disabled = true;
 
       try {
@@ -448,6 +502,9 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
           ? computeDiff(originalLines, modifiedLines, ignoreWhitespace)
           : await diffRunner.run({ originalLines, modifiedLines, ignoreWhitespace });
 
+        if (diffEmptyState) {
+          diffEmptyState.style.display = 'none';
+        }
         const diffDisplay = new DiffDisplay(diffResultElement);
         diffDisplay.displayDiff(diffResults, isCodeContent);
 
@@ -458,11 +515,11 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
         NotificationManager.show('Diff computation complete!');
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        NotificationManager.show('Error computing diff: ' + errorMessage);
+        setInlineError('Error computing diff: ' + errorMessage);
         console.error(error);
       } finally {
-        // Restore UI state
-        compareButton.textContent = 'Compare';
+        // Restore UI state (first-text-node swap keeps `.c-kbd`)
+        setPrimaryButtonLabel('Compare');
         compareButton.disabled = false;
       }
     });
@@ -481,7 +538,6 @@ export function DiffCheckerApp() {
         <div className="o-panel diffc-panel c-surface-card c-surface-panel">
           <div className="diff-checker-panel-header diffc-panel-header c-surface-panel__header">
             <h3>Original Text</h3>
-            <div className="o-toolbar diffc-panel-toolbar c-panel-toolbar" />
           </div>
           <div className="o-panel-content diffc-panel-content c-surface-panel__content c-surface-panel__content--flush">
             <textarea
@@ -497,7 +553,6 @@ export function DiffCheckerApp() {
         <div className="o-panel diffc-panel c-surface-card c-surface-panel">
           <div className="diff-checker-panel-header diffc-panel-header c-surface-panel__header">
             <h3>Modified Text</h3>
-            <div className="o-toolbar diffc-panel-toolbar c-panel-toolbar" />
           </div>
           <div className="o-panel-content diffc-panel-content c-surface-panel__content c-surface-panel__content--flush">
             <textarea
@@ -512,6 +567,7 @@ export function DiffCheckerApp() {
       </div>
 
       <div className="o-controls diff-checker-options diffc-options c-action-strip">
+        <button id="load-sample" className="c-button c-button--ghost diffc-load-sample-btn" type="button">Load Sample</button>
         <div className="c-checkbox-group diffc-checkbox-group">
           <div className="c-checkbox-item c-checkbox-card diffc-checkbox-item">
             <input type="checkbox" id="ignore-whitespace" defaultChecked />
@@ -519,10 +575,13 @@ export function DiffCheckerApp() {
           </div>
         </div>
 
-        <div className="o-toolbar diffc-options-toolbar">
-          <button id="compare-button" className="c-button diffc-compare-button" type="button">Compare</button>
-        </div>
+        <span className="c-toolbar__spacer" />
+        <button id="compare-button" className="c-button diffc-compare-button" type="button">
+          Compare
+          <span className="c-kbd" aria-hidden="true">⌘⏎</span>
+        </button>
       </div>
+      <div id="diff-error-status" className="c-input-status diffc-error-status" role="status" aria-live="polite" />
 
       <div id="diff-result-container" className="o-panel diffc-result-panel c-surface-card c-surface-panel">
         <div className="diff-result-header diffc-result-header">
@@ -550,6 +609,17 @@ export function DiffCheckerApp() {
           </div>
         </div>
         <div className="o-panel-content diffc-result-panel-content">
+          <div id="diff-empty-state" className="c-empty-state">
+            <span className="c-empty-state__icon" aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <path d="M14 2v6h6" />
+                <path d="M9 13h6M9 17h6" />
+              </svg>
+            </span>
+            <p className="c-empty-state__message">Differences will appear here</p>
+            <p className="c-empty-state__hint">Paste both texts or load the sample, then run Compare.</p>
+          </div>
           <pre
             id="diff-result"
             className="c-code-output diffc-result-output"
@@ -558,7 +628,7 @@ export function DiffCheckerApp() {
         </div>
       </div>
 
-      <div id="notification" className="c-notification" role="status" aria-live="polite">Copied to clipboard!</div>
+      <div id="notification" className="c-notification" role="status" aria-live="polite" />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import QRCode from 'qrcode';
 import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
+import { NotificationManager } from '../common/notification-manager';
 import { hydrate, render } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -250,6 +251,12 @@ export function QRCodeGeneratorApp() {
     const filename = `qrcode-${Date.now()}.png`;
     const downloadManager = new DownloadManager();
     downloadManager.downloadFile(dataUrl, filename, 'image/png');
+    NotificationManager.show('QR code downloaded', 2000, { type: 'success' });
+  };
+
+  const handleLoadSample = () => {
+    setText(DEFAULT_QR_STATE.text);
+    NotificationManager.show('Sample URL loaded', 2000, { type: 'success' });
   };
 
   const handleTextInput = (event) => {
@@ -282,7 +289,12 @@ export function QRCodeGeneratorApp() {
     <div id="qr-code-generator-tool" className="tool-container qr-tool c-tool-stack">
       <div className="qr-tool__main-content">
         <div className="qr-tool__controls c-surface-card">
-          <h3 className="qr-tool__section-title">Configuration</h3>
+          <div className="qr-tool__section-header">
+            <h3 className="qr-tool__section-title">Configuration</h3>
+            <button id="qr-load-sample" className="c-button c-button--ghost qr-tool__load-sample-button" onClick={handleLoadSample}>
+              Load Sample
+            </button>
+          </div>
 
           <div className="qr-tool__form-group">
             <label htmlFor="qr-text" className="qr-tool__label">Text or URL</label>
@@ -347,6 +359,19 @@ export function QRCodeGeneratorApp() {
 
         <div className="qr-tool__preview c-surface-card">
           <div id="qr-code-container" className="qr-tool__qr-container">
+            {!canvasVisible && (
+              <div className="c-empty-state">
+                <span className="c-empty-state__icon" aria-hidden="true">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <path d="M14 2v6h6" />
+                    <path d="M9 13h6M9 17h6" />
+                  </svg>
+                </span>
+                <p className="c-empty-state__message">QR code will appear here</p>
+                <p className="c-empty-state__hint">Enter text or a URL to generate a QR code.</p>
+              </div>
+            )}
             <canvas
               id="qr-canvas"
               ref={canvasRef}
@@ -368,7 +393,7 @@ export function QRCodeGeneratorApp() {
       <QRCodeGeneratorIntro />
       <QRCodeGeneratorArticle />
 
-      <footer className="qr-tool__footer" />
+      <div id="notification" className="c-notification" role="status" aria-live="polite" />
     </div>
   );
 }

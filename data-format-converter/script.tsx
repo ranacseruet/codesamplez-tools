@@ -3,6 +3,7 @@ import { NotificationManager } from '../common/notification-manager';
 import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
+import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -180,22 +181,30 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
         copyOverlayButtonRef.current?.updateVisibility?.();
     }, [outputText]);
 
-    const showError = (message: string, silent = false) => {
-        if (!silent) {
-            NotificationManager.show(message, 3000, { type: 'error' });
+    useEffect(() => {
+        const primaryButton = document.getElementById('convertBtn');
+        if (!primaryButton) {
+            /* istanbul ignore next */
+            return undefined;
         }
+        return registerPrimaryActionShortcut(primaryButton);
+    }, []);
+
+    // v4 contract: errors surface inline in the banner, never as toasts.
+    const showError = (message: string, _silent = false) => {
         setErrorMessage(message);
+    };
+
+    // Action-level guard errors (copy/download with no output, clipboard
+    // failures) surface BOTH inline and as a toast: they are action feedback,
+    // not input validation.
+    const showActionError = (message: string) => {
+        setErrorMessage(message);
+        NotificationManager.show(message, 3000, { type: 'error' });
     };
 
     const showSuccess = (message: string) => {
         NotificationManager.show(message, 3000, { type: 'success' });
-        setErrorMessage('');
-    };
-
-    const clearConverterData = () => {
-        clearTimeout(debounceTimerRef.current as ReturnType<typeof setTimeout>);
-        setInputText('');
-        setOutputText('');
         setErrorMessage('');
     };
 
@@ -250,6 +259,12 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
         const target = event.target as HTMLTextAreaElement | null;
         const value = target?.value ?? '';
         setInputText(value);
+        // Typing fresh input disables sample mode (v4 one-way sample contract).
+        // Read the closure state, not stateRef: handlers are re-bound every
+        // render, while stateRef writes race with deferred effect syncs.
+        if (useSampleData) {
+            setUseSampleData(false);
+        }
 
         const autoConvertElement = document.getElementById('autoConvert') as HTMLInputElement | null;
         const shouldAutoConvert = autoConvertElement ? autoConvertElement.checked : stateRef.current.autoConvert;
@@ -281,8 +296,8 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
     };
 
     const handleInputFormatChange = (nextFormat: SupportedFormat) => {
-        const sampleModeEnabled = (document.getElementById('useSampleData') as HTMLInputElement | null)?.checked
-            ?? stateRef.current.useSampleData;
+        // Closure state (fresh per render), not stateRef — see handleInputChange.
+        const sampleModeEnabled = useSampleData;
         stateRef.current = {
             ...stateRef.current,
             inputFormat: nextFormat
@@ -293,7 +308,7 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
         if (sampleModeEnabled) {
             loadSampleData({
                 nextInputFormat: nextFormat,
-                nextOutputFormat: stateRef.current.outputFormat
+                nextOutputFormat: outputFormat
             });
             return;
         }
@@ -339,30 +354,18 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
         }
     };
 
-    const handleUseSampleDataToggle = (event: Event) => {
-        const target = event.target as HTMLInputElement | null;
-        const checked = Boolean(target?.checked);
-        const selectedInputFormat = getSelectedFormat('.input-section', stateRef.current.inputFormat);
-        const selectedOutputFormat = getSelectedFormat('.output-section', stateRef.current.outputFormat);
-        stateRef.current = {
-            ...stateRef.current,
-            inputFormat: selectedInputFormat,
-            outputFormat: selectedOutputFormat,
-            useSampleData: checked
-        };
-        setUseSampleData(checked);
-
-        if (checked) {
-            setInputFormat(selectedInputFormat);
-            setOutputFormat(selectedOutputFormat);
-            loadSampleData({
-                nextInputFormat: selectedInputFormat,
-                nextOutputFormat: selectedOutputFormat
-            });
-            return;
-        }
-
-        clearConverterData();
+    // v4 Phase C: sample mode is enabled via the uniform "Load Sample" ghost
+    // button; typing fresh input disables it again (previously a checkbox).
+    const handleLoadSampleClick = () => {
+        const selectedInputFormat = getSelectedFormat('.input-section', inputFormat);
+        const selectedOutputFormat = getSelectedFormat('.output-section', outputFormat);
+        setUseSampleData(true);
+        setInputFormat(selectedInputFormat);
+        setOutputFormat(selectedOutputFormat);
+        loadSampleData({
+            nextInputFormat: selectedInputFormat,
+            nextOutputFormat: selectedOutputFormat
+        });
     };
 
     const handleSwap = () => {
@@ -395,7 +398,7 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
 
     const handleCopyOutput = async () => {
         if (!outputText) {
-            showError('No output to copy');
+            showActionError('No output to copy');
             return;
         }
 
@@ -403,13 +406,13 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
             await copyToClipboard(outputText);
             NotificationManager.show('Copied to clipboard!', 3000, { type: 'success' });
         } catch (_error) {
-            showError('Failed to copy output');
+            showActionError('Failed to copy output');
         }
     };
 
     const handleDownload = () => {
         if (!outputText) {
-            showError('No data to download');
+            showActionError('No data to download');
             return;
         }
 
@@ -516,15 +519,9 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
                 </div>
 
                 <div className="c-options-panel c-action-strip u-text-center dfc-primary-actions">
-                    <label className="c-checkbox dfc-sample-data-label">
-                        <input
-                            type="checkbox"
-                            id="useSampleData"
-                            checked={useSampleData}
-                            onChange={handleUseSampleDataToggle}
-                        />
-                        <span>Use sample data</span>
-                    </label>
+                    <button id="loadSampleBtn" type="button" className="c-button c-button--ghost dfc-load-sample-btn" onClick={handleLoadSampleClick}>
+                        Load Sample
+                    </button>
                     <label className="c-checkbox dfc-auto-convert-label">
                         <input
                             type="checkbox"
@@ -534,8 +531,10 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
                         />
                         <span>Auto-convert</span>
                     </label>
+                    <span className="c-toolbar__spacer" />
                     <button id="convertBtn" className="convert-btn c-button dfc-convert-btn" onClick={() => convertData()}>
                         Convert Data
+                        <span className="c-kbd" aria-hidden="true">⌘⏎</span>
                     </button>
                     <button
                         id="downloadBtn"

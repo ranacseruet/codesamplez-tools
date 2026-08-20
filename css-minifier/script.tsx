@@ -12,6 +12,7 @@ import { formatBytes } from '../common/format-utils';
 import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { scheduleTask } from '../common/scheduler-utils';
+import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { hydrate, render } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -187,6 +188,15 @@ export function CssMinifierApp() {
     copyButtonRef.current?.updateVisibility?.();
   }, [outputCss]);
 
+  useEffect(() => {
+    const primaryButton = document.getElementById('minify-btn');
+    if (!primaryButton) {
+      /* istanbul ignore next */
+      return undefined;
+    }
+    return registerPrimaryActionShortcut(primaryButton);
+  }, []);
+
   const resetOptions = () => {
     setOptions(createDefaultOptions());
   };
@@ -196,8 +206,7 @@ export function CssMinifierApp() {
 
     if (!originalCss) {
       setOutputCss('');
-      setErrorMessage('');
-      NotificationManager.show('Error: Please enter CSS to minify', 3000, { type: 'error' });
+      setErrorMessage('Please enter CSS to minify');
       return false;
     }
 
@@ -211,7 +220,6 @@ export function CssMinifierApp() {
         setOutputCss('');
         const invalidMessage = 'Invalid CSS input. Please check your CSS syntax.';
         setErrorMessage(invalidMessage);
-        NotificationManager.show(`Error: ${invalidMessage}`, 3000, { type: 'error' });
         return false;
       }
 
@@ -226,7 +234,6 @@ export function CssMinifierApp() {
       setOutputCss('');
       const failureMessage = `Failed to process CSS. ${error.message}`;
       setErrorMessage(failureMessage);
-      NotificationManager.show(`Error: ${failureMessage}`, 3000, { type: 'error' });
       return false;
     } finally {
       setIsProcessing(false);
@@ -261,7 +268,6 @@ export function CssMinifierApp() {
         <div className="o-panel cssm-panel cssm-input-panel c-surface-card c-surface-panel">
           <div className="o-panel-header cssm-panel-header c-surface-panel__header">
             <h3>Input CSS</h3>
-            <div className="css-minifier-toolbar o-toolbar cssm-panel-toolbar c-panel-toolbar" />
           </div>
           <textarea
             id="css-minifier-input"
@@ -285,7 +291,6 @@ export function CssMinifierApp() {
         <div className="o-panel cssm-panel cssm-output-panel c-surface-card c-surface-panel">
           <div className="o-panel-header cssm-panel-header c-surface-panel__header">
             <h3>Minified Output</h3>
-            <div className="css-minifier-toolbar o-toolbar cssm-panel-toolbar c-panel-toolbar" />
           </div>
           <textarea
             id="css-minifier-output"
@@ -300,11 +305,13 @@ export function CssMinifierApp() {
       </div>
 
       <div className="css-minifier-actions cssm-actions c-action-strip">
+        <button className="c-button c-button--ghost cssm-load-sample-btn" id="load-sample" onClick={() => void handleLoadSample()}>
+          Load Sample
+        </button>
+        <span className="c-toolbar__spacer" />
         <button id="minify-btn" className="c-button cssm-minify-btn" onClick={() => void runMinify()} disabled={isProcessing}>
           {isProcessing ? 'Minifying...' : 'Minify CSS'}
-        </button>
-        <button className="c-button c-button--secondary cssm-load-sample-btn" id="load-sample" onClick={() => void handleLoadSample()}>
-          Load Sample
+          {!isProcessing && <span className="c-kbd" aria-hidden="true">⌘⏎</span>}
         </button>
       </div>
 
@@ -364,13 +371,7 @@ export function CssMinifierApp() {
         </div>
       </div>
 
-      <div className="css-minifier-footer cssm-footer c-tool-footer">
-        <p>CSS Minifier - Always test minified CSS before deployment.</p>
-      </div>
-
-      <div id="notification" className="c-notification" role="status" aria-live="polite">
-        Copied to clipboard!
-      </div>
+      <div id="notification" className="c-notification" role="status" aria-live="polite" />
 
       {/* Tool-first ordering: About intro + guide below the interactive tool. */}
       <CssMinifierIntro />

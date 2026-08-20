@@ -68,6 +68,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             <span id="base64converter-status"></span>
             <span id="base64converter-copy-status"></span>
             <button id="base64converter-convert"></button>
+            <button id="base64converter-load-sample"></button>
             <button id="base64converter-download-decoded" disabled></button>
         `;
 
@@ -363,8 +364,8 @@ describe('Base64Converter UI (script.tsx)', () => {
             elements.mode.value = 'decode';
             converter.processInput();
 
-            expect(require('../common/notification-manager').NotificationManager.show)
-                .toHaveBeenCalledWith('⚠ Invalid Data URI format.', 3000, { type: 'error' });
+            // v4 contract: processing errors surface inline in the status chip.
+            expect(elements.status.textContent).toBe('Invalid Data URI format.');
             decodeSpy.mockRestore();
         });
 
@@ -380,8 +381,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             elements.mode.value = 'decode';
             converter.processInput();
 
-            expect(require('../common/notification-manager').NotificationManager.show)
-                .toHaveBeenCalledWith('⚠ Input cannot be empty.', 3000, { type: 'error' });
+            expect(elements.status.textContent).toBe('Input cannot be empty.');
             decodeSpy.mockRestore();
         });
 
@@ -397,8 +397,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             elements.mode.value = 'decode';
             converter.processInput();
 
-            expect(require('../common/notification-manager').NotificationManager.show)
-                .toHaveBeenCalledWith('⚠ Processing failed: unexpected decode failure', 3000, { type: 'error' });
+            expect(elements.status.textContent).toBe('Processing failed: unexpected decode failure');
             decodeSpy.mockRestore();
         });
 
@@ -572,6 +571,25 @@ describe('Base64Converter UI (script.tsx)', () => {
             const processInputSpy = jest.spyOn(converter, 'processInput');
             elements.convertButton.click();
             expect(processInputSpy).toHaveBeenCalled();
+        });
+
+        test('shows an inline status error when converting empty input', () => {
+            elements.input.value = '';
+            elements.convertButton.click();
+
+            expect(elements.status.textContent).toBe('Please enter some text or upload a file to convert');
+        });
+
+        test('Load Sample resets mode to auto and encodes a plain-text sample', () => {
+            elements.mode.value = 'decode';
+            elements.input.value = 'not actually base64';
+
+            document.getElementById('base64converter-load-sample').click();
+
+            expect(elements.mode.value).toBe('auto');
+            expect(elements.input.value).toBe('Hello from CodeSamplez Tools!');
+            expect(elements.result.textContent).not.toBe('');
+            expect(elements.status.textContent).toBe('');
         });
     });
 

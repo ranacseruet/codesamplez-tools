@@ -235,15 +235,9 @@
 }
 
 .js-minifier-toolbar.o-toolbar {
-  justify-content: center;
+  /* v4 Phase C: flat surface from .c-action-strip; ghost left, primary right. */
   margin: 0 0 var(--spacing-lg, var(--default-spacing-lg));
   width: 100%;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-bg, #fff) 93%, var(--jsm-accent) 7%) 0%,
-      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 92%, var(--cst-color-mix-neutral, white) 8%) 100%
-    );
 }
 
 .js-minifier-toolbar.o-toolbar .c-button {

@@ -374,9 +374,10 @@ describe('JWT Decoder UI Interactions', () => {
 
     expect(statusOutput.textContent).toBe('Enter a JWT token.');
     expect(statusOutput.classList.contains('status-default')).toBe(true);
-    expect(headerJson.innerHTML).toBe('');
-    expect(payloadJson.innerHTML).toBe('');
-    expect(rawJsonViewer.innerHTML).toBe('');
+    // Cleared wells render the `.c-empty-state` content (Phase C).
+    [headerJson, payloadJson, rawJsonViewer].forEach((viewer) => {
+      expect(viewer.querySelector('.c-empty-state')).not.toBeNull();
+    });
     expect(decodedOutput.value).toBe('');
     expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenCalledWith('Enter a JWT token.', 2000, expect.objectContaining({ type: 'default' }));
@@ -482,9 +483,10 @@ describe('JWT Decoder UI Interactions', () => {
     expect(jwtInput.value).toBe('');
     expect(secretInput.value).toBe('');
     expect(decodedOutput.value).toBe('');
-    expect(headerJson.innerHTML).toBe('');
-    expect(payloadJson.innerHTML).toBe('');
-    expect(rawJsonViewer.innerHTML).toBe('');
+    // Cleared wells render the `.c-empty-state` content (Phase C).
+    [headerJson, payloadJson, rawJsonViewer].forEach((viewer) => {
+      expect(viewer.querySelector('.c-empty-state')).not.toBeNull();
+    });
     expect(statusOutput.textContent).toBe('Enter a JWT token.');
     expect(require('../common/notification-manager').NotificationManager.show)
       .toHaveBeenCalledWith('All fields cleared.', 2000, expect.objectContaining({ type: 'success' }));
