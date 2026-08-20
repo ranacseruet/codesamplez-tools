@@ -204,6 +204,24 @@ Supporting and report-oriented checks:
 
 Visual baseline publishing and PR visual diffs are CI-managed workflows in this repository rather than local npm scripts. They run on the [snapdrift](https://github.com/ranacseruet/snapdrift) actions configured against snapdrift's **hosted Snap backend** (`provider: "snap"` in `.github/snapdrift.json`): baselines are stored durably in the hosted service (not as expiring GitHub artifacts), and each PR comment links to the Snap dashboard ("View in dashboard →") where the captured frames and diffs can be reviewed. The integration authenticates with the `SNAP_API_KEY` repository secret. The per-PR visual diff runs as a `visual-diff` job in the main CI workflow, gated on the `test-and-build` job passing — it won't run (or post a comment) until typecheck, tests, audit, budget, and build all succeed. An on-demand `PR Visual Diff (manual)` workflow is available via `workflow_dispatch` to force a diff without pushing a new commit. To validate UI changes before pushing, you can also run the `snapdrift` CLI locally (`npx snapdrift diff --open`) against a local `npm start`.
 
+## Dependency Overrides
+
+`package.json` carries an `overrides` block that forces patched versions of transitive
+dependencies the direct dependency tree would otherwise resolve lower. Two rules apply
+when editing it:
+
+- **An override for a package that is also a direct dependency must use the `$name`
+  reference form** (for example `"js-yaml": "$js-yaml"`), never a literal range. npm
+  rejects a literal override whose spec differs from the direct dependency with
+  `EOVERRIDE: Override for <pkg>@<version> conflicts with direct dependency`, which
+  fails every Dependabot run that tries to bump that package. The `$name` form resolves
+  to whatever the direct dependency declares, so the two can never drift apart.
+- **Check what an override is holding up before removing it.** An entry that looks
+  redundant next to a matching direct dependency is usually still pinning a transitive
+  consumer. `js-yaml` is the current example: `@istanbuljs/load-nyc-config` requests
+  `^3.13.1`, so dropping the override re-introduces a nested js-yaml 3.x alongside the
+  direct 4.x. Verify with `npm ls <pkg> --all` before and after any change.
+
 ## Contributing
 
 1. Create a feature branch.
