@@ -1,4 +1,5 @@
 import { DiffDisplay, DiffNavigator, CodeDetector, initializeDiffChecker } from './script';
+import { waitFor } from '@testing-library/dom';
 import { NotificationManager } from '../common/notification-manager';
 import { scheduleTask } from '../common/scheduler-utils';
 import { fireFileDragEvent, fireFileDrop, flushFileDrop } from '../common/drop-zone-test-utils';
@@ -605,12 +606,10 @@ describe('initializeDiffChecker', () => {
     const resultBefore = document.getElementById('diff-result').innerHTML;
 
     fireFileDrop(original, 'first side', 'before.txt');
-    await flushFileDrop();
+    await waitFor(() => expect(original.value).toBe('first side'));
     fireFileDrop(modified, 'second side', 'after.txt');
-    await flushFileDrop();
+    await waitFor(() => expect(modified.value).toBe('second side'));
 
-    expect(original.value).toBe('first side');
-    expect(modified.value).toBe('second side');
     expect(NotificationManager.show).toHaveBeenCalledWith(
       'Loaded before.txt',
       expect.any(Number),
@@ -662,9 +661,8 @@ describe('initializeDiffChecker', () => {
       document.getElementById('ignore-whitespace').checked = false;
 
       document.getElementById('diff-share-button').click();
-      await flushShare();
+      await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
 
-      expect(writeText).toHaveBeenCalledTimes(1);
       const url = writeText.mock.calls[0][0];
       expect(url).toContain('#d=');
       // The compared text must live in the fragment, never the query string.
@@ -744,9 +742,8 @@ describe('initializeDiffChecker', () => {
       })}`);
 
       initializeDiffChecker();
-      await new Promise((resolve) => setTimeout(resolve, 60));
+      await waitFor(() => expect(document.getElementById('text1').value).toBe('a'));
 
-      expect(document.getElementById('text1').value).toBe('a');
       expect(NotificationManager.show).toHaveBeenCalledWith(
         expect.stringContaining('Legacy ?d='),
         expect.any(Number),
@@ -764,9 +761,8 @@ describe('initializeDiffChecker', () => {
       })}`;
 
       initializeDiffChecker();
-      await new Promise((resolve) => setTimeout(resolve, 60));
+      await waitFor(() => expect(document.getElementById('text1').value).toBe('alpha\nbeta'));
 
-      expect(document.getElementById('text1').value).toBe('alpha\nbeta');
       expect(document.getElementById('text2').value).toBe('alpha\ngamma');
       expect(document.getElementById('ignore-whitespace').checked).toBe(false);
       expect(NotificationManager.show).toHaveBeenCalledWith(

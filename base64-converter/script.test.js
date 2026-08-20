@@ -6,6 +6,7 @@ import Base64Codec from '../common/Base64Codec';
 import { NotificationManager } from '../common/notification-manager';
 import DownloadManager from '../common/DownloadManager';
 import CopyButton from '../common/copy-button/CopyButton';
+import { waitFor } from '@testing-library/dom';
 import { fireFileDragEvent } from '../common/drop-zone-test-utils';
 
 // Mock NotificationManager at the top level
@@ -333,7 +334,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             elements.input.value = 'Hello from CodeSamplez Tools!';
 
             document.getElementById('base64converter-share').click();
-            await flushShare();
+            await waitFor(() => expect(mockClipboard.writeText).toHaveBeenCalled());
 
             // Not a call-count assertion: this suite re-requires ./script and
             // re-dispatches DOMContentLoaded in every beforeEach, and the

@@ -168,10 +168,15 @@ describe('TextAnalyzer Preact runtime', () => {
         await flushEffects();
 
         fireFileDrop(document.getElementById('textInput'), 'one two three.', 'notes.txt');
-        await flushFileDrop();
+        // This suite's own waitFor takes a predicate, not an assertion.
+        await waitFor(
+            () => document.getElementById('textInput')?.value === 'one two three.',
+            'the dropped text to load'
+        );
         await flushEffects();
 
         expect(document.getElementById('textInput')?.value).toBe('one two three.');
+
         expect(document.getElementById('wordCount')?.textContent).toBe('3');
         expect(NotificationManager.show).toHaveBeenCalledWith(
             'Loaded notes.txt',

@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { fireEvent } from '@testing-library/dom';
+import { fireEvent, waitFor } from '@testing-library/dom';
 import { render as preactRender } from 'preact';
 import { fireFileDragEvent, fireFileDrop, flushFileDrop } from '../common/drop-zone-test-utils';
 
@@ -279,10 +279,9 @@ describe('CSS Minifier Preact runtime', () => {
 
     const input = document.getElementById('css-minifier-input');
     fireFileDrop(input, 'body {  color:  #ffffff;  }', 'theme.css');
-    await flushFileDrop();
+    await waitFor(() => expect(input.value).toBe('body {  color:  #ffffff;  }'));
     await flushEffects();
 
-    expect(input.value).toBe('body {  color:  #ffffff;  }');
     expect(NotificationManager.show).toHaveBeenCalledWith(
       'Loaded theme.css',
       expect.any(Number),

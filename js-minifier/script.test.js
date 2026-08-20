@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { fireEvent } from '@testing-library/dom';
+import { fireEvent, waitFor } from '@testing-library/dom';
 import { render as preactRender } from 'preact';
 import { fireFileDragEvent, fireFileDrop, flushFileDrop } from '../common/drop-zone-test-utils';
 
@@ -293,11 +293,10 @@ describe('JavaScript Minifier Preact runtime', () => {
     await flushEffects();
 
     fireFileDrop(document.getElementById('js-minifier-input'), 'const  a  =  1;', 'app.js');
-    await flushFileDrop();
+    await waitFor(() => expect(document.getElementById('js-minifier-input')?.value).toBe('const  a  =  1;'));
     await flushEffects();
     await flushEffects();
 
-    expect(document.getElementById('js-minifier-input')?.value).toBe('const  a  =  1;');
     expect(document.getElementById('js-minifier-output')?.value.length).toBeGreaterThan(0);
     expect(NotificationManager.show).toHaveBeenCalledWith(
       'Loaded app.js',

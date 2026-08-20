@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { fireEvent } from '@testing-library/dom';
+import { fireEvent, waitFor } from '@testing-library/dom';
 import { render as preactRender } from 'preact';
 import { fireFileDragEvent, fireFileDrop, flushFileDrop } from '../common/drop-zone-test-utils';
 import { buildShareHash, parseShareHash } from './share-url';
@@ -189,11 +189,13 @@ describe('DataFormatConverterUI Integration', () => {
         // fake timers would stall, so run just that stretch on real timers.
         jest.useRealTimers();
         fireFileDrop(document.getElementById('inputText'), '{"dropped": true}', 'payload.json');
-        await flushFileDrop();
+        // Poll rather than waiting a fixed number of turns: the file read plus
+        // the Preact re-render took longer than two macrotasks on a loaded CI
+        // runner, which turned this spec red on main.
+        await waitFor(() => expect(document.getElementById('inputText')?.value).toBe('{"dropped": true}'));
         jest.useFakeTimers();
         await flush();
 
-        expect(document.getElementById('inputText')?.value).toBe('{"dropped": true}');
         expect(NotificationManager.show).toHaveBeenCalledWith(
             'Loaded payload.json',
             expect.any(Number),
@@ -334,15 +336,14 @@ describe('DataFormatConverterUI Integration', () => {
 
             jest.useRealTimers();
             new DataFormatConverterUI();
-            await new Promise((resolve) => setTimeout(resolve, 20));
-            jest.useFakeTimers();
-            await flush();
-
-            expect(NotificationManager.show).toHaveBeenCalledWith(
+            await waitFor(() => expect(NotificationManager.show).toHaveBeenCalledWith(
                 expect.stringContaining('Legacy ?c='),
                 expect.any(Number),
                 expect.objectContaining({ type: 'warning' })
-            );
+            ));
+            jest.useFakeTimers();
+            await flush();
+
 
             window.history.replaceState({}, '', pathname);
         });
@@ -414,11 +415,10 @@ describe('DataFormatConverterUI Integration', () => {
             // stretch on real timers, as the drop-zone spec does.
             jest.useRealTimers();
             new DataFormatConverterUI();
-            await new Promise((resolve) => setTimeout(resolve, 20));
+            await waitFor(() => expect(document.getElementById('inputText')?.value).toBe('name: Ada\n'));
             jest.useFakeTimers();
             await flush();
 
-            expect(document.getElementById('inputText')?.value).toBe('name: Ada\n');
             expect(
                 document.querySelector('.input-section .format-btn[data-format="yaml"]')?.classList.contains('active')
             ).toBe(true);
