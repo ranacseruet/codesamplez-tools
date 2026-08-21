@@ -92,6 +92,12 @@ describe('root document generation', () => {
     expect(html).toContain('placeholder="Search tools…"');
     expect(html).toContain('<a class="tool-search__chip tool-search__chip--all" role="button" href="#tools">All tools</a>');
     expect(html).toContain('<a class="tool-search__chip tool-search__chip--formatters" role="button" href="#group-code-formatters">Code Formatters &amp; Validators</a>');
+    // v4 Phase D3: empty slot for the client-rendered "Recently used" row,
+    // directly under the search island (the row is per-visitor, so nothing can
+    // be server-rendered into it).
+    expect(html).toContain('<div class="recent-tools-slot" id="recent-tools-root"></div>');
+    expect(html.indexOf('id="recent-tools-root"')).toBeGreaterThan(html.indexOf('id="tool-search-root"'));
+    expect(html.indexOf('id="recent-tools-root"')).toBeLessThan(html.indexOf('<div id="tools" class="tools-index">'));
     // v4 cards: whole-card stretched title link (one tab stop), category
     // accent class, fake CTA affordance.
     expect(html).toContain('class="tool-card tool-card--formatters" data-tool-id="json-formatter-tool"');

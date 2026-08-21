@@ -134,3 +134,25 @@ describe('tool catalog runtime data', () => {
         jest.resetModules();
     });
 });
+
+describe('resolveToolIdFromPath', () => {
+    const { resolveToolIdFromPath } = require('./toolCatalog');
+
+    it.each([
+        ['a canonical tool path', '/json-formatter/', 'json-formatter-tool'],
+        ['a path without the trailing slash', '/json-formatter', 'json-formatter-tool'],
+        ['an explicit index document', '/json-formatter/index.html', 'json-formatter-tool'],
+        ['a sub-directory deployment', '/tools/diff-checker/', 'diff-checker-tool']
+    ])('resolves %s', (_label, pathName, expectedId) => {
+        expect(resolveToolIdFromPath(pathName)).toBe(expectedId);
+    });
+
+    it.each([
+        ['the tools index', '/'],
+        ['an empty path', ''],
+        ['an unknown route', '/not-a-tool/'],
+        ['the index document of the root page', '/index.html']
+    ])('returns null for %s', (_label, pathName) => {
+        expect(resolveToolIdFromPath(pathName)).toBeNull();
+    });
+});

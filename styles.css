@@ -510,6 +510,111 @@ body {
   color: var(--color-text-secondary);
 }
 
+/* ==========================================================================
+   v4 Recently used row — client-rendered shortcut row under the hero search
+   ========================================================================== */
+
+/* The slot is server-rendered empty and stays collapsed for first-time visitors
+   (and with JS off), so it costs no layout and shows no placeholder. */
+.recent-tools-slot:empty {
+  display: none;
+}
+
+.recent-tools {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  max-width: 34rem;
+  margin: var(--spacing-md) auto 0;
+}
+
+.recent-tools__label {
+  margin: 0;
+  font-family: var(--font-family-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.recent-tools__list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recent-tools__item {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-size: 0.82rem;
+  text-decoration: none;
+  transition:
+    border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+.recent-tools__item::before {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-right: 0.45rem;
+  border-radius: 999px;
+  background-color: var(--cst-color-category-formatters, #a99cff);
+}
+
+.recent-tools__item--encoders::before {
+  background-color: var(--cst-color-category-encoders, #5fe0c2);
+}
+
+.recent-tools__item--text::before {
+  background-color: var(--cst-color-category-text, #f5c542);
+}
+
+.recent-tools__item:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.recent-tools__item:focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, none);
+}
+
+.recent-tools__clear {
+  padding: 0.2rem 0.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--landing-link-underline);
+  text-underline-offset: 0.16em;
+}
+
+.recent-tools__clear:hover {
+  color: var(--color-accent);
+}
+
+.recent-tools__clear:focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, none);
+}
+
 /* Grid filtering states (toggled by the search island). */
 .main-container .tool-card--hidden,
 .main-container .tool-group--hidden {

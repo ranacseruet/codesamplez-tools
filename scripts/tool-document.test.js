@@ -95,6 +95,9 @@ describe('tool document generation', () => {
         expect(html).toContain(`"url":"${buildSiteHref('/diff-checker/')}"`);
         expect(html).toContain(`"image":"${buildSiteAssetUri('/diff-checker/images/featured.png')}"`);
         expect(html).toContain('<div id="app-shell-header"><header class="cst-shell__header">');
+        // The shortcuts button is client-only: it needs the lazy overlay chunk
+        // behind it, so it must not appear in server markup.
+        expect(html).not.toContain('cst-shell__shortcut-help-button');
         expect(html).toContain('<div id="app-shell-share"><nav class="cst-share" aria-label="Share this tool">');
         expect(html).toContain(`href="https://twitter.com/intent/tweet?text=${encodeURIComponent('Diff Checker')}&amp;url=${encodeURIComponent(buildSiteHref('/diff-checker/'))}"`);
         expect(html).toContain(`href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(buildSiteHref('/diff-checker/'))}"`);

@@ -131,6 +131,12 @@ interface ToolShellHeaderProps {
     showThemeToggle?: boolean;
     themeMode?: ThemeMode;
     onToggleTheme?: () => void;
+    /**
+     * Opens the `?` shortcut help overlay. Supplied only by the client mount —
+     * the server-rendered header omits the button, so it can never appear
+     * before the handler that makes it work exists.
+     */
+    onOpenShortcutHelp?: () => void;
 }
 
 export function ToolShellHeader({
@@ -140,7 +146,8 @@ export function ToolShellHeader({
     breadcrumbItems,
     showThemeToggle = false,
     themeMode = 'light',
-    onToggleTheme
+    onToggleTheme,
+    onOpenShortcutHelp
 }: ToolShellHeaderProps): JSX.Element {
     const isDarkMode = themeMode === 'dark';
     const themeToggleLabel = isDarkMode ? 'Light mode' : 'Dark mode';
@@ -165,6 +172,19 @@ export function ToolShellHeader({
                     </a>
                     <div className="cst-shell__header-actions">
                         <ToolMenu />
+                        {onOpenShortcutHelp ? (
+                            <button
+                                type="button"
+                                className="cst-shell__shortcut-help-button"
+                                aria-label="Keyboard shortcuts"
+                                title="Keyboard shortcuts (?)"
+                                onClick={onOpenShortcutHelp}
+                            >
+                                {/* The glyph is the shortcut: pressing `?` does
+                                    the same thing this button does. */}
+                                <span aria-hidden="true">?</span>
+                            </button>
+                        ) : null}
                         {showThemeToggle ? (
                             <button
                                 type="button"

@@ -32,6 +32,9 @@ export const DROP_ZONE_MAX_BYTES = 5 * 1024 * 1024;
 /** Class toggled on the target while a file drag hovers it. */
 export const DROP_ZONE_ACTIVE_CLASS = 'is-drop-active';
 
+/** Attribute set on a registered target for the lifetime of the registration. */
+export const DROP_ZONE_TARGET_ATTRIBUTE = 'data-drop-target';
+
 interface DropZoneBaseOptions {
     /** Reported for rejected or unreadable drops. Tools surface this as a toast. */
     onError?: (message: string) => void;
@@ -243,6 +246,11 @@ export function registerDropZone(target: HTMLElement, options: DropZoneOptions):
     target.addEventListener('dragleave', handleDragLeave);
     target.addEventListener('drop', handleDrop);
 
+    // Marks the element as accepting file drops. Nothing styles this — it is
+    // how the `?` help overlay (common/shortcut-help.tsx) knows whether the page
+    // has drop targets to advertise, without a per-tool list to keep in sync.
+    target.setAttribute(DROP_ZONE_TARGET_ATTRIBUTE, 'true');
+
     activeZoneCount += 1;
     installDocumentGuard();
 
@@ -252,6 +260,7 @@ export function registerDropZone(target: HTMLElement, options: DropZoneOptions):
         target.removeEventListener('dragover', handleDragOver);
         target.removeEventListener('dragleave', handleDragLeave);
         target.removeEventListener('drop', handleDrop);
+        target.removeAttribute(DROP_ZONE_TARGET_ATTRIBUTE);
         reset();
         activeZoneCount = Math.max(0, activeZoneCount - 1);
         releaseDocumentGuard();

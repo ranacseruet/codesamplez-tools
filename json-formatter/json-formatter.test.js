@@ -950,7 +950,14 @@ describe('JSONFormatter', () => {
       formatter.copyBtn = { addEventListener: copyBtnMock };
       formatter.sampleBtn = { addEventListener: sampleBtnMock };
       formatter.shareBtn = { addEventListener: shareBtnMock };
-      formatter.input = { addEventListener: inputMock, value: '{"key": "value"}' };
+      formatter.input = {
+        addEventListener: inputMock,
+        value: '{"key": "value"}',
+        // registerDropZone marks its target for the `?` help overlay, so the
+        // stand-in needs the attribute methods a real element has.
+        setAttribute: jest.fn(),
+        removeAttribute: jest.fn()
+      };
       formatter.clearInputBtn = { addEventListener: clearInputBtnMock };
       formatter.clearOutputBtn = { addEventListener: clearOutputBtnMock };
       formatter.indentSelect = { addEventListener: captureMock(callbacks.indentSelect, 'change') };
@@ -1105,7 +1112,7 @@ describe('JSONFormatter', () => {
 
     test('should re-format on indent change when input is non-empty', () => {
       formatter.formatJSON = jest.fn();
-      formatter.input = { addEventListener: inputMock, value: '{"a":1}' };
+      formatter.input = { addEventListener: inputMock, value: '{"a":1}', setAttribute: jest.fn(), removeAttribute: jest.fn() };
       formatter.initializeEvents();
 
       callbacks.indentSelect.change();
@@ -1114,7 +1121,7 @@ describe('JSONFormatter', () => {
 
     test('should not re-format on indent change when input is empty', () => {
       formatter.formatJSON = jest.fn();
-      formatter.input = { addEventListener: inputMock, value: '   ' };
+      formatter.input = { addEventListener: inputMock, value: '   ', setAttribute: jest.fn(), removeAttribute: jest.fn() };
       formatter.initializeEvents();
 
       callbacks.indentSelect.change();
@@ -1654,7 +1661,7 @@ describe('JSONFormatter', () => {
       jest.useFakeTimers();
       formatter.clearError = jest.fn();
       formatter.updateStats = jest.fn();
-      formatter.input = { addEventListener: jest.fn(), value: '{"test": "data"}' };
+      formatter.input = { addEventListener: jest.fn(), value: '{"test": "data"}', setAttribute: jest.fn(), removeAttribute: jest.fn() };
       formatter.formatBtn = { addEventListener: jest.fn() };
       formatter.copyBtn = { addEventListener: jest.fn() };
       formatter.downloadBtn = { addEventListener: jest.fn() };

@@ -115,6 +115,17 @@ ${chips}
 }
 
 /**
+ * Empty slot for the client-rendered "Recently used" row (Phase D3). The list
+ * is per-visitor, so nothing can be server-rendered here; the slot collapses
+ * (`:empty` in styles.css) until root-shell fills it, so first-time visitors
+ * see no gap and no placeholder.
+ * @returns {string}
+ */
+function renderRecentToolsSlot() {
+    return '    <div class="recent-tools-slot" id="recent-tools-root"></div>';
+}
+
+/**
  * v4 hero: mono eyebrow stats, gradient display title, one-line value prop,
  * CTA pair, and the search island. The long-form intro paragraph stays below
  * the hero (SEO copy is unchanged).
@@ -133,6 +144,7 @@ function renderHero(title, toolCount, catalogGroups) {
         <a class="cta-button cta-button--ghost" href="#what-are-online-developer-tools">Why client-side?</a>
       </div>
 ${renderToolSearchShell(catalogGroups)}
+${renderRecentToolsSlot()}
     </section>`;
 }
 

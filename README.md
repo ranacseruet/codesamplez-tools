@@ -8,6 +8,8 @@ A collection of browser-based developer utilities that run client-side and build
 - Browser-based with no install required for end users
 - Client-side processing for privacy-preserving workflows
 - Shared responsive UI foundation across all tools
+- Keyboard-first UX: `?` opens a per-page shortcut reference on every page
+- A "Recently used" row on the tools index, kept in your browser only
 - Standalone build output per tool for stable deployment
 - Automated validation, bundle budgets, and regression monitoring
 
@@ -45,8 +47,17 @@ The repo is on a post-migration steady-state workflow.
   - `common/material-theme.css`
   - `common/shared-styles.css`
 - Shared input behaviours: `common/shortcut-utils.ts` (Cmd/Ctrl+Enter primary
-  action) and `common/drop-zone.ts` (drag-and-drop file loading; files are read
-  in the browser and never uploaded)
+  action, the `?` help trigger, and the shared `isEditableTarget` /
+  `formatModifierChord` helpers) and `common/drop-zone.ts` (drag-and-drop file
+  loading; files are read in the browser and never uploaded)
+- Keyboard help: `common/shortcut-help.ts` renders the `?` overlay, listing only
+  the shortcuts the current page actually has (it reads the search island, the
+  primary-action button, and registered drop targets from the live DOM). It
+  loads as a lazy chunk, and the shell header's `?` button opens the same thing
+- Recently used tools: `common/recent-tools.ts` stores catalog ids in this
+  browser's `localStorage` (never transmitted, capped at 8, malformed payloads
+  discarded). `mountToolShell` records the visit; the landing hero renders the
+  row via `common/app-shell/RecentTools.tsx`, with a Clear control
 - Shared share/copy behaviours: `common/share-url.ts` (hash-fragment state
   links, never sent to a server) and `common/clipboard.ts` (one
   Clipboard-API-with-`execCommand`-fallback strategy). Per-tool payload codecs

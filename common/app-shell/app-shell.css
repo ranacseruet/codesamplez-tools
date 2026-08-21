@@ -313,6 +313,47 @@ body.landing-page {
   box-shadow: var(--cst-focus-ring, none);
 }
 
+/* Shortcuts button (v4 Phase D3) — opens the `?` help overlay. Icon-only, and
+   hidden on touch pointers for the same reason as the `.c-kbd` hint chips:
+   there is no keyboard to press. */
+.cst-shell__shortcut-help-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--cst-shell-theme-toggle-border, var(--md-sys-color-outline-variant, #bfc9cd));
+  background: var(--cst-shell-theme-toggle-bg, rgba(255, 255, 255, 0.72));
+  color: var(--cst-shell-theme-toggle-text, var(--md-sys-color-on-surface, #141c1e));
+  font-family: var(--cst-font-family-mono, ui-monospace, monospace);
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+.cst-shell__shortcut-help-button:hover {
+  background: var(--cst-shell-theme-toggle-bg-hover, rgba(255, 255, 255, 0.9));
+  border-color: var(--cst-shell-theme-toggle-border-hover, var(--md-sys-color-outline, #6f797d));
+}
+
+.cst-shell__shortcut-help-button:focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, none);
+}
+
+@media (pointer: coarse) {
+  .cst-shell__shortcut-help-button {
+    display: none;
+  }
+}
+
 .cst-shell__theme-toggle {
   display: inline-flex;
   align-items: center;
@@ -580,5 +621,169 @@ body.landing-page {
 
   .cst-shell__theme-toggle-text {
     display: none;
+  }
+}
+
+/* ==========================================================================
+   Keyboard shortcut help overlay (v4 Phase D3)
+   Rendered on demand by common/shortcut-help.tsx (lazy chunk) into a host
+   element appended to <body>, so these rules never apply to server markup.
+   ========================================================================== */
+
+.cst-shortcut-help {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1rem, 4vw, 2.5rem);
+  background: var(--cst-scrim, rgba(4, 4, 10, 0.62));
+  animation: cst-shortcut-help-fade var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+@keyframes cst-shortcut-help-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.cst-shortcut-help__panel {
+  width: min(34rem, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+  border: 1px solid var(--md-sys-color-outline-variant, var(--md-sys-color-outline, #bfc9cd));
+  border-radius: var(--cst-radius-lg, 12px);
+  background: var(--md-sys-color-surface-container-low, #0e0e14);
+  box-shadow: var(--cst-shadow-3, 0 18px 40px rgba(0, 0, 0, 0.5));
+  color: var(--md-sys-color-on-surface, #141c1e);
+}
+
+.cst-shortcut-help__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.cst-shortcut-help__title {
+  margin: 0;
+  font-family: var(--cst-font-family-display, inherit);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.cst-shortcut-help__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--cst-shell-theme-toggle-border, var(--md-sys-color-outline-variant, #bfc9cd));
+  background: transparent;
+  color: var(--md-sys-color-on-surface, #141c1e);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+.cst-shortcut-help__close:hover {
+  background: var(--cst-shell-brand-chip-bg, rgba(111, 91, 240, 0.14));
+  border-color: var(--cst-color-accent, var(--md-sys-color-primary, #6f5bf0));
+}
+
+.cst-shortcut-help__close:focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, none);
+}
+
+.cst-shortcut-help__section + .cst-shortcut-help__section {
+  margin-top: 1.1rem;
+}
+
+.cst-shortcut-help__section-title {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant, #4f5a5d);
+}
+
+.cst-shortcut-help__list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.cst-shortcut-help__row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+}
+
+.cst-shortcut-help__keys {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+  min-width: 6.5rem;
+  margin: 0;
+}
+
+.cst-shortcut-help__key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--md-sys-color-outline-variant, var(--md-sys-color-outline, #bfc9cd));
+  border-radius: 0.4rem;
+  background: var(--md-sys-color-surface-bright, rgba(255, 255, 255, 0.06));
+  font-family: var(--cst-font-family-mono, ui-monospace, monospace);
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface, #141c1e);
+}
+
+.cst-shortcut-help__description {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: var(--cst-line-height-base, 1.55);
+  color: var(--md-sys-color-on-surface-variant, #495353);
+}
+
+.cst-shortcut-help__tip {
+  margin: 1.1rem 0 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #d6dfde);
+  font-size: 0.85rem;
+  line-height: var(--cst-line-height-base, 1.55);
+  color: var(--md-sys-color-on-surface-variant, #495353);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cst-shortcut-help {
+    animation: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .cst-shortcut-help__row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
   }
 }

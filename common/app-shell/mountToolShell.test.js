@@ -1,5 +1,8 @@
+import { waitFor } from '@testing-library/dom';
 import { SITE_BASE_URL } from '../siteBaseUrl';
 import { mountToolShell } from './mountToolShell';
+import { closeShortcutHelpDialog } from '../shortcut-help';
+import { readRecentToolVisits, recordToolVisit } from '../recent-tools';
 
 describe('mountToolShell', () => {
     beforeEach(() => {
@@ -250,5 +253,143 @@ describe('mountToolShell', () => {
         expect(document.querySelector('#app-shell-header .cst-shell__theme-toggle')).not.toBeNull();
         expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
         expect(document.documentElement.getAttribute('data-cst-theme')).toBe('dark');
+    });
+    describe('recently used tools', () => {
+        const originalPath = window.location.pathname;
+
+        afterEach(() => {
+            window.history.replaceState({}, '', originalPath);
+        });
+
+        it('records a visit on a tool page, resolving the id from the catalog', () => {
+            window.history.replaceState({}, '', '/json-formatter/');
+            document.body.className = 'standalone-app';
+            document.body.innerHTML = '<div id="app-shell-header"></div>';
+
+            mountToolShell({ title: 'JSON Formatter', homeHref: '/' });
+
+            expect(readRecentToolVisits().map((visit) => visit.id)).toEqual(['json-formatter-tool']);
+        });
+
+        it('re-records the visit when the tool page is restored from the bfcache', () => {
+            window.history.replaceState({}, '', '/json-formatter/');
+            document.body.className = 'standalone-app';
+            document.body.innerHTML = '<div id="app-shell-header"></div>';
+
+            mountToolShell({ title: 'JSON Formatter', homeHref: '/' });
+            const [firstVisit] = readRecentToolVisits();
+
+            // A tool visited in between; coming Back restores this document
+            // without re-running the mount, so recency would otherwise be stale.
+            recordToolVisit('diff-checker-tool', Date.now() + 1000);
+            window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+
+            const visits = readRecentToolVisits();
+            expect(visits[0].id).toBe('json-formatter-tool');
+            expect(visits[0].at).toBeGreaterThanOrEqual(firstVisit.at);
+        });
+
+        it('ignores a pageshow that is not a bfcache restore', () => {
+            window.history.replaceState({}, '', '/json-formatter/');
+            document.body.className = 'standalone-app';
+            document.body.innerHTML = '<div id="app-shell-header"></div>';
+
+            mountToolShell({ title: 'JSON Formatter', homeHref: '/' });
+            recordToolVisit('diff-checker-tool', Date.now() + 1000);
+            window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: false }));
+
+            expect(readRecentToolVisits()[0].id).toBe('diff-checker-tool');
+        });
+
+        it('releases the previous pageshow listener when the shell remounts', () => {
+            window.history.replaceState({}, '', '/json-formatter/');
+            document.body.className = 'standalone-app';
+            document.body.innerHTML = '<div id="app-shell-header"></div>';
+
+            // Warm-up mount so the spies below see one remount in isolation,
+            // whatever earlier tests left registered.
+            mountToolShell({ title: 'JSON Formatter', homeHref: '/' });
+            const addSpy = jest.spyOn(window, 'addEventListener');
+            const removeSpy = jest.spyOn(window, 'removeEventListener');
+
+            mountToolShell({ title: 'JSON Formatter', homeHref: '/' });
+
+            const added = addSpy.mock.calls.filter(([type]) => type === 'pageshow').length;
+            const removed = removeSpy.mock.calls.filter(([type]) => type === 'pageshow').length;
+            expect([added, removed]).toEqual([1, 1]);
+
+            addSpy.mockRestore();
+            removeSpy.mockRestore();
+        });
+
+        it('does not record a visit for the tools index', () => {
+            window.history.replaceState({}, '', '/');
+            document.body.className = 'landing-page';
+            document.body.innerHTML = '<div id="app-shell-header"></div>';
+
+            mountToolShell({ homeHref: '/', showThemeToggle: true });
+
+            expect(readRecentToolVisits()).toEqual([]);
+        });
+
+        it('does not record a visit for a path outside the catalog', () => {
+            window.history.replaceState({}, '', '/not-a-tool/');
+            document.body.className = 'standalone-app';
+            document.body.innerHTML = '<div id="app-shell-header"></div>';
+
+            mountToolShell({ title: 'Missing', homeHref: '/' });
+
+            expect(readRecentToolVisits()).toEqual([]);
+        });
+    });
+
+    describe('shortcut help', () => {
+        afterEach(() => {
+            closeShortcutHelpDialog();
+        });
+
+        it('opens the overlay from the shell header button', async () => {
+            document.body.innerHTML = '<div id="app-shell-header"></div>';
+
+            mountToolShell({ title: 'Diff Checker', homeHref: '/' });
+
+            const helpButton = document.querySelector('#app-shell-header .cst-shell__shortcut-help-button');
+            expect(helpButton?.getAttribute('aria-label')).toBe('Keyboard shortcuts');
+
+            helpButton.click();
+
+            // The overlay is a lazy chunk — poll for it rather than assuming how
+            // many turns the import takes.
+            await waitFor(() => {
+                expect(document.querySelector('.cst-shortcut-help [role="dialog"]')).not.toBeNull();
+            });
+        });
+
+        it('opens the overlay on "?"', async () => {
+            document.body.innerHTML = '<div id="app-shell-header"></div>';
+
+            mountToolShell({ title: 'Diff Checker', homeHref: '/' });
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }));
+
+            await waitFor(() => {
+                expect(document.querySelector('.cst-shortcut-help')).not.toBeNull();
+            });
+        });
+
+        it('leaves only one "?" listener behind when the shell remounts', async () => {
+            document.body.innerHTML = '<div id="app-shell-header"></div>';
+            const addSpy = jest.spyOn(document, 'addEventListener');
+            const removeSpy = jest.spyOn(document, 'removeEventListener');
+
+            mountToolShell({ title: 'Diff Checker', homeHref: '/' });
+            mountToolShell({ title: 'Diff Checker', homeHref: '/' });
+
+            const added = addSpy.mock.calls.filter(([type]) => type === 'keydown').length;
+            const removed = removeSpy.mock.calls.filter(([type]) => type === 'keydown').length;
+            expect(added - removed).toBe(1);
+
+            addSpy.mockRestore();
+            removeSpy.mockRestore();
+        });
     });
 });

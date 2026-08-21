@@ -1,6 +1,7 @@
 import { waitFor } from '@testing-library/dom';
 import {
     DROP_ZONE_ACTIVE_CLASS,
+    DROP_ZONE_TARGET_ATTRIBUTE,
     registerDropZone,
     readFileAsText,
     type DropZoneCleanup,
@@ -65,6 +66,19 @@ describe('registerDropZone', () => {
         fire(target, 'drop', fileDrag([file]));
 
         await waitFor(() => expect(onText).toHaveBeenCalledWith('{"a":1}', file));
+    });
+
+    it('marks the element as a drop target for as long as it is registered', () => {
+        // The `?` help overlay reads this attribute to decide whether the page
+        // can advertise drag-and-drop, so registration must own its lifetime.
+        expect(target.hasAttribute(DROP_ZONE_TARGET_ATTRIBUTE)).toBe(false);
+
+        cleanup = registerDropZone(target, { onText: jest.fn() });
+        expect(target.getAttribute(DROP_ZONE_TARGET_ATTRIBUTE)).toBe('true');
+
+        cleanup();
+        cleanup = undefined;
+        expect(target.hasAttribute(DROP_ZONE_TARGET_ATTRIBUTE)).toBe(false);
     });
 
     it('hands the raw File to onFile without reading it', () => {

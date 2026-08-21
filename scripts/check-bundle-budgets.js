@@ -59,17 +59,32 @@ const DEFAULT_FAIL_PERCENT = 10;
 // that split the main bundle was 92,444, over the fail line. Left at a standing
 // WARN it would have been 88 bytes over, which dulls the signal for the next
 // change rather than reflecting the new expected size.
+//
+// `css-minifier-tool` (71,459 -> 75,570), `text-analyzer-tool` (51,949 ->
+// 55,830), and `data-format-converter` (181,680 -> 191,635) were refreshed for
+// UI v4 Phase D3 (`?` shortcut help + recently-used tracking). Every tool gains
+// the same two things: ~1 KB for the shell's visit recorder plus the `?`
+// registrar, and — for the tools that previously had no code-split chunk at
+// all — webpack's chunk-loading runtime, because the help overlay is a lazy
+// chunk. Measured alternatives were both worse: importing the overlay eagerly
+// costs ~5.5 KB of main bundle per tool instead of ~2.4 KB, and rendering the
+// overlay with Preact (rather than plain DOM) adds a further ~3.7 KB per tool
+// by breaking scope hoisting in main, which is what pushed text-analyzer over
+// its fail line during development. The other seven tools absorbed the same
+// growth within their existing headroom and are deliberately left alone.
+// `data-format-converter` had also drifted +7,855 on its own before this
+// change (dependency growth), so its new value banks that drift too.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 58348,
-    'data-format-converter': 181680,
+    'data-format-converter': 191635,
     'diff-checker-tool': 87207,
     'jwt-builder-tool': 77707,
     'jwt-decoder-tool': 78448,
     'base64-converter-tool': 100367,
     'json-formatter-tool': 79715,
-    'css-minifier-tool': 71459,
-    'text-analyzer-tool': 51949,
+    'css-minifier-tool': 75570,
+    'text-analyzer-tool': 55830,
     'qr-code-generator': 91896
 });
 

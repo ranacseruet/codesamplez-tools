@@ -1,6 +1,9 @@
 import { render } from 'preact';
 import { ToolShellFooter, ToolShellHeader, createToolBreadcrumbItems } from './AppShell';
 import { ShareBar } from './ShareBar';
+import { resolveToolIdFromPath } from './toolCatalog';
+import { recordToolVisit } from '../recent-tools';
+import { openShortcutHelp, registerShortcutHelp } from '../shortcut-utils';
 import { SITE_BASE_URL } from '../siteBaseUrl';
 import type { MountToolShellOptions } from '../tooling-contracts';
 
@@ -10,6 +13,8 @@ const THEME_DARK = 'dark';
 const THEME_ATTR = 'data-theme';
 const LEGACY_THEME_ATTR = 'data-cst-theme';
 let activeThemeObserver: MutationObserver | null = null;
+let activeShortcutHelpCleanup: (() => void) | null = null;
+let activeVisitRecordingCleanup: (() => void) | null = null;
 
 type ThemeMode = typeof THEME_LIGHT | typeof THEME_DARK;
 
@@ -80,6 +85,47 @@ export function mountToolShell({
         activeThemeObserver = null;
     }
 
+    if (activeShortcutHelpCleanup) {
+        activeShortcutHelpCleanup();
+        activeShortcutHelpCleanup = null;
+    }
+
+    // The `?` overlay is available on every page the shell mounts; the chunk
+    // that renders it only loads on first use.
+    activeShortcutHelpCleanup = registerShortcutHelp();
+
+    if (activeVisitRecordingCleanup) {
+        activeVisitRecordingCleanup();
+        activeVisitRecordingCleanup = null;
+    }
+
+    // Recently used tools (Phase D3). Recorded here rather than per tool so the
+    // id always comes from the catalog: the landing row and the recorded visit
+    // cannot drift apart. The tools index mounts the same shell, and resolves
+    // to no tool id, so browsing the index never counts as a visit.
+    if (isStandaloneMode) {
+        const visitedToolId = resolveToolIdFromPath(window.location.pathname);
+        if (visitedToolId) {
+            recordToolVisit(visitedToolId);
+
+            // Coming Back to this tool restores it from the back/forward cache
+            // without re-running this mount, so the visit would keep the
+            // timestamp of the *first* time it was opened and sink down the
+            // recency order. `pageshow` is the one event that fires on a
+            // bfcache restore.
+            const onPageShow = (event: PageTransitionEvent) => {
+                if (event.persisted) {
+                    recordToolVisit(visitedToolId);
+                }
+            };
+
+            window.addEventListener('pageshow', onPageShow);
+            activeVisitRecordingCleanup = () => {
+                window.removeEventListener('pageshow', onPageShow);
+            };
+        }
+    }
+
     // Dark is the product default: it applies when the toggle is disabled (no
     // resolution runs) and as the final fallback below — the generated documents'
     // pre-paint init script normally sets data-theme (stored choice or dark)
@@ -106,6 +152,10 @@ export function mountToolShell({
         renderHeader();
     }
 
+    function handleOpenShortcutHelp(): void {
+        void openShortcutHelp();
+    }
+
     function renderHeader(): void {
         if (!headerRoot) {
             return;
@@ -120,6 +170,7 @@ export function mountToolShell({
                 showThemeToggle={shouldEnableThemeToggle}
                 themeMode={currentThemeMode}
                 onToggleTheme={shouldEnableThemeToggle ? handleThemeToggle : undefined}
+                onOpenShortcutHelp={handleOpenShortcutHelp}
             />,
             headerRoot
         );

@@ -2,6 +2,7 @@ import type { JSX } from 'preact';
 import { render } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { TOOL_CATALOG_ENTRIES, TOOL_CATALOG_GROUPS } from './toolCatalog';
+import { formatModifierChord, isEditableTarget } from '../shortcut-utils';
 import { buildSiteHref } from '../siteBaseUrl';
 
 // Maps catalog group ids to the v4 category accent slug (chip/palette hues).
@@ -59,19 +60,6 @@ function rankTools(tools: ToolSearchEntry[], queryTokens: string[]): ToolSearchE
         .map(({ tool }) => tool);
 }
 
-function isEditableTarget(target: EventTarget | null): boolean {
-    if (!(target instanceof HTMLElement)) {
-        return false;
-    }
-
-    return (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.tagName === 'SELECT' ||
-        target.isContentEditable
-    );
-}
-
 function SearchIcon(): JSX.Element {
     return (
         <svg
@@ -120,7 +108,8 @@ export function ToolSearch(): JSX.Element {
     );
     const paletteItems = filteredTools.slice(0, MAX_PALETTE_ITEMS);
     const isFiltering = queryTokens.length > 0 || category !== null;
-    const shortcutLabel = /Mac|iPhone|iPad/.test(typeof navigator !== 'undefined' ? navigator.platform : '') ? '⌘K' : 'Ctrl K';
+    // Shared with the `?` help overlay so the advertised chord matches exactly.
+    const shortcutLabel = formatModifierChord('K');
 
     // Filter the SSR'd grid in lockstep with the palette. When nothing is
     // being filtered, every card and group is visible again.

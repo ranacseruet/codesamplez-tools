@@ -59,6 +59,50 @@ export function resolveCatalogHref(pathName: string, rootPath: string): string {
         : `${normalizedRootPath}${normalizedPathName}`;
 }
 
+/**
+ * Last meaningful path segment: `/tools/json-formatter/index.html` and
+ * `/json-formatter` both reduce to `json-formatter`. Written with index loops
+ * rather than `Array#at`/`findLast` so consuming tool bundles don't pull core-js
+ * helpers for a string comparison (same reasoning as `common/drop-zone.ts`).
+ */
+function getToolPathSlug(pathName: string): string {
+    const rawSegments = pathName.split('/');
+    const segments: string[] = [];
+    for (let index = 0; index < rawSegments.length; index += 1) {
+        const segment = rawSegments[index];
+        if (segment && segment !== 'index.html') {
+            segments.push(segment);
+        }
+    }
+
+    return segments.length > 0 ? segments[segments.length - 1] : '';
+}
+
+/**
+ * Resolves a location pathname to a catalog tool id, or `null` when the path is
+ * not a tool page (the index, the 404 page, an unknown route).
+ *
+ * Matching on the trailing slug rather than the full public path keeps this
+ * correct when the site is served from a sub-directory or without a trailing
+ * slash, and means visit recording needs no per-tool wiring that could drift
+ * from the catalog.
+ */
+export function resolveToolIdFromPath(pathName: string): string | null {
+    const slug = getToolPathSlug(pathName);
+    if (!slug) {
+        return null;
+    }
+
+    for (let index = 0; index < TOOL_CATALOG_ENTRIES.length; index += 1) {
+        const entry = TOOL_CATALOG_ENTRIES[index];
+        if (getToolPathSlug(entry.publicPath) === slug) {
+            return entry.id;
+        }
+    }
+
+    return null;
+}
+
 export function normalizeToolCatalog(
     rawRootConfig: AppShellRootConfig,
     toolMetadata: AppShellToolMetadata[]

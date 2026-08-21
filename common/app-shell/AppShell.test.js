@@ -240,4 +240,23 @@ describe('AppShell components', () => {
         expect(removedTypes).toContain('keydown');
         removeEventListenerSpy.mockRestore();
     });
+    it('renders the shortcuts button only when a handler is supplied', () => {
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+
+        // Server-rendered headers pass no handler, so the button never ships in
+        // markup that cannot act on it.
+        render(<ToolShellHeader title="JSON Formatter" />, root);
+        expect(root.querySelector('.cst-shell__shortcut-help-button')).toBeNull();
+
+        const onOpenShortcutHelp = jest.fn();
+        render(<ToolShellHeader title="JSON Formatter" onOpenShortcutHelp={onOpenShortcutHelp} />, root);
+        const button = root.querySelector('.cst-shell__shortcut-help-button');
+        expect(button?.getAttribute('title')).toBe('Keyboard shortcuts (?)');
+
+        button.click();
+        expect(onOpenShortcutHelp).toHaveBeenCalledTimes(1);
+
+        render(null, root);
+    });
 });
