@@ -1,4 +1,5 @@
 import { render } from 'preact';
+import { waitFor } from '@testing-library/dom';
 import { ShareBar } from './ShareBar';
 
 const SHARE_URL = 'https://tools.codesamplez.com/diff-checker/';
@@ -75,23 +76,53 @@ describe('ShareBar', () => {
         expect(copyButton.getAttribute('aria-label')).toBe('Copy link');
 
         copyButton.click();
-        await Promise.resolve();
-        await Promise.resolve();
 
+        // The copy resolves through the shared helper and Preact re-renders on a
+        // microtask; poll instead of counting turns.
+        await waitFor(() => {
+            expect(root.querySelector('button.cst-share__btn--copy').getAttribute('aria-label')).toBe('Link copied');
+        });
         expect(writeText).toHaveBeenCalledWith(SHARE_URL);
-        const updatedButton = root.querySelector('button.cst-share__btn--copy');
-        expect(updatedButton.getAttribute('aria-label')).toBe('Link copied');
-        expect(updatedButton.className).toContain('is-copied');
+        expect(root.querySelector('button.cst-share__btn--copy').className).toContain('is-copied');
     });
 
-    it('does not throw when the clipboard API is unavailable', () => {
+    it('falls back to execCommand when the clipboard API is unavailable', async () => {
+        // This rail used to bail out entirely here, which is precisely the case
+        // the shared fallback exists for.
         Object.defineProperty(navigator, 'clipboard', {
             configurable: true,
             value: undefined
         });
+        const execCommand = jest.fn(() => true);
+        document.execCommand = execCommand;
 
         const root = renderShareBar();
         const copyButton = root.querySelector('button.cst-share__btn--copy');
         expect(() => copyButton.click()).not.toThrow();
+
+        await waitFor(() => {
+            expect(root.querySelector('button.cst-share__btn--copy').className).toContain('is-copied');
+        });
+        expect(execCommand).toHaveBeenCalledWith('copy');
+
+        delete document.execCommand;
+    });
+
+    it('stays quiet when both copy routes fail', async () => {
+        Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            value: { writeText: jest.fn().mockRejectedValue(new Error('denied')) }
+        });
+        document.execCommand = jest.fn(() => false);
+
+        const root = renderShareBar();
+        const copyButton = root.querySelector('button.cst-share__btn--copy');
+        expect(() => copyButton.click()).not.toThrow();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        // No toast, no copied state — the rail sits beside a visible URL.
+        expect(root.querySelector('button.cst-share__btn--copy').className).not.toContain('is-copied');
+
+        delete document.execCommand;
     });
 });

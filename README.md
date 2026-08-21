@@ -60,7 +60,8 @@ The repo is on a post-migration steady-state workflow.
   row via `common/app-shell/RecentTools.tsx`, with a Clear control
 - Shared share/copy behaviours: `common/share-url.ts` (hash-fragment state
   links, never sent to a server) and `common/clipboard.ts` (one
-  Clipboard-API-with-`execCommand`-fallback strategy). Per-tool payload codecs
+  Clipboard-API-with-`execCommand`-fallback strategy, used by every copy
+  affordance in the repo). Per-tool payload codecs
   live in each tool's `share-url.ts` and load as lazy chunks, since they pull
   `lz-string`
 - Prerender pipeline: `scripts/prerender-tool.js`

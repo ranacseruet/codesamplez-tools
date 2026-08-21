@@ -1,6 +1,7 @@
 import { JWTDecoder } from './JWTDecoder';
 import { JsonTreeViewRenderer } from './JsonTreeViewRenderer';
 import { NotificationManager } from '../common/notification-manager';
+import { copyTextToClipboard } from '../common/clipboard';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import ClearButton from '../common/clear-button/ClearButton';
 import { hydrate, render } from 'preact';
@@ -392,7 +393,7 @@ export class JWTDecoderUI {
         }
 
         try {
-            await navigator.clipboard.writeText(decodedContent);
+            await copyTextToClipboard(decodedContent);
             NotificationManager.show('Copied to clipboard!', 2000, { type: 'success' });
         } catch (error: unknown) {
             console.error('Failed to copy:', error);

@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
+import { copyTextToClipboard } from '../clipboard';
 
 // Floating share rail shown on individual tool pages (mirrors the main site's
 // article share widget, themed with the v2 iris tokens). Brand glyphs aren't in
@@ -126,19 +127,19 @@ export function ShareBar({ shareUrl, shareTitle }: ShareBarProps): JSX.Element {
     const copyLabel = copied ? 'Link copied' : 'Copy link';
 
     function handleCopy(): void {
-        const clipboard = typeof navigator !== 'undefined' ? navigator.clipboard : undefined;
-        if (!clipboard?.writeText) {
-            return;
-        }
-
-        clipboard
-            .writeText(shareUrl)
+        // Routed through the shared helper so this rail gets the same
+        // execCommand fallback as every other copy affordance: it used to bail
+        // out entirely without the Clipboard API, which is exactly the case the
+        // fallback exists for.
+        void copyTextToClipboard(shareUrl)
             .then(() => {
                 setCopied(true);
                 window.setTimeout(() => setCopied(false), COPIED_RESET_MS);
             })
             .catch(() => {
-                // Clipboard can reject (permissions / insecure context) — fail quietly.
+                // Both routes failed (permissions, insecure context with no
+                // selection support). The rail is a convenience beside a
+                // visible URL, so it stays quiet rather than toasting.
             });
     }
 

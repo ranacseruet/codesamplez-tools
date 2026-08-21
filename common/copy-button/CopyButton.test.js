@@ -336,33 +336,10 @@ describe('CopyButton', () => {
         });
     });
 
-    describe('Fallback Copy Method', () => {
-        test('should create and remove temporary textarea for fallback copy', () => {
-            const content = 'fallback test content';
-            const createElementSpy = jest.spyOn(document, 'createElement');
-            const appendChildSpy = jest.spyOn(document.body, 'appendChild');
-            const removeChildSpy = jest.spyOn(document.body, 'removeChild');
-            
-            copyButtonInstance.fallbackCopyToClipboard(content);
-            
-            expect(createElementSpy).toHaveBeenCalledWith('textarea');
-            expect(appendChildSpy).toHaveBeenCalled();
-            expect(removeChildSpy).toHaveBeenCalled();
-            expect(document.execCommand).toHaveBeenCalledWith('copy');
-            
-            createElementSpy.mockRestore();
-            appendChildSpy.mockRestore();
-            removeChildSpy.mockRestore();
-        });
-
-        test('should throw error when execCommand fails', () => {
-            document.execCommand.mockReturnValue(false);
-            
-            expect(() => {
-                copyButtonInstance.fallbackCopyToClipboard('test');
-            }).toThrow('execCommand copy failed');
-        });
-    });
+    // The Clipboard-API-then-execCommand sequence itself is owned by
+    // common/clipboard.ts and covered by common/clipboard.test.ts; what matters
+    // here is that this component still succeeds on the fallback path and only
+    // shows its error state when both routes fail (asserted above).
 
     describe('Pre Element Support', () => {
         let preElement;

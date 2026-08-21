@@ -268,7 +268,12 @@ describe('TextAnalyzer Preact runtime', () => {
         await flushEffects();
 
         fireEvent.click(document.getElementById('copy-results'));
-        await waitFor(() => writeText.mock.calls.length === 1, 'clipboard.writeText called');
+        // The toast lands a turn after the write resolves (the copy goes through
+        // the shared helper), so poll for it rather than assuming a turn count.
+        await waitFor(
+            () => NotificationManager.show.mock.calls.some((call) => call[0] === 'Results copied to clipboard!'),
+            'copy success toast'
+        );
 
         expect(writeText.mock.calls[0][0]).toContain('Word Count: 2');
         expect(NotificationManager.show).toHaveBeenCalledWith('Results copied to clipboard!', 2000, { type: 'success' });

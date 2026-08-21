@@ -547,7 +547,9 @@ describe('JSONFormatter', () => {
       document.execCommand = jest.fn().mockReturnValue(true);
       const mockCreateElement = jest.spyOn(document, 'createElement').mockReturnValue({
         value: '',
-        style: { position: '' },
+        style: { position: '', top: '', left: '' },
+        setAttribute: jest.fn(),
+        focus: jest.fn(),
         select: jest.fn()
       });
       const mockAppendChild = jest.spyOn(document.body, 'appendChild').mockImplementation(() => { });
@@ -573,7 +575,9 @@ describe('JSONFormatter', () => {
       document.execCommand = jest.fn().mockReturnValue(false);
       const mockCreateElement = jest.spyOn(document, 'createElement').mockReturnValue({
         value: '',
-        style: { position: '' },
+        style: { position: '', top: '', left: '' },
+        setAttribute: jest.fn(),
+        focus: jest.fn(),
         select: jest.fn()
       });
       const mockAppendChild = jest.spyOn(document.body, 'appendChild').mockImplementation(() => { });
@@ -684,7 +688,9 @@ describe('JSONFormatter', () => {
       document.execCommand = jest.fn().mockReturnValue(true);
       const mockCreateElement = jest.spyOn(document, 'createElement').mockReturnValue({
         value: '',
-        style: { position: '' },
+        style: { position: '', top: '', left: '' },
+        setAttribute: jest.fn(),
+        focus: jest.fn(),
         select: jest.fn()
       });
       const mockAppendChild = jest.spyOn(document.body, 'appendChild').mockImplementation(() => { });
@@ -707,7 +713,9 @@ describe('JSONFormatter', () => {
       document.execCommand = jest.fn().mockReturnValue(false);
       const mockCreateElement = jest.spyOn(document, 'createElement').mockReturnValue({
         value: '',
-        style: { position: '' },
+        style: { position: '', top: '', left: '' },
+        setAttribute: jest.fn(),
+        focus: jest.fn(),
         select: jest.fn()
       });
       const mockAppendChild = jest.spyOn(document.body, 'appendChild').mockImplementation(() => { });

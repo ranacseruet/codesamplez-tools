@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/ho
 import { NotificationManager } from '../common/notification-manager';
 import ClearButton from '../common/clear-button/ClearButton';
 import { registerDropZone } from '../common/drop-zone';
+import { copyTextToClipboard } from '../common/clipboard';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { analyzeText, type TextAnalysisResult } from './TextAnalyzer';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
@@ -154,27 +155,9 @@ export function TextAnalyzerApp() {
             : 'No words to analyze';
         const content = [...lines, `Word Frequency (Top 5): ${frequency}`].join('\n');
 
-        const onSuccess = () => NotificationManager.show('Results copied to clipboard!', 2000, { type: 'success' });
         try {
-            if (navigator.clipboard && window.isSecureContext) {
-                await navigator.clipboard.writeText(content);
-            } else {
-                const textarea = document.createElement('textarea');
-                textarea.value = content;
-                textarea.style.position = 'fixed';
-                textarea.style.left = '-999999px';
-                document.body.appendChild(textarea);
-                textarea.focus();
-                textarea.select();
-                try {
-                    if (!document.execCommand('copy')) {
-                        throw new Error('execCommand copy failed');
-                    }
-                } finally {
-                    document.body.removeChild(textarea);
-                }
-            }
-            onSuccess();
+            await copyTextToClipboard(content);
+            NotificationManager.show('Results copied to clipboard!', 2000, { type: 'success' });
         } catch {
             NotificationManager.show('Failed to copy results', 3000, { type: 'error' });
         }

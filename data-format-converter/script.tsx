@@ -70,27 +70,6 @@ function getErrorMessage(error: unknown): string {
     return String(error);
 }
 
-async function copyToClipboard(text: string): Promise<void> {
-    if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
-        return;
-    }
-
-    const tempTextArea = document.createElement('textarea');
-    tempTextArea.value = text;
-    tempTextArea.setAttribute('readonly', '');
-    tempTextArea.style.position = 'absolute';
-    tempTextArea.style.left = '-9999px';
-    document.body.appendChild(tempTextArea);
-    tempTextArea.select();
-    const copied = document.execCommand('copy');
-    document.body.removeChild(tempTextArea);
-
-    if (!copied) {
-        throw new Error('Copy failed');
-    }
-}
-
 function createSampleInput(converter: DataFormatConverter, format: SupportedFormat): string {
     return converter.formatOutput(SAMPLE_RECORD, format);
 }
@@ -554,7 +533,7 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
         }
 
         try {
-            await copyToClipboard(outputText);
+            await copyTextToClipboard(outputText);
             NotificationManager.show('Copied to clipboard!', 3000, { type: 'success' });
         } catch (_error) {
             showActionError('Failed to copy output');

@@ -220,6 +220,28 @@ describe('JWT Decoder UI Interactions', () => {
         .toHaveBeenCalledWith('Copied to clipboard!', 2000, expect.objectContaining({ type: 'success' }));
   });
 
+  it('copies through the execCommand fallback when the Clipboard API is unavailable', async () => {
+    // This handler called navigator.clipboard directly until the copy
+    // affordances were consolidated; without the Clipboard API it simply threw.
+    const copyBtn = document.getElementById('jwt-decoder-copy-btn');
+    const decodedOutput = document.getElementById('jwtDecodedOutput');
+    const originalClipboard = navigator.clipboard;
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
+    const execCommand = jest.fn(() => true);
+    document.execCommand = execCommand;
+
+    decodedOutput.value = '{"header":{"alg":"HS256"}}';
+    copyBtn.click();
+    await jest.runAllTimersAsync();
+
+    expect(execCommand).toHaveBeenCalledWith('copy');
+    expect(require('../common/notification-manager').NotificationManager.show)
+        .toHaveBeenCalledWith('Copied to clipboard!', 2000, expect.objectContaining({ type: 'success' }));
+
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: originalClipboard });
+    delete document.execCommand;
+  });
+
   it('should not copy error content when copy button is clicked', async () => {
     const copyBtn = document.getElementById('jwt-decoder-copy-btn');
     const decodedOutput = document.getElementById('jwtDecodedOutput');

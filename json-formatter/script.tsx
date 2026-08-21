@@ -648,31 +648,8 @@ export class JSONFormatter {
 
   async copyOutput(): Promise<void> {
     try {
-      const textToCopy = this.getFormattedOutput();
-
-      // Try modern Clipboard API first
-      if (globalThis.navigator?.clipboard) {
-        await globalThis.navigator.clipboard.writeText(textToCopy);
-        NotificationManager.show('Copied to clipboard!', 2000, { type: 'success' });
-        return;
-      }
-
-      // Fallback to execCommand for older browsers/HTTP contexts
-      const textarea = document.createElement('textarea');
-      textarea.value = textToCopy;
-      textarea.style.position = 'fixed';  // Prevent scrolling to bottom
-      document.body.appendChild(textarea);
-      textarea.select();
-
-      try {
-        const successful = document.execCommand('copy');
-        if (!successful) {
-          throw new Error('Copy command failed');
-        }
-        NotificationManager.show('Copied to clipboard!', 2000, { type: 'success' });
-      } finally {
-        document.body.removeChild(textarea);
-      }
+      await copyTextToClipboard(this.getFormattedOutput());
+      NotificationManager.show('Copied to clipboard!', 2000, { type: 'success' });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       this.showError(`Failed to copy. ${message}. Note: Clipboard access requires HTTPS in modern browsers.`);

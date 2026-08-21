@@ -276,8 +276,12 @@ function MyTextArea() {
 - ✅ Edge 79+
 
 **Fallback Support:**
-- Uses `document.execCommand('copy')` for older browsers
-- Graceful degradation for non-secure contexts
+- Copying is delegated to `common/clipboard.ts` (`copyTextToClipboard`), the one
+  clipboard strategy shared by every copy affordance in the repo
+- That helper uses `document.execCommand('copy')` for older browsers, for
+  non-secure contexts, and as a retry when the Clipboard API rejects
+- This component owns only the feedback: success/error animation and the
+  `contentCopied` event
 
 ## 🧪 Testing
 
@@ -290,7 +294,8 @@ npm test -- common/copy-button/CopyButton.test.js
 **Test Coverage:**
 - ✅ Initialization and DOM manipulation
 - ✅ Visibility management
-- ✅ Copy functionality (modern and fallback)
+- ✅ Copy functionality (success and total-failure paths; the API/execCommand
+  sequence itself is covered by `common/clipboard.test.ts`)
 - ✅ Event dispatching
 - ✅ Animation states
 - ✅ Event listener management

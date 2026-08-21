@@ -1,3 +1,5 @@
+import { copyTextToClipboard } from '../clipboard';
+
 type CopyTargetElement = HTMLTextAreaElement | HTMLInputElement | HTMLPreElement;
 
 class CopyButton {
@@ -113,51 +115,16 @@ class CopyButton {
             return;
         }
 
+        // The Clipboard-API-then-execCommand sequence (including retrying the
+        // synchronous path when the async one rejects) lives in
+        // common/clipboard.ts; this component owns only the feedback.
         try {
-            // Try modern Clipboard API first
-            if (navigator.clipboard && window.isSecureContext) {
-                await navigator.clipboard.writeText(content);
-            } else {
-                // Fallback for older browsers or non-secure contexts
-                this.fallbackCopyToClipboard(content);
-            }
-
+            await copyTextToClipboard(content);
             this.showSuccessAnimation();
             this.dispatchCopyEvent(content);
-
         } catch (error) {
-            console.warn('Copy to clipboard failed:', error);
-            // Try fallback method
-            try {
-                this.fallbackCopyToClipboard(content);
-                this.showSuccessAnimation();
-                this.dispatchCopyEvent(content);
-            } catch (fallbackError) {
-                console.error('All copy methods failed:', fallbackError);
-                this.showErrorAnimation();
-            }
-        }
-    }
-
-    fallbackCopyToClipboard(text: string): void {
-        // Create a temporary textarea element
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        document.body.appendChild(textArea);
-
-        textArea.focus();
-        textArea.select();
-
-        try {
-            const successful = document.execCommand('copy');
-            if (!successful) {
-                throw new Error('execCommand copy failed');
-            }
-        } finally {
-            document.body.removeChild(textArea);
+            console.error('All copy methods failed:', error);
+            this.showErrorAnimation();
         }
     }
 
