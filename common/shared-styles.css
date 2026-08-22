@@ -1280,16 +1280,31 @@ button.c-tooltip-container {
 }
 
 .c-tool-static-shell {
-  width: 100%;
+  /* No explicit width: like `.tool-container`, let auto sizing absorb the
+     inline padding under content-box (`width: 100%` here would add the padding
+     on top and overflow narrow viewports). */
   max-width: var(--container-max-width, var(--default-container-max-width, 1280px));
   margin-left: auto;
   margin-right: auto;
   padding-inline: clamp(0.85rem, 2vw, var(--spacing-lg, var(--default-spacing-lg)));
-  box-sizing: border-box;
+  /* content-box to mirror `.tool-container` exactly (same max-width token, same
+     inline clamp): `.tool-container` itself is content-box (only its descendants
+     get border-box), so with border-box here the prerendered article sections
+     rendered outside the app root (diff-checker's after-app shell) sat ~2x-pad
+     narrower than the tool UI above them. */
+  box-sizing: content-box;
 }
 
 .c-tool-static-shell--before {
   margin-bottom: 1rem;
+}
+
+/* Mirror `.tool-container`'s ≤768px padding bump so the shell keeps tracking
+   the tool UI's content edges on small screens too. */
+@media (max-width: 768px) {
+  .c-tool-static-shell {
+    padding-inline: var(--spacing-md, var(--default-spacing-md));
+  }
 }
 
 .c-tool-static-shell--after {
