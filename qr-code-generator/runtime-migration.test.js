@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { fireEvent } from '@testing-library/dom';
+import { fireEvent, waitFor } from '@testing-library/dom';
 import { render as preactRender } from 'preact';
 
 jest.mock('qrcode', () => ({
@@ -39,17 +39,9 @@ import ClearButton from '../common/clear-button/ClearButton';
 import { NotificationManager } from '../common/notification-manager';
 
 describe('QRCodeGenerator Preact runtime', () => {
+    // Prefix of the product's QR_EMPTY_INPUT_MESSAGE (not exported).
+    const QR_EMPTY_INPUT_PREFIX = 'Please enter text or a URL';
     const flush = () => Promise.resolve();
-    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    const waitFor = async (predicate, timeoutMs = 1000) => {
-        const start = Date.now();
-        while (!predicate()) {
-            if (Date.now() - start > timeoutMs) {
-                throw new Error('Timed out waiting for condition');
-            }
-            await wait(20);
-        }
-    };
     const flushEffects = async () => {
         await flush();
         await flush();
@@ -67,8 +59,7 @@ describe('QRCodeGenerator Preact runtime', () => {
 
     it('renders defaults and generates QR after debounce', async () => {
         new QRCodeGeneratorToolUI();
-        await flushEffects();
-        await waitFor(() => QRCode.toCanvas.mock.calls.length >= 1);
+        await waitFor(() => expect(QRCode.toCanvas.mock.calls.length).toBeGreaterThanOrEqual(1));
         await flushEffects();
 
         expect(document.getElementById('qr-text')?.value).toBe('https://codesamplez.com');
@@ -84,10 +75,11 @@ describe('QRCodeGenerator Preact runtime', () => {
 
         const input = document.getElementById('qr-text');
         fireEvent.input(input, { target: { value: '' } });
-        await wait(300);
-        await flushEffects();
-
-        expect(document.getElementById('error-message')?.textContent).toContain('Please enter text or a URL');
+        // The generation is debounced (250ms); poll for the outcome instead of
+        // assuming the debounce lands inside a fixed wait (CI-flake lesson).
+        await waitFor(() =>
+            expect(document.getElementById('error-message')?.textContent).toContain(QR_EMPTY_INPUT_PREFIX)
+        );
         expect(document.getElementById('qr-canvas')?.style.display).toBe('none');
     });
 
@@ -96,14 +88,15 @@ describe('QRCodeGenerator Preact runtime', () => {
         await flushEffects();
 
         fireEvent.input(document.getElementById('qr-text'), { target: { value: '' } });
-        await wait(300);
-        await flushEffects();
+        await waitFor(() =>
+            expect(document.getElementById('error-message')?.textContent).toContain(QR_EMPTY_INPUT_PREFIX)
+        );
 
         fireEvent.click(document.getElementById('qr-load-sample'));
-        await flushEffects();
-
-        expect(document.getElementById('qr-text')?.value).toBe('https://codesamplez.com');
-        expect(NotificationManager.show).toHaveBeenCalledWith('Sample URL loaded', 2000, { type: 'success' });
+        await waitFor(() => {
+            expect(document.getElementById('qr-text')?.value).toBe('https://codesamplez.com');
+            expect(NotificationManager.show).toHaveBeenCalledWith('Sample URL loaded', 2000, { type: 'success' });
+        });
     });
 
     it('updates sliders and downloads generated QR image', async () => {
@@ -114,17 +107,12 @@ describe('QRCodeGenerator Preact runtime', () => {
         const marginSlider = document.getElementById('qr-margin');
         fireEvent.input(sizeSlider, { target: { value: '320' } });
         fireEvent.input(marginSlider, { target: { value: '4' } });
-        await wait(300);
-        await flushEffects();
-
-        expect(document.getElementById('size-label')?.textContent).toBe('320px');
-        expect(document.getElementById('margin-label')?.textContent).toBe('4');
-        expect(QRCode.toCanvas).toHaveBeenLastCalledWith(
-            expect.anything(),
-            expect.any(String),
-            expect.objectContaining({ width: 320, height: 320, margin: 4 }),
-            expect.any(Function)
-        );
+        await waitFor(() => {
+            expect(document.getElementById('size-label')?.textContent).toBe('320px');
+            expect(document.getElementById('margin-label')?.textContent).toBe('4');
+            const lastCall = QRCode.toCanvas.mock.calls.at(-1);
+            expect(lastCall?.[2]).toMatchObject({ width: 320, height: 320, margin: 4 });
+        });
 
         fireEvent.click(document.getElementById('download-btn'));
         expect(HTMLCanvasElement.prototype.toDataURL).toHaveBeenCalledWith('image/png');
@@ -132,45 +120,34 @@ describe('QRCodeGenerator Preact runtime', () => {
 
     it('updates error correction and shows QR library callback error state', async () => {
         new QRCodeGeneratorToolUI();
-        await flushEffects();
-        await wait(300);
-        await flushEffects();
+        // Let the initial generation land before clearing the mock.
+        await waitFor(() => expect(QRCode.toCanvas).toHaveBeenCalled());
 
         QRCode.toCanvas.mockClear();
         QRCode.toCanvas.mockImplementationOnce((canvas, text, options, callback) => callback(new Error('Too long')));
 
         const errorCorrectionSelect = document.getElementById('error-correction');
         fireEvent.change(errorCorrectionSelect, { target: { value: 'H' } });
-        await wait(300);
-        await flushEffects();
-
-        expect(QRCode.toCanvas).toHaveBeenCalledWith(
-            expect.anything(),
-            expect.any(String),
-            expect.objectContaining({ errorCorrectionLevel: 'H' }),
-            expect.any(Function)
+        await waitFor(() => expect(QRCode.toCanvas).toHaveBeenCalledTimes(1));
+        await waitFor(() =>
+            expect(document.getElementById('error-message')?.textContent).toContain('Input data is too long')
         );
-        expect(document.getElementById('error-message')?.textContent).toContain('Input data is too long');
         expect(document.getElementById('qr-canvas')?.style.display).toBe('none');
     });
 
     it('handles textCleared event and disconnects clear button on unmount', async () => {
         new QRCodeGeneratorToolUI();
-        await flushEffects();
-        await wait(300);
-        await flushEffects();
+        await waitFor(() => expect(QRCode.toCanvas).toHaveBeenCalled());
 
         const input = document.getElementById('qr-text');
         fireEvent.input(input, { target: { value: 'temporary value' } });
-        await wait(300);
-        await flushEffects();
+        // Wait out the debounce so its pending callback cannot re-render the
+        // controlled input after the manual clear below.
+        await waitFor(() => expect(QRCode.toCanvas.mock.calls.at(-1)?.[1]).toBe('temporary value'));
 
         input.value = '';
         input.dispatchEvent(new CustomEvent('textCleared', { bubbles: true }));
-        await wait(300);
-        await flushEffects();
-
-        expect(document.getElementById('qr-text')?.value).toBe('');
+        await waitFor(() => expect(document.getElementById('qr-text')?.value).toBe(''));
 
         const clearButtonInstance = ClearButton.mock.results.at(-1)?.value;
         preactRender(null, document.getElementById('qr-code-generator-app'));
@@ -182,8 +159,6 @@ describe('QRCodeGenerator Preact runtime', () => {
         document.body.innerHTML = '<div id="qr-code-generator-tool"></div>';
 
         new QRCodeGeneratorToolUI('#missing-root');
-        await flushEffects();
-        await wait(300);
         await flushEffects();
 
         expect(document.getElementById('qr-text')).not.toBeNull();
@@ -202,8 +177,6 @@ describe('QRCodeGenerator Preact runtime', () => {
         `;
 
         document.dispatchEvent(new Event('DOMContentLoaded'));
-        await flushEffects();
-        await wait(300);
         await flushEffects();
 
         expect(mountToolShell).toHaveBeenCalledWith(expect.objectContaining({

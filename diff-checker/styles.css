@@ -15,8 +15,9 @@
   --diffc-removed-accent: #dc2626;
   --diffc-removed-deep: #7f1d1d;
 
-  /* Dark-theme syntax-highlight palette for the result pane (used by the
-     [data-theme="dark"] token rules below). */
+  /* Syntax-highlight palette for the result pane. Dark values live here
+     (dark is the system default); light overrides are set under
+     `[data-theme="light"]` below, and every token rule reads these vars. */
   --diffc-syntax-comment: #93a4ab;
   --diffc-syntax-punctuation: #c3d0d4;
   --diffc-syntax-property: #7dd3fc;
@@ -27,6 +28,22 @@
   --diffc-syntax-function: #f9a8d4;
   /* Shared by regex/important and deleted tokens — a single "danger" hue. */
   --diffc-syntax-danger: #fda4af;
+}
+
+/* Light-theme syntax palette — mirrors the dark hues with AA-checked
+   equivalents (the stock Prism light colors fail contrast on white, e.g.
+   punctuation #999 at ~2.8:1). */
+:root[data-theme="light"] .diffc-tool,
+:root[data-cst-theme="light"] .diffc-tool {
+  --diffc-syntax-comment: #6e6e80;
+  --diffc-syntax-punctuation: #5a5a68;
+  --diffc-syntax-property: #0e7490;
+  --diffc-syntax-number: #92400e;
+  --diffc-syntax-string: #157a4c;
+  --diffc-syntax-operator: #47475c;
+  --diffc-syntax-keyword: #6450e6;
+  --diffc-syntax-function: #be185d;
+  --diffc-syntax-danger: #be123c;
 }
 
 .diffc-tool .diffc-grid {
@@ -176,7 +193,9 @@
   margin: 0;
   min-height: 24rem;
   width: 100%;
-  padding: 0.3rem;
+  /* Left padding doubles as the +/- marker gutter: `.diff-line::before` hangs
+     14px into it, and `overflow: auto` clips anything left of this box. */
+  padding: 0.3rem 0.3rem 0.3rem 1.25rem;
   border-radius: var(--radius-md, 10px);
   border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
   box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
@@ -191,112 +210,80 @@
 }
 
 /* Prism emits generic `.token` spans, and host pages often ship global Prism themes.
-   Provide a scoped dark-theme palette for the diff result pane so syntax highlighting
-   stays readable in embedded dark mode without affecting light mode. */
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token {
+   Scope a curated palette to the diff result pane so syntax highlighting stays
+   readable in both themes. Colors come from the `--diffc-syntax-*` vars above
+   (dark defaults on `.diffc-tool`, light overrides under [data-theme="light"]). */
+.diffc-tool .diffc-result-output .token {
   background: transparent !important;
   text-shadow: none !important;
 }
 
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.comment,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.prolog,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.doctype,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.cdata,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.comment,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.prolog,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.doctype,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.cdata {
+.diffc-tool .diffc-result-output .token.comment,
+.diffc-tool .diffc-result-output .token.prolog,
+.diffc-tool .diffc-result-output .token.doctype,
+.diffc-tool .diffc-result-output .token.cdata {
   color: var(--diffc-syntax-comment, #93a4ab) !important;
 }
 
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.punctuation,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.punctuation {
+.diffc-tool .diffc-result-output .token.punctuation {
   color: var(--diffc-syntax-punctuation, #c3d0d4) !important;
 }
 
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.property,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.tag,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.constant,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.symbol,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.property,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.tag,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.constant,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.symbol {
+.diffc-tool .diffc-result-output .token.property,
+.diffc-tool .diffc-result-output .token.tag,
+.diffc-tool .diffc-result-output .token.constant,
+.diffc-tool .diffc-result-output .token.symbol {
   color: var(--diffc-syntax-property, #7dd3fc) !important;
 }
 
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.boolean,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.number,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.boolean,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.number {
+.diffc-tool .diffc-result-output .token.boolean,
+.diffc-tool .diffc-result-output .token.number {
   color: var(--diffc-syntax-number, #f6c177) !important;
 }
 
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.selector,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.attr-name,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.string,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.char,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.builtin,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.inserted,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.selector,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.attr-name,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.string,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.char,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.builtin,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.inserted {
+.diffc-tool .diffc-result-output .token.selector,
+.diffc-tool .diffc-result-output .token.attr-name,
+.diffc-tool .diffc-result-output .token.string,
+.diffc-tool .diffc-result-output .token.char,
+.diffc-tool .diffc-result-output .token.builtin,
+.diffc-tool .diffc-result-output .token.inserted {
   color: var(--diffc-syntax-string, #86efac) !important;
 }
 
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.operator,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.entity,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.url,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.variable,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.operator,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.entity,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.url,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.variable {
+.diffc-tool .diffc-result-output .token.operator,
+.diffc-tool .diffc-result-output .token.entity,
+.diffc-tool .diffc-result-output .token.url,
+.diffc-tool .diffc-result-output .token.variable {
   color: var(--diffc-syntax-operator, #d2dce0) !important;
 }
 
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.atrule,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.attr-value,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.keyword,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.atrule,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.attr-value,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.keyword {
+.diffc-tool .diffc-result-output .token.atrule,
+.diffc-tool .diffc-result-output .token.attr-value,
+.diffc-tool .diffc-result-output .token.keyword {
   color: var(--diffc-syntax-keyword, #c4b5fd) !important;
 }
 
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.function,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.class-name,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.function,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.class-name {
+.diffc-tool .diffc-result-output .token.function,
+.diffc-tool .diffc-result-output .token.class-name {
   color: var(--diffc-syntax-function, #f9a8d4) !important;
 }
 
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.regex,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.important,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.regex,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.important {
+.diffc-tool .diffc-result-output .token.regex,
+.diffc-tool .diffc-result-output .token.important {
   color: var(--diffc-syntax-danger, #fda4af) !important;
 }
 
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.deleted,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.deleted {
+.diffc-tool .diffc-result-output .token.deleted {
   color: var(--diffc-syntax-danger, #fda4af) !important;
   opacity: 0.9;
 }
 
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.bold,
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.important,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.bold,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.important {
+.diffc-tool .diffc-result-output .token.bold,
+.diffc-tool .diffc-result-output .token.important {
   font-weight: 600;
 }
 
-:root[data-theme="dark"] .diffc-tool .diffc-result-output .token.italic,
-:root[data-cst-theme="dark"] .diffc-tool .diffc-result-output .token.italic {
+.diffc-tool .diffc-result-output .token.italic {
   font-style: italic;
 }
 
@@ -362,6 +349,20 @@
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--diffc-removed-accent, #dc2626) 48%, var(--cst-color-mix-neutral, white)),
     inset 0 -1px 0 color-mix(in srgb, var(--diffc-removed-deep, #7f1d1d) 18%, transparent);
+}
+
+/* Light theme: the chip text mixes toward --color-text (dark gray), which is not
+   enough contrast against the saturated light chip fills — measured 4.04:1
+   (added) and 3.44:1 (removed). Mixing the semantic hue toward black instead of
+   gray clears WCAG AA (~4.9:1 / ~5.2:1) while keeping the same chip fills. */
+:root[data-theme="light"] .diffc-tool .word-added,
+:root[data-cst-theme="light"] .diffc-tool .word-added {
+  color: color-mix(in srgb, var(--color-success, #1d7f4f) 80%, black);
+}
+
+:root[data-theme="light"] .diffc-tool .word-removed,
+:root[data-cst-theme="light"] .diffc-tool .word-removed {
+  color: color-mix(in srgb, var(--color-danger, #ba1a1a) 64%, black);
 }
 
 .diffc-tool .diff-line:has(.diff-content.diff-added):hover {
@@ -491,6 +492,8 @@
 
   .diffc-tool .diffc-result-output {
     min-height: 18rem;
+    /* Markers are hidden at this width; reclaim the gutter. */
+    padding-left: 0.45rem;
   }
 
   .diffc-tool .diff-content {
