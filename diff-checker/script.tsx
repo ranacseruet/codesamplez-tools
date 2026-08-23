@@ -8,6 +8,7 @@ import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { registerDropZone, type DropZoneCleanup } from '../common/drop-zone';
 import { copyTextToClipboard } from '../common/clipboard';
 import type { DiffSharePayload } from './share-url';
+import { trackOptionsHeight } from './sticky-offset';
 import { createLazyRunner } from '../common/lazy-runner';
 import type { ToolCleanupHandle } from '../common/tooling-contracts';
 import { hydrate, render } from 'preact';
@@ -424,9 +425,17 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
       computeDiff(originalLines, modifiedLines, ignoreWhitespace) as DiffComputeResult
   );
 
+  // Keep the result header's sticky offset equal to the options strip's real
+  // height instead of a hard-coded per-breakpoint guess.
+  const stopTrackingOptionsHeight = trackOptionsHeight(
+    document.querySelector<HTMLElement>('.diffc-options'),
+    document.querySelector<HTMLElement>('.diffc-tool')
+  );
+
   // Cleanup function to disconnect clear buttons
   /* istanbul ignore next */
   const cleanup = () => {
+    stopTrackingOptionsHeight();
     if (clearButton1) {
       clearButton1.disconnect();
       clearButton1 = null;
@@ -733,7 +742,7 @@ export function DiffCheckerApp() {
       <div id="diff-error-status" className="c-input-status diffc-error-status" role="status" aria-live="polite" />
 
       <div id="diff-result-container" className="o-panel diffc-result-panel c-surface-card c-surface-panel">
-        <div className="diff-result-header diffc-result-header">
+        <div className="diff-result-header diffc-result-header c-surface-panel__header">
           <h3>Differences</h3>
           <div className="diff-navigation diffc-navigation">
             <button

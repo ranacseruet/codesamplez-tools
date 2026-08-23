@@ -5,7 +5,12 @@
      The sticky options bar and result header must pin *below* that bar instead of
      flush to the viewport top, otherwise they slide underneath it on scroll. */
   --sticky-offset-base: var(--cst-appbar-height, 3.5rem);
-  --diffc-options-height: 68px;
+  /* Desktop-shaped fallback only. The real height varies from ~80px to ~272px
+     depending on how the strip's controls wrap, so `trackOptionsHeight`
+     (`sticky-offset.ts`) measures the strip and overrides this inline; the
+     per-breakpoint constants that used to live here had drifted ~190px out of
+     date and pinned the result header behind the strip. */
+  --diffc-options-height: 80px;
 
   /* Diff accent palette: deliberately more saturated than the semantic
      success/error tokens so added/removed fills stay legible at low
@@ -60,12 +65,6 @@
   min-height: 22rem;
 }
 
-.diffc-tool .diffc-result-header :is(h2, h3) {
-  margin: 0;
-  font-size: 1rem;
-  letter-spacing: 0.01em;
-}
-
 .diffc-tool .diffc-panel-content {
   padding: 0;
 }
@@ -81,32 +80,13 @@
   z-index: 1;
 }
 
-.diffc-tool .diffc-textarea--original {
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 62%, var(--cst-color-mix-neutral, white)),
-      var(--cst-color-mix-neutral, white) 42%
-    );
-}
-
-.diffc-tool .diffc-textarea--modified {
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--cst-color-mix-neutral, white) 90%, var(--color-primary-soft, #e9f3fb)),
-      var(--color-surface, #fff)
-    );
-}
-
+/* The opaque surface a sticky strip needs comes from `.c-action-strip`
+   (v4 flat surface) — do not repaint it here. */
 .diffc-tool .diffc-options {
   position: sticky;
   top: var(--sticky-offset-base, 0px);
   z-index: 10;
   gap: var(--spacing-sm, var(--default-spacing-sm));
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 10%, transparent), transparent 58%),
-    linear-gradient(180deg, color-mix(in srgb, var(--cst-color-mix-neutral, white) 90%, var(--color-surface-subtle, #f5f7fa)), var(--cst-color-mix-neutral, white));
 }
 
 .diffc-tool .diffc-checkbox-group {
@@ -137,28 +117,19 @@
 
 .diffc-tool .diffc-result-panel {
   min-height: 28rem;
-  overflow: visible;
+  /* `.c-surface-panel` clips with `overflow: hidden`, which would make this a
+     scroll container and break the sticky header below. `clip` still honours
+     the card's border radius — without it the result content paints square
+     corners over the card's rounded ones. */
+  overflow: clip;
 }
 
+/* Chrome/padding/background come from `.c-surface-panel__header`; only the
+   sticky positioning is tool-specific. */
 .diffc-tool .diffc-result-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.9rem;
   position: sticky;
-  top: calc(var(--sticky-offset-base, 0px) + var(--diffc-options-height, 68px));
+  top: calc(var(--sticky-offset-base, 0px) + var(--diffc-options-height, 80px));
   z-index: 9;
-  margin: 0;
-  padding: 0.85rem 1rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--cst-color-mix-neutral, white) 82%, var(--color-primary-soft, #e9f3fb)),
-      color-mix(in srgb, var(--cst-color-mix-neutral, white) 94%, var(--color-surface-subtle, #f5f7fa))
-    );
-  border-top-left-radius: inherit;
-  border-top-right-radius: inherit;
 }
 
 .diffc-tool .diffc-navigation {
@@ -181,12 +152,6 @@
   flex: 1;
   min-height: 0;
   padding: 0.5rem;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--cst-color-mix-neutral, white) 94%, var(--color-surface-subtle, #f5f7fa)),
-      var(--color-surface, #fff)
-    );
 }
 
 .diffc-tool .diffc-result-output {
@@ -204,9 +169,14 @@
   line-height: 1.45;
 }
 
+/* One focus-ring system: `--cst-focus-ring` is a box-shadow value, so it cannot
+   be handed to `outline`. The inset well shadow is repeated because
+   `box-shadow` replaces rather than adds. */
 .diffc-tool .diffc-result-output:focus-visible {
-  outline: var(--cst-focus-ring, 3px solid rgba(37, 99, 235, 0.35));
-  outline-offset: 2px;
+  outline: none;
+  box-shadow:
+    var(--cst-focus-ring, 0 0 0 3px rgba(125, 107, 255, 0.55)),
+    inset 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 /* Prism emits generic `.token` spans, and host pages often ship global Prism themes.
@@ -436,10 +406,6 @@
 }
 
 @media (max-width: 900px) {
-  .diffc-tool {
-    --diffc-options-height: 78px;
-  }
-
   .diffc-tool .diffc-options {
     align-items: stretch;
   }
@@ -461,10 +427,6 @@
 }
 
 @media (max-width: 640px) {
-  .diffc-tool {
-    --diffc-options-height: 118px;
-  }
-
   .diffc-tool .diffc-panel {
     min-height: 19rem;
   }
