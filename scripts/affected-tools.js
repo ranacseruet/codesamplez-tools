@@ -15,9 +15,25 @@ const ALL_TOOL_TRIGGER_FILES = new Set([
     'scripts/build-tools.js',
     'scripts/document-helpers.js',
     'scripts/error-document.js',
+    // Vendored Lucide icon geometry, inlined into the landing cards and the
+    // related-tools cards. Editing a path changes the emitted SVG on every page.
+    'scripts/lucide-icons.js',
     'scripts/prerender-tool.js',
+    // Configures the Babel register hook the generators use to require TSX at
+    // prerender time, so a change here can alter the emitted markup. Pre-existing
+    // gap, surfaced by the generator-input guard test in affected-tools.test.js.
+    'scripts/register-node-transforms.js',
+    // Pair-specific related-tools copy. Prerendered into every tool document,
+    // so a copy-only edit must still rebuild and redeploy them — otherwise it
+    // is classified as a no-op and production keeps the old wording, the same
+    // silent-staleness trap noted on generated-site-assets.js below.
+    'scripts/related-tools-metadata.js',
     'scripts/root-document.js',
     'scripts/structured-data.js',
+    // Catalog group -> category accent slug. Feeds the landing cards via
+    // root-document.js and the related-tools cards via prerender-tool.js, so it
+    // affects the root page and every tool page.
+    'scripts/tool-categories.js',
     'scripts/tool-document.js',
     'scripts/tool-faq-metadata.js',
     'scripts/tool-feature-metadata.js',
@@ -31,6 +47,10 @@ const ROOT_ONLY_TRIGGER_FILES = new Set([
     // llms.txt). Changing it must redeploy those assets; without this trigger a
     // wording/grouping-only edit is classified as a no-op and production goes stale.
     'scripts/generated-site-assets.js',
+    // Landing-page intro and post-index section copy. Root-only: it never
+    // reaches a tool document, but a wording edit still has to redeploy the
+    // root page. Pre-existing gap, surfaced by the generator-input guard test.
+    'scripts/root-page-content.js',
     ...getRootAssets()
 ]);
 

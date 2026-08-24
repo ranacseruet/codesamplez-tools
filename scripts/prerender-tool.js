@@ -1,8 +1,11 @@
 // @ts-check
 
 const path = require('path');
-const { getRelatedTools } = require('./tool-manifest');
+const { getRelatedTools, getToolById } = require('./tool-manifest');
 const { ensureBabelRegister } = require('./register-node-transforms');
+const { renderInlineIcon } = require('./lucide-icons');
+const { getGroupCategorySlug } = require('./tool-categories');
+const { getRelatedToolReason } = require('./related-tools-metadata');
 
 /**
  * @typedef {import('../common/tooling-contracts').ToolPrerenderConfig} ToolPrerenderConfig
@@ -157,18 +160,27 @@ function renderToolAfterAppPrerenderMarkup(toolName) {
  * @returns {string}
  */
 function renderRelatedToolsPrerenderMarkup(toolName) {
+    // getRelatedTools throws `Unknown tool id` for an unregistered tool, so by
+    // this point the lookup cannot miss. The cast records that invariant rather
+    // than adding an unreachable guard that duplicates the same error.
     const relatedTools = getRelatedTools(toolName);
+    const sourceTool = /** @type {import('./tool-manifest').ToolDefinition} */ (getToolById(toolName));
 
     return renderNodeToMarkup(() => {
         const { h } = require('preact');
         const { RelatedToolsSection } = require(path.resolve(__dirname, '../common/related-tools/RelatedTools'));
 
         return h(RelatedToolsSection, {
+            sourceToolTitle: sourceTool.title,
             tools: relatedTools.map((tool) => ({
                 id: tool.id,
                 title: tool.title,
-                description: tool.description,
-                publicPath: tool.publicPath
+                // Pair-specific handoff copy, not the target's SEO meta
+                // description — see scripts/related-tools-metadata.js.
+                reason: getRelatedToolReason(toolName, tool.id),
+                publicPath: tool.publicPath,
+                iconSvg: renderInlineIcon(tool.icon || 'wrench'),
+                categorySlug: getGroupCategorySlug(tool.catalogGroupId)
             }))
         });
     });

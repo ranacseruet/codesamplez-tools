@@ -1344,6 +1344,46 @@ button.c-tooltip-container {
   background-color: var(--color-surface-subtle, var(--color-bg-light, #f8f9fa));
   border: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.2));
   border-radius: var(--radius-md, 10px);
+  /* Anchors the stretched link below. */
+  position: relative;
+  transition:
+    border-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease),
+    background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
+}
+
+.c-related-tools__card:hover {
+  border-color: color-mix(in srgb, var(--color-accent, #a99cff) 40%, transparent);
+}
+
+/* Category-hued icon tile, matching the landing cards. */
+.c-related-tools__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-sm, 8px);
+  color: var(--color-accent, #a99cff);
+  background: color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 26%, transparent);
+}
+
+.c-related-tools__card--formatters .c-related-tools__icon {
+  color: var(--cst-color-category-formatters, var(--color-accent));
+  background: var(--cst-color-category-formatters-soft, color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 16%, transparent));
+  border-color: color-mix(in srgb, var(--cst-color-category-formatters, #a99cff) 34%, transparent);
+}
+
+.c-related-tools__card--encoders .c-related-tools__icon {
+  color: var(--cst-color-category-encoders, var(--color-accent));
+  background: var(--cst-color-category-encoders-soft, color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 16%, transparent));
+  border-color: color-mix(in srgb, var(--cst-color-category-encoders, #5fe0c2) 34%, transparent);
+}
+
+.c-related-tools__card--text .c-related-tools__icon {
+  color: var(--cst-color-category-text, var(--color-accent));
+  background: var(--cst-color-category-text-soft, color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 16%, transparent));
+  border-color: color-mix(in srgb, var(--cst-color-category-text, #ffb26b) 34%, transparent);
 }
 
 .c-related-tools__card-title {
@@ -1352,17 +1392,50 @@ button.c-tooltip-container {
   line-height: var(--line-height-tight, var(--default-line-height-tight));
 }
 
+/* Stretched link: the title anchor covers the card, so the whole card is
+   clickable while staying a single tab stop (same pattern as the landing
+   cards in styles.css). */
+.c-related-tools__link {
+  color: var(--color-accent, #a99cff);
+  text-decoration: none;
+}
+
+.c-related-tools__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.c-related-tools__link:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+/* Focus lands on the anchor but should read as the whole card being selected.
+   `:focus-within` rather than `:has(:focus-visible)` — it is universally
+   supported, so suppressing the anchor's own outline can never leave the card
+   with no focus indicator at all. Same mechanism as the landing cards. */
+.c-related-tools__link:focus-visible {
+  outline: none;
+}
+
+.c-related-tools__card:focus-within {
+  outline: 2px solid var(--color-accent, #a99cff);
+  outline-offset: 2px;
+}
+
 .c-related-tools__card-copy {
   margin: 0;
   color: var(--color-text-secondary, var(--default-color-text-secondary));
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
 }
 
+/* Decorative affordance only — the stretched link above does the navigating. */
 .c-related-tools__cta {
   margin-top: auto;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-accent, #a99cff);
 }
 
 .c-tool-description {

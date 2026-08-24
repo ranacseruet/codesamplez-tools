@@ -253,7 +253,10 @@ describe('tool document generation', () => {
         expect(html).toContain('id="base64converter-mode"');
         expect(html).toContain('id="base64converter-convert"');
         expect(html).toContain('id="related-tools-heading"');
-        expect(html).toContain('Related tools');
+        expect(html).toContain('Next step');
+        expect(html).toContain('Common follow-ons after using the Base64 Converter.');
+        // Pair-specific handoff copy, not the target tool's SEO meta description.
+        expect(html).toContain('Decode a JWT instead of raw Base64');
         expect(html).toContain(`href="${buildSiteHref('/jwt-decoder/')}"`);
         expect(html).toContain(buildSiteAssetUri('/base64-converter/images/featured.png'));
         expect(html).toContain('"@type":"WebSite"');

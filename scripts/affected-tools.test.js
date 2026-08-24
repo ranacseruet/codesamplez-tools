@@ -1,5 +1,13 @@
+const path = require('path');
+const { readFileSync } = require('fs');
 const { getToolDefinitions, getToolIds, parseToolSelectionArgs } = require('./tool-manifest');
-const { buildReverseRelatedToolMap, detectAffectedTargets, isToolMetadataPath } = require('./affected-tools');
+const {
+  buildReverseRelatedToolMap,
+  detectAffectedTargets,
+  isAllToolsTrigger,
+  isRootOnlyTrigger,
+  isToolMetadataPath
+} = require('./affected-tools');
 
 describe('parseToolSelectionArgs', () => {
   it('parses single and multi-tool selections with root flags', () => {
@@ -155,6 +163,47 @@ describe('detectAffectedTargets', () => {
       expect(result.affectedTools).toEqual(getToolIds());
       expect(result.shouldBuild).toBe(true);
       expect(result.shouldDeploy).toBe(true);
+    });
+  });
+
+  it('treats the related-tools copy and category-slug registries as all-tools rebuild triggers', () => {
+    // Both are prerendered into every tool document. Without these triggers a
+    // copy-only or accent-only edit is classified as a no-op, so nothing
+    // rebuilds and production silently keeps serving the old markup.
+    ['scripts/related-tools-metadata.js', 'scripts/tool-categories.js'].forEach((filePath) => {
+      const result = detectAffectedTargets([filePath]);
+
+      expect(result.scope).toBe('all-tools');
+      expect(result.affectedTools).toEqual(getToolIds());
+      expect(result.shouldBuild).toBe(true);
+      expect(result.shouldDeploy).toBe(true);
+    });
+  });
+
+  it('registers every generator input as a trigger for the surface it feeds', () => {
+    // Guards the class of bug rather than individual instances of it: any
+    // scripts/ module required by a document generator has to be a rebuild
+    // trigger, because the failure mode when it is not is silent — the change
+    // is classified as a no-op and production keeps serving the old HTML.
+    //
+    // Tool-document inputs must rebuild every tool; root-document inputs only
+    // have to redeploy the root page, so either scope satisfies them.
+    const localRequires = (entry) => {
+      const source = readFileSync(path.resolve(__dirname, entry), 'utf8');
+      return [...source.matchAll(/require\('\.\/([\w-]+)'\)/g)].map((m) => `scripts/${m[1]}.js`);
+    };
+
+    const toolInputs = new Set([...localRequires('./prerender-tool.js'), ...localRequires('./tool-document.js')]);
+    const rootInputs = new Set(localRequires('./root-document.js'));
+
+    toolInputs.forEach((filePath) => {
+      expect({ filePath, triggersAllTools: isAllToolsTrigger(filePath) })
+        .toEqual({ filePath, triggersAllTools: true });
+    });
+
+    rootInputs.forEach((filePath) => {
+      expect({ filePath, triggersRebuild: isAllToolsTrigger(filePath) || isRootOnlyTrigger(filePath) })
+        .toEqual({ filePath, triggersRebuild: true });
     });
   });
 

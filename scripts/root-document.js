@@ -7,6 +7,7 @@ const { renderRootPageIntro, renderRootPagePostIndexSections } = require('./root
 const { buildRootStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
 const { renderAnalyticsHeadMarkup, renderAnalyticsResourceHints } = require('./analytics');
 const { renderInlineIcon } = require('./lucide-icons');
+const { getGroupCategorySlug } = require('./tool-categories');
 
 const THEME_COLOR = '#0b0b11';
 
@@ -46,23 +47,6 @@ function renderFaviconLinks(staticRootUri) {
 /**
  * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
  */
-
-// Maps catalog group ids to the v4 category accent slug (icon tile hues,
-// section markers, search chips). Keep in sync with GROUP_CATEGORY_SLUGS in
-// common/app-shell/ToolSearch.tsx.
-const GROUP_CATEGORY_SLUGS = {
-    'code-formatters': 'formatters',
-    'encoders-decoders': 'encoders',
-    'text-analysis': 'text'
-};
-
-/**
- * @param {string} groupId
- * @returns {string}
- */
-function getGroupCategorySlug(groupId) {
-    return GROUP_CATEGORY_SLUGS[groupId] || 'formatters';
-}
 
 /**
  * v4 card: the whole card is clickable via the stretched title link (one tab

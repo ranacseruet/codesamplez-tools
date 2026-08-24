@@ -179,6 +179,21 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('Base64 Converter');
         expect(markup).toContain(`href="${buildSiteHref('/jwt-builder/')}"`);
         expect(markup).toContain(`href="${buildSiteHref('/base64-converter/')}"`);
-        expect(markup).toContain('Open tool');
+
+        // Framed from the tool the visitor is on, with pair-specific copy
+        // rather than each target's SEO meta description.
+        expect(markup).toContain('Common follow-ons after using the JWT Decoder &amp; Validator.');
+        expect(markup).toContain('Build a new token from these claims');
+        expect(markup).toContain('Decode the raw segments yourself');
+
+        // One anchor per card keeps the section a single tab stop per tool.
+        expect(markup.match(/<a /g)).toHaveLength(3);
+        expect(markup).toContain('c-related-tools__card--encoders');
+        expect(markup).toContain('<svg class="cst-icon"');
+    });
+
+    it('throws for a tool that is not in the manifest', () => {
+        expect(() => renderRelatedToolsPrerenderMarkup('not-a-real-tool'))
+            .toThrow('Unknown tool id: not-a-real-tool');
     });
 });
