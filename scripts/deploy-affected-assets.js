@@ -141,15 +141,32 @@ function assertExists(filePath) {
 // a cached copy, never how stale the CDN can get.
 //
 //   .woff2            immutable for a year — font files never change in place.
-//   .js / .css        1 day — bundle filenames are not content-hashed, but the
-//                     deploy invalidation purges the edge, so a returning visitor
-//                     is at most a day behind and JS+CSS move together.
+//   .js / .css        browser revalidates, edge caches for a day. See the note
+//                     below: this pair MUST revalidate as long as the filenames
+//                     are not content-hashed.
 //   images / icons    1 week.
 //   .txt / .xml       1 hour (robots, sitemap, ads.txt, llms.txt).
 //   .html             must-revalidate, max-age 0 — HTML is the entry point and
 //                     must always reflect the latest deploy.
+//
+// Why JS/CSS revalidate rather than sitting on a 1-day browser max-age:
+// `bundle.main.js` and `styles.main.css` are NOT content-hashed, and HTML is
+// served must-revalidate. A returning visitor therefore gets the *new* HTML
+// against their *old* cached CSS/JS — not a uniformly day-old page, but a
+// mismatched one. Observed in production after PR #487: the new markup rendered
+// against the previous stylesheet, so the whole-card link had no `::after`
+// overlay and was inert until the browser cache expired. A CloudFront
+// invalidation cannot fix this; it purges the edge, not the browser.
+//
+// `s-maxage` keeps CloudFront caching these for a day (deploys invalidate the
+// edge anyway), so the browser's conditional request is answered at the edge and
+// costs a 304 rather than an origin fetch. Verified against the distribution's
+// Managed-CachingOptimized policy (MinTTL 1 / MaxTTL 31536000), which honours
+// origin headers and prefers `s-maxage` over `max-age` for its own TTL.
+//
+// Restore a long browser max-age only together with content-hashed filenames.
 const CACHE_CONTROL_HTML = 'public, max-age=0, must-revalidate';
-const CACHE_CONTROL_DIR_ASSETS = 'public, max-age=86400';
+const CACHE_CONTROL_DIR_ASSETS = 'public, max-age=0, must-revalidate, s-maxage=86400';
 
 /**
  * Resolve the Cache-Control header value for a root asset based on its extension.
@@ -163,7 +180,9 @@ function cacheControlForAsset(assetPath) {
             return 'public, max-age=31536000, immutable';
         case '.js':
         case '.css':
-            return 'public, max-age=86400';
+            // Must match CACHE_CONTROL_DIR_ASSETS — root-level bundles have the
+            // same un-hashed-filename problem as the per-tool ones.
+            return CACHE_CONTROL_DIR_ASSETS;
         case '.png':
         case '.svg':
         case '.ico':

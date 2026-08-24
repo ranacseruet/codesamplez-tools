@@ -13,6 +13,13 @@ const ALL_TOOL_TRIGGER_FILES = new Set([
     'config/tooling-root.json',
     'scripts/analytics.js',
     'scripts/build-tools.js',
+    // The deploy script itself. It stamps Cache-Control on every tool directory
+    // and every root asset, so a policy change there only reaches production by
+    // re-uploading all of them — and with no trigger the detector returns
+    // `shouldDeploy: false`, leaving the change inert until some unrelated edit
+    // happens to redeploy each object. Its sibling `deploy-cloudfront-function.js`
+    // does not need an entry: the workflow greps for that one separately.
+    'scripts/deploy-affected-assets.js',
     'scripts/document-helpers.js',
     'scripts/error-document.js',
     // Vendored Lucide icon geometry, inlined into the landing cards and the

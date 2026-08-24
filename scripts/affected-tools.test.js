@@ -180,6 +180,20 @@ describe('detectAffectedTargets', () => {
     });
   });
 
+  it('treats the asset deploy script as an all-tools trigger so policy changes reach production', () => {
+    // The script stamps Cache-Control on every tool directory and root asset.
+    // Without this trigger a header-policy change ships to the repo but never
+    // re-uploads anything, so the old headers stay live — a change that looks
+    // deployed and is not.
+    const result = detectAffectedTargets(['scripts/deploy-affected-assets.js']);
+
+    expect(result.scope).toBe('all-tools');
+    expect(result.affectedTools).toEqual(getToolIds());
+    expect(result.includeRootAssets).toBe(true);
+    expect(result.shouldBuild).toBe(true);
+    expect(result.shouldDeploy).toBe(true);
+  });
+
   it('registers every generator input as a trigger for the surface it feeds', () => {
     // Guards the class of bug rather than individual instances of it: any
     // scripts/ module required by a document generator has to be a rebuild
