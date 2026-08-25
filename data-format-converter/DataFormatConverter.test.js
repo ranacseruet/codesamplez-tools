@@ -131,6 +131,12 @@ describe('DataFormatConverter', () => {
             expect(result).toEqual({ name: 'test', value: 123 });
         });
 
+        it('should resolve merge keys in YAML input', () => {
+            const yaml = 'a: &base\n  color: purple\nb:\n  <<: *base\n  size: large';
+            const result = converter.parseInput(yaml, 'yaml');
+            expect(result).toEqual({ a: { color: 'purple' }, b: { color: 'purple', size: 'large' } });
+        });
+
         it('should throw error for unsupported format', () => {
             expect(() => converter.parseInput('data', 'csv')).toThrow('Unsupported input format: csv');
         });
@@ -510,6 +516,15 @@ empty: null`;
             expect(result).toContain('- 1');
             expect(result).toContain('- 2');
             expect(result).toContain('- 3');
+        });
+
+        it('should preserve string types through YAML round trip', () => {
+            const data = { date: '2026-08-25', flag: 'yes', octal: '0777', ratio: '1:30' };
+            const yamlOut = converter.formatOutput(data, 'yaml');
+            expect(yamlOut).toContain("date: '2026-08-25'");
+            expect(yamlOut).toContain("flag: 'yes'");
+            expect(yamlOut).toContain("octal: '0777'");
+            expect(converter.parseInput(yamlOut, 'yaml')).toEqual(data);
         });
 
         it('should throw error for null input', () => {

@@ -1,4 +1,4 @@
-import { load as loadYAML, dump as dumpYAML } from 'js-yaml';
+import { load as loadYAML, dump as dumpYAML, YAML11_SCHEMA } from 'js-yaml';
 import { XMLParser, XMLBuilder, XMLValidator } from 'fast-xml-parser';
 
 type SupportedFormat = 'json' | 'xml' | 'yaml' | 'properties';
@@ -240,7 +240,7 @@ export class DataFormatConverter {
                 return {};
             }
             
-            const result = loadYAML(yamlString);
+            const result = loadYAML(yamlString, { schema: YAML11_SCHEMA });
             // Convert undefined to empty object to match test expectations
             return result === undefined ? {} : result;
         } catch (e) {
@@ -253,7 +253,7 @@ export class DataFormatConverter {
             if (obj === null || obj === undefined) {
                 throw new Error('Cannot format null or undefined to YAML');
             }
-            return dumpYAML(obj, { indent: 2 });
+            return dumpYAML(obj, { indent: 2, schema: YAML11_SCHEMA });
         } catch (e) {
             throw new Error(`Cannot format to YAML: ${getErrorMessage(e)}`);
         }
