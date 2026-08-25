@@ -7,7 +7,7 @@ const {
     renderToolBeforeAppPrerenderMarkup,
     renderToolPrerenderMarkup
 } = require('./prerender-tool');
-const { escapeAttribute, escapeHtml, formatToolDocumentTitle, joinUrl } = require('./document-helpers');
+const { escapeAttribute, escapeHtml, escapeJsonForHtml, formatToolDocumentTitle, joinUrl } = require('./document-helpers');
 const { buildToolStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
 const { renderAnalyticsHeadMarkup, renderAnalyticsResourceHints } = require('./analytics');
 const { getToolFaqItems } = require('./tool-faq-metadata');
@@ -25,6 +25,42 @@ const OG_IMAGE_HEIGHT = '630';
 // Pre-paint theme init: apply the saved theme (default dark) before CSS paints
 // so the choice persists across pages with no flash. Must run before stylesheets.
 const THEME_INIT_SCRIPT = `<script>(function(){try{var t=localStorage.getItem('cst-standalone-theme-mode');var m=t==='light'?'light':'dark';var e=document.documentElement;e.setAttribute('data-theme',m);e.setAttribute('data-cst-theme',m);}catch(e){}})();</script>`;
+
+// Related-tools placement. The section is emitted last in the body (after the
+// tool, the long-form article and the FAQ), which on the JSON Formatter put it
+// at 88% page depth — 4.4 viewports below the fold. Measured reach: only 14.2%
+// of tool-page views ever fire GA4's 90%-scroll event, so ~6 in 7 visitors
+// never had the chance to see it. This moves it directly above the first
+// article section, i.e. straight after the interactive tool.
+//
+// Why an inline script rather than emitting it in the right order: for 9 of the
+// 10 tools the article is rendered *inside* the app root by the tool's own
+// component, so the document template has no seam between the workspace and the
+// article. Issue #327 (moving article content out of the app root) would create
+// one; until then this is the cheap, reversible version — delete the constant to
+// revert. Deliberately NOT in the tool bundles: `js-minifier` has under 1 KB of
+// budget headroom, and a post-DOMContentLoaded move lands after first paint and
+// shifts visible content (real CLS). Emitted immediately after the section's
+// markup so it runs during parse, before first paint. Same technique as the
+// theme init above and the AdSense loader in scripts/analytics.js.
+//
+// Targets the FIRST `.c-tool-article` — the "About this tool" intro — but only
+// when it sits OUTSIDE the app root. That guard is not optional: where the
+// article is still rendered inside the app root, Preact owns those children, and
+// its first `render()` reconciles the injected `<section>` against the intro it
+// expects in that slot. Measured result without the guard: the section keeps its
+// class but its contents are replaced by the intro's — heading reads "About This
+// Tool", zero cards, zero links. That is strictly worse than leaving it at the
+// bottom, so the move is skipped rather than risked.
+//
+// Today only diff-checker renders its article outside the app root (via
+// `createAfterAppNode`), so only diff-checker moves — which is 77% of tool-page
+// traffic. Issue #327 migrates the remaining nine to the same pattern, and each
+// one starts moving automatically as it lands, with no change here.
+function renderRelatedToolsPlacementScript(appRootId) {
+    const escapedAppRootSelector = escapeJsonForHtml(JSON.stringify(`#${appRootId}`));
+    return `<script>(function(){try{var s=document.querySelector('.c-related-tools'),a=document.querySelector('.c-tool-article');if(s&&a&&a.parentNode&&!a.closest(${escapedAppRootSelector})){a.parentNode.insertBefore(s,a);}}catch(e){}})();</script>`;
+}
 
 // v2 design system: self-hosted Geist fonts (icons are inlined SVGs — no CDN).
 // Preloads use the configured static-root absolute URL so they resolve to the
@@ -135,6 +171,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
         <div id="${escapedAppRootId}">${prerenderedMarkup}</div>
         ${wrappedAfterMarkup}
         ${relatedToolsMarkup}
+        ${renderRelatedToolsPlacementScript(tool.appRootId)}
         <div id="app-shell-share">${shellShareMarkup}</div>
     </main>
     <div id="app-shell-footer">${shellFooterMarkup}</div>

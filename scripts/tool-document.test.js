@@ -136,6 +136,30 @@ describe('tool document generation', () => {
         });
     });
 
+    it('guards the related-tools placement script with the tool\'s own app root', () => {
+        // The move is only safe where the article sits OUTSIDE the app root.
+        // Inside it, Preact owns those children and its first render() replaces
+        // the injected section's contents with the intro's — measured: heading
+        // "About This Tool", zero cards, zero links, which is worse than leaving
+        // the section at the bottom. The guard must name this tool's own app
+        // root exactly, or the move fires where it corrupts.
+        getToolDefinitions().forEach((tool) => {
+            const html = generateToolDocument(tool.id);
+
+            expect(html).toContain(`!a.closest("#${tool.appRootId}")`);
+
+            // Must run during parse, before first paint: after the section's
+            // markup, before the client bundle. Otherwise the move lands after
+            // paint and shifts visible content.
+            const sectionIndex = html.indexOf('class="c-related-tools');
+            const scriptIndex = html.indexOf('!a.closest(');
+            const bundleIndex = html.indexOf('bundle.main.js"');
+            expect(sectionIndex).toBeGreaterThan(-1);
+            expect(scriptIndex).toBeGreaterThan(sectionIndex);
+            expect(bundleIndex).toBeGreaterThan(scriptIndex);
+        });
+    });
+
     it('renders FAQPage structured data for diff-checker', () => {
         const html = generateToolDocument('diff-checker-tool');
 
