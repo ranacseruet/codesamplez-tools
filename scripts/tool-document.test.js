@@ -110,8 +110,9 @@ describe('tool document generation', () => {
         expect(html).toContain('<h2 id="diff-checker-app-workspace-heading" class="u-visually-hidden">Diff Checker workspace</h2>');
         expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--before"><section>Before payload</section></div>');
         expect(html).toContain('<div id="diff-checker-app"><section>SSR payload</section></div>');
-        expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--after"><section>After payload</section></div>');
-        expect(html).toContain('<section class="c-related-tools">Related</section>');
+        // Related tools lead the after-app shell, ahead of the article payload
+        // (issue #497 — previously emitted last in the body and moved by script).
+        expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--after"><section class="c-related-tools">Related</section><section>After payload</section></div>');
         expect(html).toContain(`<link rel="image_src" href="${buildSiteAssetUri('/diff-checker/images/featured.png')}">`);
         expect(html).toContain(`<script src="${buildSiteAssetUri('/diff-checker/bundle.main.js')}" type="module"></script>`);
     });
@@ -136,52 +137,38 @@ describe('tool document generation', () => {
         });
     });
 
-    it('guards the related-tools placement script with the tool\'s own app root', () => {
-        // The move is only safe where the article sits OUTSIDE the app root.
-        // Inside it, Preact owns those children and its first render() replaces
-        // the injected section's contents with the intro's — measured: heading
-        // "About This Tool", zero cards, zero links, which is worse than leaving
-        // the section at the bottom. The guard must name this tool's own app
-        // root exactly, or the move fires where it corrupts.
-        getToolDefinitions().forEach((tool) => {
-            const html = generateToolDocument(tool.id);
-
-            expect(html).toContain(`!a.closest("#${tool.appRootId}")`);
-
-            // Must run during parse, before first paint: after the section's
-            // markup, before the client bundle. Otherwise the move lands after
-            // paint and shifts visible content.
-            const sectionIndex = html.indexOf('class="c-related-tools');
-            const scriptIndex = html.indexOf('!a.closest(');
-            const bundleIndex = html.indexOf('bundle.main.js"');
-            expect(sectionIndex).toBeGreaterThan(-1);
-            expect(scriptIndex).toBeGreaterThan(sectionIndex);
-            expect(bundleIndex).toBeGreaterThan(scriptIndex);
-        });
-    });
-
-    it('actually relocates the related-tools section when the document runs', () => {
-        // The guard-string test above pins what is emitted; this pins what the
-        // emitted script DOES. Since #327 every tool's article is outside the
-        // app root, so the move must fire for all of them — and if a future
-        // change puts an article back inside the root, the guard silently
-        // reverts that tool to the page-bottom placement reached by only 14.2%
-        // of visitors, with no other test noticing.
+    it('places related tools ahead of the article, statically, for every tool', () => {
+        // The section used to be emitted last in the body and moved into place by
+        // an inline script; issue #497 retired that once #327 made the after-app
+        // shell a real seam. The position is the point — emitted last it sat at
+        // 88% page depth, which only 14.2% of tool-page views ever scroll to.
         const { JSDOM } = require('jsdom');
 
         getToolDefinitions().forEach((tool) => {
-            const dom = new JSDOM(generateToolDocument(tool.id), { runScripts: 'dangerously' });
-            const { document } = dom.window;
+            const html = generateToolDocument(tool.id);
+            // No runtime DOM move left to depend on. `runScripts` stays off so a
+            // reintroduced script cannot make this pass.
+            const { document } = new JSDOM(html).window;
             const section = document.querySelector('.c-related-tools');
             const article = document.querySelector('.c-tool-article');
 
-            expect({ tool: tool.id, moved: section.nextElementSibling === article })
-                .toEqual({ tool: tool.id, moved: true });
+            expect({ tool: tool.id, leadsAfterShell: section.nextElementSibling === article })
+                .toEqual({ tool: tool.id, leadsAfterShell: true });
+            expect(section.parentElement.className).toContain('c-tool-static-shell--after');
             expect(section.closest(`#${tool.appRootId}`)).toBeNull();
-            // The move must not cost the section its contents — the failure mode
-            // observed when it ran inside a Preact-owned root.
             expect(section.querySelectorAll('.c-related-tools__card')).toHaveLength(3);
-            dom.window.close();
+        });
+    });
+
+    it('ships no related-tools placement script', () => {
+        // Guards the deletion: reintroducing a runtime move would reinstate a
+        // parse-blocking inline <script> on every tool page and, worse, could
+        // relocate the section into a Preact-owned container again.
+        getToolDefinitions().forEach((tool) => {
+            const html = generateToolDocument(tool.id);
+
+            expect(html).not.toContain('a.closest(');
+            expect(html).not.toContain('insertBefore');
         });
     });
 

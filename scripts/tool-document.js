@@ -7,7 +7,7 @@ const {
     renderToolBeforeAppPrerenderMarkup,
     renderToolPrerenderMarkup
 } = require('./prerender-tool');
-const { escapeAttribute, escapeHtml, escapeJsonForHtml, formatToolDocumentTitle, joinUrl } = require('./document-helpers');
+const { escapeAttribute, escapeHtml, formatToolDocumentTitle, joinUrl } = require('./document-helpers');
 const { buildToolStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
 const { renderAnalyticsHeadMarkup, renderAnalyticsResourceHints } = require('./analytics');
 const { getToolFaqItems } = require('./tool-faq-metadata');
@@ -25,48 +25,6 @@ const OG_IMAGE_HEIGHT = '630';
 // Pre-paint theme init: apply the saved theme (default dark) before CSS paints
 // so the choice persists across pages with no flash. Must run before stylesheets.
 const THEME_INIT_SCRIPT = `<script>(function(){try{var t=localStorage.getItem('cst-standalone-theme-mode');var m=t==='light'?'light':'dark';var e=document.documentElement;e.setAttribute('data-theme',m);e.setAttribute('data-cst-theme',m);}catch(e){}})();</script>`;
-
-// Related-tools placement. The section is emitted last in the body (after the
-// tool, the long-form article and the FAQ), which on the JSON Formatter put it
-// at 88% page depth — 4.4 viewports below the fold. Measured reach: only 14.2%
-// of tool-page views ever fire GA4's 90%-scroll event, so ~6 in 7 visitors
-// never had the chance to see it. This moves it directly above the first
-// article section, i.e. straight after the interactive tool.
-//
-// Why an inline script rather than emitting it in the right order: this landed
-// while 9 of the 10 tools still rendered the article *inside* the app root, so
-// the document template had no seam between the workspace and the article.
-// Issue #327 has since moved every tool's article into the after-app shell, so
-// that seam now exists for all ten — see the follow-up note below.
-// Deliberately NOT in the tool bundles: `js-minifier` has little budget
-// headroom, and a post-DOMContentLoaded move lands after first paint and shifts
-// visible content (real CLS). Emitted immediately after the section's markup so
-// it runs during parse, before first paint. Same technique as the theme init
-// above and the AdSense loader in scripts/analytics.js.
-//
-// Targets the FIRST `.c-tool-article` — the "About this tool" intro — but only
-// when it sits OUTSIDE the app root. The guard exists because Preact owns the
-// app root's children: where the article was still inside it, the first
-// `render()` reconciled the injected `<section>` against the intro it expected
-// in that slot. Measured result without the guard: the section kept its class
-// but its contents were replaced by the intro's — heading read "About This
-// Tool", zero cards, zero links.
-//
-// Post-#327 the condition is true for every registered tool, so the guard is now
-// a safety net rather than a filter: it is what stops the section being
-// destroyed if anyone re-adds `<Intro/>` to an `*App` and quietly undoes the
-// migration. `scripts/prerender-tool.test.js` asserts the app markup does not
-// contain the article, which is the test that catches that first.
-//
-// Follow-up: now that `wrappedAfterMarkup` is a real seam for all ten tools,
-// this script could be retired by emitting `${relatedToolsMarkup}` inside the
-// after-app shell directly, deleting a parse-blocking inline `<script>` from
-// every tool page. Left in place because that changes the mechanism shipped in
-// PR #495 and deserves its own review rather than riding along with #327.
-function renderRelatedToolsPlacementScript(appRootId) {
-    const escapedAppRootSelector = escapeJsonForHtml(JSON.stringify(`#${appRootId}`));
-    return `<script>(function(){try{var s=document.querySelector('.c-related-tools'),a=document.querySelector('.c-tool-article');if(s&&a&&a.parentNode&&!a.closest(${escapedAppRootSelector})){a.parentNode.insertBefore(s,a);}}catch(e){}})();</script>`;
-}
 
 // v2 design system: self-hosted Geist fonts (icons are inlined SVGs — no CDN).
 // Preloads use the configured static-root absolute URL so they resolve to the
@@ -132,8 +90,16 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     const wrappedBeforeMarkup = beforeAppMarkup
         ? `<div class="c-tool-static-shell c-tool-static-shell--before">${beforeAppMarkup}</div>`
         : '';
-    const wrappedAfterMarkup = afterAppMarkup
-        ? `<div class="c-tool-static-shell c-tool-static-shell--after">${afterAppMarkup}</div>`
+    // Related tools lead the after-app shell, ahead of the About intro and the
+    // guide article. That position is the whole point: emitted last in the body
+    // the section sat at 88% page depth, and only 14.2% of tool-page views ever
+    // fire GA4's 90%-scroll event, so ~6 in 7 visitors never had the chance to
+    // see it. Issue #327 moved every tool's article out of the app root, which
+    // made this seam exist for all ten and let the runtime DOM move that used to
+    // do this job go away (issue #497).
+    const afterShellMarkup = `${relatedToolsMarkup}${afterAppMarkup}`;
+    const wrappedAfterMarkup = afterShellMarkup
+        ? `<div class="c-tool-static-shell c-tool-static-shell--after">${afterShellMarkup}</div>`
         : '';
 
     return `<!DOCTYPE html>
@@ -176,8 +142,6 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
         ${wrappedBeforeMarkup}
         <div id="${escapedAppRootId}">${prerenderedMarkup}</div>
         ${wrappedAfterMarkup}
-        ${relatedToolsMarkup}
-        ${renderRelatedToolsPlacementScript(tool.appRootId)}
         <div id="app-shell-share">${shellShareMarkup}</div>
     </main>
     <div id="app-shell-footer">${shellFooterMarkup}</div>
