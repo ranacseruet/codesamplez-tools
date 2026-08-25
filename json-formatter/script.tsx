@@ -19,7 +19,6 @@ import {
 } from './json-format-core';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
-import { JsonFormatterArticle, JsonFormatterIntro } from './content';
 import { buildShareUrl, resolveSharePayload, SHARE_URL_MAX_LENGTH, type ShareUrlPayload } from './share-url';
 import toolMetadata from './tool.meta.json';
 
@@ -183,10 +182,6 @@ export function JsonFormatterApp() {
 
       <div id="notification" className="c-notification" role="status" aria-live="polite" />
 
-      {/* Tool-first ordering: the About intro + guide article render below the
-          interactive tool (still prerendered, so SEO content is preserved). */}
-      <JsonFormatterIntro />
-      <JsonFormatterArticle />
     </div>
   );
 }

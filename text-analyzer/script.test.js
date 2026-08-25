@@ -82,25 +82,6 @@ describe('TextAnalyzer Preact runtime', () => {
         new TextAnalyzerToolUI();
         await flushEffects();
 
-        expect(document.body.textContent).toContain(
-            'The CodeSamplez Text Analyzer is a free online text analysis tool that instantly provides detailed statistics about your text.'
-        );
-        expect(document.body.textContent).toContain('What is a Text Analyzer?');
-        expect(document.body.textContent).toContain('Features and Benefits of the Text Analyzer:');
-        expect(document.body.textContent).toContain('How To Use The Text Analyzer:');
-        expect(document.body.textContent).toContain('Text Analyzer FAQs:');
-
-        FAQ_ITEMS.forEach((item) => {
-            expect(document.body.textContent).toContain(item.question);
-            expect(item.structuredDataAnswer).toEqual(expect.any(String));
-            expect(item.structuredDataAnswer.length).toBeGreaterThan(0);
-        });
-
-        const toolsLink = document.querySelector(`a[href="${SITE_BASE_URL}"]`);
-        const contactLink = document.querySelector('a[href="https://codesamplez.com/contact"]');
-
-        expect(toolsLink?.textContent).toContain('Explore More Dev Tools');
-        expect(contactLink?.textContent).toContain('contact us');
     });
 
     it('updates counts and word-frequency chart on input', async () => {

@@ -74,18 +74,43 @@ const DEFAULT_FAIL_PERCENT = 10;
 // growth within their existing headroom and are deliberately left alone.
 // `data-format-converter` had also drifted +7,855 on its own before this
 // change (dependency growth), so its new value banks that drift too.
+//
+// All nine non-diff-checker baselines were lowered for issue #327, which moved
+// intro/article/FAQ content out of the hydrated app root and into the prerender
+// pipeline. Measured by building main and the branch and diffing the emitted
+// bundles: 790,271 -> 700,363 raw bytes across the nine migrated main bundles,
+// a saving of 89,908 (-11.4%), ranging -5.6% (data-format-converter) to -17.6%
+// (js-minifier). Those percentages are against main's actual sizes, not against
+// the previous baselines — several of which carried years of stale headroom, so
+// the drop from baseline looks larger (qr-code-generator 91,896 -> 65,847) and
+// banks that pre-existing drift as well, the same caveat noted for
+// data-format-converter above.
+//
+// Lowering them is the point rather than bookkeeping: left at the old numbers
+// every tool would carry 10-25% of slack, so the budgets would stop catching
+// the next regression — the same "dulls the signal" reasoning as the refreshes
+// above, in the opposite direction. `diff-checker-tool` is unchanged because it
+// already used this pattern; its +2,365 drift is pre-existing and still inside
+// the warn line.
+//
+// These are pinned to the exact measured byte, so warn is +5% and fail +10% of
+// the true size (e.g. text-analyzer has 2,320 bytes before WARN). A shared
+// addition that lands in every bundle — the ShareBar rail cost 5-7 KB, a
+// fast-xml-parser bump ~21 KB — will therefore trip several tools at once
+// rather than being absorbed silently. That is the intended signal; the
+// expected response is one coordinated refresh commit, not a per-tool waiver.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
-    'js-minifier-tool': 58348,
-    'data-format-converter': 191635,
+    'js-minifier-tool': 49773,
+    'data-format-converter': 190839,
     'diff-checker-tool': 87207,
-    'jwt-builder-tool': 77707,
-    'jwt-decoder-tool': 78448,
-    'base64-converter-tool': 100367,
-    'json-formatter-tool': 79715,
-    'css-minifier-tool': 75570,
-    'text-analyzer-tool': 55830,
-    'qr-code-generator': 91896
+    'jwt-builder-tool': 70073,
+    'jwt-decoder-tool': 70827,
+    'base64-converter-tool': 76402,
+    'json-formatter-tool': 64098,
+    'css-minifier-tool': 66115,
+    'text-analyzer-tool': 46389,
+    'qr-code-generator': 65847
 });
 
 /**

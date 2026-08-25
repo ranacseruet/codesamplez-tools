@@ -208,6 +208,31 @@ body.standalone-app {
   padding: 0;
 }
 
+/* Same reset for the prerendered article shell, which since issue #327 hosts
+   content that used to sit inside `.tool-container` and inherit the rule above.
+   Without it, bare `<h3>`, `<p>`, `<li>` and `<pre>` regain UA margins, and
+   `.c-tool-article__content` is a flex column with its own `gap`, so those
+   margins add to the gap rather than collapsing into it.
+   It has to live HERE, next to its twin, not beside the other
+   `.c-tool-static-shell` rules further down: `* {}` is specificity 0-1-0, the
+   same as `.c-tool-article` / `.c-tool-faq__item` / `.c-button`, so declared
+   after them it wins on source order and flattens their padding to 0 —
+   measured, article and FAQ text sat flush against the card borders and the
+   article CTA lost its 12px/20px. */
+.c-tool-static-shell * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* v4 one-focus-ring system for that same content: the original rule below is
+   scoped to `.tool-container`, so article and FAQ links fell back to the UA
+   outline while the tool widget above kept the token ring. */
+.c-tool-static-shell :is(button, a, input, select, textarea):focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(125, 107, 255, 0.55));
+}
+
 /* --- Preventative Style Safeguards --- */
 /* Constraints with higher specificity to prevent external host styles from breaking the layout */
 .tool-container .c-button,
@@ -1293,6 +1318,17 @@ button.c-tooltip-container {
      rendered outside the app root (diff-checker's after-app shell) sat ~2x-pad
      narrower than the tool UI above them. */
   box-sizing: content-box;
+
+  /* Typography parity with `.tool-container`. Article content used to live
+     inside the app root and inherited these from it; since issue #327 it does
+     not, and without them the body copy renders at the UA default (16px) while
+     the tool UI directly above stays at `--font-size-base` (14px), and inline
+     `<code>`/`<pre>` shift the other way. The shell is now a peer of
+     `.tool-container` for the content it hosts, so it has to restate them. */
+  font-family: var(--font-family-base, var(--default-font-family-base));
+  font-size: var(--font-size-base, var(--default-font-size-base));
+  line-height: var(--line-height-base, var(--default-line-height-base));
+  color: var(--color-text, var(--default-color-text));
 }
 
 .c-tool-static-shell--before {
@@ -1307,8 +1343,22 @@ button.c-tooltip-container {
   }
 }
 
+/* The vertical rhythm between the intro card, the guide article and (once the
+   placement script moves it here) the related-tools card came from
+   `.c-tool-stack` on the app root. Outside it these are bordered, rounded
+   `.c-surface-card`s stacked at 0px, so their hairlines butt together. Restate
+   the same token gap rather than relying on the parent the content has left. */
 .c-tool-static-shell--after {
   margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+}
+
+/* The placement script relocates the section in here; its own top margin would
+   double up with the flex gap above. */
+.c-tool-static-shell--after > .c-related-tools {
+  margin-top: 0;
 }
 
 .c-related-tools__header {

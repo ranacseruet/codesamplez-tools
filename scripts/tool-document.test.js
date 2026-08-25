@@ -160,6 +160,31 @@ describe('tool document generation', () => {
         });
     });
 
+    it('actually relocates the related-tools section when the document runs', () => {
+        // The guard-string test above pins what is emitted; this pins what the
+        // emitted script DOES. Since #327 every tool's article is outside the
+        // app root, so the move must fire for all of them — and if a future
+        // change puts an article back inside the root, the guard silently
+        // reverts that tool to the page-bottom placement reached by only 14.2%
+        // of visitors, with no other test noticing.
+        const { JSDOM } = require('jsdom');
+
+        getToolDefinitions().forEach((tool) => {
+            const dom = new JSDOM(generateToolDocument(tool.id), { runScripts: 'dangerously' });
+            const { document } = dom.window;
+            const section = document.querySelector('.c-related-tools');
+            const article = document.querySelector('.c-tool-article');
+
+            expect({ tool: tool.id, moved: section.nextElementSibling === article })
+                .toEqual({ tool: tool.id, moved: true });
+            expect(section.closest(`#${tool.appRootId}`)).toBeNull();
+            // The move must not cost the section its contents — the failure mode
+            // observed when it ran inside a Preact-owned root.
+            expect(section.querySelectorAll('.c-related-tools__card')).toHaveLength(3);
+            dom.window.close();
+        });
+    });
+
     it('renders FAQPage structured data for diff-checker', () => {
         const html = generateToolDocument('diff-checker-tool');
 

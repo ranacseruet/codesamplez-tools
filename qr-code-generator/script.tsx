@@ -5,7 +5,6 @@ import { NotificationManager } from '../common/notification-manager';
 import { hydrate, render } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
-import { QRCodeGeneratorArticle, QRCodeGeneratorIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 const QR_EMPTY_INPUT_MESSAGE = 'Please enter text or a URL to generate a QR code.';
@@ -389,9 +388,6 @@ export function QRCodeGeneratorApp() {
         </div>
       </div>
 
-      {/* Tool-first ordering: About intro + guide below the interactive tool. */}
-      <QRCodeGeneratorIntro />
-      <QRCodeGeneratorArticle />
 
       <div id="notification" className="c-notification" role="status" aria-live="polite" />
     </div>

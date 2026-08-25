@@ -1,6 +1,8 @@
 /** @jest-environment node */
 
 const {
+    createArticleAfterAppNode,
+    resolveContentExport,
     getPrerenderConfig,
     getPrerenderToolNames,
     renderRelatedToolsPrerenderMarkup,
@@ -11,6 +13,19 @@ const {
 const { SITE_BASE_URL, buildSiteAssetUri, buildSiteHref } = require('../common/siteBaseUrl');
 
 describe('generic tool prerender helpers', () => {
+    // Registry-wide invariant. The per-tool tests below are hand-written, so a
+    // newly registered tool has none — it would ship with no intro/article/FAQ
+    // copy and fully green CI. This also catches a misspelled content export:
+    // preact-render-to-string renders `h(undefined)` as literal
+    // `<undefined></undefined>` rather than throwing.
+    it.each(getPrerenderToolNames())('renders non-empty after-app article markup for %s', (toolName) => {
+        const afterMarkup = renderToolAfterAppPrerenderMarkup(toolName);
+
+        expect(afterMarkup.length).toBeGreaterThan(0);
+        expect(afterMarkup).toContain('c-tool-article');
+        expect(afterMarkup).not.toContain('<undefined>');
+    });
+
     it('contains data-format-converter in prerender registry', () => {
         const toolNames = getPrerenderToolNames();
         expect(toolNames).toContain('data-format-converter');
@@ -25,16 +40,24 @@ describe('generic tool prerender helpers', () => {
     });
 
     it('renders converter app markup to string for server-side prerender', () => {
-        const markup = renderToolPrerenderMarkup('data-format-converter');
+        const appMarkup = renderToolPrerenderMarkup('data-format-converter');
+        const afterMarkup = renderToolAfterAppPrerenderMarkup('data-format-converter');
 
-        expect(markup).toMatch(/class="[^"]*\btool-container\b[^"]*"/);
-        expect(markup).toContain('id="inputText"');
-        expect(markup).toContain('id="outputText"');
-        expect(markup).toContain('Convert Data');
-        expect(markup).toContain('The Online Data Format Converter Tool is a web-based utility that converts between JSON, XML, Properties and YAML data formats.');
-        expect(markup).toContain('Data Format Converter Usage Example');
-        expect(markup).toContain('Data Format Converter FAQs');
-        expect(markup).toContain(`href="${SITE_BASE_URL}"`);
+        expect(appMarkup).toContain('id="inputText"');
+        expect(appMarkup).toContain('id="outputText"');
+        expect(appMarkup).toMatch(/class="[^"]*\btool-container\b[^"]*"/);
+        // Interactive control label, not article copy — stays in the app markup.
+        expect(appMarkup).toContain('Convert Data');
+        // Article content is prerendered outside the app root (#327),
+        // so the interactive bundle no longer carries the static tree.
+        expect(afterMarkup).toContain('The Online Data Format Converter Tool is a web-based utility that converts between JSON, XML, Properties and YAML data formats.');
+        // The invariant this migration exists for: the article tree must NOT
+        // be in the hydrated app markup. Without this, re-adding <Intro/> to a
+        // component passes every positive assertion.
+        expect(appMarkup).not.toContain('The Online Data Format Converter Tool is a web-based utility that converts between JSON, XML, Properties and YAML data formats.');
+        expect(afterMarkup).toContain('Data Format Converter Usage Example');
+        expect(afterMarkup).toContain('Data Format Converter FAQs');
+        expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
     });
 
     it('throws when attempting to render a tool without prerender config', () => {
@@ -43,70 +66,105 @@ describe('generic tool prerender helpers', () => {
     });
 
     it('renders base64-converter app markup for server-side prerender', () => {
-        const markup = renderToolPrerenderMarkup('base64-converter-tool');
+        const appMarkup = renderToolPrerenderMarkup('base64-converter-tool');
+        const afterMarkup = renderToolAfterAppPrerenderMarkup('base64-converter-tool');
 
-        expect(markup).toContain('id="base64converter-mode"');
-        expect(markup).toContain('id="base64converter-input"');
-        expect(markup).toContain('id="base64converter-convert"');
-        expect(markup).toContain('Base64 Converter is a free online tool to quickly encode or decode text and files in Base64 format.');
-        expect(markup).toContain('What is Base64 encoding and why use it?');
-        expect(markup).toContain('Base64 Converter FAQs (Frequently Asked Questions)');
-        expect(markup).toContain(`href="${SITE_BASE_URL}"`);
-        expect(markup).toContain('href="https://codesamplez.com/contact"');
+        expect(appMarkup).toContain('id="base64converter-mode"');
+        expect(appMarkup).toContain('id="base64converter-input"');
+        expect(appMarkup).toContain('id="base64converter-convert"');
+        // Article content is prerendered outside the app root (#327),
+        // so the interactive bundle no longer carries the static tree.
+        expect(afterMarkup).toContain('Base64 Converter is a free online tool to quickly encode or decode text and files in Base64 format.');
+        // The invariant this migration exists for: the article tree must NOT
+        // be in the hydrated app markup. Without this, re-adding <Intro/> to a
+        // component passes every positive assertion.
+        expect(appMarkup).not.toContain('Base64 Converter is a free online tool to quickly encode or decode text and files in Base64 format.');
+        expect(afterMarkup).toContain('What is Base64 encoding and why use it?');
+        expect(afterMarkup).toContain('Base64 Converter FAQs (Frequently Asked Questions)');
+        expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
+        expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('renders json-formatter app markup for server-side prerender', () => {
-        const markup = renderToolPrerenderMarkup('json-formatter-tool');
+        const appMarkup = renderToolPrerenderMarkup('json-formatter-tool');
+        const afterMarkup = renderToolAfterAppPrerenderMarkup('json-formatter-tool');
 
-        expect(markup).toContain('id="formatJsonBtn"');
-        expect(markup).toContain('id="jsonErrorStatus"');
-        expect(markup).toContain('id="treeView"');
-        expect(markup).toContain('A JSON formatter is a tool that takes raw or minified JSON and rewrites it with indentation');
-        expect(markup).toContain('Why Use A JSON Formatter Tool?');
-        expect(markup).toContain('JSON Formatter FAQs');
-        expect(markup).toContain(`href="${SITE_BASE_URL}"`);
-        expect(markup).toContain('href="https://codesamplez.com/contact"');
+        expect(appMarkup).toContain('id="formatJsonBtn"');
+        expect(appMarkup).toContain('id="jsonErrorStatus"');
+        expect(appMarkup).toContain('id="treeView"');
+        // Article content is prerendered outside the app root (#327),
+        // so the interactive bundle no longer carries the static tree.
+        expect(afterMarkup).toContain('A JSON formatter is a tool that takes raw or minified JSON and rewrites it with indentation');
+        // The invariant this migration exists for: the article tree must NOT
+        // be in the hydrated app markup. Without this, re-adding <Intro/> to a
+        // component passes every positive assertion.
+        expect(appMarkup).not.toContain('A JSON formatter is a tool that takes raw or minified JSON and rewrites it with indentation');
+        expect(afterMarkup).toContain('Why Use A JSON Formatter Tool?');
+        expect(afterMarkup).toContain('JSON Formatter FAQs');
+        expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
+        expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('renders js-minifier app markup for server-side prerender', () => {
-        const markup = renderToolPrerenderMarkup('js-minifier-tool');
+        const appMarkup = renderToolPrerenderMarkup('js-minifier-tool');
+        const afterMarkup = renderToolAfterAppPrerenderMarkup('js-minifier-tool');
 
-        expect(markup).toContain('id="js-minifier-minify-btn"');
-        expect(markup).toContain('id="js-minifier-input"');
-        expect(markup).toContain('id="js-minifier-remove-comments"');
-        expect(markup).toContain('Minify your JavaScript code online to dramatically reduce file size and improve web performance.');
-        expect(markup).toContain('Why Minify JavaScript?');
-        expect(markup).toContain('JavaScript Minifier FAQs');
-        expect(markup).toContain(`href="${SITE_BASE_URL}"`);
-        expect(markup).toContain('href="https://codesamplez.com/contact"');
+        expect(appMarkup).toContain('id="js-minifier-minify-btn"');
+        expect(appMarkup).toContain('id="js-minifier-input"');
+        expect(appMarkup).toContain('id="js-minifier-remove-comments"');
+        // Article content is prerendered outside the app root (#327),
+        // so the interactive bundle no longer carries the static tree.
+        expect(afterMarkup).toContain('Minify your JavaScript code online to dramatically reduce file size and improve web performance.');
+        // The invariant this migration exists for: the article tree must NOT
+        // be in the hydrated app markup. Without this, re-adding <Intro/> to a
+        // component passes every positive assertion.
+        expect(appMarkup).not.toContain('Minify your JavaScript code online to dramatically reduce file size and improve web performance.');
+        expect(afterMarkup).toContain('Why Minify JavaScript?');
+        expect(afterMarkup).toContain('JavaScript Minifier FAQs');
+        expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
+        expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('renders jwt-decoder app markup for server-side prerender', () => {
-        const markup = renderToolPrerenderMarkup('jwt-decoder-tool');
+        const appMarkup = renderToolPrerenderMarkup('jwt-decoder-tool');
+        const afterMarkup = renderToolAfterAppPrerenderMarkup('jwt-decoder-tool');
 
-        expect(markup).toContain('id="jwtInputToken"');
-        expect(markup).toContain('id="jwt-decoder-validate-btn"');
-        expect(markup).toContain('id="jwtSignatureStatus"');
-        expect(markup).toContain('This free online JWT Decoder lets you paste any JSON Web Token to instantly see its header and payload');
-        expect(markup).toContain('What is a JSON Web Token (JWT)?');
-        expect(markup).toContain('JWT Decoder FAQs (Frequently Asked Questions)');
-        expect(markup).toContain(`href="${SITE_BASE_URL}"`);
-        expect(markup).toContain(`href="${buildSiteHref('/jwt-builder/')}"`);
-        expect(markup).toContain('href="https://codesamplez.com/contact"');
+        expect(appMarkup).toContain('id="jwtInputToken"');
+        expect(appMarkup).toContain('id="jwt-decoder-validate-btn"');
+        expect(appMarkup).toContain('id="jwtSignatureStatus"');
+        // Article content is prerendered outside the app root (#327),
+        // so the interactive bundle no longer carries the static tree.
+        expect(afterMarkup).toContain('This free online JWT Decoder lets you paste any JSON Web Token to instantly see its header and payload');
+        // The invariant this migration exists for: the article tree must NOT
+        // be in the hydrated app markup. Without this, re-adding <Intro/> to a
+        // component passes every positive assertion.
+        expect(appMarkup).not.toContain('This free online JWT Decoder lets you paste any JSON Web Token to instantly see its header and payload');
+        expect(afterMarkup).toContain('What is a JSON Web Token (JWT)?');
+        expect(afterMarkup).toContain('JWT Decoder FAQs (Frequently Asked Questions)');
+        expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
+        expect(afterMarkup).toContain(`href="${buildSiteHref('/jwt-builder/')}"`);
+        expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('renders jwt-builder app markup for server-side prerender', () => {
-        const markup = renderToolPrerenderMarkup('jwt-builder-tool');
+        const appMarkup = renderToolPrerenderMarkup('jwt-builder-tool');
+        const afterMarkup = renderToolAfterAppPrerenderMarkup('jwt-builder-tool');
 
-        expect(markup).toContain('id="jwtForm"');
-        expect(markup).toContain('id="buildJwtBtn"');
-        expect(markup).toContain('id="customClaims"');
-        expect(markup).toContain('JWT Generator is a free browser-based tool to quickly create signed JSON Web Tokens.');
-        expect(markup).toContain('What is a JWT Generator?');
-        expect(markup).toContain('JWT Generator FAQs (Frequently Asked Questions)');
-        expect(markup).toContain(`href="${SITE_BASE_URL}"`);
-        expect(markup).toContain(`href="${buildSiteHref('/jwt-decoder/')}"`);
-        expect(markup).toContain('href="https://codesamplez.com/contact"');
+        expect(appMarkup).toContain('id="jwtForm"');
+        expect(appMarkup).toContain('id="buildJwtBtn"');
+        expect(appMarkup).toContain('id="customClaims"');
+        // Article content is prerendered outside the app root (#327),
+        // so the interactive bundle no longer carries the static tree.
+        expect(afterMarkup).toContain('JWT Generator is a free browser-based tool to quickly create signed JSON Web Tokens.');
+        // The invariant this migration exists for: the article tree must NOT
+        // be in the hydrated app markup. Without this, re-adding <Intro/> to a
+        // component passes every positive assertion.
+        expect(appMarkup).not.toContain('JWT Generator is a free browser-based tool to quickly create signed JSON Web Tokens.');
+        expect(afterMarkup).toContain('What is a JWT Generator?');
+        expect(afterMarkup).toContain('JWT Generator FAQs (Frequently Asked Questions)');
+        expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
+        expect(afterMarkup).toContain(`href="${buildSiteHref('/jwt-decoder/')}"`);
+        expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('renders diff-checker app markup for server-side prerender', () => {
@@ -133,42 +191,63 @@ describe('generic tool prerender helpers', () => {
     });
 
     it('renders css-minifier app markup for server-side prerender', () => {
-        const markup = renderToolPrerenderMarkup('css-minifier-tool');
+        const appMarkup = renderToolPrerenderMarkup('css-minifier-tool');
+        const afterMarkup = renderToolAfterAppPrerenderMarkup('css-minifier-tool');
 
-        expect(markup).toContain('id="css-minifier-input"');
-        expect(markup).toContain('id="css-minifier-output"');
-        expect(markup).toContain('id="minify-btn"');
-        expect(markup).toContain('CSS Minification is the process of removing unnecessary characters such as spaces, line breaks, and comments from CSS code.');
-        expect(markup).toContain('What is a CSS Minifier?');
-        expect(markup).toContain('CSS Minifier FAQs');
-        expect(markup).toContain(`href="${SITE_BASE_URL}"`);
-        expect(markup).toContain(`href="${buildSiteHref('/js-minifier/')}"`);
+        expect(appMarkup).toContain('id="css-minifier-input"');
+        expect(appMarkup).toContain('id="css-minifier-output"');
+        expect(appMarkup).toContain('id="minify-btn"');
+        // Article content is prerendered outside the app root (#327),
+        // so the interactive bundle no longer carries the static tree.
+        expect(afterMarkup).toContain('CSS Minification is the process of removing unnecessary characters such as spaces, line breaks, and comments from CSS code.');
+        // The invariant this migration exists for: the article tree must NOT
+        // be in the hydrated app markup. Without this, re-adding <Intro/> to a
+        // component passes every positive assertion.
+        expect(appMarkup).not.toContain('CSS Minification is the process of removing unnecessary characters such as spaces, line breaks, and comments from CSS code.');
+        expect(afterMarkup).toContain('What is a CSS Minifier?');
+        expect(afterMarkup).toContain('CSS Minifier FAQs');
+        expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
+        expect(afterMarkup).toContain(`href="${buildSiteHref('/js-minifier/')}"`);
     });
 
     it('renders text-analyzer app markup for server-side prerender', () => {
-        const markup = renderToolPrerenderMarkup('text-analyzer-tool');
+        const appMarkup = renderToolPrerenderMarkup('text-analyzer-tool');
+        const afterMarkup = renderToolAfterAppPrerenderMarkup('text-analyzer-tool');
 
-        expect(markup).toContain('id="textInput"');
-        expect(markup).toContain('id="wordFrequencyChart"');
-        expect(markup).toContain('id="load-sample"');
-        expect(markup).toContain('The CodeSamplez Text Analyzer is a <strong>free online text analysis tool</strong>');
-        expect(markup).toContain('What is a Text Analyzer?');
-        expect(markup).toContain('Text Analyzer FAQs:');
-        expect(markup).toContain(`href="${SITE_BASE_URL}"`);
-        expect(markup).toContain('href="https://codesamplez.com/contact"');
+        expect(appMarkup).toContain('id="textInput"');
+        expect(appMarkup).toContain('id="wordFrequencyChart"');
+        expect(appMarkup).toContain('id="load-sample"');
+        // Article content is prerendered outside the app root (#327),
+        // so the interactive bundle no longer carries the static tree.
+        expect(afterMarkup).toContain('The CodeSamplez Text Analyzer is a <strong>free online text analysis tool</strong>');
+        // The invariant this migration exists for: the article tree must NOT
+        // be in the hydrated app markup. Without this, re-adding <Intro/> to a
+        // component passes every positive assertion.
+        expect(appMarkup).not.toContain('The CodeSamplez Text Analyzer is a <strong>free online text analysis tool</strong>');
+        expect(afterMarkup).toContain('What is a Text Analyzer?');
+        expect(afterMarkup).toContain('Text Analyzer FAQs:');
+        expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
+        expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('renders qr-code-generator app markup for server-side prerender', () => {
-        const markup = renderToolPrerenderMarkup('qr-code-generator');
+        const appMarkup = renderToolPrerenderMarkup('qr-code-generator');
+        const afterMarkup = renderToolAfterAppPrerenderMarkup('qr-code-generator');
 
-        expect(markup).toContain('id="qr-text"');
-        expect(markup).toContain('id="qr-canvas"');
-        expect(markup).toContain('id="download-btn"');
-        expect(markup).toContain('The CodeSamplez QR Code Generator is a <strong>free online QR code creator</strong>');
-        expect(markup).toContain('How To Generate QR Code With This Tool:');
-        expect(markup).toContain('Frequently Asked Questions (FAQs)');
-        expect(markup).toContain(`href="${SITE_BASE_URL}"`);
-        expect(markup).toContain('href="https://codesamplez.com/contact"');
+        expect(appMarkup).toContain('id="qr-text"');
+        expect(appMarkup).toContain('id="qr-canvas"');
+        expect(appMarkup).toContain('id="download-btn"');
+        // Article content is prerendered outside the app root (#327),
+        // so the interactive bundle no longer carries the static tree.
+        expect(afterMarkup).toContain('The CodeSamplez QR Code Generator is a <strong>free online QR code creator</strong>');
+        // The invariant this migration exists for: the article tree must NOT
+        // be in the hydrated app markup. Without this, re-adding <Intro/> to a
+        // component passes every positive assertion.
+        expect(appMarkup).not.toContain('The CodeSamplez QR Code Generator is a <strong>free online QR code creator</strong>');
+        expect(afterMarkup).toContain('How To Generate QR Code With This Tool:');
+        expect(afterMarkup).toContain('Frequently Asked Questions (FAQs)');
+        expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
+        expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
     });
 
     it('renders related-tools markup for a representative tool', () => {
@@ -196,4 +275,35 @@ describe('generic tool prerender helpers', () => {
         expect(() => renderRelatedToolsPrerenderMarkup('not-a-real-tool'))
             .toThrow('Unknown tool id: not-a-real-tool');
     });
+
+    describe('article content resolution', () => {
+        // Both paths exist because preact-render-to-string renders `h(undefined)`
+        // as a literal `<undefined></undefined>` instead of throwing, so a
+        // renamed or removed export would otherwise ship as broken markup.
+        it('throws for a tool that is not in the manifest', () => {
+            expect(() => createArticleAfterAppNode('not-a-real-tool')())
+                .toThrow('Unknown tool id: not-a-real-tool');
+        });
+
+        it('throws when the content module exports no matching component', () => {
+            expect(() => resolveContentExport({ SomethingElse: () => null }, 'Intro', 'demo-tool'))
+                .toThrow("Expected exactly one *Intro export from demo-tool's content module, found 0");
+        });
+
+        it('throws, and names them, when the content module exports several', () => {
+            const content = { FirstIntro: () => null, SecondIntro: () => null };
+
+            expect(() => resolveContentExport(content, 'Intro', 'demo-tool'))
+                .toThrow("found 2: FirstIntro, SecondIntro");
+        });
+
+        it('ignores non-function exports that happen to match the suffix', () => {
+            const Component = () => null;
+            const content = { ARTICLE_INTRO_ID: 'intro', RealIntro: Component };
+
+            expect(resolveContentExport(content, 'Intro', 'demo-tool')).toBe(Component);
+        });
+    });
+
+
 });

@@ -4,13 +4,14 @@
   margin: 0;
 }
 
-.text-analyzer-tool .c-tool-article {
-  margin: 0;
-}
-
-.text-analyzer-tool .c-tool-article__cta-row .c-button {
-  width: fit-content;
-}
+/* The `.text-analyzer-tool .c-tool-article…` rules that used to live here were
+   dead as of issue #327: the article moved out of the app root, so nothing
+   under `.text-analyzer-tool` matches it any more. The `margin: 0` is now
+   covered by the `.c-tool-static-shell *` reset, and the `width: fit-content`
+   CTA override is dropped deliberately — text-analyzer was the only tool that
+   opted out of the global `@media (max-width: 768px) { .c-button { width: 100% } }`,
+   and diff-checker (migrated first) never had it, so the CTA now matches every
+   other tool in the 641–768px band instead of being the one exception. */
 
 .text-analyzer-tool .ta-panel {
   min-height: 21rem;
@@ -230,10 +231,6 @@
   }
 
   .text-analyzer-tool .ta-load-sample-btn {
-    width: 100%;
-  }
-
-  .text-analyzer-tool .c-tool-article__cta-row .c-button {
     width: 100%;
   }
 

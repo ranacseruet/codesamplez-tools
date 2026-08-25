@@ -10,7 +10,6 @@ import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { registerDropZone } from '../common/drop-zone';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
-import { Base64ConverterArticle, Base64ConverterIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 const BASE64_DATA_URL_REGEX = /^data:([a-zA-Z0-9/\-+.-\w]+)?(?:;charset=([a-zA-Z0-9/\-+.-\w]+))?;base64,(.*)$/;
@@ -468,9 +467,6 @@ export function Base64ConverterApp() {
 
             <div id="notification" className="c-notification" role="status" aria-live="polite" />
 
-            {/* Tool-first ordering: About intro + guide below the interactive tool. */}
-            <Base64ConverterIntro />
-            <Base64ConverterArticle />
         </div>
     );
 }

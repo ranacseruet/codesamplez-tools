@@ -4,7 +4,6 @@ import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import CopyButton from '../common/copy-button/CopyButton';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
-import { JwtBuilderArticle, JwtBuilderIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 type JwtBuilderWindow = Window & {
@@ -474,9 +473,6 @@ export function JwtBuilderApp() {
         </div>
       </div>
 
-      {/* Tool-first ordering: About intro + guide below the interactive tool. */}
-      <JwtBuilderIntro />
-      <JwtBuilderArticle />
     </div>
   );
 }

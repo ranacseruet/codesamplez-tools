@@ -80,12 +80,6 @@ describe('JWT Builder Preact runtime', () => {
     expect(document.getElementById('sub')?.value).toBe('your-subject');
     expect(document.getElementById('aud')?.value).toBe('your-audience');
     expect(document.getElementById('jti')?.value).toBe('your-indentifier');
-    expect(document.body.textContent).toContain('About This Tool');
-    expect(document.body.textContent).toContain('What is a JWT Generator?');
-    expect(document.body.textContent).toContain('JWT Generator FAQs (Frequently Asked Questions)');
-    expect(document.querySelector(`#jwt-builder-tool a[href="${SITE_BASE_URL}"]`)).not.toBeNull();
-    expect(document.querySelector(`#jwt-builder-tool a[href="${buildSiteHref('/jwt-decoder/')}"]`)).not.toBeNull();
-    expect(document.querySelector('#jwt-builder-tool a[href="https://codesamplez.com/contact"]')).not.toBeNull();
     expect(document.querySelectorAll('#jwt-builder-tool h1')).toHaveLength(0);
     expect(CopyButton).toHaveBeenCalledTimes(2);
   });

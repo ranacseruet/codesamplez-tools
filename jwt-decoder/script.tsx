@@ -6,7 +6,6 @@ import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import ClearButton from '../common/clear-button/ClearButton';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
-import { JwtDecoderArticle, JwtDecoderIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 type StatusType = 'default' | 'success' | 'error' | 'warning';
@@ -550,9 +549,6 @@ export function JwtDecoderApp() {
                 </div>
             </div>
 
-            {/* Tool-first ordering: About intro + guide below the interactive tool. */}
-            <JwtDecoderIntro />
-            <JwtDecoderArticle />
 
             <div id="notification" className="c-notification" role="status" aria-live="polite" />
         </div>

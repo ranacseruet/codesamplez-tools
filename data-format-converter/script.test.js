@@ -113,14 +113,6 @@ describe('DataFormatConverterUI Integration', () => {
         expect(getSelectedFormat('.input-section', 'properties')).toBe('properties');
     });
 
-    it('renders the shared article and faq content around the converter UI', () => {
-        expect(document.body.textContent).toContain('About This Tool');
-        expect(document.body.textContent).toContain('Data Format Converter Usage Example');
-        expect(document.body.textContent).toContain('Data Format Converter FAQs');
-        const siteBaseUrlLinks = Array.from(document.querySelectorAll('a'))
-            .filter((link) => link.href === SITE_BASE_URL || link.getAttribute('href') === SITE_BASE_URL);
-        expect(siteBaseUrlLinks.length).toBeGreaterThan(0);
-    });
 
     it('keeps sample mode disabled by default', () => {
         expect(document.getElementById('loadSampleBtn')).not.toBeNull();

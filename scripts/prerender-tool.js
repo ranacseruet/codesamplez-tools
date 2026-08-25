@@ -12,6 +12,61 @@ const { getRelatedToolReason } = require('./related-tools-metadata');
  * @typedef {import('../common/tooling-contracts').ToolPrerenderRegistry} ToolPrerenderRegistry
  */
 
+/**
+ * Every tool ships its long-form copy as exactly one `*Intro` and one `*Article`
+ * export from `<sourceRoot>/content.tsx`, and since issue #327 all of them are
+ * prerendered outside the app root so the hydrated bundle never carries the
+ * static tree. The wiring is therefore identical per tool and lives here once
+ * rather than in ten near-identical closures — otherwise changing the contract
+ * (wrapping the fragment, lazy-loading it, adding a guard) means ten identical
+ * edits, and missing one silently ships a page with no About/FAQ copy.
+ *
+ * Exports are resolved by suffix rather than named per tool because the names
+ * are not uniform (`JSMinifierIntro`, `JsonFormatterIntro`, `QRCodeGeneratorIntro`).
+ * Resolution is strict: preact-render-to-string renders `h(undefined)` as a
+ * literal `<undefined></undefined>` instead of throwing, so a renamed or removed
+ * export would otherwise reach production as silently broken markup.
+ *
+ * @param {string} toolId
+ * @returns {() => import('preact').VNode}
+ */
+function createArticleAfterAppNode(toolId) {
+    return () => {
+        const { Fragment, h } = require('preact');
+        const tool = getToolById(toolId);
+        if (!tool) {
+            throw new Error(`Unknown tool id: ${toolId}`);
+        }
+
+        const content = require(path.resolve(__dirname, `../${tool.sourceRoot}/content`));
+        const Intro = resolveContentExport(content, 'Intro', toolId);
+        const Article = resolveContentExport(content, 'Article', toolId);
+
+        return h(Fragment, null, h(Intro, {}), h(Article, {}));
+    };
+}
+
+/**
+ * @param {Record<string, unknown>} content
+ * @param {string} suffix
+ * @param {string} toolId
+ * @returns {import('preact').ComponentType<{}>}
+ */
+function resolveContentExport(content, suffix, toolId) {
+    const matches = Object.keys(content).filter(
+        (name) => name.endsWith(suffix) && typeof content[name] === 'function'
+    );
+
+    if (matches.length !== 1) {
+        throw new Error(
+            `Expected exactly one *${suffix} export from ${toolId}'s content module, found ${matches.length}` +
+            (matches.length ? `: ${matches.join(', ')}` : '')
+        );
+    }
+
+    return /** @type {import('preact').ComponentType<{}>} */ (content[matches[0]]);
+}
+
 /** @type {ToolPrerenderRegistry} */
 const TOOL_PRERENDER_REGISTRY = {
     'base64-converter-tool': {
@@ -19,7 +74,8 @@ const TOOL_PRERENDER_REGISTRY = {
             const { h } = require('preact');
             const { Base64ConverterApp } = require(path.resolve(__dirname, '../base64-converter/script'));
             return h(Base64ConverterApp, {});
-        }
+        },
+        createAfterAppNode: createArticleAfterAppNode('base64-converter-tool')
     },
     'data-format-converter': {
         createAppNode: () => {
@@ -30,14 +86,16 @@ const TOOL_PRERENDER_REGISTRY = {
             return h(DataFormatConverterApp, {
                 converter: new DataFormatConverter()
             });
-        }
+        },
+        createAfterAppNode: createArticleAfterAppNode('data-format-converter')
     },
     'css-minifier-tool': {
         createAppNode: () => {
             const { h } = require('preact');
             const { CssMinifierApp } = require(path.resolve(__dirname, '../css-minifier/script'));
             return h(CssMinifierApp, {});
-        }
+        },
+        createAfterAppNode: createArticleAfterAppNode('css-minifier-tool')
     },
     'diff-checker-tool': {
         createAppNode: () => {
@@ -45,56 +103,55 @@ const TOOL_PRERENDER_REGISTRY = {
             const { DiffCheckerApp } = require(path.resolve(__dirname, '../diff-checker/script'));
             return h(DiffCheckerApp, {});
         },
-        // Tool-first ordering: the About intro renders after the tool (alongside the
-        // guide article) rather than above it. Both stay prerendered, so the
-        // keyword-rich copy remains crawlable.
-        createAfterAppNode: () => {
-            const { Fragment, h } = require('preact');
-            const { DiffCheckerArticle, DiffCheckerIntro } = require(path.resolve(__dirname, '../diff-checker/content'));
-            return h(Fragment, null, h(DiffCheckerIntro, {}), h(DiffCheckerArticle, {}));
-        }
+        createAfterAppNode: createArticleAfterAppNode('diff-checker-tool')
     },
     'json-formatter-tool': {
         createAppNode: () => {
             const { h } = require('preact');
             const { JsonFormatterApp } = require(path.resolve(__dirname, '../json-formatter/script'));
             return h(JsonFormatterApp, {});
-        }
+        },
+        createAfterAppNode: createArticleAfterAppNode('json-formatter-tool')
     },
     'js-minifier-tool': {
         createAppNode: () => {
             const { h } = require('preact');
             const { JSMinifierApp } = require(path.resolve(__dirname, '../js-minifier/script'));
             return h(JSMinifierApp, {});
-        }
+        },
+        createAfterAppNode: createArticleAfterAppNode('js-minifier-tool')
     },
     'jwt-builder-tool': {
         createAppNode: () => {
             const { h } = require('preact');
             const { JwtBuilderApp } = require(path.resolve(__dirname, '../jwt-builder/script'));
             return h(JwtBuilderApp, {});
-        }
+        },
+        createAfterAppNode: createArticleAfterAppNode('jwt-builder-tool')
     },
     'jwt-decoder-tool': {
         createAppNode: () => {
             const { h } = require('preact');
             const { JwtDecoderApp } = require(path.resolve(__dirname, '../jwt-decoder/script'));
             return h(JwtDecoderApp, {});
-        }
+        },
+        createAfterAppNode: createArticleAfterAppNode('jwt-decoder-tool')
     },
     'text-analyzer-tool': {
         createAppNode: () => {
             const { h } = require('preact');
             const { TextAnalyzerApp } = require(path.resolve(__dirname, '../text-analyzer/script'));
             return h(TextAnalyzerApp, {});
-        }
+        },
+        createAfterAppNode: createArticleAfterAppNode('text-analyzer-tool')
     },
     'qr-code-generator': {
         createAppNode: () => {
             const { h } = require('preact');
             const { QRCodeGeneratorApp } = require(path.resolve(__dirname, '../qr-code-generator/script'));
             return h(QRCodeGeneratorApp, {});
-        }
+        },
+        createAfterAppNode: createArticleAfterAppNode('qr-code-generator')
     }
 };
 
@@ -195,6 +252,10 @@ function getPrerenderToolNames() {
 
 module.exports = {
     TOOL_PRERENDER_REGISTRY,
+    // Exported for tests: both throw paths guard against silently-broken markup,
+    // so they are worth exercising directly rather than only through a full render.
+    createArticleAfterAppNode,
+    resolveContentExport,
     getPrerenderConfig,
     getPrerenderToolNames,
     renderRelatedToolsPrerenderMarkup,

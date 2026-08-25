@@ -7,7 +7,6 @@ import { copyTextToClipboard } from '../common/clipboard';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { analyzeText, type TextAnalysisResult } from './TextAnalyzer';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
-import { TextAnalyzerArticle, TextAnalyzerIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 const SAMPLE_TEXT = "This is a sample text for analysis. It has multiple sentences and paragraphs.\n\nLet's see how well it works!";
@@ -271,9 +270,6 @@ export function TextAnalyzerApp() {
 
             <div id="notification" className="c-notification" role="status" aria-live="polite" />
 
-            {/* Tool-first ordering: About intro + guide below the interactive tool. */}
-            <TextAnalyzerIntro />
-            <TextAnalyzerArticle />
         </div>
     );
 }

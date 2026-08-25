@@ -17,7 +17,6 @@ import { registerDropZone } from '../common/drop-zone';
 import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
-import { CssMinifierArticle, CssMinifierIntro } from './content';
 import toolMetadata from './tool.meta.json';
 
 const DEFAULT_OPTIONS = {
@@ -394,9 +393,6 @@ export function CssMinifierApp() {
 
       <div id="notification" className="c-notification" role="status" aria-live="polite" />
 
-      {/* Tool-first ordering: About intro + guide below the interactive tool. */}
-      <CssMinifierIntro />
-      <CssMinifierArticle />
     </div>
   );
 }

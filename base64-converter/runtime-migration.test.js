@@ -77,12 +77,6 @@ describe('Base64 Converter Preact runtime', () => {
     expect(document.getElementById('base64converter-encoding')?.value).toBe('utf8');
     expect(document.getElementById('base64converter-download-decoded')?.disabled).toBe(true);
     expect(document.querySelectorAll('#base64converter-tool h1')).toHaveLength(0);
-    expect(document.body.textContent).toContain('About This Tool');
-    expect(document.body.textContent).toContain('What is Base64 encoding and why use it?');
-    expect(document.body.textContent).toContain('Base64 Converter FAQs (Frequently Asked Questions)');
-    expect(document.querySelector(`#base64converter-tool a[href="${SITE_BASE_URL}"]`)).not.toBeNull();
-    expect(document.querySelector('#base64converter-tool a[href="https://codesamplez.com/contact"]')).not.toBeNull();
-    expect(document.body.textContent).toContain(`${buildSiteHref('/base64-converter/')}?data=YOUR_BASE64_OR_TEXT_DATA`);
     expect(window.base64ConverterInstance).toBe(ui.converter);
   });
 
