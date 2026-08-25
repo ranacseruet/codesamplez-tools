@@ -68,13 +68,13 @@ jobs:
           QA_A11Y_FAIL_ON_VIOLATIONS: '0'
         continue-on-error: true
 
-      - name: Visual baseline snapshot capture (scheduled, report-only)
+      - name: Local visual smoke capture (scheduled, report-only)
+        # This monitoring workflow intentionally uses the non-publishing local
+        # capture path. The hosted baseline action is reserved for the complete
+        # main publisher in ci.yml; keeping this job local avoids a second
+        # canonical publisher and does not exercise Snap's hosted renderer.
         id: visual_capture
-        uses: ranacseruet/snapdrift/actions/baseline@v0.7.0
-        with:
-          upload-artifact: 'false'
-        env:
-          SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
+        uses: ranacseruet/snapdrift/actions/capture@3485e898104125db1f45ab27361770356a7564a8 # v0.8.2
         continue-on-error: true
 
       - name: Dependency audit capture (full JSON, report-only)
@@ -98,5 +98,4 @@ jobs:
             qa-artifacts/a11y-reports/phase-d-foundation/phase-d-foundation-a11y-results.json
             qa-artifacts/visual-baselines/current/visual-baseline-results.json
             qa-artifacts/visual-baselines/current/visual-screenshot-manifest.json
-            qa-artifacts/visual-baseline-artifact
             qa-artifacts/dependency-audit

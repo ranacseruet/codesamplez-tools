@@ -17,7 +17,8 @@ permissions:
 
 # Cancel superseded PR runs (stale commits), but never cancel main runs: on push
 # the group key is unique per run (run_id), so concurrent main builds proceed
-# independently. Deploy serialization is handled separately on the deploy job.
+# independently. Deploy serialization is handled on its job; baseline races are
+# handled by a branch-head freshness check plus Snap's publication sequence.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -25,11 +26,6 @@ concurrency:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
-    outputs:
-      scope: ${{ steps.affected.outputs.scope }}
-      affected_tools: ${{ steps.affected.outputs.affected_tools }}
-      affected_tool_count: ${{ steps.affected.outputs.affected_tool_count }}
-      snapdrift_config_changed: ${{ steps.snapdrift_config.outputs.changed }}
 
     steps:
     - uses: actions/checkout@v4
@@ -61,26 +57,6 @@ jobs:
           --base "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}" \
           --head "${{ github.sha }}" \
           --write-github-output
-
-    # A config-only edit to the SnapDrift route map (path/slug fixes, new
-    # routes) yields scope=none, so publish-baseline would not re-capture and
-    # the hosted Snap baseline would stay stale (or, for renamed/added routes,
-    # missing) until the next all-tools change happens to land. Flag the change
-    # so publish-baseline runs on merge to main and refreshes the baseline.
-    - name: Detect SnapDrift config change
-      id: snapdrift_config
-      run: |
-        set -euo pipefail
-        BASE="${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}"
-        HEAD="${{ github.sha }}"
-        if [[ "$BASE" =~ ^0+$ ]]; then
-          BASE="$(git rev-parse "$HEAD^")"
-        fi
-        if git diff --name-only "$BASE" "$HEAD" | grep -qx '.github/snapdrift.json'; then
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "changed=false" >> "$GITHUB_OUTPUT"
-        fi
 
     - name: Build
       if: steps.affected.outputs.should_build == 'true'
@@ -266,7 +242,7 @@ jobs:
   # screenshotting, 45-min timeout) and posts a PR comment, so there's no point
   # running it on a PR that doesn't pass typecheck/tests/audit/budget/build.
   # PR-only; the manual force-run path lives in pr-visual-diff.yml. On push to
-  # main the baseline is published inside test-and-build instead.
+  # main the dedicated publish-baseline job publishes the complete baseline.
   # Same-repo PRs only: forked-repo and Dependabot PRs don't receive repository
   # secrets (GitHub passes only GITHUB_TOKEN), so SNAP_API_KEY would be empty and
   # snapdrift's Snap provider throws at config load. Skip the job rather than fail
@@ -328,7 +304,7 @@ jobs:
 
       - name: Run visual PR diff
         id: visual_diff
-        uses: ranacseruet/snapdrift/actions/pr-diff@v0.7.0
+        uses: ranacseruet/snapdrift/actions/pr-diff@3485e898104125db1f45ab27361770356a7564a8 # v0.8.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
         env:
@@ -338,36 +314,55 @@ jobs:
         if: always()
         run: kill "$QA_SERVER_PID" || true
 
-  # Publishes the hosted Snap baseline on push to main when a shared/all-tools
-  # change lands, or when the SnapDrift route map (.github/snapdrift.json) itself
-  # changes so route path/slug fixes refresh the baseline immediately instead of
-  # waiting for the next all-tools change. Runs in its own job (not test-and-build)
-  # because the baseline
-  # must be captured from a build whose asset URLs point at the local origin
-  # (CST_SITE_STATIC_ROOT_URI) — the test-and-build artifact uses production CDN
-  # URLs and is reused by deploy, so it can't be repurposed for capture.
+  # Publishes a complete hosted Snap baseline after every successful main build.
+  # This job intentionally rebuilds and captures every configured route; PR diff
+  # scoping must never be applied to canonical baseline publication. It runs
+  # separately because its local asset origin differs from the deploy artifact.
   publish-baseline:
     needs: test-and-build
-    if: >-
-      github.ref == 'refs/heads/main'
-      && (needs.test-and-build.outputs.scope == 'all-tools'
-          || needs.test-and-build.outputs.snapdrift_config_changed == 'true')
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    # Never cancel an in-flight publisher. GitHub keeps at most one pending job
+    # per group, so intermediate candidates are dropped and the newest merge
+    # publishes after the current run finishes; intermediate SHAs are stale by
+    # then and their freshness check would skip them anyway.
+    concurrency:
+      group: visual-baseline-main-${{ github.repository }}
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Verify current main baseline candidate
+        id: baseline_candidate
+        run: |
+          set -euo pipefail
+          latest_sha="$(git ls-remote origin refs/heads/main | cut -f1)"
+          if [ -z "$latest_sha" ]; then
+            echo "::error::Could not resolve the current main commit."
+            exit 1
+          fi
+          if [ "$GITHUB_SHA" = "$latest_sha" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping stale baseline candidate $GITHUB_SHA; current main is $latest_sha."
+          fi
+
       - uses: actions/setup-node@v4
+        if: steps.baseline_candidate.outputs.current == 'true'
         with:
           node-version: '24'
           cache: npm
 
       - name: Install dependencies
+        if: steps.baseline_candidate.outputs.current == 'true'
         run: npm ci
 
       - name: Build app
+        if: steps.baseline_candidate.outputs.current == 'true'
         # Local asset origin so the captured baseline loads this build's own
         # CSS/JS instead of the production CDN (see visual-diff for rationale).
         run: npm run build
@@ -375,12 +370,13 @@ jobs:
           CST_SITE_STATIC_ROOT_URI: http://127.0.0.1:8080
 
       - name: Start app
+        if: steps.baseline_candidate.outputs.current == 'true'
         run: |
           set -euo pipefail
           npm start > /tmp/visual-baseline-start.log 2>&1 &
           echo "QA_SERVER_PID=$!" >> "$GITHUB_ENV"
           ready=0
-          for i in $(seq 1 45); do
+          for _ in $(seq 1 45); do
             if curl -sSf http://127.0.0.1:8080 >/dev/null; then
               ready=1
               break
@@ -392,8 +388,28 @@ jobs:
             exit 1
           fi
 
+      - name: Verify current main before publication
+        id: baseline_current
+        if: steps.baseline_candidate.outputs.current == 'true'
+        run: |
+          set -euo pipefail
+          latest_sha="$(git ls-remote origin refs/heads/main | cut -f1)"
+          if [ -z "$latest_sha" ]; then
+            echo "::error::Could not resolve the current main commit before publication."
+            exit 1
+          fi
+          if [ "$GITHUB_SHA" = "$latest_sha" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping baseline publication for stale candidate $GITHUB_SHA; current main is $latest_sha."
+          fi
+
       - name: Publish main visual baseline
-        uses: ranacseruet/snapdrift/actions/baseline@v0.7.0
+        if: >-
+          steps.baseline_candidate.outputs.current == 'true'
+          && steps.baseline_current.outputs.current == 'true'
+        uses: ranacseruet/snapdrift/actions/baseline@3485e898104125db1f45ab27361770356a7564a8 # v0.8.2
         with:
           upload-artifact: 'false'
         env:
