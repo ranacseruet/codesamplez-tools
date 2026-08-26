@@ -225,6 +225,13 @@ describe('DiffDisplay', () => {
       const result = diffDisplay.formatLine('const x = 1;', true, 'unchanged');
       expect(result).toBe('const x = 1;\n');
     });
+
+    it('renders carriage returns as visible markers', () => {
+      const result = diffDisplay.formatLine('first\r', false, 'removed');
+
+      expect(result).toBe('first␍\n');
+      expect(result).not.toContain('\r');
+    });
   });
 
   // Rename describe block and test calls
@@ -876,6 +883,82 @@ describe('initializeDiffChecker', () => {
     // Verify results were populated
     const result = document.getElementById('diff-result');
     expect(result.children.length).toBeGreaterThan(0);
+  });
+
+  test('compares dropped CRLF and LF files without blank rows', async () => {
+    initializeDiffChecker();
+
+    const original = document.getElementById('text1');
+    const modified = document.getElementById('text2');
+    fireFileDrop(original, 'first\r\nsecond', 'before.txt');
+    fireFileDrop(modified, 'first\nsecond', 'after.txt');
+    await waitFor(() => {
+      expect(original.value).toBe('first\nsecond');
+      expect(modified.value).toBe('first\nsecond');
+    });
+
+    document.getElementById('ignore-whitespace').checked = false;
+    document.getElementById('compare-button').click();
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    const result = document.getElementById('diff-result');
+    expect(result.children).toHaveLength(3);
+    expect(result.querySelectorAll('.diff-removed, .diff-added')).toHaveLength(2);
+    expect(result.innerHTML).not.toContain('\r');
+    expect(result.textContent).toContain('first␍');
+
+    // The same raw dropped file is normalized when whitespace is ignored.
+    document.getElementById('ignore-whitespace').checked = true;
+    document.getElementById('compare-button').click();
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    expect(result.children).toHaveLength(2);
+    expect(result.querySelectorAll('.diff-removed, .diff-added')).toHaveLength(0);
+    expect(result.innerHTML).not.toContain('\r');
+    expect(result.textContent).not.toContain('␍');
+  });
+
+  test('keeps classic-Mac line structure visible in exact mode', async () => {
+    initializeDiffChecker();
+
+    const original = document.getElementById('text1');
+    const modified = document.getElementById('text2');
+    fireFileDrop(original, 'alpha\rbeta\rgamma', 'classic-mac.txt');
+    fireFileDrop(modified, 'alpha\nbeta\ngamma', 'unix.txt');
+    await waitFor(() => {
+      expect(original.value).toBe('alpha\nbeta\ngamma');
+      expect(modified.value).toBe('alpha\nbeta\ngamma');
+    });
+
+    document.getElementById('ignore-whitespace').checked = false;
+    document.getElementById('compare-button').click();
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    const result = document.getElementById('diff-result');
+    expect(result.children).toHaveLength(5);
+    expect(result.innerHTML).not.toContain('\r');
+    expect(result.textContent).toContain('alpha␍');
+    expect(result.textContent).toContain('beta␍');
+  });
+
+  test('drops remembered file line endings after a pane is edited', async () => {
+    initializeDiffChecker();
+
+    const original = document.getElementById('text1');
+    const modified = document.getElementById('text2');
+    fireFileDrop(original, 'first\r\nsecond', 'before.txt');
+    fireFileDrop(modified, 'first\nsecond', 'after.txt');
+    await waitFor(() => expect(original.value).toBe('first\nsecond'));
+
+    original.value = 'first\nsecond';
+    original.dispatchEvent(new Event('input', { bubbles: true }));
+    document.getElementById('ignore-whitespace').checked = false;
+    document.getElementById('compare-button').click();
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    const result = document.getElementById('diff-result');
+    expect(result.querySelectorAll('.diff-removed, .diff-added')).toHaveLength(0);
+    expect(result.innerHTML).not.toContain('␍');
   });
 
   test('should fill both panes and compare via the Load Sample button', async () => {

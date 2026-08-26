@@ -48,6 +48,7 @@ The **Diff Checker Tool** is a lightweight, web-based utility designed to compar
 9. **File Drop**
    - Drag a file onto either pane to load it into that side
    - The file is read in the browser and never uploaded (5 MB limit, binary files rejected)
+   - In exact mode, dropped-file carriage returns are preserved and shown as `␍`, so CRLF/LF differences stay visible without adding blank rows
    - A drop deliberately does not auto-compare: it fills one pane at a time, and
      comparing against an empty pane would render the whole file as an insertion
 
@@ -66,11 +67,12 @@ The **Diff Checker Tool** is a lightweight, web-based utility designed to compar
 1. **Input Texts**
    - Paste the first block of text into the left textarea labeled "Paste your first text here..."
    - Paste the second block of text into the right textarea labeled "Paste your second text here..."
+   - Browser textareas normalize typed and pasted line endings to LF. To compare raw CRLF or CR against LF, drop the files or use a shared link.
 
 2. **Configure Options**
    - Check/uncheck "Ignore whitespace" based on your needs:
      - Checked (default): Ignores differences in spaces, tabs, and line endings
-     - Unchecked: Shows all whitespace differences
+     - Unchecked: Shows all available whitespace differences; carriage returns from dropped files or shared links appear as `␍`
 
 3. **Compare Texts**
    - Click the "Compare" button to analyze the differences between the two texts
@@ -152,7 +154,7 @@ To integrate this tool into another webpage:
 - **Cause**: The tool performs a line-by-line comparison followed by word-level comparison on modified lines. Formatting issues (e.g., extra newlines or inconsistent indentation) can affect line matching.
 - **Solution**:
   1. Check the "Ignore whitespace" option if spacing differences should be ignored. It applies to both passes: lines that differ only in whitespace are reported as unchanged (shown once, using the original text), and on a line that also carries a real change, only the changed words are highlighted while each side keeps its own indentation.
-  2. Uncheck it if you need to see exact whitespace differences, highlighted down to the individual space or tab.
+   2. Uncheck it if you need to see exact whitespace differences, highlighted down to the individual space or tab. Raw carriage returns are shown as `␍` so they do not become extra visual rows.
   3. "Whitespace" here means spaces, tabs and line endings. Look-alike characters such as a non-breaking space (`U+00A0`) are always treated as real content, so swapping one for a plain space still shows up as a difference.
   3. Ensure both texts are properly formatted before comparison.
 

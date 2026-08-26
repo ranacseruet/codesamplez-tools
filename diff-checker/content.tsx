@@ -21,7 +21,7 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     ),
     createPlainTextFaqItem(
         'Why does it ignore whitespace by default?',
-        'This is intentional for cleaner code comparisons because minor formatting changes do not clutter the results. You can toggle the Ignore Whitespace option off if you need exact matching, including every space and newline.'
+        'This is intentional for cleaner code comparisons because minor formatting changes do not clutter the results. You can toggle the Ignore Whitespace option off if you need exact matching, including every space and newline. Carriage returns from dropped files or shared links are shown as ␍ in that mode so line-ending differences stay visible without adding blank rows.'
     ),
     createPlainTextFaqItem(
         'Can I compare code from different programming languages?',
@@ -81,7 +81,8 @@ export function DiffCheckerArticle(): JSX.Element {
                         </li>
                         <li>
                             <strong>Smart whitespace handling:</strong> Configurable sensitivity lets you ignore
-                            formatting-only changes or compare every space and line ending exactly.
+                            formatting-only changes or compare every space and line ending exactly; carriage returns
+                            are shown as ␍ in exact mode.
                         </li>
                         <li>
                             <strong>Multiline support:</strong> Handles multi-line inputs seamlessly, which makes it
@@ -127,7 +128,7 @@ export function DiffCheckerArticle(): JSX.Element {
                         </li>
                         <li>
                             <strong>Configure Ignore Whitespace</strong>
-                            <p>Keep it checked to ignore differences in spaces, tabs, and line endings, or uncheck it to compare whitespace exactly.</p>
+                            <p>Keep it checked to ignore differences in spaces, tabs, and line endings, or uncheck it to compare whitespace exactly. Browser textareas normalize typed and pasted line endings to LF; use file drops or shared links to compare raw line endings, which appear as ␍.</p>
                         </li>
                         <li>
                             <strong>Compare Texts</strong>

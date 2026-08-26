@@ -27,6 +27,46 @@ import toolMetadata from './tool.meta.json';
  * `import.meta.url` and must only be evaluated in the browser.
  */
 const DIFF_WORKER_CHAR_THRESHOLD = 20_000;
+const CARRIAGE_RETURN_MARKER = '\u240d';
+
+function normalizeLineEndings(text: string): string {
+  return text.replace(/\r\n?/g, '\n');
+}
+
+/**
+ * Split exact-mode input into logical lines while keeping carriage returns on
+ * the line they terminate. That lets the renderer show CRLF/CR differences
+ * without handing a raw carriage return to the HTML parser.
+ */
+function splitExactLines(text: string): string[] {
+  const lines: string[] = [];
+  let lineStart = 0;
+
+  for (let index = 0; index < text.length; index += 1) {
+    if (text[index] === '\r') {
+      if (text[index + 1] === '\n') continue;
+      lines.push(`${text.slice(lineStart, index)}\r`);
+      lineStart = index + 1;
+      continue;
+    }
+
+    if (text[index] === '\n') {
+      const hasCarriageReturn = index > lineStart && text[index - 1] === '\r';
+      const lineEnd = hasCarriageReturn ? index - 1 : index;
+      lines.push(`${text.slice(lineStart, lineEnd)}${hasCarriageReturn ? '\r' : ''}`);
+      lineStart = index + 1;
+    }
+  }
+
+  lines.push(text.slice(lineStart));
+  return lines;
+}
+
+function splitLines(text: string, ignoreWhitespace: boolean): string[] {
+  return ignoreWhitespace
+    ? normalizeLineEndings(text).split('\n')
+    : splitExactLines(text);
+}
 
 type PrismRuntime = {
   highlight?: (code: string, grammar: unknown, language: string) => string;
@@ -175,27 +215,32 @@ class DiffDisplay {
    * @returns {string} The formatted line content, with appropriate HTML and syntax highlighting.
    */
   formatLine(lineContent, isCodeContent, changeType) {
+    // A carriage return is a meaningful diff input when whitespace is not
+    // ignored. Show it explicitly instead of writing it to the HTML container,
+    // whose parser normalizes it to a newline and creates an extra visual row.
+    const displayLineContent = lineContent.replace(/\r/g, CARRIAGE_RETURN_MARKER);
+
     // Only apply Prism highlighting if the line is unchanged and it's code content
     if (changeType === 'unchanged' && isCodeContent) {
       try {
         const prismRuntime = getPrismRuntime();
         // Ensure Prism is available
         if (prismRuntime.languages && prismRuntime.languages.javascript && prismRuntime.highlight) {
-          return prismRuntime.highlight(lineContent, prismRuntime.languages.javascript, 'javascript') + '\n';
+          return prismRuntime.highlight(displayLineContent, prismRuntime.languages.javascript, 'javascript') + '\n';
         } else {
           console.warn('Prism.js or javascript language not available. Falling back to escaped HTML.');
           // Fallback for Prism errors or unavailability: escaped HTML
-          return this.escapeHtml(lineContent) + '\n';
+          return this.escapeHtml(displayLineContent) + '\n';
         }
       } catch (error) {
         console.warn('Syntax highlighting failed:', error);
         // Fallback for Prism errors: escaped HTML
-        return this.escapeHtml(lineContent) + '\n';
+        return this.escapeHtml(displayLineContent) + '\n';
       }
     } else {
       // For added, removed, or non-code lines, or lines with word diffs (handled by escapeHtmlPreserveDiff)
       // Use escapeHtmlPreserveDiff to handle potential word-diff spans correctly
-      return this.escapeHtmlPreserveDiff(lineContent) + '\n';
+      return this.escapeHtmlPreserveDiff(displayLineContent) + '\n';
     }
   }
 
@@ -415,6 +460,30 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   let clearButton1: ClearButton | null = null;
   let clearButton2: ClearButton | null = null;
   const dropZoneCleanups: DropZoneCleanup[] = [];
+  // Textarea.value normalizes CRLF and CR to LF. Keep the source text for
+  // file drops and share payloads, then discard it as soon as the user edits
+  // that pane so the comparison always reflects the visible input.
+  const rawTextByPane = new WeakMap<HTMLTextAreaElement, string>();
+  const paneInputCleanups: Array<() => void> = [];
+
+  const rememberPaneText = (pane: HTMLTextAreaElement, text: string) => {
+    rawTextByPane.set(pane, text);
+    pane.value = text;
+  };
+
+  const getPaneText = (pane: HTMLTextAreaElement): string => {
+    const rawText = rawTextByPane.get(pane);
+    if (rawText !== undefined && normalizeLineEndings(rawText) === pane.value) {
+      return rawText;
+    }
+    return pane.value;
+  };
+
+  const trackPaneInput = (pane: HTMLTextAreaElement) => {
+    const clearRawText = () => rawTextByPane.delete(pane);
+    pane.addEventListener('input', clearRawText);
+    paneInputCleanups.push(() => pane.removeEventListener('input', clearRawText));
+  };
 
   // Web Worker runner for large diffs. Lazily imports the runner chunk on first
   // over-threshold compare (keeping the worker out of the main bundle) and
@@ -446,6 +515,7 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     }
     resultCopyButton?.disconnect();
     diffRunner.terminate();
+    paneInputCleanups.splice(0).forEach((disposeInputTracking) => disposeInputTracking());
     dropZoneCleanups.splice(0).forEach((disposeDropZone) => disposeDropZone());
   };
 
@@ -486,8 +556,8 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   const loadSampleButton = document.getElementById('load-sample') as HTMLButtonElement | null;
   if (loadSampleButton && text1 && text2 && compareButton) {
     loadSampleButton.addEventListener('click', () => {
-      text1.value = SAMPLE_ORIGINAL;
-      text2.value = SAMPLE_MODIFIED;
+      rememberPaneText(text1, SAMPLE_ORIGINAL);
+      rememberPaneText(text2, SAMPLE_MODIFIED);
       clearButton1?.updateVisibility();
       clearButton2?.updateVisibility();
       compareButton.click();
@@ -505,7 +575,7 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     dropZoneCleanups.push(
       registerDropZone(pane, {
         onText: (text, file) => {
-          pane.value = text;
+          rememberPaneText(pane, text);
           getClearButton()?.updateVisibility();
           setInlineError('');
           NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
@@ -521,12 +591,18 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   if (text2) {
     registerPaneDropZone(text2, () => clearButton2);
   }
+  if (text1) {
+    trackPaneInput(text1);
+  }
+  if (text2) {
+    trackPaneInput(text2);
+  }
 
   if (compareButton && text1 && text2) {
     registerPrimaryActionShortcut(compareButton);
     compareButton.addEventListener('click', async function () {
-      const originalText = text1.value;
-      const modifiedText = text2.value;
+      const originalText = getPaneText(text1);
+      const modifiedText = getPaneText(text2);
 
       if (!originalText && !modifiedText) {
         setInlineError('Please enter text in at least one of the fields');
@@ -542,12 +618,12 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
         // Yield to main thread
         await scheduleTask(20);
 
-        const originalLines = originalText.split('\n');
-        const modifiedLines = modifiedText.split('\n');
-
         const isCodeContent = CodeDetector.isCode(originalText) || CodeDetector.isCode(modifiedText);
         const ignoreWhitespaceToggle = document.getElementById('ignore-whitespace') as HTMLInputElement | null;
         const ignoreWhitespace = ignoreWhitespaceToggle?.checked ?? true;
+
+        const originalLines = splitLines(originalText, ignoreWhitespace);
+        const modifiedLines = splitLines(modifiedText, ignoreWhitespace);
 
         // Small compares run synchronously (cheap, no worker round-trip);
         // large ones are offloaded to the worker. DOM rendering below always
@@ -596,8 +672,8 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     }
 
     const payload: DiffSharePayload = {
-      original: text1.value,
-      modified: text2.value,
+      original: getPaneText(text1),
+      modified: getPaneText(text2),
       ignoreWhitespace: ignoreWhitespaceToggle?.checked ?? true
     };
     const { buildShareUrl, SHARE_URL_MAX_LENGTH } = await import('./share-url');
@@ -653,8 +729,8 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     const { payload, source } = resolveSharePayload(locationLike);
     if (!payload) return;
 
-    text1.value = payload.original;
-    text2.value = payload.modified;
+    rememberPaneText(text1, payload.original);
+    rememberPaneText(text2, payload.modified);
     clearButton1?.updateVisibility();
     clearButton2?.updateVisibility();
     if (ignoreWhitespaceToggle) {
