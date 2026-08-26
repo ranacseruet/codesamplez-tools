@@ -51,7 +51,7 @@ Line 3`;
     expect(computeDiff(text1.split('\n'), text2.split('\n'))).toEqual([
       ['unchanged', 'Line 1'],
       ['removed', 'Line 2'],
-      ['added', 'Line 2<span class="word-added"> modified</span>'], // Diff lib adds span after space
+      ['added', 'Line 2 <span class="word-added">modified</span>'], // Span wraps the word, not the space before it
       ['unchanged', 'Line 3']
     ]);
   });
@@ -117,14 +117,106 @@ describe('Whitespace Handling', () => {
       ]);
   });
 
-  test('should handle whitespace differences when ignoreWhitespace is true', () => {
+  test('should treat a whitespace-only difference as unchanged when ignoreWhitespace is true', () => {
     const text1 = 'Hello   world';
     const text2 = 'Hello world';
-    // Expect word diff now because originals differ, even if normalized match
+    // The only delta is run length, which the toggle says to ignore. The
+    // original line is kept verbatim rather than the normalized one.
     expect(computeDiff(text1.split('\n'), text2.split('\n'), true)).toEqual([
-       ['removed', 'Hello<span class="word-removed">   </span>world'], // Actual: 3 spaces removed
-       ['added', 'Hello<span class="word-added"> </span>world'] // Actual: 1 space added
+       ['unchanged', 'Hello   world']
     ]);
+  });
+
+  // Regression for #76. A whitespace-only change never reached the word-level
+  // pass, so the bug only surfaced on a line that also carried a real change.
+  describe('#76 — indentation change alongside a real change', () => {
+    const original = ['function a() {', '    const foo = 1;', '}'];
+    const modified = ['function a() {', '\t\tconst bar = 1;', '}'];
+    const stripSpans = html => html.replace(/<\/?span[^>]*>/g, '');
+
+    test('highlights only the word change when ignoreWhitespace is true', () => {
+      expect(computeDiff(original, modified, true)).toEqual([
+        ['unchanged', 'function a() {'],
+        ['removed', '    const <span class="word-removed">foo</span> = 1;'],
+        ['added', '\t\tconst <span class="word-added">bar</span> = 1;'],
+        ['unchanged', '}']
+      ]);
+    });
+
+    test('keeps each pane on its own indentation when ignoreWhitespace is true', () => {
+      // Both panes are built from one parts list, so the danger is a pane
+      // rendering whitespace copied from the other side's line.
+      const [, [, removedHtml], [, addedHtml]] = computeDiff(original, modified, true);
+      expect(stripSpans(removedHtml)).toBe(original[1]);
+      expect(stripSpans(addedHtml)).toBe(modified[1]);
+    });
+
+    test('still highlights whitespace when ignoreWhitespace is false', () => {
+      expect(computeDiff(original, modified, false)).toEqual([
+        ['unchanged', 'function a() {'],
+        ['removed', '<span class="word-removed">    </span>const <span class="word-removed">foo</span> = 1;'],
+        ['added', '<span class="word-added">\t\t</span>const <span class="word-added">bar</span> = 1;'],
+        ['unchanged', '}']
+      ]);
+    });
+
+    // Built from escapes on purpose: a literal NBSP in a test file is invisible
+    // in every diff and review tool, so the test would silently start comparing
+    // two identical strings the first time an editor normalized it.
+    const NBSP = String.fromCharCode(0x00a0);
+    const BOM = String.fromCharCode(0xfeff);
+
+    describe('look-alike spaces are real content, not whitespace', () => {
+      // /\s/ matches NBSP and BOM, so a naive whitespace test reports these
+      // pairs as identical and shows the user nothing — the exact class of
+      // change (Word/Docs pastes, &nbsp; cleanups, encoding bugs) a diff tool
+      // exists to surface.
+      test.each([
+        ['mid-line NBSP', `price: 10${NBSP}USD`, 'price: 10 USD'],
+        ['leading NBSP', `${NBSP}price`, ' price'],
+        ['trailing NBSP', `price${NBSP}`, 'price '],
+        ['leading BOM', `${BOM}abc`, 'abc']
+      ])('%s is reported as a difference', (_label, original, modified) => {
+        const result = computeDiff([original], [modified], true);
+
+        expect(result.map(([type]) => type)).toEqual(['removed', 'added']);
+        expect(result[0][1] + result[1][1]).toContain('word-');
+        expect(stripSpans(result[0][1])).toBe(original);
+        expect(stripSpans(result[1][1])).toBe(modified);
+      });
+
+      test('the check survives the line-level pass, not just the word pass', () => {
+        // Diff.diffLines({ ignoreWhitespace: true }) trims line edges using its
+        // own \s definition, so an edge-only look-alike never reaches word
+        // refinement unless the unchanged branch re-checks it.
+        expect(computeDiff([`${NBSP}price`], [' price'], true)[0][0]).not.toBe('unchanged');
+      });
+    });
+
+    test('stays linear on a part with a long interior whitespace run', () => {
+      // Guards against a regex of the shape /^(\s*)([\s\S]*?)(\s*)$/, which
+      // backtracks quadratically here: ~2.9s at 80k, ~18s at 200k. Column
+      // padded reports and ASCII tables produce exactly this shape, and this
+      // runs on the default path — on the main thread under the 20k worker
+      // threshold, and in the worker above it.
+      const padded = ['anchor', `aaa${' '.repeat(200000)}bbb`, 'tail'];
+      const other = ['anchor', 'ccc', 'tail'];
+      const started = Date.now();
+      computeDiff(padded, other, true);
+      expect(Date.now() - started).toBeLessThan(1000);
+    });
+
+    test('drops the highlight from inner run-length changes when ignoreWhitespace is true', () => {
+      const [, [, removedHtml], [, addedHtml]] = computeDiff(
+        ['x', 'const foo   =   1;'],
+        ['x', 'const bar = 1;'],
+        true
+      );
+      expect(removedHtml).not.toContain('word-removed">   <');
+      expect(addedHtml).not.toContain('word-added"> <');
+      expect(stripSpans(removedHtml)).toBe('const foo   =   1;');
+      expect(stripSpans(addedHtml)).toBe('const bar = 1;');
+    });
   });
 
   test('should return all lines as added/removed when no matches and ignoreWhitespace=false', () => {
@@ -266,7 +358,7 @@ describe('Word-Level Diffing', () => {
      // Expect raw strings with spans
     expect(result).toEqual([
       ['removed', 'This is line.'], // Diff lib shows no removed part here
-      ['added', 'This is <span class="word-added">the </span>line.']
+      ['added', 'This is <span class="word-added">the</span> line.']
     ]);
   });
 
@@ -276,7 +368,7 @@ describe('Word-Level Diffing', () => {
     const result = computeDiff(text1.split('\n'), text2.split('\n'));
     // Expect raw strings with spans
     expect(result).toEqual([
-      ['removed', 'This is <span class="word-removed">the first </span>line.'],
+      ['removed', 'This is <span class="word-removed">the first</span> line.'],
       ['added', 'This is line.'] // Diff lib shows no added part here
     ]);
   });
@@ -306,15 +398,15 @@ describe('Word-Level Diffing', () => {
     ]);
   });
 
-  test('should perform word diff even when ignoreWhitespace is true', () => {
-    // ignoreWhitespace affects line matching, not word diff on matched lines
+  test('should not word diff leading, inner or trailing whitespace when ignoreWhitespace is true', () => {
+    // Regression for #76: ignoreWhitespace now reaches the word-level pass too,
+    // so a line whose every delta is whitespace stays unchanged instead of
+    // coming back with each run highlighted.
     const text1 = '  Word   diff   ';
     const text2 = 'Word diff';
     const result = computeDiff(text1.split('\n'), text2.split('\n'), true);
-    // Expecting word diff because originals differ, even if normalized match. Raw strings.
     expect(result).toEqual([
-      ['removed', '<span class="word-removed">  </span>Word<span class="word-removed">   </span>diff<span class="word-removed">   </span>'],
-      ['added', 'Word<span class="word-added"> </span>diff'] // Actual added part
+      ['unchanged', '  Word   diff   ']
     ]);
   });
   
@@ -376,7 +468,7 @@ describe('Word-Level Diffing', () => {
     const result = computeDiff(text1.split('\n'), text2.split('\n'));
     // Expect raw strings with spans for the modified line, and raw string for the purely removed line
     expect(result).toEqual([
-      ['removed', '<title>Diff<span class="word-removed"> Checker</span></title>'], // Adjusted expectation based on actual library output
+      ['removed', '<title>Diff <span class="word-removed">Checker</span></title>'], // Span wraps the word, not the space before it
       ['added', '<title>Diff</title>'], // Adjusted expectation based on actual library output
       ['removed', '<link rel="stylesheet" href="styles.main.css">']
     ]);

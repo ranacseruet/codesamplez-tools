@@ -151,8 +151,9 @@ To integrate this tool into another webpage:
 ### Issue: Differences are not displayed correctly
 - **Cause**: The tool performs a line-by-line comparison followed by word-level comparison on modified lines. Formatting issues (e.g., extra newlines or inconsistent indentation) can affect line matching.
 - **Solution**:
-  1. Check the "Ignore whitespace" option if spacing differences should be ignored *between lines*. Word-level diffing within lines still considers whitespace.
-  2. Uncheck it if you need to see exact whitespace differences *between lines*.
+  1. Check the "Ignore whitespace" option if spacing differences should be ignored. It applies to both passes: lines that differ only in whitespace are reported as unchanged (shown once, using the original text), and on a line that also carries a real change, only the changed words are highlighted while each side keeps its own indentation.
+  2. Uncheck it if you need to see exact whitespace differences, highlighted down to the individual space or tab.
+  3. "Whitespace" here means spaces, tabs and line endings. Look-alike characters such as a non-breaking space (`U+00A0`) are always treated as real content, so swapping one for a plain space still shows up as a difference.
   3. Ensure both texts are properly formatted before comparison.
 
 ### Issue: Tool does not load or function as expected
