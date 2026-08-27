@@ -90,6 +90,7 @@ export function TextAnalyzerArticle(): JSX.Element {
                             (periods, commas, question marks, exclamation marks).
                         </li>
                         <li><strong>Word frequency analysis:</strong> Tracks usage density of keywords and show top 5 most frequently used words.</li>
+                        <li><strong>Local file input:</strong> Click Upload File or drag a text file into the input; files are read in the browser and never uploaded.</li>
                     </ul>
 
                     <div className="c-tool-article__cta-row">
@@ -102,8 +103,8 @@ export function TextAnalyzerArticle(): JSX.Element {
                 <ToolArticleSection id="how-to-use-text-analyzer" title="How To Use The Text Analyzer:">
                     <ol>
                         <li>
-                            <strong>Paste or type your text</strong> into the input field. You can enter any length of
-                            text, from a single sentence to multiple paragraphs.
+                            <strong>Paste, type, or upload your text</strong> into the input field. Click Upload File
+                            to choose a local text file, or enter any length of text from a single sentence to multiple paragraphs.
                         </li>
                         <li>
                             <strong>View instant results</strong> - as you input the text, the tool will immediately

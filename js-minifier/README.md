@@ -13,12 +13,12 @@ A tool to minify JavaScript code by removing comments, whitespace, and optionall
 - Real-time size and compression statistics
 - Copy to clipboard functionality
 - Clear all fields
-- Drag a `.js` file onto the input to load and minify it; the file is read in
-  the browser and never uploaded (5 MB limit, binary files rejected)
+- Click "Upload File" or drag a `.js` file onto the input to load and minify it;
+  the file is read in the browser and never uploaded (5 MB limit, binary files rejected)
 
 ## Usage
 
-1. Paste your JavaScript code into the "Original JavaScript" textarea
+1. Paste your JavaScript code into the "Original JavaScript" textarea, or click "Upload File" to choose a local text file
 2. Select desired minification options:
    - Remove comments (enabled by default)
    - Remove whitespace (enabled by default)

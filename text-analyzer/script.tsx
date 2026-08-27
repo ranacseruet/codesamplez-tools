@@ -2,7 +2,8 @@ import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { NotificationManager } from '../common/notification-manager';
 import ClearButton from '../common/clear-button/ClearButton';
-import { registerDropZone } from '../common/drop-zone';
+import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { analyzeText, type TextAnalysisResult } from './TextAnalyzer';
@@ -41,6 +42,7 @@ const PUNCTUATION_STATS = [
 export function TextAnalyzerApp() {
     const [text, setText] = useState('');
     const textAreaRef = useRef(null);
+    const fileInputRef = useRef(null);
     const clearButtonRef = useRef(null);
     const runnerRef = useRef<LazyRunner<string, TextAnalysisResult> | null>(null);
 
@@ -128,13 +130,23 @@ export function TextAnalyzerApp() {
             return undefined;
         }
 
-        return registerDropZone(textAreaRef.current, {
+        const fileOptions = {
             onText: (droppedText, file) => {
                 setText(droppedText);
                 NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
             },
             onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
-        });
+        };
+        const dropZoneCleanup = registerDropZone(textAreaRef.current, fileOptions);
+        let fileInputCleanup: (() => void) | undefined;
+        if (fileInputRef.current instanceof HTMLInputElement) {
+            fileInputCleanup = registerFileInput(fileInputRef.current, fileOptions);
+        }
+
+        return () => {
+            dropZoneCleanup();
+            fileInputCleanup?.();
+        };
     }, []);
 
     const handleLoadSample = () => {
@@ -202,15 +214,21 @@ export function TextAnalyzerApp() {
                 <div className="text-analyzer-panel ta-panel ta-input-panel c-surface-card c-surface-panel">
                     <div className="text-analyzer-panel-header ta-panel-header c-surface-panel__header">
                         <h3>Input Text</h3>
-                    <div className="text-analyzer-toolbar ta-toolbar">
-                        <button
-                            className="c-button c-button--ghost ta-load-sample-btn"
-                            id="load-sample"
-                            onClick={handleLoadSample}
-                        >
-                            Load Sample
-                        </button>
-                    </div>
+                        <div className="text-analyzer-toolbar ta-toolbar">
+                            <button
+                                className="c-button c-button--ghost ta-load-sample-btn"
+                                id="load-sample"
+                                onClick={handleLoadSample}
+                            >
+                                Load Sample
+                            </button>
+                            <FileUploadButton
+                                id="text-analyzer-file"
+                                inputRef={fileInputRef}
+                                className="c-button c-button--secondary ta-upload-button"
+                                accept={TEXT_FILE_ACCEPT}
+                            />
+                        </div>
                     </div>
                     <textarea
                         id="textInput"

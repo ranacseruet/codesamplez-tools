@@ -1037,6 +1037,50 @@ describe('JSONFormatter', () => {
       });
     });
 
+    describe('file picker', () => {
+      let fileInput;
+
+      beforeEach(() => {
+        fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'json-formatter-file';
+        document.body.appendChild(fileInput);
+      });
+
+      afterEach(() => {
+        fileInput.remove();
+      });
+
+      test('loads a selected file through the shared picker path', async () => {
+        formatter.loadDroppedText = jest.fn();
+        formatter.initializeEvents();
+        const file = new File(['{"picker": true}'], 'picker.json');
+        Object.defineProperty(file, 'text', { value: () => Promise.resolve('{"picker": true}') });
+        Object.defineProperty(fileInput, 'files', { configurable: true, value: [file] });
+
+        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(formatter.loadDroppedText).toHaveBeenCalledWith('{"picker": true}', 'picker.json');
+      });
+
+      test('surfaces a picker binary-content error through the shared path', async () => {
+        const liveFile = new File(['binary'], 'binary.bin');
+        Object.defineProperty(liveFile, 'text', { value: () => Promise.resolve('x\u0000y') });
+        Object.defineProperty(fileInput, 'files', { configurable: true, value: [liveFile] });
+        formatter.initializeEvents();
+
+        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(mockNotificationManager.show).toHaveBeenCalledWith(
+          expect.stringContaining('binary file'),
+          3000,
+          expect.objectContaining({ type: 'error' })
+        );
+      });
+    });
+
     test('should trigger formatJSON on format button click', () => {
       formatter.formatJSON = jest.fn();
       formatter.initializeEvents();

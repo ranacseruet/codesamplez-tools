@@ -46,7 +46,7 @@ The **Diff Checker Tool** is a lightweight, web-based utility designed to compar
 ---
 
 9. **File Drop**
-   - Drag a file onto either pane to load it into that side
+   - Click "Upload File" or drag a file onto either pane to load it into that side
    - The file is read in the browser and never uploaded (5 MB limit, binary files rejected)
    - In exact mode, dropped-file carriage returns are preserved and shown as `␍`, so CRLF/LF differences stay visible without adding blank rows
    - A drop deliberately does not auto-compare: it fills one pane at a time, and
@@ -65,8 +65,8 @@ The **Diff Checker Tool** is a lightweight, web-based utility designed to compar
 
 ### Step-by-Step Guide
 1. **Input Texts**
-   - Paste the first block of text into the left textarea labeled "Paste your first text here..."
-   - Paste the second block of text into the right textarea labeled "Paste your second text here..."
+   - Paste the first block of text into the left textarea labeled "Paste your first text here...", or click "Upload File" in that pane
+   - Paste the second block of text into the right textarea labeled "Paste your second text here...", or click "Upload File" in that pane
    - Browser textareas normalize typed and pasted line endings to LF. To compare raw CRLF or CR against LF, drop the files or use a shared link.
 
 2. **Configure Options**

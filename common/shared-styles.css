@@ -492,6 +492,11 @@ body.standalone-app {
     box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, ease);
 }
 
+.c-file-upload-control {
+  display: inline-flex;
+  align-items: center;
+}
+
 .c-button:hover {
   background-color: var(--color-primary-hover, var(--default-color-primary-hover));
 }
@@ -511,6 +516,14 @@ body.standalone-app {
 }
 
 .c-button:focus-visible {
+  box-shadow: var(--cst-focus-ring, none);
+}
+
+/* Keep the visible label keyboard-visible when its paired file input is
+   visually hidden. */
+.u-visually-hidden:focus + .c-button,
+.u-visually-hidden:focus-visible + .c-button {
+  outline: none;
   box-shadow: var(--cst-focus-ring, none);
 }
 

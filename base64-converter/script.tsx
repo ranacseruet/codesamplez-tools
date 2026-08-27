@@ -7,7 +7,8 @@ import CopyButton from '../common/copy-button/CopyButton';
 import { buildShareUrl, readHashOrQueryParam, SHARE_URL_MAX_LENGTH } from '../common/share-url';
 import { copyTextToClipboard } from '../common/clipboard';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone } from '../common/drop-zone';
+import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import FileUploadButton from '../common/file-upload';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import toolMetadata from './tool.meta.json';
@@ -434,10 +435,10 @@ export function Base64ConverterApp() {
                     <button type="button" id="base64converter-load-sample" className="c-button c-button--ghost b64-load-sample-button">
                         Load Sample
                     </button>
-                    <input type="file" id="base64converter-file" className="u-visually-hidden" />
-                    <label className="c-button c-button--secondary b64-upload-button" htmlFor="base64converter-file">
-                        Upload File
-                    </label>
+                    <FileUploadButton
+                        id="base64converter-file"
+                        className="c-button c-button--secondary b64-upload-button"
+                    />
                     <button
                         type="button"
                         id="base64converter-share"
@@ -563,20 +564,26 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
         sampleButton.addEventListener('click', sampleHandler);
     }
 
-    const fileUploadHandler = (e) => converter.handleFileUpload(e);
-    typedElements.fileInput.addEventListener('change', fileUploadHandler);
+    const handleRawFile = (file: File) => {
+        void converter.handleFileUpload({ target: { files: [file], value: null } });
+    };
+
+    // Base64 is intentionally open to arbitrary binary input and preserves
+    // the legacy picker behavior without the text-tool size ceiling.
+    const fileOptions = {
+        onFile: handleRawFile,
+        onError: (message: string) => NotificationManager.show(message, 3000, { type: 'error' as const }),
+        maxBytes: Number.POSITIVE_INFINITY
+    };
+
+    registerFileInput(typedElements.fileInput, fileOptions);
 
     // Drag-and-drop reuses the Upload File path rather than the text path:
     // this tool is the one that legitimately wants binary input (images are
     // encoded via readAsDataURL), so the raw File is handed straight to
     // `handleFileUpload` in the same shape its change listener receives.
     if (typedElements.input instanceof HTMLElement) {
-        registerDropZone(typedElements.input, {
-            onFile: (file) => {
-                void converter.handleFileUpload({ target: { files: [file], value: null } });
-            },
-            onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
-        });
+        registerDropZone(typedElements.input, fileOptions);
     }
 
     const downloadHandler = () => converter.handleDownload();

@@ -106,6 +106,10 @@ export function DiffCheckerArticle(): JSX.Element {
                             or configuration.
                         </li>
                         <li>
+                            <strong>File input:</strong> Click Upload File or drag a local text file into either pane;
+                            files are read in the browser and never uploaded.
+                        </li>
+                        <li>
                             <strong>Sophisticated diff algorithm:</strong> Uses the{' '}
                             <a href="https://www.npmjs.com/package/diff">Myers difference algorithm-based javascript library</a>{' '}
                             for change detection.
@@ -124,7 +128,7 @@ export function DiffCheckerArticle(): JSX.Element {
                     <ol>
                         <li>
                             <strong>Input Texts</strong>
-                            <p>Paste the first text block into the left textarea and the second text block into the right textarea.</p>
+                            <p>Paste the first text block into the left textarea and the second text block into the right textarea, or click Upload File in either pane.</p>
                         </li>
                         <li>
                             <strong>Configure Ignore Whitespace</strong>

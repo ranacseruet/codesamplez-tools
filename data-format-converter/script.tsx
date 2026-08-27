@@ -4,7 +4,8 @@ import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone } from '../common/drop-zone';
+import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
 import type { ConverterSharePayload } from './share-url';
 import { hydrate, render } from 'preact';
@@ -93,6 +94,7 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const stateRef = useRef<ConverterStateSnapshot>({ inputFormat, outputFormat, autoConvert, useSampleData });
     const inputTextAreaRef = useRef<HTMLTextAreaElement | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
     const outputTextAreaRef = useRef<HTMLTextAreaElement | null>(null);
     const clearOverlayButtonRef = useRef<ClearButton | null>(null);
     const copyOverlayButtonRef = useRef<CopyButton | null>(null);
@@ -287,7 +289,7 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
             return undefined;
         }
 
-        return registerDropZone(inputTextAreaRef.current, {
+        const fileOptions = {
             onText: (text, file) => {
                 clearTimeout(debounceTimerRef.current as ReturnType<typeof setTimeout>);
                 setInputText(text);
@@ -319,7 +321,17 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
                 });
             },
             onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
-        });
+        };
+        const dropZoneCleanup = registerDropZone(inputTextAreaRef.current, fileOptions);
+        let fileInputCleanup: (() => void) | undefined;
+        if (fileInputRef.current instanceof HTMLInputElement) {
+            fileInputCleanup = registerFileInput(fileInputRef.current, fileOptions);
+        }
+
+        return () => {
+            dropZoneCleanup();
+            fileInputCleanup?.();
+        };
     }, [useSampleData, autoConvert, inputFormat, outputFormat]);
 
     /**
@@ -651,6 +663,12 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
                     <button id="loadSampleBtn" type="button" className="c-button c-button--ghost dfc-load-sample-btn" onClick={handleLoadSampleClick}>
                         Load Sample
                     </button>
+                    <FileUploadButton
+                        id="data-format-converter-file"
+                        inputRef={fileInputRef}
+                        className="c-button c-button--secondary dfc-upload-button"
+                        accept={TEXT_FILE_ACCEPT}
+                    />
                     <label className="c-checkbox dfc-auto-convert-label">
                         <input
                             type="checkbox"

@@ -5,7 +5,8 @@ import CopyButton from '../common/copy-button/CopyButton';
 import { NotificationManager } from '../common/notification-manager';
 import { scheduleTask } from '../common/scheduler-utils';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone, type DropZoneCleanup } from '../common/drop-zone';
+import { registerDropZone, registerFileInput, type DropZoneCleanup } from '../common/drop-zone';
+import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
 import type { DiffSharePayload } from './share-url';
 import { trackOptionsHeight } from './sticky-offset';
@@ -568,28 +569,34 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   // Unlike the single-input tools this deliberately does not auto-compare:
   // after the first drop only one side is filled, and running a compare
   // against an empty pane would just render the whole file as an insertion.
-  const registerPaneDropZone = (
+  const registerPaneFileLoading = (
     pane: HTMLTextAreaElement,
+    fileInputId: string,
     getClearButton: () => ClearButton | null
   ) => {
-    dropZoneCleanups.push(
-      registerDropZone(pane, {
-        onText: (text, file) => {
-          rememberPaneText(pane, text);
-          getClearButton()?.updateVisibility();
-          setInlineError('');
-          NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
-        },
-        onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
-      })
-    );
+    const fileOptions = {
+      onText: (text: string, file: File) => {
+        rememberPaneText(pane, text);
+        getClearButton()?.updateVisibility();
+        setInlineError('');
+        NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
+      },
+      onError: (message: string) => NotificationManager.show(message, 3000, { type: 'error' as const })
+    };
+
+    dropZoneCleanups.push(registerDropZone(pane, fileOptions));
+
+    const fileInput = document.getElementById(fileInputId);
+    if (fileInput instanceof HTMLInputElement) {
+      dropZoneCleanups.push(registerFileInput(fileInput, fileOptions));
+    }
   };
 
   if (text1) {
-    registerPaneDropZone(text1, () => clearButton1);
+    registerPaneFileLoading(text1, 'diff-checker-original-file', () => clearButton1);
   }
   if (text2) {
-    registerPaneDropZone(text2, () => clearButton2);
+    registerPaneFileLoading(text2, 'diff-checker-modified-file', () => clearButton2);
   }
   if (text1) {
     trackPaneInput(text1);
@@ -764,6 +771,12 @@ export function DiffCheckerApp() {
         <div className="o-panel diffc-panel c-surface-card c-surface-panel">
           <div className="diff-checker-panel-header diffc-panel-header c-surface-panel__header">
             <h3>Original Text</h3>
+            <FileUploadButton
+              id="diff-checker-original-file"
+              className="c-button c-button--secondary c-button--small diffc-upload-button"
+              accept={TEXT_FILE_ACCEPT}
+              ariaLabel="Upload file for original text"
+            />
           </div>
           <div className="o-panel-content diffc-panel-content c-surface-panel__content c-surface-panel__content--flush">
             <textarea
@@ -779,6 +792,12 @@ export function DiffCheckerApp() {
         <div className="o-panel diffc-panel c-surface-card c-surface-panel">
           <div className="diff-checker-panel-header diffc-panel-header c-surface-panel__header">
             <h3>Modified Text</h3>
+            <FileUploadButton
+              id="diff-checker-modified-file"
+              className="c-button c-button--secondary c-button--small diffc-upload-button"
+              accept={TEXT_FILE_ACCEPT}
+              ariaLabel="Upload file for modified text"
+            />
           </div>
           <div className="o-panel-content diffc-panel-content c-surface-panel__content c-surface-panel__content--flush">
             <textarea

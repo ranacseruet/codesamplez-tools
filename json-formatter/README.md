@@ -23,11 +23,11 @@ A tool for formatting and validating JSON data with optional alphabetical key so
 - Shareable URLs: compress the current JSON + settings into the URL's hash fragment for private, client-side-only sharing
 - Mobile-responsive design
 - Shared notification system for consistent user feedback
-- Drag a file onto the input to load and format it; the file is read in the
-  browser and never uploaded (5 MB limit, binary files rejected)
+- Click "Upload File" or drag a file onto the input to load and format it; the
+  file is read in the browser and never uploaded (5 MB limit, binary files rejected)
 
 ## Usage
-1. Paste your JSON into the input area
+1. Paste your JSON into the input area, or click "Upload File" to choose a local text file
 2. Toggle "Sort Keys" checkbox to enable/disable alphabetical sorting
 3. Toggle "Auto fix" checkbox to enable/disable automatic error correction.
 4. Choose an "Indent" option (2 spaces, 4 spaces, Tab, or Minified)

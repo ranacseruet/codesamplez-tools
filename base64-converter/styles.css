@@ -120,6 +120,10 @@
   min-width: 0;
 }
 
+.b64-file-action > .c-file-upload-control {
+  display: contents;
+}
+
 .b64-upload-button,
 .b64-convert-button,
 .b64-download-button,

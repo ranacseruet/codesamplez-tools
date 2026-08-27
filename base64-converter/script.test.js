@@ -232,6 +232,22 @@ describe('Base64Converter UI (script.tsx)', () => {
             expect(elements.input.value).toContain('[File: test.txt uploaded');
         });
 
+        test('should allow a large binary file selected through the picker', () => {
+            const liveNotificationManager = require('../common/notification-manager').NotificationManager;
+            const mockFile = new File(['x'], 'large.bin', { type: 'application/octet-stream' });
+            Object.defineProperty(mockFile, 'size', { configurable: true, value: 7 * 1024 * 1024 });
+            Object.defineProperty(elements.fileInput, 'files', { configurable: true, value: [mockFile] });
+
+            elements.fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+            expect(mockFileReaderInstance.readAsDataURL).toHaveBeenCalledWith(mockFile);
+            expect(liveNotificationManager.show).not.toHaveBeenCalledWith(
+                expect.stringContaining('too large'),
+                3000,
+                expect.objectContaining({ type: 'error' })
+            );
+        });
+
         test('should encode a file dropped on the input through the upload path', () => {
             const mockFile = new File(['Test content'], 'dropped.txt', { type: 'text/plain' });
 

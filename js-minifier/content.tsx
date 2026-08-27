@@ -81,7 +81,7 @@ export function JSMinifierArticle(): JSX.Element {
 
                 <ToolArticleSection id="js-minifier-how-to-use" title="How to Use the JavaScript Minifier">
                     <ol>
-                        <li><strong>Paste your JavaScript code</strong> into the Original JavaScript textarea.</li>
+                        <li><strong>Paste your JavaScript code</strong> into the Original JavaScript textarea, or click Upload File to choose a local text file.</li>
                         <li>
                             <strong>Select the minification options</strong> you want:
                             <ul>
@@ -104,6 +104,7 @@ export function JSMinifierArticle(): JSX.Element {
                         <li><strong>Real-time statistics:</strong> See original size, minified size, and compression ratio immediately.</li>
                         <li><strong>Customizable compression:</strong> Choose whether to remove comments, remove whitespace, or enable experimental shortening options.</li>
                         <li><strong>One-click copy workflow:</strong> Copy the minified output directly from the result panel.</li>
+                        <li><strong>Local file input:</strong> Click Upload File or drag a JavaScript text file into the input; files are read in the browser and never uploaded.</li>
                     </ul>
                 </ToolArticleSection>
 

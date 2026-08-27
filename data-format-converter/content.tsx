@@ -98,6 +98,7 @@ export function DataFormatConverterArticle(): JSX.Element {
                                 <li>Copy to clipboard functionality</li>
                                 <li>Download converted data with proper file extension</li>
                                 <li>Visual feedback for successful operations</li>
+                                <li>Click Upload File or drag a local text file into the input</li>
                             </ul>
                         </li>
                         <li>
@@ -128,7 +129,7 @@ export function DataFormatConverterArticle(): JSX.Element {
                         <li>
                             <strong>Enter Data</strong>
                             <ul>
-                                <li>Paste your data into the input textarea</li>
+                                <li>Paste your data into the input textarea, or click Upload File to choose a local text file</li>
                                 <li>Example templates are provided in the placeholder text</li>
                             </ul>
                         </li>

@@ -108,7 +108,7 @@ export function Base64ConverterArticle(): JSX.Element {
 
                     <h3>Encode/Decode File Content</h3>
                     <ol>
-                        <li>Click Upload File to select a text file.</li>
+                        <li>Click Upload File to select any file, including text, image, PDF, or other binary data.</li>
                         <li>The file upload status appears in the input area and the converted data appears in the output area.</li>
                         <li>Conversion happens automatically based on your selected mode and encoding.</li>
                     </ol>

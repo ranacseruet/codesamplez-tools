@@ -65,7 +65,7 @@ export interface ToolHowToStep {
 export const HOWTO_STEPS: ToolHowToStep[] = [
     {
         name: 'Enter JSON Data',
-        text: 'Paste your JSON string into the input area, or use the "Load Sample" button if you are just trying out the tool.'
+        text: 'Paste your JSON string into the input area, click "Upload File" to choose a local text file, or use the "Load Sample" button if you are just trying out the tool.'
     },
     {
         name: '(Optional) Update Configuration',
@@ -99,7 +99,8 @@ export const FEATURE_LIST: string[] = [
     'Syntax highlighting',
     'Tree node expand/collapse',
     'Real-time size comparison',
-    'Shareable URLs (compressed, client-side only)'
+    'Shareable URLs (compressed, client-side only)',
+    'Upload or drop text files locally'
 ];
 
 export function JsonFormatterIntro(): JSX.Element {
@@ -156,6 +157,7 @@ export function JsonFormatterArticle(): JSX.Element {
                         <li><strong>Tree Node Expand/Collapse:</strong> Expand or collapse nested objects and arrays while preserving structure, with Expand All / Collapse All controls.</li>
                         <li><strong>Size Comparison:</strong> Real-time size updates support bytes, KB, MB, and GB with accurate formatting.</li>
                         <li><strong>Shareable URLs:</strong> Click &ldquo;Share&rdquo; to copy a link with your JSON and settings compressed into the URL&rsquo;s hash fragment, so it never leaves your browser.</li>
+                        <li><strong>Local file input:</strong> Click Upload File or drag a text file into the input; files are read in the browser and never uploaded.</li>
                     </ul>
                 </ToolArticleSection>
 

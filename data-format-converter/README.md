@@ -40,7 +40,7 @@ The **Data Format Converter Tool** is a web-based utility that converts between 
 ---
 
 6. **File Drop**
-   - Drag a file onto the input to load it
+   - Click "Upload File" or drag a file onto the input to load it
    - The file is read in the browser and never uploaded (5 MB limit, binary files rejected)
    - A drop counts as fresh input: sample mode switches off, and the conversion
      still honours the Auto-convert toggle
@@ -60,7 +60,7 @@ The **Data Format Converter Tool** is a web-based utility that converts between 
    - Click the format button (JSON, XML, or YAML) above the input box to specify your input format
 
 2. **Enter Data**
-   - Paste your data into the input textarea
+   - Paste your data into the input textarea, or click "Upload File" to choose a local text file
    - Example templates are provided in the placeholder text
 
 3. **Select Output Format**

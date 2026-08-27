@@ -234,6 +234,10 @@
     width: 100%;
   }
 
+  .text-analyzer-tool .ta-toolbar > .c-file-upload-control {
+    flex: 0 0 auto;
+  }
+
   .text-analyzer-tool .ta-input-textarea {
     min-height: 16.5rem;
   }

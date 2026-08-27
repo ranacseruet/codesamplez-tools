@@ -4,7 +4,8 @@ import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { scheduleTask } from '../common/scheduler-utils';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone } from '../common/drop-zone';
+import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -67,6 +68,7 @@ export function JSMinifierApp() {
   const [isLoadingEngine, setIsLoadingEngine] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
   const outputRef = useRef(null);
   const clearButtonRef = useRef(null);
   const copyButtonRef = useRef(null);
@@ -218,7 +220,7 @@ export function JSMinifierApp() {
       return undefined;
     }
 
-    return registerDropZone(inputRef.current, {
+    const fileOptions = {
       onText: (text, file) => {
         latestInputRef.current = text;
         setInputCode(text);
@@ -227,7 +229,17 @@ export function JSMinifierApp() {
         void runMinify(text, options);
       },
       onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
-    });
+    };
+    const dropZoneCleanup = registerDropZone(inputRef.current, fileOptions);
+    let fileInputCleanup: (() => void) | undefined;
+    if (fileInputRef.current instanceof HTMLInputElement) {
+      fileInputCleanup = registerFileInput(fileInputRef.current, fileOptions);
+    }
+
+    return () => {
+      dropZoneCleanup();
+      fileInputCleanup?.();
+    };
   }, [options]);
 
   const updateOption = (key) => async (event) => {
@@ -352,6 +364,12 @@ export function JSMinifierApp() {
         <button id="js-minifier-load-sample-btn" className="c-button c-button--ghost" onClick={() => void handleLoadSample()}>
           Load Sample
         </button>
+        <FileUploadButton
+          id="js-minifier-file"
+          inputRef={fileInputRef}
+          className="c-button c-button--secondary js-minifier-upload-button"
+          accept={TEXT_FILE_ACCEPT}
+        />
         <span className="c-toolbar__spacer" />
         <button id="js-minifier-minify-btn" className="c-button" onClick={() => void runMinify()} disabled={isProcessing || isLoadingEngine}>
           {isLoadingEngine ? 'Loading…' : isProcessing ? 'Minifying...' : 'Minify JavaScript'}

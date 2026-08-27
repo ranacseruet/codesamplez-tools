@@ -4,7 +4,8 @@ import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
 import { scheduleTask, nextFrame } from '../common/scheduler-utils';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone } from '../common/drop-zone';
+import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
 import {
@@ -50,6 +51,11 @@ export function JsonFormatterApp() {
     <div id="json-formatter-tool" className="tool-container jsonf-tool c-tool-stack">
       <div className="o-toolbar jsonf-controls-custom jsonf-toolbar c-action-strip c-toolbar">
         <button className="c-button c-button--ghost jsonf-sample-btn" id="loadSampleBtn" type="button">Load Sample</button>
+        <FileUploadButton
+          id="json-formatter-file"
+          className="c-button c-button--secondary jsonf-upload-button"
+          accept={TEXT_FILE_ACCEPT}
+        />
         <div className="c-checkbox-item jsonf-checkbox-item">
           <input type="checkbox" id="sortKeys" defaultChecked />
           <label htmlFor="sortKeys">Sort keys</label>
@@ -290,6 +296,14 @@ export class JSONFormatter {
 
     if (this.input) {
       registerDropZone(this.input, {
+        onText: (text, file) => this.loadDroppedText(text, file.name),
+        onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
+      });
+    }
+
+    const fileInput = document.getElementById('json-formatter-file');
+    if (fileInput instanceof HTMLInputElement) {
+      registerFileInput(fileInput, {
         onText: (text, file) => this.loadDroppedText(text, file.name),
         onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
       });

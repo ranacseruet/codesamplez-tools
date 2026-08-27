@@ -1,11 +1,11 @@
 /**
- * Shared drag-and-drop file loading for tool inputs (UI v4 Phase D).
+ * Shared file loading for tool inputs (UI v4 Phase D).
  *
  * Contract: every tool whose primary input is a text field accepts a dropped
- * file as an alternative to pasting. The drop target highlights while a file
- * is dragged over it, the file is read locally (never uploaded — these tools
- * are client-side by design), and the tool receives either the decoded text or
- * the raw `File`.
+ * file as an alternative to pasting. Drop targets highlight while a file is
+ * dragged over them, picker and drop files are read locally (never uploaded —
+ * these tools are client-side by design), and the tool receives either the
+ * decoded text or the raw `File`.
  *
  * Two behaviours here are deliberate rather than incidental:
  *
@@ -118,6 +118,55 @@ function releaseDocumentGuard(): void {
 }
 
 /**
+ * Process one accepted file using the same validation and text-reading path
+ * for both drag-and-drop and the visible file picker. The read-state factory
+ * runs only after the cheap size check so a rejected file cannot supersede a
+ * read that is already in flight.
+ */
+function processFile(
+    file: File,
+    options: DropZoneOptions,
+    beginRead: () => () => boolean
+): void {
+    const maxBytes = options.maxBytes ?? DROP_ZONE_MAX_BYTES;
+
+    if (file.size > maxBytes) {
+        options.onError?.(`"${file.name}" is too large to load (limit ${formatMegabytes(maxBytes)}).`);
+        return;
+    }
+
+    const isStale = beginRead();
+
+    if (options.onFile) {
+        if (!isStale()) {
+            options.onFile(file);
+        }
+        return;
+    }
+
+    const onText = options.onText;
+    void readFileAsText(file)
+        .then((text) => {
+            if (isStale()) return;
+            // A dropped image or archive decodes to mojibake rather than
+            // failing, and NUL bytes are the cheapest reliable tell.
+            // `indexOf` avoids the `String#includes` core-js polyfill.
+            if (text.indexOf('\u0000') !== -1) {
+                options.onError?.(`"${file.name}" looks like a binary file. Use a text file instead.`);
+                return;
+            }
+            onText(text, file);
+        })
+        .catch(() => {
+            // A superseded or disposed read reports nothing: the user has
+            // already moved on, and the toast would describe a file they no
+            // longer care about.
+            if (isStale()) return;
+            options.onError?.(`Could not read "${file.name}".`);
+        });
+}
+
+/**
  * Wire drag-and-drop file loading onto `target`. Returns a cleanup function
  * that removes every listener and releases the shared document guard.
  */
@@ -202,43 +251,10 @@ export function registerDropZone(target: HTMLElement, options: DropZoneOptions):
             return;
         }
 
-        if (file.size > maxBytes) {
-            options.onError?.(
-                `"${file.name}" is too large to load (limit ${formatMegabytes(maxBytes)}).`
-            );
-            return;
-        }
-
-        if (options.onFile) {
-            options.onFile(file);
-            return;
-        }
-
-        // Captured before the await so the handler stays narrowed inside the
-        // promise callback, where TypeScript would otherwise widen `options`.
-        const onText = options.onText;
-        const readId = (latestReadId += 1);
-        const isStale = () => disposed || readId !== latestReadId;
-
-        void readFileAsText(file)
-            .then((text) => {
-                if (isStale()) return;
-                // A dropped image or archive decodes to mojibake rather than
-                // failing, and NUL bytes are the cheapest reliable tell.
-                // `indexOf` avoids the `String#includes` core-js polyfill.
-                if (text.indexOf('\u0000') !== -1) {
-                    options.onError?.(`"${file.name}" looks like a binary file. Drop a text file instead.`);
-                    return;
-                }
-                onText?.(text, file);
-            })
-            .catch(() => {
-                // A superseded or disposed read reports nothing: the user has
-                // already moved on, and the toast would describe a file they
-                // no longer care about.
-                if (isStale()) return;
-                options.onError?.(`Could not read "${file.name}".`);
-            });
+        processFile(file, { ...options, maxBytes }, () => {
+            const readId = (latestReadId += 1);
+            return () => disposed || readId !== latestReadId;
+        });
     };
 
     target.addEventListener('dragenter', handleDragEnter);
@@ -264,6 +280,35 @@ export function registerDropZone(target: HTMLElement, options: DropZoneOptions):
         reset();
         activeZoneCount = Math.max(0, activeZoneCount - 1);
         releaseDocumentGuard();
+    };
+}
+
+/**
+ * Wire the shared file-loading path onto a hidden file input. The input value
+ * is cleared after each selection so choosing the same file again still emits
+ * a change event.
+ */
+export function registerFileInput(target: HTMLInputElement, options: DropZoneOptions): DropZoneCleanup {
+    let disposed = false;
+    let latestReadId = 0;
+
+    const handleChange = () => {
+        const file = target.files?.[0];
+        target.value = '';
+        if (!file) return;
+
+        processFile(file, options, () => {
+            const readId = (latestReadId += 1);
+            return () => disposed || readId !== latestReadId;
+        });
+    };
+
+    target.addEventListener('change', handleChange);
+
+    return () => {
+        disposed = true;
+        latestReadId += 1;
+        target.removeEventListener('change', handleChange);
     };
 }
 

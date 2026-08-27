@@ -21,13 +21,13 @@ A lightweight, browser-based text analysis tool that provides real-time statisti
 - **Average Word Length**: Calculates the mean length of words (excluding punctuation)
 - **Average Sentence Length**: Computes the average number of words per sentence
 - **Punctuation Statistics**: Tracks usage frequency of common punctuation marks (periods, commas, question marks, exclamation marks)
-- **File Drop**: Drag a text file onto the input to analyze it; the file is read in the browser and never uploaded (5 MB limit, binary files rejected)
+- **File Input**: Click "Upload File" or drag a text file onto the input to analyze it; the file is read in the browser and never uploaded (5 MB limit, binary files rejected)
 
 ## Usage
 
 ### Online
 1. Visit [tools.codesamplez.com/text-analyzer](https://tools.codesamplez.com/text-analyzer)
-2. Enter or paste your text in the textarea
+2. Enter or paste your text in the textarea, or click "Upload File" to choose a local text file
 3. View real-time statistics updating automatically as you type or modify the text
 
 ### Local Development

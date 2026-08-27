@@ -3,6 +3,7 @@ import {
     DROP_ZONE_ACTIVE_CLASS,
     DROP_ZONE_TARGET_ATTRIBUTE,
     registerDropZone,
+    registerFileInput,
     readFileAsText,
     type DropZoneCleanup,
 } from './drop-zone';
@@ -180,6 +181,7 @@ describe('registerDropZone', () => {
         fire(target, 'drop', fileDrag([new File(['PNG\u0000\u0000data'], 'logo.png')]));
 
         await waitFor(() => expect(onError).toHaveBeenCalledWith(expect.stringContaining('binary file')));
+        expect(onError).toHaveBeenCalledWith(expect.stringContaining('Use a text file instead'));
         expect(onText).not.toHaveBeenCalled();
     });
 
@@ -190,6 +192,22 @@ describe('registerDropZone', () => {
         fire(target, 'drop', fileDrag([]));
 
         expect(onError).toHaveBeenCalledWith(expect.stringContaining('No file'));
+    });
+
+    it('does not supersede a valid read when a later file is rejected by size', async () => {
+        const onText = jest.fn();
+        const onError = jest.fn();
+        const valid = deferredFile('valid.txt', 'valid contents');
+        const oversized = new File(['x'], 'too-large.txt');
+        Object.defineProperty(oversized, 'size', { value: 6 * 1024 * 1024 });
+        cleanup = registerDropZone(target, { onText, onError });
+
+        fire(target, 'drop', fileDrag([valid.file]));
+        fire(target, 'drop', fileDrag([oversized]));
+
+        expect(onError).toHaveBeenCalledWith(expect.stringContaining('too large'));
+        valid.resolve();
+        await waitFor(() => expect(onText).toHaveBeenCalledWith('valid contents', valid.file));
     });
 
     it('reports an unreadable file', async () => {
@@ -388,6 +406,94 @@ describe('stray-drop document guard', () => {
         expect(fire(elsewhere, 'drop', fileDrag([new File(['x'], 'x.txt')])).defaultPrevented).toBe(false);
 
         elsewhere.remove();
+    });
+});
+
+describe('registerFileInput', () => {
+    let target: HTMLInputElement;
+    let cleanup: DropZoneCleanup | undefined;
+
+    beforeEach(() => {
+        target = document.createElement('input');
+        target.type = 'file';
+        document.body.appendChild(target);
+    });
+
+    afterEach(() => {
+        cleanup?.();
+        cleanup = undefined;
+        target.remove();
+    });
+
+    function select(file: File): void {
+        Object.defineProperty(target, 'files', { configurable: true, value: [file] });
+        target.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    it('reads a selected text file and allows selecting the same file again', async () => {
+        const onText = jest.fn();
+        cleanup = registerFileInput(target, { onText });
+        const file = new File(['selected contents'], 'selected.txt');
+
+        select(file);
+        await waitFor(() => expect(onText).toHaveBeenCalledWith('selected contents', file));
+
+        select(file);
+        await waitFor(() => expect(onText).toHaveBeenCalledTimes(2));
+        expect(target.value).toBe('');
+    });
+
+    it('ignores an empty file selection', () => {
+        const onText = jest.fn();
+        cleanup = registerFileInput(target, { onText });
+
+        Object.defineProperty(target, 'files', { configurable: true, value: [] });
+        target.dispatchEvent(new Event('change', { bubbles: true }));
+
+        expect(onText).not.toHaveBeenCalled();
+    });
+
+    it('hands a selected raw file to onFile without decoding it', () => {
+        const onFile = jest.fn();
+        cleanup = registerFileInput(target, { onFile });
+        const file = new File(['raw contents'], 'payload.bin');
+
+        select(file);
+
+        expect(onFile).toHaveBeenCalledWith(file);
+    });
+
+    it('uses the shared size and binary-content validation', async () => {
+        const onText = jest.fn();
+        const onError = jest.fn();
+        cleanup = registerFileInput(target, { onText, onError, maxBytes: 4 });
+
+        select(new File(['too long'], 'large.txt'));
+        await waitFor(() => expect(onError).toHaveBeenCalledWith(expect.stringContaining('too large')));
+
+        select(new File(['x\u0000y'], 'binary.bin'));
+        await waitFor(() => expect(onError).toHaveBeenCalledWith(expect.stringContaining('binary file')));
+        expect(onError).toHaveBeenCalledWith(expect.stringContaining('Use a text file instead'));
+        expect(onText).not.toHaveBeenCalled();
+    });
+
+    it('ignores a read that finishes after cleanup', async () => {
+        const onText = jest.fn();
+        let resolveRead!: (value: string) => void;
+        const pending = new Promise<string>((resolve) => {
+            resolveRead = resolve;
+        });
+        const file = new File(['late contents'], 'late.txt');
+        Object.defineProperty(file, 'text', { value: () => pending });
+        cleanup = registerFileInput(target, { onText });
+
+        select(file);
+        cleanup();
+        cleanup = undefined;
+        resolveRead('late contents');
+        await flush();
+
+        expect(onText).not.toHaveBeenCalled();
     });
 });
 
