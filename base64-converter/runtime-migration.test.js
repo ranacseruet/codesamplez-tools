@@ -39,6 +39,7 @@ jest.mock('../common/copy-button/CopyButton', () => ({
     const instance = {
       updateVisibility: jest.fn(),
       forceUpdateVisibility: jest.fn(),
+      wrapper: { hidden: false },
       disconnect: jest.fn()
     };
     mockCopyButtonInstances.push(instance);
@@ -76,6 +77,8 @@ describe('Base64 Converter Preact runtime', () => {
     expect(document.getElementById('base64converter-mode')?.value).toBe('auto');
     expect(document.getElementById('base64converter-encoding')?.value).toBe('utf8');
     expect(document.getElementById('base64converter-download-decoded')?.disabled).toBe(true);
+    expect(document.getElementById('base64converter-image-preview')?.hidden).toBe(true);
+    expect(document.getElementById('base64converter-swap')?.disabled).toBe(true);
     expect(document.querySelectorAll('#base64converter-tool h1')).toHaveLength(0);
     expect(window.base64ConverterInstance).toBe(ui.converter);
   });
@@ -104,6 +107,29 @@ describe('Base64 Converter Preact runtime', () => {
 
     expect(result.textContent).toBe('Hello World');
     expect(document.getElementById('base64converter-download-decoded')?.disabled).toBe(false);
+  });
+
+  it('swaps rendered panel values and toggles the conversion mode', async () => {
+    new Base64ConverterToolUI();
+    await flushEffects();
+
+    const input = document.getElementById('base64converter-input');
+    const result = document.getElementById('base64converter-result');
+    const mode = document.getElementById('base64converter-mode');
+    const convert = document.getElementById('base64converter-convert');
+    const swap = document.getElementById('base64converter-swap');
+
+    fireEvent.input(input, { target: { value: 'Hello World' } });
+    mode.value = 'auto';
+    fireEvent.click(convert);
+    await flushEffects();
+
+    expect(swap.disabled).toBe(false);
+    fireEvent.click(swap);
+
+    expect(input.value).toBe('SGVsbG8gV29ybGQ=');
+    expect(result.value).toBe('Hello World');
+    expect(mode.value).toBe('decode');
   });
 
   it('supports rendered ucs2 encoding option values', async () => {

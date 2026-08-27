@@ -288,6 +288,8 @@ describe('tool document generation', () => {
 
         expect(html).toContain('id="base64converter-mode"');
         expect(html).toContain('id="base64converter-convert"');
+        expect(html).toContain('id="base64converter-image-preview"');
+        expect(html).toContain('id="base64converter-swap"');
         expect(html).toContain('id="related-tools-heading"');
         expect(html).toContain('Next step');
         expect(html).toContain('Common follow-ons after using the Base64 Converter.');

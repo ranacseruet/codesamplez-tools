@@ -76,6 +76,8 @@ export function Base64ConverterArticle(): JSX.Element {
                         <li><strong>File upload support:</strong> reads file content and automatically processes it.</li>
                         <li><strong>Copy to clipboard:</strong> shows a copy button when there is output and hides it when there is not.</li>
                         <li><strong>Download as file:</strong> downloads encoded or decoded output, including binary content when available.</li>
+                        <li><strong>Image previews:</strong> displays decoded images from explicitly typed <code>data:image/*;base64,...</code> Data URIs while keeping Download available.</li>
+                        <li><strong>Swap conversion:</strong> exchanges the Input and Output panels and toggles the conversion direction, including the last successful direction in Auto Detect mode.</li>
                         <li><strong>Binary content support:</strong> can encode and decode binary files or content.</li>
                         <li><strong>URL parameter support:</strong> supports preloading data directly from links through the <code>data</code> parameter.</li>
                     </ul>
@@ -102,8 +104,8 @@ export function Base64ConverterArticle(): JSX.Element {
                                 <li>UCS-2</li>
                             </ul>
                         </li>
-                        <li>View the result below the input area.</li>
-                        <li>Click Copy Result to copy the converted text to the clipboard or click Download to save it as a file.</li>
+                        <li>View the result below the input area. Decoded image Data URIs appear as an image preview; text remains in the output area.</li>
+                        <li>Click Copy Result to copy text output, Download to save the result, or Swap to exchange the panels and toggle the conversion direction.</li>
                     </ol>
 
                     <h3>Encode/Decode File Content</h3>
@@ -112,6 +114,20 @@ export function Base64ConverterArticle(): JSX.Element {
                         <li>The file upload status appears in the input area and the converted data appears in the output area.</li>
                         <li>Conversion happens automatically based on your selected mode and encoding.</li>
                     </ol>
+
+                    <h3>Preview Images and Swap Values</h3>
+                    <p>
+                        To preview an image, provide a valid Data URI with an explicit <code>image/*</code> MIME type,
+                        such as <code>data:image/png;base64,...</code>, and use Auto Detect or Decode mode. The converter
+                        uses the declared MIME type only; it does not infer image formats from magic bytes. The text
+                        output and Copy control are hidden during the preview, while Download remains available. If
+                        the browser cannot load the image, a binary placeholder is shown instead.
+                    </p>
+                    <p>
+                        Swap exchanges the full Input and Output values and toggles Encode/Decode. In Auto Detect mode,
+                        it chooses the opposite of the last successful conversion. Swap is disabled for empty, invalid,
+                        binary, or image output.
+                    </p>
 
                     <h3>URL Parameter Integration</h3>
                     <p>

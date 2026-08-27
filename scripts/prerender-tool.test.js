@@ -72,6 +72,8 @@ describe('generic tool prerender helpers', () => {
         expect(appMarkup).toContain('id="base64converter-mode"');
         expect(appMarkup).toContain('id="base64converter-input"');
         expect(appMarkup).toContain('id="base64converter-convert"');
+        expect(appMarkup).toContain('id="base64converter-image-preview"');
+        expect(appMarkup).toContain('id="base64converter-swap"');
         // Article content is prerendered outside the app root (#327),
         // so the interactive bundle no longer carries the static tree.
         expect(afterMarkup).toContain('Base64 Converter is a free online tool to quickly encode or decode text and files in Base64 format.');

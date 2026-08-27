@@ -9,6 +9,8 @@ import CopyButton from '../common/copy-button/CopyButton';
 import { waitFor } from '@testing-library/dom';
 import { fireFileDragEvent } from '../common/drop-zone-test-utils';
 
+const IMAGE_DATA_URI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+
 // Mock NotificationManager at the top level
 jest.mock('../common/notification-manager', () => ({
     NotificationManager: {
@@ -36,6 +38,7 @@ jest.mock('../common/copy-button/CopyButton', () => {
             updateVisibility: jest.fn(),
             forceUpdateVisibility: jest.fn(),
             isDisabled: jest.fn().mockReturnValue(false),
+            wrapper: { hidden: false },
             disconnect: jest.fn()
         };
     });
@@ -67,11 +70,13 @@ describe('Base64Converter UI (script.tsx)', () => {
                 <option value="UTF-16">UTF-16</option>
             </select>
             <div id="base64converter-result"></div>
+            <img id="base64converter-image-preview" alt="Decoded image preview" hidden />
             <span id="base64converter-status"></span>
             <span id="base64converter-copy-status"></span>
             <button id="base64converter-convert"></button>
             <button id="base64converter-load-sample"></button>
             <button id="base64converter-share"></button>
+            <button id="base64converter-swap" disabled></button>
             <button id="base64converter-download-decoded" disabled></button>
         `;
 
@@ -116,6 +121,8 @@ describe('Base64Converter UI (script.tsx)', () => {
         test('should initialize with all required elements', () => {
             expect(converter.elements.input).toBeDefined();
             expect(converter.elements.result).toBeDefined();
+            expect(converter.elements.preview).toBeDefined();
+            expect(converter.elements.swapButton).toBeDefined();
             expect(converter.elements.downloadDecodedButton).toBeDefined();
         });
 
@@ -170,6 +177,77 @@ describe('Base64Converter UI (script.tsx)', () => {
             
             expect(elements.result.textContent).toBe('Hello World');
             expect(elements.downloadDecodedButton.disabled).toBe(false);
+        });
+
+        test('should exchange panels and toggle from encode to decode', () => {
+            elements.input.value = 'Hello World';
+            elements.mode.value = 'encode';
+            converter.processInput();
+
+            elements.swapButton.click();
+
+            expect(elements.input.value).toBe('SGVsbG8gV29ybGQ=');
+            expect(elements.result.textContent).toBe('Hello World');
+            expect(elements.mode.value).toBe('decode');
+            expect(elements.swapButton.disabled).toBe(false);
+        });
+
+        test('should exchange panels and toggle from decode to encode', () => {
+            elements.input.value = 'SGVsbG8gV29ybGQ=';
+            elements.mode.value = 'decode';
+            converter.processInput();
+
+            elements.swapButton.click();
+
+            expect(elements.input.value).toBe('Hello World');
+            expect(elements.result.textContent).toBe('SGVsbG8gV29ybGQ=');
+            expect(elements.mode.value).toBe('encode');
+            expect(elements.swapButton.disabled).toBe(false);
+        });
+
+        test('should choose the opposite last direction when swapping in auto mode', () => {
+            elements.input.value = 'Hello World';
+            elements.mode.value = 'auto';
+            converter.processInput();
+
+            elements.swapButton.click();
+
+            expect(elements.mode.value).toBe('decode');
+            expect(elements.input.value).toBe('SGVsbG8gV29ybGQ=');
+            expect(elements.result.textContent).toBe('Hello World');
+
+            elements.input.value = 'SGVsbG8gV29ybGQ=';
+            elements.mode.value = 'auto';
+            converter.processInput();
+            elements.swapButton.click();
+
+            expect(elements.mode.value).toBe('encode');
+            expect(elements.input.value).toBe('Hello World');
+            expect(elements.result.textContent).toBe('SGVsbG8gV29ybGQ=');
+        });
+
+        test('should keep Swap disabled until text output is available', () => {
+            expect(elements.swapButton.disabled).toBe(true);
+
+            converter.outputKind = 'text';
+            elements.swapButton.disabled = false;
+            elements.swapButton.click();
+            expect(elements.swapButton.disabled).toBe(true);
+
+            elements.input.value = 'Not base64!';
+            elements.mode.value = 'decode';
+            converter.processInput();
+            expect(elements.swapButton.disabled).toBe(true);
+
+            elements.input.value = 'data:application/pdf;base64,SGVsbG8=';
+            elements.mode.value = 'decode';
+            converter.processInput();
+            expect(elements.swapButton.disabled).toBe(true);
+
+            elements.input.value = IMAGE_DATA_URI;
+            elements.mode.value = 'decode';
+            converter.processInput();
+            expect(elements.swapButton.disabled).toBe(true);
         });
 
         test('should auto-detect and encode plain text', () => {
@@ -230,6 +308,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             
             expect(elements.result.textContent).toBe('VGVzdCBjb250ZW50');
             expect(elements.input.value).toContain('[File: test.txt uploaded');
+            expect(elements.swapButton.disabled).toBe(true);
         });
 
         test('should allow a large binary file selected through the picker', () => {
@@ -534,6 +613,24 @@ describe('Base64Converter UI (script.tsx)', () => {
             decodeSpy.mockRestore();
         });
 
+        test('should surface unexpected auto-detect decode errors', () => {
+            const RuntimeBase64Codec = require('../common/Base64Codec').default;
+            const decodeSpy = jest
+                .spyOn(RuntimeBase64Codec.prototype, 'decodeText')
+                .mockImplementation(() => {
+                    throw new Error('unexpected auto decode failure');
+                });
+
+            elements.input.value = 'SGVsbG8=';
+            elements.mode.value = 'auto';
+            converter.processInput();
+
+            expect(elements.result.textContent).toBe('');
+            expect(elements.status.textContent).toBe('Processing failed: unexpected auto decode failure');
+            expect(elements.downloadDecodedButton.disabled).toBe(true);
+            decodeSpy.mockRestore();
+        });
+
     });
 
     describe('Download Functionality', () => {
@@ -550,6 +647,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         test('should handle binary content download', async () => {
             elements.result.textContent = '[Binary content (image/png). Use Download button.]';
             elements.input.value = 'SGVsbG8gV29ybGQ='; // Base64 for "Hello World"
+            converter.outputKind = 'binary';
             
             await converter.handleDownload();
             
@@ -558,9 +656,20 @@ describe('Base64Converter UI (script.tsx)', () => {
             // expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.bin"', 2000, expect.objectContaining({ type: 'success' }));
         });
 
+        test('should treat text output as text even when it resembles a binary placeholder', async () => {
+            const textOutput = '[Binary content is actually text]';
+            elements.result.textContent = textOutput;
+            converter.outputKind = 'text';
+
+            await converter.handleDownload();
+
+            expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith(textOutput, 'output.txt', 'application/octet-stream');
+        });
+
         test('should handle decoded content likely binary download', async () => {
             elements.result.textContent = '[Decoded content (likely binary, not UTF-8 text). Use Download button.]';
             elements.input.value = 'SGVsbG8gV29ybGQ='; // Base64 for "Hello World"
+            converter.outputKind = 'binary';
             
             await converter.handleDownload();
             
@@ -572,12 +681,27 @@ describe('Base64Converter UI (script.tsx)', () => {
         test('should handle binary content download from Data URI', async () => {
             elements.result.textContent = '[Binary content (image/png). Use Download button.]';
             elements.input.value = 'data:image/png;base64,SGVsbG8gV29ybGQ=';
+            converter.outputKind = 'binary';
             
             await converter.handleDownload();
             
             expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith(expect.any(Uint8Array), 'output.bin', 'application/octet-stream');
             // Temporarily comment out failing expectation for NotificationManager.show
             // expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.bin"', 2000, expect.objectContaining({ type: 'success' }));
+        });
+
+        test('should download the source bytes when an image preview is active', async () => {
+            elements.input.value = 'data:image/png;base64,SGVsbG8=';
+            elements.mode.value = 'decode';
+            converter.processInput();
+            elements.input.value = 'data:image/png;base64,V29ybGQ=';
+
+            await converter.handleDownload();
+
+            const [content, filename, mimeType] = converter.downloadManager.downloadFile.mock.calls[0];
+            expect(Array.from(content)).toEqual([72, 101, 108, 108, 111]);
+            expect(filename).toBe('output.bin');
+            expect(mimeType).toBe('application/octet-stream');
         });
 
         test('should show error for empty content', async () => {
@@ -592,6 +716,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         test('should show error for invalid base64 in binary download', async () => {
             elements.result.textContent = '[Binary content (image/png). Use Download button.]';
             elements.input.value = 'Invalid Base64!';
+            converter.outputKind = 'binary';
             
             await converter.handleDownload();
             
@@ -602,6 +727,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         test('should show error for invalid Data URI format in binary download', async () => {
             elements.result.textContent = '[Binary content (image/png). Use Download button.]';
             elements.input.value = 'data:invalid-format';
+            converter.outputKind = 'binary';
             
             await converter.handleDownload();
             
@@ -612,6 +738,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         test('should handle binary content download with specific MIME type', async () => {
             elements.result.textContent = '[Binary content (application/pdf). Use Download button.]';
             elements.input.value = 'data:application/pdf;base64,SGVsbG8gV29ybGQ=';
+            converter.outputKind = 'binary';
             
             await converter.handleDownload();
             
@@ -635,12 +762,107 @@ describe('Base64Converter UI (script.tsx)', () => {
 
     describe('Data URI and Binary Content Handling', () => {
         test('should handle Data URI with non-text MIME type in auto mode', () => {
-            elements.input.value = 'data:image/png;base64,SGVsbG8gV29ybGQ=';
+            elements.input.value = 'data:application/pdf;base64,SGVsbG8gV29ybGQ=';
             elements.mode.value = 'auto';
             converter.processInput();
             
-            expect(elements.result.textContent).toContain('[Binary content (image/png). Use Download button.]');
+            expect(elements.result.textContent).toContain('[Binary content (application/pdf). Use Download button.]');
+            expect(elements.preview.hidden).toBe(true);
+            expect(elements.swapButton.disabled).toBe(true);
             expect(elements.downloadDecodedButton.disabled).toBe(false);
+        });
+
+        test('should preview an image Data URI in auto mode', () => {
+            elements.input.value = IMAGE_DATA_URI;
+            elements.mode.value = 'auto';
+            converter.processInput();
+
+            expect(elements.result.textContent).toBe('');
+            expect(elements.result.hidden).toBe(true);
+            expect(elements.preview.hidden).toBe(false);
+            expect(elements.preview.src).toContain('data:image/png;base64,');
+            expect(converter.outputKind).toBe('image');
+            expect(converter.lastConversionDirection).toBe('decode');
+            expect(elements.downloadDecodedButton.disabled).toBe(false);
+            expect(elements.swapButton.disabled).toBe(true);
+            expect(converter.copyButtonInstance.wrapper.hidden).toBe(true);
+            expect(require('../common/notification-manager').NotificationManager.show).toHaveBeenCalledWith(
+                'Decoded. MIME: image/png. Image preview available.',
+                2000,
+                { type: 'success' }
+            );
+        });
+
+        test('should preview an image Data URI in decode mode', () => {
+            elements.input.value = IMAGE_DATA_URI;
+            elements.mode.value = 'decode';
+            converter.processInput();
+
+            expect(elements.preview.hidden).toBe(false);
+            expect(elements.result.hidden).toBe(true);
+            expect(elements.downloadDecodedButton.disabled).toBe(false);
+            expect(elements.swapButton.disabled).toBe(true);
+        });
+
+        test('should fall back to a binary placeholder when an image preview fails to load', () => {
+            elements.input.value = IMAGE_DATA_URI;
+            elements.mode.value = 'decode';
+            converter.processInput();
+
+            converter.imagePreviewRequest.loader.dispatchEvent(new Event('error'));
+
+            expect(elements.preview.hidden).toBe(true);
+            expect(elements.result.hidden).toBe(false);
+            expect(elements.result.textContent).toBe('[Binary content (image/png). Use Download button.]');
+            expect(elements.downloadDecodedButton.disabled).toBe(false);
+            expect(elements.swapButton.disabled).toBe(true);
+            expect(elements.status.textContent).toBe('Image preview unavailable. Use Download button.');
+        });
+
+        test('should ignore a stale image loader failure after a newer preview starts', () => {
+            elements.input.value = 'data:image/png;base64,SGVsbG8=';
+            elements.mode.value = 'decode';
+            converter.processInput();
+            const firstRequest = converter.imagePreviewRequest;
+
+            elements.input.value = 'data:image/jpeg;base64,V29ybGQ=';
+            converter.processInput();
+            const secondRequest = converter.imagePreviewRequest;
+
+            firstRequest.loader.dispatchEvent(new Event('error'));
+
+            expect(converter.imagePreviewRequest).toBe(secondRequest);
+            expect(converter.outputKind).toBe('image');
+            expect(elements.preview.hidden).toBe(false);
+            expect(elements.result.hidden).toBe(true);
+
+            secondRequest.loader.dispatchEvent(new Event('error'));
+
+            expect(converter.outputKind).toBe('binary');
+            expect(elements.result.textContent).toBe('[Binary content (image/jpeg). Use Download button.]');
+        });
+
+        test('should reject malformed image Data URIs without previewing', () => {
+            elements.input.value = 'data:image/png,not-base64';
+            elements.mode.value = 'decode';
+            converter.processInput();
+
+            expect(elements.preview.hidden).toBe(true);
+            expect(elements.result.textContent).toBe('');
+            expect(elements.status.textContent).toBe('Invalid Data URI format');
+            expect(elements.downloadDecodedButton.disabled).toBe(true);
+            expect(elements.swapButton.disabled).toBe(true);
+        });
+
+        test('should keep bare Base64 text output unchanged', () => {
+            elements.input.value = 'SGVsbG8gV29ybGQ=';
+            elements.mode.value = 'auto';
+            converter.processInput();
+
+            expect(elements.result.textContent).toBe('Hello World');
+            expect(elements.preview.hidden).toBe(true);
+            expect(elements.result.hidden).toBe(false);
+            expect(elements.swapButton.disabled).toBe(false);
         });
 
         test('should handle null characters in decoded content', () => {
@@ -751,9 +973,11 @@ describe('Base64Converter UI (script.tsx)', () => {
                     <option value="UTF-16">UTF-16</option>
                 </select>
                 <div id="base64converter-result"></div>
+                <img id="base64converter-image-preview" alt="Decoded image preview" hidden />
                 <span id="base64converter-status"></span>
                 <span id="base64converter-copy-status"></span>
                 <button id="base64converter-convert"></button>
+                <button id="base64converter-swap" disabled></button>
                 <button id="base64converter-download-decoded" disabled></button>
             `;
             setTestUrl();

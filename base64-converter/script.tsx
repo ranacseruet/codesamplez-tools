@@ -16,6 +16,8 @@ import toolMetadata from './tool.meta.json';
 const BASE64_DATA_URL_REGEX = /^data:([a-zA-Z0-9/\-+.-\w]+)?(?:;charset=([a-zA-Z0-9/\-+.-\w]+))?;base64,(.*)$/;
 
 type Base64Encoding = 'utf8' | 'ascii' | 'iso88591' | 'ucs2';
+type Base64ConversionDirection = 'encode' | 'decode';
+type Base64OutputKind = 'empty' | 'text' | 'binary' | 'image';
 
 interface ParsedDataUrl {
     mimeType: string | null;
@@ -25,17 +27,27 @@ interface ParsedDataUrl {
 interface Base64ConverterElements {
     input: HTMLTextAreaElement;
     result: HTMLElement;
+    preview: HTMLImageElement;
     status: HTMLElement;
     mode: HTMLSelectElement;
     encoding: HTMLSelectElement;
     fileInput: HTMLInputElement;
     convertButton: HTMLElement;
+    swapButton: HTMLButtonElement;
     downloadDecodedButton: HTMLButtonElement;
+}
+
+interface ImagePreviewRequest {
+    loader: HTMLImageElement;
 }
 
 interface Base64ConverterInstance {
     elements: Base64ConverterElements;
     currentMimeType: string | null;
+    outputKind: Base64OutputKind;
+    lastConversionDirection: Base64ConversionDirection | null;
+    downloadSource: string | null;
+    imagePreviewRequest: ImagePreviewRequest | null;
     downloadManager: DownloadManager;
     clearButtonInstance: ClearButton | null;
     copyButtonInstance: CopyButton;
@@ -85,14 +97,141 @@ function parseBase64DataUrl(value: unknown): ParsedDataUrl | null {
     };
 }
 
+function isTextMimeType(mimeType: string | null): boolean {
+    const normalizedMimeType = mimeType?.toLowerCase();
+    return Boolean(
+        normalizedMimeType &&
+        (normalizedMimeType.startsWith('text/') ||
+            normalizedMimeType === 'application/json' ||
+            normalizedMimeType === 'application/xml' ||
+            normalizedMimeType.startsWith('application/javascript'))
+    );
+}
+
+function isImageMimeType(mimeType: string | null): boolean {
+    return Boolean(mimeType?.toLowerCase().startsWith('image/'));
+}
+
+function isBinaryPlaceholder(value: string): boolean {
+    return value.startsWith('[Binary content') || value.startsWith('[Decoded content (likely binary');
+}
+
+function isFileUploadPlaceholder(value: string): boolean {
+    return value.startsWith('[File:') && value.endsWith('uploaded and encoded to output]');
+}
+
+function isBinaryOutputKind(outputKind: Base64OutputKind): boolean {
+    return outputKind === 'binary' || outputKind === 'image';
+}
+
+const SWAPPABLE_OUTPUT_KINDS: ReadonlySet<Base64OutputKind> = new Set(['text']);
+
+function isSwappableOutputKind(outputKind: Base64OutputKind): boolean {
+    return SWAPPABLE_OUTPUT_KINDS.has(outputKind);
+}
+
+function isLikelyBinaryDecodeError(error: unknown): boolean {
+    const message = error instanceof Error && error.message ? error.message.toLowerCase() : '';
+    return (
+        message.includes('utf-8') ||
+        message.includes('ucs-2') ||
+        message.includes('malformed') ||
+        message.includes('invalid sequence') ||
+        message.includes('data was not valid') ||
+        message.includes('valid utf') ||
+        error instanceof TypeError
+    );
+}
+
+function readOutputText(element: HTMLElement): string {
+    if (element instanceof HTMLTextAreaElement || element instanceof HTMLInputElement) {
+        return element.value;
+    }
+    return element.textContent || '';
+}
+
+function writeOutputText(element: HTMLElement, value: string): void {
+    element.textContent = value;
+    if (element instanceof HTMLTextAreaElement || element instanceof HTMLInputElement) {
+        element.value = value;
+    }
+}
+
+function setImagePreviewVisible(converter: Base64ConverterInstance, visible: boolean, source = ''): void {
+    const { preview, result } = converter.elements;
+    converter.imagePreviewRequest = null;
+
+    if (visible) {
+        preview.src = source;
+        preview.hidden = false;
+
+        const request: ImagePreviewRequest = {
+            loader: document.createElement('img')
+        };
+        converter.imagePreviewRequest = request;
+        request.loader.onerror = () => {
+            if (converter.imagePreviewRequest !== request || converter.outputKind !== 'image') {
+                return;
+            }
+            handleImagePreviewError(converter);
+        };
+        request.loader.src = source;
+    } else {
+        preview.hidden = true;
+        preview.removeAttribute('src');
+    }
+
+    result.hidden = visible;
+    const copyWrapper = converter.copyButtonInstance?.wrapper;
+    if (copyWrapper) {
+        copyWrapper.hidden = visible;
+    }
+}
+
+function handleImagePreviewError(converter: Base64ConverterInstance): void {
+    if (converter.outputKind !== 'image') {
+        return;
+    }
+
+    const mimeType = converter.currentMimeType || 'image/*';
+    setImagePreviewVisible(converter, false);
+    writeOutputText(converter.elements.result, `[Binary content (${mimeType}). Use Download button.]`);
+    converter.outputKind = 'binary';
+    converter.elements.downloadDecodedButton.disabled = false;
+    converter.elements.status.textContent = 'Image preview unavailable. Use Download button.';
+    converter.copyButtonInstance.forceUpdateVisibility();
+    updateSwapButton(converter);
+}
+
+function updateSwapButton(converter: Base64ConverterInstance): void {
+    converter.elements.swapButton.disabled =
+        !isSwappableOutputKind(converter.outputKind) ||
+        !readOutputText(converter.elements.result).trim() ||
+        isFileUploadPlaceholder(converter.elements.input.value);
+}
+
+function resetOutputState(converter: Base64ConverterInstance): void {
+    converter.currentMimeType = null;
+    converter.outputKind = 'empty';
+    converter.lastConversionDirection = null;
+    converter.downloadSource = null;
+    converter.elements.downloadDecodedButton.disabled = true;
+    setImagePreviewVisible(converter, false);
+    writeOutputText(converter.elements.result, '');
+    converter.copyButtonInstance.forceUpdateVisibility();
+    updateSwapButton(converter);
+}
+
 const BASE64_CONVERTER_ELEMENT_IDS = {
     input: 'base64converter-input',
     result: 'base64converter-result',
+    preview: 'base64converter-image-preview',
     status: 'base64converter-status',
     mode: 'base64converter-mode',
     encoding: 'base64converter-encoding',
     fileInput: 'base64converter-file',
     convertButton: 'base64converter-convert',
+    swapButton: 'base64converter-swap',
     downloadDecodedButton: 'base64converter-download-decoded'
 };
 
@@ -105,25 +244,34 @@ const createConverter = (): Base64ConverterInstance => {
     return {
         elements: {} as Base64ConverterElements,
         currentMimeType: null, // To store MIME type from Data URL
+        outputKind: 'empty' as Base64OutputKind,
+        lastConversionDirection: null as Base64ConversionDirection | null,
+        downloadSource: null,
+        imagePreviewRequest: null,
         downloadManager: downloadManager, // Expose downloadManager for testing
         clearButtonInstance: null,
         copyButtonInstance: null as unknown as CopyButton,
 
         processInput() {
             const rawInput = this.elements.input.value.trim();
-            
+
             // If the input is the file upload placeholder, do not process it as text for encoding/decoding.
             // The result and status should already be set by handleFileUpload.
-            if (rawInput.startsWith('[File:') && rawInput.endsWith('uploaded and encoded to output]')) {
+            if (isFileUploadPlaceholder(rawInput)) {
+                this.currentMimeType = null;
+                this.downloadSource = null;
+                this.outputKind = 'text';
+                this.lastConversionDirection = 'encode';
+                setImagePreviewVisible(this, false);
                 this.elements.downloadDecodedButton.disabled = false;
-                return; 
+                this.copyButtonInstance.forceUpdateVisibility();
+                updateSwapButton(this);
+                return;
             }
 
-            this.currentMimeType = null; // Reset MIME type, will be set if Data URI
-            this.elements.downloadDecodedButton.disabled = true;
+            resetOutputState(this);
 
             if (!rawInput) {
-                this.elements.result.textContent = '';
                 this.elements.status.textContent = '';
                 return;
             }
@@ -138,19 +286,54 @@ const createConverter = (): Base64ConverterInstance => {
                     base64Payload = parsedDataUrl.base64Payload;
                     this.currentMimeType = detectedMimeType; // Persist for download
                 } else {
-                    this.elements.result.textContent = '';
                     // v4 contract: errors surface inline in the status chip.
                     this.elements.status.textContent = 'Invalid Data URI format';
                     return;
                 }
             }
-            
+
             const mode = this.elements.mode.value;
-            let encoding = normalizeEncodingValue(this.elements.encoding.value); // For text decoding
+            const encoding = normalizeEncodingValue(this.elements.encoding.value); // For text decoding
 
             try {
-                let resultText;
-                let statusActionMessage;
+                let resultText = '';
+                let statusActionMessage: 'Encoded' | 'Decoded';
+                let outputKind: Base64OutputKind = 'text';
+                let imagePreviewSource = '';
+
+                const decodePayloadForDisplay = (strictTextValidation: boolean) => {
+                    if (isImageMimeType(detectedMimeType)) {
+                        return {
+                            resultText: '',
+                            outputKind: 'image' as const,
+                            imagePreviewSource: `data:${detectedMimeType};base64,${base64Payload}`
+                        };
+                    }
+
+                    if (detectedMimeType && !isTextMimeType(detectedMimeType)) {
+                        return {
+                            resultText: `[Binary content (${detectedMimeType}). Use Download button.]`,
+                            outputKind: 'binary' as const,
+                            imagePreviewSource: ''
+                        };
+                    }
+
+                    let decodedText = codec.decodeText(base64Payload, encoding);
+                    if (strictTextValidation) {
+                        // Replace null characters for display purposes to match the existing text output contract.
+                        decodedText = decodedText.replace(/\u0000/g, '');
+                        // Check for replacement characters indicating decode errors.
+                        if (decodedText.includes('\uFFFD')) {
+                            throw new Error('Invalid UTF-8 sequence detected in decoded result');
+                        }
+                    }
+
+                    return {
+                        resultText: decodedText,
+                        outputKind: 'text' as const,
+                        imagePreviewSource: ''
+                    };
+                };
 
                 if (mode === 'encode') {
                     statusActionMessage = 'Encoded';
@@ -161,28 +344,17 @@ const createConverter = (): Base64ConverterInstance => {
                     if (mode === 'auto') {
                         if (isPayloadBase64) {
                             statusActionMessage = 'Decoded';
-                            if (detectedMimeType && 
-                                !detectedMimeType.startsWith('text/') && 
-                                detectedMimeType !== 'application/json' && 
-                                detectedMimeType !== 'application/xml' && 
-                                !detectedMimeType.startsWith('application/javascript')) {
-                                resultText = `[Binary content (${detectedMimeType}). Use Download button.]`;
-                                this.elements.downloadDecodedButton.disabled = false;
-                            } else {
-                                try {
-                                    resultText = codec.decodeText(base64Payload, encoding);
-                                    this.elements.downloadDecodedButton.disabled = false;
-                                } catch (decodeError: unknown) {
-                                    const msg = decodeError instanceof Error && decodeError.message ? decodeError.message.toLowerCase() : "";
-                                    if (msg.includes('utf-8') || msg.includes('ucs-2') || 
-                                        msg.includes('malformed') || msg.includes('invalid sequence') || 
-                                        msg.includes('data was not valid') || msg.includes('valid utf') ||
-                                        decodeError instanceof TypeError) {
-                                        resultText = `[Decoded content (likely binary, not ${encoding} text). Use Download button.]`;
-                                        this.elements.downloadDecodedButton.disabled = false;
-                                    } else {
-                                        throw decodeError;
-                                    }
+                            try {
+                                const display = decodePayloadForDisplay(false);
+                                resultText = display.resultText;
+                                outputKind = display.outputKind;
+                                imagePreviewSource = display.imagePreviewSource;
+                            } catch (decodeError: unknown) {
+                                if (isLikelyBinaryDecodeError(decodeError)) {
+                                    resultText = `[Decoded content (likely binary, not ${encoding} text). Use Download button.]`;
+                                    outputKind = 'binary';
+                                } else {
+                                    throw decodeError;
                                 }
                             }
                         } else {
@@ -194,38 +366,36 @@ const createConverter = (): Base64ConverterInstance => {
                         if (!isPayloadBase64) {
                             throw new Error('Invalid base64 input string');
                         }
-                        try {
-                            resultText = codec.decodeText(base64Payload, encoding);
-                            // Replace null characters for display purposes to match test expectation
-                            resultText = resultText.replace(/\u0000/g, '');
-                            // Check for replacement characters indicating decode errors
-                            if (resultText.includes('\uFFFD')) {
-                                throw new Error('Invalid UTF-8 sequence detected in decoded result');
-                            }
-                            this.elements.downloadDecodedButton.disabled = false;
-                        } catch (decodeError) {
-                            throw decodeError; // Re-throw to ensure it's handled in the catch block
-                        }
+                        const display = decodePayloadForDisplay(true);
+                        resultText = display.resultText;
+                        outputKind = display.outputKind;
+                        imagePreviewSource = display.imagePreviewSource;
                     }
                 }
 
-                this.elements.result.textContent = resultText;
+                this.outputKind = outputKind;
+                this.lastConversionDirection = statusActionMessage === 'Encoded' ? 'encode' : 'decode';
+                this.downloadSource = isBinaryOutputKind(outputKind) ? rawInput : null;
+                writeOutputText(this.elements.result, resultText);
+                setImagePreviewVisible(this, outputKind === 'image', imagePreviewSource);
                 this.elements.status.textContent = '';
                 // Update CopyButton visibility directly
                 this.copyButtonInstance.forceUpdateVisibility();
-                if (statusActionMessage === 'Decoded' && detectedMimeType && !detectedMimeType.startsWith('text/')) {
+                updateSwapButton(this);
+                if (statusActionMessage === 'Decoded' && detectedMimeType && isImageMimeType(detectedMimeType)) {
+                    NotificationManager.show(`${statusActionMessage}. MIME: ${detectedMimeType}. Image preview available.`, 2000, { type: 'success' });
+                } else if (statusActionMessage === 'Decoded' && detectedMimeType && !isTextMimeType(detectedMimeType)) {
                     NotificationManager.show(`${statusActionMessage}. MIME: ${detectedMimeType}. Selected encoding (${this.elements.encoding.value}) ignored for binary display.`, 2000, { type: 'success' });
-                } else if (statusActionMessage === 'Decoded' && !detectedMimeType && (resultText.startsWith('[Decoded content (likely binary') || resultText.startsWith('[Binary content'))) {
+                } else if (statusActionMessage === 'Decoded' && !detectedMimeType && isBinaryPlaceholder(resultText)) {
                     NotificationManager.show(`${statusActionMessage}. Selected encoding (${this.elements.encoding.value}) failed for display. Use Download.`, 2000, { type: 'success' });
-                }
-                else {
+                } else {
                     NotificationManager.show(`${statusActionMessage} using ${this.elements.encoding.value}`, 2000, { type: 'success' });
                 }
                 this.elements.downloadDecodedButton.disabled = false;
 
             } catch (error: unknown) {
                 console.error('Processing error:', error);
-                this.elements.result.textContent = '';
+                resetOutputState(this);
                 let errorMessage = '';
                 const message = error instanceof Error ? error.message : String(error);
 
@@ -246,7 +416,6 @@ const createConverter = (): Base64ConverterInstance => {
                 // v4 contract: all errors surface inline in the status chip;
                 // toasts are reserved for success confirmations.
                 this.elements.status.textContent = errorMessage;
-                this.elements.downloadDecodedButton.disabled = true;
             }
         },
 
@@ -259,9 +428,10 @@ const createConverter = (): Base64ConverterInstance => {
         },
 
         async handleDownload() {
-            const outputContent = this.elements.result.textContent.trim();
+            const outputContent = readOutputText(this.elements.result).trim();
+            const shouldDownloadBinary = isBinaryOutputKind(this.outputKind);
 
-            if (!outputContent) {
+            if (!outputContent && !shouldDownloadBinary) {
                 NotificationManager.show('No content to download', 3000, { type: 'error' });
                 return;
             }
@@ -270,8 +440,8 @@ const createConverter = (): Base64ConverterInstance => {
                 let content;
                 let filename = 'output.txt';
 
-                if (outputContent.startsWith('[Binary content') || outputContent.startsWith('[Decoded content (likely binary')) {
-                    const rawInputValue = this.elements.input.value.trim();
+                if (shouldDownloadBinary) {
+                    const rawInputValue = (this.downloadSource ?? this.elements.input.value).trim();
                     let base64Payload = rawInputValue;
 
                     if (rawInputValue.startsWith('data:')) {
@@ -337,18 +507,23 @@ const createConverter = (): Base64ConverterInstance => {
                     }
 
                     this.elements.input.value = `[File: ${file.name} uploaded and encoded to output]`;
-                    this.elements.result.textContent = base64String;
+                    writeOutputText(this.elements.result, base64String);
+                    this.currentMimeType = null;
+                    this.downloadSource = null;
+                    this.outputKind = 'text';
+                    this.lastConversionDirection = 'encode';
+                    setImagePreviewVisible(this, false);
                     // Update CopyButton visibility directly
                     this.copyButtonInstance.forceUpdateVisibility();
+                    updateSwapButton(this);
+                    this.elements.downloadDecodedButton.disabled = false;
 
                 } catch (error: unknown) {
-                console.error('File processing error after read:', error);
-                this.elements.result.textContent = '';
-                this.copyButtonInstance.forceUpdateVisibility();
-                this.elements.input.value = '';
-                const message = error instanceof Error ? error.message : String(error);
-                NotificationManager.show('Error processing file: ' + message, 3000, { type: 'error' });
-                    this.elements.downloadDecodedButton.disabled = true;
+                    console.error('File processing error after read:', error);
+                    resetOutputState(this);
+                    this.elements.input.value = '';
+                    const message = error instanceof Error ? error.message : String(error);
+                    NotificationManager.show('Error processing file: ' + message, 3000, { type: 'error' });
                 } finally {
                     e.target.value = null;
                 }
@@ -356,11 +531,9 @@ const createConverter = (): Base64ConverterInstance => {
 
             reader.onerror = () => {
                 console.error('File reading error:', reader.error);
-                this.elements.result.textContent = '';
-                this.copyButtonInstance.forceUpdateVisibility();
+                resetOutputState(this);
                 this.elements.input.value = '';
                 NotificationManager.show('Error reading file: ' + (reader.error?.message || 'Unknown error'), 3000, { type: 'error' });
-                this.elements.downloadDecodedButton.disabled = true;
                 e.target.value = null;
             };
 
@@ -416,17 +589,39 @@ export function Base64ConverterApp() {
                     />
                 </div>
 
+                <div className="b64-swap-action">
+                    <button
+                        type="button"
+                        id="base64converter-swap"
+                        className="c-button c-button--secondary c-button--small b64-swap-button"
+                        title="Swap Input and Output"
+                        aria-label="Swap Input and Output"
+                        aria-controls="base64converter-input base64converter-result"
+                        disabled
+                    >
+                        Swap ⇄
+                    </button>
+                </div>
+
                 <div className="o-panel b64-panel c-surface-card c-surface-panel">
                     <div className="o-panel-header b64-panel-header c-surface-panel__header">
                         <h3>Output</h3>
                     </div>
-                    <textarea
-                        id="base64converter-result"
-                        className="c-input c-input--textarea b64-textarea b64-output"
-                        readOnly
-                        aria-label="Output text"
-                        placeholder="Converted output will appear here..."
-                    />
+                    <div className="b64-output-well">
+                        <textarea
+                            id="base64converter-result"
+                            className="c-input c-input--textarea b64-textarea b64-output"
+                            readOnly
+                            aria-label="Output text"
+                            placeholder="Converted output will appear here..."
+                        />
+                        <img
+                            id="base64converter-image-preview"
+                            className="b64-image-preview"
+                            alt="Decoded image preview"
+                            hidden
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -534,6 +729,8 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
 
     converter.clearButtonInstance = new ClearButton(typedElements.input);
     converter.copyButtonInstance = new CopyButton(typedElements.result as HTMLTextAreaElement | HTMLInputElement | HTMLPreElement);
+    setImagePreviewVisible(converter, false);
+    updateSwapButton(converter);
 
     if (browserWindow) {
         browserWindow.base64ConverterInstance = converter;
@@ -551,6 +748,40 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
     if (typedElements.convertButton instanceof HTMLElement) {
         registerPrimaryActionShortcut(typedElements.convertButton);
     }
+
+    const swapHandler = () => {
+        if (!isSwappableOutputKind(converter.outputKind) || isFileUploadPlaceholder(typedElements.input.value)) {
+            return;
+        }
+
+        const outputValue = readOutputText(typedElements.result);
+        if (!outputValue.trim()) {
+            updateSwapButton(converter);
+            return;
+        }
+
+        const inputValue = typedElements.input.value;
+        typedElements.input.value = outputValue;
+        writeOutputText(typedElements.result, inputValue);
+        setImagePreviewVisible(converter, false);
+
+        const nextMode = typedElements.mode.value === 'encode'
+            ? 'decode'
+            : typedElements.mode.value === 'decode'
+                ? 'encode'
+                : converter.lastConversionDirection === 'encode'
+                    ? 'decode'
+                    : 'encode';
+        typedElements.mode.value = nextMode;
+        converter.currentMimeType = null;
+        converter.downloadSource = null;
+        converter.outputKind = inputValue.trim() ? 'text' : 'empty';
+        converter.elements.status.textContent = '';
+        converter.elements.downloadDecodedButton.disabled = !inputValue.trim();
+        converter.copyButtonInstance.forceUpdateVisibility();
+        updateSwapButton(converter);
+    };
+    typedElements.swapButton.addEventListener('click', swapHandler);
 
     const sampleHandler = () => {
         // Load Sample always demonstrates a valid encode: reset the mode to

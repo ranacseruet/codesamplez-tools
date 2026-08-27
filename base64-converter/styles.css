@@ -73,6 +73,24 @@
   flex: 1;
 }
 
+.b64-output-well {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: clamp(17rem, 35vh, 22rem);
+  width: 100%;
+}
+
+.b64-output-well > .copy-button-wrapper {
+  display: flex;
+  min-height: 0;
+}
+
+.b64-output-well > .copy-button-wrapper[hidden] {
+  display: none;
+}
+
 .b64-textarea.c-input.c-input--textarea,
 .b64-tool textarea.b64-textarea {
   width: 100%;
@@ -109,6 +127,34 @@
       var(--md-sys-color-surface-container-low, #f5f7f9) 0%,
       color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 88%, var(--cst-color-mix-neutral, white) 12%) 100%
     );
+}
+
+.b64-image-preview {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: clamp(17rem, 35vh, 22rem);
+  height: auto;
+  margin: auto;
+  object-fit: contain;
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  background-color: var(--color-bg, #fff);
+}
+
+.b64-image-preview[hidden] {
+  display: none;
+}
+
+.b64-swap-action {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+.b64-swap-button {
+  min-width: 5.5rem;
+  white-space: nowrap;
 }
 
 .b64-action-row {
@@ -182,6 +228,14 @@
     gap: var(--spacing-md, var(--default-spacing-md));
   }
 
+  .b64-swap-action {
+    width: 100%;
+  }
+
+  .b64-swap-button {
+    width: 100%;
+  }
+
   .b64-tool .b64-panel.o-panel {
     width: 100%;
     padding: var(--spacing-md, var(--default-spacing-md));
@@ -192,6 +246,14 @@
   #base64converter-result.b64-output {
     min-height: 14rem;
     max-height: none;
+  }
+
+  .b64-output-well {
+    min-height: 14rem;
+  }
+
+  .b64-image-preview {
+    max-height: 14rem;
   }
 
   .b64-action-row {

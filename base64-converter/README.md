@@ -20,6 +20,8 @@ A powerful and user-friendly web tool for encoding and decoding Base64 strings w
 - 📝 Multiple encoding support (UTF-8, ASCII, ISO-8859-1, UCS-2)
 - 📁 File upload capability for encoding
 - 💾 Download decoded Base64 as a file (supports any file type)
+- 🖼️ Image previews for valid `data:image/*;base64,...` input in Auto Detect or Decode mode
+- 🔁 Swap input and output values while toggling the conversion direction
 - 📋 One-click copy to clipboard
 - 🎨 Clean, responsive user interface
 - ⚡ Real-time conversion
@@ -42,8 +44,8 @@ A powerful and user-friendly web tool for encoding and decoding Base64 strings w
    - ASCII
    - ISO-8859-1
    - UCS-2
-4. View the result below the input area
-5. Click "Copy Result" to copy the converted text to clipboard
+4. View the result below the input area. Decoded image Data URIs appear as an image preview; text remains in the output area.
+5. Click "Copy Result" to copy text output to the clipboard, or click "Swap ⇄" to exchange the two panels and toggle the conversion direction.
 
 ### URL Preload Integration
 
@@ -103,6 +105,21 @@ You can integrate this into your own applications by creating links like:
 
 ### File Processing
 
+#### Data URI Image Previews
+
+When the input is an explicitly typed image Data URI such as
+`data:image/png;base64,iVBORw0KGgo...`, choose **Auto Detect** or **Decode** to
+see the decoded image in the Output panel. The text output and Copy control are
+hidden while the preview is shown, and **Download** remains available. The
+preview is based only on the declared `image/*` MIME type; the converter does
+not infer file types from magic bytes. If the browser cannot load the image,
+the tool falls back to a binary placeholder and keeps Download available.
+
+The **Swap ⇄** control exchanges the complete Input and Output values and
+toggles Encode/Decode. In Auto Detect mode it selects the opposite of the last
+successful conversion. Swap is disabled when the output is empty, invalid,
+binary, or an image preview.
+
 #### Encoding Files to Base64
 
 The "Upload File" feature allows you to directly encode any file into its Base64 representation.
@@ -120,7 +137,7 @@ You can decode a Base64 string (whether it represents text or binary data like a
 1.  Paste your Base64 string into the **Input** area.
     *   If your input is a **Data URL** (e.g., `data:image/png;base64,iVBORw...`), the tool will attempt to parse the MIME type and suggest a filename (e.g., `decoded_file.png`).
     *   If it's a raw Base64 string, you'll need to provide a suitable filename.
-2.  Select "Decode" or "Auto Detect" mode. The text representation of the decoded content will appear in the **Output** area (this may look like garbled text for binary files).
+2.  Select "Decode" or "Auto Detect" mode. Text output appears in the **Output** area. A valid image Data URI appears as an image preview, while other binary data keeps the binary placeholder behavior.
 3.  If the input is valid Base64, the "Download Decoded File" button will become active.
 4.  Enter a desired filename (e.g., `myImage.png`, `document.pdf`) in the "Download Filename" input field next to the button. If you don't provide one, a default like `download.dat` or one based on a detected MIME type will be used.
 5.  Click "Download Decoded File". The browser will download the decoded binary data as the specified file.
