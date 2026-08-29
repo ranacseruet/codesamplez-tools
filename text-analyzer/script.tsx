@@ -8,6 +8,7 @@ import { copyTextToClipboard } from '../common/clipboard';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { analyzeText, type TextAnalysisResult } from './TextAnalyzer';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
+import { TEXT_ANALYZER_WORKER_CHAR_THRESHOLD as WORKER_CHAR_THRESHOLD } from '../common/worker-thresholds.mjs';
 import toolMetadata from './tool.meta.json';
 
 const SAMPLE_TEXT = "This is a sample text for analysis. It has multiple sentences and paragraphs.\n\nLet's see how well it works!";
@@ -16,12 +17,12 @@ const SAMPLE_TEXT = "This is a sample text for analysis. It has multiple sentenc
  * Inputs at or below this length are analyzed synchronously on the main thread:
  * the work is sub-millisecond and a worker round-trip would only add latency and
  * a frame of flicker. Above it, analysis is offloaded to a Web Worker so typing
- * stays responsive (INP) on very large texts. Kept here (not in analyzer-runner)
- * so the SSR/prerender graph never imports the worker module, which uses
- * `import.meta.url` and must only be evaluated in the browser.
+ * stays responsive (INP) on very large texts. Defined in the shared threshold
+ * module (not in analyzer-runner) so the SSR/prerender graph never imports the
+ * worker module, which uses `import.meta.url` and must only be evaluated in the
+ * browser. The shared threshold module keeps this dispatch rule aligned with
+ * browser QA.
  */
-const WORKER_CHAR_THRESHOLD = 5_000;
-
 const PRIMARY_STATS = [
     ['wordCount', 'Word Count'],
     ['charCount', 'Character Count'],

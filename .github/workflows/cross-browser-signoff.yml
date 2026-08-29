@@ -1,6 +1,9 @@
 name: Cross-Browser Signoff
 
 on:
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
@@ -27,6 +30,11 @@ jobs:
         run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Build production artifacts
+        env:
+          # Serve the checked-out build's JS/CSS locally. Without this override
+          # the generated HTML points at the hosted CDN, so worker assertions
+          # can accidentally exercise a deployed bundle instead of this commit.
+          CST_SITE_STATIC_ROOT_URI: http://127.0.0.1:8080
         run: npm run build
 
       - name: Start local QA server

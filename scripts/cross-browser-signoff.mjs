@@ -4,9 +4,34 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { chromium, firefox, webkit } from 'playwright';
+import {
+  DIFF_CHECKER_WORKER_CHAR_THRESHOLD,
+  JSON_FORMATTER_WORKER_CHAR_THRESHOLD,
+  TEXT_ANALYZER_WORKER_CHAR_THRESHOLD
+} from '../common/worker-thresholds.mjs';
 
 /** @typedef {import('../types/qa-script-types').CrossBrowserCheck} CrossBrowserCheck */
 /** @typedef {import('../types/qa-script-types').CrossBrowserResults} CrossBrowserResults */
+/**
+ * @typedef {{
+ *   name: string,
+ *   url: string,
+ *   waits: string[],
+ *   toolId?: string,
+ *   workerPath?: string,
+ *   exercise?: (page: import('playwright').Page) => Promise<Record<string, unknown>>
+ * }} SignoffScenario
+ */
+/**
+ * @typedef {{ id: number, hasResult: boolean, hasError: boolean }} WorkerProbeResponse
+ */
+/**
+ * @typedef {{
+ *   url: string,
+ *   requests: { id?: number }[],
+ *   responses: WorkerProbeResponse[]
+ * }} WorkerProbeRecord
+ */
 
 const require = createRequire(import.meta.url);
 const { parseToolSelectionArgs } = require('./tool-manifest');
@@ -27,11 +52,12 @@ const browserMatrix = [
   { name: 'webkit', type: webkit }
 ];
 
+/** @type {SignoffScenario[]} */
 const scenarios = [
   {
     name: 'root-index',
     url: '/',
-    waits: ['.cst-shell__header', '.main-container', '.tools-grid']
+    waits: ['.cst-appbar', '.main-container', '.tools-grid']
   },
   {
     name: 'data-format-converter',
@@ -46,7 +72,31 @@ const scenarios = [
   {
     name: 'diff-checker-tool',
     url: '/diff-checker/',
-    waits: ['#app-shell-header .cst-shell__header', '#text1', '#text2', '#compare-button', '#diff-result']
+    waits: ['#app-shell-header .cst-shell__header', '#text1', '#text2', '#compare-button']
+  },
+  {
+    name: 'text-analyzer-worker',
+    toolId: 'text-analyzer-tool',
+    url: '/text-analyzer/',
+    waits: ['#app-shell-header .cst-shell__header', '#textInput', '#charCount', '#wordCount'],
+    workerPath: '/text-analyzer/',
+    exercise: runTextAnalyzerWorkerScenario
+  },
+  {
+    name: 'diff-checker-worker',
+    toolId: 'diff-checker-tool',
+    url: '/diff-checker/',
+    waits: ['#app-shell-header .cst-shell__header', '#text1', '#text2', '#compare-button'],
+    workerPath: '/diff-checker/',
+    exercise: runDiffCheckerWorkerScenario
+  },
+  {
+    name: 'json-formatter-worker',
+    toolId: 'json-formatter-tool',
+    url: '/json-formatter/',
+    waits: ['#app-shell-header .cst-shell__header', '.jsonf-input-textarea', '#formatJsonBtn'],
+    workerPath: '/json-formatter/',
+    exercise: runJsonFormatterWorkerScenario
   }
 ];
 
@@ -70,7 +120,7 @@ async function waitVisible(page, selector, timeout = 10000) {
 
 /**
  * @param {string} browserName
- * @param {{ name: string }} scenario
+ * @param {SignoffScenario} scenario
  * @param {() => Promise<Record<string, unknown> | void>} fn
  * @returns {Promise<void>}
  */
@@ -122,17 +172,228 @@ function makeMarkdown(summary) {
 }
 
 /**
- * @param {{ name: string }} scenario
+ * @param {SignoffScenario} scenario
  * @returns {boolean}
  */
 function shouldRunScenario(scenario) {
-  return selectedTools.size === 0 || selectedTools.has(scenario.name);
+  return selectedTools.size === 0
+    || selectedTools.has(scenario.name)
+    || (scenario.toolId !== undefined && selectedTools.has(scenario.toolId));
+}
+
+/**
+ * Install a test-only Worker wrapper before the page's application code runs.
+ * It records request/response ids without changing the production runner or
+ * disabling its fallback behavior.
+ *
+ * @param {import('playwright').Page} page
+ * @returns {Promise<void>}
+ */
+async function installWorkerProbe(page) {
+  await page.addInitScript(() => {
+    const nativeWorker = globalThis.Worker;
+    if (typeof nativeWorker !== 'function') {
+      return;
+    }
+
+    const probeRecords = [];
+    const probeGlobal = /** @type {Record<string, unknown>} */ (globalThis);
+    probeGlobal.__CST_WORKER_PROBE__ = probeRecords;
+
+    const ProbedWorker = new Proxy(nativeWorker, {
+      construct(target, args) {
+        const worker = Reflect.construct(target, args);
+        const record = {
+          url: new URL(String(args[0]), document.baseURI).href,
+          requests: [],
+          responses: []
+        };
+        probeRecords.push(record);
+
+        const nativePostMessage = worker.postMessage.bind(worker);
+        worker.postMessage = (message, ...transfer) => {
+          record.requests.push({ id: message?.id });
+          return nativePostMessage(message, ...transfer);
+        };
+        worker.addEventListener('message', (event) => {
+          const data = event.data;
+          record.responses.push({
+            id: data?.id,
+            hasResult: data?.result !== undefined,
+            hasError: data?.error !== undefined
+          });
+        });
+
+        return worker;
+      }
+    });
+
+    Object.defineProperty(globalThis, 'Worker', {
+      configurable: true,
+      value: ProbedWorker,
+      writable: true
+    });
+  });
+}
+
+/**
+ * @param {string} url
+ * @param {string} publicPath
+ * @returns {boolean}
+ */
+function isWorkerPath(url, publicPath) {
+  try {
+    return new URL(url).pathname.startsWith(publicPath);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * @param {import('playwright').Page} page
+ * @param {SignoffScenario} scenario
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function runWorkerScenario(page, scenario) {
+  if (!scenario.exercise || !scenario.workerPath) {
+    throw new Error(`Worker scenario is missing its exercise or public path: ${scenario.name}`);
+  }
+
+  const workers = [];
+  const onWorker = (worker) => workers.push({ worker, url: worker.url() });
+  page.on('worker', onWorker);
+
+  try {
+    const observations = await scenario.exercise(page);
+    const workerEntry = workers.find(({ url }) => isWorkerPath(url, scenario.workerPath));
+    const workerUrl = workerEntry?.url;
+
+    if (!workerUrl) {
+      throw new Error(
+        `No worker started from ${scenario.workerPath}; observed: ${workers.map(({ url }) => url).join(', ') || 'none'}`
+      );
+    }
+
+    const workerPath = new URL(workerUrl).pathname;
+    if (!workerPath.endsWith('.bundle.main.js')) {
+      throw new Error(`Worker did not resolve to a bundled chunk: ${workerUrl}`);
+    }
+
+    const probeRecords = /** @type {WorkerProbeRecord[]} */ (await page.evaluate(() => {
+      const probeGlobal = /** @type {Record<string, unknown>} */ (globalThis);
+      return probeGlobal.__CST_WORKER_PROBE__ || [];
+    }));
+    const probeRecord = probeRecords.find(({ url }) => isWorkerPath(url, scenario.workerPath));
+    const requestIds = new Set(probeRecord?.requests.map(({ id }) => id));
+    const workerResponse = probeRecord?.responses.find(({ id, hasResult, hasError }) => (
+      requestIds.has(id) && hasResult && !hasError
+    ));
+    if (!workerResponse) {
+      throw new Error(
+        `Worker at ${workerUrl} did not return a result response; observed: ${JSON.stringify(probeRecord || null)}`
+      );
+    }
+
+    const workerLiveness = await workerEntry.worker.evaluate(() => 1);
+    if (workerLiveness !== 1) {
+      throw new Error(`Worker at ${workerUrl} did not remain evaluable after its result response`);
+    }
+
+    return { observations, workerUrl, workerResponseId: workerResponse.id };
+  } finally {
+    page.off('worker', onWorker);
+  }
+}
+
+/**
+ * @param {import('playwright').Page} page
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function runTextAnalyzerWorkerScenario(page) {
+  const largeText = 'worker-check '.repeat(500);
+  if (largeText.length <= TEXT_ANALYZER_WORKER_CHAR_THRESHOLD) {
+    throw new Error('Text Analyzer regression input no longer exceeds its worker threshold');
+  }
+
+  await page.fill('#textInput', largeText);
+  await page.waitForFunction((expectedCharCount) => {
+    const charCount = document.getElementById('charCount');
+    const wordCount = document.getElementById('wordCount');
+    return charCount?.textContent === String(expectedCharCount) && wordCount?.textContent === '500';
+  }, largeText.length);
+
+  return {
+    inputLength: largeText.length,
+    charCount: await page.locator('#charCount').innerText(),
+    wordCount: await page.locator('#wordCount').innerText()
+  };
+}
+
+/**
+ * @param {import('playwright').Page} page
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function runDiffCheckerWorkerScenario(page) {
+  const repeatedLines = 'same line\n'.repeat(1400);
+  const original = `${repeatedLines}original`;
+  const modified = `${repeatedLines}modified`;
+  const combinedInputLength = original.length + modified.length;
+  if (combinedInputLength <= DIFF_CHECKER_WORKER_CHAR_THRESHOLD) {
+    throw new Error('Diff Checker regression input no longer exceeds its worker threshold');
+  }
+
+  await page.fill('#text1', original);
+  await page.fill('#text2', modified);
+  await page.click('#compare-button');
+  await page.waitForFunction(() => (
+    document.querySelectorAll('#diff-result .diff-line').length >= 2
+    && document.querySelectorAll('#diff-result .diff-added, #diff-result .diff-removed').length >= 2
+  ));
+
+  return {
+    inputLength: combinedInputLength,
+    diffLineCount: await page.locator('#diff-result .diff-line').count(),
+    changedLineCount: await page.locator('#diff-result .diff-added, #diff-result .diff-removed').count()
+  };
+}
+
+/**
+ * @param {import('playwright').Page} page
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function runJsonFormatterWorkerScenario(page) {
+  const payload = 'worker-regression-value-'.repeat(3000);
+  const input = JSON.stringify({ z: 1, payload });
+  if (input.length <= JSON_FORMATTER_WORKER_CHAR_THRESHOLD) {
+    throw new Error('JSON Formatter regression input no longer exceeds its worker threshold');
+  }
+
+  await page.fill('.jsonf-input-textarea', input);
+  await page.click('#formatJsonBtn');
+  await page.waitForFunction(() => {
+    const output = document.querySelector('#plainView .jsonf-plain-textarea');
+    return output instanceof HTMLTextAreaElement
+      && output.value.includes('"payload"')
+      && output.value.length > 50_000;
+  });
+
+  const output = await page.locator('#plainView .jsonf-plain-textarea').inputValue();
+  const copyOutputDisabled = await page.locator('#copyOutputBtn').isDisabled();
+  if (copyOutputDisabled) {
+    throw new Error('JSON Formatter did not enable Copy Output after formatting');
+  }
+
+  return {
+    inputLength: input.length,
+    outputLength: output.length,
+    copyOutputDisabled
+  };
 }
 
 /**
  * @param {string} browserName
  * @param {import('playwright').BrowserType} browserType
- * @param {{ name: string, url: string, waits: string[] }} scenario
+ * @param {SignoffScenario} scenario
  * @returns {Promise<void>}
  */
 async function runScenario(browserName, browserType, scenario) {
@@ -140,14 +401,21 @@ async function runScenario(browserName, browserType, scenario) {
   try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
+    if (scenario.exercise) {
+      await installWorkerProbe(page);
+    }
     await record(browserName, scenario, async () => {
       await page.goto(`${baseUrl}${scenario.url}`, { waitUntil: 'networkidle' });
       for (const selector of scenario.waits) {
         await waitVisible(page, selector);
       }
+      const workerDetails = scenario.exercise
+        ? await runWorkerScenario(page, scenario)
+        : {};
       return {
         url: scenario.url,
-        title: await page.title()
+        title: await page.title(),
+        ...workerDetails
       };
     });
     await context.close();

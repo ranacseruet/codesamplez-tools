@@ -8,6 +8,7 @@ import { registerDropZone, registerFileInput } from '../common/drop-zone';
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
+import { JSON_FORMATTER_WORKER_CHAR_THRESHOLD as JSON_WORKER_CHAR_THRESHOLD } from '../common/worker-thresholds.mjs';
 import {
   autoFixJSON,
   formatJson,
@@ -29,12 +30,12 @@ import toolMetadata from './tool.meta.json';
  * worker round-trip (plus structured-cloning the parsed object back for the
  * tree renderer) would only add latency. Above it, the compute is offloaded to
  * a Web Worker so a large paste does not block interaction (INP). The tree
- * render below always stays on the main thread (chunked via `nextFrame`). Kept
- * here — not in format-runner — so the SSR/prerender graph never imports the
- * worker module, which uses `import.meta.url` and must only run in the browser.
+ * render below always stays on the main thread (chunked via `nextFrame`).
+ * Defined in the shared threshold module — not in format-runner — so the
+ * SSR/prerender graph never imports the worker module, which uses
+ * `import.meta.url` and must only run in the browser. The shared threshold
+ * module keeps this dispatch rule aligned with browser QA.
  */
-const JSON_WORKER_CHAR_THRESHOLD = 50_000;
-
 interface RenderContext {
   count: number;
   runId: number | null;

@@ -49,6 +49,9 @@ export interface CrossBrowserCheck {
   durationMs: number;
   url?: string;
   title?: string;
+  workerUrl?: string;
+  workerResponseId?: number;
+  observations?: Record<string, unknown>;
   error?: string;
 }
 

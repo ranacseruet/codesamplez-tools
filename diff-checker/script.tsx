@@ -11,6 +11,7 @@ import { copyTextToClipboard } from '../common/clipboard';
 import type { DiffSharePayload } from './share-url';
 import { trackOptionsHeight } from './sticky-offset';
 import { createLazyRunner } from '../common/lazy-runner';
+import { DIFF_CHECKER_WORKER_CHAR_THRESHOLD as DIFF_WORKER_CHAR_THRESHOLD } from '../common/worker-thresholds.mjs';
 import type { ToolCleanupHandle } from '../common/tooling-contracts';
 import { hydrate, render } from 'preact';
 import Prism from 'prismjs';
@@ -23,11 +24,12 @@ import toolMetadata from './tool.meta.json';
  * the diff is computed synchronously on the main thread: the work is cheap and
  * a worker round-trip would only add latency. Above it, `computeDiff` is
  * offloaded to a Web Worker (with a main-thread fallback) so a large compare
- * does not block interaction (INP). Kept in this module — not in diff-runner —
- * so the SSR/prerender graph never imports the worker module, which uses
- * `import.meta.url` and must only be evaluated in the browser.
+ * does not block interaction (INP). Defined in the shared threshold module —
+ * not in diff-runner — so the SSR/prerender graph never imports the worker
+ * module, which uses `import.meta.url` and must only be evaluated in the
+ * browser. The shared threshold module keeps this dispatch rule aligned with
+ * browser QA.
  */
-const DIFF_WORKER_CHAR_THRESHOLD = 20_000;
 const CARRIAGE_RETURN_MARKER = '\u240d';
 
 function normalizeLineEndings(text: string): string {
