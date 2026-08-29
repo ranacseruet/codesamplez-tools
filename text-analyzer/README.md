@@ -23,6 +23,13 @@ A lightweight, browser-based text analysis tool that provides real-time statisti
 - **Punctuation Statistics**: Tracks usage frequency of common punctuation marks (periods, commas, question marks, exclamation marks)
 - **File Input**: Click "Upload File" or drag a text file onto the input to analyze it; the file is read in the browser and never uploaded (5 MB limit, binary files rejected)
 
+## Performance
+
+- Text up to 5,000 characters is analyzed synchronously to avoid worker startup and round-trip overhead.
+- Larger inputs offload the statistics computation to a Web Worker so typing remains responsive.
+- If workers are unavailable or the worker chunk cannot load, analysis falls back automatically to the main thread.
+- Only the statistics computation is offloaded; rendering the results remains in the browser UI on the main thread.
+
 ## Usage
 
 ### Online
