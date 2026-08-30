@@ -1,5 +1,9 @@
 /* Phase E tool-scoped styles for JSON Formatter */
 
+.jsonf-tool {
+  --jsonf-well-height: 20rem;
+}
+
 /* Unified panel header bar. Both panels carry one — input holds only its title,
    output holds the title plus the view tabs. Equal `min-height` on both bars
    makes the input textarea and the output well begin at the same vertical
@@ -54,6 +58,7 @@
 .jsonf-tool .jsonf-output-footer {
   justify-content: flex-end;
   gap: var(--spacing-sm, var(--default-spacing-sm));
+  margin-top: auto;
 }
 
 /* Validation status row: message takes the space, the jump button sits at the end. */
@@ -85,8 +90,8 @@
 
 .jsonf-tool .jsonf-input-textarea,
 .jsonf-tool .jsonf-plain-textarea {
-  min-height: 20rem;
-  height: 20rem;
+  min-height: var(--jsonf-well-height);
+  height: var(--jsonf-well-height);
   flex: none;
   font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   line-height: 1.5;
@@ -220,6 +225,12 @@
   display: none;
 }
 
+/* The empty state replaces the hidden tree well, so reserve the same fixed
+   height as populated output and keep the action footer anchored. */
+.jsonf-tool #treeView .c-empty-state {
+  min-height: var(--jsonf-well-height);
+}
+
 .jsonf-tool .jsonf-output-content {
   padding-top: var(--spacing-md, var(--default-spacing-md));
 }
@@ -228,7 +239,7 @@
   width: 100%;
   /* Same fixed height as the input textarea so the output well's top and
      bottom stay locked to it in every state; taller trees scroll inside. */
-  height: 20rem;
+  height: var(--jsonf-well-height);
   margin: 0;
   padding: 0.95rem 1rem;
   border-radius: var(--radius-md, 10px);
@@ -350,6 +361,10 @@
 }
 
 @media (max-width: 640px) {
+  .jsonf-tool {
+    --jsonf-well-height: 17.5rem;
+  }
+
   .jsonf-tool .jsonf-panel-content,
   .jsonf-tool .jsonf-toolbar {
     padding: var(--spacing-sm, var(--default-spacing-sm));
@@ -370,9 +385,13 @@
   .jsonf-tool .jsonf-input-textarea,
   .jsonf-tool .jsonf-plain-textarea,
   .jsonf-tool #treeView .jsonf-code-output {
-    min-height: 17.5rem;
-    height: 17.5rem;
+    min-height: var(--jsonf-well-height);
+    height: var(--jsonf-well-height);
     max-height: none;
+  }
+
+  .jsonf-tool #treeView .c-empty-state {
+    min-height: var(--jsonf-well-height);
   }
 }
 

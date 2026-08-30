@@ -359,9 +359,79 @@ async function runDiffCheckerWorkerScenario(page) {
 
 /**
  * @param {import('playwright').Page} page
+ * @param {'empty'|'populated'} state
+ * @returns {Promise<Record<string, number>>}
+ */
+async function assertJsonFormatterLayout(page, state) {
+  const layout = await page.evaluate(() => {
+    const readBox = (selector) => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+
+      const rect = element.getBoundingClientRect();
+      return {
+        borderBottom: Number.parseFloat(getComputedStyle(element).borderBottomWidth) || 0,
+        bottom: rect.bottom,
+        display: getComputedStyle(element).display,
+        height: rect.height,
+      };
+    };
+
+    return {
+      code: readBox('#treeView .jsonf-code-output'),
+      empty: readBox('#jsonfEmptyState'),
+      footer: readBox('.jsonf-output-footer'),
+      input: readBox('.jsonf-input-textarea'),
+      panel: readBox('.jsonf-output-panel'),
+    };
+  });
+
+  const { code, empty, footer, input, panel } = layout;
+  if (!code || !empty || !footer || !input || !panel) {
+    throw new Error(`JSON Formatter ${state} layout is missing expected elements`);
+  }
+
+  const activeOutput = state === 'empty' ? empty : code;
+  const panelContentBottom = panel.bottom - panel.borderBottom;
+  const footerPanelGap = Math.abs(footer.bottom - panelContentBottom);
+  const inputOutputGap = Math.abs(input.height - activeOutput.height);
+
+  if (footerPanelGap > 1) {
+    throw new Error(
+      `JSON Formatter ${state} footer is ${footerPanelGap.toFixed(2)}px above the panel bottom`,
+    );
+  }
+
+  if (inputOutputGap > 1) {
+    throw new Error(
+      `JSON Formatter ${state} output well differs from input well by ${inputOutputGap.toFixed(2)}px`,
+    );
+  }
+
+  if (state === 'empty' && (empty.display === 'none' || code.display !== 'none')) {
+    throw new Error('JSON Formatter empty state visibility is incorrect');
+  }
+
+  if (state === 'populated' && (empty.display !== 'none' || code.display === 'none')) {
+    throw new Error('JSON Formatter populated state visibility is incorrect');
+  }
+
+  return {
+    footerPanelGapPx: Number(footerPanelGap.toFixed(2)),
+    inputWellHeightPx: Number(input.height.toFixed(2)),
+    outputWellHeightPx: Number(activeOutput.height.toFixed(2)),
+  };
+}
+
+/**
+ * @param {import('playwright').Page} page
  * @returns {Promise<Record<string, unknown>>}
  */
 async function runJsonFormatterWorkerScenario(page) {
+  const desktopInitialLayout = await assertJsonFormatterLayout(page, 'empty');
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileInitialLayout = await assertJsonFormatterLayout(page, 'empty');
+  await page.setViewportSize({ width: 1440, height: 900 });
   const payload = 'worker-regression-value-'.repeat(3000);
   const input = JSON.stringify({ z: 1, payload });
   if (input.length <= JSON_FORMATTER_WORKER_CHAR_THRESHOLD) {
@@ -383,8 +453,24 @@ async function runJsonFormatterWorkerScenario(page) {
     throw new Error('JSON Formatter did not enable Copy Output after formatting');
   }
 
+  const populatedLayout = await assertJsonFormatterLayout(page, 'populated');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.click('.jsonf-tab[data-view="tree"]');
+  await page.waitForFunction(() => document.querySelector('#treeView')?.classList.contains('active'));
+  const mobilePopulatedLayout = await assertJsonFormatterLayout(page, 'populated');
+
   return {
     inputLength: input.length,
+    layout: {
+      desktop: {
+        initial: desktopInitialLayout,
+        populated: populatedLayout,
+      },
+      mobile: {
+        initial: mobileInitialLayout,
+        populated: mobilePopulatedLayout,
+      },
+    },
     outputLength: output.length,
     copyOutputDisabled
   };
