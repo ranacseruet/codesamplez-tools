@@ -177,6 +177,8 @@ describe('generic tool prerender helpers', () => {
         expect(appMarkup).toContain('id="text1"');
         expect(appMarkup).toContain('id="text2"');
         expect(appMarkup).toContain('id="compare-button"');
+        expect(appMarkup).toContain('id="download-patch-button"');
+        expect(appMarkup).toContain('Download .patch');
         expect(appMarkup).toContain('id="diff-result"');
         // Tool-first ordering: the intro no longer renders above the tool; it now
         // renders after the tool, ahead of the guide article, within afterMarkup.
@@ -184,6 +186,7 @@ describe('generic tool prerender helpers', () => {
         const introCopy = 'The Diff Checker Tool is a lightweight, web-based utility designed to compare two blocks of text';
         expect(afterMarkup).toContain(introCopy);
         expect(afterMarkup).toContain('Diff Checker Tool Features:');
+        expect(afterMarkup).toContain('Unified patch export');
         expect(afterMarkup.indexOf(introCopy)).toBeLessThan(afterMarkup.indexOf('Diff Checker Tool Features:'));
         expect(afterMarkup).toContain('Diff Checker FAQs');
         expect(afterMarkup).toContain('Example diff checker result output:');

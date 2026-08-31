@@ -110,6 +110,11 @@ export function DiffCheckerArticle(): JSX.Element {
                             files are read in the browser and never uploaded.
                         </li>
                         <li>
+                            <strong>Unified patch export:</strong> Download the current comparison as a standard <code>.patch</code>
+                            file, using loaded filenames or <code>original</code> and <code>modified</code> labels; Ignore Whitespace
+                            follows the native patch semantics of the diff library.
+                        </li>
+                        <li>
                             <strong>Sophisticated diff algorithm:</strong> Uses the{' '}
                             <a href="https://www.npmjs.com/package/diff">Myers difference algorithm-based javascript library</a>{' '}
                             for change detection.

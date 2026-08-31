@@ -61,6 +61,12 @@ The **Diff Checker Tool** is a lightweight, web-based utility designed to compar
    - The codec loads as a lazy chunk on first use, so visitors who never share
      do not download it
 
+11. **Unified Patch Export**
+   - After comparing, click "Download .patch" to save the current result as a standard unified diff
+   - Dropped or uploaded filenames are used in the patch headers; typed content uses `original` and `modified`
+   - The patch forwards the selected Ignore Whitespace setting to `diff@9`'s native line comparison; leading/trailing whitespace is ignored, while internal whitespace follows the library's patch semantics
+   - Raw carriage returns are preserved; classic-Mac-only files may appear as a single whole-file hunk because patch generation segments lines on LF
+
 ## Usage Example
 
 ### Step-by-Step Guide
@@ -81,6 +87,10 @@ The **Diff Checker Tool** is a lightweight, web-based utility designed to compar
    - The differences will be displayed below the button in a styled output area
    - Added lines will appear with a light green background, removed lines with a light red background, and unchanged lines will remain unstyled.
    - Within modified lines, specific added words will have a darker green background, and removed words will have a darker red background with a strike-through.
+
+5. **Download the Patch**
+   - Click "Download .patch" to save the current comparison as `comparison.patch` for code reviews or patch tools.
+   - Typed-content headers use `original` and `modified`; use `git apply -p0` when applying those fallback labels directly.
 
 ### Example Input
 **Text 1:**
@@ -138,13 +148,10 @@ To integrate this tool into another webpage:
    - Basic syntax highlighting (currently JavaScript) is applied only to code lines that are completely **unchanged** between the two inputs.
    - Added, removed, or modified lines (including those with only word-level differences) are *not* syntax highlighted to ensure diff markers remain clear.
 
-3. **Export Options**
-   - Allow users to export the diff results as a file (e.g., `.txt` or `.html`).
-
-4. **Advanced Algorithms**
+3. **Advanced Algorithms**
    - Explore alternative diff algorithms or optimizations for performance improvements.
 
-5. **Dark Mode**
+4. **Dark Mode**
    - Add a toggle for a dark mode UI to improve accessibility and user preference options.
 
 ---

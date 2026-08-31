@@ -6,6 +6,8 @@ import ClearButton from '../common/clear-button/ClearButton';
 import { fireFileDragEvent, fireFileDrop, flushFileDrop } from '../common/drop-zone-test-utils';
 import { buildShareHash, parseShareHash } from './share-url';
 
+const mockDownloadManagerInstances = [];
+
 // Mock NotificationManager
 jest.mock('../common/notification-manager', () => ({
   NotificationManager: {
@@ -25,6 +27,15 @@ jest.mock('../common/clear-button/ClearButton', () => {
     updateVisibility: jest.fn()
   }));
 });
+
+jest.mock('../common/DownloadManager', () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => {
+    const instance = { downloadFile: jest.fn() };
+    mockDownloadManagerInstances.push(instance);
+    return instance;
+  })
+}));
 
 // Removed global document.createElement mock
 
@@ -584,12 +595,14 @@ describe('initializeDiffChecker', () => {
       <span id="diff-counter"></span>
       <input type="checkbox" id="ignore-whitespace">
       <button id="diff-share-button">Share</button>
+      <button id="download-patch-button" disabled>Download .patch</button>
     `;
     document.body.appendChild(container); // Using JSDOM document
     // initializeDiffChecker reads window.location for a share payload, so the
     // hash has to be clean unless a spec sets one deliberately.
     window.location.hash = '';
     jest.clearAllMocks();
+    mockDownloadManagerInstances.length = 0;
   });
 
   afterEach(() => {
@@ -883,6 +896,118 @@ describe('initializeDiffChecker', () => {
     // Verify results were populated
     const result = document.getElementById('diff-result');
     expect(result.children.length).toBeGreaterThan(0);
+  });
+
+  test('enables patch download after a comparison and uses typed labels', async () => {
+    initializeDiffChecker();
+
+    const downloadButton = document.getElementById('download-patch-button');
+    const downloadManager = mockDownloadManagerInstances.at(-1);
+    expect(downloadButton.disabled).toBe(true);
+
+    document.getElementById('text1').value = 'first\nsecond';
+    document.getElementById('text2').value = 'first\nupdated';
+    document.getElementById('compare-button').click();
+
+    await waitFor(() => expect(downloadButton.disabled).toBe(false));
+    downloadButton.click();
+    await waitFor(() => expect(downloadManager.downloadFile).toHaveBeenCalledTimes(1));
+
+    const [patch, filename, mimeType] = downloadManager.downloadFile.mock.calls[0];
+    expect(filename).toBe('comparison.patch');
+    expect(mimeType).toBe('text/plain');
+    expect(patch).toContain('--- original');
+    expect(patch).toContain('+++ modified');
+    expect(patch).toContain('-second');
+    expect(patch).toContain('+updated');
+  });
+
+  test('uses file labels and falls back after a pane is edited', async () => {
+    initializeDiffChecker();
+
+    const original = document.getElementById('text1');
+    const modified = document.getElementById('text2');
+    const downloadButton = document.getElementById('download-patch-button');
+    const downloadManager = mockDownloadManagerInstances.at(-1);
+
+    fireFileDrop(original, 'before\nline', 'before.txt');
+    fireFileDrop(modified, 'after\nline', 'after.txt');
+    await waitFor(() => {
+      expect(original.value).toBe('before\nline');
+      expect(modified.value).toBe('after\nline');
+    });
+
+    document.getElementById('compare-button').click();
+    await waitFor(() => expect(downloadButton.disabled).toBe(false));
+    downloadButton.click();
+    await waitFor(() => expect(downloadManager.downloadFile).toHaveBeenCalledTimes(1));
+
+    const firstPatch = downloadManager.downloadFile.mock.calls[0][0];
+    expect(firstPatch).toContain('--- before.txt');
+    expect(firstPatch).toContain('+++ after.txt');
+
+    original.value = 'edited before\nline';
+    original.dispatchEvent(new Event('input', { bubbles: true }));
+    document.getElementById('compare-button').click();
+    await waitFor(() => expect(downloadButton.disabled).toBe(false));
+    downloadButton.click();
+    await waitFor(() => expect(downloadManager.downloadFile).toHaveBeenCalledTimes(2));
+
+    const secondPatch = downloadManager.downloadFile.mock.calls[1][0];
+    expect(secondPatch).toContain('--- original');
+    expect(secondPatch).toContain('+++ after.txt');
+  });
+
+  test('downloads the last successful comparison snapshot', async () => {
+    initializeDiffChecker();
+
+    const text1 = document.getElementById('text1');
+    const text2 = document.getElementById('text2');
+    const downloadButton = document.getElementById('download-patch-button');
+    const downloadManager = mockDownloadManagerInstances.at(-1);
+
+    text1.value = 'old original';
+    text2.value = 'old modified';
+    document.getElementById('compare-button').click();
+    await waitFor(() => expect(downloadButton.disabled).toBe(false));
+
+    text1.value = 'new original';
+    text2.value = 'new modified';
+    document.getElementById('ignore-whitespace').checked = true;
+    downloadButton.click();
+    await waitFor(() => expect(downloadManager.downloadFile).toHaveBeenCalledTimes(1));
+
+    const patch = downloadManager.downloadFile.mock.calls[0][0];
+    expect(patch).toContain('-old original');
+    expect(patch).toContain('+old modified');
+    expect(patch).not.toContain('-new original');
+    expect(patch).not.toContain('+new modified');
+  });
+
+  test('keeps patch download disabled for an empty comparison and reports failures', async () => {
+    initializeDiffChecker();
+
+    const compareButton = document.getElementById('compare-button');
+    const downloadButton = document.getElementById('download-patch-button');
+    const downloadManager = mockDownloadManagerInstances.at(-1);
+
+    compareButton.click();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(downloadButton.disabled).toBe(true);
+
+    document.getElementById('text1').value = 'one-sided';
+    compareButton.click();
+    await waitFor(() => expect(downloadButton.disabled).toBe(false));
+
+    downloadManager.downloadFile.mockImplementationOnce(() => {
+      throw new Error('blocked');
+    });
+    downloadButton.click();
+    await waitFor(() => expect(NotificationManager.show).toHaveBeenCalledWith(
+      'Download failed: blocked',
+      3000,
+      expect.objectContaining({ type: 'error' })
+    ));
   });
 
   test('compares dropped CRLF and LF files without blank rows', async () => {

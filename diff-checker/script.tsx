@@ -8,6 +8,7 @@ import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { registerDropZone, registerFileInput, type DropZoneCleanup } from '../common/drop-zone';
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
+import DownloadManager from '../common/DownloadManager';
 import type { DiffSharePayload } from './share-url';
 import { trackOptionsHeight } from './sticky-offset';
 import { createLazyRunner } from '../common/lazy-runner';
@@ -423,9 +424,21 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   const diffResultElement = document.getElementById('diff-result') as HTMLElement | null;
   const diffEmptyState = document.getElementById('diff-empty-state');
   const diffErrorStatus = document.getElementById('diff-error-status');
+  const ignoreWhitespaceToggle = document.getElementById('ignore-whitespace') as HTMLInputElement | null;
+  const downloadPatchButton = document.getElementById('download-patch-button') as HTMLButtonElement | null;
   if (!diffResultElement) {
     return;
   }
+
+  const downloadManager = downloadPatchButton ? new DownloadManager() : null;
+  type ComparisonSnapshot = {
+    originalText: string;
+    modifiedText: string;
+    originalFileName: string;
+    modifiedFileName: string;
+    ignoreWhitespace: boolean;
+  };
+  let lastSuccessfulComparison: ComparisonSnapshot | null = null;
 
   // One-click copy for the rendered diff output (CopyButton targets <pre>).
   const resultCopyButton = diffResultElement instanceof HTMLPreElement
@@ -467,11 +480,17 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   // file drops and share payloads, then discard it as soon as the user edits
   // that pane so the comparison always reflects the visible input.
   const rawTextByPane = new WeakMap<HTMLTextAreaElement, string>();
+  const fileNameByPane = new WeakMap<HTMLTextAreaElement, string>();
   const paneInputCleanups: Array<() => void> = [];
 
-  const rememberPaneText = (pane: HTMLTextAreaElement, text: string) => {
+  const rememberPaneText = (pane: HTMLTextAreaElement, text: string, fileName?: string) => {
     rawTextByPane.set(pane, text);
     pane.value = text;
+    if (fileName) {
+      fileNameByPane.set(pane, fileName);
+    } else {
+      fileNameByPane.delete(pane);
+    }
   };
 
   const getPaneText = (pane: HTMLTextAreaElement): string => {
@@ -483,7 +502,10 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   };
 
   const trackPaneInput = (pane: HTMLTextAreaElement) => {
-    const clearRawText = () => rawTextByPane.delete(pane);
+    const clearRawText = () => {
+      rawTextByPane.delete(pane);
+      fileNameByPane.delete(pane);
+    };
     pane.addEventListener('input', clearRawText);
     paneInputCleanups.push(() => pane.removeEventListener('input', clearRawText));
   };
@@ -578,7 +600,7 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   ) => {
     const fileOptions = {
       onText: (text: string, file: File) => {
-        rememberPaneText(pane, text);
+        rememberPaneText(pane, text, file.name);
         getClearButton()?.updateVisibility();
         setInlineError('');
         NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
@@ -612,12 +634,21 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     compareButton.addEventListener('click', async function () {
       const originalText = getPaneText(text1);
       const modifiedText = getPaneText(text2);
+      const ignoreWhitespace = ignoreWhitespaceToggle?.checked ?? true;
 
       if (!originalText && !modifiedText) {
         setInlineError('Please enter text in at least one of the fields');
         return;
       }
       setInlineError('');
+
+      const comparisonSnapshot: ComparisonSnapshot = {
+        originalText,
+        modifiedText,
+        originalFileName: fileNameByPane.get(text1) || 'original',
+        modifiedFileName: fileNameByPane.get(text2) || 'modified',
+        ignoreWhitespace
+      };
 
       // UI Feedback: Show loading state (first-text-node swap keeps `.c-kbd`)
       setPrimaryButtonLabel('Computing Diff...');
@@ -628,9 +659,6 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
         await scheduleTask(20);
 
         const isCodeContent = CodeDetector.isCode(originalText) || CodeDetector.isCode(modifiedText);
-        const ignoreWhitespaceToggle = document.getElementById('ignore-whitespace') as HTMLInputElement | null;
-        const ignoreWhitespace = ignoreWhitespaceToggle?.checked ?? true;
-
         const originalLines = splitLines(originalText, ignoreWhitespace);
         const modifiedLines = splitLines(modifiedText, ignoreWhitespace);
 
@@ -650,6 +678,11 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
         // Update the navigator with the new diff elements
         diffNavigator.updateDiffElements();
 
+        lastSuccessfulComparison = comparisonSnapshot;
+        if (downloadPatchButton) {
+          downloadPatchButton.disabled = false;
+        }
+
         // Show notification
         NotificationManager.show('Diff computation complete!');
       } catch (error) {
@@ -664,7 +697,25 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     });
   }
 
-  const ignoreWhitespaceToggle = document.getElementById('ignore-whitespace') as HTMLInputElement | null;
+  if (downloadPatchButton && downloadManager) {
+    downloadPatchButton.addEventListener('click', async () => {
+      const comparison = lastSuccessfulComparison;
+      if (!comparison) return;
+
+      downloadPatchButton.disabled = true;
+      try {
+        const { createUnifiedPatch } = await import('./patch-export');
+        const patch = await createUnifiedPatch(comparison);
+        downloadManager.downloadFile(patch, 'comparison.patch', 'text/plain');
+        NotificationManager.show('Download started!', 2000, { type: 'success' });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        NotificationManager.show(`Download failed: ${message}`, 3000, { type: 'error' });
+      } finally {
+        downloadPatchButton.disabled = lastSuccessfulComparison === null;
+      }
+    });
+  }
 
   /**
    * Copy a shareable link carrying both panes plus the whitespace option,
@@ -828,6 +879,15 @@ export function DiffCheckerApp() {
           type="button"
         >
           Share
+        </button>
+
+        <button
+          id="download-patch-button"
+          className="c-button c-button--secondary c-button--icon-download diffc-download-patch-button"
+          type="button"
+          disabled
+        >
+          Download .patch
         </button>
 
         <span className="c-toolbar__spacer" />
