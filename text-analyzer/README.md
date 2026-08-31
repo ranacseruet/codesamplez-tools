@@ -20,6 +20,9 @@ A lightweight, browser-based text analysis tool that provides real-time statisti
 - **Paragraph Count**: Counts paragraphs by identifying text blocks separated by blank lines
 - **Average Word Length**: Calculates the mean length of words (excluding punctuation)
 - **Average Sentence Length**: Computes the average number of words per sentence
+- **Reading Time**: Estimates how many minutes the text takes to read at 200 words per minute
+- **Readability Scores**: Reports Flesch Reading Ease and Flesch-Kincaid grade level using a dependency-free syllable heuristic; displays `—` when the metric is not applicable
+- **Keyword Density**: Shows the most frequent non-stop word and the percentage of total words it represents; numeric-only tokens are ignored
 - **Punctuation Statistics**: Tracks usage frequency of common punctuation marks (periods, commas, question marks, exclamation marks)
 - **File Input**: Click "Upload File" or drag a text file onto the input to analyze it; the file is read in the browser and never uploaded (5 MB limit, binary files rejected)
 
@@ -73,6 +76,9 @@ The tool uses vanilla JavaScript with event listeners to provide real-time text 
 - **Sentence Detection**: Uses regex pattern `[.!?]+` to identify sentence boundaries, with special handling for abbreviations
 - **Line Counting**: Splits text on newline characters (`\n`)
 - **Paragraph Analysis**: Identifies text blocks separated by blank lines
+- **Reading Time**: Divides the word count by 200 and rounds up to the next minute
+- **Readability**: Applies the Flesch Reading Ease and Flesch-Kincaid formulas to the analyzer's sentence, word, and estimated syllable counts; scores are bounded for display and use `—` when no English word-based score is available
+- **Keyword Density**: Divides the most frequent non-stop word's count by the total word count and expresses it as a percentage; numeric-only tokens are excluded from keyword candidates
 
 ## Architecture
 
@@ -125,14 +131,11 @@ function updatePunctuationStats(text) {
 - Word count is approximate and may not handle all international writing systems perfectly
 - Sentence detection is basic and may not catch all edge cases (e.g., abbreviations with periods)
 - Line count includes empty lines after trimming whitespace
+- Readability scores use an English-oriented syllable heuristic and are estimates, especially for names, technical terms, and non-English text; `—` means no applicable English word-based score was available
+- Keyword density reports the most frequent non-stop word rather than every possible keyword or phrase, and ignores numeric-only tokens
 
 ## Future Improvements
 
-- **Advanced Word Analysis**: 
-  - Reading time estimation
-  - Readability scoring (Flesch-Kincaid, etc.)
-  - Keyword density analysis
-  
 - **Export Capabilities**:
   - Export analysis results as CSV/PDF
   - Save text with statistics for later reference

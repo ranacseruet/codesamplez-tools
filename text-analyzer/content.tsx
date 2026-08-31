@@ -21,15 +21,15 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     ),
     createPlainTextFaqItem(
         'What\'s the difference between a text analyzer and a word counter?',
-        'A word counter typically counts the number of words, and often characters, in a text. A text analyzer provides a broader set of statistics. In addition to word count, the CodeSamplez Text Analyzer counts sentences and lines, and analyzers can provide broader insights like keyword frequency or readability. In short, a text analyzer includes word counting as one of its features while giving you a more complete view of your text.'
+        'A word counter typically counts the number of words, and often characters, in a text. A text analyzer provides a broader set of statistics. In addition to word count, the CodeSamplez Text Analyzer counts sentences and lines, estimates reading time, reports readability scores, and shows keyword density. In short, a text analyzer includes word counting as one of its features while giving you a more complete view of your text.'
     ),
     createPlainTextFaqItem(
         'Does the Text Analyzer support multiple languages?',
-        'Yes, you can analyze text in any language. The tool counts characters and words regardless of language or script. It does not translate text or identify language-specific grammar, but non-English texts are handled for counting just as easily as English.'
+        'Yes, you can analyze text in any language for basic counts. The tool counts characters and whitespace-separated words regardless of language or script. Readability scores use an English-oriented syllable heuristic, so treat those estimates as approximate for non-English text.'
     ),
     createPlainTextFaqItem(
         'Are the results from the Text Analyzer accurate?',
-        'Absolutely. The Text Analyzer uses straightforward counting algorithms to provide accurate word and character counts. It treats words as whitespace-separated tokens and counts sentences using punctuation such as periods, question marks, and exclamation points. While automated tools can miss edge cases like abbreviations or ellipses, the reported numbers are highly reliable for general editing and review.'
+        'The Text Analyzer uses straightforward algorithms for word and character counts. It treats words as whitespace-separated tokens, counts sentences using punctuation such as periods, question marks, and exclamation points, and estimates syllables for readability scoring. Automated tools can miss edge cases like abbreviations, ellipses, names, and technical terms, so readability and sentence metrics should be treated as helpful estimates.'
     )
 ];
 
@@ -41,9 +41,10 @@ export function TextAnalyzerIntro(): JSX.Element {
                 <p className="c-tool-article__lead">
                     The CodeSamplez Text Analyzer is a <strong>free online text analysis tool</strong> that instantly
                     provides detailed statistics about your text. It counts <strong>characters</strong>,{' '}
-                    <strong>words</strong>, <strong>sentences</strong>, and <strong>paragraphs</strong> in real time,
-                    giving you immediate insight into your content. This tool is ideal for students, writers, and
-                    anyone who needs to evaluate or monitor text length and structure in a document.
+                    <strong>words</strong>, <strong>sentences</strong>, and <strong>paragraphs</strong>, and estimates{' '}
+                    <strong>reading time</strong>, <strong>readability</strong>, and <strong>keyword density</strong> in
+                    real time. This tool is ideal for students, writers, and anyone who needs to evaluate or monitor
+                    text length, structure, and clarity in a document.
                 </p>
             </div>
         </section>
@@ -70,8 +71,8 @@ export function TextAnalyzerArticle(): JSX.Element {
                     <ul>
                         <li>
                             <strong>Real-Time Counting:</strong> The Text Analyzer updates the word, character,
-                            sentence, and line counts immediately as you type or paste text. There is no need to
-                            click a submit button, making it efficient for quick checks.
+                            sentence, and line counts immediately as you type or paste text. It also refreshes the
+                            reading-time, readability, and keyword-density estimates without a submit button.
                         </li>
                         <li>
                             <strong>Counts:</strong>
@@ -89,7 +90,10 @@ export function TextAnalyzerArticle(): JSX.Element {
                             <strong>Punctuation Statistics</strong>: Tracks usage frequency of common punctuation marks
                             (periods, commas, question marks, exclamation marks).
                         </li>
-                        <li><strong>Word frequency analysis:</strong> Tracks usage density of keywords and show top 5 most frequently used words.</li>
+                        <li><strong>Word frequency analysis:</strong> Shows the top 5 most frequently used non-stop words; numeric-only tokens are ignored.</li>
+                        <li><strong>Reading time:</strong> Estimates reading time at 200 words per minute, rounded up to the next minute.</li>
+                        <li><strong>Readability:</strong> Reports Flesch Reading Ease and Flesch-Kincaid grade level from estimated syllable counts; shows an em dash when no applicable English score is available.</li>
+                        <li><strong>Keyword density:</strong> Reports the most frequent non-stop word and what percentage of all words it represents.</li>
                         <li><strong>Local file input:</strong> Click Upload File or drag a text file into the input; files are read in the browser and never uploaded.</li>
                     </ul>
 
@@ -108,8 +112,9 @@ export function TextAnalyzerArticle(): JSX.Element {
                         </li>
                         <li>
                             <strong>View instant results</strong> - as you input the text, the tool will immediately
-                            display key statistics such as the character count, word count, sentence count, and line
-                            count. The counts update in real time with each keystroke.
+                            display key statistics such as the character count, word count, sentence count, line count,
+                            reading time, readability, and keyword density. The results update in real time with each
+                            keystroke.
                         </li>
                         <li>
                             <strong>Analyze the output:</strong> Check if your content meets your requirements. Writers
@@ -134,6 +139,8 @@ export function TextAnalyzerArticle(): JSX.Element {
                         <li>Word count is approximate and may not handle all international writing systems perfectly.</li>
                         <li>Sentence detection is basic and may not catch all edge cases, such as abbreviations with periods.</li>
                         <li>Line count includes empty lines after trimming whitespace.</li>
+                        <li>Readability scores use an English-oriented syllable heuristic and are estimates for names, technical terms, and non-English text; an em dash means no applicable English score was available.</li>
+                        <li>Keyword density reports the most frequent non-stop word rather than every possible keyword or phrase, and ignores numeric-only tokens.</li>
                     </ul>
                 </ToolArticleSection>
 
@@ -149,19 +156,6 @@ export function TextAnalyzerArticle(): JSX.Element {
 
                 <ToolArticleSection id="text-analyzer-future" title="Future Improvements">
                     <ul>
-                        <li>
-                            <strong>Advanced Word Analysis</strong>:
-                            <ul>
-                                <li>Reading time estimation.</li>
-                                <li>Readability scoring, such as Flesch-Kincaid.</li>
-                            </ul>
-                        </li>
-                        <li>
-                            <strong>Trends Analysis:</strong>
-                            <ul>
-                                <li>Keyword frequency and most-used words or phrases.</li>
-                            </ul>
-                        </li>
                         <li>
                             <strong>Export Capabilities</strong>:
                             <ul>

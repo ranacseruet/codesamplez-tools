@@ -75,6 +75,10 @@ describe('TextAnalyzer Preact runtime', () => {
 
         expect(document.getElementById('wordCount')?.textContent).toBe('0');
         expect(document.getElementById('charCount')?.textContent).toBe('0');
+        expect(document.getElementById('readingTime')?.textContent).toBe('0 min');
+        expect(document.getElementById('readabilityScore')?.textContent).toBe('—');
+        expect(document.getElementById('gradeLevel')?.textContent).toBe('—');
+        expect(document.getElementById('keywordDensity')?.textContent).toBe('—');
         expect(document.getElementById('wordFrequencyChart')?.textContent).toContain('No words to analyze');
     });
 
@@ -94,9 +98,30 @@ describe('TextAnalyzer Preact runtime', () => {
 
         expect(document.getElementById('wordCount')?.textContent).toBe('3');
         expect(document.getElementById('charCount')?.textContent).toBe(String('hello hello world'.length));
+        expect(document.getElementById('readingTime')?.textContent).toBe('1 min');
+        expect(document.getElementById('keywordDensity')?.textContent).toBe('hello — 66.67%');
         const chart = document.getElementById('wordFrequencyChart');
         expect(chart.querySelectorAll('.word-frequency-item').length).toBeGreaterThan(0);
         expect(chart.textContent.toLowerCase()).toContain('hello');
+    });
+
+    it('shows bounded readability scores and an em dash for inapplicable text', async () => {
+        new TextAnalyzerToolUI();
+        await flushEffects();
+
+        const input = document.getElementById('textInput');
+        fireEvent.input(input, { target: { value: 'Go.' } });
+        await flushEffects();
+
+        expect(document.getElementById('readabilityScore')?.textContent).toBe('100.00');
+        expect(document.getElementById('gradeLevel')?.textContent).toBe('0.00');
+
+        fireEvent.input(input, { target: { value: 'Это тест.' } });
+        await flushEffects();
+
+        expect(document.getElementById('readabilityScore')?.textContent).toBe('—');
+        expect(document.getElementById('gradeLevel')?.textContent).toBe('—');
+        expect(document.getElementById('keywordDensity')?.textContent).toBe('—');
     });
 
     it('analyzes large inputs via the async (worker/fallback) path', async () => {
@@ -224,6 +249,8 @@ describe('TextAnalyzer Preact runtime', () => {
 
         expect(execCommandMock).toHaveBeenCalledWith('copy');
         expect(capturedContent).toContain('Word Count: 3');
+        expect(capturedContent).toContain('Reading Time: 1 min');
+        expect(capturedContent).toContain('Top Keyword Density: hello — 33.33%');
         expect(capturedContent).toContain('Word Frequency (Top 5):');
         expect(NotificationManager.show).toHaveBeenCalledWith('Results copied to clipboard!', 2000, { type: 'success' });
 

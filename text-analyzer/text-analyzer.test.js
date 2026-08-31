@@ -39,7 +39,7 @@ global.setTimeout = jest.fn((fn) => fn()); // Execute immediately for tests
 global.clearTimeout = jest.fn();
 
 // Import functions for testing
-import { analyzeText } from './TextAnalyzer'; // Main analyzer functions
+import { analyzeText, countSyllables } from './TextAnalyzer'; // Main analyzer functions
 
 describe('Text Analyzer Tests', () => {
     // Mock the DOMContentLoaded and event listener setup from script.js
@@ -300,6 +300,70 @@ describe('Text Analyzer Tests', () => {
             const text = 'This is one. This is two! How about three?';
             const result = analyzeText(text);
             expect(parseFloat(result.avgSentenceLength)).toBeCloseTo(3.0, 1);
+        });
+    });
+
+    describe('Derived Metrics', () => {
+        test('empty input returns zero values or not-applicable metrics', () => {
+            const result = analyzeText('');
+
+            expect(result.readingTime).toBe(0);
+            expect(result.readabilityScore).toBeNull();
+            expect(result.gradeLevel).toBeNull();
+            expect(result.keywordDensity).toBe(0);
+            expect(result.topKeyword).toBeNull();
+        });
+
+        test('estimates reading time at 200 words per minute', () => {
+            expect(analyzeText('word '.repeat(200).trim()).readingTime).toBe(1);
+            expect(analyzeText('word '.repeat(201).trim()).readingTime).toBe(2);
+        });
+
+        test('matches the Flesch worked example for the quick brown fox sentence', () => {
+            // Published reference counts: one sentence, 9 words, 11 syllables.
+            const result = analyzeText('The quick brown fox jumps over the lazy dog.');
+
+            expect(result.readabilityScore).toBe(94.3);
+            expect(result.gradeLevel).toBe(2.34);
+        });
+
+        test('marks readability as not applicable without English words', () => {
+            const result = analyzeText('Это тестовый текст. Он написан по-русски.');
+
+            expect(result.readabilityScore).toBeNull();
+            expect(result.gradeLevel).toBeNull();
+        });
+
+        test('uses all analyzer words for the readability sentence-length term', () => {
+            const result = analyzeText('The team. 12 34 56.');
+
+            expect(result.wordCount).toBe(5);
+            expect(result.sentenceCount).toBe(2);
+            expect(result.readabilityScore).toBe(119.7);
+            expect(result.gradeLevel).toBe(-2.81);
+        });
+
+        test('counts syllables with silent-e and consonant-le heuristics', () => {
+            expect(countSyllables('!!!')).toBe(0);
+            expect(countSyllables('simple')).toBe(2);
+            expect(countSyllables('table')).toBe(2);
+            expect(countSyllables('reading')).toBe(2);
+            expect(countSyllables('the')).toBe(1);
+        });
+
+        test('calculates top keyword density against all words', () => {
+            const result = analyzeText('alpha alpha the');
+
+            expect(result.keywordDensity).toBe(66.67);
+            expect(result.topKeyword).toBe('alpha');
+        });
+
+        test('ignores numeric-only tokens as keyword candidates', () => {
+            const result = analyzeText('12 12 alpha.');
+
+            expect(result.wordFrequency).toEqual([{ word: 'alpha', count: 1 }]);
+            expect(result.topKeyword).toBe('alpha');
+            expect(result.keywordDensity).toBe(33.33);
         });
     });
 

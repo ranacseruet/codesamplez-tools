@@ -30,7 +30,11 @@ const PRIMARY_STATS = [
     ['sentenceCount', 'Sentence Count'],
     ['lineCount', 'Lines Counter'],
     ['avgWordLength', 'Average Word Length'],
-    ['avgSentenceLength', 'Average Sentence Length']
+    ['avgSentenceLength', 'Average Sentence Length'],
+    ['readingTime', 'Reading Time'],
+    ['readabilityScore', 'Flesch Reading Ease'],
+    ['gradeLevel', 'Flesch-Kincaid Grade'],
+    ['keywordDensity', 'Top Keyword Density']
 ];
 
 const PUNCTUATION_STATS = [
@@ -39,6 +43,33 @@ const PUNCTUATION_STATS = [
     ['questionCount', 'Question Marks'],
     ['exclamationCount', 'Exclamation Marks']
 ];
+
+function formatStatValue(key: string, value: unknown, keyword?: string | null): string {
+    if (key === 'readingTime') {
+        return `${String(value)} min`;
+    }
+
+    if (key === 'readabilityScore' || key === 'gradeLevel') {
+        if (value === null) {
+            return '—';
+        }
+        if (typeof value !== 'number') {
+            return String(value);
+        }
+        const boundedValue = key === 'readabilityScore'
+            ? Math.min(Math.max(value, 0), 100)
+            : Math.max(value, 0);
+        return boundedValue.toFixed(2);
+    }
+
+    if (key === 'keywordDensity') {
+        return typeof value === 'number' && keyword
+            ? `${keyword} — ${value.toFixed(2)}%`
+            : '—';
+    }
+
+    return String(value);
+}
 
 export function TextAnalyzerApp() {
     const [text, setText] = useState('');
@@ -160,7 +191,7 @@ export function TextAnalyzerApp() {
     // per output type" for structured outputs.
     const handleCopyResults = async () => {
         const lines = [...PRIMARY_STATS, ...PUNCTUATION_STATS].map(
-            ([key, label]) => `${label}: ${String(result[key])}`
+            ([key, label]) => `${label}: ${formatStatValue(key, result[key], result.topKeyword)}`
         );
         const frequency = result.wordFrequency && result.wordFrequency.length > 0
             ? result.wordFrequency.map((item) => `${item.word}: ${item.count}`).join(', ')
@@ -258,7 +289,9 @@ export function TextAnalyzerApp() {
                 {PRIMARY_STATS.map(([key, label]) => (
                     <div key={key} className="text-analyzer-stat-item ta-stat-item">
                         <span className="text-analyzer-stat-label">{label}</span>
-                        <span id={key} className="text-analyzer-stat-value">{String(result[key])}</span>
+                        <span id={key} className="text-analyzer-stat-value">
+                            {formatStatValue(key, result[key], result.topKeyword)}
+                        </span>
                     </div>
                 ))}
             </div>
