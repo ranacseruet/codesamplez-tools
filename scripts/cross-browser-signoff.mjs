@@ -91,6 +91,12 @@ const scenarios = [
     exercise: runDiffCheckerWorkerScenario
   },
   {
+    name: 'jwt-builder-tool',
+    url: '/jwt-builder/',
+    waits: ['#app-shell-header .cst-shell__header', '#jwtForm', '#jwt-algorithm', '#buildJwtBtn'],
+    exercise: runJwtBuilderScenario
+  },
+  {
     name: 'json-formatter-worker',
     toolId: 'json-formatter-tool',
     url: '/json-formatter/',
@@ -477,6 +483,152 @@ async function runJsonFormatterWorkerScenario(page) {
 }
 
 /**
+ * Exercise both signing algorithms in a real browser. The key pair is
+ * generated in-page so the scenario never embeds or transports a private key
+ * outside the browser context.
+ *
+ * @param {import('playwright').Page} page
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function runJwtBuilderScenario(page) {
+  await page.fill('#key', 'cross-browser-hs256-secret');
+  await page.selectOption('#jwt-algorithm', 'HS256');
+  await page.click('#buildJwtBtn');
+  await page.waitForFunction(() => {
+    const result = document.getElementById('result');
+    return Boolean(result?.textContent?.trim());
+  });
+
+  const hsToken = await page.locator('#result').textContent();
+  if (!hsToken) {
+    throw new Error('JWT Builder did not produce an HS256 token');
+  }
+  const hsHeader = decodeJwtPart(hsToken, 0);
+  if (hsHeader.alg !== 'HS256') {
+    throw new Error(`JWT Builder emitted ${hsHeader.alg} for the HS256 selection`);
+  }
+
+  const keyMaterial = await page.evaluate(async () => {
+    const pair = await crypto.subtle.generateKey(
+      {
+        name: 'RSASSA-PKCS1-v1_5',
+        modulusLength: 2048,
+        publicExponent: new Uint8Array([1, 0, 1]),
+        hash: 'SHA-256'
+      },
+      true,
+      ['sign', 'verify']
+    );
+    const privateKey = await crypto.subtle.exportKey('pkcs8', pair.privateKey);
+    const publicKey = await crypto.subtle.exportKey('spki', pair.publicKey);
+    const toPem = (label, data) => {
+      const bytes = new Uint8Array(data);
+      let binary = '';
+      for (let index = 0; index < bytes.length; index += 1) {
+        binary += String.fromCharCode(bytes[index]);
+      }
+      const base64 = btoa(binary);
+      const lines = base64.match(/.{1,64}/g)?.join('\n') || '';
+      return `-----BEGIN ${label}-----\n${lines}\n-----END ${label}-----`;
+    };
+
+    return {
+      privateKeyPem: toPem('PRIVATE KEY', privateKey),
+      publicKeyPem: toPem('PUBLIC KEY', publicKey),
+      publicKeyBytes: Array.from(new Uint8Array(publicKey))
+    };
+  });
+
+  await page.selectOption('#jwt-algorithm', 'RS256');
+  await page.waitForSelector('#jwt-builder-rs256-key-panel:not([hidden])');
+  await page.fill('#rsa-private-key', keyMaterial.privateKeyPem);
+  await page.click('#buildJwtBtn');
+  await page.waitForFunction(() => {
+    const result = document.getElementById('result');
+    return Boolean(result?.textContent?.trim());
+  });
+
+  const rsToken = await page.locator('#result').textContent();
+  if (!rsToken) {
+    throw new Error('JWT Builder did not produce an RS256 token');
+  }
+  const rsHeader = decodeJwtPart(rsToken, 0);
+  if (rsHeader.alg !== 'RS256') {
+    throw new Error(`JWT Builder emitted ${rsHeader.alg} for the RS256 selection`);
+  }
+
+  const rsSignatureVerified = await page.evaluate(async ({ token, publicKeyBytes }) => {
+    const [header, payload, signature] = token.split('.');
+    const base64UrlToBytes = (value) => {
+      const base64 = value.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (value.length % 4)) % 4);
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+      return bytes;
+    };
+    const publicKey = await crypto.subtle.importKey(
+      'spki',
+      new Uint8Array(publicKeyBytes),
+      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+      false,
+      ['verify']
+    );
+    return crypto.subtle.verify(
+      'RSASSA-PKCS1-v1_5',
+      publicKey,
+      base64UrlToBytes(signature),
+      new TextEncoder().encode(`${header}.${payload}`)
+    );
+  }, { token: rsToken, publicKeyBytes: keyMaterial.publicKeyBytes });
+  if (!rsSignatureVerified) {
+    throw new Error('JWT Builder produced an RS256 signature that did not verify');
+  }
+
+  await page.fill('#rsa-private-key', keyMaterial.publicKeyPem);
+  await page.click('#buildJwtBtn');
+  await page.waitForFunction(() => {
+    const error = document.getElementById('jwt-builder-error-status');
+    const result = document.getElementById('result');
+    return Boolean(error?.textContent?.toLowerCase().includes('public')) && !result?.textContent?.trim();
+  });
+  const publicKeyError = await page.locator('#jwt-builder-error-status').innerText();
+
+  await page.fill('#rsa-private-key', 'not a PEM key');
+  await page.click('#buildJwtBtn');
+  await page.waitForFunction(() => {
+    const error = document.getElementById('jwt-builder-error-status');
+    const result = document.getElementById('result');
+    return Boolean(error?.textContent?.includes('PKCS#8')) && !result?.textContent?.trim();
+  });
+  const malformedKeyError = await page.locator('#jwt-builder-error-status').innerText();
+
+  return {
+    hsAlgorithm: hsHeader.alg,
+    rsAlgorithm: rsHeader.alg,
+    rsSignatureVerified,
+    publicKeyError,
+    malformedKeyError
+  };
+}
+
+/**
+ * @param {string} token
+ * @param {number} index
+ * @returns {Record<string, unknown>}
+ */
+function decodeJwtPart(token, index) {
+  const segment = token.split('.')[index];
+  if (!segment) {
+    throw new Error(`JWT is missing segment ${index}`);
+  }
+  const base64 = segment.replace(/-/g, '+').replace(/_/g, '/')
+    + '='.repeat((4 - (segment.length % 4)) % 4);
+  return JSON.parse(Buffer.from(base64, 'base64').toString('utf8'));
+}
+
+/**
  * @param {string} browserName
  * @param {import('playwright').BrowserType} browserType
  * @param {SignoffScenario} scenario
@@ -487,7 +639,7 @@ async function runScenario(browserName, browserType, scenario) {
   try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
-    if (scenario.exercise) {
+    if (scenario.exercise && scenario.workerPath) {
       await installWorkerProbe(page);
     }
     await record(browserName, scenario, async () => {
@@ -495,13 +647,15 @@ async function runScenario(browserName, browserType, scenario) {
       for (const selector of scenario.waits) {
         await waitVisible(page, selector);
       }
-      const workerDetails = scenario.exercise
-        ? await runWorkerScenario(page, scenario)
+      const exerciseDetails = scenario.exercise
+        ? (scenario.workerPath
+          ? await runWorkerScenario(page, scenario)
+          : await scenario.exercise(page))
         : {};
       return {
         url: scenario.url,
         title: await page.title(),
-        ...workerDetails
+        ...exerciseDetails
       };
     });
     await context.close();
@@ -512,6 +666,10 @@ async function runScenario(browserName, browserType, scenario) {
 
 async function main() {
   await fs.mkdir(outDir, { recursive: true });
+
+  if (selectedTools.size > 0 && scenarios.every((scenario) => !shouldRunScenario(scenario))) {
+    throw new Error(`No cross-browser scenarios matched the requested tools: ${Array.from(selectedTools).join(', ')}`);
+  }
 
   for (const browser of browserMatrix) {
     for (const scenario of scenarios.filter(shouldRunScenario)) {

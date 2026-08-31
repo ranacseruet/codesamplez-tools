@@ -81,6 +81,32 @@ async function analyzePageA11y(page) {
 }
 
 /**
+ * Keep the existing aggregate report shape while preserving enough detail to
+ * tell which algorithm state produced an accessibility finding.
+ *
+ * @param {string} page
+ * @param {string} viewport
+ * @param {Record<string, unknown>} hs256
+ * @param {Record<string, unknown>} rs256
+ * @returns {Record<string, unknown>}
+ */
+function mergeStateReports(page, viewport, hs256, rs256) {
+  const hs256Violations = Array.isArray(hs256.violations) ? hs256.violations : [];
+  const rs256Violations = Array.isArray(rs256.violations) ? rs256.violations : [];
+  return {
+    page,
+    viewport,
+    ...hs256,
+    violations: [...hs256Violations, ...rs256Violations],
+    passesCount: Number(hs256.passesCount || 0) + Number(rs256.passesCount || 0),
+    violationsCount: hs256Violations.length + rs256Violations.length,
+    incompleteCount: Number(hs256.incompleteCount || 0) + Number(rs256.incompleteCount || 0),
+    inapplicableCount: Number(hs256.inapplicableCount || 0) + Number(rs256.inapplicableCount || 0),
+    states: { hs256, rs256 }
+  };
+}
+
+/**
  * @param {string} name
  * @param {() => Promise<Record<string, unknown> | void>} fn
  * @returns {Promise<void>}
@@ -216,9 +242,13 @@ async function run() {
         await jwtBuilderDesktop.goto(`${baseUrl}/jwt-builder/`, { waitUntil: 'networkidle' });
         await waitVisible(jwtBuilderDesktop, '#app-shell-header .cst-appbar');
         await waitVisible(jwtBuilderDesktop, '#jwtForm');
+        await waitVisible(jwtBuilderDesktop, '#jwt-algorithm');
         await waitVisible(jwtBuilderDesktop, '#buildJwtBtn');
-        const report = await analyzePageA11y(jwtBuilderDesktop);
-        return { page: '/jwt-builder/', viewport: 'desktop', ...report };
+        const hs256 = await analyzePageA11y(jwtBuilderDesktop);
+        await jwtBuilderDesktop.selectOption('#jwt-algorithm', 'RS256');
+        await waitVisible(jwtBuilderDesktop, '#jwt-builder-rs256-key-panel:not([hidden])');
+        const rs256 = await analyzePageA11y(jwtBuilderDesktop);
+        return mergeStateReports('/jwt-builder/', 'desktop', hs256, rs256);
       });
 
       const jwtBuilderMobile = await mobile.newPage();
@@ -226,9 +256,13 @@ async function run() {
         await jwtBuilderMobile.goto(`${baseUrl}/jwt-builder/`, { waitUntil: 'networkidle' });
         await waitVisible(jwtBuilderMobile, '#app-shell-header .cst-appbar');
         await waitVisible(jwtBuilderMobile, '#jwtForm');
+        await waitVisible(jwtBuilderMobile, '#jwt-algorithm');
         await waitVisible(jwtBuilderMobile, '#buildJwtBtn');
-        const report = await analyzePageA11y(jwtBuilderMobile);
-        return { page: '/jwt-builder/', viewport: 'mobile-iphone12', ...report };
+        const hs256 = await analyzePageA11y(jwtBuilderMobile);
+        await jwtBuilderMobile.selectOption('#jwt-algorithm', 'RS256');
+        await waitVisible(jwtBuilderMobile, '#jwt-builder-rs256-key-panel:not([hidden])');
+        const rs256 = await analyzePageA11y(jwtBuilderMobile);
+        return mergeStateReports('/jwt-builder/', 'mobile-iphone12', hs256, rs256);
       });
     }
 

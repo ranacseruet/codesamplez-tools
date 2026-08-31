@@ -83,8 +83,47 @@
   min-width: 0;
 }
 
-.jwt-builder-container .jwt-builder-secret-row {
+.jwt-builder-container .jwt-builder-signature-row {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.jwt-builder-container .jwt-builder-signature-row[hidden] {
+  display: none;
+}
+
+.jwt-builder-container .jwt-builder-signature-row > label {
+  flex: none;
+  width: 100%;
+  padding-top: 0;
+}
+
+.jwt-builder-field-control {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--spacing-xs, var(--default-spacing-xs));
+  min-width: 0;
+  width: 100%;
+}
+
+.jwt-builder-algorithm-select {
+  width: 100%;
+  min-height: var(--cst-control-height, 40px);
+}
+
+.jwt-builder-field-help {
+  margin: 0;
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  font-size: var(--font-size-small, var(--default-font-size-small));
+  line-height: 1.45;
+}
+
+.jwt-builder-secret-control {
+  display: flex;
   align-items: center;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  min-width: 0;
 }
 
 .jwt-builder-secret-generate {
@@ -94,6 +133,8 @@
   padding: 0.35rem !important;
   min-width: 2.25rem;
   min-height: 2.25rem;
+  width: 2.25rem;
+  flex: 0 0 2.25rem;
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   box-shadow: none !important;
 }
@@ -121,19 +162,11 @@
   flex: 1;
 }
 
-.jwt-builder-algorithm-panel.c-form-group {
-  margin-top: 0;
-  padding-block: var(--spacing-md, var(--default-spacing-md));
-  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
-  border: 1px dashed color-mix(in srgb, var(--jwtb-accent) 22%, transparent);
-  background: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 95%, var(--cst-color-mix-neutral, white) 5%);
-  box-shadow: none;
-}
-
-.jwt-builder-container .algorithm-info {
-  margin: 0;
-  font-size: var(--font-size-small, var(--default-font-size-small));
-  color: var(--color-text-secondary, var(--default-color-text-secondary));
+.jwt-builder-container .jwt-builder-private-key.c-input--textarea {
+  width: 100%;
+  height: auto;
+  min-height: 11rem;
+  resize: vertical;
   line-height: 1.45;
 }
 
@@ -290,5 +323,9 @@
 
   .jwt-builder-container .copy-button-wrapper .c-input {
     padding-right: 50px;
+  }
+
+  .jwt-builder-secret-control {
+    align-items: stretch;
   }
 }

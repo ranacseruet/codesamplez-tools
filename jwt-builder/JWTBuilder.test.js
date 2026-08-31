@@ -1,4 +1,6 @@
 import { jest } from '@jest/globals';
+import { webcrypto as nodeWebCrypto } from 'node:crypto';
+import { privateKey as testPrivateKey, publicKey as testPublicKey } from './test-fixtures/rs256-test-keypair.js';
 const { TextEncoder, TextDecoder } = require('util');
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
@@ -17,26 +19,59 @@ function decodeBase64Url(str) {
   return Buffer.from(base64, 'base64').toString('utf8');
 }
 
+const realVerify = nodeWebCrypto.subtle.verify.bind(nodeWebCrypto.subtle);
+
+function pemEncode(buffer) {
+  const base64 = Buffer.from(buffer).toString('base64');
+  const lines = base64.match(/.{1,64}/g) || [];
+  return `-----BEGIN PRIVATE KEY-----\n${lines.join('\n')}\n-----END PRIVATE KEY-----`;
+}
+
+function pemDecode(pem) {
+  return Buffer.from(pem.split('\n').slice(1, -1).join(''), 'base64');
+}
+
+const originalCrypto = global.crypto;
+const mockCrypto = {
+  getRandomValues: array => nodeWebCrypto.getRandomValues(array),
+  subtle: {
+    importKey: jest.fn(),
+    sign: jest.fn()
+  }
+};
+
+function setGlobalCrypto(value) {
+  Object.defineProperty(global, 'crypto', {
+    configurable: true,
+    writable: true,
+    value
+  });
+}
+
+async function withRealWebCrypto(callback) {
+  const mockedCrypto = global.crypto;
+  setGlobalCrypto(nodeWebCrypto);
+
+  try {
+    return await callback();
+  } finally {
+    setGlobalCrypto(mockedCrypto);
+  }
+}
+
 
 
 describe('JWTBuilder', () => {
   let jwtBuilder;
   const mockSignature = new Uint8Array([1, 2, 3, 4, 5]).buffer;
-  const originalCrypto = global.crypto;
 
   beforeAll(() => {
-    if (!global.crypto) {
-      global.crypto = {};
-    }
-    if (!global.crypto.subtle) {
-      global.crypto.subtle = {};
-    }
-    
-    global.crypto.subtle.importKey = jest.fn().mockResolvedValue('mock-key');
-    global.crypto.subtle.sign = jest.fn().mockResolvedValue(mockSignature);
+    setGlobalCrypto(mockCrypto);
   });
 
   beforeEach(() => {
+    mockCrypto.subtle.importKey = jest.fn().mockResolvedValue({ algorithm: { modulusLength: 2048 } });
+    mockCrypto.subtle.sign = jest.fn().mockResolvedValue(mockSignature);
     jwtBuilder = new JWTBuilder();
   });
 
@@ -45,7 +80,7 @@ describe('JWTBuilder', () => {
   });
 
   afterAll(() => {
-    global.crypto = originalCrypto;
+    setGlobalCrypto(originalCrypto);
   });
 
   describe('getFormattedDate', () => {
@@ -81,9 +116,38 @@ describe('JWTBuilder', () => {
       expect(result).toBeNull();
     });
 
+    test('returns null for non-finite numeric timestamps', () => {
+      expect(jwtBuilder.parseDateTime('Infinity')).toBeNull();
+      expect(jwtBuilder.parseDateTime('-Infinity')).toBeNull();
+    });
+
+    test('rejects numeric-looking timestamps that are not decimal integers', () => {
+      expect(jwtBuilder.parseDateTime('1e10')).toBeNull();
+      expect(jwtBuilder.parseDateTime('1.7e9')).toBeNull();
+      expect(jwtBuilder.parseDateTime('0x10')).toBeNull();
+    });
+
     test('returns null for empty string', () => {
       const result = jwtBuilder.parseDateTime('');
       expect(result).toBeNull();
+    });
+
+    test('returns null when the datetime constructor fails', () => {
+      const RealDate = global.Date;
+      global.Date = class extends RealDate {
+        constructor(value) {
+          if (value === 'throws') {
+            throw new Error('date constructor failed');
+          }
+          super(value);
+        }
+      };
+
+      try {
+        expect(jwtBuilder.parseDateTime('throws')).toBeNull();
+      } finally {
+        global.Date = RealDate;
+      }
     });
   });
 
@@ -163,6 +227,12 @@ describe('JWTBuilder', () => {
       await expect(jwtBuilder.generateSignature('input', '')).rejects.toThrow();
     });
 
+    test('rejects unsupported signing algorithms', async () => {
+      await expect(jwtBuilder.generateSignature('test', 'key', 'ES256'))
+        .rejects
+        .toThrow('Unsupported JWT algorithm: ES256');
+    });
+
     test('handles crypto.subtle.sign failure', async () => {
       global.crypto.subtle.sign = jest.fn().mockRejectedValue(new Error('Sign failed'));
       await expect(jwtBuilder.generateSignature('test', 'key')).rejects.toThrow('Sign failed');
@@ -172,6 +242,178 @@ describe('JWTBuilder', () => {
       global.crypto.subtle.sign = jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3, 4, 5]));
       const signature = await jwtBuilder.generateSignature('test', 'key');
       expect(signature).toBeDefined();
+    });
+
+    test('generates an RS256 signature that Node WebCrypto verifies', async () => {
+      await withRealWebCrypto(async () => {
+        const publicCryptoKey = await nodeWebCrypto.subtle.importKey(
+          'spki',
+          pemDecode(testPublicKey),
+          { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+          false,
+          ['verify']
+        );
+        const privateKey = testPrivateKey;
+        const jwt = await jwtBuilder.buildJWT({ sub: 'test-user' }, privateKey, 'RS256');
+        const [headerB64, payloadB64, signatureB64] = jwt.split('.');
+
+        const isValid = await realVerify(
+          'RSASSA-PKCS1-v1_5',
+          publicCryptoKey,
+          jwtBuilder.codec.decodeBase64Url(signatureB64),
+          new TextEncoder().encode(`${headerB64}.${payloadB64}`)
+        );
+
+        expect(JSON.parse(decodeBase64Url(headerB64))).toEqual({ alg: 'RS256', typ: 'JWT' });
+        expect(isValid).toBe(true);
+      });
+    });
+
+    test('imports RS256 keys as non-extractable sign-only keys', async () => {
+      const signature = await jwtBuilder.generateSignature('header.payload', testPrivateKey, 'RS256');
+
+      expect(signature).toBeTruthy();
+      expect(mockCrypto.subtle.importKey).toHaveBeenCalledWith(
+        'pkcs8',
+        expect.any(Uint8Array),
+        { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+        false,
+        ['sign']
+      );
+      expect(mockCrypto.subtle.sign).toHaveBeenCalledWith(
+        'RSASSA-PKCS1-v1_5',
+        { algorithm: { modulusLength: 2048 } },
+        expect.anything()
+      );
+    });
+
+    test('rejects RSA keys when the browser does not expose a modulus length', async () => {
+      mockCrypto.subtle.importKey.mockResolvedValueOnce({ algorithm: { name: 'RSASSA-PKCS1-v1_5' } });
+
+      await expect(jwtBuilder.generateSignature('header.payload', testPrivateKey, 'RS256'))
+        .rejects
+        .toThrow('Invalid RSA private key');
+    });
+
+    test('reports when Web Crypto is unavailable for RS256', async () => {
+      const mockedCrypto = global.crypto;
+      setGlobalCrypto({});
+
+      try {
+        await expect(jwtBuilder.generateSignature('header.payload', testPrivateKey, 'RS256'))
+          .rejects
+          .toThrow('RS256 signing requires Web Crypto support');
+      } finally {
+        setGlobalCrypto(mockedCrypto);
+      }
+    });
+
+    test('accepts CRLF-formatted PKCS#8 PEM keys', async () => {
+      await withRealWebCrypto(async () => {
+        const crlfPrivateKey = testPrivateKey.replace(/\n/g, '\r\n');
+        const signature = await jwtBuilder.generateSignature('header.payload', crlfPrivateKey, 'RS256');
+
+        expect(signature).toMatch(/^[A-Za-z0-9_-]+$/);
+      });
+    });
+
+    test('rejects RSA public keys for RS256 signing', async () => {
+      await expect(
+        jwtBuilder.generateSignature(
+          'header.payload',
+          '-----BEGIN PUBLIC KEY-----\nZm9v\n-----END PUBLIC KEY-----',
+          'RS256'
+        )
+      ).rejects.toThrow('public keys cannot be used');
+    });
+
+    test('rejects PKCS#1 RSA public keys for RS256 signing', async () => {
+      await expect(
+        jwtBuilder.generateSignature(
+          'header.payload',
+          '-----BEGIN RSA PUBLIC KEY-----\nZm9v\n-----END RSA PUBLIC KEY-----',
+          'RS256'
+        )
+      ).rejects.toThrow('public keys cannot be used');
+    });
+
+    test('rejects PKCS#1 RSA private keys for RS256 signing', async () => {
+      await expect(
+        jwtBuilder.generateSignature(
+          'header.payload',
+          '-----BEGIN RSA PRIVATE KEY-----\nZm9v\n-----END RSA PRIVATE KEY-----',
+          'RS256'
+        )
+      ).rejects.toThrow('PKCS#1 RSA private keys are not supported');
+    });
+
+    test('rejects encrypted RSA private keys for RS256 signing', async () => {
+      await expect(
+        jwtBuilder.generateSignature(
+          'header.payload',
+          '-----BEGIN ENCRYPTED PRIVATE KEY-----\nZm9v\n-----END ENCRYPTED PRIVATE KEY-----',
+          'RS256'
+        )
+      ).rejects.toThrow('Encrypted RSA private keys are not supported');
+    });
+
+    test('rejects malformed RSA private keys for RS256 signing', async () => {
+      await expect(jwtBuilder.generateSignature('header.payload', 'not-a-private-key', 'RS256'))
+        .rejects
+        .toThrow('Invalid RSA private key');
+    });
+
+    test('rejects invalid PKCS#8 base64 content', async () => {
+      await expect(
+        jwtBuilder.generateSignature(
+          'header.payload',
+          '-----BEGIN PRIVATE KEY-----\nnot-base64\n-----END PRIVATE KEY-----',
+          'RS256'
+        )
+      ).rejects.toThrow('Invalid RSA private key');
+    });
+
+    test('maps PEM decoding failures to a friendly RSA error', async () => {
+      const originalAtob = global.atob;
+      global.atob = jest.fn(() => {
+        throw new Error('decode failed');
+      });
+
+      try {
+        await expect(jwtBuilder.generateSignature('header.payload', testPrivateKey, 'RS256'))
+          .rejects
+          .toThrow('Invalid RSA private key');
+      } finally {
+        global.atob = originalAtob;
+      }
+    });
+
+    test('maps Web Crypto RSA import failures to a friendly RSA error', async () => {
+      mockCrypto.subtle.importKey.mockRejectedValueOnce(new Error('DataError'));
+
+      await expect(jwtBuilder.generateSignature('header.payload', testPrivateKey, 'RS256'))
+        .rejects
+        .toThrow('Invalid RSA private key');
+    });
+
+    test('rejects RSA private keys smaller than 2048 bits', async () => {
+      await withRealWebCrypto(async () => {
+        const keyPair = await nodeWebCrypto.subtle.generateKey(
+          {
+            name: 'RSASSA-PKCS1-v1_5',
+            modulusLength: 1024,
+            publicExponent: new Uint8Array([1, 0, 1]),
+            hash: 'SHA-256'
+          },
+          true,
+          ['sign', 'verify']
+        );
+        const privateKey = pemEncode(await nodeWebCrypto.subtle.exportKey('pkcs8', keyPair.privateKey));
+
+        await expect(jwtBuilder.generateSignature('header.payload', privateKey, 'RS256'))
+          .rejects
+          .toThrow('at least 2048 bits');
+      });
     });
   });
 
@@ -247,12 +489,47 @@ describe('JWTBuilder', () => {
       await expect(jwtBuilder.buildJWT(payload, 'test-secret')).rejects.toThrow();
     });
 
-    test('maps signing SyntaxError to a user-facing payload error', async () => {
-      jest.spyOn(jwtBuilder, 'generateSignature').mockRejectedValueOnce(new SyntaxError('unexpected syntax'));
+    test('maps JSON serialization errors to a user-facing payload error', async () => {
+      const payload = {
+        toJSON() {
+          throw new SyntaxError('unexpected syntax');
+        }
+      };
+
+      await expect(jwtBuilder.buildJWT(payload, 'test-secret'))
+        .rejects
+        .toThrow('Invalid JSON payload.');
+    });
+
+    test('rejects payloads whose JSON serialization is undefined', async () => {
+      const payload = {
+        toJSON() {
+          return undefined;
+        }
+      };
+
+      await expect(jwtBuilder.buildJWT(payload, 'test-secret'))
+        .rejects
+        .toThrow('Invalid JSON payload.');
+    });
+
+    test('does not map signing SyntaxError to a payload error', async () => {
+      const signingError = new SyntaxError('unexpected signing syntax');
+      jest.spyOn(jwtBuilder, 'generateSignature').mockRejectedValueOnce(signingError);
 
       await expect(jwtBuilder.buildJWT({ sub: 'test-user' }, 'test-secret'))
         .rejects
-        .toThrow('Invalid JSON payload.');
+        .toThrow('unexpected signing syntax');
+    });
+
+    test('uses the requested algorithm only for the current call', async () => {
+      jest.spyOn(jwtBuilder, 'generateSignature').mockResolvedValue('signature');
+
+      const rsJwt = await jwtBuilder.buildJWT({ sub: 'test-user' }, 'test-secret', 'RS256');
+      const hsJwt = await jwtBuilder.buildJWT({ sub: 'test-user' }, 'test-secret');
+
+      expect(JSON.parse(decodeBase64Url(rsJwt.split('.')[0]))).toEqual({ alg: 'RS256', typ: 'JWT' });
+      expect(JSON.parse(decodeBase64Url(hsJwt.split('.')[0]))).toEqual({ alg: 'HS256', typ: 'JWT' });
     });
 
     test('creates JWT with complex nested payload', async () => {

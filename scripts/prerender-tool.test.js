@@ -155,6 +155,13 @@ describe('generic tool prerender helpers', () => {
         expect(appMarkup).toContain('id="jwtForm"');
         expect(appMarkup).toContain('id="buildJwtBtn"');
         expect(appMarkup).toContain('id="customClaims"');
+        expect(appMarkup).toContain('id="jwt-algorithm"');
+        expect(appMarkup).toContain('value="HS256"');
+        expect(appMarkup).toContain('value="RS256"');
+        expect(appMarkup).toContain('id="jwt-builder-hs256-key-panel"');
+        expect(appMarkup).toContain('id="jwt-builder-rs256-key-panel"');
+        expect(appMarkup).toContain('id="rsa-private-key"');
+        expect(appMarkup).toContain('aria-describedby="jwt-builder-rs256-key-help jwt-builder-error-status"');
         // Article content is prerendered outside the app root (#327),
         // so the interactive bundle no longer carries the static tree.
         expect(afterMarkup).toContain('JWT Generator is a free browser-based tool to quickly create signed JSON Web Tokens.');

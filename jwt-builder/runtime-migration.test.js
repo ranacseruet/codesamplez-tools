@@ -57,6 +57,13 @@ describe('JWT Builder Preact runtime', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockCopyButtons.length = 0;
+    mockBuilder.parseDateTime.mockImplementation((value) => {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : Math.floor(date.getTime() / 1000);
+    });
+    mockBuilder.buildJWT.mockResolvedValue('header.payload.signature');
+    mockBuilder.getFormattedDate.mockReturnValue('2024-01-01T00:00:00Z');
+    mockBuilder.generateRandomSecret.mockReturnValue('random-secret-key-32-chars-long!!');
     scriptJwtBuilder.parseDateTime = mockBuilder.parseDateTime;
     scriptJwtBuilder.buildJWT = mockBuilder.buildJWT;
     scriptJwtBuilder.getFormattedDate = mockBuilder.getFormattedDate;
@@ -79,7 +86,12 @@ describe('JWT Builder Preact runtime', () => {
     expect(document.getElementById('iss')?.value).toBe('codesamplez.com');
     expect(document.getElementById('sub')?.value).toBe('your-subject');
     expect(document.getElementById('aud')?.value).toBe('your-audience');
-    expect(document.getElementById('jti')?.value).toBe('your-indentifier');
+    expect(document.getElementById('jti')?.value).toBe('your-identifier');
+    expect(document.getElementById('jwt-algorithm')?.value).toBe('HS256');
+    expect(document.getElementById('jwt-builder-hs256-key-panel')?.hidden).toBe(false);
+    expect(document.getElementById('jwt-builder-rs256-key-panel')?.hidden).toBe(true);
+    expect(document.getElementById('rsa-private-key')).toBeInstanceOf(HTMLTextAreaElement);
+    expect(document.getElementById('rsa-private-key')?.disabled).toBe(true);
     expect(document.querySelectorAll('#jwt-builder-tool h1')).toHaveLength(0);
     expect(CopyButton).toHaveBeenCalledTimes(2);
   });
@@ -101,18 +113,63 @@ describe('JWT Builder Preact runtime', () => {
     expect(NotificationManager.show).toHaveBeenCalledWith('JWT successfully built', 2000, { type: 'success' });
   });
 
+  it('renders accessible algorithm controls and routes RS256 through the private key', async () => {
+    new JWTBuilderToolUI();
+    await flushEffects();
+
+    const algorithm = document.getElementById('jwt-algorithm');
+    const privateKey = document.getElementById('rsa-private-key');
+    const hsPanel = document.getElementById('jwt-builder-hs256-key-panel');
+    const rsPanel = document.getElementById('jwt-builder-rs256-key-panel');
+
+    expect(document.querySelector('label[for="jwt-algorithm"]')?.textContent).toContain('Signing Algorithm');
+    expect(document.querySelector('label[for="key"]')?.textContent).toContain('Shared Secret');
+    expect(document.querySelector('label[for="rsa-private-key"]')?.textContent).toContain('Private Key');
+    expect(algorithm?.getAttribute('aria-describedby')).toBe('jwt-builder-algorithm-help');
+    expect(privateKey?.getAttribute('aria-describedby')).toContain('jwt-builder-rs256-key-help');
+    expect(document.getElementById('jwt-builder-error-status')?.getAttribute('aria-atomic')).toBe('true');
+
+    document.getElementById('result').textContent = 'stale.jwt.token';
+    fireEvent.change(algorithm, { target: { value: 'RS256' } });
+    await flushEffects();
+
+    expect(hsPanel.hidden).toBe(true);
+    expect(rsPanel.hidden).toBe(false);
+    expect(document.getElementById('key').disabled).toBe(true);
+    expect(privateKey.disabled).toBe(false);
+    expect(document.getElementById('result')?.textContent).toBe('');
+    expect(document.querySelector('button[aria-label="Generate a random secret key"]')?.closest('[hidden]')).toBe(hsPanel);
+
+    privateKey.value = '-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----';
+    document.getElementById('iss').value = 'issuer';
+    document.getElementById('exp').value = '2025-01-01T00:00:00Z';
+    fireEvent.click(document.getElementById('buildJwtBtn'));
+    await flushEffects();
+    await flushEffects();
+
+    expect(mockBuilder.buildJWT).toHaveBeenLastCalledWith(
+      expect.objectContaining({ iss: 'issuer' }),
+      '-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----',
+      'RS256'
+    );
+  });
+
   it('Load Sample resets claims and the secret via the rendered button', async () => {
     new JWTBuilderToolUI();
     await flushEffects();
 
     document.getElementById('iss').value = 'edited-issuer';
     document.getElementById('key').value = 'edited-secret';
+    fireEvent.change(document.getElementById('jwt-algorithm'), { target: { value: 'RS256' } });
+    document.getElementById('rsa-private-key').value = 'edited-private-key';
 
     fireEvent.click(document.getElementById('jwt-builder-sample-btn'));
     await flushEffects();
 
     expect(document.getElementById('iss')?.value).toBe('codesamplez.com');
     expect(document.getElementById('key')?.value).toBe('your-jwt-secret-key');
+    expect(document.getElementById('rsa-private-key')?.value).toBe('');
+    expect(document.getElementById('jwt-algorithm')?.value).toBe('HS256');
     expect(NotificationManager.show).toHaveBeenCalledWith('Sample claims loaded', 2000, { type: 'success' });
   });
 

@@ -1,4 +1,4 @@
-import { JWTBuilder } from './JWTBuilder';
+import { JWTBuilder, type JWTAlgorithm } from './JWTBuilder';
 import { NotificationManager } from '../common/notification-manager';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import CopyButton from '../common/copy-button/CopyButton';
@@ -17,6 +17,18 @@ type JwtBuilderWindow = Window & {
   loadSampleClaims?: () => void;
 };
 
+const DEFAULT_ALGORITHM: JWTAlgorithm = 'HS256';
+const ALGORITHM_HELP: Record<JWTAlgorithm, string> = {
+  HS256: 'HS256 signs with a shared secret using HMAC SHA-256.',
+  RS256: 'RS256 signs with an unencrypted PKCS#8 RSA private key (2048 bits or stronger) using RSA SHA-256.'
+};
+
+const DATE_CLAIM_LABELS = {
+  exp: 'Expiration Time (exp)',
+  iat: 'Issued At (iat)',
+  nbf: 'Not Before (nbf)'
+} as const;
+
 const browserWindow = typeof window !== 'undefined' ? (window as JwtBuilderWindow) : null;
 
 // Export for testing and create a singleton instance
@@ -34,20 +46,46 @@ function getInputElement(id: string): HTMLInputElement | null {
   return element instanceof HTMLInputElement ? element : null;
 }
 
+function getValueElement(id: string): HTMLInputElement | HTMLTextAreaElement | null {
+  const element = document.getElementById(id);
+  return element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement ? element : null;
+}
+
 function getInputValue(id: string): string {
-  return getInputElement(id)?.value || '';
+  return getValueElement(id)?.value || '';
+}
+
+function getSelectedAlgorithm(): JWTAlgorithm {
+  const selector = document.getElementById('jwt-algorithm');
+  return selector instanceof HTMLSelectElement && selector.value === 'RS256' ? 'RS256' : DEFAULT_ALGORITHM;
 }
 
 // v4 contract: build errors surface inline; the empty-state well copy flips by
 // toggling the dedicated element rather than relying on a bare <pre>.
-function setInlineError(message: string): void {
+function clearInputErrorState(): void {
+  document.querySelectorAll('.c-input--error').forEach((element) => {
+    element.classList.remove('c-input--error');
+    element.removeAttribute('aria-invalid');
+  });
+}
+
+function setInlineError(message: string, fieldId?: string): void {
   const status = document.getElementById('jwt-builder-error-status');
   /* istanbul ignore next */
   if (!status) {
     return;
   }
+  clearInputErrorState();
   status.textContent = message;
   status.classList.toggle('error', message.length > 0);
+
+  if (message && fieldId) {
+    const field = document.getElementById(fieldId);
+    if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) {
+      field.classList.add('c-input--error');
+      field.setAttribute('aria-invalid', 'true');
+    }
+  }
 }
 
 function toggleEmptyState(show: boolean): void {
@@ -59,6 +97,50 @@ function toggleEmptyState(show: boolean): void {
   if (resultDiv) {
     resultDiv.style.display = show ? 'none' : '';
   }
+}
+
+function clearGeneratedResult(): void {
+  const resultDiv = document.getElementById('result');
+  if (resultDiv) {
+    resultDiv.textContent = '';
+  }
+  setInlineError('');
+  toggleEmptyState(true);
+}
+
+function applySigningAlgorithm(algorithm: JWTAlgorithm, clearResult: boolean): void {
+  const selector = document.getElementById('jwt-algorithm');
+  if (selector instanceof HTMLSelectElement) {
+    selector.value = algorithm;
+  }
+
+  const hsPanel = document.getElementById('jwt-builder-hs256-key-panel');
+  const rsPanel = document.getElementById('jwt-builder-rs256-key-panel');
+  if (hsPanel) {
+    hsPanel.hidden = algorithm !== 'HS256';
+    hsPanel.querySelectorAll('input, button').forEach((control) => {
+      (control as HTMLInputElement | HTMLButtonElement).disabled = algorithm !== 'HS256';
+    });
+  }
+  if (rsPanel) {
+    rsPanel.hidden = algorithm !== 'RS256';
+    rsPanel.querySelectorAll('textarea').forEach((control) => {
+      control.disabled = algorithm !== 'RS256';
+    });
+  }
+
+  const help = document.getElementById('jwt-builder-algorithm-help');
+  if (help) {
+    help.textContent = ALGORITHM_HELP[algorithm];
+  }
+
+  if (clearResult) {
+    clearGeneratedResult();
+  }
+}
+
+export function setSigningAlgorithm(algorithm: JWTAlgorithm): void {
+  applySigningAlgorithm(algorithm, true);
 }
 
 function initializeDefaultClaims() {
@@ -73,7 +155,7 @@ function initializeDefaultClaims() {
     sub: 'your-subject',
     aud: 'your-audience',
     nbf: jwtBuilder.getFormattedDate(now),
-    jti: 'your-indentifier'
+    jti: 'your-identifier'
   };
 
   const standardClaims: (keyof typeof payload)[] = ['iss', 'exp', 'sub', 'aud', 'iat', 'nbf', 'jti'];
@@ -89,10 +171,15 @@ function initializeDefaultClaims() {
 // the bundled secret) — a uniform reset affordance across tools.
 export function loadSampleClaims() {
   initializeDefaultClaims();
+  applySigningAlgorithm(DEFAULT_ALGORITHM, true);
   const keyInput = getInputElement('key');
   if (keyInput) {
     keyInput.value = 'your-jwt-secret-key';
     keyCopyButton?.updateVisibility();
+  }
+  const rsaKeyInput = getValueElement('rsa-private-key');
+  if (rsaKeyInput) {
+    rsaKeyInput.value = '';
   }
   NotificationManager.show('Sample claims loaded', 2000, { type: 'success' });
 }
@@ -181,13 +268,16 @@ export function removeClaim(button: HTMLElement | null) {
 
 export async function buildJWT() {
   const payload: Record<string, unknown> = {};
+  let invalidDateClaim: keyof typeof DATE_CLAIM_LABELS | null = null;
 
-  ['exp', 'iat', 'nbf'].forEach((claim) => {
+  (Object.keys(DATE_CLAIM_LABELS) as (keyof typeof DATE_CLAIM_LABELS)[]).forEach((claim) => {
     const value = getInputValue(claim);
     if (value) {
       const timestamp = jwtBuilder.parseDateTime(value);
-      if (timestamp !== null) {
+      if (timestamp !== null && Number.isFinite(timestamp)) {
         payload[claim] = timestamp;
+      } else if (!invalidDateClaim) {
+        invalidDateClaim = claim;
       }
     }
   });
@@ -216,7 +306,9 @@ export async function buildJWT() {
     }
   });
 
-  const key = getInputValue('key');
+  const algorithm = getSelectedAlgorithm();
+  const keyFieldId = algorithm === 'RS256' ? 'rsa-private-key' : 'key';
+  const key = getInputValue(keyFieldId);
   const iss = getInputValue('iss');
   const exp = getInputValue('exp');
   const resultDiv = document.getElementById('result');
@@ -226,35 +318,44 @@ export async function buildJWT() {
 
   try {
     if (!key.trim()) {
-      setInlineError('Error: Secret key is required for JWT signing');
+      const keyLabel = algorithm === 'RS256' ? 'Private key' : 'Shared secret';
+      setInlineError(`Error: ${keyLabel} is required for ${algorithm} signing`, keyFieldId);
       resultDiv.textContent = '';
       toggleEmptyState(true);
       return null;
     }
     if (!iss.trim()) {
-      setInlineError('Error: Issuer (iss) is required for JWT');
+      setInlineError('Error: Issuer (iss) is required for JWT', 'iss');
       resultDiv.textContent = '';
       toggleEmptyState(true);
       return null;
     }
     if (!exp.trim()) {
-      setInlineError('Error: Expiration Time (exp) is required for JWT');
+      setInlineError('Error: Expiration Time (exp) is required for JWT', 'exp');
+      resultDiv.textContent = '';
+      toggleEmptyState(true);
+      return null;
+    }
+    if (invalidDateClaim) {
+      setInlineError(
+        `Error: ${DATE_CLAIM_LABELS[invalidDateClaim]} must be an ISO 8601 date or UNIX timestamp`,
+        invalidDateClaim
+      );
       resultDiv.textContent = '';
       toggleEmptyState(true);
       return null;
     }
 
-    const jwt = await jwtBuilder.buildJWT(payload, key);
+    const jwt = await jwtBuilder.buildJWT(payload, key, algorithm);
     resultDiv.textContent = jwt;
     setInlineError('');
     toggleEmptyState(false);
     NotificationManager.show('JWT successfully built', 2000, { type: 'success' });
     return jwt;
   } catch (error: unknown) {
-    const message = error instanceof SyntaxError
-      ? 'Invalid JSON payload.'
-      : `Error building JWT: ${error instanceof Error ? error.message : String(error)}`;
-    setInlineError(message);
+    const detail = error instanceof Error ? error.message : String(error);
+    const message = detail === 'Invalid JSON payload.' ? detail : `Error building JWT: ${detail}`;
+    setInlineError(message, detail === 'Invalid JSON payload.' ? undefined : keyFieldId);
     resultDiv.textContent = '';
     toggleEmptyState(true);
     return null;
@@ -402,31 +503,82 @@ export function JwtBuilderApp() {
 
           <div className="c-form-group jwt-builder-section jwt-builder-section--signature">
             <h3 className="c-form-group-header">Signature</h3>
-            <div className="c-form-row jwt-builder-secret-row">
+            <div className="c-form-row jwt-builder-signature-row">
+              <label htmlFor="jwt-algorithm" className="required">Signing Algorithm:</label>
+              <div className="jwt-builder-field-control">
+                <select
+                  id="jwt-algorithm"
+                  className="c-input jwt-builder-algorithm-select"
+                  defaultValue={DEFAULT_ALGORITHM}
+                  required
+                  aria-controls="jwt-builder-hs256-key-panel jwt-builder-rs256-key-panel"
+                  aria-describedby="jwt-builder-algorithm-help"
+                  onChange={(event) => setSigningAlgorithm(event.currentTarget.value === 'RS256' ? 'RS256' : 'HS256')}
+                >
+                  <option value="HS256">HS256 — HMAC SHA-256</option>
+                  <option value="RS256">RS256 — RSA SHA-256</option>
+                </select>
+                <p id="jwt-builder-algorithm-help" className="jwt-builder-field-help">
+                  {ALGORITHM_HELP.HS256}
+                </p>
+              </div>
+            </div>
+
+            <div id="jwt-builder-hs256-key-panel" className="c-form-row jwt-builder-signature-row">
               <label htmlFor="key" className="required">
-                <span className="c-tooltip-container" title="Secret key for signing the JWT">
-                  Signature Key:
-                  <span className="c-tooltip">Required - The secret key used to sign the JWT. Keep this secure and never share it.</span>
-                </span>
+                Shared Secret:
               </label>
-              <input type="text" id="key" className="c-input" value="your-jwt-secret-key" placeholder="Your secret key" />
-              <button
-                type="button"
-                className="c-button c-button--secondary c-button--small jwt-builder-secret-generate"
-                onClick={() => generateRandomSecret()}
-                aria-label="Generate a random secret key"
-                title="Generate a random secret key"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                  <path d="M19.146 4.854l-1.489 1.489A8 8 0 1 0 12 20a8.094 8.094 0 0 0 7.371-4.886 1 1 0 1 0-1.842-.779A6.071 6.071 0 0 1 12 18a6 6 0 1 1 4.243-10.243l-1.39 1.39a.5.5 0 0 0 .354.854H19.5A.5.5 0 0 0 20 9.5V5.207a.5.5 0 0 0-.854-.353z" />
-                </svg>
-              </button>
+              <div className="jwt-builder-field-control">
+                <div className="jwt-builder-secret-control">
+                  <input
+                    type="text"
+                    id="key"
+                    className="c-input"
+                    defaultValue="your-jwt-secret-key"
+                    placeholder="Your shared secret"
+                    required
+                    autoComplete="off"
+                    spellcheck={false}
+                    aria-describedby="jwt-builder-hs256-key-help jwt-builder-error-status"
+                  />
+                  <button
+                    type="button"
+                    className="c-button c-button--secondary c-button--small jwt-builder-secret-generate"
+                    onClick={() => generateRandomSecret()}
+                    aria-label="Generate a random secret key"
+                    aria-controls="key"
+                    title="Generate a random secret key"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                      <path d="M19.146 4.854l-1.489 1.489A8 8 0 1 0 12 20a8.094 8.094 0 0 0 7.371-4.886 1 1 0 1 0-1.842-.779A6.071 6.071 0 0 1 12 18a6 6 0 1 1 4.243-10.243l-1.39 1.39a.5.5 0 0 0 .354.854H19.5A.5.5 0 0 0 20 9.5V5.207a.5.5 0 0 0-.854-.353z" />
+                    </svg>
+                  </button>
+                </div>
+                <p id="jwt-builder-hs256-key-help" className="jwt-builder-field-help">
+                  Use a strong shared secret known to both the token issuer and verifier.
+                </p>
+              </div>
+            </div>
+
+            <div id="jwt-builder-rs256-key-panel" className="c-form-row jwt-builder-signature-row" hidden>
+              <label htmlFor="rsa-private-key" className="required">Private Key (PKCS#8 PEM):</label>
+              <div className="jwt-builder-field-control">
+                <textarea
+                  id="rsa-private-key"
+                  className="c-input c-input--textarea jwt-builder-private-key"
+                  placeholder={'-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----'}
+                  required
+                  autoComplete="off"
+                  spellcheck={false}
+                  aria-describedby="jwt-builder-rs256-key-help jwt-builder-error-status"
+                  disabled
+                />
+                <p id="jwt-builder-rs256-key-help" className="jwt-builder-field-help">
+                  Paste an unencrypted PKCS#8 RSA private key (2048 bits or stronger). It stays in this browser and is never uploaded.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="c-form-group jwt-builder-algorithm-panel">
-          <p className="algorithm-info">NOTE: For signature key signing, we only support "HS256 (HMAC with SHA-256)" algorithm for now.</p>
         </div>
 
         <div className="c-form-group jwt-builder-section jwt-builder-section--custom-claims">
@@ -452,7 +604,7 @@ export function JwtBuilderApp() {
           </button>
         </div>
 
-        <div id="jwt-builder-error-status" className="c-input-status jwt-builder-error-status" role="status" aria-live="polite" />
+        <div id="jwt-builder-error-status" className="c-input-status jwt-builder-error-status" role="status" aria-live="polite" aria-atomic="true" />
       </form>
 
       <div className="c-form-group result-section jwt-builder-result-panel c-surface-card">
@@ -479,6 +631,7 @@ export function JwtBuilderApp() {
 
 export function initializeJwtBuilderDom() {
   initializeDefaultClaims();
+  applySigningAlgorithm(getSelectedAlgorithm(), false);
   initializeCopyButtons();
   const buildButton = document.getElementById('buildJwtBtn');
   if (buildButton) {

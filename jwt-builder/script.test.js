@@ -53,7 +53,13 @@ describe('JWT Builder UI Tests', () => {
       <div id="jwt-builder-error-status"></div>
       <div id="jwt-builder-empty-state"></div>
       <pre id="result"></pre>
-      <input id="key" value="test-key">
+      <select id="jwt-algorithm">
+        <option value="HS256" selected>HS256</option>
+        <option value="RS256">RS256</option>
+      </select>
+      <p id="jwt-builder-algorithm-help"></p>
+      <div id="jwt-builder-hs256-key-panel"><input id="key" value="test-key"></div>
+      <div id="jwt-builder-rs256-key-panel" hidden><textarea id="rsa-private-key"></textarea></div>
       <input id="iss" value="test-issuer">
       <input id="sub" value="test-subject">
       <input id="aud" value="test-audience">
@@ -65,6 +71,12 @@ describe('JWT Builder UI Tests', () => {
 
     // Set up window.jwtBuilder before importing script
     window.jwtBuilder = mockBuilder;
+    mockBuilder.parseDateTime.mockImplementation(value => {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : Math.floor(date.getTime() / 1000);
+    });
+    mockBuilder.buildJWT.mockResolvedValue('mocked.jwt.token');
+    mockBuilder.getFormattedDate.mockReturnValue('2024-01-01T00:00:00Z');
   });
 
   afterEach(() => {
@@ -82,14 +94,14 @@ describe('JWT Builder UI Tests', () => {
       expect(document.getElementById('iss').value).toBe('codesamplez.com');
       expect(document.getElementById('sub').value).toBe('your-subject');
       expect(document.getElementById('aud').value).toBe('your-audience');
-      expect(document.getElementById('jti').value).toBe('your-indentifier');
+      expect(document.getElementById('jti').value).toBe('your-identifier');
     });
 
     test('initializes copy buttons for result and key input', () => {
       // Trigger DOMContentLoaded
       document.dispatchEvent(new Event('DOMContentLoaded'));
 
-      // Verify CopyButton was called twice - once for result, once for key input
+      // Result and the shared-secret control retain copy affordances.
       expect(CopyButton).toHaveBeenCalledTimes(2);
       
       // Verify it was called with the result element
@@ -105,12 +117,18 @@ describe('JWT Builder UI Tests', () => {
       // Simulate user edits that dirty the fields.
       document.getElementById('iss').value = 'edited-issuer';
       document.getElementById('key').value = 'edited-secret';
+      scriptModule.setSigningAlgorithm('RS256');
+      document.getElementById('rsa-private-key').value = 'edited-private-key';
 
       scriptModule.loadSampleClaims();
 
       expect(document.getElementById('iss').value).toBe('codesamplez.com');
       expect(document.getElementById('sub').value).toBe('your-subject');
       expect(document.getElementById('key').value).toBe('your-jwt-secret-key');
+      expect(document.getElementById('rsa-private-key').value).toBe('');
+      expect(document.getElementById('jwt-algorithm').value).toBe('HS256');
+      expect(document.getElementById('jwt-builder-hs256-key-panel').hidden).toBe(false);
+      expect(document.getElementById('jwt-builder-rs256-key-panel').hidden).toBe(true);
       expect(mockCopyButton.updateVisibility).toHaveBeenCalled();
       expect(NotificationManager.show).toHaveBeenCalledWith(
         'Sample claims loaded', 2000, { type: 'success' }
@@ -238,7 +256,8 @@ describe('JWT Builder UI Tests', () => {
           iat: expect.any(Number),
           jti: 'test-id'
         }),
-        'test-key'
+        'test-key',
+        'HS256'
       );
 
       expect(document.getElementById('result').textContent).toBe('mocked.jwt.token');
@@ -258,7 +277,8 @@ describe('JWT Builder UI Tests', () => {
         expect.objectContaining({
           role: 'admin'
         }),
-        expect.any(String)
+        expect.any(String),
+        'HS256'
       );
 
       expect(jwt).toBe('mocked.jwt.token');
@@ -276,7 +296,8 @@ describe('JWT Builder UI Tests', () => {
         expect.objectContaining({
           permissions: ['read', 'write']
         }),
-        expect.any(String)
+        expect.any(String),
+        'HS256'
       );
 
       expect(jwt).toBe('mocked.jwt.token');
@@ -294,7 +315,8 @@ describe('JWT Builder UI Tests', () => {
         expect.objectContaining({
           payload: '{"broken": true'
         }),
-        expect.any(String)
+        expect.any(String),
+        'HS256'
       );
     });
 
@@ -316,14 +338,15 @@ describe('JWT Builder UI Tests', () => {
           '': expect.anything(),
           'key': expect.anything()
         }),
-        expect.any(String)
+        expect.any(String),
+        'HS256'
       );
 
       expect(jwt).toBe('mocked.jwt.token');
     });
 
     test('handles error when building JWT with invalid payload', async () => {
-      mockBuilder.buildJWT.mockRejectedValue(new SyntaxError('Invalid JSON'));
+      mockBuilder.buildJWT.mockRejectedValue(new Error('Invalid JSON payload.'));
       const jwt = await scriptModule.buildJWT();
 
       expect(document.getElementById('result').textContent).toBe('');
@@ -344,13 +367,59 @@ describe('JWT Builder UI Tests', () => {
       expect(jwt).toBeNull();
     });
 
-    test('shows error notification when no secret key provided', async () => {
+    test('shows an inline error when no shared secret is provided', async () => {
       document.getElementById('key').value = '';
       const jwt = await scriptModule.buildJWT();
       expect(document.getElementById('result').textContent).toBe('');
       const errorStatus = document.getElementById('jwt-builder-error-status');
-      expect(errorStatus.textContent).toBe('Error: Secret key is required for JWT signing');
+      expect(errorStatus.textContent).toBe('Error: Shared secret is required for HS256 signing');
+      expect(document.getElementById('key').getAttribute('aria-invalid')).toBe('true');
       expect(jwt).toBeNull();
+    });
+
+    test('routes RS256 builds through the private key field', async () => {
+      document.getElementById('rsa-private-key').value = '-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----';
+      scriptModule.setSigningAlgorithm('RS256');
+
+      const jwt = await scriptModule.buildJWT();
+
+      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
+        expect.objectContaining({ iss: 'test-issuer' }),
+        '-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----',
+        'RS256'
+      );
+      expect(jwt).toBe('mocked.jwt.token');
+    });
+
+    test('requires a private key for RS256', async () => {
+      scriptModule.setSigningAlgorithm('RS256');
+
+      await expect(scriptModule.buildJWT()).resolves.toBeNull();
+
+      expect(document.getElementById('jwt-builder-error-status').textContent)
+        .toBe('Error: Private key is required for RS256 signing');
+      expect(document.getElementById('rsa-private-key').getAttribute('aria-invalid')).toBe('true');
+      expect(mockBuilder.buildJWT).not.toHaveBeenCalled();
+    });
+
+    test('switching algorithms toggles key panels and clears stale output', () => {
+      document.getElementById('result').textContent = 'stale.jwt.token';
+      document.getElementById('jwt-builder-error-status').textContent = 'stale error';
+      document.getElementById('key').classList.add('c-input--error');
+      document.getElementById('key').setAttribute('aria-invalid', 'true');
+
+      scriptModule.setSigningAlgorithm('RS256');
+
+      expect(document.getElementById('jwt-algorithm').value).toBe('RS256');
+      expect(document.getElementById('jwt-builder-hs256-key-panel').hidden).toBe(true);
+      expect(document.getElementById('jwt-builder-rs256-key-panel').hidden).toBe(false);
+      expect(document.getElementById('key').disabled).toBe(true);
+      expect(document.getElementById('rsa-private-key').disabled).toBe(false);
+      expect(document.getElementById('result').textContent).toBe('');
+      expect(document.getElementById('jwt-builder-error-status').textContent).toBe('');
+      expect(document.getElementById('jwt-builder-empty-state').style.display).toBe('');
+      expect(document.getElementById('key').classList.contains('c-input--error')).toBe(false);
+      expect(document.getElementById('key').hasAttribute('aria-invalid')).toBe(false);
     });
 
     test('shows error notification when no issuer (iss) provided', async () => {
@@ -382,50 +451,47 @@ describe('JWT Builder UI Tests', () => {
   describe('Date Parsing', () => {
     test('handles invalid date input for exp', async () => {
       document.getElementById('exp').value = 'invalid-date';
-      mockBuilder.parseDateTime.mockReturnValue(null);
 
       const jwt = await scriptModule.buildJWT();
 
-      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
-        expect.not.objectContaining({
-          exp: expect.any(Number)
-        }),
-        expect.any(String)
-      );
+      expect(jwt).toBeNull();
+      expect(mockBuilder.buildJWT).not.toHaveBeenCalled();
+      expect(document.getElementById('jwt-builder-error-status').textContent)
+        .toBe('Error: Expiration Time (exp) must be an ISO 8601 date or UNIX timestamp');
+      expect(document.getElementById('exp').getAttribute('aria-invalid')).toBe('true');
+    });
+
+    test('rejects non-finite date parser results', async () => {
+      mockBuilder.parseDateTime.mockReturnValueOnce(Number.NaN);
+
+      const jwt = await scriptModule.buildJWT();
 
       expect(jwt).toBeNull();
+      expect(mockBuilder.buildJWT).not.toHaveBeenCalled();
+      expect(document.getElementById('jwt-builder-error-status').textContent)
+        .toBe('Error: Expiration Time (exp) must be an ISO 8601 date or UNIX timestamp');
     });
 
     test('handles invalid date input for nbf', async () => {
       document.getElementById('nbf').value = 'invalid-date';
-      mockBuilder.parseDateTime.mockReturnValue(null);
 
       const jwt = await scriptModule.buildJWT();
 
-      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
-        expect.not.objectContaining({
-          nbf: expect.any(Number)
-        }),
-        expect.any(String)
-      );
-
       expect(jwt).toBeNull();
+      expect(mockBuilder.buildJWT).not.toHaveBeenCalled();
+      expect(document.getElementById('jwt-builder-error-status').textContent)
+        .toBe('Error: Not Before (nbf) must be an ISO 8601 date or UNIX timestamp');
     });
 
     test('handles invalid date input for iat', async () => {
       document.getElementById('iat').value = 'invalid-date';
-      mockBuilder.parseDateTime.mockReturnValue(null);
 
       const jwt = await scriptModule.buildJWT();
 
-      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
-        expect.not.objectContaining({
-          iat: expect.any(Number)
-        }),
-        expect.any(String)
-      );
-
       expect(jwt).toBeNull();
+      expect(mockBuilder.buildJWT).not.toHaveBeenCalled();
+      expect(document.getElementById('jwt-builder-error-status').textContent)
+        .toBe('Error: Issued At (iat) must be an ISO 8601 date or UNIX timestamp');
     });
   });
 

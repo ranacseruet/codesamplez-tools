@@ -1,162 +1,81 @@
 # JWT Builder
 
-A powerful and user-friendly web tool for building JSON Web Tokens (JWTs) with support for both standard and custom claims.
+A browser-based tool for creating signed JSON Web Tokens (JWTs) with standard and custom claims.
 
 ## Summary
 
-JWT Builder is a browser-based tool that allows users to create JWTs by specifying standard claims, adding custom claims, and signing tokens using HMAC-SHA256 (HS256) algorithm. The tool provides an intuitive interface for JWT generation with real-time validation and error handling. It supports complex nested payloads, Unicode characters, and handles large tokens efficiently through chunk-based processing.
-
-## Error Handling & Validation
-
-- Real-time validation of input fields
-- Detailed error messages for:
-  - Invalid JSON in custom claims
-  - Missing required fields
-  - Invalid datetime formats
-  - Failed signature generation
-- Secure error handling that never exposes sensitive data
-- Graceful fallbacks for invalid inputs
-
-## Privacy & Security
-- 🔒 **100% Client-Side Processing**: All JWT operations including signing are performed locally in your browser
-- 🚫 **Zero Data Storage**: Your claims and signature keys are never saved or transmitted anywhere
-- 💻 **Offline Capability**: Works completely offline after initial page load
-- 🔐 **Secure Key Handling**: Secret keys are only used in memory and never stored or transmitted
-- 🛡️ **No External Dependencies**: Uses only native browser crypto APIs for secure operations
-
-## Test Coverage
-
-The tool is thoroughly tested with Jest, including:
-- Full coverage of JWT generation logic
-- Extensive datetime parsing tests
-- Base64URL encoding/decoding validation
-- Error handling scenarios
-- Unicode and special character support
-- Complex nested payload handling
+JWT Builder creates HS256 and RS256 tokens entirely in the browser. Choose an algorithm, enter a shared secret or an unencrypted PKCS#8 RSA private key, configure the claims, and build a signed token without sending the payload or signing key to a server.
 
 ## Features
 
-- Support for all standard JWT claims:
-  - `iss` (Issuer)
-  - `sub` (Subject)
-  - `aud` (Audience)
-  - `exp` (Expiration Time)
-  - `nbf` (Not Before)
-  - `iat` (Issued At)
-  - `jti` (JWT ID)
-- Custom claim support with dynamic field addition
-- Flexible datetime input handling:
-  - Accepts both ISO 8601 datetime strings (e.g., "2025-12-31T23:59:59Z")
-  - Supports UNIX timestamps
-- Automatic timestamp conversion and validation
-- HMAC-SHA256 (HS256) signature generation
-- Copy-to-clipboard functionality
-- Real-time error handling and feedback
-- Default values for quick testing
+- HS256 signing with a shared secret using HMAC SHA-256
+- RS256 signing with an unencrypted PKCS#8 RSA private key (2048 bits or stronger) using RSASSA-PKCS1-v1_5 and SHA-256
+- An algorithm selector with signing-key guidance that adapts to HS256 or RS256
+- Standard JWT claims: `iss`, `sub`, `aud`, `exp`, `nbf`, `iat`, and `jti`
+- Dynamic custom claims with string, object, and array values
+- ISO 8601 and UNIX timestamp input for time-based claims
+- Cryptographically random 32-character Base64URL shared-secret generation for HS256 testing
+- Copy-ready token output and shared-secret control
+- Inline validation with a cleared result whenever a build fails
 
-## Usage Examples
+## Usage
 
-### Basic Usage
+1. Fill in the required issuer and expiration time plus any optional standard or custom claims.
+2. Choose a signing algorithm:
+   - **HS256:** enter a shared secret or generate a random test secret.
+   - **RS256:** paste an unencrypted PKCS#8 RSA private key (2048 bits or stronger) whose PEM block begins with `-----BEGIN PRIVATE KEY-----`.
+3. Select **Build JWT**.
+4. Copy the generated token from the result panel.
 
-1. Fill in the standard claims:
-   - Issuer: The entity issuing the token (e.g., "my-app")
-   - Subject: The subject of the token (e.g., "user123")
-   - Audience: The intended recipient (e.g., "my-api")
-   - Expiration: When the token expires (e.g., "2025-12-31T23:59:59Z")
-   - Other standard claims as needed
+The **Load Sample** action restores the standard sample claims, selects HS256, restores the sample shared secret, and clears any RSA private key.
 
-### Advanced Usage
+## Input Processing and Validation
 
-1. Working with Complex Claims:
-   ```json
-   {
-     "permissions": {
-       "admin": true,
-       "roles": ["user", "manager"],
-       "access": {
-         "level": 3,
-         "areas": ["frontend", "api"]
-       }
-     }
-   }
-   ```
+- Time-based claims accept ISO 8601 dates or UNIX timestamps and are converted to JWT NumericDate values.
+- A non-empty invalid datetime is rejected instead of being silently omitted.
+- Custom-claim values beginning with `{` or `[` are parsed as JSON when valid; malformed JSON-style values fall back to strings.
+- Missing issuer, expiration time, or active signing key is reported inline.
+- RS256 reports clear errors for public, malformed, encrypted, or unsupported private-key input without displaying key contents or raw Web Crypto errors.
+- RS256 reports when Web Crypto is unavailable in the current browser context separately from key-format errors.
 
-2. Datetime Handling:
-   - ISO 8601 strings: "2025-12-31T23:59:59Z"
-   - UNIX timestamps: "1735689599"
-   - Relative times: Current time used if empty
-   - Automatic timezone conversion to UTC
+## Privacy and Security
 
-2. Add custom claims (if required):
-   - Click "Add Claim" button
-   - Enter claim name and value
-   - Add multiple custom claims as needed
+- Claims and signing keys are processed locally with the Web Crypto API.
+- No payload, shared secret, or private key is stored or transmitted by the tool.
+- Signing keys are held in memory only for the current page session.
+- Use test credentials. Avoid entering production shared secrets, private keys, or sensitive payloads into any browser tool.
 
-3. Enter your signature key:
-   - Provide a secure secret key for signing the JWT
+## Test Coverage
 
-4. Generate the JWT:
-   - Click "Build JWT" button
-   - The generated JWT will appear in the output section
+The Jest and browser suites cover:
 
-5. Copy the token:
-   - Click "Copy JWT" button to copy the token to clipboard
-   - Use the token in your application
-
-## Input Processing
-
-### Datetime Handling
-- Supports multiple input formats:
-  - ISO 8601 datetime strings
-  - UNIX timestamps (seconds since epoch)
-  - Empty field defaults to current time
-- Automatic timezone normalization to UTC
-- Validation of future/past dates
-- Proper handling of leap years/DST
-
-### Custom Claims Processing
-- Automatic type detection for values
-- Support for nested JSON structures
-- Array handling
-- Special character escaping
-- Unicode support for international use
-
-## Technology Stack
-
-- **Frontend**: Pure HTML, CSS, and JavaScript
-- **Cryptography**: Web Crypto API
-  - HMAC-SHA256 for token signing
-  - Secure key handling using SubtleCrypto
-- **Encoding**: 
-  - Base64URL encoding for JWT components
-  - UTF-8 encoding for string handling
-- **Input Processing**:
-  - Datetime parsing and validation
-  - JSON structure validation
-  - Chunk-based string processing for large tokens
-
-## Security Considerations
-
-- All cryptographic operations are performed using the standardized Web Crypto API
-- No external dependencies required for JWT generation
-- Client-side only - no data is sent to any server
-- Signature key is never stored or transmitted
+- HS256 and RS256 header and signature generation
+- RS256 verification against the matching known public key
+- PKCS#8 PEM parsing and public/malformed-key errors
+- Algorithm-specific UI state and signing-key routing
+- Required-field and datetime validation
+- Standard, custom, nested, Unicode, and special-character payloads
+- Desktop/mobile accessibility and cross-browser Web Crypto behavior
 
 ## Browser Compatibility
 
-Compatible with modern browsers that support:
-- Web Crypto API
-- TextEncoder API
-- Clipboard API
+The tool requires a modern browser with:
+
+- Web Crypto API support for HMAC and RSASSA-PKCS1-v1_5
+- `TextEncoder` and `TextDecoder`
+- Clipboard support for copy actions
 - ES6+ JavaScript features
 
 ## Development
 
-The tool consists of the following main files:
-- `tool.meta.json`: Shared page metadata used to generate the standalone document shell
-- `styles.css`: Tool-specific styling and layout (inherits base styles from `common/shared-styles.css`)
-- `script.js`: JWT generation logic and user interactions
-- `base64.js`: Helper functions for Base64URL encoding
+The main files are:
+
+- `JWTBuilder.ts`: algorithm-specific signing, PEM parsing, and JWT assembly
+- `script.tsx`: rendered controls and browser interactions
+- `content.tsx`: guide and FAQ content
+- `styles.css`: tool-specific layout and presentation
+- `tool.meta.json`: standalone page metadata
+- `JWTBuilder.test.js`, `script.test.js`, and `runtime-migration.test.js`: core and UI coverage
 
 ## License
 
