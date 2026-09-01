@@ -94,6 +94,9 @@ describe('generic tool prerender helpers', () => {
         expect(appMarkup).toContain('id="formatJsonBtn"');
         expect(appMarkup).toContain('id="jsonErrorStatus"');
         expect(appMarkup).toContain('id="treeView"');
+        expect(appMarkup).toContain('class="jsonf-schema-disclosure"');
+        expect(appMarkup).toContain('id="jsonSchemaInput"');
+        expect(appMarkup).toContain('id="jsonSchemaDraft"');
         // Article content is prerendered outside the app root (#327),
         // so the interactive bundle no longer carries the static tree.
         expect(afterMarkup).toContain('A JSON formatter is a tool that takes raw or minified JSON and rewrites it with indentation');

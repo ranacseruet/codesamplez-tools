@@ -107,6 +107,26 @@ function mergeStateReports(page, viewport, hs256, rs256) {
 }
 
 /**
+ * Preserve the baseline report shape while checking both the collapsed
+ * formatter and its expanded JSON Schema disclosure.
+ */
+function mergeA11yStateReports(page, viewport, initial, expanded) {
+  const initialViolations = Array.isArray(initial.violations) ? initial.violations : [];
+  const expandedViolations = Array.isArray(expanded.violations) ? expanded.violations : [];
+  return {
+    page,
+    viewport,
+    ...initial,
+    violations: [...initialViolations, ...expandedViolations],
+    passesCount: Number(initial.passesCount || 0) + Number(expanded.passesCount || 0),
+    violationsCount: initialViolations.length + expandedViolations.length,
+    incompleteCount: Number(initial.incompleteCount || 0) + Number(expanded.incompleteCount || 0),
+    inapplicableCount: Number(initial.inapplicableCount || 0) + Number(expanded.inapplicableCount || 0),
+    states: { initial, expanded }
+  };
+}
+
+/**
  * @param {string} name
  * @param {() => Promise<Record<string, unknown> | void>} fn
  * @returns {Promise<void>}
@@ -295,8 +315,11 @@ async function run() {
         await waitVisible(jsonFormatterDesktop, '#app-shell-header .cst-appbar');
         await waitVisible(jsonFormatterDesktop, '#formatJsonBtn');
         await waitVisible(jsonFormatterDesktop, '#treeView');
-        const report = await analyzePageA11y(jsonFormatterDesktop);
-        return { page: '/json-formatter/', viewport: 'desktop', ...report };
+        const initial = await analyzePageA11y(jsonFormatterDesktop);
+        await jsonFormatterDesktop.locator('.jsonf-schema-disclosure > summary').click();
+        await waitVisible(jsonFormatterDesktop, '#jsonSchemaInput');
+        const expanded = await analyzePageA11y(jsonFormatterDesktop);
+        return mergeA11yStateReports('/json-formatter/', 'desktop', initial, expanded);
       });
 
       const jsonFormatterMobile = await mobile.newPage();
@@ -305,8 +328,11 @@ async function run() {
         await waitVisible(jsonFormatterMobile, '#app-shell-header .cst-appbar');
         await waitVisible(jsonFormatterMobile, '#formatJsonBtn');
         await waitVisible(jsonFormatterMobile, '#treeView');
-        const report = await analyzePageA11y(jsonFormatterMobile);
-        return { page: '/json-formatter/', viewport: 'mobile-iphone12', ...report };
+        const initial = await analyzePageA11y(jsonFormatterMobile);
+        await jsonFormatterMobile.locator('.jsonf-schema-disclosure > summary').click();
+        await waitVisible(jsonFormatterMobile, '#jsonSchemaInput');
+        const expanded = await analyzePageA11y(jsonFormatterMobile);
+        return mergeA11yStateReports('/json-formatter/', 'mobile-iphone12', initial, expanded);
       });
     }
 

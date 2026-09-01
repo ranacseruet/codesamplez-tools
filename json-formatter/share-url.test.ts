@@ -11,6 +11,8 @@ describe('share-url', () => {
     it('round-trips a payload through buildShareHash/parseShareHash', () => {
         const hash = buildShareHash(payload);
         expect(parseShareHash(hash)).toEqual(payload);
+        expect(parseShareHash(hash)).not.toHaveProperty('schema');
+        expect(parseShareHash(hash)).not.toHaveProperty('draft');
     });
 
     it('round-trips through a full URL built by buildShareUrl', () => {

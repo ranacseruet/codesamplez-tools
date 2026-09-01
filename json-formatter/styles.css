@@ -111,6 +111,129 @@
   gap: 0.75rem;
 }
 
+/* Optional validation controls stay outside the two-column workbench so the
+   formatter's established input/output geometry does not move when expanded. */
+.jsonf-tool .jsonf-schema-disclosure {
+  width: 100%;
+  margin: 0 0 var(--spacing-md, var(--default-spacing-md));
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  border-radius: var(--radius-md, 10px);
+  background: color-mix(in srgb, var(--color-surface, #fff) 96%, var(--color-surface-subtle, #f5f7fa));
+}
+
+.jsonf-tool .jsonf-schema-disclosure > summary {
+  cursor: pointer;
+  padding: 0.8rem 1rem;
+  color: var(--color-text, #1f2937);
+  font-weight: 600;
+}
+
+.jsonf-tool .jsonf-schema-optional {
+  margin-left: 0.45rem;
+  color: var(--color-text-secondary, #4b5563);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.jsonf-tool .jsonf-schema-panel {
+  display: grid;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  padding: var(--spacing-md, var(--default-spacing-md));
+  border-top: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 85%, var(--cst-color-mix-neutral, white));
+}
+
+.jsonf-tool .jsonf-schema-field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.jsonf-tool .jsonf-schema-field label,
+.jsonf-tool .jsonf-schema-draft-item label {
+  color: var(--color-text-secondary, #4b5563);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.jsonf-tool .jsonf-schema-textarea {
+  width: 100%;
+  min-height: 9rem;
+  resize: vertical;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border, #d7dde4);
+  border-radius: var(--radius-md, 10px);
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #1f2937);
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  line-height: 1.5;
+}
+
+.jsonf-tool .jsonf-schema-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.jsonf-tool .jsonf-schema-draft-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.jsonf-tool .jsonf-schema-draft-item select {
+  min-height: 2.35rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--color-border, #d7dde4);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #1f2937);
+}
+
+.jsonf-tool .jsonf-schema-helper {
+  margin: 0;
+  color: var(--color-text-secondary, #4b5563);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.jsonf-tool .jsonf-schema-status-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  min-height: 2.25rem;
+}
+
+.jsonf-tool .jsonf-schema-status {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--color-text-secondary, #4b5563);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.jsonf-tool .jsonf-schema-status.success {
+  color: var(--color-success, #176b3a);
+}
+
+.jsonf-tool .jsonf-schema-status.error {
+  color: var(--color-error, #b42318);
+}
+
+.jsonf-tool .jsonf-schema-status.warning {
+  color: var(--color-warning, #8a4b08);
+}
+
+.jsonf-tool .jsonf-schema-goto-error-btn[hidden] {
+  display: none;
+}
+
+.jsonf-tool .jsonf-schema-goto-error-btn {
+  flex: none;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
 /* Primary action sits at the right end of the top action strip (Phase C). */
 .jsonf-tool .jsonf-format-btn {
   min-width: 12rem;
@@ -376,6 +499,29 @@
 
   .jsonf-tool .jsonf-output-bar .jsonf-tabs {
     gap: 0.25rem;
+  }
+
+  .jsonf-tool .jsonf-schema-panel {
+    padding: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .jsonf-tool .jsonf-schema-controls,
+  .jsonf-tool .jsonf-schema-draft-item,
+  .jsonf-tool .jsonf-schema-draft-item select {
+    width: 100%;
+  }
+
+  .jsonf-tool .jsonf-schema-draft-item {
+    justify-content: space-between;
+  }
+
+  .jsonf-tool .jsonf-schema-status-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .jsonf-tool .jsonf-schema-goto-error-btn {
+    width: 100%;
   }
 
   .jsonf-tool .jsonf-tab {

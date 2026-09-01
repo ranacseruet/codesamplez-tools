@@ -1353,6 +1353,32 @@ describe('JSONFormatter', () => {
       expect(document.querySelectorAll).toHaveBeenCalledTimes(1);
     });
 
+    test('should terminate workers when the page is discarded', () => {
+      const formatter = new JSONFormatter(true);
+      formatter.lazyFormatRunner.terminate = jest.fn();
+      formatter.lazySchemaRunner.terminate = jest.fn();
+
+      const event = new Event('pagehide');
+      Object.defineProperty(event, 'persisted', { value: false });
+      window.dispatchEvent(event);
+
+      expect(formatter.lazyFormatRunner.terminate).toHaveBeenCalledTimes(1);
+      expect(formatter.lazySchemaRunner.terminate).toHaveBeenCalledTimes(1);
+    });
+
+    test('should preserve workers for a persisted page', () => {
+      const formatter = new JSONFormatter(true);
+      formatter.lazyFormatRunner.terminate = jest.fn();
+      formatter.lazySchemaRunner.terminate = jest.fn();
+
+      const event = new Event('pagehide');
+      Object.defineProperty(event, 'persisted', { value: true });
+      window.dispatchEvent(event);
+
+      expect(formatter.lazyFormatRunner.terminate).not.toHaveBeenCalled();
+      expect(formatter.lazySchemaRunner.terminate).not.toHaveBeenCalled();
+    });
+
     test('should not initialize DOM elements when initDom is false', () => {
       const formatter = new JSONFormatter(false);
       expect(document.querySelector).not.toHaveBeenCalled();

@@ -51,6 +51,12 @@ export interface CreateWorkerRunnerOptions<TPayload, TResult> {
     fallback: (payload: TPayload) => TResult | Promise<TResult>;
     /** Per-request timeout before falling back. Defaults to 10s. */
     timeoutMs?: number;
+    /**
+     * Terminate the current worker when a request times out. The runner stays
+     * available to create a fresh worker for the next request; this is useful
+     * for untrusted workloads where a timed-out worker must never be reused.
+     */
+    terminateOnTimeout?: boolean;
 }
 
 interface PendingEntry<TPayload, TResult> {
@@ -65,7 +71,12 @@ const DEFAULT_TIMEOUT_MS = 10_000;
 export function createWorkerRunner<TPayload, TResult>(
     options: CreateWorkerRunnerOptions<TPayload, TResult>
 ): WorkerRunner<TPayload, TResult> {
-    const { createWorker, fallback, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
+    const {
+        createWorker,
+        fallback,
+        timeoutMs = DEFAULT_TIMEOUT_MS,
+        terminateOnTimeout = false
+    } = options;
 
     let worker: Worker | null = null;
     let fallbackOnly = false;
@@ -96,6 +107,26 @@ export function createWorkerRunner<TPayload, TResult>(
             }
             worker = null;
         }
+        const entries = [...pending.values()];
+        pending.clear();
+        entries.forEach(settleViaFallback);
+    };
+
+    const terminateTimedOutWorker = (): void => {
+        if (worker) {
+            const timedOutWorker = worker;
+            timedOutWorker.onerror = null;
+            if ('onmessageerror' in timedOutWorker) {
+                timedOutWorker.onmessageerror = null;
+            }
+            try {
+                timedOutWorker.terminate();
+            } catch {
+                /* ignore */
+            }
+            worker = null;
+        }
+
         const entries = [...pending.values()];
         pending.clear();
         entries.forEach(settleViaFallback);
@@ -154,7 +185,13 @@ export function createWorkerRunner<TPayload, TResult>(
         return new Promise<TResult>((resolve, reject) => {
             const entry: PendingEntry<TPayload, TResult> = { payload, resolve, reject, timer: null };
             entry.timer = setTimeout(() => {
-                if (pending.delete(id)) {
+                if (!pending.has(id)) {
+                    return;
+                }
+
+                if (terminateOnTimeout) {
+                    terminateTimedOutWorker();
+                } else if (pending.delete(id)) {
                     entry.timer = null;
                     settleViaFallback(entry);
                 }

@@ -41,5 +41,18 @@ describe('JSON Formatter Accessibility', () => {
     const activeTab = document.querySelector('.jsonf-tab.active');
     expect(activeTab.getAttribute('aria-pressed')).toBe('true');
   });
-});
 
+  test('Schema disclosure is collapsed and its controls are labelled', () => {
+    const disclosure = document.querySelector('.jsonf-schema-disclosure');
+    expect(disclosure).not.toBeNull();
+    expect(disclosure.hasAttribute('open')).toBe(false);
+
+    const schema = document.querySelector('#jsonSchemaInput');
+    expect(schema.getAttribute('aria-describedby')).toBe('jsonSchemaHelper');
+    expect(document.querySelector('label[for="jsonSchemaInput"]')).not.toBeNull();
+
+    const draft = document.querySelector('#jsonSchemaDraft');
+    expect(draft.getAttribute('aria-label')).toBe('JSON Schema draft');
+    expect(document.querySelector('#jsonSchemaStatus').getAttribute('role')).toBe('status');
+  });
+});

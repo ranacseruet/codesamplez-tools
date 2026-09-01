@@ -190,6 +190,29 @@ describe('createWorkerRunner', () => {
         expect(fallback).toHaveBeenCalledWith('slow');
     });
 
+    it('terminates a timed-out worker and can construct a fresh one', async () => {
+        jest.useFakeTimers();
+        installFakeWorker();
+        const fallback = jest.fn((value) => `late:${value}`);
+        const runner = createWorkerRunner({
+            createWorker: () => new FakeWorker(FakeWorker.instances.length === 0 ? 'never' : 'echo', (value) => `worker:${value}`),
+            fallback,
+            timeoutMs: 50,
+            terminateOnTimeout: true
+        });
+
+        const promise = runner.run('slow');
+        await jest.advanceTimersByTimeAsync(60);
+        await expect(promise).resolves.toBe('late:slow');
+        expect(FakeWorker.instances[0].terminated).toBe(true);
+
+        const fresh = runner.run('fresh');
+        await jest.runOnlyPendingTimersAsync();
+        await expect(fresh).resolves.toBe('worker:fresh');
+        expect(FakeWorker.instances).toHaveLength(2);
+        expect(fallback).toHaveBeenCalledTimes(1);
+    });
+
     it('terminate() tears down the worker and settles pending via fallback', async () => {
         installFakeWorker();
         const fallback = jest.fn((value) => `t:${value}`);

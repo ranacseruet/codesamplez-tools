@@ -99,6 +99,10 @@ const DEFAULT_FAIL_PERCENT = 10;
 // fast-xml-parser bump ~21 KB — will therefore trip several tools at once
 // rather than being absorbed silently. That is the intended signal; the
 // expected response is one coordinated refresh commit, not a per-tool waiver.
+// `json-formatter-tool` is refreshed for the optional JSON Schema disclosure and
+// its stale-result/worker dispatch UI. Ajv 8 and json-source-map remain in the
+// validator's lazy async chunks (not the initial bundle); this baseline records
+// the intentional main-thread UI growth while keeping the next regression visible.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 49773,
@@ -107,7 +111,7 @@ const JS_RAW_BASELINES = Object.freeze({
     'jwt-builder-tool': 70073,
     'jwt-decoder-tool': 70827,
     'base64-converter-tool': 76402,
-    'json-formatter-tool': 64098,
+    'json-formatter-tool': 71306,
     'css-minifier-tool': 66115,
     'text-analyzer-tool': 46389,
     'qr-code-generator': 65847

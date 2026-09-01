@@ -25,7 +25,7 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     ),
     createPlainTextFaqItem(
         'Can a JSON Formatter also validate JSON?',
-        'Yes, this JSON Formatter also acts as a validator. If your JSON has a syntax error like a missing comma or quote, the tool will alert you and pinpoint the error so you can fix it and format again.'
+        'Yes. The formatter always checks JSON syntax, and its optional JSON Schema validation checks whether valid data matches a contract. Open the JSON Schema validation disclosure to use Draft 7 or Draft 2020-12; the tool reports the first schema issue with its JSON Pointer and source line/column. Auto fix can format repaired output, but schema validation waits until the original input is strict JSON.'
     ),
     createPlainTextFaqItem(
         'How do I fix "Unexpected token" errors in JSON?',
@@ -53,7 +53,7 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     ),
     createPlainTextFaqItem(
         'Is sharing a JSON Formatter link private?',
-        'Yes. Clicking "Share" compresses your JSON and settings and puts them in the URL\'s hash fragment (the part after #), which browsers never send to a server - it is only readable by JavaScript running on the page. Nothing you share is uploaded, logged, or stored; the link works by decompressing that fragment back into the tool entirely in the recipient\'s browser.'
+        'Yes. Clicking "Share" compresses your JSON and formatter settings and puts them in the URL\'s hash fragment (the part after #), which browsers never send to a server. JSON Schema text and the selected draft are intentionally not persisted or included in shared URLs.'
     )
 ];
 
@@ -69,11 +69,11 @@ export const HOWTO_STEPS: ToolHowToStep[] = [
     },
     {
         name: '(Optional) Update Configuration',
-        text: 'Toggle the "Auto fix" checkbox to enable or disable automatic error correction, toggle "Sort keys" to enable or disable key sorting, and pick an "Indent" option (2 spaces, 4 spaces, Tab, or Minified).'
+        text: 'Toggle the "Auto fix" checkbox to enable or disable automatic error correction, toggle "Sort keys" to enable or disable key sorting, pick an "Indent" option (2 spaces, 4 spaces, Tab, or Minified), and optionally expand JSON Schema validation to paste or upload a schema and choose a draft.'
     },
     {
         name: 'Validate and Format',
-        text: 'Click "Format JSON" to validate and format the input with proper indentation.'
+        text: 'Click "Format JSON" when no schema is present, or "Format & Validate" after adding a schema. Syntax validation always runs; schema validation then checks strict raw JSON against the selected or auto-detected Draft 7 or Draft 2020-12 schema.'
     },
     {
         name: 'Pick your preferred result view',
@@ -94,6 +94,7 @@ export const FEATURE_LIST: string[] = [
     'Minify to a single line',
     'Alphabetical key sorting',
     'Syntax validation with line/column error detail',
+    'Optional JSON Schema validation for Draft 7 and Draft 2020-12',
     'Auto fix for common JSON errors',
     'Copy to clipboard and download as .json',
     'Syntax highlighting',
@@ -112,12 +113,14 @@ export function JsonFormatterIntro(): JSX.Element {
                     A JSON formatter is a tool that takes raw or minified JSON and rewrites it with indentation,
                     line breaks, and syntax highlighting so it is readable and easy to debug. Use one whenever you
                     need to inspect an API response, validate a config file, or track down a syntax error in JSON
-                    that arrived as a single unreadable line.
+                    that arrived as a single unreadable line. Syntax validation checks whether the text is JSON;
+                    optional JSON Schema validation checks whether valid JSON matches a documented shape.
                 </p>
                 <p className="c-tool-article__lead">
                     Our free Online JSON Formatter beautifies raw JSON instantly, adding indentation and color
                     highlights so you can actually read it. Paste your JSON and get a clear, error-checked output
-                    in seconds. Bonus: it even sorts object keys alphabetically for consistency.
+                    in seconds. Expand JSON Schema validation when you also want a first contract violation with
+                    a JSON Pointer and source position. Bonus: it even sorts object keys alphabetically for consistency.
                 </p>
             </div>
         </section>
@@ -150,7 +153,8 @@ export function JsonFormatterArticle(): JSX.Element {
                         <li><strong>Pretty-print:</strong> Beautifies and formats JSON data with selectable indentation (2 spaces, 4 spaces, or Tab).</li>
                         <li><strong>Minify:</strong> Compacts JSON to a single line with no whitespace via the "Minified" indentation option.</li>
                         <li><strong>Key Sorting:</strong> Optionally sorts object keys alphabetically for consistent output.</li>
-                        <li><strong>Validation:</strong> Validates JSON syntax with detailed error messages, the exact line and column, and a &ldquo;Go to error&rdquo; jump that highlights the offending character in your input.</li>
+                        <li><strong>Syntax validation:</strong> Validates strict JSON syntax with detailed error messages, the exact line and column, and a &ldquo;Go to error&rdquo; jump that highlights the offending character in your input.</li>
+                        <li><strong>JSON Schema validation:</strong> Optionally validates strict raw JSON against Draft 7 or Draft 2020-12. The schema draft is auto-detected from <code>$schema</code> (Draft 7 is the fallback), local fragment references are supported, and the first violation includes its JSON Pointer, rule, message, and source line/column.</li>
                         <li><strong>Auto Fix:</strong> Auto-fixes common JSON errors and is enabled by default.</li>
                         <li><strong>Copy to clipboard / Download:</strong> Copy formatted output with confirmation or download it as a <code>.json</code> file.</li>
                         <li><strong>Syntax highlighting:</strong> Color-coded keys and values improve readability in tree view.</li>
@@ -192,6 +196,10 @@ export function JsonFormatterArticle(): JSX.Element {
                 <ToolArticleSection id="json-formatter-limitations" title="JSON Formatter Current Limitations">
                     <ul>
                         <li>Large JSON files may impact performance.</li>
+                        <li>Schema validation accepts Draft 7 and Draft 2020-12 only, with a 256 KiB schema limit, maximum schema depth of 100, and a five-second worker deadline.</li>
+                        <li>Schema validation uses strict raw JSON. If Auto fix was needed to format the source, validation reports that it was not run until the source is valid JSON.</li>
+                        <li>Only fragment-local <code>$ref</code>, <code>$defs</code>, and <code>definitions</code> are supported. External references are rejected without network requests.</li>
+                        <li>The JSON Schema <code>format</code> keyword is treated as annotation only; it is not asserted.</li>
                         <li>The tool currently does not sort array elements and only sorts object keys.</li>
                         <li>Clipboard operations require a secure context such as HTTPS or localhost.</li>
                         <li>Does not preserve trailing commas.</li>
@@ -202,7 +210,7 @@ export function JsonFormatterArticle(): JSX.Element {
                 </ToolArticleSection>
 
                 <ToolArticleSection id="json-formatter-error-handling" title="Error Handling">
-                    <p>This JSON Formatter Tool provides specific error messages for common JSON syntax errors:</p>
+                    <p>This JSON Formatter Tool provides specific error messages for common JSON syntax errors and, when a schema is supplied, the first actionable schema violation:</p>
                     <ul>
                         <li>Missing or extra commas</li>
                         <li>Unclosed brackets or braces</li>
@@ -210,16 +218,16 @@ export function JsonFormatterArticle(): JSX.Element {
                         <li>Missing colons</li>
                         <li>Invalid values</li>
                     </ul>
-                    <p>You will see any errors below the input area, including the line and column where the tool detected the issue. Use the &ldquo;Go to error&rdquo; button to jump straight to that spot in your input, with the offending character selected.</p>
+                    <p>You will see syntax errors below the input area, including the line and column where the tool detected the issue. Schema diagnostics show the JSON Pointer, rule, message, and source line/column; use the jump action to select that location. Invalid schemas, unsupported drafts, external references, limits, and unavailable workers are reported without removing formatted output.</p>
                 </ToolArticleSection>
 
                 <ToolArticleSection id="json-formatter-privacy" title="Privacy & Security">
                     <ul>
-                        <li>100% client-side processing: all JSON formatting and validation happens in your browser.</li>
-                        <li>No server storage: your JSON data is never saved or transmitted to any server.</li>
-                        <li>Offline support: fully functional without an internet connection once loaded.</li>
-                        <li>Zero data collection: no cookies, tracking, or data persistence of any kind.</li>
-                        <li>Private sharing: the &ldquo;Share&rdquo; link stores your JSON in the URL&rsquo;s hash fragment, which browsers never send to a server.</li>
+                        <li>100% client-side processing: JSON formatting and JSON Schema validation happen in your browser.</li>
+                        <li>No tool-side storage or upload: JSON and schema text are not saved or transmitted by this formatter.</li>
+                        <li>Offline support: formatting works without an internet connection once loaded; schema validation works after its lazy validator chunk has loaded.</li>
+                        <li>Schema privacy: schema text and draft selection are not persisted and never appear in Share links.</li>
+                        <li>Private sharing: the &ldquo;Share&rdquo; link stores only JSON and formatter settings in the URL&rsquo;s hash fragment, which browsers never send to a server.</li>
                     </ul>
                 </ToolArticleSection>
 

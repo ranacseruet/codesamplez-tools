@@ -458,7 +458,83 @@ async function runJsonFormatterWorkerScenario(page) {
   if (copyOutputDisabled) {
     throw new Error('JSON Formatter did not enable Copy Output after formatting');
   }
+  const initialWorkerCount = await page.evaluate(() => {
+    const probe = /** @type {{ url: string }[] | undefined} */ (globalThis.__CST_WORKER_PROBE__);
+    return probe?.length ?? 0;
+  });
+  if (initialWorkerCount !== 1) {
+    throw new Error(`JSON Formatter started ${initialWorkerCount} workers before schema validation was activated`);
+  }
 
+  // Exercise every schema result family in the real browser. The disclosure is
+  // collapsed by default, and schema work is separate from the formatter
+  // worker tested above.
+  await page.locator('.jsonf-schema-disclosure > summary').click();
+  const exerciseSchemaStates = async () => {
+    await page.fill('#jsonSchemaInput', JSON.stringify({
+      $schema: 'https://json-schema.org/draft-07/schema#',
+      type: 'object',
+      required: ['name'],
+      properties: { name: { type: 'string' } }
+    }));
+    await page.fill('.jsonf-input-textarea', '{"name":"Ada"}');
+    await page.click('#formatJsonBtn');
+    await page.waitForFunction(() => document.querySelector('#jsonSchemaStatus')?.textContent?.includes('Valid against Draft 7'));
+    const valid = await page.locator('#jsonSchemaStatus').innerText();
+
+    await page.fill('.jsonf-input-textarea', '{"name":42}');
+    await page.click('#formatJsonBtn');
+    await page.waitForFunction(() => document.querySelector('#jsonSchemaStatus')?.textContent?.includes('Invalid data at /name'));
+    const violating = await page.locator('#jsonSchemaStatus').innerText();
+
+    await page.fill('#jsonSchemaInput', '{"type":');
+    await page.click('#formatJsonBtn');
+    await page.waitForFunction(() => document.querySelector('#jsonSchemaStatus')?.textContent?.includes('Invalid schema:'));
+    const malformed = await page.locator('#jsonSchemaStatus').innerText();
+
+    const externalRefUrl = 'https://example.invalid/codesamplez-schema.json';
+    const externalRequests = [];
+    const captureExternalRequest = (request) => {
+      if (request.url() === externalRefUrl) externalRequests.push(request.url());
+    };
+    page.on('request', captureExternalRequest);
+    await page.fill('#jsonSchemaInput', JSON.stringify({ $ref: externalRefUrl }));
+    await page.click('#formatJsonBtn');
+    await page.waitForFunction(() => document.querySelector('#jsonSchemaStatus')?.textContent?.includes('External $ref'));
+    page.off('request', captureExternalRequest);
+    if (externalRequests.length > 0) {
+      throw new Error('JSON Formatter attempted to fetch an external JSON Schema reference');
+    }
+
+    return { valid, violating, malformed, externalRefRequests: externalRequests.length };
+  };
+
+  const desktopSchema = await exerciseSchemaStates();
+  const schemaWorkerCount = await page.evaluate(() => {
+    const probe = /** @type {{ url: string }[] | undefined} */ (globalThis.__CST_WORKER_PROBE__);
+    return probe?.length ?? 0;
+  });
+  if (schemaWorkerCount <= initialWorkerCount) {
+    throw new Error('JSON Formatter did not lazy-load a dedicated schema worker after activation');
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileSchema = await exerciseSchemaStates();
+
+  // Terminate the memoized runner and remove Worker only for this final probe;
+  // production code must surface unavailable rather than validate on the main
+  // thread when the worker cannot be constructed.
+  await page.evaluate(() => {
+    const formatter = globalThis.jsonFormatter;
+    formatter?.lazySchemaRunner?.terminate?.();
+    globalThis.Worker = undefined;
+  });
+  await page.fill('#jsonSchemaInput', '{"type":"object"}');
+  await page.click('#formatJsonBtn');
+  await page.waitForFunction(() => document.querySelector('#jsonSchemaStatus')?.textContent?.includes('unavailable'));
+  const unavailableSchemaStatus = await page.locator('#jsonSchemaStatus').innerText();
+
+  await page.setViewportSize({ width: 1440, height: 900 });
   const populatedLayout = await assertJsonFormatterLayout(page, 'populated');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.click('.jsonf-tab[data-view="tree"]');
@@ -478,7 +554,18 @@ async function runJsonFormatterWorkerScenario(page) {
       },
     },
     outputLength: output.length,
-    copyOutputDisabled
+    copyOutputDisabled,
+    workers: {
+      initial: initialWorkerCount,
+      afterSchemaActivation: schemaWorkerCount
+    },
+    schema: {
+      desktop: desktopSchema,
+      mobile: {
+        ...mobileSchema,
+        unavailable: unavailableSchemaStatus
+      }
+    }
   };
 }
 

@@ -1,20 +1,22 @@
 # JSON Formatter
 
-A tool for formatting and validating JSON data with optional alphabetical key sorting and interactive node collapsing.
+A browser-based JSON Formatter with optional Draft 7 / Draft 2020-12 JSON Schema validation, alphabetical key sorting, and interactive node collapsing.
 
 ## Privacy & Security
-- 🔒 **100% Client-Side Processing**: All JSON formatting and validation happens in your browser
-- 🚫 **No Server Storage**: Your JSON data is never saved or transmitted to any server
-- 💻 **Offline Support**: Fully functional without internet connection once loaded
-- 🔐 **Zero Data Collection**: No cookies, tracking, or data persistence of any kind
-- 🔗 **Private Sharing**: The "Share" link stores your JSON in the URL's hash fragment, which browsers never send to a server
+- 🔒 **100% Client-Side Processing**: JSON formatting and JSON Schema validation happen in your browser
+- 🚫 **No Tool-Side Storage or Upload**: JSON and schema text are not saved or transmitted by this formatter
+- 💻 **Offline Support**: Formatting works without an internet connection once loaded; schema validation works after its lazy validator chunk has loaded
+- 🔐 **Schema Privacy**: Schema text and draft selection are not persisted and never appear in Share links
+- 🔗 **Private Sharing**: The "Share" link stores JSON and formatter settings in the URL's hash fragment, which browsers never send to a server
 
 ## Features
 - Pretty-print JSON with selectable indentation (2 spaces, 4 spaces, or Tab)
 - Minify JSON to a compact single line (the "Minified" indentation option)
 - Optional alphabetical sorting of object keys (enabled by default)
 - Auto-fix common JSON errors (enabled by default)
-- Validate JSON syntax with detailed error messages, including the line/column and a "Go to error" jump
+- Validate strict JSON syntax with detailed error messages, including the line/column and a "Go to error" jump
+- Optionally validate strict raw JSON against Draft 7 or Draft 2020-12 JSON Schema; report the first JSON Pointer/rule/message/source position
+- Auto-detect `$schema` declarations (Draft 7 when missing), support fragment-local `$ref`/`$defs`/`definitions`, and reject external references without fetching
 - Copy formatted output to clipboard with success confirmation
 - Collapsible/expandable JSON nodes, plus Expand All / Collapse All controls
 - Size comparison between original and formatted JSON
@@ -31,23 +33,27 @@ A tool for formatting and validating JSON data with optional alphabetical key so
 2. Toggle "Sort Keys" checkbox to enable/disable alphabetical sorting
 3. Toggle "Auto fix" checkbox to enable/disable automatic error correction.
 4. Choose an "Indent" option (2 spaces, 4 spaces, Tab, or Minified)
-5. Click "Format JSON" to validate and format
-   - The tool will automatically validate the JSON syntax
+5. Optionally expand "JSON Schema validation", paste or upload a schema, and leave Draft on "Auto-detect" or choose Draft 7 / Draft 2020-12
+   - Schema text stays local, is not saved, and is not included in Share links
+6. Click "Format JSON" without a schema, or "Format & Validate" with a schema
+   - The tool always validates JSON syntax
+   - With a schema, the validator checks strict raw JSON and reports only the first actionable violation
+   - If Auto fix was needed, formatted output is still shown but schema validation waits until the source is valid JSON
    - If valid, it will format with the selected indentation (defaults to 2 spaces)
    - Choosing "Minified" produces compact single-line JSON and switches to Plain View
    - Object keys will be sorted alphabetically if enabled
-6. In Tree View, use "Expand All" / "Collapse All" to fold or unfold every node at once
-7. Use "Copy Output" button to copy formatted JSON
+7. In Tree View, use "Expand All" / "Collapse All" to fold or unfold every node at once
+8. Use "Copy Output" button to copy formatted JSON
    - Uses modern Clipboard API with execCommand fallback
    - A temporary success message will appear when copied
-8. Click "Download" to save formatted JSON as a file
+9. Click "Download" to save formatted JSON as a file
    - Downloads as "formatted.json" with application/json MIME type
-9. Click "Sample Data" to load example JSON for testing
+10. Click "Sample Data" to load example JSON for testing
    - Loads a comprehensive sample with nested objects and arrays
-10. Invalid JSON will show specific error messages
+11. Invalid JSON or schema diagnostics will show specific messages
    - The error message will indicate the exact issue
    - Uses shared notification system for consistent display
-11. Click "Share" to copy a shareable link with your current JSON and settings
+12. Click "Share" to copy a shareable link with your current JSON and settings
     - The JSON and settings (indent, sort keys, auto fix) are LZ-compressed into the URL's hash fragment (`#j=...`), which browsers never send to a server
     - Opening the link auto-populates the input, restores the settings, and formats automatically
     - Blocked with an error notification if the compressed payload would make the URL impractically long (over ~8,000 characters) — use Download instead for very large JSON
@@ -168,6 +174,14 @@ Calculation methodology:
 - Reports the exact line and column of the first syntax error
 - Shows a "Go to error" button that focuses the input, scrolls to the error line, and selects the offending character (jump-to-error)
 
+### JSON Schema Validation
+- Uses a dedicated lazily loaded Web Worker with Ajv 8 and `json-source-map`; the existing formatting worker and initial bundle do not include the validator.
+- Supports Draft 7 and Draft 2020-12 with separate Ajv dialect implementations. `$schema` is auto-detected, with Draft 7 as the missing-declaration default.
+- Validates strict raw JSON with no data mutation, one actionable error (`allErrors: false`), and `format` treated as annotation (`validateFormats: false`).
+- Supports fragment-local `$ref`, `$defs`, and `definitions`; external references are rejected and never fetched.
+- Limits schemas to 256 KiB and depth 100, with a five-second worker deadline. A timeout or unavailable worker reports `unavailable` and never runs Ajv on the main thread.
+- Invalid JSON, invalid schemas, unsupported drafts, and schema violations preserve any formatted output. Violations include JSON Pointer, rule, message, and a line/column jump into the input.
+
 ### Clipboard Integration
 1. Attempts modern Clipboard API first (requires HTTPS/localhost)
 2. Falls back to document.execCommand for older browsers
@@ -196,7 +210,7 @@ Calculation methodology:
 - Comments in JSON are not supported (as per JSON specification)
 - The auto-fix feature is not a full JSON5 parser and may not fix all syntax errors.
 - Unicode characters in strings are not escaped/unescaped
-- No syntax highlighting (basic text rendering only)
+- JSON5 and JSONC syntax are not supported; Auto fix is intentionally limited and is not a full JSON5 parser
 
 ## UI Components
 - Uses shared component classes (c- prefix) for consistency

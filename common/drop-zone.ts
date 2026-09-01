@@ -56,7 +56,12 @@ export type DropZoneOptions = DropZoneBaseOptions &
         | { onFile: (file: File) => void; onText?: never }
     );
 
-function formatMegabytes(bytes: number): string {
+function formatSizeLimit(bytes: number): string {
+    if (bytes < 1024 * 1024) {
+        const kibibytes = bytes / 1024;
+        return kibibytes % 1 === 0 ? `${kibibytes} KiB` : `${kibibytes.toFixed(1)} KiB`;
+    }
+
     const megabytes = bytes / (1024 * 1024);
     // Whole numbers read better in an error toast ("limit 5 MB", not "5.0 MB").
     return megabytes % 1 === 0 ? `${megabytes} MB` : `${megabytes.toFixed(1)} MB`;
@@ -131,7 +136,7 @@ function processFile(
     const maxBytes = options.maxBytes ?? DROP_ZONE_MAX_BYTES;
 
     if (file.size > maxBytes) {
-        options.onError?.(`"${file.name}" is too large to load (limit ${formatMegabytes(maxBytes)}).`);
+        options.onError?.(`"${file.name}" is too large to load (limit ${formatSizeLimit(maxBytes)}).`);
         return;
     }
 

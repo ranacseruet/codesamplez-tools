@@ -12,6 +12,7 @@ import { JSON_FORMATTER_WORKER_CHAR_THRESHOLD as JSON_WORKER_CHAR_THRESHOLD } fr
 import {
   autoFixJSON,
   formatJson,
+  indexFromLineColumn,
   locateJsonError,
   parseIndentOption,
   sortKeysAlphabetically,
@@ -19,6 +20,11 @@ import {
   type JsonFormatRequest,
   type JsonFormatResult
 } from './json-format-core';
+import type {
+  SchemaDraft,
+  SchemaValidationRequest,
+  SchemaValidationResult
+} from './schema-validation-core';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { buildShareUrl, resolveSharePayload, SHARE_URL_MAX_LENGTH, type ShareUrlPayload } from './share-url';
@@ -80,6 +86,52 @@ export function JsonFormatterApp() {
           <span className="c-kbd" aria-hidden="true">⌘⏎</span>
         </button>
       </div>
+
+      <details className="jsonf-schema-disclosure">
+        <summary>JSON Schema validation <span className="jsonf-schema-optional">Optional</span></summary>
+        <div className="jsonf-schema-panel c-surface-card">
+          <div className="jsonf-schema-field">
+            <label htmlFor="jsonSchemaInput">JSON Schema</label>
+            <textarea
+              id="jsonSchemaInput"
+              className="jsonf-schema-textarea"
+              placeholder="Paste a Draft 7 or Draft 2020-12 schema here..."
+              aria-describedby="jsonSchemaHelper"
+            />
+          </div>
+          <div className="jsonf-schema-controls">
+            <FileUploadButton
+              id="json-schema-file"
+              className="c-button c-button--secondary"
+              label="Upload Schema"
+              accept="application/json,.json"
+              ariaLabel="Upload JSON Schema"
+            />
+            <div className="jsonf-schema-draft-item">
+              <label htmlFor="jsonSchemaDraft">Draft</label>
+              <select id="jsonSchemaDraft" aria-label="JSON Schema draft">
+                <option value="auto" selected>Auto-detect</option>
+                <option value="draft-07">Draft 7</option>
+                <option value="2020-12">Draft 2020-12</option>
+              </select>
+            </div>
+          </div>
+          <p id="jsonSchemaHelper" className="jsonf-schema-helper">
+            Draft 7 is used when <code>$schema</code> is missing. Validation runs locally on strict raw JSON; local fragment references are supported, while external references are not fetched.
+          </p>
+          <div className="jsonf-schema-status-row">
+            <div id="jsonSchemaStatus" className="jsonf-schema-status" role="status" aria-live="polite" />
+            <button
+              className="c-button c-button--secondary jsonf-schema-goto-error-btn"
+              id="goToSchemaErrorBtn"
+              type="button"
+              hidden
+            >
+              Go to source
+            </button>
+          </div>
+        </div>
+      </details>
 
       <div className="c-workbench c-workbench--two-col jsonf-workbench">
         <div className="o-panel jsonf-panel jsonf-input-panel c-surface-card c-surface-panel">
@@ -213,6 +265,12 @@ export class JSONFormatter {
   collapseAllBtn!: HTMLButtonElement;
   errorStatus!: HTMLElement;
   goToErrorBtn!: HTMLButtonElement;
+  schemaInput: HTMLTextAreaElement | null = null;
+  schemaDraft: HTMLSelectElement | null = null;
+  schemaStatus: HTMLElement | null = null;
+  goToSchemaErrorBtn: HTMLButtonElement | null = null;
+  schemaErrorIndex: number | null = null;
+  private schemaValidationRunId = 0;
   // 0-based offset of the current syntax error in the input, or null when valid.
   errorIndex: number | null = null;
   originalSizeEl!: HTMLElement;
@@ -226,6 +284,17 @@ export class JSONFormatter {
   private lazyFormatRunner: LazyRunner<JsonFormatRequest, JsonFormatResult> = createLazyRunner(
     () => import('./format-runner').then((module) => module.createFormatRunner),
     formatJson
+  );
+
+  // Unlike formatting, schema validation must never fall back to Ajv on the
+  // main thread. A missing/failed validator chunk therefore returns an
+  // explicit unavailable result while preserving any formatted output.
+  private lazySchemaRunner: LazyRunner<SchemaValidationRequest, SchemaValidationResult> = createLazyRunner(
+    () => import('./schema-validation-runner').then((module) => module.createSchemaValidationRunner),
+    () => ({
+      outcome: 'unavailable',
+      message: 'Schema validation is unavailable right now. Your formatted output is still available.'
+    })
   );
 
   constructor(initDom = true) {
@@ -253,6 +322,10 @@ export class JSONFormatter {
       this.collapseAllBtn = document.querySelector('#collapseAllBtn') as HTMLButtonElement;
       this.errorStatus = document.querySelector('#jsonErrorStatus') as HTMLElement;
       this.goToErrorBtn = document.querySelector('#goToErrorBtn') as HTMLButtonElement;
+      this.schemaInput = document.getElementById('jsonSchemaInput') as HTMLTextAreaElement | null;
+      this.schemaDraft = document.getElementById('jsonSchemaDraft') as HTMLSelectElement | null;
+      this.schemaStatus = document.getElementById('jsonSchemaStatus');
+      this.goToSchemaErrorBtn = document.getElementById('goToSchemaErrorBtn') as HTMLButtonElement | null;
       this.originalSizeEl = document.querySelector('.jsonf-original-size') as HTMLElement;
       this.formattedSizeEl = document.querySelector('.jsonf-formatted-size') as HTMLElement;
       // getElementById keeps this off the querySelector-count-sensitive path.
@@ -262,6 +335,12 @@ export class JSONFormatter {
       this.clearButtonInstance = new ClearButton(this.input);
 
       this.initializeEvents();
+      this.updatePrimaryActionLabel();
+      window.addEventListener('pagehide', (event: PageTransitionEvent) => {
+        if (event.persisted) return;
+        this.lazyFormatRunner.terminate();
+        this.lazySchemaRunner.terminate();
+      });
     }
   }
 
@@ -275,6 +354,117 @@ export class JSONFormatter {
     } else {
       this.formatBtn.textContent = text;
     }
+  }
+
+  private hasSchema(): boolean {
+    return Boolean(this.schemaInput?.value.trim());
+  }
+
+  private updatePrimaryActionLabel(): void {
+    if (this.formatBtn) {
+      this.setPrimaryButtonLabel(this.hasSchema() ? 'Format & Validate' : 'Format JSON');
+    }
+  }
+
+  private getSchemaDraft(): SchemaDraft {
+    const value = this.schemaDraft?.value;
+    return value === 'draft-07' || value === '2020-12' ? value : 'auto';
+  }
+
+  private clearSchemaError(): void {
+    this.schemaErrorIndex = null;
+    if (this.goToSchemaErrorBtn) {
+      this.goToSchemaErrorBtn.hidden = true;
+    }
+  }
+
+  private clearValidationStatus(invalidate = true): void {
+    if (invalidate) {
+      this.schemaValidationRunId += 1;
+    }
+    this.clearSchemaError();
+    if (this.schemaStatus) {
+      this.schemaStatus.textContent = '';
+      this.schemaStatus.classList.remove('error', 'success', 'warning');
+    }
+  }
+
+  private setValidationStatus(result: SchemaValidationResult): void {
+    if (!this.schemaStatus) return;
+
+    this.clearSchemaError();
+    this.schemaStatus.classList.remove('error', 'success', 'warning');
+
+    if (result.outcome === 'valid') {
+      this.schemaStatus.textContent = `Valid against ${result.draft === 'draft-07' ? 'Draft 7' : 'Draft 2020-12'}.`;
+      this.schemaStatus.classList.add('success');
+      return;
+    }
+
+    if (result.outcome === 'invalid-data') {
+      const { diagnostic } = result;
+      const pointer = diagnostic.pointer || '(root)';
+      this.schemaStatus.textContent = `Invalid data at ${pointer} — ${diagnostic.rule}: ${diagnostic.message} (line ${diagnostic.line}, col ${diagnostic.column}).`;
+      this.schemaStatus.classList.add('error');
+      this.schemaErrorIndex = indexFromLineColumn(this.input.value, diagnostic.line, diagnostic.column);
+      if (this.goToSchemaErrorBtn) {
+        this.goToSchemaErrorBtn.textContent = `Go to source (line ${diagnostic.line}, col ${diagnostic.column})`;
+        this.goToSchemaErrorBtn.hidden = false;
+        this.scrollInputToError(this.schemaErrorIndex);
+      }
+      return;
+    }
+
+    if (result.outcome === 'invalid-json') {
+      this.schemaStatus.textContent = `Schema validation not run until the source is valid JSON. ${result.message}`;
+      this.schemaStatus.classList.add('warning');
+      return;
+    }
+
+    if (result.outcome === 'invalid-schema') {
+      this.schemaStatus.textContent = `Invalid schema: ${result.message}${result.line ? ` (line ${result.line}, col ${result.column})` : ''}`;
+      this.schemaStatus.classList.add('error');
+      return;
+    }
+
+    if (result.outcome === 'unsupported-draft') {
+      this.schemaStatus.textContent = result.message;
+      this.schemaStatus.classList.add('warning');
+      return;
+    }
+
+    this.schemaStatus.textContent = result.message;
+    this.schemaStatus.classList.add('warning');
+  }
+
+  private async runSchemaValidation(
+    request: SchemaValidationRequest,
+    runId: number,
+    validationRunId: number
+  ): Promise<void> {
+    let result: SchemaValidationResult;
+    try {
+      result = await this.lazySchemaRunner.run(
+        request,
+        () => runId !== this.currentRunId || validationRunId !== this.schemaValidationRunId
+      );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      result = { outcome: 'unavailable', message: `Schema validation is unavailable: ${message}` };
+    }
+
+    if (runId !== this.currentRunId || validationRunId !== this.schemaValidationRunId) return;
+    this.setValidationStatus(result);
+  }
+
+  goToSchemaError(): void {
+    const input = this.input;
+    if (this.schemaErrorIndex === null || !(input instanceof HTMLTextAreaElement)) return;
+
+    input.focus();
+    const end = Math.min(this.schemaErrorIndex + 1, input.value.length);
+    input.setSelectionRange(this.schemaErrorIndex, end);
+    this.scrollInputToError(this.schemaErrorIndex);
   }
 
   initializeEvents() {
@@ -310,6 +500,32 @@ export class JSONFormatter {
       });
     }
 
+    if (this.schemaInput) {
+      registerDropZone(this.schemaInput, {
+        maxBytes: 256 * 1024,
+        onText: (text) => {
+          this.schemaInput!.value = text;
+          this.clearValidationStatus();
+          this.updatePrimaryActionLabel();
+        },
+        onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
+      });
+    }
+
+    const schemaFileInput = document.getElementById('json-schema-file');
+    if (schemaFileInput instanceof HTMLInputElement) {
+      registerFileInput(schemaFileInput, {
+        maxBytes: 256 * 1024,
+        onText: (text) => {
+          if (!this.schemaInput) return;
+          this.schemaInput.value = text;
+          this.clearValidationStatus();
+          this.updatePrimaryActionLabel();
+        },
+        onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
+      });
+    }
+
     if (this.shareBtn) {
       this.shareBtn.addEventListener('click', () => this.shareUrl());
     }
@@ -336,6 +552,21 @@ export class JSONFormatter {
       this.goToErrorBtn.addEventListener('click', () => this.goToError());
     }
 
+    if (this.goToSchemaErrorBtn) {
+      this.goToSchemaErrorBtn.addEventListener('click', () => this.goToSchemaError());
+    }
+
+    if (this.schemaInput) {
+      this.schemaInput.addEventListener('input', () => {
+        this.clearValidationStatus();
+        this.updatePrimaryActionLabel();
+      });
+    }
+
+    if (this.schemaDraft) {
+      this.schemaDraft.addEventListener('change', () => this.clearValidationStatus());
+    }
+
     if (this.input) {
       const debouncedUpdate = JSONFormatter.debounce(() => {
         this.updateStats(this.input.value, '');
@@ -343,6 +574,8 @@ export class JSONFormatter {
 
       this.input.addEventListener('input', () => {
         this.clearError();
+        this.clearValidationStatus();
+        this.updatePrimaryActionLabel();
         debouncedUpdate();
       });
     }
@@ -361,14 +594,18 @@ export class JSONFormatter {
   async formatJSON(): Promise<void> {
     // Capture current run ID to prevent stale results
     const runId = ++this.currentRunId;
+    const validationRunId = ++this.schemaValidationRunId;
+    const schemaText = this.schemaInput?.value ?? '';
+    const hasSchema = Boolean(schemaText.trim());
 
     try {
       let inputValue = this.input.value.trim();
 
       // UI Feedback: Show loading state (first-text-node swap keeps `.c-kbd`)
-      this.setPrimaryButtonLabel('Formatting...');
+      this.setPrimaryButtonLabel(hasSchema ? 'Formatting & validating...' : 'Formatting...');
       this.formatBtn.disabled = true;
       this.clearError();
+      this.clearValidationStatus(false);
 
       // Yield to main thread
       await scheduleTask(20);
@@ -422,7 +659,18 @@ export class JSONFormatter {
         this.switchView('plain');
       }
 
+      // Formatting is complete and its output is available independently of
+      // the optional schema check. Show the success toast before awaiting the
+      // worker so a slow or timed-out validation never delays or follows it.
       NotificationManager.show('JSON formatted successfully!', 2000, { type: 'success' });
+
+      if (hasSchema) {
+        await this.runSchemaValidation(
+          { data: this.input.value, schema: schemaText, draft: this.getSchemaDraft() },
+          runId,
+          validationRunId
+        );
+      }
     } catch (error: unknown) {
       const fallbackMessage = error instanceof Error ? error.message : String(error);
       this.reportJsonError(this.input.value, this.autoFixCheckbox.checked, fallbackMessage);
@@ -436,10 +684,18 @@ export class JSONFormatter {
         this.emptyStateEl.style.display = '';
       }
       this.updateStats(this.input.value, '');
+
+      if (hasSchema && runId === this.currentRunId) {
+        await this.runSchemaValidation(
+          { data: this.input.value, schema: schemaText, draft: this.getSchemaDraft() },
+          runId,
+          validationRunId
+        );
+      }
     } finally {
       // Restore UI state ONLY if this is still the current run
       if (runId === this.currentRunId) {
-        this.setPrimaryButtonLabel('Format JSON');
+        this.updatePrimaryActionLabel();
         this.formatBtn.disabled = false;
       }
     }
@@ -799,6 +1055,8 @@ export class JSONFormatter {
     };
 
     this.input.value = JSON.stringify(sampleData);
+    this.clearValidationStatus();
+    this.updatePrimaryActionLabel();
     this.clearButtonInstance.updateVisibility(); // Explicitly update ClearButton visibility
     this.formatJSON();
     NotificationManager.show('Sample data loaded successfully!', 2000, { type: 'success' });
@@ -810,6 +1068,8 @@ export class JSONFormatter {
    */
   loadDroppedText(text: string, fileName: string): void {
     this.input.value = text;
+    this.clearValidationStatus();
+    this.updatePrimaryActionLabel();
     this.clearButtonInstance.updateVisibility();
     // Toast before formatting, not after: `formatJSON` raises its own
     // success toast, and they share one notification element — announcing the
@@ -868,6 +1128,8 @@ export class JSONFormatter {
     if (!payload) return;
 
     this.input.value = payload.input;
+    this.clearValidationStatus();
+    this.updatePrimaryActionLabel();
     this.sortCheckbox.checked = payload.sortKeys;
     this.autoFixCheckbox.checked = payload.autoFix;
     this.indentSelect.value = String(payload.indent);

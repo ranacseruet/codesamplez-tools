@@ -173,6 +173,17 @@ describe('registerDropZone', () => {
         await waitFor(() => expect(onError).toHaveBeenCalledWith(expect.stringContaining('limit 5 MB')));
     });
 
+    it('reports sub-megabyte limits in kibibytes', async () => {
+        const onError = jest.fn();
+        cleanup = registerDropZone(target, { onText: jest.fn(), onError, maxBytes: 256 * 1024 });
+        const oversized = new File(['x'], 'schema.json');
+        Object.defineProperty(oversized, 'size', { value: 257 * 1024 });
+
+        fire(target, 'drop', fileDrag([oversized]));
+
+        await waitFor(() => expect(onError).toHaveBeenCalledWith(expect.stringContaining('limit 256 KiB')));
+    });
+
     it('rejects binary content on the text path', async () => {
         const onText = jest.fn();
         const onError = jest.fn();
