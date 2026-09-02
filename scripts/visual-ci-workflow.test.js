@@ -47,12 +47,12 @@ describe('Visual CI workflow contract', () => {
     expect(currentStep.run).toMatch(/::notice::Skipping baseline publication/);
   });
 
-  it('keeps the canonical hosted baseline at the full 22-identity configuration', () => {
+  it('keeps the canonical hosted baseline at the full 24-identity configuration', () => {
     const config = JSON.parse(fs.readFileSync(SNAPDRIFT_CONFIG_PATH, 'utf8'));
     const routeIds = config.routes.map((route) => route.id);
 
     expect(config.provider).toBe('snap');
-    expect(routeIds).toHaveLength(22);
+    expect(routeIds).toHaveLength(24);
     expect(new Set(routeIds).size).toBe(routeIds.length);
   });
 

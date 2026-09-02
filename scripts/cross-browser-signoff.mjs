@@ -103,6 +103,13 @@ const scenarios = [
     waits: ['#app-shell-header .cst-shell__header', '.jsonf-input-textarea', '#formatJsonBtn'],
     workerPath: '/json-formatter/',
     exercise: runJsonFormatterWorkerScenario
+  },
+  {
+    name: 'json-editor-tool',
+    toolId: 'json-editor-tool',
+    url: '/json-editor/',
+    waits: ['#app-shell-header .cst-shell__header', '#json-editor-preview'],
+    exercise: runJsonEditorScenario
   }
 ];
 
@@ -566,6 +573,63 @@ async function runJsonFormatterWorkerScenario(page) {
         unavailable: unavailableSchemaStatus
       }
     }
+  };
+}
+
+/**
+ * @param {import('playwright').Page} page
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function runJsonEditorScenario(page) {
+  const input = JSON.stringify({ title: 'Alpha', enabled: true, count: 2 });
+  await page.locator('.jsone-import-disclosure > summary').click();
+  await waitVisible(page, '#json-editor-import-input');
+  await page.fill('#json-editor-import-input', input);
+  await page.getByRole('button', { name: 'Import JSON' }).click();
+  await page.waitForFunction(() => {
+    const preview = document.querySelector('#json-editor-preview');
+    return preview instanceof HTMLTextAreaElement && preview.value.includes('"title": "Alpha"');
+  });
+
+  const titleInput = page.locator('.jsone-key-input').first();
+  await titleInput.fill('name');
+  await titleInput.press('Enter');
+  const valueInput = page.locator('.jsone-value-input').first();
+  await valueInput.fill('Beta');
+  await valueInput.press('Enter');
+  await page.waitForFunction(() => {
+    const preview = document.querySelector('#json-editor-preview');
+    return preview instanceof HTMLTextAreaElement && preview.value.includes('"name": "Beta"');
+  });
+
+  const editedPreview = await page.locator('#json-editor-preview').inputValue();
+  await page.getByRole('button', { name: 'Undo last change' }).click();
+  await page.waitForFunction(() => {
+    const preview = document.querySelector('#json-editor-preview');
+    return preview instanceof HTMLTextAreaElement && preview.value.includes('"name": "Alpha"');
+  });
+  const undonePreview = await page.locator('#json-editor-preview').inputValue();
+
+  await page.getByRole('button', { name: 'Redo last undone change' }).click();
+  await page.waitForFunction(() => {
+    const preview = document.querySelector('#json-editor-preview');
+    return preview instanceof HTMLTextAreaElement && preview.value.includes('"name": "Beta"');
+  });
+  const redonePreview = await page.locator('#json-editor-preview').inputValue();
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download' }).click();
+  const download = await downloadPromise;
+  if (download.suggestedFilename() !== 'edited.json') {
+    throw new Error(`JSON Editor export filename was ${download.suggestedFilename()}`);
+  }
+
+  return {
+    importedLength: input.length,
+    editedHasUpdatedKey: editedPreview.includes('"name": "Beta"'),
+    undoRestoredValue: undonePreview.includes('"name": "Alpha"'),
+    redoRestoredValue: redonePreview.includes('"name": "Beta"'),
+    exportFilename: download.suggestedFilename()
   };
 }
 

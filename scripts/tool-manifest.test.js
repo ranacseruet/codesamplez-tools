@@ -42,7 +42,7 @@ const PROD_SITE_BASE_URL = getSiteBaseUrl();
 const PROD_SITE_STATIC_ROOT_URI = getSiteStaticRootUri();
 const SITE_DESCRIPTION = 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.';
 const ROOT_PAGE_TITLE = 'Online Developer Tools';
-const ROOT_PAGE_DESCRIPTION = 'Free online developer tools for debugging, formatting and validation needs. Access 10+ utilities to help boost your day-to-day productivity.';
+const ROOT_PAGE_DESCRIPTION = 'Free online developer tools for debugging, formatting and validation needs. Access 11+ utilities to help boost your day-to-day productivity.';
 
 function buildProdSiteHref(publicPath) {
   return new URL(publicPath.replace(/^\/+/, ''), `${PROD_SITE_BASE_URL}/`).toString();
@@ -407,7 +407,7 @@ describe('tool-manifest', () => {
   it('discovers tool definitions from tool-local metadata files', () => {
     const toolDefinitions = getToolDefinitions();
 
-    expect(toolDefinitions).toHaveLength(10);
+    expect(toolDefinitions).toHaveLength(11);
     expect(toolDefinitions).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: 'jwt-decoder-tool',
@@ -488,7 +488,8 @@ describe('tool-manifest', () => {
         tools: [
           expect.objectContaining({ id: 'json-formatter-tool', catalogOrder: 1 }),
           expect.objectContaining({ id: 'js-minifier-tool', catalogOrder: 2 }),
-          expect.objectContaining({ id: 'css-minifier-tool', catalogOrder: 3 })
+          expect.objectContaining({ id: 'css-minifier-tool', catalogOrder: 3 }),
+          expect.objectContaining({ id: 'json-editor-tool', catalogOrder: 4 })
         ]
       }),
       expect.objectContaining({
@@ -520,8 +521,22 @@ describe('tool-manifest', () => {
       expect.objectContaining({
         id: 'fixture-tool',
         keywords: [],
+        structuredData: { includeFaq: true, includeHowTo: true },
         absolutePageUrl: buildProdSiteHref('/fixture-tool/'),
         absoluteFeaturedImageUrl: buildProdStaticAssetUri('/fixture-tool/images/featured.png')
+      })
+    ]);
+
+    expect(withMockedManifestFiles({
+      metadataBySourceRoot: {
+        fixture: createMockToolMetadata({
+          structuredData: { includeFaq: false, includeHowTo: false }
+        })
+      }
+    }, () => getToolDefinitions())).toEqual([
+      expect.objectContaining({
+        id: 'fixture-tool',
+        structuredData: { includeFaq: false, includeHowTo: false }
       })
     ]);
 
@@ -560,6 +575,14 @@ describe('tool-manifest', () => {
     expect(() => withMockedManifestFiles({
       metadataBySourceRoot: {
         fixture: createMockToolMetadata({
+          structuredData: { includeFaq: /** @type {any} */ ('false') }
+        })
+      }
+    }, () => getToolDefinitions())).toThrow('Tool structuredData.includeFaq must be a boolean');
+
+    expect(() => withMockedManifestFiles({
+      metadataBySourceRoot: {
+        fixture: createMockToolMetadata({
           scriptType: /** @type {any} */ ('esm')
         })
       }
@@ -582,6 +605,12 @@ describe('tool-manifest', () => {
       sourceRoot: 'data-format-converter',
       outputDir: 'data-format-converter',
       publicPath: '/data-format-converter/'
+    }));
+    expect(getToolById('json-editor-tool')).toEqual(expect.objectContaining({
+      structuredData: { includeFaq: false, includeHowTo: false }
+    }));
+    expect(getToolById('json-formatter-tool')).toEqual(expect.objectContaining({
+      structuredData: { includeFaq: true, includeHowTo: true }
     }));
     expect(getToolById('qr-code-generator')).toEqual(expect.objectContaining({
       id: 'qr-code-generator',

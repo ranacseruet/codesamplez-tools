@@ -16,6 +16,7 @@ body:
         - diff-checker-tool
         - js-minifier-tool
         - json-formatter-tool
+        - json-editor-tool
         - jwt-builder-tool
         - jwt-decoder-tool
         - qr-code-generator

@@ -86,7 +86,7 @@ describe('ToolSearch', () => {
         expect(itemTitles).toEqual(['Diff Checker', 'Data Format Converter', 'Text Analyzer']);
         expect(visibleCardIds()).toEqual(['diff-checker-tool', 'text-analyzer-tool']);
         expect(hiddenGroupIds()).toEqual(['code-formatters']);
-        expect(root.querySelector('.tool-search__count')?.textContent).toContain('3 of 10');
+        expect(root.querySelector('.tool-search__count')?.textContent).toContain('3 of 11');
     });
 
     it('matches across descriptions and supports multi-token queries', async () => {

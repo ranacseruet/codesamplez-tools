@@ -53,6 +53,11 @@ const RELATED_TOOL_REASONS = {
         'jwt-decoder-tool': 'Decode a token and read its JSON payload',
         'js-minifier-tool': 'Minify the JavaScript that consumes it'
     },
+    'json-editor-tool': {
+        'json-formatter-tool': 'Format the JSON you just built',
+        'data-format-converter': 'Convert this JSON to YAML or XML',
+        'diff-checker-tool': 'Compare this document with another version'
+    },
     'jwt-builder-tool': {
         'jwt-decoder-tool': 'Verify the token you just signed',
         'base64-converter-tool': 'Inspect the raw Base64 segments',

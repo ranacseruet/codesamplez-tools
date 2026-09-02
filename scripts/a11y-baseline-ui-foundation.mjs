@@ -38,6 +38,66 @@ async function waitVisible(page, selector, timeout = 10000) {
 }
 
 /**
+ * @param {import('playwright').Page} page
+ * @param {string} route
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function assertMobileHeaderLayout(page, route) {
+  const metrics = await page.evaluate(() => {
+    const appbar = document.querySelector('.cst-appbar');
+    const inner = document.querySelector('.cst-appbar__inner');
+    const brand = document.querySelector('.cst-shell__brand');
+    const actions = document.querySelector('.cst-shell__header-actions');
+    const themeToggle = document.querySelector('.cst-shell__theme-toggle');
+
+    if (!appbar || !inner || !brand || !actions || !themeToggle) {
+      throw new Error('Shared mobile header controls are missing');
+    }
+
+    const appbarRect = appbar.getBoundingClientRect();
+    const innerRect = inner.getBoundingClientRect();
+    const brandRect = brand.getBoundingClientRect();
+    const actionsRect = actions.getBoundingClientRect();
+    const themeRect = themeToggle.getBoundingClientRect();
+    const brandStyle = getComputedStyle(brand);
+    const actionsStyle = getComputedStyle(actions);
+
+    return {
+      actionsFlexWrap: actionsStyle.flexWrap,
+      brandOverflow: brandStyle.overflow,
+      brandTextOverflow: brandStyle.textOverflow,
+      brandWhiteSpace: brandStyle.whiteSpace,
+      appbarTop: appbarRect.top,
+      appbarBottom: appbarRect.bottom,
+      innerRight: innerRect.right,
+      brandRight: brandRect.right,
+      actionsLeft: actionsRect.left,
+      actionsRight: actionsRect.right,
+      themeTop: themeRect.top,
+      themeBottom: themeRect.bottom
+    };
+  });
+
+  if (metrics.actionsFlexWrap !== 'nowrap') {
+    throw new Error(`${route} mobile header actions are allowed to wrap`);
+  }
+  if (metrics.brandOverflow !== 'hidden' || metrics.brandTextOverflow !== 'ellipsis' || metrics.brandWhiteSpace !== 'nowrap') {
+    throw new Error(`${route} mobile brand does not use ellipsis overflow`);
+  }
+  if (Number(metrics.brandRight) > Number(metrics.actionsLeft) + 1) {
+    throw new Error(`${route} mobile brand overlaps the header actions`);
+  }
+  if (Number(metrics.actionsRight) > Number(metrics.innerRight) + 1) {
+    throw new Error(`${route} mobile header actions overflow the app bar`);
+  }
+  if (Number(metrics.themeTop) < Number(metrics.appbarTop) - 1 || Number(metrics.themeBottom) > Number(metrics.appbarBottom) + 1) {
+    throw new Error(`${route} mobile theme toggle escapes the fixed app bar height`);
+  }
+
+  return { mobileHeader: metrics };
+}
+
+/**
  * @param {Array<{
  *   id: string,
  *   impact?: string | null,
@@ -332,7 +392,35 @@ async function run() {
         await jsonFormatterMobile.locator('.jsonf-schema-disclosure > summary').click();
         await waitVisible(jsonFormatterMobile, '#jsonSchemaInput');
         const expanded = await analyzePageA11y(jsonFormatterMobile);
-        return mergeA11yStateReports('/json-formatter/', 'mobile-iphone12', initial, expanded);
+        const headerLayout = await assertMobileHeaderLayout(jsonFormatterMobile, '/json-formatter/');
+        return { ...mergeA11yStateReports('/json-formatter/', 'mobile-iphone12', initial, expanded), ...headerLayout };
+      });
+    }
+
+    if (shouldRunTool('json-editor-tool')) {
+      const jsonEditorDesktop = await desktop.newPage();
+      await record('json-editor-tool desktop a11y baseline', async () => {
+        await jsonEditorDesktop.goto(`${baseUrl}/json-editor/`, { waitUntil: 'networkidle' });
+        await waitVisible(jsonEditorDesktop, '#app-shell-header .cst-appbar');
+        await waitVisible(jsonEditorDesktop, '#json-editor-preview');
+        const collapsed = await analyzePageA11y(jsonEditorDesktop);
+        await jsonEditorDesktop.locator('.jsone-import-disclosure > summary').click();
+        await waitVisible(jsonEditorDesktop, '#json-editor-import-input');
+        const expanded = await analyzePageA11y(jsonEditorDesktop);
+        return mergeA11yStateReports('/json-editor/', 'desktop', collapsed, expanded);
+      });
+
+      const jsonEditorMobile = await mobile.newPage();
+      await record('json-editor-tool mobile a11y baseline', async () => {
+        await jsonEditorMobile.goto(`${baseUrl}/json-editor/`, { waitUntil: 'networkidle' });
+        await waitVisible(jsonEditorMobile, '#app-shell-header .cst-appbar');
+        await waitVisible(jsonEditorMobile, '#json-editor-preview');
+        const collapsed = await analyzePageA11y(jsonEditorMobile);
+        await jsonEditorMobile.locator('.jsone-import-disclosure > summary').click();
+        await waitVisible(jsonEditorMobile, '#json-editor-import-input');
+        const expanded = await analyzePageA11y(jsonEditorMobile);
+        const headerLayout = await assertMobileHeaderLayout(jsonEditorMobile, '/json-editor/');
+        return { ...mergeA11yStateReports('/json-editor/', 'mobile-iphone12', collapsed, expanded), ...headerLayout };
       });
     }
 

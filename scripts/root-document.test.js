@@ -32,7 +32,7 @@ describe('root document generation', () => {
         const html = generateRootDocument();
 
     expect(html).toContain('<title>Online Developer Tools | CodeSamplez</title>');
-    expect(html).toContain('<meta name="description" content="Free online developer tools for debugging, formatting and validation needs. Access 10+ utilities to help boost your day-to-day productivity.">');
+    expect(html).toContain('<meta name="description" content="Free online developer tools for debugging, formatting and validation needs. Access 11+ utilities to help boost your day-to-day productivity.">');
     expect(html).toContain('<meta name="theme-color" content="#0b0b11">');
     expect(html).toContain('<html lang="en" data-theme="dark">');
     expect(html).toContain("localStorage.getItem('cst-standalone-theme-mode')");
@@ -64,8 +64,9 @@ describe('root document generation', () => {
     expect(html).toContain('"@type":"CollectionPage"');
     expect(html).toContain('"@type":"ItemList"');
     expect(html).toContain('"@type":["WebApplication","SoftwareApplication"]');
-    expect(html).toContain('"numberOfItems":10');
+    expect(html).toContain('"numberOfItems":11');
     expect(html).toContain(`"url":"${buildSiteHref('/json-formatter/')}"`);
+    expect(html).toContain(`"url":"${buildSiteHref('/json-editor/')}"`);
     expect(html).toContain(`"url":"${buildSiteHref('/text-analyzer/')}"`);
     expect(html).toContain('What are Online Developer Tools?');
     expect(html).toContain('Why Use These Free Developer Tools?');
@@ -77,6 +78,7 @@ describe('root document generation', () => {
     expect(html).toContain('Encoders &amp; Decoders');
     expect(html).toContain('Text Analysis &amp; Diff Tools');
     expect(html).toContain('Format, validate JSON syntax, and optionally check JSON Schema contracts in one client-side tool.');
+    expect(html).toContain('Build and edit JSON with a visual tree editor. Import JSON locally, add or rearrange values, and copy or download the finished document.');
     expect(html).toContain('Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.');
     expect(html).toContain('Analyze text to get insights like character count, word count, line count, and other useful text statistics.');
     expect(html).toContain('<span class="tool-icon-tile" aria-hidden="true"><svg class="cst-icon"');
@@ -84,7 +86,7 @@ describe('root document generation', () => {
     // non-live tools get a status badge.
     expect(html).not.toContain('tool-status--live');
     // v4 hero: eyebrow stats, tagline, CTA pair, search island shell.
-    expect(html).toContain('<p class="hero-eyebrow">// 10 tools · 100% client-side · 0 uploads</p>');
+    expect(html).toContain('<p class="hero-eyebrow">// 11 tools · 100% client-side · 0 uploads</p>');
     expect(html).toContain('your data never leaves the tab');
     expect(html).toContain('<a class="cta-button" href="#tools">Browse tools');
     expect(html).toContain('<a class="cta-button cta-button--ghost" href="#what-are-online-developer-tools">Why client-side?</a>');

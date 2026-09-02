@@ -103,6 +103,9 @@ const DEFAULT_FAIL_PERCENT = 10;
 // its stale-result/worker dispatch UI. Ajv 8 and json-source-map remain in the
 // validator's lazy async chunks (not the initial bundle); this baseline records
 // the intentional main-thread UI growth while keeping the next regression visible.
+// `json-editor-tool` is measured from its initial production bundle; the
+// dependency-free visual tree editor keeps parsing and serialization in the
+// main bundle and has no editor library or worker chunk.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 49773,
@@ -112,6 +115,7 @@ const JS_RAW_BASELINES = Object.freeze({
     'jwt-decoder-tool': 70827,
     'base64-converter-tool': 76402,
     'json-formatter-tool': 71306,
+    'json-editor-tool': 63226,
     'css-minifier-tool': 66115,
     'text-analyzer-tool': 46389,
     'qr-code-generator': 65847

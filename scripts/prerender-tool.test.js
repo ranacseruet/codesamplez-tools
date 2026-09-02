@@ -110,6 +110,22 @@ describe('generic tool prerender helpers', () => {
         expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
     });
 
+    it('renders json-editor app markup for server-side prerender', () => {
+        const appMarkup = renderToolPrerenderMarkup('json-editor-tool');
+        const afterMarkup = renderToolAfterAppPrerenderMarkup('json-editor-tool');
+
+        expect(appMarkup).toContain('id="json-editor-import-input"');
+        expect(appMarkup).toContain('id="json-editor-preview"');
+        expect(appMarkup).toContain('Visual builder');
+        // Article content is prerendered outside the app root, so the
+        // hydrated bundle contains only the interactive editor surface.
+        expect(afterMarkup).toContain('Use this free online JSON editor to build and edit JSON objects and arrays.');
+        expect(appMarkup).not.toContain('Use this free online JSON editor to build and edit JSON objects and arrays.');
+        expect(afterMarkup).toContain('How to Build JSON (Step-by-Step)');
+        expect(afterMarkup).toContain('JSON Editor FAQs');
+        expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
+    });
+
     it('renders js-minifier app markup for server-side prerender', () => {
         const appMarkup = renderToolPrerenderMarkup('js-minifier-tool');
         const afterMarkup = renderToolAfterAppPrerenderMarkup('js-minifier-tool');

@@ -27,6 +27,10 @@ const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
  */
 
 /**
+ * @typedef {{ includeFaq: boolean, includeHowTo: boolean }} ToolStructuredDataOptions
+ */
+
+/**
  * @typedef {{ id: string, label: string }} CatalogGroupDefinition
  * @typedef {{ title: string, description: string, absoluteUrl: string, staticRootUri: string, imageUrl: string }} RootPageDefinition
  * @typedef {{ name: string, url: string, logo: string, sameAs: string[] }} OrganizationDefinition
@@ -68,6 +72,7 @@ const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
  *   icon: string | null,
  *   status: 'live' | 'soon',
  *   keywords: string[],
+ *   structuredData: ToolStructuredDataOptions,
  *   appRootId: string,
  *   publicPath: string,
  *   absolutePageUrl: string,
@@ -105,6 +110,7 @@ const DEFAULT_DEVELOPMENT_SITE_ORIGIN = 'http://localhost:8081';
  *   icon: string | null,
  *   status: 'live' | 'soon',
  *   keywords?: string[],
+ *   structuredData?: { includeFaq?: boolean, includeHowTo?: boolean },
  *   catalogGroupId: string,
  *   catalogOrder: number,
  *   appRootId: string,
@@ -358,6 +364,48 @@ function normalizeToolStatus(value) {
 /**
  * @param {unknown} value
  * @param {string} label
+ * @param {boolean} fallback
+ * @returns {boolean}
+ */
+function normalizeOptionalBoolean(value, label, fallback) {
+    if (typeof value === 'undefined') {
+        return fallback;
+    }
+
+    if (typeof value !== 'boolean') {
+        throw new Error(`${label} must be a boolean`);
+    }
+
+    return value;
+}
+
+/**
+ * FAQ and HowTo structured data are enabled by default so existing tools keep
+ * their current generated graph. A tool can explicitly opt out of either
+ * content type when the markup is useful on-page but no longer belongs in its
+ * search-structured-data graph.
+ * @param {unknown} value
+ * @returns {ToolStructuredDataOptions}
+ */
+function normalizeStructuredDataOptions(value) {
+    if (typeof value === 'undefined') {
+        return { includeFaq: true, includeHowTo: true };
+    }
+
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        throw new Error('Tool structuredData must be an object');
+    }
+
+    const structuredDataRecord = /** @type {Record<string, unknown>} */ (value);
+    return {
+        includeFaq: normalizeOptionalBoolean(structuredDataRecord.includeFaq, 'Tool structuredData.includeFaq', true),
+        includeHowTo: normalizeOptionalBoolean(structuredDataRecord.includeHowTo, 'Tool structuredData.includeHowTo', true)
+    };
+}
+
+/**
+ * @param {unknown} value
+ * @param {string} label
  * @returns {string[]}
  */
 function normalizeOptionalStringArray(value, label) {
@@ -485,6 +533,7 @@ function readToolMetadata(metadataPath) {
         icon: normalizeOptionalString(metadataRecord.icon, 'Tool icon'),
         status: normalizeToolStatus(metadataRecord.status),
         keywords: normalizeOptionalStringArray(metadataRecord.keywords, 'Tool keywords'),
+        structuredData: normalizeStructuredDataOptions(metadataRecord.structuredData),
         catalogGroupId: requireNonEmptyString(metadataRecord.catalogGroupId, 'Tool catalogGroupId'),
         catalogOrder: requirePositiveInteger(metadataRecord.catalogOrder, 'Tool catalogOrder'),
         appRootId: requireNonEmptyString(metadataRecord.appRootId, 'Tool appRootId'),
@@ -556,6 +605,7 @@ function createToolDefinition(metadataPath) {
         icon: metadata.icon,
         status: metadata.status,
         keywords: metadata.keywords || [],
+        structuredData: normalizeStructuredDataOptions(metadata.structuredData),
         appRootId: metadata.appRootId,
         publicPath,
         absolutePageUrl,

@@ -243,6 +243,26 @@ describe('tool document generation', () => {
         expect(html).toContain('"featureList":["Pretty-print with selectable indentation"');
     });
 
+    it('renders visible SEO content and current structured data for json-editor', () => {
+        const html = generateToolDocument('json-editor-tool');
+
+        expect(html).toContain('<title>JSON Editor — Build JSON Online | Free Online Dev Tools by CodeSamplez</title>');
+        expect(html).toContain('<meta name="description" content="Free online JSON editor to build and edit JSON visually. Import existing JSON, then copy or download the result locally.">');
+        expect(html).toContain(`<link rel="canonical" href="${buildSiteHref('/json-editor/')}">`);
+        expect(html).toContain('Use this free online JSON editor to build and edit JSON objects and arrays.');
+        expect(html).toContain('"@type":"WebPage"');
+        expect(html).toContain(`"mainEntity":{"@id":"${buildSiteHref('/json-editor/')}#webapplication"}`);
+        expect(html).toContain('"@type":["WebApplication","SoftwareApplication"]');
+        expect(html).toContain('"@type":"BreadcrumbList"');
+        expect(html).toContain('"featureList":["Visual object and array tree builder"');
+        expect(html).toContain('JSON Editor FAQs');
+        expect(html).toContain('How to Build JSON (Step-by-Step)');
+        expect(html).not.toContain('"@type":"FAQPage"');
+        expect(html).not.toContain('"@type":"HowTo"');
+        expect(html).toContain('id="json-editor-import-input"');
+        expect(html).toContain('id="json-editor-preview"');
+    });
+
     it('renders FAQPage structured data for css-minifier', () => {
         const html = generateToolDocument('css-minifier-tool');
 

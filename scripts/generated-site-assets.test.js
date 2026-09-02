@@ -4,7 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { XMLParser } = require('fast-xml-parser');
-const { getGroupedToolDefinitions, getRootPageDefinition, getToolDefinitions } = require('./tool-manifest');
+const { getGroupedToolDefinitions, getRootPageDefinition, getToolById, getToolDefinitions } = require('./tool-manifest');
 const {
     buildLlmsTxt,
     buildRobotsTxt,
@@ -81,6 +81,7 @@ describe('generated site assets', () => {
 
         expect(locations).toEqual(expectedLocations);
         expect(new Set(locations).size).toBe(expectedLocations.length);
+        expect(locations).toContain(getToolById('json-editor-tool').absolutePageUrl);
         expect(locations.some((location) => location.endsWith('/index.html'))).toBe(false);
         expect(locations.some((location) => location.includes('/styles.css'))).toBe(false);
         expect(locations.some((location) => location.includes('/root-shell/'))).toBe(false);

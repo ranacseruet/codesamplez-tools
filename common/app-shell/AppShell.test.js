@@ -190,7 +190,7 @@ describe('AppShell components', () => {
             'Encoders & Decoders',
             'Text Analysis & Diff Tools'
         ]);
-        expect(root.querySelectorAll('.cst-shell__footer-list a.cst-shell__footer-link')).toHaveLength(10);
+        expect(root.querySelectorAll('.cst-shell__footer-list a.cst-shell__footer-link')).toHaveLength(11);
         // Bottom row keeps the outbound links + privacy line.
         const bottom = root.querySelector('.cst-shell__footer-bottom');
         expect(bottom?.textContent).toContain('Client-side by design');

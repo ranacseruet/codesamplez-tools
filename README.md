@@ -22,6 +22,7 @@ A collection of browser-based developer utilities that run client-side and build
 - `text-analyzer-tool`
 - `js-minifier-tool`
 - `json-formatter-tool`
+- `json-editor-tool`
 - `jwt-builder-tool`
 - `css-minifier-tool`
 - `qr-code-generator`

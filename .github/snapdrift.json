@@ -130,6 +130,22 @@
       ]
     },
     {
+      "id": "json-editor-desktop",
+      "path": "/json-editor/",
+      "viewport": "desktop",
+      "changePaths": [
+        "json-editor/"
+      ]
+    },
+    {
+      "id": "json-editor-mobile",
+      "path": "/json-editor/",
+      "viewport": "mobile",
+      "changePaths": [
+        "json-editor/"
+      ]
+    },
+    {
       "id": "css-minifier-desktop",
       "path": "/css-minifier/",
       "viewport": "desktop",

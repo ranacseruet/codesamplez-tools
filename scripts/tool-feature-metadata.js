@@ -9,6 +9,11 @@ const TOOL_FEATURE_REGISTRY = {
         ensureBabelRegister();
         const { FEATURE_LIST } = require(path.resolve(__dirname, '../json-formatter/content'));
         return FEATURE_LIST;
+    },
+    'json-editor-tool': () => {
+        ensureBabelRegister();
+        const { FEATURE_LIST } = require(path.resolve(__dirname, '../json-editor/content'));
+        return FEATURE_LIST;
     }
 };
 

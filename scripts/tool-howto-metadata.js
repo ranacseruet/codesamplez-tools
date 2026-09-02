@@ -16,6 +16,14 @@ const TOOL_HOWTO_REGISTRY = {
             name: step.name,
             text: step.text
         }));
+    },
+    'json-editor-tool': () => {
+        ensureBabelRegister();
+        const { HOWTO_STEPS } = require(path.resolve(__dirname, '../json-editor/content'));
+        return HOWTO_STEPS.map((step) => ({
+            name: step.name,
+            text: step.text
+        }));
     }
 };
 

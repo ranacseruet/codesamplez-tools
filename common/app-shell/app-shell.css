@@ -601,10 +601,20 @@ body.landing-page {
   /* The bar stays slim on mobile — brand left, compact actions right. */
   .cst-appbar__inner {
     gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .cst-shell__brand {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .cst-shell__header-actions {
+    flex: 0 0 auto;
     gap: 0.4rem;
+    flex-wrap: nowrap;
   }
 
   /* Browse Tools panel drops as a near-full-width overlay below the trigger. */
@@ -616,7 +626,10 @@ body.landing-page {
   }
 
   .cst-shell__theme-toggle {
+    flex: 0 0 2rem;
+    width: 2rem;
     padding-inline: 0.55rem;
+    justify-content: center;
   }
 
   .cst-shell__theme-toggle-text {

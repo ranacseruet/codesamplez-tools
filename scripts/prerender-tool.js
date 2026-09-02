@@ -113,6 +113,14 @@ const TOOL_PRERENDER_REGISTRY = {
         },
         createAfterAppNode: createArticleAfterAppNode('json-formatter-tool')
     },
+    'json-editor-tool': {
+        createAppNode: () => {
+            const { h } = require('preact');
+            const { JsonEditorApp } = require(path.resolve(__dirname, '../json-editor/script'));
+            return h(JsonEditorApp, {});
+        },
+        createAfterAppNode: createArticleAfterAppNode('json-editor-tool')
+    },
     'js-minifier-tool': {
         createAppNode: () => {
             const { h } = require('preact');

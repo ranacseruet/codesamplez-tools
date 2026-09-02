@@ -76,9 +76,10 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     const escapedBundleUrl = escapeAttribute(absoluteBundleUrl);
     const escapedFeaturedImageUrl = escapeAttribute(absoluteFeaturedImageUrl);
     const escapedFeaturedAlt = escapeAttribute(`${tool.title} featured image`);
+    const structuredDataOptions = tool.structuredData;
     const structuredDataScript = renderStructuredDataScript(buildToolStructuredDataGraph(manifest, tool, {
-        faqItems: getToolFaqItems(tool.id),
-        howToSteps: getToolHowToSteps(tool.id),
+        faqItems: structuredDataOptions.includeFaq ? getToolFaqItems(tool.id) : [],
+        howToSteps: structuredDataOptions.includeHowTo ? getToolHowToSteps(tool.id) : [],
         featureList: getToolFeatureList(tool.id)
     }));
     const analyticsHeadMarkup = renderAnalyticsHeadMarkup(manifest.analytics);
