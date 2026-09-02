@@ -105,6 +105,7 @@ interface EditableFieldProps {
     autoFocus?: boolean;
     onAutoFocus?: () => void;
     onCommit: (value: string) => boolean;
+    onCancel?: () => void;
 }
 
 function EditableField({
@@ -115,7 +116,8 @@ function EditableField({
     error,
     autoFocus = false,
     onAutoFocus,
-    onCommit
+    onCommit,
+    onCancel
 }: EditableFieldProps): JSX.Element {
     const [draft, setDraft] = useState(value);
     const previousValueRef = useRef(value);
@@ -145,12 +147,7 @@ function EditableField({
     }, [autoFocus, onAutoFocus]);
 
     const commit = () => {
-        if (draft === value) {
-            committedDraftRef.current = null;
-            return true;
-        }
-        if (committedDraftRef.current === draft) {
-            committedDraftRef.current = null;
+        if (draft === value || committedDraftRef.current === draft) {
             return true;
         }
         const committed = onCommit(draft);
@@ -163,13 +160,16 @@ function EditableField({
             <input
                 ref={inputRef}
                 id={inputId}
-                className={`c-input jsone-inline-input ${className}`}
+                className={`c-input jsone-inline-input ${error ? 'c-input--error ' : ''}${className}`}
                 type="text"
                 value={draft}
                 aria-label={ariaLabel}
                 aria-invalid={error ? 'true' : undefined}
                 aria-describedby={error ? errorId : undefined}
-                onInput={(event) => setDraft((event.currentTarget as HTMLInputElement).value)}
+                onInput={(event) => {
+                    committedDraftRef.current = null;
+                    setDraft((event.currentTarget as HTMLInputElement).value);
+                }}
                 onBlur={commit}
                 onKeyDown={(event) => {
                     if (event.key === 'Enter') {
@@ -179,7 +179,9 @@ function EditableField({
                         }
                     } else if (event.key === 'Escape') {
                         event.preventDefault();
+                        committedDraftRef.current = null;
                         setDraft(value);
+                        onCancel?.();
                     }
                 }}
             />
@@ -208,6 +210,7 @@ interface JsonEditorNodeRowProps {
     onDuplicate: (nodeId: string) => void;
     onDelete: (nodeId: string) => void;
     onMove: (nodeId: string, direction: 'up' | 'down') => void;
+    onClearFieldError: (fieldId: string) => void;
 }
 
 function JsonEditorNodeRow({
@@ -229,7 +232,8 @@ function JsonEditorNodeRow({
     onAddItem,
     onDuplicate,
     onDelete,
-    onMove
+    onMove,
+    onClearFieldError
 }: JsonEditorNodeRowProps): JSX.Element {
     const isContainer = isJsonEditorContainer(node);
     const isExpanded = isContainer && !collapsedIds.has(node.id);
@@ -271,6 +275,7 @@ function JsonEditorNodeRow({
                             autoFocus={focusTargetId === node.id}
                             onAutoFocus={onAutoFocus}
                             onCommit={(value) => onRename(propertyId, value)}
+                            onCancel={() => onClearFieldError(propertyId)}
                         />
                 ) : <span className={isRoot ? 'jsone-root-label' : 'jsone-array-index-label'}>{displayLabel}</span>}
                 </span>
@@ -297,6 +302,7 @@ function JsonEditorNodeRow({
                             className="jsone-value-input"
                             error={valueError}
                             onCommit={(value) => onCommitValue(node.id, value)}
+                            onCancel={() => onClearFieldError(node.id)}
                         />
                     ) : null}
                     {node.type === 'number' ? (
@@ -307,6 +313,7 @@ function JsonEditorNodeRow({
                             className="jsone-value-input jsone-number-input"
                             error={valueError}
                             onCommit={(value) => onCommitValue(node.id, value)}
+                            onCancel={() => onClearFieldError(node.id)}
                         />
                     ) : null}
                     {node.type === 'boolean' ? (
@@ -326,12 +333,12 @@ function JsonEditorNodeRow({
 
                 <div className="jsone-node-actions" role="group" aria-label={`Actions for ${displayLabel}`}>
                     {isContainer && node.type === 'object' ? (
-                        <button className="c-button c-button--ghost c-button--small" type="button" onClick={() => onAddProperty(node.id)}>
+                        <button className="c-button c-button--ghost c-button--small jsone-btn-add-property" type="button" onClick={() => onAddProperty(node.id)}>
                             Add property
                         </button>
                     ) : null}
                     {isContainer && node.type === 'array' ? (
-                        <button className="c-button c-button--ghost c-button--small" type="button" onClick={() => onAddItem(node.id)}>
+                        <button className="c-button c-button--ghost c-button--small jsone-btn-add-item" type="button" onClick={() => onAddItem(node.id)}>
                             Add item
                         </button>
                     ) : null}
@@ -367,7 +374,7 @@ function JsonEditorNodeRow({
                                 ⧉
                             </button>
                             <button
-                                className="c-button c-button--ghost c-button--icon"
+                                className="c-button c-button--ghost c-button--icon jsone-action-delete"
                                 type="button"
                                 aria-label={`Delete ${displayLabel}`}
                                 title="Delete"
@@ -382,50 +389,70 @@ function JsonEditorNodeRow({
 
             {isContainer ? (
                 <div id={childrenId} className="jsone-children" role="group" aria-label={`${displayLabel} children`} hidden={!isExpanded}>
-                    {isExpanded && node.type === 'object' ? node.children.map((property, index) => (
-                        <JsonEditorNodeRow
-                            key={property.id}
-                            node={property.value}
-                            label={property.key}
-                            propertyId={property.id}
-                            isFirst={index === 0}
-                            isLast={index === node.children.length - 1}
-                            collapsedIds={collapsedIds}
-                            fieldErrors={fieldErrors}
-                            focusTargetId={focusTargetId}
-                            onAutoFocus={onAutoFocus}
-                            onToggle={onToggle}
-                            onCommitValue={onCommitValue}
-                            onRename={onRename}
-                            onChangeType={onChangeType}
-                            onAddProperty={onAddProperty}
-                            onAddItem={onAddItem}
-                            onDuplicate={onDuplicate}
-                            onDelete={onDelete}
-                            onMove={onMove}
-                        />
-                    )) : isExpanded ? node.children.map((child, index) => (
-                        <JsonEditorNodeRow
-                            key={child.id}
-                            node={child}
-                            label={`[${index}]`}
-                            isFirst={index === 0}
-                            isLast={index === node.children.length - 1}
-                            collapsedIds={collapsedIds}
-                            fieldErrors={fieldErrors}
-                            focusTargetId={focusTargetId}
-                            onAutoFocus={onAutoFocus}
-                            onToggle={onToggle}
-                            onCommitValue={onCommitValue}
-                            onRename={onRename}
-                            onChangeType={onChangeType}
-                            onAddProperty={onAddProperty}
-                            onAddItem={onAddItem}
-                            onDuplicate={onDuplicate}
-                            onDelete={onDelete}
-                            onMove={onMove}
-                        />
-                    )) : null}
+                    {isExpanded && node.type === 'object' ? (
+                        node.children.length === 0 ? (
+                            <div className="jsone-empty-container">
+                                <span>Empty object</span> ·{' '}
+                                <button className="jsone-inline-add-btn" type="button" onClick={() => onAddProperty(node.id)}>
+                                    + Add property
+                                </button>
+                            </div>
+                        ) : node.children.map((property, index) => (
+                            <JsonEditorNodeRow
+                                key={property.id}
+                                node={property.value}
+                                label={property.key}
+                                propertyId={property.id}
+                                isFirst={index === 0}
+                                isLast={index === node.children.length - 1}
+                                collapsedIds={collapsedIds}
+                                fieldErrors={fieldErrors}
+                                focusTargetId={focusTargetId}
+                                onAutoFocus={onAutoFocus}
+                                onToggle={onToggle}
+                                onCommitValue={onCommitValue}
+                                onRename={onRename}
+                                onChangeType={onChangeType}
+                                onAddProperty={onAddProperty}
+                                onAddItem={onAddItem}
+                                onDuplicate={onDuplicate}
+                                onDelete={onDelete}
+                                onMove={onMove}
+                                onClearFieldError={onClearFieldError}
+                            />
+                        ))
+                    ) : isExpanded ? (
+                        node.children.length === 0 ? (
+                            <div className="jsone-empty-container">
+                                <span>Empty array</span> ·{' '}
+                                <button className="jsone-inline-add-btn" type="button" onClick={() => onAddItem(node.id)}>
+                                    + Add item
+                                </button>
+                            </div>
+                        ) : node.children.map((child, index) => (
+                            <JsonEditorNodeRow
+                                key={child.id}
+                                node={child}
+                                label={`[${index}]`}
+                                isFirst={index === 0}
+                                isLast={index === node.children.length - 1}
+                                collapsedIds={collapsedIds}
+                                fieldErrors={fieldErrors}
+                                focusTargetId={focusTargetId}
+                                onAutoFocus={onAutoFocus}
+                                onToggle={onToggle}
+                                onCommitValue={onCommitValue}
+                                onRename={onRename}
+                                onChangeType={onChangeType}
+                                onAddProperty={onAddProperty}
+                                onAddItem={onAddItem}
+                                onDuplicate={onDuplicate}
+                                onDelete={onDelete}
+                                onMove={onMove}
+                                onClearFieldError={onClearFieldError}
+                            />
+                        ))
+                    ) : null}
                 </div>
             ) : null}
         </div>
@@ -448,12 +475,18 @@ export function JsonEditorApp(): JSX.Element {
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
     const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set());
     const [focusTargetId, setFocusTargetId] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
+    const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const importDisclosureRef = useRef<HTMLDetailsElement>(null);
     const importTextRef = useRef<HTMLTextAreaElement>(null);
-    const importPanelRef = useRef<HTMLDivElement>(null);
     const importErrorRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const importButtonRef = useRef<HTMLButtonElement>(null);
     const downloadManagerRef = useRef<DownloadManager | null>(null);
+    // Latest values for the single-registration primary shortcut (see below).
+    const importOpenRef = useRef(importOpen);
+    const importTextStateRef = useRef(importText);
+    const handleCopyRef = useRef<() => void>(() => undefined);
+    const handleImportRef = useRef<(input: string, sourceName?: string) => void>(() => undefined);
 
     const commitDocument = useCallback((next: JsonEditorNode) => {
         setHistory((current) => {
@@ -488,7 +521,6 @@ export function JsonEditorApp(): JSX.Element {
                 ? (error as Error & { diagnostics: JsonEditorParseDiagnostics }).diagnostics
                 : getFallbackDiagnostics(error instanceof Error ? error.message : String(error));
             setImportError(diagnostics);
-            NotificationManager.show('JSON could not be imported. The current document was kept.', 3500, { type: 'error' });
         }
     }, [commitDocument, idFactory]);
 
@@ -496,27 +528,33 @@ export function JsonEditorApp(): JSX.Element {
         if (importError) importErrorRef.current?.focus();
     }, [importError]);
 
+    useEffect(() => {
+        return () => {
+            if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+        };
+    }, []);
+
     useLayoutEffect(() => {
-        const importPanel = importPanelRef.current;
+        // Single registration on the disclosure (which contains the panel):
+        // registering both panel + disclosure double-fires on drop via bubbling.
+        const importDisclosure = importDisclosureRef.current;
         const fileInput = fileInputRef.current;
-        if (!importPanel || !fileInput) return undefined;
+        if (!importDisclosure || !fileInput) return undefined;
 
         const options = {
-            onText: (text: string, file: File) => handleImport(text, file.name),
+            onText: (text: string, file: File) => {
+                handleImport(text, file.name);
+                setImportOpen(true);
+            },
             onError: (message: string) => NotificationManager.show(message, 3500, { type: 'error' })
         };
-        const dropCleanup = registerDropZone(importPanel, options);
+        const dropCleanup = registerDropZone(importDisclosure, options);
         const fileCleanup = registerFileInput(fileInput, options);
         return () => {
             dropCleanup();
             fileCleanup();
         };
     }, [handleImport]);
-
-    useLayoutEffect(() => {
-        if (!importButtonRef.current) return undefined;
-        return registerPrimaryActionShortcut(importButtonRef.current);
-    }, []);
 
     useLayoutEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
@@ -630,6 +668,12 @@ export function JsonEditorApp(): JSX.Element {
             if (parent?.type === 'object' && parent.children.length > 0) {
                 setFocusTargetId(parent.children[parent.children.length - 1].value.id);
             }
+            setCollapsedIds((current) => {
+                if (!current.has(parentId)) return current;
+                const nextSet = new Set(current);
+                nextSet.delete(parentId);
+                return nextSet;
+            });
             commitDocument(next);
         } catch (error) {
             showMutationError(error);
@@ -643,11 +687,26 @@ export function JsonEditorApp(): JSX.Element {
             if (parent?.type === 'array' && parent.children.length > 0) {
                 setFocusTargetId(parent.children[parent.children.length - 1].id);
             }
+            setCollapsedIds((current) => {
+                if (!current.has(parentId)) return current;
+                const nextSet = new Set(current);
+                nextSet.delete(parentId);
+                return nextSet;
+            });
             commitDocument(next);
         } catch (error) {
             showMutationError(error);
         }
     }, [commitDocument, history.present, idFactory]);
+
+    const handleClearFieldError = useCallback((id: string) => {
+        setFieldErrors((current) => {
+            if (!current[id]) return current;
+            const next = { ...current };
+            delete next[id];
+            return next;
+        });
+    }, []);
 
     const handleDuplicate = useCallback((nodeId: string) => {
         try {
@@ -699,6 +758,9 @@ export function JsonEditorApp(): JSX.Element {
         try {
             await copyTextToClipboard(preview);
             NotificationManager.show('JSON copied to clipboard.', 2200, { type: 'success' });
+            setCopied(true);
+            if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+            copyTimeoutRef.current = setTimeout(() => setCopied(false), 1500);
         } catch (error) {
             NotificationManager.show(`Could not copy JSON. ${error instanceof Error ? error.message : String(error)}`, 3500, { type: 'error' });
         }
@@ -710,8 +772,32 @@ export function JsonEditorApp(): JSX.Element {
         NotificationManager.show('Downloaded edited.json.', 2200, { type: 'success' });
     }, [preview]);
 
+    useLayoutEffect(() => {
+        importOpenRef.current = importOpen;
+        importTextStateRef.current = importText;
+        handleCopyRef.current = () => {
+            void handleCopy();
+        };
+        handleImportRef.current = handleImport;
+    });
+
+    useLayoutEffect(() => {
+        // Registered once; latest state/callbacks are read via refs so tree
+        // edits (which recreate handleCopy via `preview`) don't churn the
+        // document listener.
+        return registerPrimaryActionShortcut(() => {
+            if (importOpenRef.current) {
+                handleImportRef.current(importTextRef.current?.value ?? importTextStateRef.current);
+            } else {
+                handleCopyRef.current();
+            }
+        });
+    }, []);
+
     const handleExpandAll = useCallback(() => setCollapsedIds(new Set()), []);
     const handleCollapseAll = useCallback(() => setCollapsedIds(new Set(collectContainerIds(history.present))), [history.present]);
+
+    const nodeCount = countJsonEditorNodes(history.present);
 
     return (
         <div id="json-editor-tool" className="tool-container jsone-tool c-tool-stack">
@@ -734,14 +820,14 @@ export function JsonEditorApp(): JSX.Element {
                 </label>
             </div>
 
-            <details className="jsone-import-disclosure" open={importOpen} onToggle={(event) => setImportOpen((event.currentTarget as HTMLDetailsElement).open)}>
+            <details ref={importDisclosureRef} className="jsone-import-disclosure" open={importOpen} onToggle={(event) => setImportOpen((event.currentTarget as HTMLDetailsElement).open)}>
                 <summary>Import JSON <span className="jsone-summary-hint">Paste, upload, or drop strict JSON to replace the document</span></summary>
-                <div ref={importPanelRef} className="jsone-import-panel c-surface-card">
+                <div className="jsone-import-panel c-surface-card">
                     <label className="jsone-field-label" htmlFor="json-editor-import-input">JSON to import</label>
                     <textarea
                         ref={importTextRef}
                         id="json-editor-import-input"
-                        className="c-input c-input--textarea jsone-import-textarea"
+                        className={`c-input c-input--textarea jsone-import-textarea${importError ? ' c-input--error' : ''}`}
                         value={importText}
                         placeholder={'Paste JSON here, for example {"name":"Ada"}'}
                         aria-invalid={importError ? 'true' : undefined}
@@ -750,14 +836,14 @@ export function JsonEditorApp(): JSX.Element {
                     />
                     <p id="json-editor-import-helper" className="jsone-helper">Import replaces the tree. Later tree edits do not change this source text; click Import JSON again to replace the document.</p>
                     <div className="jsone-import-actions">
-                        <button ref={importButtonRef} className="c-button" type="button" onClick={() => handleImport(importTextRef.current?.value ?? importText)}>
+                        <button className="c-button" type="button" onClick={() => handleImport(importTextRef.current?.value ?? importText)}>
                             Import JSON <span className="c-kbd" aria-hidden="true">⌘⏎</span>
                         </button>
                         <FileUploadButton id="json-editor-file" label="Upload JSON" ariaLabel="Upload JSON file" accept="application/json,.json,text/plain,.txt" inputRef={fileInputRef} />
-                        <span className="jsone-drop-hint">or drop a JSON file anywhere in this import panel</span>
+                        <span className="jsone-drop-hint">or drop a JSON file anywhere in this import section</span>
                     </div>
                     {importError ? (
-                        <div ref={importErrorRef} id="json-editor-import-error" className="c-input-status jsone-import-error" role="alert" tabIndex={-1}>
+                        <div ref={importErrorRef} id="json-editor-import-error" className="c-input-status error jsone-import-error" role="alert" tabIndex={-1}>
                             <strong>Import failed:</strong> {importError.message} (line {importError.line}, column {importError.column}). The current document was kept.
                         </div>
                     ) : null}
@@ -798,10 +884,11 @@ export function JsonEditorApp(): JSX.Element {
                             onDuplicate={handleDuplicate}
                             onDelete={handleDelete}
                             onMove={handleMove}
+                            onClearFieldError={handleClearFieldError}
                         />
                     </div>
                     <div className="jsone-tree-status" role="status" aria-live="polite">
-                        {countJsonEditorNodes(history.present).toLocaleString()} nodes · depth {getJsonEditorDepth(history.present)} / 100
+                        {nodeCount.toLocaleString()} {nodeCount === 1 ? 'node' : 'nodes'} · depth {getJsonEditorDepth(history.present)} / 100
                     </div>
                 </section>
 
@@ -812,8 +899,8 @@ export function JsonEditorApp(): JSX.Element {
                             <p>Read-only output from the current tree.</p>
                         </div>
                         <div className="jsone-preview-actions" role="group" aria-label="JSON export actions">
-                            <button className="c-button c-button--secondary c-button--small" type="button" onClick={() => void handleCopy()}>Copy</button>
-                            <button className="c-button c-button--secondary c-button--small" type="button" onClick={handleDownload}>Download</button>
+                            <button className="c-button c-button--secondary c-button--small" type="button" onClick={() => void handleCopy()}>{copied ? 'Copied!' : 'Copy'}</button>
+                            <button className="c-button c-button--secondary c-button--small c-button--icon-download" type="button" onClick={handleDownload}>Download</button>
                         </div>
                     </div>
                     <textarea id="json-editor-preview" className="c-input c-input--textarea jsone-preview-textarea" readOnly value={preview} aria-label="Generated JSON preview" spellcheck={false} />

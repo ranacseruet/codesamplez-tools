@@ -30,6 +30,7 @@ import { JsonEditorApp, JSONEditorToolUI } from './script';
 import * as jsonEditorCore from './json-editor-core';
 import { copyTextToClipboard } from '../common/clipboard';
 import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { NotificationManager } from '../common/notification-manager';
 
 function mountEditor() {
@@ -233,7 +234,8 @@ describe('JSON Editor runtime', () => {
   test('handles registered drop-zone and file-input imports', async () => {
     await flushRender();
 
-    expect(registerDropZone.mock.calls[0][0]).toBe(document.querySelector('.jsone-import-panel'));
+    expect(registerDropZone).toHaveBeenCalledTimes(1);
+    expect(registerDropZone.mock.calls[0][0]).toBe(document.querySelector('.jsone-import-disclosure'));
     const dropOptions = registerDropZone.mock.calls[0][1];
     dropOptions.onText('{"source":"drop"}', new File(['{"source":"drop"}'], 'drop.json', { type: 'application/json' }));
     await flushRender();
@@ -444,5 +446,173 @@ describe('JSON Editor runtime', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
     await Promise.resolve();
     expect(NotificationManager.show).toHaveBeenCalledWith('Could not copy JSON. Clipboard blocked.', 3500, { type: 'error' });
+  });
+
+  test('download button includes standard icon class', () => {
+    const downloadBtn = screen.getByRole('button', { name: 'Download' });
+    expect(downloadBtn.classList.contains('c-button--icon-download')).toBe(true);
+  });
+
+  test('auto-expands collapsed container when adding property or item', async () => {
+    await importJson('{"user":{"name":"Ada"},"list":[1]}');
+    // Collapse user object
+    const collapseUserBtn = screen.getByRole('button', { name: 'Collapse user' });
+    fireEvent.click(collapseUserBtn);
+    await flushRender();
+    expect(collapseUserBtn.getAttribute('aria-expanded')).toBe('false');
+
+    // Add property to user (second Add property button, since root also has one)
+    const addPropertyButtons = screen.getAllByRole('button', { name: 'Add property' });
+    fireEvent.click(addPropertyButtons[1]);
+    await flushRender();
+
+    // Container should now be expanded
+    const userToggle = screen.getByRole('button', { name: 'Collapse user' });
+    expect(userToggle.getAttribute('aria-expanded')).toBe('true');
+
+    // Collapse list array
+    const collapseListBtn = screen.getByRole('button', { name: 'Collapse list' });
+    fireEvent.click(collapseListBtn);
+    await flushRender();
+    expect(collapseListBtn.getAttribute('aria-expanded')).toBe('false');
+
+    // Add item to list
+    const addItemBtn = screen.getByRole('button', { name: 'Add item' });
+    fireEvent.click(addItemBtn);
+    await flushRender();
+
+    // Array should now be expanded
+    const listToggle = screen.getByRole('button', { name: 'Collapse list' });
+    expect(listToggle.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  test('pressing Escape in an invalid field clears the field error and reverts value', async () => {
+    await importJson('{"count":10}');
+    const countInput = document.querySelector('.jsone-number-input');
+    countInput.value = 'not-a-number';
+    fireEvent.input(countInput, { target: { value: 'not-a-number' } });
+    await flushRender();
+    fireEvent.keyDown(countInput, { key: 'Enter' });
+    await flushRender();
+
+    // Error message and error class should be present
+    expect(document.querySelector('.jsone-field-error')).not.toBeNull();
+    expect(countInput.classList.contains('c-input--error')).toBe(true);
+
+    // Press Escape
+    fireEvent.keyDown(countInput, { key: 'Escape' });
+    await flushRender();
+
+    // Error should be cleared and input reverted
+    expect(document.querySelector('.jsone-field-error')).toBeNull();
+    expect(countInput.value).toBe('10');
+    expect(countInput.classList.contains('c-input--error')).toBe(false);
+  });
+
+  test('primary shortcut copies JSON when import disclosure is closed and does not clobber edits', async () => {
+    await importJson('{"name":"Original"}');
+    copyTextToClipboard.mockResolvedValueOnce(undefined);
+
+    // Edit the tree
+    const nameInput = document.querySelector('.jsone-value-input');
+    nameInput.value = 'Modified';
+    fireEvent.input(nameInput, { target: { value: 'Modified' } });
+    await flushRender();
+    fireEvent.blur(nameInput);
+    await flushRender();
+    expect(preview()).toContain('"name": "Modified"');
+
+    // Get the registered primary action shortcut callback
+    const registeredCallbacks = registerPrimaryActionShortcut.mock.calls;
+    const latestCallback = registeredCallbacks[registeredCallbacks.length - 1][0];
+    expect(typeof latestCallback).toBe('function');
+
+    // Invoke shortcut callback with closed import disclosure
+    NotificationManager.show.mockClear();
+    latestCallback();
+    await flushRender();
+    await Promise.resolve();
+
+    // Edits must be preserved and copy should have been triggered
+    expect(preview()).toContain('"name": "Modified"');
+    expect(copyTextToClipboard).toHaveBeenCalledWith(preview());
+  });
+
+  test('pluralizes tree status correctly', async () => {
+    await importJson('"just-a-string"');
+    const status = document.querySelector('.jsone-tree-status');
+    expect(status.textContent).toContain('1 node');
+    expect(status.textContent).not.toContain('1 nodes');
+
+    await importJson('{"a":1,"b":2}');
+    expect(status.textContent).toContain('3 nodes');
+  });
+
+  test('pressing Escape in an invalid key field clears the field error and reverts value', async () => {
+    await importJson('{"first":1,"second":2}');
+    const keyInput = document.querySelectorAll('.jsone-key-input')[1];
+    keyInput.value = 'first'; // Duplicate key
+    fireEvent.input(keyInput, { target: { value: 'first' } });
+    await flushRender();
+    fireEvent.keyDown(keyInput, { key: 'Enter' });
+    await flushRender();
+
+    // Error should be present
+    expect(document.querySelector('.jsone-field-error')).not.toBeNull();
+    expect(keyInput.classList.contains('c-input--error')).toBe(true);
+
+    // Press Escape
+    fireEvent.keyDown(keyInput, { key: 'Escape' });
+    await flushRender();
+
+    // Error should be cleared and key reverted
+    expect(document.querySelector('.jsone-field-error')).toBeNull();
+    expect(keyInput.value).toBe('second');
+  });
+
+  test('renders empty container hint and inline add button for empty containers', async () => {
+    await importJson('{}');
+    const emptyHintObj = document.querySelector('.jsone-empty-container');
+    expect(emptyHintObj).not.toBeNull();
+    expect(emptyHintObj.textContent).toContain('Empty object');
+    const inlineAddObj = emptyHintObj.querySelector('.jsone-inline-add-btn');
+    expect(inlineAddObj).not.toBeNull();
+    fireEvent.click(inlineAddObj);
+    await flushRender();
+    expect(preview()).toContain('"newProperty": null');
+
+    await importJson('[]');
+    const emptyHintArr = document.querySelector('.jsone-empty-container');
+    expect(emptyHintArr).not.toBeNull();
+    expect(emptyHintArr.textContent).toContain('Empty array');
+    const inlineAddArr = emptyHintArr.querySelector('.jsone-inline-add-btn');
+    expect(inlineAddArr).not.toBeNull();
+    fireEvent.click(inlineAddArr);
+    await flushRender();
+    expect(preview()).toContain('null');
+  });
+
+  test('primary shortcut imports JSON when import disclosure is open', async () => {
+    await importJson('{"initial":true}');
+    // Open import disclosure
+    const summary = document.querySelector('.jsone-import-disclosure summary');
+    fireEvent.click(summary);
+    await flushRender();
+
+    // Change import textarea text
+    const textarea = document.querySelector('#json-editor-import-input');
+    textarea.value = '{"importedViaShortcut":true}';
+    fireEvent.input(textarea, { target: { value: '{"importedViaShortcut":true}' } });
+    await flushRender();
+
+    // Get latest shortcut callback
+    const registeredCallbacks = registerPrimaryActionShortcut.mock.calls;
+    const latestCallback = registeredCallbacks[registeredCallbacks.length - 1][0];
+
+    // Invoke shortcut callback
+    latestCallback();
+    await flushRender();
+
+    expect(preview()).toContain('"importedViaShortcut": true');
   });
 });
