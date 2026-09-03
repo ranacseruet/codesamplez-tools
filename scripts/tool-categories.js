@@ -14,7 +14,8 @@
 const GROUP_CATEGORY_SLUGS = {
     'code-formatters': 'formatters',
     'encoders-decoders': 'encoders',
-    'text-analysis': 'text'
+    'text-analysis': 'text',
+    'image-tools': 'media'
 };
 
 const DEFAULT_CATEGORY_SLUG = 'formatters';

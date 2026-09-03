@@ -281,6 +281,37 @@ describe('generic tool prerender helpers', () => {
         expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
     });
 
+    it('renders image-editor app markup for server-side prerender', () => {
+        const appMarkup = renderToolPrerenderMarkup('image-editor');
+        const afterMarkup = renderToolAfterAppPrerenderMarkup('image-editor');
+
+        expect(appMarkup).toContain('id="image-editor-stage"');
+        expect(appMarkup).toContain('id="image-editor-export"');
+        expect(appMarkup).toContain('id="image-editor-load-sample"');
+        // Article content is prerendered outside the app root (#327),
+        // so the interactive bundle no longer carries the static tree.
+        expect(afterMarkup).toContain('A browser based image editor is a tool that modifies pictures without desktop software or uploads.');
+        // The invariant this migration exists for: the article tree must NOT
+        // be in the hydrated app markup. Without this, re-adding <Intro/> to a
+        // component passes every positive assertion.
+        expect(appMarkup).not.toContain('A browser based image editor is a tool that modifies pictures without desktop software or uploads.');
+        expect(afterMarkup).toContain('How To Edit Images With This Tool:');
+        expect(afterMarkup).toContain('Frequently Asked Questions (FAQs)');
+        expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
+        expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
+    });
+
+    it('renders image-editor related-tools markup with pair-specific copy', () => {
+        const markup = renderRelatedToolsPrerenderMarkup('image-editor');
+
+        expect(markup).toContain('id="related-tools-heading"');
+        expect(markup).toContain('Base64 Converter');
+        expect(markup).toContain('QR Code Generator');
+        expect(markup).toContain('Encode the edited image as Base64');
+        expect(markup).toContain(`href="${buildSiteHref('/base64-converter/')}"`);
+        expect(markup).toContain(`href="${buildSiteHref('/qr-code-generator/')}"`);
+    });
+
     it('renders related-tools markup for a representative tool', () => {
         const markup = renderRelatedToolsPrerenderMarkup('jwt-decoder-tool');
 

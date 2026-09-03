@@ -26,6 +26,7 @@ A collection of browser-based developer utilities that run client-side and build
 - `jwt-builder-tool`
 - `css-minifier-tool`
 - `qr-code-generator`
+- `image-editor`
 
 ## Browser Support
 

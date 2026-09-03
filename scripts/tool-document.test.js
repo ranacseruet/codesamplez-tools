@@ -202,6 +202,24 @@ describe('tool document generation', () => {
         expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/qr-code-generator/')}#webpage"}`);
     });
 
+    it('renders a classic-script document for image-editor', () => {
+        const html = generateToolDocument('image-editor');
+
+        expect(html).toContain('<div id="image-editor-app">');
+        expect(html).toContain(`<script src="${buildSiteAssetUri('/image-editor/bundle.main.js')}"></script>`);
+        expect(html).not.toContain(`<script src="${buildSiteAssetUri('/image-editor/bundle.main.js')}" type="module"></script>`);
+    });
+
+    it('renders FAQPage structured data for image-editor', () => {
+        const html = generateToolDocument('image-editor');
+
+        expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('"name":"What is a browser based image editor?"');
+        expect(html).toContain('"name":"How do I crop an image with this tool?"');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"A browser based image editor is a web tool that lets you modify pictures');
+        expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/image-editor/')}#webpage"}`);
+    });
+
     it('renders FAQPage structured data for data-format-converter', () => {
         const html = generateToolDocument('data-format-converter');
 

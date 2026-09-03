@@ -1449,6 +1449,12 @@ button.c-tooltip-container {
   border-color: color-mix(in srgb, var(--cst-color-category-text, #ffb26b) 34%, transparent);
 }
 
+.c-related-tools__card--media .c-related-tools__icon {
+  color: var(--cst-color-category-media, var(--color-accent));
+  background: var(--cst-color-category-media-soft, color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 16%, transparent));
+  border-color: color-mix(in srgb, var(--cst-color-category-media, #f472b6) 34%, transparent);
+}
+
 .c-related-tools__card-title {
   margin: 0;
   font-size: 1rem;

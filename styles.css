@@ -405,6 +405,12 @@ body {
   background-color: var(--cst-color-category-text-soft, transparent);
 }
 
+.tool-search__chip--media[aria-pressed="true"] {
+  color: var(--cst-color-category-media, var(--color-accent));
+  border-color: var(--cst-color-category-media, var(--color-accent));
+  background-color: var(--cst-color-category-media-soft, transparent);
+}
+
 /* Command palette dropdown. */
 .tool-search__palette {
   position: absolute;
@@ -466,6 +472,10 @@ body {
 
 .tool-search__item-icon--text {
   background-color: var(--cst-color-category-text, var(--color-accent));
+}
+
+.tool-search__item-icon--media {
+  background-color: var(--cst-color-category-media, var(--color-accent));
 }
 
 .tool-search__item-text {
@@ -668,6 +678,10 @@ body {
   border-color: color-mix(in srgb, var(--cst-color-category-text, #f5c542) 45%, var(--color-border-light));
 }
 
+.main-container .tool-card--media:hover {
+  border-color: color-mix(in srgb, var(--cst-color-category-media, #f472b6) 45%, var(--color-border-light));
+}
+
 .main-container .tool-card__head {
   display: flex;
   align-items: center;
@@ -709,6 +723,12 @@ body {
   border-color: color-mix(in srgb, var(--cst-color-category-text, #f5c542) 34%, transparent);
 }
 
+.main-container .tool-card--media .tool-icon-tile {
+  color: var(--cst-color-category-media, var(--color-accent));
+  background: var(--cst-color-category-media-soft, color-mix(in srgb, var(--md-sys-color-primary, #6f5bf0) 16%, transparent));
+  border-color: color-mix(in srgb, var(--cst-color-category-media, #f472b6) 34%, transparent);
+}
+
 /* Icon tile glow on card hover. */
 .main-container .tool-card--formatters:hover .tool-icon-tile {
   box-shadow: 0 0 18px color-mix(in srgb, var(--cst-color-category-formatters, #a99cff) 32%, transparent);
@@ -720,6 +740,10 @@ body {
 
 .main-container .tool-card--text:hover .tool-icon-tile {
   box-shadow: 0 0 18px color-mix(in srgb, var(--cst-color-category-text, #f5c542) 32%, transparent);
+}
+
+.main-container .tool-card--media:hover .tool-icon-tile {
+  box-shadow: 0 0 18px color-mix(in srgb, var(--cst-color-category-media, #f472b6) 32%, transparent);
 }
 
 .main-container .tool-status {

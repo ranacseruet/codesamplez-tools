@@ -106,6 +106,9 @@ const DEFAULT_FAIL_PERCENT = 10;
 // `json-editor-tool` is measured from its initial production bundle; the
 // dependency-free visual tree editor keeps parsing and serialization in the
 // main bundle and has no editor library or worker chunk.
+// `image-editor` is measured from its initial production bundle; the
+// dependency-free canvas editor keeps all geometry/filter math in the main
+// bundle with no editor library or worker chunk.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 49773,
@@ -118,7 +121,8 @@ const JS_RAW_BASELINES = Object.freeze({
     'json-editor-tool': 63226,
     'css-minifier-tool': 66115,
     'text-analyzer-tool': 46389,
-    'qr-code-generator': 65847
+    'qr-code-generator': 65847,
+    'image-editor': 66107
 });
 
 /**

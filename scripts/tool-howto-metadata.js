@@ -24,6 +24,14 @@ const TOOL_HOWTO_REGISTRY = {
             name: step.name,
             text: step.text
         }));
+    },
+    'image-editor': () => {
+        ensureBabelRegister();
+        const { HOWTO_STEPS } = require(path.resolve(__dirname, '../image-editor/content'));
+        return HOWTO_STEPS.map((step) => ({
+            name: step.name,
+            text: step.text
+        }));
     }
 };
 

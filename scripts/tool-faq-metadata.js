@@ -96,6 +96,14 @@ const TOOL_FAQ_REGISTRY = {
             question: item.question,
             structuredDataAnswer: item.structuredDataAnswer
         }));
+    },
+    'image-editor': () => {
+        ensureBabelRegister();
+        const { FAQ_ITEMS } = require(path.resolve(__dirname, '../image-editor/content'));
+        return FAQ_ITEMS.map((item) => ({
+            question: item.question,
+            structuredDataAnswer: item.structuredDataAnswer
+        }));
     }
 };
 

@@ -10,7 +10,8 @@ import { buildSiteHref } from '../siteBaseUrl';
 const GROUP_CATEGORY_SLUGS: Record<string, string> = {
     'code-formatters': 'formatters',
     'encoders-decoders': 'encoders',
-    'text-analysis': 'text'
+    'text-analysis': 'text',
+    'image-tools': 'media'
 };
 
 const MAX_PALETTE_ITEMS = 8;

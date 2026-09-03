@@ -38,7 +38,8 @@ describe('AppShell components', () => {
         expect(groupHeadings).toEqual([
             'Code Formatters & Validators',
             'Encoders & Decoders',
-            'Text Analysis & Diff Tools'
+            'Text Analysis & Diff Tools',
+            'Image Tools'
         ]);
 
         const dataFormatConverterLink = Array.from(root.querySelectorAll('.cst-shell__tool-menu-link'))
@@ -188,9 +189,10 @@ describe('AppShell components', () => {
         expect(headings).toEqual([
             'Code Formatters & Validators',
             'Encoders & Decoders',
-            'Text Analysis & Diff Tools'
+            'Text Analysis & Diff Tools',
+            'Image Tools'
         ]);
-        expect(root.querySelectorAll('.cst-shell__footer-list a.cst-shell__footer-link')).toHaveLength(11);
+        expect(root.querySelectorAll('.cst-shell__footer-list a.cst-shell__footer-link')).toHaveLength(12);
         // Bottom row keeps the outbound links + privacy line.
         const bottom = root.querySelector('.cst-shell__footer-bottom');
         expect(bottom?.textContent).toContain('Client-side by design');

@@ -77,7 +77,7 @@
   --cst-color-focus-ring: rgba(125, 107, 255, 0.55);
 
   /* v4 accents: soft brand tint + per-category hues (landing cards, section
-     markers). formatters = iris, encoders = mint, text = amber. */
+     markers). formatters = iris, encoders = mint, text = amber, media = rose. */
   --cst-color-accent-soft: rgba(169, 156, 255, 0.14);
   --cst-color-category-formatters: #a99cff;
   --cst-color-category-formatters-soft: rgba(169, 156, 255, 0.16);
@@ -85,6 +85,8 @@
   --cst-color-category-encoders-soft: rgba(95, 224, 194, 0.14);
   --cst-color-category-text: #f5c542;
   --cst-color-category-text-soft: rgba(245, 197, 66, 0.14);
+  --cst-color-category-media: #f472b6;
+  --cst-color-category-media-soft: rgba(244, 114, 182, 0.14);
 
   --cst-font-family-base: "Geist", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --cst-font-family-display: "Geist", "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -259,6 +261,8 @@
   --cst-color-category-encoders-soft: rgba(15, 157, 125, 0.12);
   --cst-color-category-text: #b45309;
   --cst-color-category-text-soft: rgba(180, 83, 9, 0.12);
+  --cst-color-category-media: #be185d;
+  --cst-color-category-media-soft: rgba(190, 24, 93, 0.12);
   --cst-shadow-1: 0 1px 2px rgba(30, 27, 60, 0.08), 0 4px 14px rgba(30, 27, 60, 0.05);
   --cst-shadow-2: 0 6px 20px rgba(30, 27, 60, 0.1), 0 2px 6px rgba(30, 27, 60, 0.07);
   --cst-shadow-3: 0 14px 30px rgba(30, 27, 60, 0.14), 0 4px 12px rgba(30, 27, 60, 0.1);

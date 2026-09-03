@@ -14,6 +14,11 @@ const TOOL_FEATURE_REGISTRY = {
         ensureBabelRegister();
         const { FEATURE_LIST } = require(path.resolve(__dirname, '../json-editor/content'));
         return FEATURE_LIST;
+    },
+    'image-editor': () => {
+        ensureBabelRegister();
+        const { FEATURE_LIST } = require(path.resolve(__dirname, '../image-editor/content'));
+        return FEATURE_LIST;
     }
 };
 

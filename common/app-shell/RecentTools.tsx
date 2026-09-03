@@ -29,7 +29,8 @@ import {
 const GROUP_CATEGORY_SLUGS: Record<string, string> = {
     'code-formatters': 'formatters',
     'encoders-decoders': 'encoders',
-    'text-analysis': 'text'
+    'text-analysis': 'text',
+    'image-tools': 'media'
 };
 
 export interface RecentToolLink {

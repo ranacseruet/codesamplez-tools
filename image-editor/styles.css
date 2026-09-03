@@ -1,0 +1,417 @@
+/* Tool-scoped styles for Image Editor */
+
+.image-editor__main {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+}
+
+@media (min-width: 1024px) {
+  .image-editor__main {
+    grid-template-columns: minmax(19rem, 1fr) minmax(0, 1.4fr);
+    align-items: start;
+  }
+}
+
+.image-editor__controls {
+  padding: var(--spacing-md, var(--default-spacing-md));
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md, var(--default-spacing-md));
+}
+
+.image-editor__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  padding: 0 0 0.8rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
+}
+
+.image-editor__section-title {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+}
+
+.image-editor__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.9rem 1rem 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 85%, var(--cst-color-mix-neutral, white));
+}
+
+/* Collapsible config sections (native <details>, same pattern as json-editor's
+   import disclosure). One bordered block per section keeps the long panel
+   scannable while the summaries stay always visible. */
+.image-editor__disclosure {
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 85%, var(--cst-color-mix-neutral, white));
+  border-radius: var(--radius-md, 10px);
+  background: color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 40%, transparent);
+}
+
+/* Pending-edit highlight: when a crop selection is active, the Crop block
+   calls out where the next action lives. Outline + background never move
+   layout, so activating never shifts the Apply button under the pointer. */
+.image-editor__disclosure.is-active {
+  outline: 2px solid var(--color-primary, #1d70b8);
+  outline-offset: 3px;
+  background: color-mix(in srgb, var(--color-primary, #1d70b8) 7%, transparent);
+}
+
+.image-editor__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--radius-md, 10px);
+}
+
+.image-editor__summary::-webkit-details-marker {
+  display: none;
+}
+
+.image-editor__summary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring, 0 0 0 3px rgba(29, 112, 184, 0.2));
+}
+
+.image-editor__summary-chevron {
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-top: 2px solid var(--color-text-secondary, #5b6470);
+  border-right: 2px solid var(--color-text-secondary, #5b6470);
+  transform: translateY(-1px) rotate(45deg);
+  transition: transform 140ms ease;
+}
+
+.image-editor__disclosure[open] .image-editor__summary-chevron {
+  transform: translateY(1px) rotate(135deg);
+}
+
+.image-editor__summary-hint {
+  margin-left: auto;
+  text-align: right;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--color-text-secondary, #5b6470);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image-editor__summary-chevron {
+    transition: none;
+  }
+}
+
+.image-editor__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md, var(--default-spacing-md));
+}
+
+.image-editor__group-title {
+  margin: 0.4rem 0 -0.2rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary, #5b6470);
+}
+
+.image-editor__group:first-of-type .image-editor__group-title {
+  margin-top: 0;
+}
+
+.image-editor__heading {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+}
+
+.image-editor__button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.image-editor__chip.is-active {
+  border-color: var(--color-primary, #1d70b8);
+  background: color-mix(in srgb, var(--color-primary, #1d70b8) 12%, var(--cst-color-mix-neutral, white));
+  font-weight: 700;
+}
+
+.image-editor__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text, #1f2937);
+}
+
+.image-editor__resize-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.image-editor__resize-grid .image-editor__check {
+  grid-column: 1 / -1;
+}
+
+.image-editor__caption-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.6rem;
+  align-items: end;
+}
+
+.image-editor__check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.image-editor__check input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--color-primary, #1d70b8);
+}
+
+.image-editor__slider {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text, #1f2937);
+}
+
+.image-editor__slider span span {
+  color: var(--color-accent, var(--color-primary, #1d70b8));
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-weight: 700;
+}
+
+.image-editor__slider input[type="range"] {
+  width: 100%;
+  accent-color: var(--color-primary, #1d70b8);
+}
+
+.image-editor__color {
+  width: 3.5rem;
+  height: 2.5rem;
+  padding: 0.2rem;
+  cursor: pointer;
+}
+
+.image-editor__hint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--color-text-secondary, #5b6470);
+}
+
+.image-editor__estimate {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary, #5b6470);
+}
+
+.image-editor__preview {
+  padding: clamp(1rem, 2vw, 1.25rem);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-md, var(--default-spacing-md));
+}
+
+.image-editor__stage {
+  width: 100%;
+  min-height: 20rem;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.9rem, 1.8vw, 1.25rem);
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  background:
+    conic-gradient(from 0deg at 50% 50%, color-mix(in srgb, var(--cst-color-mix-neutral, white) 94%, var(--color-primary-soft, #e9f3fb)), var(--cst-color-mix-neutral, white), color-mix(in srgb, var(--cst-color-mix-neutral, white) 94%, var(--color-primary-soft, #e9f3fb))),
+    white;
+}
+
+.image-editor__stage.is-drop-active {
+  border-color: var(--color-primary, #1d70b8);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #1d70b8) 25%, transparent);
+}
+
+.image-editor__empty {
+  max-width: 26rem;
+}
+
+.image-editor__empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+  margin-top: 0.9rem;
+}
+
+.image-editor__canvas-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  line-height: 0;
+  touch-action: none;
+  /* Clips the crop dimming (a 9999px box-shadow) to the preview so the rest
+     of the page never looks disabled while selecting. */
+  overflow: hidden;
+  border-radius: var(--radius-md, 10px);
+}
+
+.image-editor__canvas {
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md, 10px);
+  background:
+    repeating-conic-gradient(color-mix(in srgb, var(--color-border, #d7dde4) 55%, white) 0% 25%, white 0% 50%) 0 0 / 16px 16px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
+  cursor: crosshair;
+}
+
+.image-editor__crop-box {
+  position: absolute;
+  border: 2px solid var(--color-primary, #1d70b8);
+  box-shadow: 0 0 0 9999px rgba(10, 15, 30, 0.45);
+  cursor: move;
+  line-height: 1.2;
+}
+
+.image-editor__crop-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid var(--color-primary, #1d70b8);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.35);
+}
+
+.image-editor__crop-handle--nw {
+  left: -8px;
+  top: -8px;
+  cursor: nwse-resize;
+}
+
+.image-editor__crop-handle--ne {
+  right: -8px;
+  top: -8px;
+  cursor: nesw-resize;
+}
+
+.image-editor__crop-handle--sw {
+  left: -8px;
+  bottom: -8px;
+  cursor: nesw-resize;
+}
+
+.image-editor__crop-handle--se {
+  right: -8px;
+  bottom: -8px;
+  cursor: nwse-resize;
+}
+
+.image-editor__crop-size {
+  position: absolute;
+  left: 50%;
+  top: 0.45rem;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  color: white;
+  background: rgba(10, 15, 30, 0.8);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+}
+
+.image-editor__info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  background: color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 55%, var(--cst-color-mix-neutral, white));
+  font-size: 0.85rem;
+}
+
+.image-editor__info > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.image-editor__info dt {
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary, #5b6470);
+}
+
+.image-editor__info dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.image-editor__info-name {
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.8rem;
+}
+
+.image-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-editor__actions .c-button {
+  min-width: 10rem;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .image-editor__controls,
+  .image-editor__preview {
+    padding: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .image-editor__stage {
+    min-height: 16rem;
+  }
+
+  .image-editor__actions .c-button {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image-editor__canvas {
+    transition: none;
+  }
+}

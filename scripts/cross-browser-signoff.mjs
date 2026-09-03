@@ -105,6 +105,13 @@ const scenarios = [
     exercise: runJsonFormatterWorkerScenario
   },
   {
+    name: 'image-editor',
+    toolId: 'image-editor',
+    url: '/image-editor/',
+    waits: ['#app-shell-header .cst-shell__header', '#image-editor-empty', '#image-editor-export'],
+    exercise: runImageEditorScenario
+  },
+  {
     name: 'json-editor-tool',
     toolId: 'json-editor-tool',
     url: '/json-editor/',
@@ -129,6 +136,19 @@ const results = {
  */
 async function waitVisible(page, selector, timeout = 10000) {
   await page.waitForSelector(selector, { state: 'visible', timeout });
+}
+
+/**
+ * Expand an image-editor config disclosure unless it is already open.
+ * Clicking the heading works in either state, so state is read first to
+ * avoid toggling an open section shut.
+ */
+async function ensureDisclosureOpen(page, headingId) {
+  const details = page.locator(`details:has(#${headingId})`);
+  const isOpen = await details.evaluate((element) => element.open);
+  if (!isOpen) {
+    await page.locator(`#${headingId}`).click();
+  }
 }
 
 /**
@@ -573,6 +593,65 @@ async function runJsonFormatterWorkerScenario(page) {
         unavailable: unavailableSchemaStatus
       }
     }
+  };
+}
+
+/**
+ * Load the built-in sample, crop it square, apply a filter, and export.
+ * Exercises the full client-side pipeline (decode, bake, filter, toBlob
+ * download) in a real browser on every engine.
+ *
+ * @param {import('playwright').Page} page
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function runImageEditorScenario(page) {
+  await page.getByRole('button', { name: 'Load Sample' }).click();
+  await page.waitForFunction(() => {
+    const info = document.querySelector('#image-editor-info');
+    return info?.textContent?.includes('1200 × 800 px') ?? false;
+  });
+
+  await ensureDisclosureOpen(page, 'image-editor-crop-heading');
+  await page.getByRole('button', { name: 'Square 1:1' }).click();
+  const cropBox = page.locator('.image-editor__crop-box');
+  await cropBox.waitFor();
+  // Drag the selection through the overlay: proves pointer handling lives at
+  // the wrap level (the overlay covers the canvas) on every engine.
+  const boxBefore = await cropBox.boundingBox();
+  if (!boxBefore) {
+    throw new Error('Image Editor crop box has no bounding box');
+  }
+  await page.mouse.move(boxBefore.x + boxBefore.width / 2, boxBefore.y + boxBefore.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(boxBefore.x + boxBefore.width / 2 + 40, boxBefore.y + boxBefore.height / 2, { steps: 5 });
+  await page.mouse.up();
+  await page.waitForFunction((startX) => {
+    const box = document.querySelector('.image-editor__crop-box');
+    return box instanceof HTMLElement && box.getBoundingClientRect().x > startX + 5;
+  }, boxBefore.x);
+  await page.getByRole('button', { name: 'Apply crop' }).click();
+  await page.waitForFunction(() => {
+    const info = document.querySelector('#image-editor-info');
+    return info?.textContent?.includes('800 × 800 px') ?? false;
+  });
+
+  await ensureDisclosureOpen(page, 'image-editor-adjust-heading');
+  await page.getByRole('button', { name: 'B&W' }).click();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export PNG' }).click();
+  const download = await downloadPromise;
+  const filename = download.suggestedFilename();
+  if (!/^edited-image-\d+\.png$/.test(filename)) {
+    throw new Error(`Image Editor export filename was ${filename}`);
+  }
+  const downloadPath = await download.path();
+  if (!downloadPath) {
+    throw new Error('Image Editor download produced no file');
+  }
+
+  return {
+    croppedTo: '800 × 800',
+    exportFilename: filename
   };
 }
 

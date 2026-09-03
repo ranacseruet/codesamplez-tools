@@ -77,6 +77,11 @@ const RELATED_TOOL_REASONS = {
         'diff-checker-tool': 'Compare this text against another version',
         'qr-code-generator': 'Turn a short string into a QR code',
         'json-formatter-tool': 'Format JSON before counting its contents'
+    },
+    'image-editor': {
+        'base64-converter-tool': 'Encode the edited image as Base64',
+        'qr-code-generator': 'Turn text into a QR code for the image page',
+        'text-analyzer-tool': 'Check the caption length before you export'
     }
 };
 

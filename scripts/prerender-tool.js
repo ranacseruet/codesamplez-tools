@@ -160,6 +160,14 @@ const TOOL_PRERENDER_REGISTRY = {
             return h(QRCodeGeneratorApp, {});
         },
         createAfterAppNode: createArticleAfterAppNode('qr-code-generator')
+    },
+    'image-editor': {
+        createAppNode: () => {
+            const { h } = require('preact');
+            const { ImageEditorApp } = require(path.resolve(__dirname, '../image-editor/script'));
+            return h(ImageEditorApp, {});
+        },
+        createAfterAppNode: createArticleAfterAppNode('image-editor')
     }
 };
 

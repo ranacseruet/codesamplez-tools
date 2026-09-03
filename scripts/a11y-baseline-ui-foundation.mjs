@@ -489,6 +489,27 @@ async function run() {
         return { page: '/qr-code-generator/', viewport: 'mobile-iphone12', ...report };
       });
     }
+    if (shouldRunTool('image-editor')) {
+      const imageEditorDesktop = await desktop.newPage();
+      await record('image-editor desktop a11y baseline', async () => {
+        await imageEditorDesktop.goto(`${baseUrl}/image-editor/`, { waitUntil: 'networkidle' });
+        await waitVisible(imageEditorDesktop, '#app-shell-header .cst-appbar');
+        await waitVisible(imageEditorDesktop, '#image-editor-empty');
+        await waitVisible(imageEditorDesktop, '#image-editor-export');
+        const report = await analyzePageA11y(imageEditorDesktop);
+        return { page: '/image-editor/', viewport: 'desktop', ...report };
+      });
+
+      const imageEditorMobile = await mobile.newPage();
+      await record('image-editor mobile a11y baseline', async () => {
+        await imageEditorMobile.goto(`${baseUrl}/image-editor/`, { waitUntil: 'networkidle' });
+        await waitVisible(imageEditorMobile, '#app-shell-header .cst-appbar');
+        await waitVisible(imageEditorMobile, '#image-editor-empty');
+        await waitVisible(imageEditorMobile, '#image-editor-export');
+        const report = await analyzePageA11y(imageEditorMobile);
+        return { page: '/image-editor/', viewport: 'mobile-iphone12', ...report };
+      });
+    }
 
     if (shouldRunTool('diff-checker-tool')) {
       const diffCheckerDesktop = await desktop.newPage();

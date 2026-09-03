@@ -42,7 +42,7 @@ const PROD_SITE_BASE_URL = getSiteBaseUrl();
 const PROD_SITE_STATIC_ROOT_URI = getSiteStaticRootUri();
 const SITE_DESCRIPTION = 'Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.';
 const ROOT_PAGE_TITLE = 'Online Developer Tools';
-const ROOT_PAGE_DESCRIPTION = 'Free online developer tools for debugging, formatting and validation needs. Access 11+ utilities to help boost your day-to-day productivity.';
+const ROOT_PAGE_DESCRIPTION = 'Free online developer tools for debugging, formatting and validation needs. Access 12+ utilities to help boost your day-to-day productivity.';
 
 function buildProdSiteHref(publicPath) {
   return new URL(publicPath.replace(/^\/+/, ''), `${PROD_SITE_BASE_URL}/`).toString();
@@ -223,7 +223,8 @@ describe('tool-manifest', () => {
       catalogGroups: [
         { id: 'code-formatters', label: 'Code Formatters & Validators' },
         { id: 'encoders-decoders', label: 'Encoders & Decoders' },
-        { id: 'text-analysis', label: 'Text Analysis & Diff Tools' }
+        { id: 'text-analysis', label: 'Text Analysis & Diff Tools' },
+        { id: 'image-tools', label: 'Image Tools' }
       ],
       rootShell: {
         id: 'root-shell',
@@ -407,8 +408,18 @@ describe('tool-manifest', () => {
   it('discovers tool definitions from tool-local metadata files', () => {
     const toolDefinitions = getToolDefinitions();
 
-    expect(toolDefinitions).toHaveLength(11);
+    expect(toolDefinitions).toHaveLength(12);
     expect(toolDefinitions).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'image-editor',
+        sourceRoot: 'image-editor',
+        outputDir: 'image-editor',
+        outputPath: 'build/image-editor',
+        catalogGroupId: 'image-tools',
+        catalogOrder: 1,
+        appRootId: 'image-editor-app',
+        publicPath: '/image-editor/'
+      }),
       expect.objectContaining({
         id: 'jwt-decoder-tool',
         sourceRoot: 'jwt-decoder',
@@ -460,11 +471,13 @@ describe('tool-manifest', () => {
       catalogGroups: [
         { id: 'code-formatters', label: 'Code Formatters & Validators' },
         { id: 'encoders-decoders', label: 'Encoders & Decoders' },
-        { id: 'text-analysis', label: 'Text Analysis & Diff Tools' }
+        { id: 'text-analysis', label: 'Text Analysis & Diff Tools' },
+        { id: 'image-tools', label: 'Image Tools' }
       ],
       tools: expect.arrayContaining([
         expect.objectContaining({ id: 'base64-converter-tool' }),
-        expect.objectContaining({ id: 'jwt-decoder-tool' })
+        expect.objectContaining({ id: 'jwt-decoder-tool' }),
+        expect.objectContaining({ id: 'image-editor' })
       ]),
       rootShell: {
         id: 'root-shell',
@@ -478,7 +491,8 @@ describe('tool-manifest', () => {
     expect(getCatalogGroups()).toEqual([
       { id: 'code-formatters', label: 'Code Formatters & Validators' },
       { id: 'encoders-decoders', label: 'Encoders & Decoders' },
-      { id: 'text-analysis', label: 'Text Analysis & Diff Tools' }
+      { id: 'text-analysis', label: 'Text Analysis & Diff Tools' },
+      { id: 'image-tools', label: 'Image Tools' }
     ]);
 
     expect(getGroupedToolDefinitions()).toEqual([
@@ -507,6 +521,13 @@ describe('tool-manifest', () => {
         tools: [
           expect.objectContaining({ id: 'diff-checker-tool', catalogOrder: 1 }),
           expect.objectContaining({ id: 'text-analyzer-tool', catalogOrder: 2 })
+        ]
+      }),
+      expect.objectContaining({
+        id: 'image-tools',
+        label: 'Image Tools',
+        tools: [
+          expect.objectContaining({ id: 'image-editor', catalogOrder: 1 })
         ]
       })
     ]);

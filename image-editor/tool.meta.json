@@ -1,0 +1,34 @@
+{
+  "id": "image-editor",
+  "version": "1.0.0",
+  "title": "Image Editor",
+  "seoTitle": "Browser Based Image Editor - Crop, Resize, Convert",
+  "description": "Free browser based image editor: crop, resize, rotate, adjust and convert images online. 100% private — everything is processed locally in your browser, nothing is uploaded.",
+  "catalogGroupId": "image-tools",
+  "catalogOrder": 1,
+  "indexDescription": "Browser based image editor: crop, resize, rotate, adjust, caption and export as PNG, JPEG, or WebP — processed 100% locally in your browser.",
+  "icon": "palette",
+  "status": "live",
+  "keywords": [
+    "browser based image editor",
+    "online image editor",
+    "edit images online",
+    "crop image",
+    "resize image",
+    "convert image",
+    "private photo editor"
+  ],
+  "appRootId": "image-editor-app",
+  "publicPath": "/image-editor/",
+  "scriptType": "classic",
+  "dependencyScopes": [
+    "build-system",
+    "shared-ui",
+    "shared-runtime"
+  ],
+  "relatedToolIds": [
+    "base64-converter-tool",
+    "qr-code-generator",
+    "text-analyzer-tool"
+  ]
+}
