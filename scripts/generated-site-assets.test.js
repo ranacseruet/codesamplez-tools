@@ -315,7 +315,10 @@ describe('generated site assets', () => {
     it('writes ads.txt only when an AdSense client id is configured', async () => {
         const buildDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cst-generated-assets-'));
         const previousClientId = process.env.CST_ADSENSE_CLIENT_ID;
+        const previousNodeEnv = process.env.NODE_ENV;
         process.env.CST_ADSENSE_CLIENT_ID = 'ca-pub-1234567890123456';
+        // Production env: ads.txt is only emitted for production builds.
+        process.env.NODE_ENV = 'production';
 
         try {
             const result = await writeGeneratedSiteAssets({ buildDir, resolveLastmod: () => null });
@@ -328,6 +331,11 @@ describe('generated site assets', () => {
                 delete process.env.CST_ADSENSE_CLIENT_ID;
             } else {
                 process.env.CST_ADSENSE_CLIENT_ID = previousClientId;
+            }
+            if (typeof previousNodeEnv === 'undefined') {
+                delete process.env.NODE_ENV;
+            } else {
+                process.env.NODE_ENV = previousNodeEnv;
             }
             fs.rmSync(buildDir, { force: true, recursive: true });
         }

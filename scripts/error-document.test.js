@@ -44,6 +44,7 @@ describe('not found document generation', () => {
 
     it('injects analytics head scripts so 404 hits are tracked in production', () => {
         const html = withEnv({
+            NODE_ENV: 'production',
             CST_GA_MEASUREMENT_ID: 'G-NOTFOUND01'
         }, () => generateNotFoundDocument());
 

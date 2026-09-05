@@ -1,6 +1,7 @@
 // @ts-check
 
 const webpack = require('webpack');
+const { findTrackerMarkupOffenders } = require('./analytics');
 const { getAppShellCatalogDefinition } = require('./app-shell-catalog');
 const { REPO_ROOT, ROOT_CONFIG_PATH, getToolById, getToolDefinitions, getToolMetadataPath } = require('./tool-manifest');
 const { generateRootDocument } = require('./root-document');
@@ -84,6 +85,18 @@ function buildGeneratedHtmlAssets(options = {}) {
             source: generateToolDocument(toolId)
         });
     });
+
+    // Fail-closed guard for every non-production render path — including
+    // `npm run dev`, which serves this HTML from memory and never passes
+    // through the build-tools.js post-build check. A gate regression fails the
+    // compilation loudly instead of silently serving trackers locally.
+    if (process.env.NODE_ENV !== 'production') {
+        const offenders = findTrackerMarkupOffenders(assets.filter((asset) => asset.filename.endsWith('.html')));
+
+        if (offenders.length > 0) {
+            throw new Error(`Tracker markup generated for non-production build: ${offenders.join(', ')}`);
+        }
+    }
 
     return assets;
 }

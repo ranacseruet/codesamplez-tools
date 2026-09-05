@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { JSDOM, VirtualConsole } = require('jsdom');
 const { TextEncoder, TextDecoder } = require('util');
+const { findTrackerMarkupOffenders } = require('./analytics');
 const { getRootShellDefinition, getToolById, getToolDefinitions, parseToolSelectionArgs } = require('./tool-manifest');
 
 const BUILD_DIR = path.resolve(__dirname, '../build');
@@ -146,6 +147,28 @@ function verifyBuild(buildDir) {
 }
 
 /**
+ * Fail a non-production build when any emitted HTML contains tracker markup.
+ * Called by scripts/build-tools.js for `--mode development` builds so a gate
+ * regression fails loudly at build time instead of silently shipping trackers
+ * to local/dev outputs. Missing files are skipped (partial builds only emit a
+ * subset of pages); callers pass exactly the pages the build regenerated.
+ * @param {string[]} htmlFilePaths absolute paths to emitted HTML files
+ * @returns {void}
+ */
+function assertNoAnalyticsInHtml(htmlFilePaths) {
+    const offenders = findTrackerMarkupOffenders(htmlFilePaths
+        .filter((htmlFilePath) => fs.existsSync(htmlFilePath))
+        .map((htmlFilePath) => ({
+            filename: htmlFilePath,
+            source: fs.readFileSync(htmlFilePath, 'utf8')
+        })));
+
+    if (offenders.length > 0) {
+        throw new Error(`Tracker markup found in non-production build output: ${offenders.join(', ')}`);
+    }
+}
+
+/**
  * @param {string[]} buildTools
  * @param {{ requestedTools: string[], includeRootShell: boolean }} selection
  * @returns {string[]}
@@ -250,6 +273,7 @@ function main() {
 
 module.exports = {
     assertBuildTargetsExist,
+    assertNoAnalyticsInHtml,
     filterBuildTools,
     getBuildTools,
     installBrowserLikeGlobals,

@@ -105,8 +105,35 @@ function buildAdsTxt(adsenseClientId) {
     return `${ADS_TXT_EXCHANGE}, ${publisherId}, ${ADS_TXT_RELATIONSHIP}, ${ADS_TXT_CERTIFICATION_ID}`;
 }
 
+// Markers matching exactly what this module emits (GA4 loader + inline
+// bootstrap, lazy AdSense bootstrap, preconnect hints). Scoped to the emitted
+// tags rather than bare hostnames so tool article copy that merely mentions
+// analytics in prose never trips the check.
+const TRACKER_MARKUP_MARKERS = [
+    'googletagmanager.com/gtag/js',
+    'gtag(\'config\'',
+    'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js',
+    'googleads.g.doubleclick.net'
+];
+
+/**
+ * Return the filenames whose HTML source contains tracker markup. Pure helper
+ * shared by the build-time guards (GeneratedHtmlPlugin for the dev-server
+ * path, build-verification for build output) so the marker list lives next to
+ * the markup it matches.
+ * @param {{ filename: string, source: string }[]} htmlAssets
+ * @returns {string[]}
+ */
+function findTrackerMarkupOffenders(htmlAssets) {
+    return htmlAssets
+        .filter(({ source }) => TRACKER_MARKUP_MARKERS.some((marker) => source.includes(marker)))
+        .map(({ filename }) => filename);
+}
+
 module.exports = {
+    TRACKER_MARKUP_MARKERS,
     buildAdsTxt,
+    findTrackerMarkupOffenders,
     renderAdsenseMarkup,
     renderAnalyticsHeadMarkup,
     renderAnalyticsResourceHints,

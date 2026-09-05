@@ -171,6 +171,10 @@ jobs:
 
     - name: Detect affected deploy targets
       id: affected
+      # Production env so the root-asset listing includes generated assets
+      # (ads.txt) — the analytics gate fails closed for any other NODE_ENV.
+      env:
+        NODE_ENV: production
       run: |
         node scripts/detect-affected-tools.js \
           --base "${{ github.event.before }}" \
@@ -224,6 +228,10 @@ jobs:
 
     - name: Deploy affected assets
       if: steps.affected.outputs.should_deploy == 'true'
+      # Production env so the root-asset listing includes generated assets
+      # (ads.txt) — the analytics gate fails closed for any other NODE_ENV.
+      env:
+        NODE_ENV: production
       run: |
         set -euo pipefail
         DEPLOY_ARGS=(--bucket tools.codesamplez.com --distribution-id "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}")

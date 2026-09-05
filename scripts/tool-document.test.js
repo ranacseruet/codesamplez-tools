@@ -383,6 +383,7 @@ describe('tool document generation', () => {
 
     it('injects GA4 and AdSense head scripts when analytics ids are configured', () => {
         const html = withEnv({
+            NODE_ENV: 'production',
             CST_GA_MEASUREMENT_ID: 'G-TOOLPAGE1',
             CST_ADSENSE_CLIENT_ID: 'ca-pub-1234567890123456'
         }, () => renderToolDocument(getToolById('diff-checker-tool'), '<section>SSR</section>'));
@@ -398,7 +399,7 @@ describe('tool document generation', () => {
     });
 
     it('injects the configured GA4 and AdSense ids from tooling-root config', () => {
-        const html = renderToolDocument(getToolById('diff-checker-tool'), '<section>SSR</section>');
+        const html = withEnv({ NODE_ENV: 'production' }, () => renderToolDocument(getToolById('diff-checker-tool'), '<section>SSR</section>'));
 
         expect(html).toContain('https://www.googletagmanager.com/gtag/js?id=G-75J9GJXH5K');
         expect(html).toContain('client=ca-pub-3520433969377647');

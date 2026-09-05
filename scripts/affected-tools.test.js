@@ -9,6 +9,26 @@ const {
   isToolMetadataPath
 } = require('./affected-tools');
 
+function withEnv(overrides, run) {
+  const originalEnv = { ...process.env };
+
+  Object.keys(overrides).forEach((key) => {
+    const value = overrides[key];
+    if (typeof value === 'undefined') {
+      delete process.env[key];
+      return;
+    }
+
+    process.env[key] = value;
+  });
+
+  try {
+    return run();
+  } finally {
+    process.env = originalEnv;
+  }
+}
+
 describe('parseToolSelectionArgs', () => {
   it('parses single and multi-tool selections with root flags', () => {
     expect(parseToolSelectionArgs([
@@ -73,16 +93,20 @@ describe('detectAffectedTargets', () => {
 
   it('treats tool metadata changes as affecting the tool, root shell, and root assets', () => {
     expect(isToolMetadataPath('jwt-decoder/tool.meta.json')).toBe(true);
-    expect(detectAffectedTargets(['jwt-builder/tool.meta.json'])).toEqual({
-      scope: 'selected-tools',
-      changedFiles: ['jwt-builder/tool.meta.json'],
-      affectedTools: ['base64-converter-tool', 'jwt-builder-tool', 'jwt-decoder-tool'],
-      includeRootShell: true,
-      includeRootAssets: true,
-      shouldBuild: true,
-      shouldDeploy: true,
-      deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'base64-converter', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'jwt-builder', 'jwt-decoder', 'llms.txt', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
-      invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/base64-converter/', '/base64-converter/*', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/llms.txt', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
+    // Production env: ads.txt is part of the deployable root assets only for
+    // production builds (the analytics gate fails closed everywhere else).
+    withEnv({ NODE_ENV: 'production' }, () => {
+      expect(detectAffectedTargets(['jwt-builder/tool.meta.json'])).toEqual({
+        scope: 'selected-tools',
+        changedFiles: ['jwt-builder/tool.meta.json'],
+        affectedTools: ['base64-converter-tool', 'jwt-builder-tool', 'jwt-decoder-tool'],
+        includeRootShell: true,
+        includeRootAssets: true,
+        shouldBuild: true,
+        shouldDeploy: true,
+        deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'base64-converter', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'jwt-builder', 'jwt-decoder', 'llms.txt', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
+        invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/base64-converter/', '/base64-converter/*', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/llms.txt', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
+      });
     });
   });
 
@@ -111,16 +135,18 @@ describe('detectAffectedTargets', () => {
   });
 
   it('treats root stylesheet changes as root-only runtime changes', () => {
-    expect(detectAffectedTargets(['styles.css'])).toEqual({
-      scope: 'root-only',
-      changedFiles: ['styles.css'],
-      affectedTools: [],
-      includeRootShell: true,
-      includeRootAssets: true,
-      shouldBuild: true,
-      shouldDeploy: true,
-      deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'llms.txt', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
-      invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/llms.txt', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
+    withEnv({ NODE_ENV: 'production' }, () => {
+      expect(detectAffectedTargets(['styles.css'])).toEqual({
+        scope: 'root-only',
+        changedFiles: ['styles.css'],
+        affectedTools: [],
+        includeRootShell: true,
+        includeRootAssets: true,
+        shouldBuild: true,
+        shouldDeploy: true,
+        deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'llms.txt', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
+        invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/llms.txt', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
+      });
     });
   });
 

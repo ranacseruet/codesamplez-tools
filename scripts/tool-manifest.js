@@ -15,6 +15,11 @@ const SITE_BASE_URL_ENV_KEY = 'CST_SITE_BASE_URL';
 const SITE_STATIC_ROOT_URI_ENV_KEY = 'CST_SITE_STATIC_ROOT_URI';
 const GA_MEASUREMENT_ID_ENV_KEY = 'CST_GA_MEASUREMENT_ID';
 const ADSENSE_CLIENT_ID_ENV_KEY = 'CST_ADSENSE_CLIENT_ID';
+// Kill-switch: when set to a truthy value (1/true/yes), analytics injection is
+// disabled even for production builds. Used by automated QA/agent runs that
+// drive real browsers against production HTML so test traffic never reaches
+// the live GA4/AdSense properties.
+const ANALYTICS_DISABLED_ENV_KEY = 'CST_DISABLE_ANALYTICS';
 // GA4 measurement IDs look like "G-XXXXXXXXXX"; AdSense client IDs like
 // "ca-pub-1234567890123456". These are public values embedded in client HTML,
 // so they live in config (with env overrides), not in secret storage.
@@ -258,14 +263,51 @@ function resolveAnalyticsId(configuredValue, overrideValue, pattern, label) {
 }
 
 /**
- * Resolve the analytics/ads configuration. Env overrides win over config, and
- * injection is disabled entirely in development so local builds stay tracker-free
- * (mirrors the NODE_ENV gate used by resolveSiteBaseUrl).
+ * @param {string | undefined} value
+ * @returns {boolean}
+ */
+function isTruthyEnvValue(value) {
+    if (typeof value !== 'string') {
+        return false;
+    }
+
+    return ['1', 'true', 'yes'].includes(value.trim().toLowerCase());
+}
+
+/**
+ * Whether analytics/ads injection is enabled for this build. Fail-closed:
+ * only production builds inject trackers; anything else (development, test,
+ * CI, staging, unset) stays tracker-free. The CST_DISABLE_ANALYTICS
+ * kill-switch forces disabled even for production builds.
+ * @returns {boolean}
+ */
+function isAnalyticsEnabled() {
+    if (isTruthyEnvValue(process.env[ANALYTICS_DISABLED_ENV_KEY])) {
+        return false;
+    }
+
+    return process.env.NODE_ENV === 'production';
+}
+
+/**
+ * Resolve the analytics/ads configuration. Env overrides win over config.
+ *
+ * Injection is fail-closed: analytics is enabled ONLY for production builds
+ * (`NODE_ENV=production`). Every other environment — development, test, CI,
+ * staging, or an unset/empty NODE_ENV (bare `webpack serve`, IDE launchers,
+ * Windows shells without `VAR=val` prefix support) — resolves to null ids so
+ * local builds stay tracker-free. This mirrors the NODE_ENV gate used by
+ * resolveSiteBaseUrl, but inverted: instead of denylisting development, it
+ * allowlists production, so any new/unset environment value fails safe.
+ *
+ * The CST_DISABLE_ANALYTICS kill-switch (truthy: 1/true/yes) disables
+ * injection even for production builds, for automated browser runs against
+ * production HTML.
  * @param {unknown} configuredAnalytics
  * @returns {AnalyticsConfig}
  */
 function resolveAnalyticsConfig(configuredAnalytics) {
-    if (process.env.NODE_ENV === 'development') {
+    if (!isAnalyticsEnabled()) {
         return { googleAnalyticsId: null, adsenseClientId: null };
     }
 
@@ -1028,6 +1070,7 @@ module.exports = {
     getToolIds,
     getToolMetadataPath,
     getOutputDirFromPublicPath,
+    isAnalyticsEnabled,
     loadManifest,
     loadRootConfig,
     normalizeSelection,

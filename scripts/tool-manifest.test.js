@@ -203,7 +203,9 @@ function withEnv(overrides, run) {
 describe('tool-manifest', () => {
   it('loads the shared root config', () => {
     expect(ROOT_CONFIG_PATH).toBe(path.resolve(__dirname, '../config/tooling-root.json'));
-    expect(loadRootConfig()).toEqual({
+    // Production env: the configured analytics ids resolve only for
+    // production builds (the gate fails closed everywhere else).
+    expect(withEnv({ NODE_ENV: 'production' }, () => loadRootConfig())).toEqual({
       siteBaseUrl: PROD_SITE_BASE_URL,
       siteStaticRootUri: PROD_SITE_STATIC_ROOT_URI,
       siteName: 'CodeSamplez Tools',
@@ -235,24 +237,33 @@ describe('tool-manifest', () => {
   });
 
   it('resolves analytics ids from config with env overrides and validation', () => {
-    expect(resolveAnalyticsConfig({ googleAnalyticsId: 'G-CONFIG123', adsenseClientId: 'ca-pub-1111111111111111' }))
+    expect(withEnv({
+      NODE_ENV: 'production'
+    }, () => resolveAnalyticsConfig({ googleAnalyticsId: 'G-CONFIG123', adsenseClientId: 'ca-pub-1111111111111111' })))
       .toEqual({ googleAnalyticsId: 'G-CONFIG123', adsenseClientId: 'ca-pub-1111111111111111' });
 
     expect(resolveAnalyticsConfig({})).toEqual({ googleAnalyticsId: null, adsenseClientId: null });
     expect(resolveAnalyticsConfig(undefined)).toEqual({ googleAnalyticsId: null, adsenseClientId: null });
-    expect(resolveAnalyticsConfig({ googleAnalyticsId: '', adsenseClientId: '' }))
+    expect(withEnv({
+      NODE_ENV: 'production'
+    }, () => resolveAnalyticsConfig({ googleAnalyticsId: '', adsenseClientId: '' })))
       .toEqual({ googleAnalyticsId: null, adsenseClientId: null });
 
     expect(withEnv({
+      NODE_ENV: 'production',
       CST_GA_MEASUREMENT_ID: 'G-ENVOVERRIDE',
       CST_ADSENSE_CLIENT_ID: 'ca-pub-2222222222222222'
     }, () => resolveAnalyticsConfig({ googleAnalyticsId: 'G-CONFIG123', adsenseClientId: 'ca-pub-1111111111111111' })))
       .toEqual({ googleAnalyticsId: 'G-ENVOVERRIDE', adsenseClientId: 'ca-pub-2222222222222222' });
 
-    expect(() => resolveAnalyticsConfig({ googleAnalyticsId: 'not-a-ga-id' }))
-      .toThrow(/googleAnalyticsId/);
-    expect(() => resolveAnalyticsConfig({ adsenseClientId: 'pub-missing-prefix' }))
-      .toThrow(/adsenseClientId/);
+    expect(withEnv({
+      NODE_ENV: 'production'
+    }, () => {
+      expect(() => resolveAnalyticsConfig({ googleAnalyticsId: 'not-a-ga-id' }))
+        .toThrow(/googleAnalyticsId/);
+      expect(() => resolveAnalyticsConfig({ adsenseClientId: 'pub-missing-prefix' }))
+        .toThrow(/adsenseClientId/);
+    })).toBeUndefined();
   });
 
   it('disables analytics entirely in development builds', () => {
@@ -262,6 +273,42 @@ describe('tool-manifest', () => {
       CST_ADSENSE_CLIENT_ID: 'ca-pub-2222222222222222'
     }, () => resolveAnalyticsConfig({ googleAnalyticsId: 'G-CONFIG123', adsenseClientId: 'ca-pub-1111111111111111' })))
       .toEqual({ googleAnalyticsId: null, adsenseClientId: null });
+  });
+
+  it('fails closed: analytics stays disabled for any non-production NODE_ENV', () => {
+    const configured = { googleAnalyticsId: 'G-CONFIG123', adsenseClientId: 'ca-pub-1111111111111111' };
+
+    // Unset, empty, test/CI, and staging-like values must all resolve to null
+    // ids — only an explicit production build injects trackers.
+    ['development', 'test', 'staging', '', undefined].forEach((nodeEnv) => {
+      expect(withEnv({
+        NODE_ENV: nodeEnv,
+        CST_GA_MEASUREMENT_ID: 'G-ENVOVERRIDE',
+        CST_ADSENSE_CLIENT_ID: 'ca-pub-2222222222222222'
+      }, () => resolveAnalyticsConfig(configured)))
+        .toEqual({ googleAnalyticsId: null, adsenseClientId: null });
+    });
+  });
+
+  it('honours the CST_DISABLE_ANALYTICS kill-switch even for production builds', () => {
+    const configured = { googleAnalyticsId: 'G-CONFIG123', adsenseClientId: 'ca-pub-1111111111111111' };
+
+    ['1', 'true', 'TRUE', 'yes', ' Yes '].forEach((killSwitch) => {
+      expect(withEnv({
+        NODE_ENV: 'production',
+        CST_DISABLE_ANALYTICS: killSwitch
+      }, () => resolveAnalyticsConfig(configured)))
+        .toEqual({ googleAnalyticsId: null, adsenseClientId: null });
+    });
+
+    // Falsy values leave production injection enabled.
+    ['0', 'false', 'no', '', undefined].forEach((killSwitch) => {
+      expect(withEnv({
+        NODE_ENV: 'production',
+        CST_DISABLE_ANALYTICS: killSwitch
+      }, () => resolveAnalyticsConfig(configured)))
+        .toEqual({ googleAnalyticsId: 'G-CONFIG123', adsenseClientId: 'ca-pub-1111111111111111' });
+    });
   });
 
   it('resolves production, development, and explicit override site base urls', () => {
@@ -449,7 +496,9 @@ describe('tool-manifest', () => {
   });
 
   it('builds a normalized manifest view', () => {
-    expect(loadManifest()).toEqual({
+    // Production env: the manifest carries the configured analytics ids only
+    // for production builds (the gate fails closed everywhere else).
+    expect(withEnv({ NODE_ENV: 'production' }, () => loadManifest())).toEqual({
       siteBaseUrl: PROD_SITE_BASE_URL,
       siteStaticRootUri: PROD_SITE_STATIC_ROOT_URI,
       siteName: 'CodeSamplez Tools',
@@ -648,7 +697,9 @@ describe('tool-manifest', () => {
     expect(() => getToolMetadataPath('not-a-real-tool')).toThrow('Unknown tool id');
 
     // ads.txt is appended dynamically because AdSense is configured in tooling-root.json.
-    expect(getRootAssets()).toEqual(['index.html', '404.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'llms.txt', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'ads.txt']);
+    // Resolved under production env: the AdSense id (and therefore ads.txt) is
+    // only present for production builds.
+    expect(withEnv({ NODE_ENV: 'production' }, () => getRootAssets())).toEqual(['index.html', '404.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'llms.txt', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'ads.txt']);
     expect(getRootPageDefinition()).toEqual({
       title: ROOT_PAGE_TITLE,
       description: ROOT_PAGE_DESCRIPTION,

@@ -144,6 +144,7 @@ describe('root document generation', () => {
 
   it('injects GA4 and AdSense head scripts when analytics ids are configured', () => {
     const html = withEnv({
+      NODE_ENV: 'production',
       CST_GA_MEASUREMENT_ID: 'G-INDEXPAGE1',
       CST_ADSENSE_CLIENT_ID: 'ca-pub-1234567890123456'
     }, () => generateRootDocument());
@@ -159,7 +160,7 @@ describe('root document generation', () => {
   });
 
   it('injects the configured GA4 and AdSense ids from tooling-root config', () => {
-    const html = generateRootDocument();
+    const html = withEnv({ NODE_ENV: 'production' }, () => generateRootDocument());
 
     expect(html).toContain('https://www.googletagmanager.com/gtag/js?id=G-75J9GJXH5K');
     expect(html).toContain('client=ca-pub-3520433969377647');

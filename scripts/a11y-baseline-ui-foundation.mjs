@@ -18,6 +18,34 @@ const reportPath = path.join(outDir, 'phase-d-foundation-a11y-results.json');
 const selection = parseToolSelectionArgs(process.argv.slice(2));
 const selectedTools = new Set(selection.requestedTools);
 
+// Tracker/ad hosts that must never receive QA traffic. These runs drive real
+// browsers against production HTML (which bakes in GA4/AdSense), so without
+// interception every run would pollute the live analytics property with
+// localhost hits.
+const TRACKER_BLOCK_PATTERNS = [
+  '**://www.googletagmanager.com/**',
+  '**://www.google-analytics.com/**',
+  '**://analytics.google.com/**',
+  '**://pagead2.googlesyndication.com/**',
+  '**://googleads.g.doubleclick.net/**',
+  '**://*.doubleclick.net/**'
+];
+
+/**
+ * Abort analytics/ad requests in a Playwright browser context so automated QA
+ * never phones home to the live GA4/AdSense properties. Opt out with
+ * QA_ALLOW_TRACKERS=1 when deliberately verifying tracker loading.
+ * @param {import('playwright').BrowserContext} context
+ * @returns {Promise<void>}
+ */
+async function blockTrackerRequests(context) {
+  if (process.env.QA_ALLOW_TRACKERS === '1') {
+    return;
+  }
+
+  await Promise.all(TRACKER_BLOCK_PATTERNS.map((pattern) => context.route(pattern, (route) => route.abort())));
+}
+
 /** @type {QaA11yResults} */
 const results = {
   startedAt: new Date().toISOString(),
@@ -231,6 +259,8 @@ async function run() {
   try {
     const desktop = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const mobile = await browser.newContext({ ...devices['iPhone 12'] });
+    await blockTrackerRequests(desktop);
+    await blockTrackerRequests(mobile);
 
     if (shouldRunRoot()) {
       const rootDesktop = await desktop.newPage();

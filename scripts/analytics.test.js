@@ -2,6 +2,7 @@
 
 const {
     buildAdsTxt,
+    findTrackerMarkupOffenders,
     renderAdsenseMarkup,
     renderAnalyticsHeadMarkup,
     renderAnalyticsResourceHints,
@@ -97,5 +98,27 @@ describe('ads.txt', () => {
         expect(buildAdsTxt(null)).toBe('');
         expect(buildAdsTxt('')).toBe('');
         expect(buildAdsTxt(undefined)).toBe('');
+    });
+});
+
+describe('tracker markup detection', () => {
+    it('flags every markup shape this module emits', () => {
+        const offenders = findTrackerMarkupOffenders([
+            { filename: 'ga.html', source: renderGoogleAnalyticsMarkup('G-ABC123XYZ') },
+            { filename: 'ads.html', source: renderAdsenseMarkup('ca-pub-1234567890123456') },
+            {
+                filename: 'hints.html',
+                source: renderAnalyticsResourceHints({ googleAnalyticsId: 'G-ABC123XYZ', adsenseClientId: 'ca-pub-1234567890123456' })
+            }
+        ]);
+
+        expect(offenders).toEqual(['ga.html', 'ads.html', 'hints.html']);
+    });
+
+    it('ignores tracker-free pages and prose that merely mentions analytics', () => {
+        expect(findTrackerMarkupOffenders([
+            { filename: 'clean.html', source: '<!doctype html><html><head><title>Tool</title></head></html>' },
+            { filename: 'prose.html', source: '<p>We removed Google Analytics from local builds.</p>' }
+        ])).toEqual([]);
     });
 });

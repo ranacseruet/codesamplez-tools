@@ -46,6 +46,34 @@ const markdownPath = path.resolve(
 const selection = parseToolSelectionArgs(process.argv.slice(2));
 const selectedTools = new Set(selection.requestedTools);
 
+// Tracker/ad hosts that must never receive QA traffic. These runs drive real
+// browsers against production HTML (which bakes in GA4/AdSense), so without
+// interception every run would pollute the live analytics property with
+// localhost hits.
+const TRACKER_BLOCK_PATTERNS = [
+  '**://www.googletagmanager.com/**',
+  '**://www.google-analytics.com/**',
+  '**://analytics.google.com/**',
+  '**://pagead2.googlesyndication.com/**',
+  '**://googleads.g.doubleclick.net/**',
+  '**://*.doubleclick.net/**'
+];
+
+/**
+ * Abort analytics/ad requests in a Playwright browser context so automated QA
+ * never phones home to the live GA4/AdSense properties. Opt out with
+ * QA_ALLOW_TRACKERS=1 when deliberately verifying tracker loading.
+ * @param {import('playwright').BrowserContext} context
+ * @returns {Promise<void>}
+ */
+async function blockTrackerRequests(context) {
+  if (process.env.QA_ALLOW_TRACKERS === '1') {
+    return;
+  }
+
+  await Promise.all(TRACKER_BLOCK_PATTERNS.map((pattern) => context.route(pattern, (route) => route.abort())));
+}
+
 const browserMatrix = [
   { name: 'chromium', type: chromium },
   { name: 'firefox', type: firefox },
@@ -868,6 +896,7 @@ async function runScenario(browserName, browserType, scenario) {
   const browser = await browserType.launch({ headless: true });
   try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    await blockTrackerRequests(context);
     const page = await context.newPage();
     if (scenario.exercise && scenario.workerPath) {
       await installWorkerProbe(page);

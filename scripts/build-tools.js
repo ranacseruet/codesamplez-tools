@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { getToolIds, normalizeSelection, parseToolSelectionArgs, selectTools } = require('./tool-manifest');
+const { assertNoAnalyticsInHtml } = require('./build-verification');
 const { writeGeneratedSiteAssets } = require('./generated-site-assets');
 
 function printHelp() {
@@ -84,6 +85,40 @@ function removeLegacyToolBuildDirs(selection) {
     });
 }
 
+/**
+ * Fail a non-production build when regenerated HTML contains tracker markup.
+ * Only pages this build regenerated are scanned (mirroring the webpack
+ * root-shell/root-asset selection) so stale output from an earlier production
+ * build never fails a partial development build. Throws on violation; the
+ * main() catch turns it into a non-zero exit.
+ * @param {string} mode
+ * @param {ReturnType<typeof parseToolSelectionArgs>} selection
+ * @returns {void}
+ */
+function assertNonProductionBuildHasNoTrackers(mode, selection) {
+    if (mode === 'production') {
+        return;
+    }
+
+    const buildDir = path.resolve(process.cwd(), 'build');
+    const normalizedSelection = normalizeSelection(selection);
+    const isFullBuild = normalizedSelection.requestedTools.length === getToolIds().length;
+    // Mirror the webpack root-shell/root-asset selection: root HTML is only
+    // regenerated when the root shell build runs with root assets included.
+    const rootHtmlRegenerated = (selection.includeRootShell || isFullBuild)
+        && (selection.includeRootAssets || isFullBuild);
+
+    /** @type {string[]} */
+    const htmlFilePaths = selectTools(normalizedSelection.requestedTools)
+        .map((tool) => path.join(process.cwd(), tool.outputPath, 'index.html'));
+
+    if (rootHtmlRegenerated) {
+        htmlFilePaths.push(path.join(buildDir, 'index.html'), path.join(buildDir, '404.html'));
+    }
+
+    assertNoAnalyticsInHtml(htmlFilePaths);
+}
+
 function main() {
     return mainAsync().catch((error) => {
         const message = error instanceof Error ? error.message : String(error);
@@ -150,6 +185,8 @@ async function mainAsync() {
                 buildDir: path.resolve(process.cwd(), 'build')
             });
         }
+
+        assertNonProductionBuildHasNoTrackers(args.mode, selection);
 
         process.exit(0);
     }

@@ -378,6 +378,17 @@ const developmentConfig = {
 
 module.exports = (env = {}, argv = {}) => {
   const mode = getWebpackMode(argv);
+  // Align NODE_ENV from the resolved webpack mode when the caller did not set
+  // it. webpack-cli does not propagate `--mode` to `process.env.NODE_ENV`
+  // (only `--node-env` does), so a bare `webpack serve --mode development`
+  // (IDE launchers, Windows shells without `VAR=val` prefix support) would
+  // otherwise leave NODE_ENV unset while building in development mode — and
+  // the analytics gate reads NODE_ENV, not webpack mode. Defaulting from the
+  // mode keeps the two in agreement; an explicitly set NODE_ENV is never
+  // overridden (in particular, never downgraded from production).
+  if (!process.env.NODE_ENV) {
+    process.env.NODE_ENV = mode;
+  }
   baseConfig.mode = mode;
   const selectedTools = readSelectedToolsFromEnv(env);
   const includeRootShell = shouldIncludeRootShell(env, selectedTools);

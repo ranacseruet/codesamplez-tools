@@ -76,6 +76,19 @@ describe('generated html plugin', () => {
     })).toThrow('Unknown tool id: not-a-real-tool');
   });
 
+  it('generates tracker-free html for non-production builds', () => {
+    // Jest runs with NODE_ENV=test, so this exercises the fail-closed guard:
+    // the builder itself throws on tracker leakage outside production. Assert
+    // the absence explicitly as well so the failure names the regression.
+    const assets = buildGeneratedHtmlAssets({ includeRootAssets: true, rootHtmlAsset: 'index.html' });
+
+    expect(assets.map(({ filename }) => filename)).toEqual(['index.html', '404.html']);
+    assets.forEach(({ source }) => {
+      expect(source).not.toContain('googletagmanager.com');
+      expect(source).not.toContain('googlesyndication.com');
+    });
+  });
+
   it('emits generated html assets through the compilation hooks', () => {
     const processAssetsTaps = [];
     const compilation = {

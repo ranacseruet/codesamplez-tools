@@ -4,6 +4,7 @@ const path = require('path');
 const { JSDOM } = require('jsdom');
 const {
   assertBuildTargetsExist,
+  assertNoAnalyticsInHtml,
   filterBuildTools,
   getBuildTools,
   installBrowserLikeGlobals,
@@ -314,6 +315,32 @@ describe('build verification helpers', () => {
       exitSpy.mockRestore();
       errorSpy.mockRestore();
       logSpy.mockRestore();
+    });
+  });
+
+  it('passes tracker-free HTML without throwing', () => {
+    withTempBuildDir((tempDir) => {
+      const cleanHtml = path.join(tempDir, 'index.html');
+      fs.writeFileSync(cleanHtml, '<!doctype html><html><head><title>Tool</title></head><body></body></html>');
+
+      expect(() => assertNoAnalyticsInHtml([cleanHtml])).not.toThrow();
+    });
+  });
+
+  it('throws when emitted HTML contains GA4 or AdSense markup', () => {
+    withTempBuildDir((tempDir) => {
+      const gaHtml = path.join(tempDir, 'ga.html');
+      const adsenseHtml = path.join(tempDir, 'ads.html');
+      fs.writeFileSync(gaHtml, '<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXX"></script>');
+      fs.writeFileSync(adsenseHtml, 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1');
+
+      expect(() => assertNoAnalyticsInHtml([gaHtml, adsenseHtml])).toThrow(/Tracker markup found in non-production build output/);
+    });
+  });
+
+  it('skips missing files so partial builds only scan regenerated pages', () => {
+    withTempBuildDir((tempDir) => {
+      expect(() => assertNoAnalyticsInHtml([path.join(tempDir, 'does-not-exist.html')])).not.toThrow();
     });
   });
 });
