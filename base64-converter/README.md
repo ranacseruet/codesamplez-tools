@@ -20,7 +20,7 @@ A powerful and user-friendly web tool for encoding and decoding Base64 strings w
 - 📝 Multiple encoding support (UTF-8, ASCII, ISO-8859-1, UCS-2)
 - 📁 File upload capability for encoding
 - 💾 Download decoded Base64 as a file (supports any file type)
-- 🖼️ Image previews for valid `data:image/*;base64,...` input in Auto Detect or Decode mode
+- 🖼️ Image previews for raster `data:image/*;base64,...` input (SVG excluded) and for bare Base64 whose magic bytes match a raster format, in Auto Detect or Decode mode; uploaded images also get a thumbnail next to their Base64 output
 - 🔁 Swap input and output values while toggling the conversion direction
 - 📋 One-click copy to clipboard
 - 🎨 Clean, responsive user interface
@@ -107,12 +107,19 @@ You can integrate this into your own applications by creating links like:
 
 #### Data URI Image Previews
 
-When the input is an explicitly typed image Data URI such as
+When the input is an explicitly typed raster image Data URI such as
 `data:image/png;base64,iVBORw0KGgo...`, choose **Auto Detect** or **Decode** to
 see the decoded image in the Output panel. The text output and Copy control are
-hidden while the preview is shown, and **Download** remains available. The
-preview is based only on the declared `image/*` MIME type; the converter does
-not infer file types from magic bytes. If the browser cannot load the image,
+hidden while the preview is shown, and **Download** remains available. Bare
+Base64 without a Data URI prefix is also previewed when its magic bytes match
+a supported raster format (PNG, JPEG, GIF, WebP, BMP, AVIF) — this is what
+makes an upload's output previewable when pasted back in. Sniffing runs
+independently of the selected character encoding (ASCII and ISO-8859-1
+decoding accept arbitrary bytes, so gating on text failure would miss those
+images). If sniffed bytes turn out to be text the browser cannot render as an
+image, the decoded text is shown instead. SVG is never
+previewed and stays download-only. A caption under the preview shows the image
+type, decoded size, and dimensions once loaded. If the browser cannot load the image,
 the tool falls back to a binary placeholder and keeps Download available.
 
 The **Swap ⇄** control exchanges the complete Input and Output values and
@@ -128,7 +135,8 @@ The "Upload File" feature allows you to directly encode any file into its Base64
 2.  The tool will read the file's content and directly encode it to Base64.
 3.  The resulting Base64 string will be displayed in the **Output** area.
 4.  The **Input** area will show a placeholder message, for example: `[File: yourfile.png uploaded and encoded to output]`.
-5.  The character encoding selection (`UTF-8`, `ASCII`, etc.) is not applicable when uploading files this way, as the file is treated as binary data for direct Base64 encoding.
+5.  If the uploaded file is a raster image (PNG, JPEG, GIF, WebP, BMP, AVIF — SVG excluded), a thumbnail preview with its MIME type and size appears alongside the Base64 output. The Base64 output itself is unchanged bare Base64, so copying it back into the **Input** area previews it via magic-byte detection.
+6.  The character encoding selection (`UTF-8`, `ASCII`, etc.) is not applicable when uploading files this way, as the file is treated as binary data for direct Base64 encoding.
 
 #### Decoding Base64 to Files
 

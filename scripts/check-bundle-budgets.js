@@ -109,6 +109,11 @@ const DEFAULT_FAIL_PERCENT = 10;
 // `image-editor` is measured from its initial production bundle; the
 // dependency-free canvas editor keeps all geometry/filter math in the main
 // bundle with no editor library or worker chunk.
+// `base64-converter-tool` (76,402 -> 84,607) was refreshed for image preview
+// support (PR #527): the magic-byte sniffer that previews bare base64 without
+// a Data URI prefix, the upload thumbnail with its blob-URL lifecycle, and the
+// decode-path caption (type, decoded size, dimensions). SVG stays
+// download-only by policy, so it adds no preview weight.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 49773,
@@ -116,7 +121,7 @@ const JS_RAW_BASELINES = Object.freeze({
     'diff-checker-tool': 87207,
     'jwt-builder-tool': 70073,
     'jwt-decoder-tool': 70827,
-    'base64-converter-tool': 76402,
+    'base64-converter-tool': 84607,
     'json-formatter-tool': 71306,
     'json-editor-tool': 63226,
     'css-minifier-tool': 66115,

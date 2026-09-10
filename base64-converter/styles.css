@@ -137,11 +137,71 @@
   height: auto;
   margin: auto;
   object-fit: contain;
+  border: 1px solid var(--b64-border-soft);
   border-radius: var(--border-radius-md, var(--default-border-radius-sm));
-  background-color: var(--color-bg, #fff);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    0 8px 24px rgba(15, 23, 42, 0.1);
+  /* Checkerboard behind the image so transparency reads as transparency. */
+  background-color: #fff;
+  background-image:
+    linear-gradient(45deg, #e9edf1 25%, transparent 25%, transparent 75%, #e9edf1 75%),
+    linear-gradient(45deg, #e9edf1 25%, transparent 25%, transparent 75%, #e9edf1 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 8px 8px;
 }
 
 .b64-image-preview[hidden] {
+  display: none;
+}
+
+/* Caption pill under the decode-path preview (MIME · size · dimensions). */
+.b64-preview-meta {
+  --c-status-chip-accent: var(--b64-accent);
+  align-self: center;
+  margin: 0.65rem 0 0.15rem;
+  max-width: 100%;
+}
+
+.b64-preview-meta[hidden] {
+  display: none;
+}
+
+/* Upload thumbnail: supplementary to the base64 text output (which stays
+   visible), so it renders smaller than the full decode-path image preview. */
+.b64-upload-preview {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 12rem;
+  height: auto;
+  margin: 0.5rem auto 0;
+  object-fit: contain;
+  border: 1px solid var(--b64-border-soft);
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    0 4px 12px rgba(15, 23, 42, 0.08);
+  background-color: #fff;
+  background-image:
+    linear-gradient(45deg, #e9edf1 25%, transparent 25%, transparent 75%, #e9edf1 75%),
+    linear-gradient(45deg, #e9edf1 25%, transparent 25%, transparent 75%, #e9edf1 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 6px 6px;
+}
+
+.b64-upload-preview[hidden] {
+  display: none;
+}
+
+.b64-upload-meta {
+  --c-status-chip-accent: var(--b64-accent);
+  align-self: center;
+  margin: 0.6rem 0 0.15rem;
+  max-width: 100%;
+}
+
+.b64-upload-meta[hidden] {
   display: none;
 }
 
@@ -254,6 +314,10 @@
 
   .b64-image-preview {
     max-height: 14rem;
+  }
+
+  .b64-upload-preview {
+    max-height: 10rem;
   }
 
   .b64-action-row {

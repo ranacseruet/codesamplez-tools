@@ -772,6 +772,28 @@ describe('Base64Converter UI (script.tsx)', () => {
             expect(elements.downloadDecodedButton.disabled).toBe(false);
         });
 
+        test('should decode a declared text Data URI as text', () => {
+            elements.input.value = 'data:text/plain;base64,SGVsbG8gV29ybGQ=';
+            elements.mode.value = 'auto';
+            converter.processInput();
+
+            expect(converter.outputKind).toBe('text');
+            expect(elements.result.textContent).toBe('Hello World');
+            expect(elements.preview.hidden).toBe(true);
+            expect(elements.downloadDecodedButton.disabled).toBe(false);
+        });
+
+        test('should apply strict text validation to declared text Data URIs', () => {
+            elements.input.value = 'data:text/plain;base64,SGVsbG8AAHdvcmxk';
+            elements.mode.value = 'decode';
+            elements.encoding.value = 'UTF-8';
+            converter.processInput();
+
+            expect(converter.outputKind).toBe('text');
+            expect(elements.result.textContent).toBe('Helloworld');
+            expect(elements.preview.hidden).toBe(true);
+        });
+
         test('should preview an image Data URI in auto mode', () => {
             elements.input.value = IMAGE_DATA_URI;
             elements.mode.value = 'auto';
@@ -902,6 +924,510 @@ describe('Base64Converter UI (script.tsx)', () => {
                 2000,
                 { type: 'success' }
             );
+        });
+
+    });
+
+    describe('Bare Base64 Image Sniffing (magic bytes)', () => {
+        // Upload output strips the Data URI prefix, so these bare payloads are
+        // what a user pastes back after uploading an image file.
+        const BARE_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+        const BARE_JPEG = '/9j/4AAQSkZJRgD/2P/Z';
+        const BARE_GIF = 'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+        const BARE_WEBP = 'UklGRhoAAABXRUJQVlA4IA0AAACdASoBAAIANCWo';
+        const BARE_AVIF = 'AAAAIGZ0eXBhdmlm/9gAEEpGSUY=';
+        const BARE_BMP = 'Qk34AAAAAAA2AAAAKAD/2A==';
+        const BARE_SVG_MARKUP = 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==';
+
+        test.each([
+            ['png', BARE_PNG, 'image/png'],
+            ['jpeg', BARE_JPEG, 'image/jpeg'],
+            ['gif', BARE_GIF, 'image/gif'],
+            ['webp', BARE_WEBP, 'image/webp'],
+            ['avif', BARE_AVIF, 'image/avif'],
+            ['bmp', BARE_BMP, 'image/bmp']
+        ])('should preview bare %s base64 in auto mode (inferred %s)', (_label, payload, mimeType) => {
+            elements.input.value = payload;
+            elements.mode.value = 'auto';
+            converter.processInput();
+
+            expect(converter.outputKind).toBe('image');
+            expect(converter.currentMimeType).toBe(mimeType);
+            expect(elements.preview.hidden).toBe(false);
+            expect(elements.preview.src).toContain(`data:${mimeType};base64,`);
+            expect(elements.result.hidden).toBe(true);
+            expect(elements.downloadDecodedButton.disabled).toBe(false);
+            expect(elements.swapButton.disabled).toBe(true);
+            expect(require('../common/notification-manager').NotificationManager.show).toHaveBeenCalledWith(
+                `Decoded. Image preview loading (inferred MIME: ${mimeType}).`,
+                2000,
+                { type: 'success' }
+            );
+        });
+
+        test.each([
+            ['ASCII', 'ASCII'],
+            ['ISO-8859-1', 'ISO-8859-1']
+        ])('should preview bare image base64 with %s encoding selected', (_label, encodingValue) => {
+            elements.encoding.innerHTML = `
+              <option value="ASCII">ASCII</option>
+              <option value="ISO-8859-1">ISO-8859-1</option>
+            `;
+            elements.input.value = BARE_PNG;
+            elements.mode.value = 'auto';
+            elements.encoding.value = encodingValue;
+            converter.processInput();
+
+            // ASCII/ISO-8859-1 decoding accepts arbitrary bytes, so without
+            // sniff-first these payloads would render as mojibake text.
+            expect(converter.outputKind).toBe('image');
+            expect(converter.currentMimeType).toBe('image/png');
+            expect(elements.preview.hidden).toBe(false);
+            expect(elements.result.hidden).toBe(true);
+            expect(converter.imagePreviewTextFallback).not.toBe(null);
+        });
+
+        test('should restore text when a sniffed preview is rejected (UTF-8 magic collision)', () => {
+            elements.input.value = 'Qk1X'; // "BMW" — valid text colliding with the BMP signature
+            elements.mode.value = 'auto';
+            converter.processInput();
+
+            expect(converter.outputKind).toBe('image');
+            expect(converter.imagePreviewTextFallback).toBe('BMW');
+
+            converter.imagePreviewRequest.loader.dispatchEvent(new Event('error'));
+
+            expect(converter.outputKind).toBe('text');
+            expect(elements.preview.hidden).toBe(true);
+            expect(elements.result.hidden).toBe(false);
+            expect(elements.result.textContent).toBe('BMW');
+            expect(elements.status.textContent).toBe('');
+            expect(elements.swapButton.disabled).toBe(false);
+        });
+
+        test('should restore text when a sniffed preview is rejected (ASCII mode)', () => {
+            elements.encoding.innerHTML = '<option value="ASCII">ASCII</option>';
+            elements.input.value = 'Qk1X';
+            elements.mode.value = 'auto';
+            elements.encoding.value = 'ASCII';
+            converter.processInput();
+
+            expect(converter.outputKind).toBe('image');
+
+            converter.imagePreviewRequest.loader.dispatchEvent(new Event('error'));
+
+            expect(converter.outputKind).toBe('text');
+            expect(elements.result.textContent).toBe('BMW');
+        });
+
+        test('should download restored text as a text file after fallback', async () => {
+            elements.input.value = 'Qk1X';
+            elements.mode.value = 'auto';
+            converter.processInput();
+            converter.imagePreviewRequest.loader.dispatchEvent(new Event('error'));
+
+            await converter.handleDownload();
+
+            const [content, filename] = converter.downloadManager.downloadFile.mock.calls[0];
+            expect(content).toBe('BMW');
+            expect(filename).toBe('output.txt');
+        });
+
+        test('should drop a stale text fallback when a newer preview starts', () => {
+            elements.input.value = 'Qk1X'; // "BMW" — sniffed preview with a text fallback stashed
+            elements.mode.value = 'auto';
+            converter.processInput();
+            const firstRequest = converter.imagePreviewRequest;
+            expect(converter.imagePreviewTextFallback).toBe('BMW');
+
+            elements.input.value = IMAGE_DATA_URI;
+            converter.processInput();
+            expect(converter.imagePreviewTextFallback).toBe(null);
+
+            firstRequest.loader.dispatchEvent(new Event('error'));
+
+            expect(converter.outputKind).toBe('image');
+            expect(elements.preview.hidden).toBe(false);
+        });
+
+        test('should preview bare image base64 in strict decode mode', () => {
+            elements.input.value = BARE_PNG;
+            elements.mode.value = 'decode';
+            converter.processInput();
+
+            expect(converter.outputKind).toBe('image');
+            expect(elements.preview.hidden).toBe(false);
+            expect(elements.result.hidden).toBe(true);
+            expect(elements.downloadDecodedButton.disabled).toBe(false);
+        });
+
+        describe('decode preview meta', () => {
+            const attachPreviewMeta = () => {
+                const meta = document.createElement('p');
+                meta.id = 'base64converter-preview-meta';
+                meta.hidden = true;
+                document.body.appendChild(meta);
+                converter.elements.previewMeta = meta;
+                return meta;
+            };
+
+            test('should show declared type and size under a Data URI preview', () => {
+                const meta = attachPreviewMeta();
+                elements.input.value = IMAGE_DATA_URI;
+                elements.mode.value = 'auto';
+                converter.processInput();
+
+                expect(converter.outputKind).toBe('image');
+                expect(meta.hidden).toBe(false);
+                expect(meta.textContent).toBe('image/png · 68 B');
+            });
+
+            test('should show inferred type and size under a bare base64 preview', () => {
+                const meta = attachPreviewMeta();
+                elements.input.value = BARE_PNG;
+                elements.mode.value = 'auto';
+                converter.processInput();
+
+                expect(meta.hidden).toBe(false);
+                expect(meta.textContent).toBe('image/png · 68 B');
+            });
+
+            test('should append dimensions to the meta once the image loads', () => {
+                const meta = attachPreviewMeta();
+                elements.input.value = IMAGE_DATA_URI;
+                elements.mode.value = 'auto';
+                converter.processInput();
+
+                const loader = converter.imagePreviewRequest.loader;
+                Object.defineProperty(loader, 'naturalWidth', { configurable: true, value: 800 });
+                Object.defineProperty(loader, 'naturalHeight', { configurable: true, value: 600 });
+                loader.dispatchEvent(new Event('load'));
+
+                expect(meta.textContent).toBe('image/png · 68 B · 800×600px');
+            });
+
+            test('should ignore dimensions from a stale image loader', () => {
+                const meta = attachPreviewMeta();
+                elements.input.value = 'data:image/png;base64,SGVsbG8=';
+                elements.mode.value = 'decode';
+                converter.processInput();
+                const firstLoader = converter.imagePreviewRequest.loader;
+
+                elements.input.value = IMAGE_DATA_URI;
+                converter.processInput();
+                expect(meta.textContent).toBe('image/png · 68 B');
+
+                Object.defineProperty(firstLoader, 'naturalWidth', { configurable: true, value: 1 });
+                Object.defineProperty(firstLoader, 'naturalHeight', { configurable: true, value: 1 });
+                firstLoader.dispatchEvent(new Event('load'));
+
+                expect(meta.textContent).toBe('image/png · 68 B');
+            });
+
+            test('should hide the preview meta when the image fails to load', () => {
+                const meta = attachPreviewMeta();
+                elements.input.value = IMAGE_DATA_URI;
+                elements.mode.value = 'decode';
+                converter.processInput();
+                expect(meta.hidden).toBe(false);
+
+                converter.imagePreviewRequest.loader.dispatchEvent(new Event('error'));
+
+                expect(meta.hidden).toBe(true);
+                expect(elements.preview.hidden).toBe(true);
+                expect(elements.result.textContent).toBe('[Binary content (image/png). Use Download button.]');
+            });
+
+            test('should clear the preview meta when converting follow-up input', () => {
+                const meta = attachPreviewMeta();
+                elements.input.value = IMAGE_DATA_URI;
+                elements.mode.value = 'auto';
+                converter.processInput();
+                expect(meta.hidden).toBe(false);
+
+                elements.input.value = 'Hello';
+                converter.processInput();
+
+                expect(meta.hidden).toBe(true);
+                expect(converter.imagePreviewMetaBase).toBe(null);
+            });
+        });
+
+        test('should keep a sniffed image downloadable under an image extension', async () => {
+            elements.input.value = BARE_PNG;
+            elements.mode.value = 'auto';
+            converter.processInput();
+
+            await converter.handleDownload();
+
+            const [_content, filename] = converter.downloadManager.downloadFile.mock.calls[0];
+            expect(filename).toBe('output.png');
+        });
+
+        test('should keep declared SVG data URIs download-only (no preview)', () => {
+            elements.input.value = `data:image/svg+xml;base64,${BARE_SVG_MARKUP}`;
+            elements.mode.value = 'auto';
+            converter.processInput();
+
+            expect(converter.outputKind).toBe('binary');
+            expect(elements.preview.hidden).toBe(true);
+            expect(elements.result.textContent).toBe('[Binary content (image/svg+xml). Use Download button.]');
+            expect(elements.downloadDecodedButton.disabled).toBe(false);
+        });
+
+        test('should decode bare SVG markup as text rather than previewing it', () => {
+            elements.input.value = BARE_SVG_MARKUP;
+            elements.mode.value = 'auto';
+            converter.processInput();
+
+            expect(converter.outputKind).toBe('text');
+            expect(elements.preview.hidden).toBe(true);
+            expect(elements.result.textContent).toContain('<svg');
+        });
+
+        test('should map sniffed MIME types to file extensions', () => {
+            expect(converter.detectMimeTypeFromBinary(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toBe('image/png');
+            expect(converter.detectMimeTypeFromBinary(new Uint8Array([0xff, 0xd8, 0xff, 0x00]))).toBe('image/jpeg');
+            expect(converter.detectMimeTypeFromBinary(new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]))).toBe('image/gif');
+            expect(converter.detectMimeTypeFromBinary(new Uint8Array([0x42, 0x4d, 0x00]))).toBe('image/bmp');
+            expect(converter.detectMimeTypeFromBinary(new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]))).toBe(null);
+            expect(converter.getFileExtensionFromMimeType('image/png')).toBe('png');
+            expect(converter.getFileExtensionFromMimeType('image/jpeg')).toBe('jpg');
+            expect(converter.getFileExtensionFromMimeType('application/pdf')).toBe('bin');
+            expect(converter.getFileExtensionFromMimeType('')).toBe('bin');
+        });
+
+    });
+
+    describe('Upload Image Preview', () => {
+        const PNG_DATA_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+        let originalCreateObjectURL;
+        let originalRevokeObjectURL;
+
+        const attachThumbnailSlots = () => {
+            const thumbnail = document.createElement('img');
+            thumbnail.id = 'base64converter-upload-preview';
+            thumbnail.hidden = true;
+            document.body.appendChild(thumbnail);
+            const meta = document.createElement('p');
+            meta.id = 'base64converter-upload-meta';
+            meta.hidden = true;
+            document.body.appendChild(meta);
+            converter.elements.uploadPreview = thumbnail;
+            converter.elements.uploadPreviewMeta = meta;
+            return { thumbnail, meta };
+        };
+
+        beforeEach(() => {
+            originalCreateObjectURL = URL.createObjectURL;
+            originalRevokeObjectURL = URL.revokeObjectURL;
+            URL.createObjectURL = jest.fn().mockReturnValue('blob:mock/upload-preview');
+            URL.revokeObjectURL = jest.fn();
+        });
+
+        afterEach(() => {
+            URL.createObjectURL = originalCreateObjectURL;
+            URL.revokeObjectURL = originalRevokeObjectURL;
+            document.getElementById('base64converter-upload-preview')?.remove();
+            document.getElementById('base64converter-upload-meta')?.remove();
+        });
+
+        const uploadFile = (file, dataUrl) => {
+            const event = { target: { files: [file] } };
+            converter.handleFileUpload(event);
+            mockFileReaderInstance.result = dataUrl;
+            mockFileReaderInstance.onload();
+        };
+
+        test('should show a thumbnail alongside the base64 output for image uploads', () => {
+            const { thumbnail, meta } = attachThumbnailSlots();
+            const mockFile = new File(['png-bytes'], 'photo.png', { type: 'image/png' });
+
+            uploadFile(mockFile, PNG_DATA_URL);
+
+            // Base64 output contract is unchanged (bare payload, still text).
+            expect(elements.result.textContent).toBe(PNG_DATA_URL.split(',')[1]);
+            expect(converter.outputKind).toBe('text');
+            expect(URL.createObjectURL).toHaveBeenCalledWith(mockFile);
+            expect(converter.uploadPreviewUrl).toBe('blob:mock/upload-preview');
+            expect(thumbnail.hidden).toBe(false);
+            expect(thumbnail.getAttribute('src')).toBe('blob:mock/upload-preview');
+            expect(meta.hidden).toBe(false);
+            expect(meta.textContent).toBe('image/png · 9 B');
+        });
+
+        test('should round-trip upload output back into an image preview', () => {
+            attachThumbnailSlots();
+            const mockFile = new File(['png-bytes'], 'photo.png', { type: 'image/png' });
+
+            uploadFile(mockFile, PNG_DATA_URL);
+
+            elements.input.value = elements.result.textContent;
+            elements.mode.value = 'auto';
+            converter.processInput();
+
+            expect(converter.outputKind).toBe('image');
+            expect(elements.preview.hidden).toBe(false);
+            expect(elements.preview.src).toContain('data:image/png;base64,');
+        });
+
+        test('should not create a preview for SVG uploads', () => {
+            const { thumbnail } = attachThumbnailSlots();
+            const mockFile = new File(['<svg></svg>'], 'vector.svg', { type: 'image/svg+xml' });
+
+            uploadFile(mockFile, 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=');
+
+            expect(elements.result.textContent).toBe('PHN2Zz48L3N2Zz4=');
+            expect(URL.createObjectURL).not.toHaveBeenCalled();
+            expect(converter.uploadPreviewUrl).toBe(null);
+            expect(thumbnail.hidden).toBe(true);
+        });
+
+        test('should skip the preview for oversized images but still encode', () => {
+            const { thumbnail, meta } = attachThumbnailSlots();
+            const mockFile = new File(['x'], 'big.png', { type: 'image/png' });
+            Object.defineProperty(mockFile, 'size', { configurable: true, value: 16 * 1024 * 1024 });
+
+            uploadFile(mockFile, PNG_DATA_URL);
+
+            expect(elements.result.textContent).toBe(PNG_DATA_URL.split(',')[1]);
+            expect(URL.createObjectURL).not.toHaveBeenCalled();
+            expect(thumbnail.hidden).toBe(true);
+            expect(meta.hidden).toBe(false);
+            expect(meta.textContent).toContain('Preview skipped');
+        });
+
+        test('should revoke the object URL when the output state resets', () => {
+            const { thumbnail, meta } = attachThumbnailSlots();
+            const mockFile = new File(['png-bytes'], 'photo.png', { type: 'image/png' });
+
+            uploadFile(mockFile, PNG_DATA_URL);
+            expect(converter.uploadPreviewUrl).toBe('blob:mock/upload-preview');
+
+            elements.input.value = 'Hello';
+            elements.mode.value = 'auto';
+            converter.processInput();
+
+            expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock/upload-preview');
+            expect(converter.uploadPreviewUrl).toBe(null);
+            expect(thumbnail.hidden).toBe(true);
+            expect(meta.hidden).toBe(true);
+        });
+
+        test('should skip the thumbnail when blob URLs are unavailable', () => {
+            const { thumbnail, meta } = attachThumbnailSlots();
+            URL.createObjectURL = undefined;
+            const mockFile = new File(['png-bytes'], 'photo.png', { type: 'image/png' });
+
+            uploadFile(mockFile, PNG_DATA_URL);
+
+            expect(elements.result.textContent).toBe(PNG_DATA_URL.split(',')[1]);
+            expect(converter.uploadPreviewUrl).toBe(null);
+            expect(thumbnail.hidden).toBe(true);
+            expect(meta.hidden).toBe(true);
+        });
+
+        test('should clear the thumbnail if it fails to load', () => {
+            const { thumbnail, meta } = attachThumbnailSlots();
+            const mockFile = new File(['png-bytes'], 'photo.png', { type: 'image/png' });
+
+            uploadFile(mockFile, PNG_DATA_URL);
+            expect(thumbnail.hidden).toBe(false);
+
+            thumbnail.dispatchEvent(new Event('error'));
+
+            expect(converter.uploadPreviewUrl).toBe(null);
+            expect(thumbnail.hidden).toBe(true);
+            expect(meta.hidden).toBe(true);
+            expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock/upload-preview');
+        });
+
+        test('should enrich the upload meta once the thumbnail loads', () => {
+            const { thumbnail, meta } = attachThumbnailSlots();
+            const mockFile = new File(['png-bytes'], 'photo.png', { type: 'image/png' });
+
+            uploadFile(mockFile, PNG_DATA_URL);
+
+            thumbnail.dispatchEvent(new Event('load'));
+            expect(meta.textContent).toBe('image/png · 9 B');
+
+            Object.defineProperty(thumbnail, 'naturalWidth', { configurable: true, value: 320 });
+            Object.defineProperty(thumbnail, 'naturalHeight', { configurable: true, value: 240 });
+            thumbnail.dispatchEvent(new Event('load'));
+            expect(meta.textContent).toBe('image/png · 9 B · 320×240px');
+        });
+
+        test('should clear the thumbnail if creating the object URL fails', () => {
+            const { thumbnail, meta } = attachThumbnailSlots();
+            URL.createObjectURL = jest.fn().mockImplementation(() => {
+                throw new Error('denied');
+            });
+            const mockFile = new File(['png-bytes'], 'photo.png', { type: 'image/png' });
+
+            uploadFile(mockFile, PNG_DATA_URL);
+
+            expect(elements.result.textContent).toBe(PNG_DATA_URL.split(',')[1]);
+            expect(converter.uploadPreviewUrl).toBe(null);
+            expect(thumbnail.hidden).toBe(true);
+            expect(meta.hidden).toBe(true);
+        });
+
+    });
+
+    describe('Preview helpers (pure functions)', () => {
+        const {
+            base64HeadToBytes,
+            sniffRasterImageMimeType,
+            base64DecodedSize,
+            formatByteSize
+        } = require('./script');
+
+        test('base64HeadToBytes decodes only a bounded head', () => {
+            expect(base64HeadToBytes('')).toBe(null);
+            expect(base64HeadToBytes('ABC')).toBe(null);
+            expect(base64HeadToBytes('!!!!')).toBe(null);
+
+            const head = base64HeadToBytes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
+            expect(head).not.toBe(null);
+            expect(head.length).toBe(48);
+            expect(Array.from(head.slice(0, 4))).toEqual([0x89, 0x50, 0x4e, 0x47]);
+
+            expect(Array.from(base64HeadToBytes('AA=='))).toEqual([0]);
+        });
+
+        test('sniffRasterImageMimeType matches raster magic bytes only', () => {
+            expect(sniffRasterImageMimeType(null)).toBe(null);
+            expect(sniffRasterImageMimeType(new Uint8Array([0x41]))).toBe(null);
+            expect(sniffRasterImageMimeType(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toBe('image/png');
+            expect(sniffRasterImageMimeType(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a]))).toBe(null);
+            expect(sniffRasterImageMimeType(new Uint8Array([0xff, 0xd8, 0xff, 0x00]))).toBe('image/jpeg');
+            expect(sniffRasterImageMimeType(new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x37, 0x61]))).toBe('image/gif');
+            expect(sniffRasterImageMimeType(new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]))).toBe('image/gif');
+            expect(sniffRasterImageMimeType(new Uint8Array([0x42, 0x4d, 0x00]))).toBe('image/bmp');
+            expect(sniffRasterImageMimeType(new Uint8Array([0x52, 0x49, 0x46, 0x46, 0x1a, 0, 0, 0, 0x57, 0x45, 0x42, 0x50]))).toBe('image/webp');
+            expect(sniffRasterImageMimeType(new Uint8Array([0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69, 0x66]))).toBe('image/avif');
+            expect(sniffRasterImageMimeType(new Uint8Array([0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69, 0x73]))).toBe('image/avif');
+            expect(sniffRasterImageMimeType(new Uint8Array([0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63]))).toBe(null);
+            expect(sniffRasterImageMimeType(new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]))).toBe(null);
+        });
+
+        test('base64DecodedSize reports exact decoded sizes', () => {
+            expect(base64DecodedSize('')).toBe(null);
+            expect(base64DecodedSize('ABC')).toBe(null);
+            expect(base64DecodedSize('SGVsbG8=')).toBe(5);
+            expect(base64DecodedSize('SGVsbG8gV29ybGQ=')).toBe(11);
+            expect(base64DecodedSize('YWI=')).toBe(2);
+        });
+
+        test('formatByteSize formats across units', () => {
+            expect(formatByteSize(Number.NaN)).toBe('unknown size');
+            expect(formatByteSize(-1)).toBe('unknown size');
+            expect(formatByteSize(0)).toBe('0 B');
+            expect(formatByteSize(512)).toBe('512 B');
+            expect(formatByteSize(2048)).toBe('2 KiB');
+            expect(formatByteSize(1536)).toBe('1.5 KiB');
+            expect(formatByteSize(5 * 1024 * 1024)).toBe('5 MB');
+            expect(formatByteSize(1.5 * 1024 * 1024)).toBe('1.5 MB');
         });
 
     });

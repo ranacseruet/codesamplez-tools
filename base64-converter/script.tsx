@@ -35,6 +35,14 @@ interface Base64ConverterElements {
     convertButton: HTMLElement;
     swapButton: HTMLButtonElement;
     downloadDecodedButton: HTMLButtonElement;
+    // Optional thumbnail for uploaded image files. Queried separately from
+    // BASE64_CONVERTER_ELEMENT_IDS so older DOMs (and tests) without these
+    // nodes still initialize — null means "no thumbnail slot available".
+    uploadPreview: HTMLImageElement | null;
+    uploadPreviewMeta: HTMLElement | null;
+    // Caption under the decode-path image preview (MIME · size · dimensions).
+    // Optional for the same reason as the upload slots.
+    previewMeta: HTMLElement | null;
 }
 
 interface ImagePreviewRequest {
@@ -48,12 +56,28 @@ interface Base64ConverterInstance {
     lastConversionDirection: Base64ConversionDirection | null;
     downloadSource: string | null;
     imagePreviewRequest: ImagePreviewRequest | null;
+    // Blob URL for the current upload thumbnail, if any. Revoked whenever the
+    // output state resets so long-lived sessions don't leak object URLs.
+    uploadPreviewUrl: string | null;
+    // Base caption for the decode-path image preview ("type · size");
+    // dimensions are appended once the image loads.
+    imagePreviewMetaBase: string | null;
+    // Decoded text stashed when a bare payload takes the sniffed image path,
+    // so a browser render rejection (e.g. text colliding with magic bytes)
+    // can fall back to text instead of a binary placeholder. Null when the
+    // bytes are not valid text, or when the preview was declared (not sniffed).
+    imagePreviewTextFallback: string | null;
     downloadManager: DownloadManager;
     clearButtonInstance: ClearButton | null;
     copyButtonInstance: CopyButton;
     processInput(): void;
-    detectMimeTypeFromBinary(bytes: Uint8Array): void;
-    getFileExtensionFromMimeType(mimeType: string): void;
+    // Sniffs raster magic bytes. Returns the MIME type for previewable raster
+    // images, or null for anything else (including SVG, which stays
+    // download-only — see PREVIEWABLE_RASTER_MIME_TYPES).
+    detectMimeTypeFromBinary(bytes: Uint8Array): string | null;
+    getFileExtensionFromMimeType(mimeType: string): string;
+    clearUploadPreview(): void;
+    showUploadPreview(file: File): void;
     handleDownload(): Promise<void>;
     handleFileUpload(event: { target: { files?: FileList | File[] | null; value?: string | null } }): Promise<void>;
 }
@@ -112,6 +136,154 @@ function isImageMimeType(mimeType: string | null): boolean {
     return Boolean(mimeType?.toLowerCase().startsWith('image/'));
 }
 
+/**
+ * Raster formats eligible for image preview. Mirrors the image-editor
+ * allowlist — and deliberately excludes `image/svg+xml`: SVG in an `<img>`
+ * blocks scripts, but opening the same `blob:`/`data:` URL directly (e.g.
+ * right-click "open image in new tab") would execute embedded scripts in the
+ * tool origin, so SVG stays download-only.
+ */
+const PREVIEWABLE_RASTER_MIME_TYPES: ReadonlySet<string> = new Set([
+    'image/png',
+    'image/jpeg',
+    'image/gif',
+    'image/webp',
+    'image/bmp',
+    'image/avif'
+]);
+
+const RASTER_MIME_TO_EXTENSION: Record<string, string> = {
+    'image/png': 'png',
+    'image/jpeg': 'jpg',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+    'image/bmp': 'bmp',
+    'image/avif': 'avif'
+};
+
+/** Bytes decoded from a base64 head purely to sniff magic bytes. */
+const IMAGE_SNIFF_BYTE_BUDGET = 48;
+
+/**
+ * Upload thumbnails are a preview nicety, not the conversion itself, so they
+ * stay under the same ceiling the image-editor uses (15 MB). Larger uploads
+ * still encode/download exactly as before — they just get no thumbnail.
+ */
+const UPLOAD_PREVIEW_MAX_BYTES = 15 * 1024 * 1024;
+
+function isPreviewableRasterMimeType(mimeType: string | null): boolean {
+    return Boolean(mimeType && PREVIEWABLE_RASTER_MIME_TYPES.has(mimeType.toLowerCase()));
+}
+
+/**
+ * Decodes just enough of a base64 payload to cover the magic-byte window.
+ * Magic bytes sit at offset 0, so decoding a short head keeps the sniff O(1)
+ * no matter how large the pasted payload is. Exported for unit tests.
+ */
+export function base64HeadToBytes(payload: string, byteBudget: number = IMAGE_SNIFF_BYTE_BUDGET): Uint8Array | null {
+    if (!payload) {
+        return null;
+    }
+    const charsNeeded = Math.ceil(byteBudget / 3) * 4;
+    const head = payload.length > charsNeeded ? payload.slice(0, charsNeeded) : payload;
+    if (head.length % 4 !== 0) {
+        return null;
+    }
+    try {
+        const binary = atob(head);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+    } catch (_sniffError: unknown) {
+        return null;
+    }
+}
+
+/**
+ * Infers a previewable raster MIME type from magic bytes. Returns null for
+ * anything else — including SVG/text (never sniffed on purpose).
+ * Exported for unit tests.
+ */
+export function sniffRasterImageMimeType(bytes: Uint8Array | null): string | null {
+    if (!bytes || bytes.length < 3) {
+        return null;
+    }
+    // PNG: 89 50 4E 47 0D 0A 1A 0A
+    if (
+        bytes.length >= 8 &&
+        bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47 &&
+        bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a
+    ) {
+        return 'image/png';
+    }
+    // JPEG: FF D8 FF
+    if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+        return 'image/jpeg';
+    }
+    // GIF: GIF87a / GIF89a
+    if (
+        bytes.length >= 6 &&
+        bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38 &&
+        (bytes[4] === 0x37 || bytes[4] === 0x39) && bytes[5] === 0x61
+    ) {
+        return 'image/gif';
+    }
+    // BMP: BM
+    if (bytes[0] === 0x42 && bytes[1] === 0x4d) {
+        return 'image/bmp';
+    }
+    // WebP: RIFF....WEBP
+    if (
+        bytes.length >= 12 &&
+        bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+        bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+    ) {
+        return 'image/webp';
+    }
+    // AVIF: ....ftypavif / ....ftypavis
+    if (
+        bytes.length >= 12 &&
+        bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70
+    ) {
+        const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+        if (brand === 'avif' || brand === 'avis') {
+            return 'image/avif';
+        }
+    }
+    return null;
+}
+
+export function formatByteSize(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes < 0) {
+        return 'unknown size';
+    }
+    if (bytes < 1024) {
+        return `${bytes} B`;
+    }
+    if (bytes < 1024 * 1024) {
+        const kibibytes = bytes / 1024;
+        return `${kibibytes % 1 === 0 ? kibibytes : kibibytes.toFixed(1)} KiB`;
+    }
+    const megabytes = bytes / (1024 * 1024);
+    return `${megabytes % 1 === 0 ? megabytes : megabytes.toFixed(1)} MB`;
+}
+
+/**
+ * Decoded byte size of a validated base64 payload, for preview captions.
+ * Returns null for malformed input rather than guessing.
+ * Exported for unit tests.
+ */
+export function base64DecodedSize(payload: string): number | null {
+    if (!payload || payload.length % 4 !== 0) {
+        return null;
+    }
+    const padding = payload.endsWith('==') ? 2 : payload.endsWith('=') ? 1 : 0;
+    const size = (payload.length / 4) * 3 - padding;
+    return Number.isInteger(size) && size >= 0 ? size : null;
+}
+
 function isBinaryPlaceholder(value: string): boolean {
     return value.startsWith('[Binary content') || value.startsWith('[Decoded content (likely binary');
 }
@@ -158,12 +330,17 @@ function writeOutputText(element: HTMLElement, value: string): void {
 }
 
 function setImagePreviewVisible(converter: Base64ConverterInstance, visible: boolean, source = ''): void {
-    const { preview, result } = converter.elements;
+    const { preview, previewMeta, result } = converter.elements;
     converter.imagePreviewRequest = null;
 
     if (visible) {
         preview.src = source;
         preview.hidden = false;
+
+        if (previewMeta && converter.imagePreviewMetaBase) {
+            previewMeta.textContent = converter.imagePreviewMetaBase;
+            previewMeta.hidden = false;
+        }
 
         const request: ImagePreviewRequest = {
             loader: document.createElement('img')
@@ -175,10 +352,22 @@ function setImagePreviewVisible(converter: Base64ConverterInstance, visible: boo
             }
             handleImagePreviewError(converter);
         };
+        request.loader.onload = () => {
+            if (converter.imagePreviewRequest !== request || converter.outputKind !== 'image') {
+                return;
+            }
+            const { naturalWidth, naturalHeight } = request.loader;
+            if (previewMeta && converter.imagePreviewMetaBase && naturalWidth > 0 && naturalHeight > 0) {
+                previewMeta.textContent = `${converter.imagePreviewMetaBase} · ${naturalWidth}×${naturalHeight}px`;
+            }
+        };
         request.loader.src = source;
     } else {
         preview.hidden = true;
         preview.removeAttribute('src');
+        if (previewMeta) {
+            previewMeta.hidden = true;
+        }
     }
 
     result.hidden = visible;
@@ -190,6 +379,24 @@ function setImagePreviewVisible(converter: Base64ConverterInstance, visible: boo
 
 function handleImagePreviewError(converter: Base64ConverterInstance): void {
     if (converter.outputKind !== 'image') {
+        return;
+    }
+
+    const textFallback = converter.imagePreviewTextFallback;
+    converter.imagePreviewTextFallback = null;
+    if (textFallback !== null) {
+        // A sniffed preview the browser rejected (e.g. text colliding with
+        // magic bytes): restore the decoded text rather than a placeholder,
+        // and return to the text download path.
+        setImagePreviewVisible(converter, false);
+        writeOutputText(converter.elements.result, textFallback);
+        converter.outputKind = 'text';
+        converter.currentMimeType = null;
+        converter.downloadSource = null;
+        converter.elements.downloadDecodedButton.disabled = false;
+        converter.elements.status.textContent = '';
+        converter.copyButtonInstance.forceUpdateVisibility();
+        updateSwapButton(converter);
         return;
     }
 
@@ -211,6 +418,9 @@ function updateSwapButton(converter: Base64ConverterInstance): void {
 }
 
 function resetOutputState(converter: Base64ConverterInstance): void {
+    converter.clearUploadPreview();
+    converter.imagePreviewMetaBase = null;
+    converter.imagePreviewTextFallback = null;
     converter.currentMimeType = null;
     converter.outputKind = 'empty';
     converter.lastConversionDirection = null;
@@ -248,6 +458,9 @@ const createConverter = (): Base64ConverterInstance => {
         lastConversionDirection: null as Base64ConversionDirection | null,
         downloadSource: null,
         imagePreviewRequest: null,
+        uploadPreviewUrl: null as string | null,
+        imagePreviewMetaBase: null as string | null,
+        imagePreviewTextFallback: null as string | null,
         downloadManager: downloadManager, // Expose downloadManager for testing
         clearButtonInstance: null,
         copyButtonInstance: null as unknown as CopyButton,
@@ -278,6 +491,9 @@ const createConverter = (): Base64ConverterInstance => {
 
             let base64Payload = rawInput;
             let detectedMimeType = null; // MIME type from Data URI, if present
+            // Raster MIME inferred from magic bytes for bare base64 payloads
+            // (e.g. re-pasted upload output, which carries no Data URI prefix).
+            let inferredMimeType: string | null = null;
 
             if (rawInput.startsWith('data:')) {
                 const parsedDataUrl = parseBase64DataUrl(rawInput);
@@ -302,7 +518,14 @@ const createConverter = (): Base64ConverterInstance => {
                 let imagePreviewSource = '';
 
                 const decodePayloadForDisplay = (strictTextValidation: boolean) => {
-                    if (isImageMimeType(detectedMimeType)) {
+                    // SVG is intentionally not previewable even when declared:
+                    // scripts inside an SVG opened directly (e.g. "open image in
+                    // new tab" on the preview) would run in the tool origin, so
+                    // it stays download-only like any other binary content.
+                    if (
+                        isImageMimeType(detectedMimeType) &&
+                        detectedMimeType?.toLowerCase() !== 'image/svg+xml'
+                    ) {
                         return {
                             resultText: '',
                             outputKind: 'image' as const,
@@ -318,21 +541,60 @@ const createConverter = (): Base64ConverterInstance => {
                         };
                     }
 
-                    let decodedText = codec.decodeText(base64Payload, encoding);
-                    if (strictTextValidation) {
-                        // Replace null characters for display purposes to match the existing text output contract.
-                        decodedText = decodedText.replace(/\u0000/g, '');
-                        // Check for replacement characters indicating decode errors.
-                        if (decodedText.includes('\uFFFD')) {
-                            throw new Error('Invalid UTF-8 sequence detected in decoded result');
+                    const decodeTextForDisplay = () => {
+                        let decodedText = codec.decodeText(base64Payload, encoding);
+                        if (strictTextValidation) {
+                            // Replace null characters for display purposes to match the existing text output contract.
+                            decodedText = decodedText.replace(/\u0000/g, '');
+                            // Check for replacement characters indicating decode errors.
+                            if (decodedText.includes('\uFFFD')) {
+                                throw new Error('Invalid UTF-8 sequence detected in decoded result');
+                            }
                         }
+
+                        return {
+                            resultText: decodedText,
+                            outputKind: 'text' as const,
+                            imagePreviewSource: ''
+                        };
+                    };
+
+                    if (!detectedMimeType) {
+                        // Bare base64 with no declared MIME (notably the output
+                        // of an image upload, which strips the Data URI prefix).
+                        // Sniffing runs independently of text decoding: ASCII and
+                        // ISO-8859-1 decoding accept arbitrary bytes, and some
+                        // raster payloads are valid UTF-8 too, so gating the
+                        // sniff on a text failure would miss those images.
+                        // When the bytes are also valid text it is stashed as a
+                        // fallback — if the browser rejects the render (e.g.
+                        // text colliding with magic bytes), the error path
+                        // restores text instead of a binary placeholder. SVG is
+                        // never sniffed and stays download-only.
+                        let textDisplay: ReturnType<typeof decodeTextForDisplay> | null = null;
+                        let textError: unknown = null;
+                        try {
+                            textDisplay = decodeTextForDisplay();
+                        } catch (error: unknown) {
+                            textError = error;
+                        }
+                        const sniffedMimeType = sniffRasterImageMimeType(base64HeadToBytes(base64Payload));
+                        if (sniffedMimeType) {
+                            inferredMimeType = sniffedMimeType;
+                            this.imagePreviewTextFallback = textDisplay ? textDisplay.resultText : null;
+                            return {
+                                resultText: '',
+                                outputKind: 'image' as const,
+                                imagePreviewSource: `data:${sniffedMimeType};base64,${base64Payload}`
+                            };
+                        }
+                        if (textDisplay) {
+                            return textDisplay;
+                        }
+                        throw textError;
                     }
 
-                    return {
-                        resultText: decodedText,
-                        outputKind: 'text' as const,
-                        imagePreviewSource: ''
-                    };
+                    return decodeTextForDisplay();
                 };
 
                 if (mode === 'encode') {
@@ -375,6 +637,16 @@ const createConverter = (): Base64ConverterInstance => {
 
                 this.outputKind = outputKind;
                 this.lastConversionDirection = statusActionMessage === 'Encoded' ? 'encode' : 'decode';
+                if (outputKind === 'image') {
+                    const previewMimeType = inferredMimeType || detectedMimeType;
+                    if (inferredMimeType) {
+                        this.currentMimeType = inferredMimeType;
+                    }
+                    const decodedSize = base64DecodedSize(base64Payload);
+                    this.imagePreviewMetaBase = previewMimeType
+                        ? `${previewMimeType} · ${decodedSize === null ? 'unknown size' : formatByteSize(decodedSize)}`
+                        : null;
+                }
                 this.downloadSource = isBinaryOutputKind(outputKind) ? rawInput : null;
                 writeOutputText(this.elements.result, resultText);
                 setImagePreviewVisible(this, outputKind === 'image', imagePreviewSource);
@@ -382,8 +654,10 @@ const createConverter = (): Base64ConverterInstance => {
                 // Update CopyButton visibility directly
                 this.copyButtonInstance.forceUpdateVisibility();
                 updateSwapButton(this);
-                if (statusActionMessage === 'Decoded' && detectedMimeType && isImageMimeType(detectedMimeType)) {
+                if (statusActionMessage === 'Decoded' && outputKind === 'image' && detectedMimeType && isImageMimeType(detectedMimeType)) {
                     NotificationManager.show(`${statusActionMessage}. MIME: ${detectedMimeType}. Image preview available.`, 2000, { type: 'success' });
+                } else if (statusActionMessage === 'Decoded' && outputKind === 'image' && inferredMimeType) {
+                    NotificationManager.show(`${statusActionMessage}. Image preview loading (inferred MIME: ${inferredMimeType}).`, 2000, { type: 'success' });
                 } else if (statusActionMessage === 'Decoded' && detectedMimeType && !isTextMimeType(detectedMimeType)) {
                     NotificationManager.show(`${statusActionMessage}. MIME: ${detectedMimeType}. Selected encoding (${this.elements.encoding.value}) ignored for binary display.`, 2000, { type: 'success' });
                 } else if (statusActionMessage === 'Decoded' && !detectedMimeType && isBinaryPlaceholder(resultText)) {
@@ -419,12 +693,99 @@ const createConverter = (): Base64ConverterInstance => {
             }
         },
 
-        detectMimeTypeFromBinary(_bytes: Uint8Array) {
-            // ... (keep existing detectMimeTypeFromBinary implementation unchanged)
+        detectMimeTypeFromBinary(bytes: Uint8Array) {
+            return sniffRasterImageMimeType(bytes);
         },
 
-        getFileExtensionFromMimeType(_mimeType: string) {
-            // ... (keep existing getFileExtensionFromMimeType implementation unchanged)
+        getFileExtensionFromMimeType(mimeType: string) {
+            const normalized = String(mimeType || '').toLowerCase().split(';')[0].trim();
+            return RASTER_MIME_TO_EXTENSION[normalized] || 'bin';
+        },
+
+        clearUploadPreview() {
+            if (
+                this.uploadPreviewUrl &&
+                typeof URL !== 'undefined' &&
+                typeof URL.revokeObjectURL === 'function'
+            ) {
+                try {
+                    URL.revokeObjectURL(this.uploadPreviewUrl);
+                } catch (_revokeError: unknown) {
+                    // Revocation is best-effort cleanup; ignore failures.
+                }
+            }
+            this.uploadPreviewUrl = null;
+            const uploadPreview = this.elements.uploadPreview;
+            if (uploadPreview) {
+                uploadPreview.hidden = true;
+                uploadPreview.removeAttribute('src');
+                uploadPreview.onload = null;
+                uploadPreview.onerror = null;
+            }
+            const uploadMeta = this.elements.uploadPreviewMeta;
+            if (uploadMeta) {
+                uploadMeta.hidden = true;
+                uploadMeta.textContent = '';
+            }
+        },
+
+        /**
+         * Shows a thumbnail for an uploaded raster image file alongside the
+         * base64 text output. The base64 output is untouched — the thumbnail
+         * is supplementary and rendered from a blob URL (never uploaded).
+         * Non-images, SVG, oversized files, and environments without blob-URL
+         * support simply get no thumbnail; conversion is unaffected.
+         */
+        showUploadPreview(file: File) {
+            this.clearUploadPreview();
+
+            const fileMimeType = typeof file.type === 'string' ? file.type : '';
+            if (!isPreviewableRasterMimeType(fileMimeType)) {
+                return;
+            }
+
+            const uploadMeta = this.elements.uploadPreviewMeta;
+            if (file.size > UPLOAD_PREVIEW_MAX_BYTES) {
+                if (uploadMeta) {
+                    uploadMeta.hidden = false;
+                    uploadMeta.textContent =
+                        `Preview skipped: file is larger than ${formatByteSize(UPLOAD_PREVIEW_MAX_BYTES)}. ` +
+                        'Base64 output and Download are still available.';
+                }
+                return;
+            }
+
+            if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') {
+                return;
+            }
+
+            try {
+                const objectUrl = URL.createObjectURL(file);
+                this.uploadPreviewUrl = objectUrl;
+                const uploadPreview = this.elements.uploadPreview;
+                if (uploadPreview) {
+                    uploadPreview.onerror = () => {
+                        this.clearUploadPreview();
+                    };
+                    uploadPreview.onload = () => {
+                        const dimensions =
+                            uploadPreview.naturalWidth && uploadPreview.naturalHeight
+                                ? ` · ${uploadPreview.naturalWidth}×${uploadPreview.naturalHeight}px`
+                                : '';
+                        if (uploadMeta) {
+                            uploadMeta.textContent = `${fileMimeType} · ${formatByteSize(file.size)}${dimensions}`;
+                        }
+                    };
+                    uploadPreview.src = objectUrl;
+                    uploadPreview.hidden = false;
+                }
+                if (uploadMeta) {
+                    uploadMeta.hidden = false;
+                    uploadMeta.textContent = `${fileMimeType} · ${formatByteSize(file.size)}`;
+                }
+            } catch (_previewError: unknown) {
+                this.clearUploadPreview();
+            }
         },
 
         async handleDownload() {
@@ -466,7 +827,9 @@ const createConverter = (): Base64ConverterInstance => {
                         bytes[i] = binaryString.charCodeAt(i);
                     }
                     content = bytes;
-                    filename = 'output.bin';
+                    // Name the file by sniffed raster type when the bytes are a
+                    // known image; otherwise keep the legacy .bin name.
+                    filename = `output.${this.getFileExtensionFromMimeType(this.detectMimeTypeFromBinary(bytes) || '')}`;
                 } else {
                     content = outputContent;
                 }
@@ -513,6 +876,7 @@ const createConverter = (): Base64ConverterInstance => {
                     this.outputKind = 'text';
                     this.lastConversionDirection = 'encode';
                     setImagePreviewVisible(this, false);
+                    this.showUploadPreview(file);
                     // Update CopyButton visibility directly
                     this.copyButtonInstance.forceUpdateVisibility();
                     updateSwapButton(this);
@@ -621,6 +985,24 @@ export function Base64ConverterApp() {
                             alt="Decoded image preview"
                             hidden
                         />
+                        <p
+                            id="base64converter-preview-meta"
+                            className="b64-preview-meta c-status-chip"
+                            aria-live="polite"
+                            hidden
+                        />
+                        <img
+                            id="base64converter-upload-preview"
+                            className="b64-upload-preview"
+                            alt="Uploaded image preview"
+                            hidden
+                        />
+                        <p
+                            id="base64converter-upload-meta"
+                            className="b64-upload-meta c-status-chip"
+                            aria-live="polite"
+                            hidden
+                        />
                     </div>
                 </div>
             </div>
@@ -722,6 +1104,15 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
     const typedElements = elements as Base64ConverterElements;
     converter.elements = typedElements;
 
+    // Upload-thumbnail slots are optional: older DOMs and test fixtures
+    // without them still initialize, uploads just show no thumbnail.
+    const uploadPreviewElement = document.getElementById('base64converter-upload-preview');
+    typedElements.uploadPreview = uploadPreviewElement instanceof HTMLImageElement ? uploadPreviewElement : null;
+    const uploadPreviewMetaElement = document.getElementById('base64converter-upload-meta');
+    typedElements.uploadPreviewMeta = uploadPreviewMetaElement instanceof HTMLElement ? uploadPreviewMetaElement : null;
+    const previewMetaElement = document.getElementById('base64converter-preview-meta');
+    typedElements.previewMeta = previewMetaElement instanceof HTMLElement ? previewMetaElement : null;
+
     if (dataFromUrl) {
         typedElements.input.value = dataFromUrl;
         typedElements.mode.value = 'auto';
@@ -764,6 +1155,7 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
         typedElements.input.value = outputValue;
         writeOutputText(typedElements.result, inputValue);
         setImagePreviewVisible(converter, false);
+        converter.clearUploadPreview();
 
         const nextMode = typedElements.mode.value === 'encode'
             ? 'decode'
