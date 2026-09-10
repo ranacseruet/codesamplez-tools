@@ -124,7 +124,10 @@
     {
       "id": "json-formatter-mobile",
       "path": "/json-formatter/",
-      "viewport": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
       "changePaths": [
         "json-formatter/"
       ]

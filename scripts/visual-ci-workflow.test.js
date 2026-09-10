@@ -60,6 +60,13 @@ describe('Visual CI workflow contract', () => {
     });
   });
 
+  it('keeps the JSON Formatter mobile capture within the hosted comparison limit', () => {
+    const config = JSON.parse(fs.readFileSync(SNAPDRIFT_CONFIG_PATH, 'utf8'));
+    const route = config.routes.find((candidate) => candidate.id === 'json-formatter-mobile');
+
+    expect(route.viewport).toEqual({ width: 390, height: 844 });
+  });
+
   it('never passes route scoping to a baseline action', () => {
     const baselineSteps = fs.readdirSync(WORKFLOW_ROOT)
       .filter((name) => name.endsWith('.yml') || name.endsWith('.yaml'))
