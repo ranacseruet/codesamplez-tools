@@ -312,7 +312,7 @@ jobs:
 
       - name: Run visual PR diff
         id: visual_diff
-        uses: ranacseruet/snapdrift/actions/pr-diff@3485e898104125db1f45ab27361770356a7564a8 # v0.8.2
+        uses: ranacseruet/snapdrift/actions/pr-diff@fb278981d01b94e7b66fd2ea429cabc44e529d53 # v0.10.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
         env:
@@ -417,7 +417,7 @@ jobs:
         if: >-
           steps.baseline_candidate.outputs.current == 'true'
           && steps.baseline_current.outputs.current == 'true'
-        uses: ranacseruet/snapdrift/actions/baseline@3485e898104125db1f45ab27361770356a7564a8 # v0.8.2
+        uses: ranacseruet/snapdrift/actions/baseline@fb278981d01b94e7b66fd2ea429cabc44e529d53 # v0.10.0
         with:
           upload-artifact: 'false'
         env:

@@ -54,6 +54,10 @@ describe('Visual CI workflow contract', () => {
     expect(config.provider).toBe('snap');
     expect(routeIds).toHaveLength(24);
     expect(new Set(routeIds).size).toBe(routeIds.length);
+    expect(config.diff.comparisonPolicy).toEqual({
+      version: 1,
+      threshold: config.diff.threshold,
+    });
   });
 
   it('never passes route scoping to a baseline action', () => {

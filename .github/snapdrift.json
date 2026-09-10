@@ -212,7 +212,11 @@
   ],
   "diff": {
     "threshold": 0.01,
-    "mode": "report-only"
+    "mode": "report-only",
+    "comparisonPolicy": {
+      "version": 1,
+      "threshold": 0.01
+    }
   },
   "provider": "snap",
   "snap": {
