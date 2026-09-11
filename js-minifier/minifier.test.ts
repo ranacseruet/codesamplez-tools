@@ -1,14 +1,25 @@
+import { jest } from '@jest/globals';
 import { JSMinifier } from './minifier';
 
 describe('JS Minifier', () => {
-  describe('configuration options', () => {
-    test('should respect removeComments=false', () => {
+  describe('configuration options and defaults', () => {
+    test('uses expected default options when no config is passed', () => {
+      const minifier = new JSMinifier();
+      expect(minifier.options).toEqual({
+        removeComments: true,
+        removeWhitespace: true,
+        shortenVariables: false,
+        mangleProperties: false
+      });
+    });
+
+    test('should respect removeComments=false in minify', () => {
       const minifier = new JSMinifier({ removeComments: false });
       const input = `// comment\nconst x = 1;`;
       expect(minifier.minify(input)).toBe(`//comment const x=1;`);
     });
 
-    test('should respect removeWhitespace=false', () => {
+    test('should respect removeWhitespace=false in minify', () => {
       const minifier = new JSMinifier({ removeWhitespace: false });
       const input = `const x = 1; \n const y = 2;`;
       expect(minifier.minify(input)).toBe(input.trim());
@@ -23,6 +34,24 @@ describe('JS Minifier', () => {
       });
       const input = `// comment\nconst x = 1; \n const y = 2;`;
       expect(minifier.minify(input)).toBe(input.trim());
+    });
+
+    test('returns original code when removeComments is called with removeComments=false', () => {
+      const minifier = new JSMinifier({ removeComments: false });
+      const input = `// comment\nconst x = 1;`;
+      expect(minifier.removeComments(input)).toBe(input);
+    });
+
+    test('returns original code when shortenVariableNames is called with shortenVariables=false', () => {
+      const minifier = new JSMinifier({ shortenVariables: false });
+      const input = `function test() { const longName = 1; return longName; }`;
+      expect(minifier.shortenVariableNames(input)).toBe(input);
+    });
+
+    test('returns original code when mangleObjectProperties is called with mangleProperties=false', () => {
+      const minifier = new JSMinifier({ mangleProperties: false });
+      const input = `const obj = { customProp: 1 }; obj.customProp;`;
+      expect(minifier.mangleObjectProperties(input)).toBe(input);
     });
   });
 
@@ -151,6 +180,28 @@ describe('JS Minifier', () => {
       expect(output).toContain('return b+a');
     });
 
+    test('generates multi-character variable names when variable count exceeds single-character alphabet', () => {
+      const minifier = new JSMinifier({ shortenVariables: true });
+      // Generate 60 distinct variables in a function
+      const varDeclarations = Array.from({ length: 60 }, (_, i) => `const var_${i} = ${i};`).join('\n');
+      const varSum = Array.from({ length: 60 }, (_, i) => `var_${i}`).join(' + ');
+      const input = `function calculateLots() {\n${varDeclarations}\nreturn ${varSum};\n}`;
+      const output = minifier.minify(input);
+
+      expect(output).toContain('function calculateLots()');
+      // Should execute correctly and compute sum 0..59 = 1770
+      const fn = new Function(`return ${output}`)();
+      expect(fn()).toBe((59 * 60) / 2);
+    });
+
+    test('preserves class declarations and method names when shortening variables', () => {
+      const minifier = new JSMinifier({ shortenVariables: true });
+      const input = `class Calculator { add(valA, valB) { const sum = valA + valB; return sum; } }`;
+      const output = minifier.minify(input);
+      expect(output).toContain('class Calculator');
+      expect(output).toContain('add(');
+    });
+
     test('should fall back to original code when AST parsing throws', () => {
       const minifier = new JSMinifier({ shortenVariables: true });
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -209,8 +260,8 @@ describe('JS Minifier', () => {
 
     test('should not mangle common properties', () => {
       const minifier = new JSMinifier({ mangleProperties: true });
-      const input = `const arr = []; arr.length;`;
-      const output = `const arr=[];arr.length;`;
+      const input = `const arr = []; arr.length; arr.toString(); arr.valueOf();`;
+      const output = `const arr=[];arr.length;arr.toString();arr.valueOf();`;
       expect(minifier.minify(input)).toBe(output);
     });
 
@@ -226,6 +277,16 @@ describe('JS Minifier', () => {
       const input = `const prop = 'name'; const obj = { [prop]: 'value' }; obj[prop];`;
       const output = minifier.minify(input);
       expect(output).toMatch(/const prop='name';const obj=\{\[prop\]:["']\w+["']\};obj\[prop\];/);
+    });
+
+    test('generates multi-character property names when properties count exceeds 54', () => {
+      const minifier = new JSMinifier({ mangleProperties: true });
+      const props = Array.from({ length: 60 }, (_, i) => `prop_${i}`);
+      const input = props.map((p) => `obj.${p} = 1;`).join(' ');
+      const output = minifier.mangleObjectProperties(input);
+
+      expect(output).not.toContain('prop_0');
+      expect(output).not.toContain('prop_59');
     });
   });
 
@@ -259,7 +320,7 @@ describe('JS Minifier', () => {
     test('should handle non-string input', () => {
       expect(minifier.minify(null)).toBe('');
       expect(minifier.minify(undefined)).toBe('');
-      expect(minifier.minify(123)).toBe('');
+      expect(minifier.minify(123 as any)).toBe('');
       expect(console.log).not.toHaveBeenCalled();
     });
 
@@ -279,7 +340,7 @@ describe('JS Minifier', () => {
       expect(minifier.getSyntaxError('const x = 1;')).toBeNull();
       const error = minifier.getSyntaxError('const x = ;');
       expect(error).toBeInstanceOf(SyntaxError);
-      expect(error.message).toContain('Unexpected token');
+      expect(error!.message).toContain('Unexpected token');
     });
 
     test('should handle complex syntax structures', () => {
@@ -313,7 +374,7 @@ describe('JS Minifier', () => {
       const originalFunction = global.Function;
       global.Function = jest.fn().mockImplementation(() => {
         throw originalError;
-      });
+      }) as any;
 
       try {
         expect(() => minifier.isValidJavaScript(throwingCode)).toThrow(originalError);

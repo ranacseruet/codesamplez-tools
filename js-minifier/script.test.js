@@ -384,7 +384,10 @@ describe('JavaScript Minifier Preact runtime', () => {
 
     try {
       new JSMinifierToolUI();
-      await flushEffects();
+      for (let i = 0; i < 10; i += 1) {
+        await flushEffects();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
 
       expect(ClearButton).not.toHaveBeenCalled();
       expect(CopyButton).not.toHaveBeenCalled();

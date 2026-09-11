@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import type { MinifierConstructor } from './load-minifier';
 
 // Exercises the real `loadMinifier()` body (the dynamic `import('./minifier')`).
 // `unstable_mockModule` is the only thing that intercepts a dynamic import under
@@ -10,7 +11,7 @@ jest.unstable_mockModule('./minifier', () => ({
 }));
 
 describe('loadMinifier', () => {
-    let loadMinifier;
+    let loadMinifier: () => Promise<MinifierConstructor>;
 
     beforeAll(async () => {
         ({ loadMinifier } = await import('./load-minifier'));
@@ -18,6 +19,6 @@ describe('loadMinifier', () => {
 
     it('dynamically imports the engine and returns the JSMinifier constructor', async () => {
         const ctor = await loadMinifier();
-        expect(ctor).toBe(FakeJSMinifier);
+        expect(ctor).toBe(FakeJSMinifier as unknown as MinifierConstructor);
     });
 });
