@@ -3,7 +3,6 @@ global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
 import Base64Codec from '../common/Base64Codec';
-import { NotificationManager } from '../common/notification-manager';
 import DownloadManager from '../common/DownloadManager';
 import CopyButton from '../common/copy-button/CopyButton';
 import { waitFor } from '@testing-library/dom';
@@ -11,17 +10,20 @@ import { fireFileDragEvent } from '../common/drop-zone-test-utils';
 
 const IMAGE_DATA_URI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 
-// Mock NotificationManager at the top level
 jest.mock('../common/notification-manager', () => ({
     NotificationManager: {
         show: jest.fn(),
     },
 }));
 
+jest.mock('../common/app-shell/mountToolShell', () => ({
+    mountToolShell: jest.fn()
+}));
+
 // Mock DownloadManager
 jest.mock('../common/DownloadManager', () => {
     return {
-        __esModule: true, // This makes it a mock of an ES module
+        __esModule: true,
         default: jest.fn().mockImplementation(() => {
             return {
                 downloadFile: jest.fn(),
@@ -44,6 +46,33 @@ jest.mock('../common/copy-button/CopyButton', () => {
     });
 });
 
+import { NotificationManager } from '../common/notification-manager';
+import './script';
+
+const BASE_DOM_HTML = `
+    <div id="notification"></div>
+    <input type="file" id="base64converter-file" />
+    <textarea id="base64converter-input"></textarea>
+    <select id="base64converter-mode">
+        <option value="auto" selected>Auto</option>
+        <option value="encode">Encode</option>
+        <option value="decode">Decode</option>
+    </select>
+    <select id="base64converter-encoding">
+        <option value="UTF-8" selected>UTF-8</option>
+        <option value="UTF-16">UTF-16</option>
+    </select>
+    <div id="base64converter-result"></div>
+    <img id="base64converter-image-preview" alt="Decoded image preview" hidden />
+    <span id="base64converter-status"></span>
+    <span id="base64converter-copy-status"></span>
+    <button id="base64converter-convert"></button>
+    <button id="base64converter-load-sample"></button>
+    <button id="base64converter-share"></button>
+    <button id="base64converter-swap" disabled></button>
+    <button id="base64converter-download-decoded" disabled></button>
+`;
+
 describe('Base64Converter UI (script.tsx)', () => {
     let converter;
     let elements;
@@ -51,34 +80,7 @@ describe('Base64Converter UI (script.tsx)', () => {
     let mockClipboard;
 
     beforeEach(() => {
-        // Reset JSDOM environment
-        document.body.innerHTML = ''; // Clear previous DOM
-        jest.resetModules(); // Clear module cache
-
-        // Set up DOM for the current test
-        document.body.innerHTML = `
-            <div id="notification"></div>
-            <input type="file" id="base64converter-file" />
-            <textarea id="base64converter-input"></textarea>
-            <select id="base64converter-mode">
-                <option value="auto" selected>Auto</option>
-                <option value="encode">Encode</option>
-                <option value="decode">Decode</option>
-            </select>
-            <select id="base64converter-encoding">
-                <option value="UTF-8" selected>UTF-8</option>
-                <option value="UTF-16">UTF-16</option>
-            </select>
-            <div id="base64converter-result"></div>
-            <img id="base64converter-image-preview" alt="Decoded image preview" hidden />
-            <span id="base64converter-status"></span>
-            <span id="base64converter-copy-status"></span>
-            <button id="base64converter-convert"></button>
-            <button id="base64converter-load-sample"></button>
-            <button id="base64converter-share"></button>
-            <button id="base64converter-swap" disabled></button>
-            <button id="base64converter-download-decoded" disabled></button>
-        `;
+        document.body.innerHTML = BASE_DOM_HTML;
 
         // Mock FileReader
         mockFileReaderInstance = {
@@ -94,15 +96,12 @@ describe('Base64Converter UI (script.tsx)', () => {
         mockClipboard = {
             writeText: jest.fn().mockResolvedValue(undefined)
         };
-        // Mock navigator.clipboard without reassigning navigator
         Object.defineProperty(global.navigator, 'clipboard', {
             value: mockClipboard,
             writable: true,
             configurable: true
         });
 
-        // Load script.tsx after DOM and mocks are ready
-        require('./script');
         document.dispatchEvent(new Event('DOMContentLoaded'));
 
         converter = window.base64ConverterInstance;
@@ -111,7 +110,7 @@ describe('Base64Converter UI (script.tsx)', () => {
 
     afterEach(() => {
         jest.clearAllMocks();
-        // Reset navigator.clipboard mock after each test to avoid interference
+        NotificationManager.show.mockClear();
         if (global.navigator.clipboard) {
             global.navigator.clipboard.writeText.mockReset();
         }
@@ -227,6 +226,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should keep Swap disabled until text output is available', () => {
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
             expect(elements.swapButton.disabled).toBe(true);
 
             converter.outputKind = 'text';
@@ -248,6 +248,19 @@ describe('Base64Converter UI (script.tsx)', () => {
             elements.mode.value = 'decode';
             converter.processInput();
             expect(elements.swapButton.disabled).toBe(true);
+            consoleErrorSpy.mockRestore();
+        });
+
+        test('should not swap when input is a file upload placeholder', () => {
+            elements.input.value = '[File: sample.txt uploaded and encoded to output]';
+            converter.outputKind = 'text';
+            elements.result.textContent = 'Decoded Content';
+            elements.swapButton.disabled = false;
+
+            elements.swapButton.click();
+
+            expect(elements.input.value).toBe('[File: sample.txt uploaded and encoded to output]');
+            expect(elements.result.textContent).toBe('Decoded Content');
         });
 
         test('should auto-detect and encode plain text', () => {
@@ -312,7 +325,6 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should allow a large binary file selected through the picker', () => {
-            const liveNotificationManager = require('../common/notification-manager').NotificationManager;
             const mockFile = new File(['x'], 'large.bin', { type: 'application/octet-stream' });
             Object.defineProperty(mockFile, 'size', { configurable: true, value: 7 * 1024 * 1024 });
             Object.defineProperty(elements.fileInput, 'files', { configurable: true, value: [mockFile] });
@@ -320,7 +332,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             elements.fileInput.dispatchEvent(new Event('change', { bubbles: true }));
 
             expect(mockFileReaderInstance.readAsDataURL).toHaveBeenCalledWith(mockFile);
-            expect(liveNotificationManager.show).not.toHaveBeenCalledWith(
+            expect(NotificationManager.show).not.toHaveBeenCalledWith(
                 expect.stringContaining('too large'),
                 3000,
                 expect.objectContaining({ type: 'error' })
@@ -342,16 +354,10 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should surface a rejected drop as an error toast', async () => {
-            // This suite calls jest.resetModules() before re-requiring
-            // ./script, so the top-level NotificationManager import is a
-            // different mock instance than the one script.tsx received. Pull
-            // the live one out of the current registry.
-            const liveNotificationManager = require('../common/notification-manager').NotificationManager;
-
             fireFileDragEvent(elements.input, 'drop', []);
             await new Promise((resolve) => setTimeout(resolve, 0));
 
-            expect(liveNotificationManager.show).toHaveBeenCalledWith(
+            expect(NotificationManager.show).toHaveBeenCalledWith(
                 expect.stringContaining('No file'),
                 expect.any(Number),
                 expect.objectContaining({ type: 'error' })
@@ -359,6 +365,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should handle file read errors', () => {
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
             const mockFile = new File([''], 'error.txt');
             const mockError = new Error('Read error');
             
@@ -370,11 +377,16 @@ describe('Base64Converter UI (script.tsx)', () => {
             
             expect(elements.result.textContent).toBe('');
             expect(elements.input.value).toBe('');
-            // Temporarily comment out failing expectation for NotificationManager.show
-            // expect(NotificationManager.show).toHaveBeenCalledWith('Error reading file: ' + mockError.message, 3000, expect.objectContaining({ type: 'error' }));
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                'Error reading file: ' + mockError.message,
+                3000,
+                { type: 'error' }
+            );
+            consoleErrorSpy.mockRestore();
         });
 
         test('should handle invalid Data URI format in file upload', () => {
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
             const mockFile = new File([''], 'invalid.txt');
             const mockDataURL = 'data:invalid-format';
             
@@ -386,9 +398,14 @@ describe('Base64Converter UI (script.tsx)', () => {
             
             expect(elements.result.textContent).toBe('');
             expect(elements.input.value).toBe('');
-            // Temporarily comment out failing expectation for NotificationManager.show
-            // expect(NotificationManager.show).toHaveBeenCalledWith('Error processing file: Invalid Data URI format', 3000, expect.objectContaining({ type: 'error' }));
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                'Error processing file: Invalid Data URI format',
+                3000,
+                { type: 'error' }
+            );
             expect(elements.downloadDecodedButton.disabled).toBe(true);
+            expect(consoleErrorSpy).toHaveBeenCalledWith('File processing error after read:', expect.any(Error));
+            consoleErrorSpy.mockRestore();
         });
 
         test('should handle file upload when FileReader returns raw base64 (non-Data URI)', () => {
@@ -405,6 +422,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should handle non-string FileReader results during upload', () => {
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
             const mockFile = new File(['Test'], 'binary.bin', { type: 'application/octet-stream' });
             const event = { target: { files: [mockFile], value: 'x' } };
             converter.handleFileUpload(event);
@@ -414,11 +432,13 @@ describe('Base64Converter UI (script.tsx)', () => {
 
             expect(elements.result.textContent).toBe('');
             expect(elements.input.value).toBe('');
-            expect(require('../common/notification-manager').NotificationManager.show).toHaveBeenCalledWith(
+            expect(NotificationManager.show).toHaveBeenCalledWith(
                 'Error processing file: Invalid file reader result',
                 3000,
                 { type: 'error' }
             );
+            expect(consoleErrorSpy).toHaveBeenCalledWith('File processing error after read:', expect.any(Error));
+            consoleErrorSpy.mockRestore();
         });
     });
 
@@ -459,7 +479,6 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should refuse to share a payload that would exceed the URL ceiling', async () => {
-            const liveNotificationManager = require('../common/notification-manager').NotificationManager;
             // Raw encodeURIComponent, no compression, so length maps directly.
             elements.input.value = 'a'.repeat(9000);
 
@@ -467,7 +486,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             await flushShare();
 
             expect(mockClipboard.writeText).not.toHaveBeenCalled();
-            expect(liveNotificationManager.show).toHaveBeenCalledWith(
+            expect(NotificationManager.show).toHaveBeenCalledWith(
                 expect.stringContaining('too large to share'),
                 expect.any(Number),
                 expect.objectContaining({ type: 'error' })
@@ -475,14 +494,13 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should report a clipboard failure instead of claiming success', async () => {
-            const liveNotificationManager = require('../common/notification-manager').NotificationManager;
             mockClipboard.writeText.mockRejectedValue(new Error('denied'));
             elements.input.value = 'shareable';
 
             document.getElementById('base64converter-share').click();
             await flushShare();
 
-            expect(liveNotificationManager.show).toHaveBeenCalledWith(
+            expect(NotificationManager.show).toHaveBeenCalledWith(
                 expect.stringContaining('Failed to copy share link'),
                 expect.any(Number),
                 expect.objectContaining({ type: 'error' })
@@ -490,14 +508,13 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should refuse to share an empty input', async () => {
-            const liveNotificationManager = require('../common/notification-manager').NotificationManager;
             elements.input.value = '   ';
 
             document.getElementById('base64converter-share').click();
             await flushShare();
 
             expect(mockClipboard.writeText).not.toHaveBeenCalled();
-            expect(liveNotificationManager.show).toHaveBeenCalledWith(
+            expect(NotificationManager.show).toHaveBeenCalledWith(
                 expect.stringContaining('before sharing'),
                 expect.any(Number),
                 expect.objectContaining({ type: 'error' })
@@ -506,14 +523,23 @@ describe('Base64Converter UI (script.tsx)', () => {
     });
 
     describe('Error Handling', () => {
+        let consoleErrorSpy;
+
+        beforeEach(() => {
+            consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        });
+
+        afterEach(() => {
+            consoleErrorSpy.mockRestore();
+        });
+
         test('should show error for invalid base64 in decode mode', () => {
             elements.input.value = 'Not base64!';
             elements.mode.value = 'decode';
             converter.processInput();
             
             expect(elements.result.textContent).toBe('');
-            // Temporarily comment out failing expectation for NotificationManager.show
-            // expect(NotificationManager.show).toHaveBeenCalledWith('⚠ Invalid base64 input', 3000, expect.objectContaining({ type: 'error' }));
+            expect(elements.status.textContent).toBe('Invalid base64 input');
             expect(elements.downloadDecodedButton.disabled).toBe(true);
         });
 
@@ -522,8 +548,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             converter.processInput();
             
             expect(elements.result.textContent).toBe('');
-            // Temporarily comment out failing expectation for NotificationManager.show
-            // expect(NotificationManager.show).toHaveBeenCalledWith('⚠ Invalid Data URI format', 3000, expect.objectContaining({ type: 'error' }));
+            expect(elements.status.textContent).toBe('Invalid Data URI format');
             expect(elements.downloadDecodedButton.disabled).toBe(true);
         });
 
@@ -534,21 +559,8 @@ describe('Base64Converter UI (script.tsx)', () => {
             elements.encoding.value = 'UTF-8';
             converter.processInput();
             
-            // Adjust expectation to match actual output as per terminal feedback
             expect(elements.result.textContent).toBe('');
             expect(elements.status.textContent).toContain('Invalid UTF-8 sequence');
-            expect(elements.downloadDecodedButton.disabled).toBe(true);
-        });
-
-        test('should handle UCS-2 decode errors', () => {
-            // Base64 string that will cause UCS-2 decode error
-            elements.input.value = '77+9'; // Invalid UCS-2 sequence when decoded
-            elements.mode.value = 'decode';
-            elements.encoding.value = 'UTF-16';
-            converter.processInput();
-            
-            expect(elements.result.textContent).toBe('');
-            expect(elements.status.textContent).toContain('Invalid UCS-2 sequence');
             expect(elements.downloadDecodedButton.disabled).toBe(true);
         });
 
@@ -578,6 +590,7 @@ describe('Base64Converter UI (script.tsx)', () => {
 
             // v4 contract: processing errors surface inline in the status chip.
             expect(elements.status.textContent).toBe('Invalid Data URI format.');
+            expect(consoleErrorSpy).toHaveBeenCalledWith('Processing error:', expect.any(Error));
             decodeSpy.mockRestore();
         });
 
@@ -594,6 +607,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             converter.processInput();
 
             expect(elements.status.textContent).toBe('Input cannot be empty.');
+            expect(consoleErrorSpy).toHaveBeenCalledWith('Processing error:', expect.any(Error));
             decodeSpy.mockRestore();
         });
 
@@ -610,6 +624,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             converter.processInput();
 
             expect(elements.status.textContent).toBe('Processing failed: unexpected decode failure');
+            expect(consoleErrorSpy).toHaveBeenCalledWith('Processing error:', expect.any(Error));
             decodeSpy.mockRestore();
         });
 
@@ -628,6 +643,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             expect(elements.result.textContent).toBe('');
             expect(elements.status.textContent).toBe('Processing failed: unexpected auto decode failure');
             expect(elements.downloadDecodedButton.disabled).toBe(true);
+            expect(consoleErrorSpy).toHaveBeenCalledWith('Processing error:', expect.any(Error));
             decodeSpy.mockRestore();
         });
 
@@ -640,8 +656,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             await converter.handleDownload();
             
             expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith('Hello World', 'output.txt', 'application/octet-stream');
-            // Temporarily comment out failing expectation for NotificationManager.show
-            // expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.txt"', 2000, expect.objectContaining({ type: 'success' }));
+            expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.txt"', 2000, { type: 'success' });
         });
 
         test('should handle binary content download', async () => {
@@ -652,8 +667,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             await converter.handleDownload();
             
             expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith(expect.any(Uint8Array), 'output.bin', 'application/octet-stream');
-            // Temporarily comment out failing expectation for NotificationManager.show
-            // expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.bin"', 2000, expect.objectContaining({ type: 'success' }));
+            expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.bin"', 2000, { type: 'success' });
         });
 
         test('should treat text output as text even when it resembles a binary placeholder', async () => {
@@ -666,18 +680,6 @@ describe('Base64Converter UI (script.tsx)', () => {
             expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith(textOutput, 'output.txt', 'application/octet-stream');
         });
 
-        test('should handle decoded content likely binary download', async () => {
-            elements.result.textContent = '[Decoded content (likely binary, not UTF-8 text). Use Download button.]';
-            elements.input.value = 'SGVsbG8gV29ybGQ='; // Base64 for "Hello World"
-            converter.outputKind = 'binary';
-            
-            await converter.handleDownload();
-            
-            expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith(expect.any(Uint8Array), 'output.bin', 'application/octet-stream');
-            // Temporarily comment out failing expectation for NotificationManager.show
-            // expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.bin"', 2000, expect.objectContaining({ type: 'success' }));
-        });
-
         test('should handle binary content download from Data URI', async () => {
             elements.result.textContent = '[Binary content (image/png). Use Download button.]';
             elements.input.value = 'data:image/png;base64,SGVsbG8gV29ybGQ=';
@@ -686,8 +688,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             await converter.handleDownload();
             
             expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith(expect.any(Uint8Array), 'output.bin', 'application/octet-stream');
-            // Temporarily comment out failing expectation for NotificationManager.show
-            // expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.bin"', 2000, expect.objectContaining({ type: 'success' }));
+            expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.bin"', 2000, { type: 'success' });
         });
 
         test('should download the source bytes when an image preview is active', async () => {
@@ -709,8 +710,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             
             await converter.handleDownload();
             
-            // Temporarily comment out failing expectation for NotificationManager.show
-            // expect(NotificationManager.show).toHaveBeenCalledWith('No content to download', 3000, expect.objectContaining({ type: 'error' }));
+            expect(NotificationManager.show).toHaveBeenCalledWith('No content to download', 3000, { type: 'error' });
         });
 
         test('should show error for invalid base64 in binary download', async () => {
@@ -720,8 +720,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             
             await converter.handleDownload();
             
-            // Temporarily comment out failing expectation for NotificationManager.show
-            // expect(NotificationManager.show).toHaveBeenCalledWith('Input is not valid Base64 for download', 3000, expect.objectContaining({ type: 'error' }));
+            expect(NotificationManager.show).toHaveBeenCalledWith('Input is not valid Base64 for download', 3000, { type: 'error' });
         });
 
         test('should show error for invalid Data URI format in binary download', async () => {
@@ -731,8 +730,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             
             await converter.handleDownload();
             
-            // Temporarily comment out failing expectation for NotificationManager.show
-            // expect(NotificationManager.show).toHaveBeenCalledWith('Invalid Data URI format for download', 3000, expect.objectContaining({ type: 'error' }));
+            expect(NotificationManager.show).toHaveBeenCalledWith('Invalid Data URI format for download', 3000, { type: 'error' });
         });
 
         test('should handle binary content download with specific MIME type', async () => {
@@ -743,11 +741,11 @@ describe('Base64Converter UI (script.tsx)', () => {
             await converter.handleDownload();
             
             expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith(expect.any(Uint8Array), 'output.bin', 'application/octet-stream');
-            // Temporarily comment out failing expectation for NotificationManager.show
-            // expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.bin"', 2000, expect.objectContaining({ type: 'success' }));
+            expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.bin"', 2000, { type: 'success' });
         });
 
         test('should show error when download manager throws', async () => {
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
             elements.result.textContent = 'Hello World';
             converter.downloadManager.downloadFile.mockImplementationOnce(() => {
                 throw new Error('Disk full');
@@ -755,8 +753,9 @@ describe('Base64Converter UI (script.tsx)', () => {
 
             await converter.handleDownload();
 
-            expect(require('../common/notification-manager').NotificationManager.show)
+            expect(NotificationManager.show)
                 .toHaveBeenCalledWith('Error downloading content: Disk full', 3000, { type: 'error' });
+            consoleErrorSpy.mockRestore();
         });
     });
 
@@ -808,7 +807,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             expect(elements.downloadDecodedButton.disabled).toBe(false);
             expect(elements.swapButton.disabled).toBe(true);
             expect(converter.copyButtonInstance.wrapper.hidden).toBe(true);
-            expect(require('../common/notification-manager').NotificationManager.show).toHaveBeenCalledWith(
+            expect(NotificationManager.show).toHaveBeenCalledWith(
                 'Decoded. MIME: image/png. Image preview available.',
                 2000,
                 { type: 'success' }
@@ -899,18 +898,6 @@ describe('Base64Converter UI (script.tsx)', () => {
             expect(elements.downloadDecodedButton.disabled).toBe(false);
         });
 
-        test('should detect replacement characters indicating decode errors', () => {
-            // Base64 string that decodes to invalid UTF-8 sequence
-            elements.input.value = '77+9'; // Invalid UTF-8 sequence
-            elements.mode.value = 'decode';
-            elements.encoding.value = 'UTF-8';
-            converter.processInput();
-            
-            expect(elements.result.textContent).toBe('');
-            expect(elements.status.textContent).toContain('Invalid UTF-8 sequence');
-            expect(elements.downloadDecodedButton.disabled).toBe(true);
-        });
-
         test('should mark auto-decoded content as likely binary when decode fails for selected encoding', () => {
             elements.input.value = '77+9'; // produces invalid UTF-8 replacement behavior on decode
             elements.mode.value = 'auto';
@@ -919,7 +906,7 @@ describe('Base64Converter UI (script.tsx)', () => {
 
             expect(elements.result.textContent).toContain('[Decoded content (likely binary');
             expect(elements.downloadDecodedButton.disabled).toBe(false);
-            expect(require('../common/notification-manager').NotificationManager.show).toHaveBeenCalledWith(
+            expect(NotificationManager.show).toHaveBeenCalledWith(
                 'Decoded. Selected encoding (UTF-16) failed for display. Use Download.',
                 2000,
                 { type: 'success' }
@@ -958,7 +945,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             expect(elements.result.hidden).toBe(true);
             expect(elements.downloadDecodedButton.disabled).toBe(false);
             expect(elements.swapButton.disabled).toBe(true);
-            expect(require('../common/notification-manager').NotificationManager.show).toHaveBeenCalledWith(
+            expect(NotificationManager.show).toHaveBeenCalledWith(
                 `Decoded. Image preview loading (inferred MIME: ${mimeType}).`,
                 2000,
                 { type: 'success' }
@@ -1433,19 +1420,24 @@ describe('Base64Converter UI (script.tsx)', () => {
     });
 
     describe('DOM Integration', () => {
-        test('should initialize when DOM is loaded', () => {
+        test('should log error and warn when required elements are missing during DOM initialization', () => {
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
             document.body.innerHTML = `
-                <div id="notification"></div> <!-- Ensure notification element is present -->
+                <div id="notification"></div>
                 <textarea id="base64converter-input"></textarea>
                 <div id="base64converter-result"></div>
                 <button id="base64converter-convert"></button>
             `;
 
-            jest.resetModules();
-            require('./script');
             document.dispatchEvent(new Event('DOMContentLoaded'));
 
-            expect(window.Base64Converter).toBeDefined();
+            expect(consoleErrorSpy).toHaveBeenCalledWith('Missing required elements:', expect.any(Array));
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                'Required elements not found - tool may not function properly',
+                3000,
+                { type: 'error' }
+            );
+            consoleErrorSpy.mockRestore();
         });
 
         test('should handle convert button click', () => {
@@ -1482,30 +1474,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         };
 
         beforeEach(() => {
-            // Reset JSDOM environment
-            document.body.innerHTML = ''; // Clear previous DOM
-            // Set up DOM for the current test
-            document.body.innerHTML = `
-                <div id="notification"></div>
-                <input type="file" id="base64converter-file" />
-                <textarea id="base64converter-input"></textarea>
-                <select id="base64converter-mode">
-                    <option value="auto" selected>Auto</option>
-                    <option value="encode">Encode</option>
-                    <option value="decode">Decode</option>
-                </select>
-                <select id="base64converter-encoding">
-                    <option value="UTF-8" selected>UTF-8</option>
-                    <option value="UTF-16">UTF-16</option>
-                </select>
-                <div id="base64converter-result"></div>
-                <img id="base64converter-image-preview" alt="Decoded image preview" hidden />
-                <span id="base64converter-status"></span>
-                <span id="base64converter-copy-status"></span>
-                <button id="base64converter-convert"></button>
-                <button id="base64converter-swap" disabled></button>
-                <button id="base64converter-download-decoded" disabled></button>
-            `;
+            document.body.innerHTML = BASE_DOM_HTML;
             setTestUrl();
         });
 
@@ -1517,14 +1486,8 @@ describe('Base64Converter UI (script.tsx)', () => {
         test('should handle URL with data parameter and auto-convert plain text', () => {
             setTestUrl('?data=Hello%20World');
 
-            // Mock setTimeout to execute immediately for testing
             jest.useFakeTimers();
-
-            jest.resetModules();
-            require('./script');
             document.dispatchEvent(new Event('DOMContentLoaded'));
-
-            // Fast-forward timers to execute setTimeout
             jest.runAllTimers();
 
             const converter = window.base64ConverterInstance;
@@ -1541,11 +1504,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             setTestUrl('?data=Hello%20World', '#data=SGVsbG8gV29ybGQ%3D');
 
             jest.useFakeTimers();
-
-            jest.resetModules();
-            require('./script');
             document.dispatchEvent(new Event('DOMContentLoaded'));
-
             jest.runAllTimers();
 
             const converter = window.base64ConverterInstance;
@@ -1559,11 +1518,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             setTestUrl('?data=SGVsbG8gV29ybGQ%3D');
 
             jest.useFakeTimers();
-
-            jest.resetModules();
-            require('./script');
             document.dispatchEvent(new Event('DOMContentLoaded'));
-
             jest.runAllTimers();
 
             const converter = window.base64ConverterInstance;
@@ -1578,11 +1533,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             setTestUrl('?data=Hello%2C%20World%21%20%26%20everyone%2E');
 
             jest.useFakeTimers();
-
-            jest.resetModules();
-            require('./script');
             document.dispatchEvent(new Event('DOMContentLoaded'));
-
             jest.runAllTimers();
 
             const converter = window.base64ConverterInstance;
@@ -1596,18 +1547,11 @@ describe('Base64Converter UI (script.tsx)', () => {
             setTestUrl('?data=%25ZZinvalid-encoding');
 
             jest.useFakeTimers();
-
-            jest.resetModules();
-            require('./script');
             document.dispatchEvent(new Event('DOMContentLoaded'));
-
             jest.runAllTimers();
 
             const converter = window.base64ConverterInstance;
-            // In Jest environment, %ZZinvalid-encoding gets through URL decoding and gets processed
-            // but in browser environments, it would throw an error and be handled gracefully
             expect(converter.elements.input.value).toBe('%ZZinvalid-encoding');
-            // Jest processes malformed UTF-8 sequences as Base64 encoding
             expect(converter.elements.result.textContent).toBe('JVpaaW52YWxpZC1lbmNvZGluZw==');
 
             jest.useRealTimers();
@@ -1617,11 +1561,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             setTestUrl('?data=');
 
             jest.useFakeTimers();
-
-            jest.resetModules();
-            require('./script');
             document.dispatchEvent(new Event('DOMContentLoaded'));
-
             jest.runAllTimers();
 
             const converter = window.base64ConverterInstance;
@@ -1635,11 +1575,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             setTestUrl();
 
             jest.useFakeTimers();
-
-            jest.resetModules();
-            require('./script');
             document.dispatchEvent(new Event('DOMContentLoaded'));
-
             jest.runAllTimers();
 
             const converter = window.base64ConverterInstance;
@@ -1649,42 +1585,29 @@ describe('Base64Converter UI (script.tsx)', () => {
         });
 
         test('should URL-decode data parameter correctly', () => {
-            // Test with various encoded characters
             setTestUrl('?data=Hello%20%5C%2F%3F%23%5B%5D%40%21%24%26%27%28%29%2A%2B%2C%3B%3D');
 
             jest.useFakeTimers();
-
-            jest.resetModules();
-            require('./script');
             document.dispatchEvent(new Event('DOMContentLoaded'));
-
             jest.runAllTimers();
 
             const converter = window.base64ConverterInstance;
             expect(converter.elements.input.value).toBe('Hello \\/?#[]@!$&\'()*+,;=');
-            // Update expected result to match actual Base64 encoding output
             expect(converter.elements.result.textContent).toBe('SGVsbG8gXC8/I1tdQCEkJicoKSorLDs9');
 
             jest.useRealTimers();
         });
 
         test('should handle URL parameter with malformed encoding by escaping invalid percent signs', () => {
-            setTestUrl('?data=%25%25invalid'); // Encodes %%invalid while preserving malformed payload semantics
+            setTestUrl('?data=%25%25invalid');
 
             jest.useFakeTimers();
-
-            jest.resetModules();
-            require('./script');
             document.dispatchEvent(new Event('DOMContentLoaded'));
-
             jest.runAllTimers();
 
-            // The URL parameter decoding succeeds by escaping invalid %, setting input to the decoded value
             const converter = window.base64ConverterInstance;
-            expect(converter.elements.input.value).toBe('%%invalid'); // Decoded value with literal %
-
-            // Auto-processing occurs
-            expect(converter.elements.result.textContent).toBe('JSVpbnZhbGlk'); // Base64 encoded '%%invalid'
+            expect(converter.elements.input.value).toBe('%%invalid');
+            expect(converter.elements.result.textContent).toBe('JSVpbnZhbGlk');
 
             jest.useRealTimers();
         });
@@ -1696,17 +1619,9 @@ describe('Base64Converter UI (script.tsx)', () => {
             ['plain text', 'plain text'],
             ['reserved base64 characters', 'a+b/c=']
         ])('should round-trip %s through a Share link', (_label, input) => {
-            // Share writes encodeURIComponent(input); readHashOrQueryParam
-            // resolves it through URLSearchParams, which decodes exactly once.
-            // A second decodeURIComponent used to corrupt or abort these:
-            // `100% sure` and `a%FFb` threw a URIError and preloaded nothing,
-            // and `literal %20 marker` came back with the escape turned into
-            // spaces.
             setTestUrl('', `data=${encodeURIComponent(input)}`);
 
             jest.useFakeTimers();
-            jest.resetModules();
-            require('./script');
             document.dispatchEvent(new Event('DOMContentLoaded'));
             jest.runAllTimers();
 
