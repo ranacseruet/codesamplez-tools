@@ -44,15 +44,13 @@ jest.mock('../common/copy-button/CopyButton', () => ({
   })
 }));
 
-jest.mock('./minifier', () => ({
-  removeCommentsFromCss: jest.fn((css) => css.replace(/\/\*[\s\S]*?\*\//g, '')),
-  removeWhitespaceFromCss: jest.fn((css) => css.replace(/\s+/g, ' ').replace(/\s*([{}:;,])\s*/g, '$1').trim()),
-  shortenColorsInCss: jest.fn((css) => css.replace(/red/g, '#f00')),
-  removeUnnecessaryUnits: jest.fn((css) => css.replace(/0px/g, '0')),
-  removeLastSemicolonsFromCss: jest.fn((css) => css.replace(/;}/g, '}')),
-  combineSelectorsInCss: jest.fn((css) => css),
-  isValidCSS: jest.fn(() => true)
-}));
+jest.mock('./minifier', () => {
+  const actual = jest.requireActual('./minifier');
+  return {
+    ...actual,
+    isValidCSS: jest.fn((...args) => actual.isValidCSS(...args))
+  };
+});
 
 import { NotificationManager } from '../common/notification-manager';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -225,6 +223,31 @@ describe('CSS Minifier Preact runtime', () => {
     expect(document.getElementById('shorten-colors')?.checked).toBe(true);
   });
 
+  it('respects toggled options when minifying', async () => {
+    new CssMinifierToolUI();
+    await flushEffects();
+
+    // Disable remove comments, shorten colors, remove units, and remove last semicolons
+    fireEvent.click(document.getElementById('remove-comments'));
+    fireEvent.click(document.getElementById('shorten-colors'));
+    fireEvent.click(document.getElementById('remove-units'));
+    fireEvent.click(document.getElementById('remove-last-semicolons'));
+    await flushEffects();
+
+    const input = document.getElementById('css-minifier-input');
+    fireEvent.input(input, { target: { value: '/* keep-comment */ body { color: red; margin: 0px; }' } });
+    await flushEffects();
+
+    fireEvent.click(document.getElementById('minify-btn'));
+    await flushEffects();
+    await flushEffects();
+
+    const output = document.getElementById('css-minifier-output');
+    expect(output.value).toContain('/* keep-comment */');
+    expect(output.value).toContain('color:red;');
+    expect(output.value).toContain('margin:0px;');
+  });
+
   it('clears output and resets stats when input becomes empty', async () => {
     new CssMinifierToolUI();
     await flushEffects();
@@ -345,4 +368,15 @@ describe('CSS Minifier Preact runtime', () => {
     }));
     expect(document.getElementById('css-minifier-input')).not.toBeNull();
   });
+
+  it('exposes minifier helper functions on window in browser environment', () => {
+    expect(typeof window.removeCommentsFromCss).toBe('function');
+    expect(typeof window.removeWhitespaceFromCss).toBe('function');
+    expect(typeof window.shortenColorsInCss).toBe('function');
+    expect(typeof window.removeUnnecessaryUnits).toBe('function');
+    expect(typeof window.removeLastSemicolonsFromCss).toBe('function');
+    expect(typeof window.combineSelectorsInCss).toBe('function');
+    expect(typeof window.isValidCSS).toBe('function');
+  });
 });
+
