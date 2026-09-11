@@ -2,39 +2,6 @@ import { TextAnalyzerUI } from './TextAnalyzerUI';
 import { analyzeText } from './TextAnalyzer';
 import { NotificationManager } from '../common/notification-manager';
 
-// Polyfill TextEncoder/TextDecoder for jsdom
-const { TextEncoder, TextDecoder } = require('util');
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
-
-const { JSDOM } = require('jsdom');
-// Setup jsdom with proper resources
-const dom = new JSDOM(`
-  <!DOCTYPE html>
-  <html>
-    <body>
-      <textarea id="textInput"></textarea>
-      <button id="clear-input"></button>
-      <button id="load-sample"></button>
-      <div id="notification" class="c-notification"></div>
-      <div id="charCount"></div>
-      <div id="wordCount"></div>
-      <div id="lineCount"></div>
-      <div id="sentenceCount"></div>
-      <div id="paragraphCount"></div>
-      <div id="avgWordLength"></div>
-      <div id="avgSentenceLength"></div>
-      <div id="periodCount"></div>
-      <div id="commaCount"></div>
-      <div id="questionCount"></div>
-      <div id="exclamationCount"></div>
-    </body>
-  </html>
-`);
-
-global.document = dom.window.document;
-global.window = dom.window;
-
 // Mock TextAnalyzer module
 jest.mock('./TextAnalyzer', () => {
   return {
