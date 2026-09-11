@@ -117,6 +117,7 @@ describe('QRCodeGenerator Preact runtime', () => {
     });
 
     it('updates error correction and shows QR library callback error state', async () => {
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
         new QRCodeGeneratorToolUI();
         // Let the initial generation land before clearing the mock.
         await waitFor(() => expect(QRCode.toCanvas).toHaveBeenCalled());
@@ -131,6 +132,8 @@ describe('QRCodeGenerator Preact runtime', () => {
             expect(document.getElementById('error-message')?.textContent).toContain('Input data is too long')
         );
         expect(document.getElementById('qr-canvas')?.style.display).toBe('none');
+        expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(Error));
+        consoleErrorSpy.mockRestore();
     });
 
     it('handles textCleared event and disconnects clear button on unmount', async () => {

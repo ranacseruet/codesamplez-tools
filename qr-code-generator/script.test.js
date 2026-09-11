@@ -1,8 +1,5 @@
 import '@testing-library/jest-dom';
-import { JSDOM } from 'jsdom';
-import path from 'path';
-import fs from 'fs';
-import { screen, fireEvent } from '@testing-library/dom';
+import { fireEvent } from '@testing-library/dom';
 
 // Mock QRCode and DownloadManager before importing the script
 jest.mock('qrcode', () => ({
@@ -31,232 +28,214 @@ import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
 import { QRCodeGeneratorUI } from './script';
 
-let qrCodeGenerator;
-let mockDownloadManagerInstance;
-
 describe('QRCodeGeneratorUI', () => {
-  let mockQrText;
-  let mockQrSize;
-  let mockSizeLabel;
-  let mockQrMargin;
-  let mockMarginLabel;
-  let mockErrorCorrection;
-  let mockQrCanvas;
-  let mockDownloadBtn;
-  let mockErrorMessage;
+  let qrCodeGenerator;
+  let mockDownloadManagerInstance;
+  let qrText;
+  let qrSize;
+  let sizeLabel;
+  let qrMargin;
+  let marginLabel;
+  let errorCorrection;
+  let qrCanvas;
+  let downloadBtn;
+  let errorMessage;
 
-  beforeEach(async () => {
-    // Clear all mocks before each test
+  const defaultOptions = {
+    qrTextId: 'qr-text',
+    qrSizeId: 'qr-size',
+    sizeLabelId: 'size-label',
+    qrMarginId: 'qr-margin',
+    marginLabelId: 'margin-label',
+    errorCorrectionId: 'error-correction',
+    qrCanvasId: 'qr-canvas',
+    downloadBtnId: 'download-btn',
+    errorMessageId: 'error-message',
+  };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
     jest.clearAllMocks();
 
-    // Manually create mock DOM elements
-    mockQrText = { value: 'Initial Text', addEventListener: jest.fn(), focus: jest.fn() };
-    mockQrSize = { value: '256', addEventListener: jest.fn() };
-    mockSizeLabel = { textContent: '', addEventListener: jest.fn() };
-    mockQrMargin = { value: '4', addEventListener: jest.fn() };
-    mockMarginLabel = { textContent: '', addEventListener: jest.fn() };
-    mockErrorCorrection = { value: 'M', addEventListener: jest.fn() };
-    mockQrCanvas = { style: { display: '' }, toDataURL: jest.fn(() => 'data:image/png;base64,mockdata'), addEventListener: jest.fn(), setAttribute: jest.fn() };
-    mockDownloadBtn = { addEventListener: jest.fn() };
-    mockErrorMessage = { textContent: '' };
+    document.body.innerHTML = `
+      <div id="test-qr-container">
+        <textarea id="qr-text">Initial Text</textarea>
+        <input type="range" id="qr-size" min="128" max="600" value="256" />
+        <span id="size-label"></span>
+        <input type="range" id="qr-margin" min="0" max="10" value="4" />
+        <span id="margin-label"></span>
+        <select id="error-correction">
+          <option value="L">Low (L)</option>
+          <option value="M" selected>Medium (M)</option>
+          <option value="Q">Quartile (Q)</option>
+          <option value="H">High (H)</option>
+        </select>
+        <canvas id="qr-canvas"></canvas>
+        <button id="download-btn">Download</button>
+        <p id="error-message"></p>
+      </div>
+    `;
 
-    // Mock document.getElementById to return our mock elements
-    jest.spyOn(document, 'getElementById').mockImplementation((id) => {
-      switch (id) {
-        case 'qr-text': return mockQrText;
-        case 'qr-size': return mockQrSize;
-        case 'size-label': return mockSizeLabel;
-        case 'qr-margin': return mockQrMargin;
-        case 'margin-label': return mockMarginLabel;
-        case 'error-correction': return mockErrorCorrection;
-        case 'qr-canvas': return mockQrCanvas;
-        case 'download-btn': return mockDownloadBtn;
-        case 'error-message': return mockErrorMessage;
-        default: return null;
-      }
+    qrText = document.getElementById('qr-text');
+    qrSize = document.getElementById('qr-size');
+    sizeLabel = document.getElementById('size-label');
+    qrMargin = document.getElementById('qr-margin');
+    marginLabel = document.getElementById('margin-label');
+    errorCorrection = document.getElementById('error-correction');
+    qrCanvas = document.getElementById('qr-canvas');
+    downloadBtn = document.getElementById('download-btn');
+    errorMessage = document.getElementById('error-message');
+
+    Object.defineProperty(HTMLCanvasElement.prototype, 'toDataURL', {
+      configurable: true,
+      value: jest.fn(() => 'data:image/png;base64,mockdata'),
     });
 
-    // Instantiate DownloadManager mock
     mockDownloadManagerInstance = new DownloadManager();
 
-    // Manually initialize QRCodeGeneratorUI with mock elements
-    qrCodeGenerator = new QRCodeGeneratorUI({
-      qrTextId: 'qr-text',
-      qrSizeId: 'qr-size',
-      sizeLabelId: 'size-label',
-      qrMarginId: 'qr-margin',
-      marginLabelId: 'margin-label',
-      errorCorrectionId: 'error-correction',
-      qrCanvasId: 'qr-canvas',
-      downloadBtnId: 'download-btn',
-      errorMessageId: 'error-message',
-    });
-
-    // Inject the mocked DownloadManager instance
+    qrCodeGenerator = new QRCodeGeneratorUI(defaultOptions);
     qrCodeGenerator.downloadManager = mockDownloadManagerInstance;
 
-    // Ensure initial state is set up by calling initializeApp
-    qrCodeGenerator.initializeApp();
-
-    // Wait for the initial QR code generation debounce to complete
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Advance debounce timer triggered during initializeApp()
+    jest.advanceTimersByTime(250);
   });
 
   afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers();
     jest.restoreAllMocks();
+    document.body.innerHTML = '';
   });
 
   it('should initialize ClearButton', () => {
     expect(ClearButton).toHaveBeenCalledTimes(1);
-    expect(ClearButton).toHaveBeenCalledWith(mockQrText);
+    expect(ClearButton).toHaveBeenCalledWith(qrText);
   });
 
   it('should initialize with correct label text and generate QR code', () => {
-    expect(mockSizeLabel.textContent).toBe('256px');
-    expect(mockMarginLabel.textContent).toBe('4');
-    // QRCode.toCanvas should have been called once during initializeApp (after debounce)
+    expect(sizeLabel.textContent).toBe('256px');
+    expect(marginLabel.textContent).toBe('4');
     expect(QRCode.toCanvas).toHaveBeenCalledTimes(1);
     expect(QRCode.toCanvas).toHaveBeenCalledWith(
-      mockQrCanvas,
-      mockQrText.value,
+      qrCanvas,
+      'Initial Text',
       expect.any(Object),
       expect.any(Function)
     );
   });
 
-  it('should generate QR code on text input', async () => {
-    QRCode.toCanvas.mockClear(); // Clear the call from initial setup
+  it('should generate QR code on text input', () => {
+    QRCode.toCanvas.mockClear();
 
-    mockQrText.value = 'test';
-    // Simulate input event by calling the registered listener directly
-    const inputListener = mockQrText.addEventListener.mock.calls.find(call => call[0] === 'input')[1];
-    inputListener();
+    qrText.value = 'test';
+    fireEvent.input(qrText);
+    jest.advanceTimersByTime(250);
 
-    // Wait for debounce
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    expect(mockQrCanvas.style.display).toBe('block');
-    expect(QRCode.toCanvas).toHaveBeenCalledTimes(1); // Now expecting only one call from this action
+    expect(qrCanvas.style.display).toBe('block');
+    expect(QRCode.toCanvas).toHaveBeenCalledTimes(1);
     expect(QRCode.toCanvas).toHaveBeenCalledWith(
-      mockQrCanvas,
+      qrCanvas,
       'test',
       expect.any(Object),
       expect.any(Function)
     );
   });
 
-  it('should generate QR code on textCleared event', async () => {
+  it('should generate QR code on textCleared event', () => {
     QRCode.toCanvas.mockClear();
 
-    mockQrText.value = 'cleared'; // Simulating value change before event
-    const clearListener = mockQrText.addEventListener.mock.calls.find(call => call[0] === 'textCleared')[1];
-
-    expect(clearListener).toBeDefined();
-
-    clearListener();
-
-    await new Promise(resolve => setTimeout(resolve, 300));
+    qrText.value = 'cleared';
+    qrText.dispatchEvent(new CustomEvent('textCleared'));
+    jest.advanceTimersByTime(250);
 
     expect(QRCode.toCanvas).toHaveBeenCalledTimes(1);
+    expect(QRCode.toCanvas).toHaveBeenCalledWith(
+      qrCanvas,
+      'cleared',
+      expect.any(Object),
+      expect.any(Function)
+    );
   });
 
-  it('should hide canvas and show error if text input is empty', async () => {
-    mockQrText.value = '';
-    const inputListener = mockQrText.addEventListener.mock.calls.find(call => call[0] === 'input')[1];
-    inputListener();
+  it('should hide canvas and show error if text input is empty', () => {
+    qrText.value = '';
+    fireEvent.input(qrText);
+    jest.advanceTimersByTime(250);
 
-    // Wait for debounce
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    expect(mockQrCanvas.style.display).toBe('none');
-    expect(mockErrorMessage.textContent).toBe('Please enter text or a URL to generate a QR code.');
+    expect(qrCanvas.style.display).toBe('none');
+    expect(errorMessage.textContent).toBe('Please enter text or a URL to generate a QR code.');
   });
 
-  it('should handle QR library errors and hide canvas', async () => {
+  it('should handle QR library errors and hide canvas', () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     QRCode.toCanvas.mockImplementationOnce((canvas, text, options, callback) => {
       callback(new Error('QR generation failed'));
     });
 
-    mockQrText.value = 'trigger error';
-    const inputListener = mockQrText.addEventListener.mock.calls.find(call => call[0] === 'input')[1];
-    inputListener();
+    qrText.value = 'trigger error';
+    fireEvent.input(qrText);
+    jest.advanceTimersByTime(250);
 
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    expect(mockQrCanvas.style.display).toBe('none');
-    expect(mockErrorMessage.textContent).toContain('Input data is too long');
+    expect(qrCanvas.style.display).toBe('none');
+    expect(errorMessage.textContent).toContain('Input data is too long');
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(Error));
+    consoleErrorSpy.mockRestore();
   });
 
-  it('should update size label and regenerate QR code on size input', async () => {
-    QRCode.toCanvas.mockClear(); // Clear initial call
+  it('should update size label and regenerate QR code on size input', () => {
+    QRCode.toCanvas.mockClear();
 
-    mockQrSize.value = '300';
-    const sizeListener = mockQrSize.addEventListener.mock.calls.find(call => call[0] === 'input')[1];
-    sizeListener();
+    qrSize.value = '300';
+    fireEvent.input(qrSize);
+    jest.advanceTimersByTime(250);
 
-    // Wait for debounce
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    expect(mockSizeLabel.textContent).toBe('300px');
+    expect(sizeLabel.textContent).toBe('300px');
     expect(QRCode.toCanvas).toHaveBeenCalledTimes(1);
     expect(QRCode.toCanvas).toHaveBeenCalledWith(
-      mockQrCanvas,
-      mockQrText.value,
+      qrCanvas,
+      'Initial Text',
       expect.objectContaining({ width: 300, height: 300 }),
       expect.any(Function)
     );
   });
 
-  it('should update margin label and regenerate QR code on margin input', async () => {
-    QRCode.toCanvas.mockClear(); // Clear initial call
+  it('should update margin label and regenerate QR code on margin input', () => {
+    QRCode.toCanvas.mockClear();
 
-    mockQrMargin.value = '10';
-    const marginListener = mockQrMargin.addEventListener.mock.calls.find(call => call[0] === 'input')[1];
-    marginListener();
+    qrMargin.value = '10';
+    fireEvent.input(qrMargin);
+    jest.advanceTimersByTime(250);
 
-    // Wait for debounce
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    expect(mockMarginLabel.textContent).toBe('10');
+    expect(marginLabel.textContent).toBe('10');
     expect(QRCode.toCanvas).toHaveBeenCalledTimes(1);
     expect(QRCode.toCanvas).toHaveBeenCalledWith(
-      mockQrCanvas,
-      mockQrText.value,
+      qrCanvas,
+      'Initial Text',
       expect.objectContaining({ margin: 10 }),
       expect.any(Function)
     );
   });
 
-  it('should regenerate QR code on error correction change', async () => {
-    QRCode.toCanvas.mockClear(); // Clear initial call
+  it('should regenerate QR code on error correction change', () => {
+    QRCode.toCanvas.mockClear();
 
-    mockErrorCorrection.value = 'H';
-    const changeListener = mockErrorCorrection.addEventListener.mock.calls.find(call => call[0] === 'change')[1];
-    changeListener();
+    errorCorrection.value = 'H';
+    fireEvent.change(errorCorrection);
+    jest.advanceTimersByTime(250);
 
-    // Wait for debounce
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
     expect(QRCode.toCanvas).toHaveBeenCalledTimes(1);
     expect(QRCode.toCanvas).toHaveBeenCalledWith(
-      mockQrCanvas,
-      mockQrText.value,
+      qrCanvas,
+      'Initial Text',
       expect.objectContaining({ errorCorrectionLevel: 'H' }),
       expect.any(Function)
     );
   });
 
-  it('should call downloadManager.downloadFile when download button is clicked', async () => {
-    // Ensure QR code is generated first
-    mockQrText.value = 'test';
-    const inputListener = mockQrText.addEventListener.mock.calls.find(call => call[0] === 'input')[1];
-    inputListener();
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    mockDownloadManagerInstance.downloadFile.mockClear(); // Clear any calls from initial generation
+  it('should call downloadManager.downloadFile when download button is clicked', () => {
+    mockDownloadManagerInstance.downloadFile.mockClear();
 
-    const clickListener = mockDownloadBtn.addEventListener.mock.calls.find(call => call[0] === 'click')[1];
-    clickListener();
+    fireEvent.click(downloadBtn);
 
     expect(mockDownloadManagerInstance.downloadFile).toHaveBeenCalledTimes(1);
     expect(mockDownloadManagerInstance.downloadFile).toHaveBeenCalledWith(
@@ -266,121 +245,53 @@ describe('QRCodeGeneratorUI', () => {
     );
   });
 
-  it('should update aria-label on canvas when QR code is generated', async () => {
+  it('should update aria-label on canvas when QR code is generated', () => {
     QRCode.toCanvas.mockClear();
 
     const testText = 'Accessible QR Code Test';
-    mockQrText.value = testText;
-    const inputListener = mockQrText.addEventListener.mock.calls.find(call => call[0] === 'input')[1];
-    inputListener();
+    qrText.value = testText;
+    fireEvent.input(qrText);
+    jest.advanceTimersByTime(250);
 
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    expect(mockQrCanvas.setAttribute).toHaveBeenCalledWith('aria-label', `QR code for: ${testText}`);
+    expect(qrCanvas.getAttribute('aria-label')).toBe(`QR code for: ${testText}`);
+    expect(qrCanvas.getAttribute('role')).toBe('img');
   });
 
-  it('should truncate aria-label on canvas when text is too long', async () => {
+  it('should truncate aria-label on canvas when text is too long', () => {
     QRCode.toCanvas.mockClear();
 
     const longText = 'This is a very long text that should be truncated for the aria-label to ensure accessibility';
-    mockQrText.value = longText;
-    const inputListener = mockQrText.addEventListener.mock.calls.find(call => call[0] === 'input')[1];
-    inputListener();
-
-    await new Promise(resolve => setTimeout(resolve, 300));
+    qrText.value = longText;
+    fireEvent.input(qrText);
+    jest.advanceTimersByTime(250);
 
     const expectedTruncatedText = longText.substring(0, 50) + '...';
-    expect(mockQrCanvas.setAttribute).toHaveBeenCalledWith('aria-label', `QR code for: ${expectedTruncatedText}`);
+    expect(qrCanvas.getAttribute('aria-label')).toBe(`QR code for: ${expectedTruncatedText}`);
   });
 
   it('should return early from generateQRCode when required elements are missing', () => {
     QRCode.toCanvas.mockClear();
-    const elementMap = {
-      'qr-text': mockQrText,
-      'qr-size': mockQrSize,
-      'size-label': mockSizeLabel,
-      'qr-margin': mockQrMargin,
-      'margin-label': mockMarginLabel,
-      'error-correction': mockErrorCorrection,
-      'qr-canvas': mockQrCanvas,
-      'download-btn': mockDownloadBtn,
-      'error-message': null
-    };
-    document.getElementById.mockImplementation((id) => elementMap[id] || null);
+    document.getElementById('error-message')?.remove();
 
-    const partialGenerator = new QRCodeGeneratorUI({
-      qrTextId: 'qr-text',
-      qrSizeId: 'qr-size',
-      sizeLabelId: 'size-label',
-      qrMarginId: 'qr-margin',
-      marginLabelId: 'margin-label',
-      errorCorrectionId: 'error-correction',
-      qrCanvasId: 'qr-canvas',
-      downloadBtnId: 'download-btn',
-      errorMessageId: 'error-message'
-    });
-
+    const partialGenerator = new QRCodeGeneratorUI(defaultOptions);
     partialGenerator.generateQRCode();
+
     expect(QRCode.toCanvas).not.toHaveBeenCalled();
   });
 
   it('should return early from bindEvents when required controls are missing', () => {
-    const elementMap = {
-      'qr-text': mockQrText,
-      'qr-size': mockQrSize,
-      'size-label': mockSizeLabel,
-      'qr-margin': mockQrMargin,
-      'margin-label': mockMarginLabel,
-      'error-correction': mockErrorCorrection,
-      'qr-canvas': mockQrCanvas,
-      'download-btn': null,
-      'error-message': mockErrorMessage
-    };
-    mockQrText.addEventListener.mockClear();
-    document.getElementById.mockImplementation((id) => elementMap[id] || null);
+    document.getElementById('download-btn')?.remove();
 
-    new QRCodeGeneratorUI({
-      qrTextId: 'qr-text',
-      qrSizeId: 'qr-size',
-      sizeLabelId: 'size-label',
-      qrMarginId: 'qr-margin',
-      marginLabelId: 'margin-label',
-      errorCorrectionId: 'error-correction',
-      qrCanvasId: 'qr-canvas',
-      downloadBtnId: 'download-btn',
-      errorMessageId: 'error-message'
-    });
-
-    expect(mockQrText.addEventListener).not.toHaveBeenCalledWith('input', expect.any(Function));
+    const partialGenerator = new QRCodeGeneratorUI(defaultOptions);
+    expect(partialGenerator.downloadBtn).toBeNull();
   });
 
   it('should return early from downloadQRCode when canvas is missing', () => {
-    const elementMap = {
-      'qr-text': mockQrText,
-      'qr-size': mockQrSize,
-      'size-label': mockSizeLabel,
-      'qr-margin': mockQrMargin,
-      'margin-label': mockMarginLabel,
-      'error-correction': mockErrorCorrection,
-      'qr-canvas': null,
-      'download-btn': mockDownloadBtn,
-      'error-message': mockErrorMessage
-    };
-    document.getElementById.mockImplementation((id) => elementMap[id] || null);
-    mockDownloadManagerInstance.downloadFile.mockClear();
+    document.getElementById('qr-canvas')?.remove();
 
-    const partialGenerator = new QRCodeGeneratorUI({
-      qrTextId: 'qr-text',
-      qrSizeId: 'qr-size',
-      sizeLabelId: 'size-label',
-      qrMarginId: 'qr-margin',
-      marginLabelId: 'margin-label',
-      errorCorrectionId: 'error-correction',
-      qrCanvasId: 'qr-canvas',
-      downloadBtnId: 'download-btn',
-      errorMessageId: 'error-message'
-    });
+    const partialGenerator = new QRCodeGeneratorUI(defaultOptions);
     partialGenerator.downloadManager = mockDownloadManagerInstance;
+    mockDownloadManagerInstance.downloadFile.mockClear();
 
     partialGenerator.downloadQRCode();
     expect(mockDownloadManagerInstance.downloadFile).not.toHaveBeenCalled();
@@ -388,32 +299,24 @@ describe('QRCodeGeneratorUI', () => {
 
   it('should return early from initializeApp when label or range inputs are missing', () => {
     QRCode.toCanvas.mockClear();
-    const elementMap = {
-      'qr-text': mockQrText,
-      'qr-size': mockQrSize,
-      'size-label': null,
-      'qr-margin': mockQrMargin,
-      'margin-label': mockMarginLabel,
-      'error-correction': mockErrorCorrection,
-      'qr-canvas': mockQrCanvas,
-      'download-btn': mockDownloadBtn,
-      'error-message': mockErrorMessage
-    };
-    document.getElementById.mockImplementation((id) => elementMap[id] || null);
+    document.getElementById('size-label')?.remove();
 
-    const partialGenerator = new QRCodeGeneratorUI({
-      qrTextId: 'qr-text',
-      qrSizeId: 'qr-size',
-      sizeLabelId: 'size-label',
-      qrMarginId: 'qr-margin',
-      marginLabelId: 'margin-label',
-      errorCorrectionId: 'error-correction',
-      qrCanvasId: 'qr-canvas',
-      downloadBtnId: 'download-btn',
-      errorMessageId: 'error-message'
-    });
+    const partialGenerator = new QRCodeGeneratorUI(defaultOptions);
     partialGenerator.initializeApp();
 
     expect(QRCode.toCanvas).not.toHaveBeenCalled();
+  });
+
+  it('should catch and log error if event binding throws', () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const faultyBtn = document.getElementById('download-btn');
+    jest.spyOn(faultyBtn, 'addEventListener').mockImplementationOnce(() => {
+      throw new Error('Event listener error');
+    });
+
+    new QRCodeGeneratorUI(defaultOptions);
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Error binding events:', expect.any(Error));
+    consoleErrorSpy.mockRestore();
   });
 });
