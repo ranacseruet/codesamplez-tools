@@ -237,6 +237,19 @@ describe('DiffDisplay', () => {
       expect(result).toBe('const x = 1;\n');
     });
 
+    it('should fall back to escaped HTML and log a warning if Prism or javascript language is missing', () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      global.Prism = {
+        languages: {}
+      };
+
+      const result = diffDisplay.formatLine('const <x> = 1;', true, 'unchanged');
+      expect(result).toBe('const &lt;x&gt; = 1;\n');
+      expect(consoleWarnSpy).toHaveBeenCalledWith('Prism.js or javascript language not available. Falling back to escaped HTML.');
+
+      consoleWarnSpy.mockRestore();
+    });
+
     it('renders carriage returns as visible markers', () => {
       const result = diffDisplay.formatLine('first\r', false, 'removed');
 
@@ -557,6 +570,27 @@ describe('DiffNavigator', () => { // Test the class directly
     expect(counter.textContent).toBe('2 of 2');
   });
 
+  it('ignores navigation when target index is out of bounds', () => {
+    setupRealDiffLines(['added', 'unchanged', 'removed']);
+    navigator.navigateToIndex(-1);
+    expect(navigator.currentDiffIndex).toBe(-1);
+
+    navigator.navigateToIndex(99);
+    expect(navigator.currentDiffIndex).toBe(-1);
+  });
+
+  it('adds current-diff-middle class to intermediate lines in a consecutive diff block with 3 or more lines', () => {
+    setupRealDiffLines(['added', 'added', 'added']);
+    expect(navigator.diffElements.length).toBe(1);
+    expect(navigator.diffElements[0].length).toBe(3);
+
+    navigator.navigateToIndex(0);
+
+    const block = navigator.diffElements[0];
+    expect(block[0].classList.contains('current-diff-start')).toBe(true);
+    expect(block[1].classList.contains('current-diff-middle')).toBe(true);
+    expect(block[2].classList.contains('current-diff-end')).toBe(true);
+  });
 });
 
 

@@ -1,14 +1,24 @@
 import { jest } from '@jest/globals';
 import { OPTIONS_HEIGHT_VAR, trackOptionsHeight } from './sticky-offset';
 
-function makeStrip(height) {
+function makeStrip(height: number): HTMLElement {
     const strip = document.createElement('div');
-    strip.getBoundingClientRect = () => ({ height });
+    strip.getBoundingClientRect = () => ({
+        height,
+        bottom: height,
+        top: 0,
+        left: 0,
+        right: 0,
+        width: 100,
+        x: 0,
+        y: 0,
+        toJSON: () => {}
+    });
     return strip;
 }
 
 describe('trackOptionsHeight', () => {
-    let target;
+    let target: HTMLElement;
 
     beforeEach(() => {
         target = document.createElement('div');
@@ -17,7 +27,7 @@ describe('trackOptionsHeight', () => {
 
     afterEach(() => {
         target.remove();
-        delete globalThis.ResizeObserver;
+        delete (globalThis as any).ResizeObserver;
         jest.restoreAllMocks();
     });
 
@@ -40,14 +50,14 @@ describe('trackOptionsHeight', () => {
 
     it('re-measures through a ResizeObserver and disconnects on cleanup', () => {
         const disconnect = jest.fn();
-        let notify = null;
+        let notify: ResizeObserverCallback | null = null;
         const observe = jest.fn();
-        globalThis.ResizeObserver = class {
-            constructor(callback) {
+        (globalThis as any).ResizeObserver = class {
+            constructor(callback: ResizeObserverCallback) {
                 notify = callback;
             }
 
-            observe(...args) {
+            observe(...args: any[]) {
                 observe(...args);
             }
 
@@ -62,8 +72,18 @@ describe('trackOptionsHeight', () => {
         expect(observe).toHaveBeenCalledWith(strip);
         expect(target.style.getPropertyValue(OPTIONS_HEIGHT_VAR)).toBe('80px');
 
-        strip.getBoundingClientRect = () => ({ height: 264 });
-        notify();
+        strip.getBoundingClientRect = () => ({
+            height: 264,
+            bottom: 264,
+            top: 0,
+            left: 0,
+            right: 0,
+            width: 100,
+            x: 0,
+            y: 0,
+            toJSON: () => {}
+        });
+        notify!([], {} as any);
         expect(target.style.getPropertyValue(OPTIONS_HEIGHT_VAR)).toBe('264px');
 
         stop();
@@ -79,14 +99,34 @@ describe('trackOptionsHeight', () => {
 
         expect(addSpy).toHaveBeenCalledWith('resize', expect.any(Function));
 
-        strip.getBoundingClientRect = () => ({ height: 264 });
+        strip.getBoundingClientRect = () => ({
+            height: 264,
+            bottom: 264,
+            top: 0,
+            left: 0,
+            right: 0,
+            width: 100,
+            x: 0,
+            y: 0,
+            toJSON: () => {}
+        });
         window.dispatchEvent(new Event('resize'));
         expect(target.style.getPropertyValue(OPTIONS_HEIGHT_VAR)).toBe('264px');
 
         stop();
         expect(removeSpy).toHaveBeenCalledWith('resize', expect.any(Function));
 
-        strip.getBoundingClientRect = () => ({ height: 500 });
+        strip.getBoundingClientRect = () => ({
+            height: 500,
+            bottom: 500,
+            top: 0,
+            left: 0,
+            right: 0,
+            width: 100,
+            x: 0,
+            y: 0,
+            toJSON: () => {}
+        });
         window.dispatchEvent(new Event('resize'));
         expect(target.style.getPropertyValue(OPTIONS_HEIGHT_VAR)).toBe('264px');
     });

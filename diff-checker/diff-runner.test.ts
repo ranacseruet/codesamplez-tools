@@ -1,17 +1,17 @@
 import { jest } from '@jest/globals';
 import { createDiffRunner } from './diff-runner';
+import type { DiffComputeRequest } from './diff';
 
-// Minimal fake so `new Worker(new URL('./diff.worker.ts', import.meta.url))`
-// executes (jsdom provides no Worker). Captures the URL it was constructed with
-// and echoes a canned result.
 class FakeWorker {
-    constructor(url) {
+    static lastUrl: string | URL | null = null;
+    onmessage: ((event: { data: any }) => void) | null = null;
+    onerror: ((error: any) => void) | null = null;
+
+    constructor(url: string | URL) {
         FakeWorker.lastUrl = url;
-        this.onmessage = null;
-        this.onerror = null;
     }
 
-    postMessage(message) {
+    postMessage(message: { id: number; request: DiffComputeRequest }) {
         queueMicrotask(() => {
             this.onmessage?.({ data: { id: message.id, result: [['added', 'baz']] } });
         });
@@ -20,7 +20,7 @@ class FakeWorker {
     terminate() {}
 }
 
-const REQUEST = {
+const REQUEST: DiffComputeRequest = {
     originalLines: ['foo'],
     modifiedLines: ['baz'],
     ignoreWhitespace: true
@@ -28,11 +28,11 @@ const REQUEST = {
 
 describe('createDiffRunner', () => {
     afterEach(() => {
-        delete globalThis.Worker;
+        delete (globalThis as any).Worker;
     });
 
     it('constructs a worker pointing at the diff worker chunk and resolves results', async () => {
-        globalThis.Worker = FakeWorker;
+        (globalThis as any).Worker = FakeWorker;
 
         const runner = createDiffRunner();
         const result = await runner.run(REQUEST);

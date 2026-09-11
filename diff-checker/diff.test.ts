@@ -1,9 +1,28 @@
-import { computeDiff } from './diff';
+import { computeDiff, DiffComputer, type DiffResultLine } from './diff';
 
 describe('Base Functionality', () => {
   test('empty inputs should return empty array', () => {
     const result = computeDiff([], []);
     expect(result).toEqual([]);
+  });
+
+  test('handles null and undefined inputs gracefully via DiffComputer.compute', () => {
+    expect(DiffComputer.compute(null as any, null as any)).toEqual([]);
+    expect(DiffComputer.compute(undefined as any, undefined as any)).toEqual([]);
+    expect(DiffComputer.compute(null as any, ['added line'])).toEqual([
+      ['added', 'added line']
+    ]);
+    expect(DiffComputer.compute(['removed line'], null as any)).toEqual([
+      ['removed', 'removed line']
+    ]);
+  });
+
+  test('converts null, undefined, or empty elements within line arrays to empty strings', () => {
+    const original = ['line1', null as any, undefined as any, ''];
+    const modified = ['line1', 'line2'];
+    const result = DiffComputer.compute(original, modified, true);
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0]).toEqual(['unchanged', 'line1']);
   });
 
   test('one empty input should mark all lines as added/removed', () => {
@@ -132,7 +151,7 @@ describe('Whitespace Handling', () => {
   describe('#76 — indentation change alongside a real change', () => {
     const original = ['function a() {', '    const foo = 1;', '}'];
     const modified = ['function a() {', '\t\tconst bar = 1;', '}'];
-    const stripSpans = html => html.replace(/<\/?span[^>]*>/g, '');
+    const stripSpans = (html: string) => html.replace(/<\/?span[^>]*>/g, '');
 
     test('highlights only the word change when ignoreWhitespace is true', () => {
       expect(computeDiff(original, modified, true)).toEqual([
@@ -146,7 +165,7 @@ describe('Whitespace Handling', () => {
     test('keeps each pane on its own indentation when ignoreWhitespace is true', () => {
       // Both panes are built from one parts list, so the danger is a pane
       // rendering whitespace copied from the other side's line.
-      const [, [, removedHtml], [, addedHtml]] = computeDiff(original, modified, true);
+      const [, [, removedHtml], [, addedHtml]] = computeDiff(original, modified, true) as DiffResultLine[];
       expect(stripSpans(removedHtml)).toBe(original[1]);
       expect(stripSpans(addedHtml)).toBe(modified[1]);
     });
@@ -211,7 +230,7 @@ describe('Whitespace Handling', () => {
         ['x', 'const foo   =   1;'],
         ['x', 'const bar = 1;'],
         true
-      );
+      ) as DiffResultLine[];
       expect(removedHtml).not.toContain('word-removed">   <');
       expect(addedHtml).not.toContain('word-added"> <');
       expect(stripSpans(removedHtml)).toBe('const foo   =   1;');
@@ -321,6 +340,7 @@ describe('Edge Cases', () => {
           ['added', 'A'],
       ]);
   });
+
   test('Should handle moved block with braces correctly', () => {
     const result = computeDiff(
         ['A{','}', 'B', 'C{','}'],
