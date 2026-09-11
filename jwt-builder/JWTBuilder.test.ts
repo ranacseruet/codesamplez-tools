@@ -1,17 +1,19 @@
 import { jest } from '@jest/globals';
 import { webcrypto as nodeWebCrypto } from 'node:crypto';
+import { TextEncoder, TextDecoder } from 'node:util';
 import { privateKey as testPrivateKey, publicKey as testPublicKey } from './test-fixtures/rs256-test-keypair.js';
-const { TextEncoder, TextDecoder } = require('util');
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
+import { JWTBuilder, type JWTAlgorithm } from './JWTBuilder';
+
+(globalThis as unknown as { TextEncoder: typeof TextEncoder }).TextEncoder = TextEncoder;
+(globalThis as unknown as { TextDecoder: typeof TextDecoder }).TextDecoder = TextDecoder;
 
 // Simple polyfills for atob and btoa for the test environment
-global.atob = str => Buffer.from(str, 'base64').toString('binary');
-global.btoa = str => Buffer.from(str, 'binary').toString('base64');
+(globalThis as unknown as { atob: (str: string) => string }).atob = (str: string) =>
+  Buffer.from(str, 'base64').toString('binary');
+(globalThis as unknown as { btoa: (str: string) => string }).btoa = (str: string) =>
+  Buffer.from(str, 'binary').toString('base64');
 
-import { JWTBuilder } from './JWTBuilder';
-
-function decodeBase64Url(str) {
+function decodeBase64Url(str: string): string {
   let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
   while (base64.length % 4) {
     base64 += '=';
@@ -21,35 +23,41 @@ function decodeBase64Url(str) {
 
 const realVerify = nodeWebCrypto.subtle.verify.bind(nodeWebCrypto.subtle);
 
-function pemEncode(buffer) {
-  const base64 = Buffer.from(buffer).toString('base64');
+function pemEncode(buffer: ArrayBuffer | Uint8Array): string {
+  const base64 = Buffer.from(buffer as ArrayBuffer).toString('base64');
   const lines = base64.match(/.{1,64}/g) || [];
   return `-----BEGIN PRIVATE KEY-----\n${lines.join('\n')}\n-----END PRIVATE KEY-----`;
 }
 
-function pemDecode(pem) {
-  return Buffer.from(pem.split('\n').slice(1, -1).join(''), 'base64');
+function pemDecode(pem: string): Uint8Array {
+  const buf = Buffer.from(pem.split('\n').slice(1, -1).join(''), 'base64');
+  return Uint8Array.from(buf);
 }
 
-const originalCrypto = global.crypto;
+const originalCrypto = globalThis.crypto;
 const mockCrypto = {
-  getRandomValues: array => nodeWebCrypto.getRandomValues(array),
+  getRandomValues: <T extends ArrayBufferView | null>(array: T): T => {
+    if (array) {
+      nodeWebCrypto.getRandomValues(array as any);
+    }
+    return array;
+  },
   subtle: {
-    importKey: jest.fn(),
-    sign: jest.fn()
+    importKey: jest.fn<any>(),
+    sign: jest.fn<any>()
   }
 };
 
-function setGlobalCrypto(value) {
-  Object.defineProperty(global, 'crypto', {
+function setGlobalCrypto(value: unknown): void {
+  Object.defineProperty(globalThis, 'crypto', {
     configurable: true,
     writable: true,
     value
   });
 }
 
-async function withRealWebCrypto(callback) {
-  const mockedCrypto = global.crypto;
+async function withRealWebCrypto<T>(callback: () => Promise<T>): Promise<T> {
+  const mockedCrypto = globalThis.crypto;
   setGlobalCrypto(nodeWebCrypto);
 
   try {
@@ -59,10 +67,8 @@ async function withRealWebCrypto(callback) {
   }
 }
 
-
-
 describe('JWTBuilder', () => {
-  let jwtBuilder;
+  let jwtBuilder: JWTBuilder;
   const mockSignature = new Uint8Array([1, 2, 3, 4, 5]).buffer;
 
   beforeAll(() => {
@@ -70,8 +76,8 @@ describe('JWTBuilder', () => {
   });
 
   beforeEach(() => {
-    mockCrypto.subtle.importKey = jest.fn().mockResolvedValue({ algorithm: { modulusLength: 2048 } });
-    mockCrypto.subtle.sign = jest.fn().mockResolvedValue(mockSignature);
+    mockCrypto.subtle.importKey = jest.fn<any>().mockResolvedValue({ algorithm: { modulusLength: 2048 } });
+    mockCrypto.subtle.sign = jest.fn<any>().mockResolvedValue(mockSignature);
     jwtBuilder = new JWTBuilder();
   });
 
@@ -133,20 +139,23 @@ describe('JWTBuilder', () => {
     });
 
     test('returns null when the datetime constructor fails', () => {
-      const RealDate = global.Date;
-      global.Date = class extends RealDate {
-        constructor(value) {
-          if (value === 'throws') {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const RealDate = globalThis.Date;
+      globalThis.Date = class extends RealDate {
+        constructor(...args: any[]) {
+          if (args[0] === 'throws') {
             throw new Error('date constructor failed');
           }
-          super(value);
+          super(...(args as [any]));
         }
-      };
+      } as unknown as DateConstructor;
 
       try {
         expect(jwtBuilder.parseDateTime('throws')).toBeNull();
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error parsing date:', expect.any(Error));
       } finally {
-        global.Date = RealDate;
+        globalThis.Date = RealDate;
+        consoleErrorSpy.mockRestore();
       }
     });
   });
@@ -205,12 +214,12 @@ describe('JWTBuilder', () => {
     test('generates valid signature', async () => {
       const signingInput = 'test.input';
       const key = 'secret-key';
-      
+
       const signature = await jwtBuilder.generateSignature(signingInput, key);
       expect(signature).toBeDefined();
       expect(typeof signature).toBe('string');
-      
-      expect(crypto.subtle.importKey).toHaveBeenCalledWith(
+
+      expect(mockCrypto.subtle.importKey).toHaveBeenCalledWith(
         'raw',
         new TextEncoder().encode('secret-key'),
         { name: 'HMAC', hash: 'SHA-256' },
@@ -228,18 +237,18 @@ describe('JWTBuilder', () => {
     });
 
     test('rejects unsupported signing algorithms', async () => {
-      await expect(jwtBuilder.generateSignature('test', 'key', 'ES256'))
+      await expect(jwtBuilder.generateSignature('test', 'key', 'ES256' as JWTAlgorithm))
         .rejects
         .toThrow('Unsupported JWT algorithm: ES256');
     });
 
     test('handles crypto.subtle.sign failure', async () => {
-      global.crypto.subtle.sign = jest.fn().mockRejectedValue(new Error('Sign failed'));
+      mockCrypto.subtle.sign = jest.fn<any>().mockRejectedValue(new Error('Sign failed'));
       await expect(jwtBuilder.generateSignature('test', 'key')).rejects.toThrow('Sign failed');
     });
 
     test('handles crypto.subtle.sign success', async () => {
-      global.crypto.subtle.sign = jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3, 4, 5]));
+      mockCrypto.subtle.sign = jest.fn<any>().mockResolvedValue(new Uint8Array([1, 2, 3, 4, 5]));
       const signature = await jwtBuilder.generateSignature('test', 'key');
       expect(signature).toBeDefined();
     });
@@ -248,7 +257,7 @@ describe('JWTBuilder', () => {
       await withRealWebCrypto(async () => {
         const publicCryptoKey = await nodeWebCrypto.subtle.importKey(
           'spki',
-          pemDecode(testPublicKey),
+          pemDecode(testPublicKey) as any,
           { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
           false,
           ['verify']
@@ -296,7 +305,7 @@ describe('JWTBuilder', () => {
     });
 
     test('reports when Web Crypto is unavailable for RS256', async () => {
-      const mockedCrypto = global.crypto;
+      const mockedCrypto = globalThis.crypto;
       setGlobalCrypto({});
 
       try {
@@ -374,8 +383,8 @@ describe('JWTBuilder', () => {
     });
 
     test('maps PEM decoding failures to a friendly RSA error', async () => {
-      const originalAtob = global.atob;
-      global.atob = jest.fn(() => {
+      const originalAtob = globalThis.atob;
+      (globalThis as unknown as { atob: (s: string) => string }).atob = jest.fn(() => {
         throw new Error('decode failed');
       });
 
@@ -384,7 +393,7 @@ describe('JWTBuilder', () => {
           .rejects
           .toThrow('Invalid RSA private key');
       } finally {
-        global.atob = originalAtob;
+        (globalThis as unknown as { atob: (s: string) => string }).atob = originalAtob;
       }
     });
 
@@ -418,10 +427,17 @@ describe('JWTBuilder', () => {
   });
 
   describe('generateRandomSecret', () => {
-    test('generates a random secret of specified length', () => {
-      const secret = jwtBuilder.generateRandomSecret(32);
+    test('uses default length of 32 when no argument provided', () => {
+      const secret = jwtBuilder.generateRandomSecret();
       expect(secret).toBeDefined();
       expect(secret.length).toBe(32);
+      expect(secret).toMatch(/^[A-Za-z0-9\-_]+$/);
+    });
+
+    test('generates a random secret of specified length', () => {
+      const secret = jwtBuilder.generateRandomSecret(16);
+      expect(secret).toBeDefined();
+      expect(secret.length).toBe(16);
     });
 
     test('generates different secrets on subsequent calls', () => {
@@ -444,7 +460,7 @@ describe('JWTBuilder', () => {
         name: 'Test User',
         role: 'admin'
       };
-      
+
       const jwt = await jwtBuilder.buildJWT(payload, 'test-secret');
       expect(jwt).toBeDefined();
       expect(jwt.split('.')).toHaveLength(3);
@@ -476,12 +492,16 @@ describe('JWTBuilder', () => {
       expect(decodedPayload).toHaveProperty('jti');
     });
 
+    test('throws error when buildJWT called with default empty secret key', async () => {
+      await expect(jwtBuilder.buildJWT()).rejects.toThrow('Secret key is required for JWT signing');
+    });
+
     test('throws error when no secret key provided', async () => {
       await expect(jwtBuilder.buildJWT({ sub: 'test' }, '')).rejects.toThrow('Secret key is required for JWT signing');
     });
 
     test('throws error for invalid payload', async () => {
-      const payload = {
+      const payload: Record<string, any> = {
         circular: {}
       };
       payload.circular.self = payload; // Create circular reference
@@ -508,7 +528,7 @@ describe('JWTBuilder', () => {
         }
       };
 
-      await expect(jwtBuilder.buildJWT(payload, 'test-secret'))
+      await expect(jwtBuilder.buildJWT(payload as any, 'test-secret'))
         .rejects
         .toThrow('Invalid JSON payload.');
     });
@@ -543,10 +563,10 @@ describe('JWTBuilder', () => {
           }
         }
       };
-      
+
       const jwt = await jwtBuilder.buildJWT(payload, 'test-secret');
       expect(jwt).toBeDefined();
-      
+
       const [headerB64, payloadB64] = jwt.split('.');
       const decodedPayload = JSON.parse(decodeBase64Url(payloadB64));
       expect(decodedPayload).toEqual(payload);
@@ -556,10 +576,10 @@ describe('JWTBuilder', () => {
       const payload = {
         message: '!@#$%^&*()_+-=[]{}|;:,.<>?'
       };
-      
+
       const jwt = await jwtBuilder.buildJWT(payload, 'test-secret');
       expect(jwt).toBeDefined();
-      
+
       const [headerB64, payloadB64] = jwt.split('.');
       const decodedPayload = JSON.parse(decodeBase64Url(payloadB64));
       expect(decodedPayload).toEqual(payload);
@@ -569,10 +589,10 @@ describe('JWTBuilder', () => {
       const payload = {
         message: '你好，世界！🌎'
       };
-      
+
       const jwt = await jwtBuilder.buildJWT(payload, 'test-secret');
       expect(jwt).toBeDefined();
-      
+
       const [headerB64, payloadB64] = jwt.split('.');
       const decodedPayload = JSON.parse(decodeBase64Url(payloadB64));
       expect(decodedPayload).toEqual(payload);
