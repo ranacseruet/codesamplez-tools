@@ -2,7 +2,7 @@ import { XMLParser, XMLValidator } from 'fast-xml-parser';
 import { DataFormatConverter } from './DataFormatConverter';
 
 describe('DataFormatConverter', () => {
-    let converter;
+    let converter: DataFormatConverter;
     const originalDOMParser = global.DOMParser;
 
     beforeEach(() => {
@@ -63,9 +63,9 @@ describe('DataFormatConverter', () => {
                     return {
                         getElementsByTagName: () => [],
                         documentElement: null
-                    };
+                    } as unknown as Document;
                 }
-            };
+            } as unknown as typeof DOMParser;
 
             expect(() => converter.parseInput('<root><name>test</name></root>', 'xml'))
                 .toThrow('Invalid XML format');
@@ -77,16 +77,16 @@ describe('DataFormatConverter', () => {
                     return {
                         getElementsByTagName: () => [{ textContent: '' }],
                         documentElement: { nodeName: 'parsererror' }
-                    };
+                    } as unknown as Document;
                 }
-            };
+            } as unknown as typeof DOMParser;
 
             expect(() => converter.parseInput('<root><name>test</name></root>', 'xml'))
                 .toThrow('Invalid XML format');
         });
 
         it('should parse XML through the non-DOM fallback path', () => {
-            global.DOMParser = undefined;
+            delete (global as unknown as { DOMParser?: unknown }).DOMParser;
             jest.spyOn(XMLValidator, 'validate').mockReturnValue(true);
 
             expect(converter.parseInput('<root><name>test</name></root>', 'xml')).toEqual({
@@ -95,10 +95,13 @@ describe('DataFormatConverter', () => {
         });
 
         it('should surface fallback XML validator errors without DOMParser', () => {
-            global.DOMParser = undefined;
+            delete (global as unknown as { DOMParser?: unknown }).DOMParser;
             jest.spyOn(XMLValidator, 'validate').mockReturnValue({
                 err: {
-                    msg: 'Bad fallback XML'
+                    code: 'ERR',
+                    msg: 'Bad fallback XML',
+                    line: 1,
+                    col: 1
                 }
             });
 
@@ -107,15 +110,15 @@ describe('DataFormatConverter', () => {
         });
 
         it('should use the generic fallback XML message when validator omits details', () => {
-            global.DOMParser = undefined;
-            jest.spyOn(XMLValidator, 'validate').mockReturnValue({});
+            delete (global as unknown as { DOMParser?: unknown }).DOMParser;
+            jest.spyOn(XMLValidator, 'validate').mockReturnValue({} as any);
 
             expect(() => converter.parseInput('<root><name>test</name></root>', 'xml'))
                 .toThrow('Invalid XML format');
         });
 
         it('should throw generic XML error when fallback parser throws', () => {
-            global.DOMParser = undefined;
+            delete (global as unknown as { DOMParser?: unknown }).DOMParser;
             jest.spyOn(XMLValidator, 'validate').mockReturnValue(true);
             jest.spyOn(XMLParser.prototype, 'parse').mockImplementation(() => {
                 throw new Error('parse failed');
@@ -330,15 +333,14 @@ age=30`;
         });
 
         it('should throw error for circular JSON structure', () => {
-            const badData = { circular: {} };
-            badData.circular.self = badData;
+            const badData: Record<string, unknown> = { circular: {} };
+            (badData.circular as Record<string, unknown>).self = badData;
             expect(() => converter.formatOutput(badData, 'json')).toThrow('Converting circular structure to JSON');
         });
 
         it('should handle YAML with newlines in keys', () => {
             const data = { 'key\nwith\nnewlines': 'value' };
             const result = converter.formatOutput(data, 'yaml');
-            // Verify the YAML is valid and contains the key-value pair
             const parsed = converter.parseInput(result, 'yaml');
             expect(parsed).toEqual(data);
         });
@@ -366,7 +368,7 @@ age=30`;
                 <item>2</item>
             </root>`;
             const doc = new DOMParser().parseFromString(xml, 'text/xml');
-            const result = converter.xmlToObject(doc.documentElement);
+            const result = converter.xmlToObject(doc.documentElement) as Record<string, unknown>;
             expect(Array.isArray(result.item)).toBe(true);
             expect(result.item).toEqual(['1', '2']);
         });
@@ -378,7 +380,7 @@ age=30`;
                 <item>3</item>
             </root>`;
             const doc = new DOMParser().parseFromString(xml, 'text/xml');
-            const result = converter.xmlToObject(doc.documentElement);
+            const result = converter.xmlToObject(doc.documentElement) as Record<string, unknown>;
 
             expect(result.item).toEqual(['1', '2', '3']);
         });
@@ -388,7 +390,7 @@ age=30`;
                 children: [],
                 childNodes: [{ nodeType: Node.TEXT_NODE, textContent: null }],
                 attributes: []
-            });
+            } as unknown as Element);
 
             expect(result).toBe('');
         });
@@ -546,7 +548,7 @@ empty: null`;
         });
 
         it('should throw error for circular references', () => {
-            const obj = {};
+            const obj: Record<string, unknown> = {};
             obj.self = obj;
             expect(() => converter.formatOutput(obj, 'xml')).toThrow();
         });
