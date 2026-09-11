@@ -1,13 +1,13 @@
-// Import the class and standalone function
-const { TextEncoder, TextDecoder } = require('util');
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
+import { jest } from '@jest/globals';
+import { TextEncoder, TextDecoder } from 'node:util';
 import { JWTDecoder, hmacSha256 } from './JWTDecoder';
 import Base64Codec from '../common/Base64Codec';
 
+(globalThis as unknown as { TextEncoder: typeof TextEncoder }).TextEncoder = TextEncoder;
+(globalThis as unknown as { TextDecoder: typeof TextDecoder }).TextDecoder = TextDecoder;
+
 // Helper function needed for comparing results in tests
-// Note: Using atob/binaryString for jsdom environment compatibility
-function base64UrlToUint8Array(base64Url) {
+function base64UrlToUint8Array(base64Url: string): Uint8Array {
     let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     switch (base64.length % 4) {
         case 0: break;
@@ -25,7 +25,7 @@ function base64UrlToUint8Array(base64Url) {
 }
 
 // Define the mock hmacSha256 implementation to be injected into verifySignature
-const mockHmacSha256 = async (message, key) => {
+const mockHmacSha256 = async (message: string, key: string): Promise<Uint8Array> => {
     if (!message || !key) {
         throw new Error('Invalid input: message and key are required');
     }
@@ -41,13 +41,11 @@ const mockHmacSha256 = async (message, key) => {
     }
 };
 
-
 describe('JWTDecoder Class', () => {
     const codec = new Base64Codec();
     const validToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
     const validSecret = 'your-256-bit-secret';
     const invalidSecret = 'wrong-secret';
-    const tokenWithInvalidJson = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsImFnZSI6MzB9.invalidJsonPayload'; // Header ok, payload invalid json structure
     const tokenWithInvalidBase64 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid-base64-payload.signature';
     const tokenWithTwoParts = 'header.payload';
     const emptyToken = '';
@@ -62,29 +60,61 @@ describe('JWTDecoder Class', () => {
             const decoder = new JWTDecoder(validToken);
             expect(decoder.isValidFormat).toBe(true);
             expect(decoder.getParsingError()).toBeNull();
-            expect(decoder.getHeader()).toEqual({ alg: "HS256", typ: "JWT" });
-            expect(decoder.getPayload()).toEqual({ sub: "1234567890", name: "John Doe", iat: 1516239022 });
+            expect(decoder.getHeader()).toEqual({ alg: 'HS256', typ: 'JWT' });
+            expect(decoder.getPayload()).toEqual({ sub: '1234567890', name: 'John Doe', iat: 1516239022 });
             expect(decoder.getSignature()).toBe('SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c');
+            expect(decoder.getAlgorithm()).toBe('HS256');
         });
 
         it('should handle tokens with invalid JSON in header or payload', () => {
-            // Example: Payload is not valid JSON after base64 decoding
-            const invalidJsonToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.aW52YWxpZCBqc29uIHNhbXBsZQ.signature'; // Invalid JSON in payload
+            const invalidJsonToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.aW52YWxpZCBqc29uIHNhbXBsZQ.signature';
             const decoder = new JWTDecoder(invalidJsonToken);
-            expect(decoder.isValidFormat).toBe(true); // Format (3 parts) is still valid
-            expect(decoder.getParsingError()).toMatch(/Failed to parse payload: Unexpected token/); // Specific payload error
-            expect(decoder.getHeader()).toEqual({ alg: "HS256", typ: "JWT" }); // Header should parse correctly
-            expect(decoder.getPayload()).toBeNull(); // Payload parsing failed
+            expect(decoder.isValidFormat).toBe(true);
+            expect(decoder.getParsingError()).toMatch(/Failed to parse payload: Unexpected token/);
+            expect(decoder.getHeader()).toEqual({ alg: 'HS256', typ: 'JWT' });
+            expect(decoder.getPayload()).toBeNull();
             expect(decoder.getSignature()).toBe('signature');
+        });
+
+        it('combines errors when both header and payload fail to parse', () => {
+            const invalidBothToken = 'aW52YWxpZA.aW52YWxpZA.signature';
+            const decoder = new JWTDecoder(invalidBothToken);
+            expect(decoder.isValidFormat).toBe(true);
+            const error = decoder.getParsingError();
+            expect(error).toContain('Failed to parse header:');
+            expect(error).toContain('Failed to parse payload:');
+            expect(decoder.getHeader()).toBeNull();
+            expect(decoder.getPayload()).toBeNull();
+        });
+
+        it('returns null algorithm when header alg is not a string or missing', () => {
+            const noAlgToken = [
+                codec.encodeBase64Url(JSON.stringify({ typ: 'JWT' })),
+                codec.encodeBase64Url(JSON.stringify({ sub: '123' })),
+                'sig'
+            ].join('.');
+            const decoderNoAlg = new JWTDecoder(noAlgToken);
+            expect(decoderNoAlg.getAlgorithm()).toBeNull();
+
+            const numberAlgToken = [
+                codec.encodeBase64Url(JSON.stringify({ alg: 123, typ: 'JWT' })),
+                codec.encodeBase64Url(JSON.stringify({ sub: '123' })),
+                'sig'
+            ].join('.');
+            const decoderNumberAlg = new JWTDecoder(numberAlgToken);
+            expect(decoderNumberAlg.getAlgorithm()).toBeNull();
+
+            const invalidHeaderToken = 'aW52YWxpZA.eyJuYW1lIjoiSm9obiJ9.signature';
+            const decoderInvalidHeader = new JWTDecoder(invalidHeaderToken);
+            expect(decoderInvalidHeader.getAlgorithm()).toBeNull();
         });
 
         it('should handle tokens with invalid base64url encoding', () => {
             const decoder = new JWTDecoder(tokenWithInvalidBase64);
-            expect(decoder.isValidFormat).toBe(true); // Format (3 parts) is still valid
-            // Expect a JSON parsing error because the decoded base64 is not valid JSON
+            expect(decoder.isValidFormat).toBe(true);
             expect(decoder.getParsingError()).toMatch(/Failed to parse payload: Unexpected token/);
-            expect(decoder.getHeader()).toEqual({ alg: "HS256", typ: "JWT" }); // Header should still parse ok
-            expect(decoder.getPayload()).toBeNull(); // Payload parsing failed due to JSON error
+            expect(decoder.getHeader()).toEqual({ alg: 'HS256', typ: 'JWT' });
+            expect(decoder.getPayload()).toBeNull();
             expect(decoder.getSignature()).toBe('signature');
         });
 
@@ -109,7 +139,7 @@ describe('JWTDecoder Class', () => {
             expect(decoder.getParsingError()).toBe('Invalid token format (must have 3 parts)');
             expect(decoder.getHeader()).toBeNull();
             expect(decoder.getPayload()).toBeNull();
-            expect(decoder.getSignature()).toBeNull(); // No signature part identified
+            expect(decoder.getSignature()).toBeNull();
         });
 
         it('should handle empty or null token strings', () => {
@@ -123,6 +153,10 @@ describe('JWTDecoder Class', () => {
             const nullDecoder = new JWTDecoder(null);
             expect(nullDecoder.isValidFormat).toBe(false);
             expect(nullDecoder.getParsingError()).toBe('No token provided');
+
+            const undefinedDecoder = new JWTDecoder(undefined);
+            expect(undefinedDecoder.isValidFormat).toBe(false);
+            expect(undefinedDecoder.getParsingError()).toBe('No token provided');
         });
     });
 
@@ -139,6 +173,14 @@ describe('JWTDecoder Class', () => {
             expect(isValid).toBe(false);
         });
 
+        it('uses default hmacSha256 when no hmacFunc parameter is passed', async () => {
+            const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+            const decoder = new JWTDecoder(validToken);
+            const isValid = await decoder.verifySignature(validSecret);
+            expect(typeof isValid).toBe('boolean');
+            consoleSpy.mockRestore();
+        });
+
         it('should return false if the token format was invalid', async () => {
             const decoder = new JWTDecoder(tokenWithTwoParts);
             const isValid = await decoder.verifySignature(validSecret, mockHmacSha256);
@@ -147,21 +189,31 @@ describe('JWTDecoder Class', () => {
 
         it('should return false if no secret is provided', async () => {
             const decoder = new JWTDecoder(validToken);
-            const isValid = await decoder.verifySignature('', mockHmacSha256); // Empty secret
+            const isValid = await decoder.verifySignature('', mockHmacSha256);
             expect(isValid).toBe(false);
-            const isValidNull = await decoder.verifySignature(null, mockHmacSha256); // Null secret
+            const isValidNull = await decoder.verifySignature(null, mockHmacSha256);
             expect(isValidNull).toBe(false);
         });
 
+        it('should return false if header or payload failed to parse', async () => {
+            const invalidHeaderToken = 'aW52YWxpZA.eyJuYW1lIjoiSm9obiJ9.signature';
+            const decoderBadHeader = new JWTDecoder(invalidHeaderToken);
+            expect(await decoderBadHeader.verifySignature(validSecret, mockHmacSha256)).toBe(false);
+
+            const invalidPayloadToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.aW52YWxpZA.signature';
+            const decoderBadPayload = new JWTDecoder(invalidPayloadToken);
+            expect(await decoderBadPayload.verifySignature(validSecret, mockHmacSha256)).toBe(false);
+        });
+
         it('should return false if the signature part is missing (handled by constructor)', async () => {
-             const tokenNoSig = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.'; // Trailing dot indicates empty signature part
-             const decoder = new JWTDecoder(tokenNoSig);
-             expect(decoder.isValidFormat).toBe(true); // Format is 3 parts
-             expect(decoder.getHeader()).not.toBeNull(); // Header should parse
-             expect(decoder.getPayload()).not.toBeNull(); // Payload should parse
-             expect(decoder.getSignature()).toBe(''); // Signature is empty string
-             const isValid = await decoder.verifySignature(validSecret, mockHmacSha256);
-             expect(isValid).toBe(false); // Verification fails because signature is empty/incorrect
+            const tokenNoSig = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.';
+            const decoder = new JWTDecoder(tokenNoSig);
+            expect(decoder.isValidFormat).toBe(true);
+            expect(decoder.getHeader()).not.toBeNull();
+            expect(decoder.getPayload()).not.toBeNull();
+            expect(decoder.getSignature()).toBe('');
+            const isValid = await decoder.verifySignature(validSecret, mockHmacSha256);
+            expect(isValid).toBe(false);
         });
 
         it('should return false when computed and provided signatures differ in length', async () => {
@@ -196,30 +248,9 @@ describe('JWTDecoder Class', () => {
             expect(consoleErrorSpy).toHaveBeenCalledWith('Error validating JWT signature:', 'verification-runtime-error');
             consoleErrorSpy.mockRestore();
         });
-
-        // Test using the actual hmacSha256 (might fail if crypto not available)
-        // This tests the integration, assuming the actual hmac works
-        /*
-        it('should validate correctly using the actual hmacSha256 (if crypto available)', async () => {
-            const decoder = new JWTDecoder(validToken);
-            try {
-                // Use the default hmacSha256 from the module
-                const isValid = await decoder.verifySignature(validSecret);
-                expect(isValid).toBe(true);
-
-                const isInvalid = await decoder.verifySignature(invalidSecret);
-                expect(isInvalid).toBe(false);
-            } catch (e) {
-                 // Expect failure if crypto.subtle is not available in the test environment
-                 expect(e.message).toContain('Web Crypto API (crypto.subtle) not available');
-            }
-        });
-        */
     });
 
-    // Test the standalone hmacSha256 function (actual/mock)
-    describe('hmacSha256 (standalone function)', () => {
-        // Test the mock directly for predictable results
+    describe('hmacSha256 mock helper', () => {
         it('mockHmacSha256 should return correct mock signature for the known secret', async () => {
             const expectedSig = base64UrlToUint8Array('SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c');
             const signature = await mockHmacSha256('any message', validSecret);
@@ -239,26 +270,5 @@ describe('JWTDecoder Class', () => {
         it('mockHmacSha256 throws error for empty key', async () => {
             await expect(mockHmacSha256('message', '')).rejects.toThrow('Invalid input: message and key are required');
         });
-
-        // Optionally, test the actual hmacSha256 if the environment supports it
-        /*
-        it('actual hmacSha256 should generate a signature (if crypto available)', async () => {
-            try {
-                const signature = await hmacSha256('test message', 'test key');
-                expect(signature).toBeInstanceOf(Uint8Array);
-                expect(signature.length).toBe(32); // SHA-256 output length
-            } catch (e) {
-                // Expect failure if crypto.subtle is not available
-                expect(e.message).toContain('Web Crypto API (crypto.subtle) not available');
-            }
-        });
-
-        it('actual hmacSha256 should throw error for invalid input', async () => {
-             await expect(hmacSha256('', 'key')).rejects.toThrow('Invalid input: message and key are required');
-             await expect(hmacSha256('message', '')).rejects.toThrow('Invalid input: message and key are required');
-        });
-        */
     });
-
-    // No need to test isBase64 as it was removed/not used by the class or script.js
 });
