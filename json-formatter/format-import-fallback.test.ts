@@ -8,7 +8,7 @@ jest.unstable_mockModule('../common/notification-manager', () => ({
     NotificationManager: { show: jest.fn() }
 }));
 jest.unstable_mockModule('../common/format-utils', () => ({
-    formatBytes: jest.fn((bytes) => `${bytes} bytes`)
+    formatBytes: jest.fn((bytes: number) => `${bytes} bytes`)
 }));
 jest.unstable_mockModule('../common/DownloadManager', () => ({
     __esModule: true,
@@ -22,15 +22,15 @@ jest.unstable_mockModule('../common/app-shell/mountToolShell', () => ({
     mountToolShell: jest.fn()
 }));
 jest.unstable_mockModule('../common/scheduler-utils', () => ({
-    scheduleTask: jest.fn().mockResolvedValue(undefined),
-    nextFrame: jest.fn().mockResolvedValue(undefined)
+    scheduleTask: jest.fn(() => Promise.resolve()),
+    nextFrame: jest.fn(() => Promise.resolve())
 }));
 jest.unstable_mockModule('./format-runner', () => {
     throw new Error('chunk load failed');
 });
 
 describe('JSON formatter lazy-chunk import failure', () => {
-    let JSONFormatterToolUI;
+    let JSONFormatterToolUI: typeof import('./script').JSONFormatterToolUI;
 
     beforeAll(async () => {
         ({ JSONFormatterToolUI } = await import('./script'));
@@ -44,11 +44,11 @@ describe('JSON formatter lazy-chunk import failure', () => {
     it('degrades to a main-thread format when the format-runner chunk fails to load', async () => {
         const tool = new JSONFormatterToolUI();
 
-        const large = {};
+        const large: Record<string, string> = {};
         for (let i = 0; i < 3000; i += 1) {
             large[`key${i}`] = `value-${i}`;
         }
-        const input = document.querySelector('.c-input.c-input--textarea');
+        const input = document.querySelector('.c-input.c-input--textarea') as HTMLTextAreaElement;
         input.value = JSON.stringify(large);
         expect(input.value.length).toBeGreaterThan(50_000);
 
@@ -58,6 +58,6 @@ describe('JSON formatter lazy-chunk import failure', () => {
         // the catch-fallback in createLazyRunner still produces the full tree
         // rather than leaving the output empty.
         const output = document.querySelector('.c-code-output code');
-        expect(output.querySelectorAll('.json-key').length).toBe(3000);
+        expect(output?.querySelectorAll('.json-key').length).toBe(3000);
     });
 });

@@ -36,6 +36,10 @@ function createFormatter(result, useDefaultSchemaRunner = false) {
 }
 
 describe('JSON Schema validation UI flow', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '<div id="notification"></div>';
+  });
+
   test('preserves formatted output while showing the first schema issue', async () => {
     const formatter = createFormatter({
       outcome: 'invalid-data',

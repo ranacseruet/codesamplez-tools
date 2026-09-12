@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import {
     autoFixJSON,
     formatJson,
@@ -6,6 +7,7 @@ import {
     indexFromLineColumn,
     lineColumnFromIndex,
     locateJsonError,
+    parseIndentOption,
     sortKeysAlphabetically
 } from './json-format-core';
 
@@ -33,7 +35,7 @@ describe('sortKeysAlphabetically', () => {
             list: [{ c: 3, d: 4 }]
         });
         // Object key order is observable via Object.keys.
-        expect(Object.keys(sortKeysAlphabetically(input))).toEqual(['a', 'b', 'list']);
+        expect(Object.keys(sortKeysAlphabetically(input) as Record<string, unknown>)).toEqual(['a', 'b', 'list']);
     });
 
     it('passes primitives through unchanged', () => {
@@ -52,11 +54,11 @@ describe('formatJson', () => {
 
     it('preserves key order when sortKeys is false', () => {
         const result = formatJson({ input: '{"b":2,"a":1}', autoFix: false, sortKeys: false });
-        expect(Object.keys(result.formatted)).toEqual(['b', 'a']);
+        expect(Object.keys(result.formatted as Record<string, unknown>)).toEqual(['b', 'a']);
     });
 
     it('applies auto-fix before parsing when enabled', () => {
-        const result = formatJson({ input: "{a:1,}", autoFix: true, sortKeys: false });
+        const result = formatJson({ input: '{a:1,}', autoFix: true, sortKeys: false });
         expect(result.formatted).toEqual({ a: 1 });
     });
 
@@ -99,6 +101,18 @@ describe('indentSpacer', () => {
     });
 });
 
+describe('parseIndentOption', () => {
+    it('parses valid indent options and defaults to 2 for unknown inputs', () => {
+        expect(parseIndentOption('4')).toBe(4);
+        expect(parseIndentOption('tab')).toBe('tab');
+        expect(parseIndentOption('minify')).toBe('minify');
+        expect(parseIndentOption('2')).toBe(2);
+        expect(parseIndentOption('unknown')).toBe(2);
+        expect(parseIndentOption(null)).toBe(2);
+        expect(parseIndentOption(undefined)).toBe(2);
+    });
+});
+
 describe('lineColumnFromIndex', () => {
     it('computes 1-based line/column and clamps out-of-range indices', () => {
         const text = 'a\nbc\nd';
@@ -112,8 +126,6 @@ describe('lineColumnFromIndex', () => {
 });
 
 describe('indexFromLineColumn', () => {
-    // Round-trips the Firefox-style "line N column M" path (V8 messages report a
-    // position instead, so this branch is otherwise unreachable in the test engine).
     it('resolves a 1-based line/column back to a 0-based offset', () => {
         const text = 'a\nbc\nd';
         expect(indexFromLineColumn(text, 1, 1)).toBe(0);
@@ -142,12 +154,25 @@ describe('locateJsonError', () => {
         const raw = '{"a": 1, "b" 2}';
         const result = locateJsonError(raw);
         expect(result).not.toBeNull();
-        expect(typeof result.message).toBe('string');
+        expect(typeof result?.message).toBe('string');
         // The error sits at the missing colon (the `2` token region).
-        expect(result.index).toBeGreaterThan(0);
-        expect(result.index).toBeLessThanOrEqual(raw.length);
-        expect(result.line).toBe(1);
-        expect(result.column).toBe(result.index + 1);
+        expect(result!.index).toBeGreaterThan(0);
+        expect(result!.index).toBeLessThanOrEqual(raw.length);
+        expect(result!.line).toBe(1);
+        expect(result!.column).toBe(result!.index + 1);
+    });
+
+    it('handles non-Error thrown during JSON.parse in locateJsonError', () => {
+        const parseSpy = jest.spyOn(JSON, 'parse').mockImplementationOnce(() => {
+            throw 'Unexpected token in JSON at position 2';
+        });
+
+        const result = locateJsonError('{"a": 1}');
+        expect(result).not.toBeNull();
+        expect(result?.message).toBe('Unexpected token in JSON at position 2');
+        expect(result?.index).toBe(2);
+
+        parseSpy.mockRestore();
     });
 
     it('maps the offset onto the correct line for multi-line input', () => {
@@ -155,37 +180,32 @@ describe('locateJsonError', () => {
         const result = locateJsonError(raw);
         expect(result).not.toBeNull();
         // The parser flags the second key once it sees no separating comma.
-        expect(result.line).toBeGreaterThanOrEqual(2);
-        expect(raw[result.index]).toBeDefined();
+        expect(result!.line).toBeGreaterThanOrEqual(2);
+        expect(raw[result!.index]).toBeDefined();
     });
 
     it('points end-of-input errors at the end of the string', () => {
         const raw = '{"a": 1';
         const result = locateJsonError(raw);
         expect(result).not.toBeNull();
-        expect(result.index).toBe(raw.length);
+        expect(result!.index).toBe(raw.length);
     });
 
     it('locates the auto-fixable token when auto-fix is off', () => {
         // Without auto-fix the unquoted `a` is the first real syntax error.
         const result = locateJsonError('{a:1, b:}', false);
-        expect(result.index).toBe(1); // the `a`
+        expect(result?.index).toBe(1); // the `a`
     });
 
     it('locates the residual error (not an auto-fixable token) when auto-fix is on', () => {
-        // `{a:1 b:2}` — auto-fix quotes the keys; the real failure is the missing
-        // comma between the pairs, so the jump must NOT point back at the `a`.
         const raw = '{a:1 b:2}';
         const result = locateJsonError(raw, true);
         expect(result).not.toBeNull();
-        expect(result.index).toBeGreaterThan(1);
-        expect(result.index).toBeLessThanOrEqual(raw.length);
+        expect(result!.index).toBeGreaterThan(1);
+        expect(result!.index).toBeLessThanOrEqual(raw.length);
     });
 
     it('offers no jump when the residual (auto-fixed) error carries no position', () => {
-        // The reviewer's example: auto-fix repairs the keys, leaving `{"a":1, "b":}`,
-        // whose V8 "Unexpected token '}'" message has no position — so rather than
-        // point at an auto-fixable token, we return null and let the UI fall back.
         expect(locateJsonError('{a:1, b:}', true)).toBeNull();
     });
 
@@ -193,9 +213,8 @@ describe('locateJsonError', () => {
         const raw = '{\n  a: 1\n  b: 2\n}';
         const result = locateJsonError(raw, true);
         expect(result).not.toBeNull();
-        // Auto-fix adds quotes but no newlines, so the flagged line still exists in raw.
-        expect(result.line).toBeGreaterThanOrEqual(2);
-        expect(result.index).toBeLessThanOrEqual(raw.length);
+        expect(result!.line).toBeGreaterThanOrEqual(2);
+        expect(result!.index).toBeLessThanOrEqual(raw.length);
     });
 });
 
