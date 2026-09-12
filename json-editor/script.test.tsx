@@ -26,7 +26,7 @@ jest.mock('../common/clipboard', () => ({
 const mockDownloadFile = jest.fn();
 jest.mock('../common/DownloadManager', () => jest.fn().mockImplementation(() => ({ downloadFile: mockDownloadFile })));
 
-import { JsonEditorApp, JSONEditorToolUI } from './script';
+import { JsonEditorApp } from './script';
 import * as jsonEditorCore from './json-editor-core';
 import { copyTextToClipboard } from '../common/clipboard';
 import { registerDropZone, registerFileInput } from '../common/drop-zone';
@@ -35,25 +35,25 @@ import { NotificationManager } from '../common/notification-manager';
 
 function mountEditor() {
   document.body.innerHTML = '<div id="root"></div>';
-  render(<JsonEditorApp />, document.getElementById('root'));
+  render(<JsonEditorApp />, document.getElementById('root')!);
 }
 
-function importJson(input) {
-  const textarea = document.getElementById('json-editor-import-input');
+function importJson(input: string) {
+  const textarea = document.getElementById('json-editor-import-input') as HTMLTextAreaElement;
   textarea.value = input;
   fireEvent.input(textarea, { target: { value: input } });
   // Keep the DOM value explicit for Preact's controlled textarea under JSDOM;
   // the production button also reads the current ref value before importing.
   textarea.value = input;
-  screen.getByRole('button', { name: /Import JSON/ }).click();
+  (screen.getByRole('button', { name: /Import JSON/ }) as HTMLButtonElement).click();
   return flushRender();
 }
 
-function preview() {
-  return document.getElementById('json-editor-preview').value;
+function preview(): string {
+  return (document.getElementById('json-editor-preview') as HTMLTextAreaElement).value;
 }
 
-function flushRender() {
+function flushRender(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
@@ -65,6 +65,8 @@ describe('JSON Editor runtime', () => {
   });
 
   afterEach(() => {
+    const root = document.getElementById('root');
+    if (root) render(null, root);
     document.body.innerHTML = '';
   });
 
@@ -72,7 +74,7 @@ describe('JSON Editor runtime', () => {
     expect(preview()).toBe('{}');
     expect(document.querySelector('.jsone-node--object')).not.toBeNull();
     expect(document.getElementById('json-editor-import-input')).not.toBeNull();
-    expect(document.querySelector('.jsone-import-disclosure').open).toBe(false);
+    expect((document.querySelector('.jsone-import-disclosure') as HTMLDetailsElement).open).toBe(false);
   });
 
   test('imports valid JSON and preserves the imported source in the panel', async () => {
@@ -80,7 +82,7 @@ describe('JSON Editor runtime', () => {
 
     expect(preview()).toContain('"name": "Ada"');
     expect(preview()).toContain('"active": true');
-    expect(document.getElementById('json-editor-import-input').value).toBe('{"name":"Ada","active":true}');
+    expect((document.getElementById('json-editor-import-input') as HTMLTextAreaElement).value).toBe('{"name":"Ada","active":true}');
     expect(document.querySelector('.jsone-import-error')).toBeNull();
   });
 
@@ -89,11 +91,11 @@ describe('JSON Editor runtime', () => {
     await importJson('{"name" "Grace"}');
 
     expect(preview()).toContain('"name": "Ada"');
-    expect(document.querySelector('.jsone-import-error').textContent).toContain('line 1');
-    expect(document.querySelector('.jsone-import-error').textContent).toContain('column');
+    expect(document.querySelector('.jsone-import-error')!.textContent).toContain('line 1');
+    expect(document.querySelector('.jsone-import-error')!.textContent).toContain('column');
     expect(document.querySelector('[role="alert"]')).not.toBeNull();
-    expect(document.getElementById('json-editor-import-input').getAttribute('aria-invalid')).toBe('true');
-    expect(document.getElementById('json-editor-import-input').getAttribute('aria-describedby')).toContain('json-editor-import-error');
+    expect(document.getElementById('json-editor-import-input')!.getAttribute('aria-invalid')).toBe('true');
+    expect(document.getElementById('json-editor-import-input')!.getAttribute('aria-describedby')).toContain('json-editor-import-error');
     await waitFor(() => expect(document.activeElement).toBe(document.querySelector('.jsone-import-error')));
   });
 
@@ -107,14 +109,14 @@ describe('JSON Editor runtime', () => {
   test('commits inline key and value edits on blur', async () => {
     await importJson('{"name":"Ada","age":36}');
 
-    const key = document.querySelector('.jsone-key-input');
+    const key = document.querySelector('.jsone-key-input') as HTMLInputElement;
     key.value = 'fullName';
     fireEvent.input(key, { target: { value: 'fullName' } });
     await flushRender();
     fireEvent.blur(key);
     await flushRender();
 
-    const value = document.querySelector('.jsone-value-input');
+    const value = document.querySelector('.jsone-value-input') as HTMLInputElement;
     value.value = 'Grace';
     fireEvent.input(value, { target: { value: 'Grace' } });
     await flushRender();
@@ -128,14 +130,14 @@ describe('JSON Editor runtime', () => {
   test('restores Escape edits and commits boolean select changes', async () => {
     await importJson('{"name":"Ada","active":true}');
 
-    const name = document.querySelector('.jsone-value-input');
+    const name = document.querySelector('.jsone-value-input') as HTMLInputElement;
     fireEvent.blur(name);
     name.value = 'Grace';
     fireEvent.input(name, { target: { value: 'Grace' } });
     await flushRender();
     fireEvent.keyDown(name, { key: 'Escape', code: 'Escape' });
     await flushRender();
-    expect(document.querySelector('.jsone-value-input').value).toBe('Ada');
+    expect((document.querySelector('.jsone-value-input') as HTMLInputElement).value).toBe('Ada');
     expect(preview()).toContain('"name": "Ada"');
 
     const active = screen.getByRole('combobox', { name: 'Value for active' });
@@ -147,7 +149,7 @@ describe('JSON Editor runtime', () => {
   test('records an Enter edit once even when blur follows it', async () => {
     await importJson('{"name":"Ada"}');
 
-    const value = document.querySelector('.jsone-value-input');
+    const value = document.querySelector('.jsone-value-input') as HTMLInputElement;
     value.value = 'Grace';
     fireEvent.input(value, { target: { value: 'Grace' } });
     await flushRender();
@@ -164,21 +166,21 @@ describe('JSON Editor runtime', () => {
   test('rejects invalid numbers and duplicate keys without corrupting output', async () => {
     await importJson('{"name":"Ada","age":36}');
 
-    const number = document.querySelector('.jsone-number-input');
+    const number = document.querySelector('.jsone-number-input') as HTMLInputElement;
     number.value = '01';
     fireEvent.input(number, { target: { value: '01' } });
     await flushRender();
     fireEvent.blur(number);
     await flushRender();
     expect(preview()).toContain('"age": 36');
-    expect(document.querySelector('.jsone-field-error').textContent).toContain('valid JSON number');
+    expect(document.querySelector('.jsone-field-error')!.textContent).toContain('valid JSON number');
 
     fireEvent.click(screen.getByRole('button', { name: 'Add property' }));
     await flushRender();
-    expect(document.querySelector('.jsone-number-input').value).toBe('36');
+    expect((document.querySelector('.jsone-number-input') as HTMLInputElement).value).toBe('36');
     expect(document.querySelector('.jsone-field-error')).toBeNull();
 
-    const keys = document.querySelectorAll('.jsone-key-input');
+    const keys = document.querySelectorAll('.jsone-key-input') as NodeListOf<HTMLInputElement>;
     keys[1].value = 'name';
     fireEvent.input(keys[1], { target: { value: 'name' } });
     await flushRender();
@@ -215,7 +217,7 @@ describe('JSON Editor runtime', () => {
 
   test('changes types and confirms destructive container changes', async () => {
     await importJson('{"config":{"enabled":true}}');
-    const typeSelect = screen.getByRole('combobox', { name: 'Type for config' });
+    const typeSelect = screen.getByRole('combobox', { name: 'Type for config' }) as HTMLSelectElement;
     const confirm = jest.spyOn(window, 'confirm').mockReturnValue(false);
 
     fireEvent.change(typeSelect, { target: { value: 'array' } });
@@ -235,17 +237,17 @@ describe('JSON Editor runtime', () => {
     await flushRender();
 
     expect(registerDropZone).toHaveBeenCalledTimes(1);
-    expect(registerDropZone.mock.calls[0][0]).toBe(document.querySelector('.jsone-import-disclosure'));
-    const dropOptions = registerDropZone.mock.calls[0][1];
+    expect((registerDropZone as unknown as jest.Mock).mock.calls[0][0]).toBe(document.querySelector('.jsone-import-disclosure'));
+    const dropOptions = (registerDropZone as unknown as jest.Mock).mock.calls[0][1];
     dropOptions.onText('{"source":"drop"}', new File(['{"source":"drop"}'], 'drop.json', { type: 'application/json' }));
     await flushRender();
     expect(preview()).toContain('"source": "drop"');
 
-    const fileOptions = registerFileInput.mock.calls[0][1];
+    const fileOptions = (registerFileInput as unknown as jest.Mock).mock.calls[0][1];
     fileOptions.onText('{"source":"file"}', new File(['{"source":"file"}'], 'file.json', { type: 'application/json' }));
     await flushRender();
     expect(preview()).toContain('"source": "file"');
-    expect(document.getElementById('json-editor-import-input').value).toBe('{"source":"file"}');
+    expect((document.getElementById('json-editor-import-input') as HTMLTextAreaElement).value).toBe('{"source":"file"}');
     dropOptions.onError('Drop failed.');
     expect(NotificationManager.show).toHaveBeenCalledWith('Drop failed.', 3500, { type: 'error' });
   });
@@ -274,7 +276,7 @@ describe('JSON Editor runtime', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Expand all' }));
     await flushRender();
 
-    const value = document.querySelector('.jsone-value-input');
+    const value = document.querySelector('.jsone-value-input') as HTMLInputElement;
     value.value = '2';
     fireEvent.input(value, { target: { value: '2' } });
     await flushRender();
@@ -310,7 +312,7 @@ describe('JSON Editor runtime', () => {
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await flushRender();
 
-    const root = document.getElementById('json-editor-app');
+    const root = document.getElementById('json-editor-app')!;
     expect(root.querySelector('#json-editor-tool')).not.toBeNull();
     render(null, root);
   });
@@ -321,7 +323,7 @@ describe('JSON Editor runtime', () => {
     });
     try {
       await importJson('{"name":"Ada"}');
-      expect(document.querySelector('.jsone-import-error').textContent).toContain('Parser failed.');
+      expect(document.querySelector('.jsone-import-error')!.textContent).toContain('Parser failed.');
       expect(preview()).toBe('{}');
     } finally {
       parser.mockRestore();
@@ -345,13 +347,13 @@ describe('JSON Editor runtime', () => {
       throw 'Rename failed.';
     });
     try {
-      const key = screen.getByRole('textbox', { name: 'Key for a' });
+      const key = screen.getByRole('textbox', { name: 'Key for a' }) as HTMLInputElement;
       key.value = 'b';
       fireEvent.input(key, { target: { value: 'b' } });
       await flushRender();
       fireEvent.blur(key);
       await flushRender();
-      expect(document.querySelector('.jsone-field-error').textContent).toContain('That key cannot be used.');
+      expect(document.querySelector('.jsone-field-error')!.textContent).toContain('That key cannot be used.');
       expect(preview()).toContain('"a": 1');
     } finally {
       rename.mockRestore();
@@ -361,7 +363,7 @@ describe('JSON Editor runtime', () => {
       throw new Error('Type change failed.');
     });
     try {
-      NotificationManager.show.mockClear();
+      (NotificationManager.show as jest.Mock).mockClear();
       fireEvent.change(screen.getByRole('combobox', { name: 'Type for a' }), { target: { value: 'boolean' } });
       expect(NotificationManager.show).toHaveBeenCalledWith('Type change failed.', 3500, { type: 'error' });
     } finally {
@@ -372,7 +374,7 @@ describe('JSON Editor runtime', () => {
       throw new Error('Property limit reached.');
     });
     try {
-      NotificationManager.show.mockClear();
+      (NotificationManager.show as jest.Mock).mockClear();
       fireEvent.click(screen.getByRole('button', { name: 'Add property' }));
       expect(NotificationManager.show).toHaveBeenCalledWith('Property limit reached.', 3500, { type: 'error' });
     } finally {
@@ -384,7 +386,7 @@ describe('JSON Editor runtime', () => {
       throw new Error('Item limit reached.');
     });
     try {
-      NotificationManager.show.mockClear();
+      (NotificationManager.show as jest.Mock).mockClear();
       fireEvent.click(screen.getByRole('button', { name: 'Add item' }));
       expect(NotificationManager.show).toHaveBeenCalledWith('Item limit reached.', 3500, { type: 'error' });
     } finally {
@@ -396,7 +398,7 @@ describe('JSON Editor runtime', () => {
       throw new Error('Duplicate limit reached.');
     });
     try {
-      NotificationManager.show.mockClear();
+      (NotificationManager.show as jest.Mock).mockClear();
       fireEvent.click(screen.getByRole('button', { name: 'Duplicate a' }));
       expect(NotificationManager.show).toHaveBeenCalledWith('Duplicate limit reached.', 3500, { type: 'error' });
     } finally {
@@ -426,7 +428,7 @@ describe('JSON Editor runtime', () => {
     fireEvent.keyDown(document, { key: 'z', ctrlKey: true, altKey: true });
     await importJson('{"name":"Ada"}');
 
-    const value = document.querySelector('.jsone-value-input');
+    const value = document.querySelector('.jsone-value-input') as HTMLInputElement;
     value.value = 'Grace';
     fireEvent.input(value, { target: { value: 'Grace' } });
     await flushRender();
@@ -442,7 +444,7 @@ describe('JSON Editor runtime', () => {
     await flushRender();
     expect(preview()).toContain('"name": "Grace"');
 
-    copyTextToClipboard.mockRejectedValueOnce(new Error('Clipboard blocked.'));
+    (copyTextToClipboard as jest.Mock).mockRejectedValueOnce(new Error('Clipboard blocked.'));
     fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
     await Promise.resolve();
     expect(NotificationManager.show).toHaveBeenCalledWith('Could not copy JSON. Clipboard blocked.', 3500, { type: 'error' });
@@ -488,7 +490,7 @@ describe('JSON Editor runtime', () => {
 
   test('pressing Escape in an invalid field clears the field error and reverts value', async () => {
     await importJson('{"count":10}');
-    const countInput = document.querySelector('.jsone-number-input');
+    const countInput = document.querySelector('.jsone-number-input') as HTMLInputElement;
     countInput.value = 'not-a-number';
     fireEvent.input(countInput, { target: { value: 'not-a-number' } });
     await flushRender();
@@ -511,10 +513,10 @@ describe('JSON Editor runtime', () => {
 
   test('primary shortcut copies JSON when import disclosure is closed and does not clobber edits', async () => {
     await importJson('{"name":"Original"}');
-    copyTextToClipboard.mockResolvedValueOnce(undefined);
+    (copyTextToClipboard as jest.Mock).mockResolvedValueOnce(undefined);
 
     // Edit the tree
-    const nameInput = document.querySelector('.jsone-value-input');
+    const nameInput = document.querySelector('.jsone-value-input') as HTMLInputElement;
     nameInput.value = 'Modified';
     fireEvent.input(nameInput, { target: { value: 'Modified' } });
     await flushRender();
@@ -523,12 +525,12 @@ describe('JSON Editor runtime', () => {
     expect(preview()).toContain('"name": "Modified"');
 
     // Get the registered primary action shortcut callback
-    const registeredCallbacks = registerPrimaryActionShortcut.mock.calls;
+    const registeredCallbacks = (registerPrimaryActionShortcut as unknown as jest.Mock).mock.calls;
     const latestCallback = registeredCallbacks[registeredCallbacks.length - 1][0];
     expect(typeof latestCallback).toBe('function');
 
     // Invoke shortcut callback with closed import disclosure
-    NotificationManager.show.mockClear();
+    (NotificationManager.show as jest.Mock).mockClear();
     latestCallback();
     await flushRender();
     await Promise.resolve();
@@ -540,7 +542,7 @@ describe('JSON Editor runtime', () => {
 
   test('pluralizes tree status correctly', async () => {
     await importJson('"just-a-string"');
-    const status = document.querySelector('.jsone-tree-status');
+    const status = document.querySelector('.jsone-tree-status')!;
     expect(status.textContent).toContain('1 node');
     expect(status.textContent).not.toContain('1 nodes');
 
@@ -550,7 +552,7 @@ describe('JSON Editor runtime', () => {
 
   test('pressing Escape in an invalid key field clears the field error and reverts value', async () => {
     await importJson('{"first":1,"second":2}');
-    const keyInput = document.querySelectorAll('.jsone-key-input')[1];
+    const keyInput = (document.querySelectorAll('.jsone-key-input') as NodeListOf<HTMLInputElement>)[1];
     keyInput.value = 'first'; // Duplicate key
     fireEvent.input(keyInput, { target: { value: 'first' } });
     await flushRender();
@@ -572,20 +574,20 @@ describe('JSON Editor runtime', () => {
 
   test('renders empty container hint and inline add button for empty containers', async () => {
     await importJson('{}');
-    const emptyHintObj = document.querySelector('.jsone-empty-container');
+    const emptyHintObj = document.querySelector('.jsone-empty-container')!;
     expect(emptyHintObj).not.toBeNull();
     expect(emptyHintObj.textContent).toContain('Empty object');
-    const inlineAddObj = emptyHintObj.querySelector('.jsone-inline-add-btn');
+    const inlineAddObj = emptyHintObj.querySelector('.jsone-inline-add-btn') as HTMLButtonElement;
     expect(inlineAddObj).not.toBeNull();
     fireEvent.click(inlineAddObj);
     await flushRender();
     expect(preview()).toContain('"newProperty": null');
 
     await importJson('[]');
-    const emptyHintArr = document.querySelector('.jsone-empty-container');
+    const emptyHintArr = document.querySelector('.jsone-empty-container')!;
     expect(emptyHintArr).not.toBeNull();
     expect(emptyHintArr.textContent).toContain('Empty array');
-    const inlineAddArr = emptyHintArr.querySelector('.jsone-inline-add-btn');
+    const inlineAddArr = emptyHintArr.querySelector('.jsone-inline-add-btn') as HTMLButtonElement;
     expect(inlineAddArr).not.toBeNull();
     fireEvent.click(inlineAddArr);
     await flushRender();
@@ -595,18 +597,18 @@ describe('JSON Editor runtime', () => {
   test('primary shortcut imports JSON when import disclosure is open', async () => {
     await importJson('{"initial":true}');
     // Open import disclosure
-    const summary = document.querySelector('.jsone-import-disclosure summary');
+    const summary = document.querySelector('.jsone-import-disclosure summary')!;
     fireEvent.click(summary);
     await flushRender();
 
     // Change import textarea text
-    const textarea = document.querySelector('#json-editor-import-input');
+    const textarea = document.querySelector('#json-editor-import-input') as HTMLTextAreaElement;
     textarea.value = '{"importedViaShortcut":true}';
     fireEvent.input(textarea, { target: { value: '{"importedViaShortcut":true}' } });
     await flushRender();
 
     // Get latest shortcut callback
-    const registeredCallbacks = registerPrimaryActionShortcut.mock.calls;
+    const registeredCallbacks = (registerPrimaryActionShortcut as unknown as jest.Mock).mock.calls;
     const latestCallback = registeredCallbacks[registeredCallbacks.length - 1][0];
 
     // Invoke shortcut callback

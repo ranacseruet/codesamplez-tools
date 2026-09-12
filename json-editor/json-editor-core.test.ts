@@ -376,4 +376,97 @@ describe('json editor core immutable operations', () => {
             maxDepth: 1
         })).toThrow(/nesting depth/);
     });
+
+    it('covers nested mutations, non-Error parse exceptions, and default parameter branches', () => {
+        // Non-Error exception in parseJsonEditorInput
+        const parseSpy = jest.spyOn(JSON, 'parse').mockImplementationOnce(() => {
+            throw 'raw parse error string';
+        });
+        expect(() => parseJsonEditorInput('{"bad": true}', ids())).toThrow(JsonEditorParseError);
+        parseSpy.mockRestore();
+
+        // assertJsonEditorLimits with default limits
+        const doc = createJsonEditorDocument(ids());
+        expect(() => assertJsonEditorLimits(doc)).not.toThrow();
+
+        // getUniqueJsonObjectKey with default base ('newProperty')
+        const objProps = (parse('{"newProperty":1}') as Extract<JsonEditorNode, { type: 'object' }>).children;
+        expect(getUniqueJsonObjectKey(objProps)).toBe('newProperty2');
+
+        // renameJsonObjectProperty nested inside an array
+        const nestedInArray = parse('[{"a":1}]') as Extract<JsonEditorNode, { type: 'array' }>;
+        const arrayObj = nestedInArray.children[0] as Extract<JsonEditorNode, { type: 'object' }>;
+        const aProp = arrayObj.children[0];
+        const renamedInArray = renameJsonObjectProperty(nestedInArray, aProp.id, 'renamed');
+        expect(jsonEditorNodeToValue(renamedInArray)).toEqual([{ renamed: 1 }]);
+
+        // renameJsonObjectProperty nested inside an object
+        const nestedInObj = parse('{"outer":{"inner":1}}') as Extract<JsonEditorNode, { type: 'object' }>;
+        const outerProp = nestedInObj.children[0];
+        const innerObj = outerProp.value as Extract<JsonEditorNode, { type: 'object' }>;
+        const innerProp = innerObj.children[0];
+        const renamedInObj = renameJsonObjectProperty(nestedInObj, innerProp.id, 'innerRenamed');
+        expect(jsonEditorNodeToValue(renamedInObj)).toEqual({ outer: { innerRenamed: 1 } });
+
+        // addJsonObjectProperty on non-object node returns node unchanged
+        const arrayRoot = parse('[1]');
+        expect(addJsonObjectProperty(arrayRoot, arrayRoot.id, ids())).toBe(arrayRoot);
+
+        // deleteJsonEditorNode nested inside an object with multiple properties (one changed, one unchanged)
+        const deepObj = parse('{"p1":{"inner":1},"p2":{"keep":2}}') as Extract<JsonEditorNode, { type: 'object' }>;
+        const deepInnerId = (deepObj.children[0].value as Extract<JsonEditorNode, { type: 'object' }>).children[0].value.id;
+        const afterDelete = deleteJsonEditorNode(deepObj, deepInnerId);
+        expect(jsonEditorNodeToValue(afterDelete)).toEqual({ p1: {}, p2: { keep: 2 } });
+        expect(deleteJsonEditorNode(deepObj, 'non-existent-id')).toBe(deepObj);
+
+        // duplicateJsonEditorNode nested inside an object with multiple properties (one changed, one unchanged)
+        const deepObjForDup = parse('{"p1":{"inner":1},"p2":{"keep":2}}') as Extract<JsonEditorNode, { type: 'object' }>;
+        const deepInnerIdForDup = (deepObjForDup.children[0].value as Extract<JsonEditorNode, { type: 'object' }>).children[0].value.id;
+        const afterDup = duplicateJsonEditorNode(deepObjForDup, deepInnerIdForDup, ids());
+        expect(jsonEditorNodeToValue(afterDup)).toEqual({ p1: { inner: 1, innerCopy: 1 }, p2: { keep: 2 } });
+        expect(duplicateJsonEditorNode(deepObjForDup, 'non-existent-id', ids())).toBe(deepObjForDup);
+
+        // moveJsonEditorNode direct sibling down on object
+        const directObj = parse('{"a":1,"b":2}') as Extract<JsonEditorNode, { type: 'object' }>;
+        const aValId = directObj.children[0].value.id;
+        const movedDown = moveJsonEditorNode(directObj, aValId, 'down');
+        expect(Object.keys(jsonEditorNodeToValue(movedDown) as Record<string, unknown>)).toEqual(['b', 'a']);
+
+        // moveJsonEditorNode nested inside an object with multiple properties
+        const deepObjForMove = parse('{"p1":[1,2],"p2":[3,4]}') as Extract<JsonEditorNode, { type: 'object' }>;
+        const arrInside = deepObjForMove.children[0].value as Extract<JsonEditorNode, { type: 'array' }>;
+        const item2Id = arrInside.children[1].id;
+        const afterMove = moveJsonEditorNode(deepObjForMove, item2Id, 'up');
+        expect(jsonEditorNodeToValue(afterMove)).toEqual({ p1: [2, 1], p2: [3, 4] });
+        expect(moveJsonEditorNode(deepObjForMove, 'non-existent-id', 'up')).toBe(deepObjForMove);
+
+        // convertPrimitiveValue edge branches: false boolean -> 0, string -> boolean false
+        const falseBoolNode = parse('{"b":false}') as Extract<JsonEditorNode, { type: 'object' }>;
+        const falseBoolId = falseBoolNode.children[0].value.id;
+        const numFromFalse = changeJsonEditorNodeType(falseBoolNode, falseBoolId, 'number', ids());
+        expect(jsonEditorNodeToValue(numFromFalse)).toEqual({ b: 0 });
+
+        const falseStrNode = parse('{"s":"not-true"}') as Extract<JsonEditorNode, { type: 'object' }>;
+        const falseStrId = falseStrNode.children[0].value.id;
+        const boolFromStr = changeJsonEditorNodeType(falseStrNode, falseStrId, 'boolean', ids());
+        expect(jsonEditorNodeToValue(boolFromStr)).toEqual({ s: false });
+
+        const zeroNumNode = parse('{"n":0}') as Extract<JsonEditorNode, { type: 'object' }>;
+        const zeroNumId = zeroNumNode.children[0].value.id;
+        const boolFromZero = changeJsonEditorNodeType(zeroNumNode, zeroNumId, 'boolean', ids());
+        expect(jsonEditorNodeToValue(boolFromZero)).toEqual({ n: false });
+
+        // mapPropertyById with sibling array containing no matching property
+        const mixedArray = parse('[[1], {"a":1}]') as Extract<JsonEditorNode, { type: 'array' }>;
+        const objInArr = mixedArray.children[1] as Extract<JsonEditorNode, { type: 'object' }>;
+        const mixedPropId = objInArr.children[0].id;
+        const renamedMixed = renameJsonObjectProperty(mixedArray, mixedPropId, 'renamed');
+        expect(jsonEditorNodeToValue(renamedMixed)).toEqual([[1], { renamed: 1 }]);
+
+        // updateJsonEditorValue for string with null/undefined value fallback
+        const strObj = parse('{"s":"initial"}') as Extract<JsonEditorNode, { type: 'object' }>;
+        const strId = strObj.children[0].value.id;
+        const clearedStr = updateJsonEditorValue(strObj, strId, null as unknown as string);
+        expect(jsonEditorNodeToValue(clearedStr)).toEqual({ s: '' });
+    });
 });
