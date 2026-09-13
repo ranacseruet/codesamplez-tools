@@ -175,6 +175,12 @@ describe('computeResizeDims', () => {
             .toBe(8192);
         expect(computeResizeDims(800, 600, { mode: 'percent', width: null, height: null, lockAspect: true, percent: 0 }).width)
             .toBe(800);
+        expect(computeResizeDims(800, 600, { mode: 'pixels', width: 0, height: 300, lockAspect: true, percent: null }))
+            .toEqual({ width: 400, height: 300 });
+        expect(computeResizeDims(800, 600, { mode: 'pixels', width: null, height: 0, lockAspect: true, percent: null }))
+            .toEqual({ width: 800, height: 600 });
+        expect(computeResizeDims(800, 600, { mode: 'pixels', width: 0, height: 0, lockAspect: false, percent: null }))
+            .toEqual({ width: 800, height: 600 });
     });
 });
 
@@ -209,9 +215,12 @@ describe('export mapping', () => {
         expect(exportMime('png')).toBe('image/png');
         expect(exportMime('jpeg')).toBe('image/jpeg');
         expect(exportMime('webp')).toBe('image/webp');
+        expect(exportMime('unknown' as any)).toBe('image/png');
         expect(exportExtension('jpeg')).toBe('jpg');
+        expect(exportExtension('unknown' as any)).toBe('png');
         expect(supportsQuality('png')).toBe(false);
         expect(supportsQuality('webp')).toBe(true);
+        expect(supportsQuality('unknown' as any)).toBe(false);
     });
 
     it('converts UI quality to a toBlob fraction', () => {
@@ -224,6 +233,7 @@ describe('export mapping', () => {
     it('builds timestamped filenames', () => {
         expect(exportFilename('png', 123)).toBe('edited-image-123.png');
         expect(exportFilename('jpeg', 123)).toBe('edited-image-123.jpg');
+        expect(exportFilename('png')).toMatch(/^edited-image-\d+\.png$/);
     });
 });
 
@@ -265,6 +275,7 @@ describe('formatBytes', () => {
         expect(formatBytes(2048)).toBe('2 KiB');
         expect(formatBytes(1536)).toBe('1.5 KiB');
         expect(formatBytes(5 * 1024 * 1024)).toBe('5 MB');
+        expect(formatBytes(1.5 * 1024 * 1024)).toBe('1.5 MB');
         expect(formatBytes(Number.NaN)).toBe('—');
     });
 });
