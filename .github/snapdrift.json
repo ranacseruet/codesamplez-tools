@@ -159,7 +159,10 @@
     {
       "id": "css-minifier-mobile",
       "path": "/css-minifier/",
-      "viewport": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
       "changePaths": [
         "css-minifier/"
       ]
