@@ -1224,6 +1224,25 @@ button.c-tooltip-container {
   margin-top: 0.55rem;
 }
 
+/* Long, unbreakable code samples must not widen the page. `white-space: pre`
+   gives a `<pre>`/`<code>` its full intrinsic width, which propagates up
+   through the flex column and expands the mobile layout viewport (issue #549:
+   /js-minifier/ laid out at 1226px on a 390px phone). Contain the block in its
+   own scroll container, and let inline code break when it has no break
+   opportunity at all (e.g. a query-string URL, which `pre-wrap` alone cannot
+   wrap). The FAQ answer is included because it is the same prose surface and
+   shares these declarations throughout the file. */
+.c-tool-article__content pre,
+.c-tool-faq__answer pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.c-tool-article__content code,
+.c-tool-faq__answer code {
+  overflow-wrap: anywhere;
+}
+
 .c-tool-article__content a:not(.c-button),
 .c-tool-faq__answer a:not(.c-button) {
   /* Bright accent so inline links stay AA-legible on the dark surface

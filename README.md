@@ -224,7 +224,7 @@ Supporting and report-oriented checks:
 
 - `npm run bundle-metrics` (reports main bundle, CSS, HTML, and worker/code-split `Async JS` chunk totals per tool)
 - `npm run qa:a11y:foundation`
-- `npm run qa:cross-browser`
+- `npm run qa:cross-browser` (worker-offload scenarios plus a 390px horizontal-overflow sweep across every tool route derived from the manifest; the sweep is what guards long, unbreakable code samples against widening the mobile layout viewport — see `docs/ui-styling-conventions.md`)
 - Review the PR visual diff workflow when a change affects UI or layout
 - Review the main-branch visual baseline publish result when shared UI changes land
 

@@ -34,7 +34,7 @@ import {
  */
 
 const require = createRequire(import.meta.url);
-const { parseToolSelectionArgs } = require('./tool-manifest');
+const { parseToolSelectionArgs, getToolDefinitions } = require('./tool-manifest');
 const baseUrl = process.env.QA_BASE_URL || 'http://127.0.0.1:8080';
 const outDir = path.resolve(process.env.QA_CROSS_BROWSER_OUT_DIR || path.join('qa-artifacts', 'cross-browser-signoff'));
 const resultsPath = path.resolve(
@@ -887,6 +887,130 @@ function decodeJwtPart(token, index) {
 }
 
 /**
+ * @param {import('playwright').Page} page
+ * @param {string} route
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function assertNoHorizontalOverflow(page, route) {
+  const metrics = await page.evaluate(() => {
+    const root = document.documentElement;
+    const viewportWidth = window.innerWidth;
+    const offenders = [];
+    for (const element of document.querySelectorAll('body *')) {
+      const rect = element.getBoundingClientRect();
+      if (rect.width > viewportWidth + 1 || rect.right > viewportWidth + 1) {
+        offenders.push({
+          tag: element.tagName.toLowerCase(),
+          className: (element.className || '').toString().slice(0, 60),
+          width: Math.round(rect.width),
+          right: Math.round(rect.right),
+          text: (element.textContent || '').trim().slice(0, 40)
+        });
+      }
+    }
+    return {
+      clientWidth: root.clientWidth,
+      innerWidth: viewportWidth,
+      offenders: offenders.slice(0, 5),
+      scrollWidth: root.scrollWidth
+    };
+  });
+
+  if (metrics.scrollWidth > metrics.clientWidth + 1) {
+    const detail = metrics.offenders
+      .map((offender) => `<${offender.tag} class="${offender.className}"> w=${offender.width} "${offender.text}"`)
+      .join('; ');
+    throw new Error(
+      `${route} overflows horizontally at 390px (scrollWidth ${metrics.scrollWidth} > clientWidth ${metrics.clientWidth})`
+      + (detail ? `: ${detail}` : '')
+    );
+  }
+
+  return metrics;
+}
+
+/**
+ * Routes the overflow sweep visits for the current `--tools` selection: every
+ * selected tool's manifest path, plus the root page when unscoped.
+ *
+ * @returns {string[]}
+ */
+function getOverflowSweepRoutes() {
+  return [
+    ...(selectedTools.size === 0 ? ['/'] : []),
+    ...getToolDefinitions()
+      .filter((tool) => selectedTools.size === 0 || selectedTools.has(tool.id))
+      .map((tool) => tool.publicPath)
+  ];
+}
+
+/**
+ * Visit every tool route (plus the root page) at a narrow, non-mobile 390px
+ * viewport and assert the document does not scroll horizontally. Derived from
+ * the tool manifest rather than a hand-listed set of routes, so a new tool is
+ * covered on the merge that adds it.
+ *
+ * A plain (non-`isMobile`) viewport is deliberate: mobile emulation widens the
+ * layout viewport to fit unbreakable content, hiding the bug (issue #549 laid
+ * out /js-minifier/ at 1226px on a 390px phone yet reported innerWidth=1226).
+ *
+ * @param {string} browserName
+ * @param {import('playwright').BrowserType} browserType
+ * @returns {Promise<void>}
+ */
+async function runOverflowSweep(browserName, browserType) {
+  const routes = getOverflowSweepRoutes();
+  if (routes.length === 0) {
+    return;
+  }
+
+  const browser = await browserType.launch({ headless: true });
+  const failures = [];
+  try {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await blockTrackerRequests(context);
+    for (const route of routes) {
+      const started = Date.now();
+      const page = await context.newPage();
+      try {
+        await page.goto(`${baseUrl}${route}`, { waitUntil: 'networkidle' });
+        await waitVisible(page, '.cst-appbar');
+        const metrics = await assertNoHorizontalOverflow(page, route);
+        results.checks.push({
+          name: `${browserName} overflow-sweep ${route}`,
+          browser: browserName,
+          scenario: 'overflow-sweep',
+          status: 'passed',
+          durationMs: Date.now() - started,
+          url: route,
+          ...metrics
+        });
+      } catch (error) {
+        const message = error?.message || String(error);
+        failures.push(message);
+        results.checks.push({
+          name: `${browserName} overflow-sweep ${route}`,
+          browser: browserName,
+          scenario: 'overflow-sweep',
+          status: 'failed',
+          durationMs: Date.now() - started,
+          url: route,
+          error: message
+        });
+      }
+      await page.close();
+    }
+    await context.close();
+  } finally {
+    await browser.close();
+  }
+
+  if (failures.length > 0) {
+    throw new Error(failures.join(' | '));
+  }
+}
+
+/**
  * @param {string} browserName
  * @param {import('playwright').BrowserType} browserType
  * @param {SignoffScenario} scenario
@@ -926,11 +1050,14 @@ async function runScenario(browserName, browserType, scenario) {
 async function main() {
   await fs.mkdir(outDir, { recursive: true });
 
-  if (selectedTools.size > 0 && scenarios.every((scenario) => !shouldRunScenario(scenario))) {
-    throw new Error(`No cross-browser scenarios matched the requested tools: ${Array.from(selectedTools).join(', ')}`);
-  }
+  // No "matched nothing" guard here: `parseToolSelectionArgs` already rejects
+  // unknown tool ids at module load, and every valid tool has a manifest route,
+  // so `runOverflowSweep` always has work. The former guard compared only
+  // against `scenarios`, which made a valid `--tools base64-converter-tool`
+  // (no legacy scenario) abort before the sweep could run.
 
   for (const browser of browserMatrix) {
+    await runOverflowSweep(browser.name, browser.type);
     for (const scenario of scenarios.filter(shouldRunScenario)) {
       await runScenario(browser.name, browser.type, scenario);
     }
