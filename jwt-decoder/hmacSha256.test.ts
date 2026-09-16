@@ -6,14 +6,19 @@ import { hmacSha256 } from './JWTDecoder';
 (globalThis as unknown as { TextDecoder: typeof TextDecoder }).TextDecoder = TextDecoder;
 
 describe('hmacSha256', () => {
+    // `jest.fn<any>()` no longer accepts `mockResolvedValue` values under
+    // jest-mock 30.5.1 (its `ResolveType<T>` resolves to `never`), so the fake
+    // Web Crypto methods are declared as promise-returning mocks instead.
+    const asyncMock = () => jest.fn<(...args: any[]) => Promise<any>>();
+
     beforeAll(() => {
         if (!globalThis.crypto) {
             (globalThis as any).crypto = {};
         }
         if (!globalThis.crypto.subtle) {
             (globalThis.crypto as any).subtle = {
-                importKey: jest.fn<any>().mockResolvedValue('mockKey' as any),
-                sign: jest.fn<any>().mockResolvedValue(new ArrayBuffer(32))
+                importKey: asyncMock().mockResolvedValue('mockKey' as any),
+                sign: asyncMock().mockResolvedValue(new ArrayBuffer(32))
             };
         }
     });

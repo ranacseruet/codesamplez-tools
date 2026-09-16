@@ -35,6 +35,18 @@ function pemDecode(pem: string): Uint8Array {
 }
 
 const originalCrypto = globalThis.crypto;
+
+// `jest.fn<any>()` no longer accepts `mockResolvedValue`/`mockRejectedValue`
+// values under jest-mock 30.5.1: its `ResolveType<T>` resolves the mock's return
+// type to `never` (via `OverloadedReturnType`), so every value argument fails to
+// type-check. Declaring the mock as a promise-returning function keeps those
+// helpers permissive while still exposing the async mock methods.
+type AsyncMock = jest.Mock<(...args: any[]) => Promise<any>>;
+
+function asyncMock(): AsyncMock {
+  return jest.fn<(...args: any[]) => Promise<any>>();
+}
+
 const mockCrypto = {
   getRandomValues: <T extends ArrayBufferView | null>(array: T): T => {
     if (array) {
@@ -43,8 +55,8 @@ const mockCrypto = {
     return array;
   },
   subtle: {
-    importKey: jest.fn<any>(),
-    sign: jest.fn<any>()
+    importKey: asyncMock(),
+    sign: asyncMock()
   }
 };
 
@@ -76,8 +88,8 @@ describe('JWTBuilder', () => {
   });
 
   beforeEach(() => {
-    mockCrypto.subtle.importKey = jest.fn<any>().mockResolvedValue({ algorithm: { modulusLength: 2048 } });
-    mockCrypto.subtle.sign = jest.fn<any>().mockResolvedValue(mockSignature);
+    mockCrypto.subtle.importKey = asyncMock().mockResolvedValue({ algorithm: { modulusLength: 2048 } });
+    mockCrypto.subtle.sign = asyncMock().mockResolvedValue(mockSignature);
     jwtBuilder = new JWTBuilder();
   });
 
@@ -243,12 +255,12 @@ describe('JWTBuilder', () => {
     });
 
     test('handles crypto.subtle.sign failure', async () => {
-      mockCrypto.subtle.sign = jest.fn<any>().mockRejectedValue(new Error('Sign failed'));
+      mockCrypto.subtle.sign = asyncMock().mockRejectedValue(new Error('Sign failed'));
       await expect(jwtBuilder.generateSignature('test', 'key')).rejects.toThrow('Sign failed');
     });
 
     test('handles crypto.subtle.sign success', async () => {
-      mockCrypto.subtle.sign = jest.fn<any>().mockResolvedValue(new Uint8Array([1, 2, 3, 4, 5]));
+      mockCrypto.subtle.sign = asyncMock().mockResolvedValue(new Uint8Array([1, 2, 3, 4, 5]));
       const signature = await jwtBuilder.generateSignature('test', 'key');
       expect(signature).toBeDefined();
     });
