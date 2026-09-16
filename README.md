@@ -232,6 +232,8 @@ Visual baseline publishing and PR visual diffs are CI-managed workflows in this 
 
 For full-page capture sizing, see SnapDrift's [screenshot size budget and viewport guidance](https://github.com/ranacseruet/snapdrift/blob/main/docs/contracts.md#screenshot-size-budget) before changing visual thresholds. The effective limit depends on rendered raster dimensions, full-page document height, and device scale factor.
 
+A route whose full-page capture cannot fit that budget uses a custom `{ "width": 390, "height": 844 }` viewport object instead of the `"mobile"` preset: the preset is 390x844 at `deviceScaleFactor: 3`, which caps the comparable full-page CSS height at roughly 9,559px, while the custom object renders at scale factor 1 and fits comfortably. Routes taller than the cap would otherwise report `comparison_too_large` on every run and could never be diffed. This trade-off drops real mobile emulation (and with it the two `@media (pointer: coarse)` rules that hide keyboard affordances) for those routes, so it is a deliberate per-route decision rather than a default — `scripts/visual-ci-workflow.test.js` keeps the two lists in sync and fails when a `"mobile"` route is added without its budget being verified.
+
 ## Dependency Overrides
 
 `package.json` carries an `overrides` block that forces patched versions of transitive

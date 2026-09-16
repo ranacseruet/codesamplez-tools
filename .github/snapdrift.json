@@ -44,7 +44,10 @@
     {
       "id": "data-format-converter-mobile",
       "path": "/data-format-converter/",
-      "viewport": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
       "changePaths": [
         "data-format-converter/"
       ]
@@ -76,7 +79,10 @@
     {
       "id": "base64-converter-mobile",
       "path": "/base64-converter/",
-      "viewport": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
       "changePaths": [
         "base64-converter/"
       ]
