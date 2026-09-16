@@ -10,13 +10,23 @@ class Base64Codec {
         this.decoder = new TextDecoder('utf-8', { fatal: true });
     }
 
+    /**
+     * Maps the URL-safe alphabet (`-`/`_`) back to standard base64 (`+`/`/`).
+     * Every consumer that hands a payload to `atob` (or that embeds it in a
+     * `data:` URL) must use this, otherwise a payload `isBase64` accepted can
+     * still fail at decode/download/preview time.
+     */
+    normalizePayload(payload: string): string {
+        return payload.replace(/-/g, '+').replace(/_/g, '/');
+    }
+
     isBase64(payload: unknown): boolean { // Expects only the base64 data payload, no prefix
         if (typeof payload !== 'string' || payload === '') {
             return false;
         }
 
         // Handle URL-safe base64 by converting to standard base64
-        let cleanedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
+        let cleanedPayload = this.normalizePayload(payload);
 
         // A valid Base64 string's length must be a multiple of 4.
         if (cleanedPayload.length % 4 !== 0) {
@@ -79,25 +89,19 @@ class Base64Codec {
                 case 'iso88591':
                     return btoa([...text].map(c => String.fromCharCode(c.charCodeAt(0) & 0xFF)).join(''));
                 case 'ucs2': {
-                    const chars = Array.from(text);
-                    const bytes = new Uint8Array(chars.length * 4); // Max 4 bytes per char
-                    let byteIndex = 0;
-
-                    for (let i = 0; i < chars.length; i++) {
-                        const codePoint = chars[i].codePointAt(0) ?? 0;
-                        if (codePoint > 0xFFFF) {
-                            // 4-byte sequence for surrogate pairs/emojis
-                            bytes[byteIndex++] = 0xF0;
-                            bytes[byteIndex++] = 0x8F;
-                            bytes[byteIndex++] = 0x80;
-                            bytes[byteIndex++] = 0x00;
-                        } else {
-                            // 2-byte sequence for BMP characters
-                            bytes[byteIndex++] = codePoint & 0xFF;
-                            bytes[byteIndex++] = (codePoint >> 8) & 0xFF;
-                        }
+                    // Little-endian UTF-16, one code unit per two bytes. Walking
+                    // code units (charCodeAt) rather than code points lets astral
+                    // characters flow through as their natural surrogate pair, so
+                    // every character round-trips — the previous fixed 4-byte
+                    // marker collapsed every astral character to the same value
+                    // (e.g. '😀' and '🌍' both encoded to '8I+AAA==').
+                    const bytes = new Uint8Array(text.length * 2);
+                    for (let i = 0; i < text.length; i++) {
+                        const codeUnit = text.charCodeAt(i);
+                        bytes[i * 2] = codeUnit & 0xFF;
+                        bytes[i * 2 + 1] = (codeUnit >> 8) & 0xFF;
                     }
-                    return btoa(String.fromCharCode(...bytes.slice(0, byteIndex)));
+                    return this._encodeBase64Bytes(bytes);
                 }
                 case 'utf8':
                 default: {
@@ -120,33 +124,28 @@ class Base64Codec {
         }
 
         try {
-            const decoded = atob(base64Str);
+            // `isBase64` accepts URL-safe input by normalizing `-`/`_`, so the
+            // decode below must apply the same normalization — otherwise
+            // auto-detect greenlights a URL-safe payload and `atob` then throws,
+            // surfacing a misleading "Invalid base64 input".
+            const decoded = atob(this.normalizePayload(base64Str));
             
             switch(encoding) {
                 case 'ascii':
                 case 'iso88591':
                     return decoded;
                 case 'ucs2': {
+                    // Inverse of the little-endian UTF-16 encode above: each
+                    // pair of bytes is one UTF-16 code unit, so surrogate pairs
+                    // reassemble into astral characters on `join`.
                     const bytes = Uint8Array.from(decoded, c => c.charCodeAt(0));
                     if (bytes.length % 2 !== 0) {
                         throw new Error('Invalid UCS-2 byte sequence');
                     }
-                    
+
                     const chars = [];
-                    for (let i = 0; i < bytes.length;) {
-                        if (i + 4 <= bytes.length &&
-                            bytes[i] === 0xF0 && bytes[i + 1] === 0x8F &&
-                            bytes[i + 2] === 0x80 && bytes[i + 3] === 0x00) {
-                            // Special 4-byte sequence for emojis
-                            chars.push('😀');
-                            i += 4;
-                        } else if (i + 2 <= bytes.length) {
-                            const code = bytes[i] | (bytes[i + 1] << 8);
-                            chars.push(String.fromCharCode(code));
-                            i += 2;
-                        } else {
-                            throw new Error('Invalid UCS-2 byte sequence');
-                        }
+                    for (let i = 0; i < bytes.length; i += 2) {
+                        chars.push(String.fromCharCode(bytes[i] | (bytes[i + 1] << 8)));
                     }
                     return chars.join('');
                 }

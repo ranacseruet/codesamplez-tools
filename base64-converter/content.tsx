@@ -221,9 +221,9 @@ export function Base64ConverterArticle(): JSX.Element {
                 <ToolArticleSection id="base64-converter-special-features" title="Special Features">
                     <h3>UCS-2 Encoding</h3>
                     <ul>
-                        <li>Special handling for surrogate pairs and emoji characters</li>
-                        <li>4-byte sequence detection for extended Unicode characters</li>
-                        <li>Fallback handling for basic BMP characters</li>
+                        <li>Little-endian UTF-16, two bytes per code unit</li>
+                        <li>Surrogate pairs are preserved, so emoji and other astral characters round-trip losslessly</li>
+                        <li>Fallback handling for basic BMP (Basic Multilingual Plane) characters</li>
                         <li>Maintains character integrity during encode and decode operations</li>
                     </ul>
 

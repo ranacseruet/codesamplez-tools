@@ -54,8 +54,24 @@ describe('Base64Codec', () => {
 
         test('encodes UCS-2 text correctly', () => {
             expect(codec.encodeText('Hello', 'ucs2')).toBe('SABlAGwAbABvAA==');
-            expect(codec.encodeText('😀', 'ucs2')).toBe('8I+AAA=='); // Our special emoji encoding
-            expect(codec.encodeText('Hello 🌍', 'ucs2')).toBe('SABlAGwAbABvACAA8I+AAA=='); // Space + emoji
+            expect(codec.encodeText('😀', 'ucs2')).toBe('PdgA3g=='); // UTF-16LE surrogate pair
+            expect(codec.encodeText('Hello 🌍', 'ucs2')).toBe('SABlAGwAbABvACAAPNgN3w=='); // Space + emoji
+        });
+
+        test('encodes distinct astral characters distinctly in UCS-2', () => {
+            // Regression: a fixed 4-byte marker collapsed every astral character
+            // to the same value, so '😀' and '🌍' encoded identically.
+            expect(codec.encodeText('😀', 'ucs2')).not.toBe(codec.encodeText('🌍', 'ucs2'));
+        });
+
+        test('encodes large UCS-2 input without a stack overflow', () => {
+            // Regression: btoa(String.fromCharCode(...bytes)) blew the call
+            // stack around ~150KB; the UTF-8 path already used the manual
+            // encoder, but the UCS-2 path did not.
+            const large = 'a'.repeat(200000);
+            const encoded = codec.encodeText(large, 'ucs2');
+            expect(encoded.length).toBe(Math.ceil((large.length * 2) / 3) * 4);
+            expect(codec.decodeText(encoded, 'ucs2')).toBe(large);
         });
 
         test('handles special characters', () => {
@@ -80,8 +96,24 @@ describe('Base64Codec', () => {
 
         test('decodes UCS-2 text correctly', () => {
             expect(codec.decodeText('SABlAGwAbABvAA==', 'ucs2')).toBe('Hello');
-            expect(codec.decodeText('8I+AAA==', 'ucs2')).toBe('😀');
-            expect(codec.decodeText('SABlAGwAbABvACAA8I+AAA==', 'ucs2')).toBe('Hello 😀');
+            expect(codec.decodeText('PdgA3g==', 'ucs2')).toBe('😀');
+            expect(codec.decodeText('SABlAGwAbABvACAAPNgN3w==', 'ucs2')).toBe('Hello 🌍');
+        });
+
+        test('round-trips all astral characters through UCS-2', () => {
+            // Regression: the old fixed marker decoded every astral payload to
+            // '😀', silently corrupting any other astral character.
+            expect(codec.decodeText(codec.encodeText('🌍', 'ucs2'), 'ucs2')).toBe('🌍');
+            expect(codec.decodeText(codec.encodeText('😀', 'ucs2'), 'ucs2')).toBe('😀');
+            expect(codec.decodeText(codec.encodeText('a😀b🌍c', 'ucs2'), 'ucs2')).toBe('a😀b🌍c');
+        });
+
+        test('decodes URL-safe base64 consistently with isBase64', () => {
+            // Regression: isBase64 accepted URL-safe input but atob rejected it,
+            // so auto-detect offered a conversion that then failed.
+            expect(codec.isBase64('SGVsbG9-fg==')).toBe(true);
+            expect(codec.decodeText('SGVsbG9-fg==', 'utf8')).toBe('Hello~~');
+            expect(codec.decodeText('SGVsbG9-fg==', 'utf8')).toBe(codec.decodeText('SGVsbG9+fg==', 'utf8'));
         });
 
         test('handles special characters', () => {

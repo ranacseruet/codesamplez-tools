@@ -744,6 +744,24 @@ describe('Base64Converter UI (script.tsx)', () => {
             expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.bin"', 2000, { type: 'success' });
         });
 
+        test('should download a URL-safe binary payload', async () => {
+            // Regression: isBase64 accepted the URL-safe alphabet and auto
+            // detect classified it as binary + enabled Download, but the
+            // download path then passed the raw payload to atob, which threw.
+            elements.result.textContent = '[Binary content (application/octet-stream). Use Download button.]';
+            elements.input.value = '_w=='; // URL-safe for the single byte 0xFF
+            elements.mode.value = 'auto';
+            converter.processInput();
+
+            expect(converter.outputKind).toBe('binary');
+
+            await converter.handleDownload();
+
+            const [content] = converter.downloadManager.downloadFile.mock.calls[0];
+            expect(Array.from(content)).toEqual([0xFF]);
+            expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.bin"', 2000, { type: 'success' });
+        });
+
         test('should show error when download manager throws', async () => {
             const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
             elements.result.textContent = 'Hello World';

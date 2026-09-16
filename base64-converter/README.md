@@ -187,7 +187,7 @@ The converter includes comprehensive error handling for:
 - Character encoding issues:
   - ASCII: Replaces non-ASCII characters with '?'
   - ISO-8859-1: Handles overflow by masking to 8 bits
-  - UCS-2: Validates byte sequences and handles surrogate pairs
+  - UCS-2: Little-endian UTF-16; validates even byte length and round-trips surrogate pairs
   - UTF-8: Detects invalid sequences using TextDecoder
 - Memory-efficient processing of large files using streaming approach
 - Input validation:
@@ -205,8 +205,8 @@ The converter includes comprehensive error handling for:
 ### Special Features
 
 #### UCS-2 Encoding
-- Special handling for surrogate pairs and emoji characters
-- 4-byte sequence detection for extended Unicode characters
+- Little-endian UTF-16, two bytes per code unit
+- Surrogate pairs are preserved, so astral characters (emoji, etc.) round-trip losslessly
 - Fallback handling for basic BMP (Basic Multilingual Plane) characters
 - Maintains character integrity during encode/decode operations
 

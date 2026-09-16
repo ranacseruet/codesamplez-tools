@@ -508,6 +508,12 @@ const createConverter = (): Base64ConverterInstance => {
                 }
             }
 
+            // Normalize URL-safe (`-`/`_`) payloads up front: `isBase64` accepts
+            // them, so every downstream consumer — magic-byte sniffing, the
+            // `data:` preview URL, and the download path — must see the standard
+            // alphabet or a detected/converted payload still fails to open.
+            base64Payload = codec.normalizePayload(base64Payload);
+
             const mode = this.elements.mode.value;
             const encoding = normalizeEncodingValue(this.elements.encoding.value); // For text decoding
 
@@ -820,6 +826,10 @@ const createConverter = (): Base64ConverterInstance => {
                         return;
                     }
 
+                    // `isBase64` accepts URL-safe payloads, so normalize before
+                    // `atob` — otherwise a payload that passed validation (and
+                    // enabled this button) throws here and the download fails.
+                    base64Payload = codec.normalizePayload(base64Payload);
                     const binaryString = atob(base64Payload);
                     const len = binaryString.length;
                     const bytes = new Uint8Array(len);
