@@ -9,7 +9,7 @@ const DEFAULT_BUILD_DIR = path.resolve(__dirname, '../build');
 const DEFAULT_WARN_PERCENT = 5;
 const DEFAULT_FAIL_PERCENT = 10;
 
-// Section 9.1 baselines from docs/archive/post-migration-modernization-execution-plan.md.
+// Frozen bundle size baselines from the post-migration modernization program.
 // `data-format-converter` and `diff-checker-tool` were refreshed when the per-tool
 // social share rail (common/app-shell/ShareBar.tsx) landed: it adds ~5–7 KB of
 // inline brand SVGs + preact/hooks to every tool bundle, and main was already ~8%

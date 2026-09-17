@@ -118,12 +118,12 @@ Always run `npm run verify-build` after build changes or when touching output-af
 ## Documentation
 
 - Keep tool-level `README.md` files current.
-- Keep active contributor docs aligned with implemented behavior, not archived plans.
+- Keep active contributor docs aligned with implemented behavior.
 - Use these active references:
   - [README](./README.md)
   - [UI Styling Conventions](./docs/ui-styling-conventions.md)
-  - [Archived Docs Index](./docs/archive/README.md)
-- Treat `docs/archive/` as historical reference only.
+  - [INP Mitigation Strategy](./docs/INP_MITIGATION.md)
+  - [AI Crawler & GEO Policy](./docs/ai-crawler-policy.md)
 
 ## Development Workflow
 

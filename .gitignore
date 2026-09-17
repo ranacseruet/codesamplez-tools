@@ -54,8 +54,21 @@ verification/
 qa-artifacts/
 reports/bundle-metrics/latest.json
 
-# AI Code Assistants
+# AI Code Assistants and Local Agent Configurations
 **/memory-bank/
+.agent/
+.Jules/
+.claude/
+.gemini/
 .clinerules
 .clineignore
+.mcp.json
+opencode.json
+.ignore
+AGENTS.md
+GEMINI.md
 snapdrift/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
+

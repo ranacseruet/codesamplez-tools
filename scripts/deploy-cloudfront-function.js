@@ -13,7 +13,7 @@ const DEFAULT_VIEWER_PROTOCOL_POLICY = 'redirect-to-https';
 // NOTE: keep <=128 chars (CloudFront Function Comment limit). The repo name is
 // intentionally embedded so anyone (human or agent) inspecting this function in
 // the shared AWS account knows its owner and that manual publishes are clobbered
-// by CI. See infrastructure/cloudfront-functions/OWNERSHIP.md.
+// by CI.
 const DEFAULT_COMMENT = 'OWNER ranacseruet/codesamplez-tools (CI: deploy-cloudfront-function.js). Do not edit/publish by hand.';
 // CloudFront's control plane is eventually consistent: an ETag read moments
 // after a publish can already be stale, which fails UpdateFunction with

@@ -1,5 +1,5 @@
 # codesamplez-tools
-![Build](https://github.com/ranacseruet/codesamplez-tools/actions/workflows/ci.yml/badge.svg) [![codecov](https://codecov.io/github/ranacseruet/codesamplez-tools/graph/badge.svg?token=REDACTED_CODECOV_TOKEN)](https://codecov.io/github/ranacseruet/codesamplez-tools)
+![Build](https://github.com/ranacseruet/codesamplez-tools/actions/workflows/ci.yml/badge.svg) [![codecov](https://codecov.io/github/ranacseruet/codesamplez-tools/graph/badge.svg)](https://codecov.io/github/ranacseruet/codesamplez-tools)
 
 A collection of browser-based developer utilities that run client-side and build into standalone static artifacts for deployment at [Codesamplez.com](https://codesamplez.com).
 
@@ -275,7 +275,8 @@ Contributor references:
 
 - [Contributing Guidelines](./CONTRIBUTING.md)
 - [UI Styling Conventions](./docs/ui-styling-conventions.md)
-- [Archived Docs Index](./docs/archive/README.md)
+- [INP Mitigation Strategy](./docs/INP_MITIGATION.md)
+- [AI Crawler & GEO Policy](./docs/ai-crawler-policy.md)
 
 ## Project Policies
 
