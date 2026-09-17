@@ -137,6 +137,18 @@ The minifier includes several safety features:
 - Dynamic property access using string literals needs careful consideration
 - Some browser-specific features may require manual testing
 
+## Testing & Validation
+
+Run the dedicated test suite for JavaScript Minifier:
+
+```bash
+# Run unit tests
+npm test -- js-minifier
+
+# Typecheck
+npm run typecheck
+```
+
 ## Screenshot
 
 ![JavaScript Minifier Screenshot](./images/featured.png)

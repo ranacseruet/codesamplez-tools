@@ -14,6 +14,7 @@ body:
         - css-minifier-tool
         - data-format-converter
         - diff-checker-tool
+        - image-editor
         - js-minifier-tool
         - json-formatter-tool
         - json-editor-tool

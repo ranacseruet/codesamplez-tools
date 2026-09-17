@@ -301,21 +301,6 @@ npm test -- common/copy-button/CopyButton.test.js
 - ✅ Event listener management
 - ✅ Error handling
 
-## 📖 Demo
-
-Check out the interactive demo:
-
-```bash
-# Open the demo file in your browser
-open common/copy-button/demo.html
-```
-
-The demo showcases:
-- Live copy functionality
-- Visual feedback animations
-- Integration examples
-- Customization options
-
 ## 🤝 Contributing
 
 1. Fork the repository

@@ -222,8 +222,18 @@ The tool requires a modern browser that supports:
 - ES6+ JavaScript
 - TextEncoder/TextDecoder APIs
 - File API
-- Clipboard API
+## Testing & Validation
+
+Run the dedicated test suite for Base64 Converter:
+
+```bash
+# Run unit tests
+npm test -- base64-converter
+
+# Typecheck
+npm run typecheck
+```
 
 ## License
 
-MIT License - Feel free to use, modify, and distribute this tool as needed.
+This project is licensed under the [MIT License](../LICENSE).

@@ -1,191 +1,53 @@
 # Data Format Converter
 
-## Summary
-The **Data Format Converter Tool** is a web-based utility that converts between JSON, XML, YAML, and `.properties` data formats. It provides a simple interface for users to paste data in one format and convert it to another, with validation and error handling. The tool performs all processing client-side, ensuring data privacy and security.
+A fast, client-side bidirectional data converter built with Preact and TypeScript. Convert data structures seamlessly between JSON, XML, YAML, and Java `.properties` formats with instant validation, formatting, and file drop support.
 
 ## Privacy & Security
-- 🔒 **100% Client-Side Processing**: All conversions happen in your browser
-- 🚫 **No Data Storage**: Your data is never saved or transmitted to any server
-- 💻 **Offline Capability**: Works without an internet connection once loaded
-- 🔐 **Data Privacy**: No cookies, tracking, or data collection of any kind
+
+- 🔒 **100% Client-Side Processing**: All parsing, structural transformation, and serialization happen locally in your browser.
+- 🚫 **No Server Uploads**: Your structured data is never transmitted across the network.
+- 📁 **Local File Drop**: Drag text data files (`.json`, `.xml`, `.yaml`, `.yml`, `.properties`) directly onto the input editor (5 MB limit, binary files rejected).
+- 🔗 **Private Sharing**: Shareable state links compress payload into the `#c=` URL hash fragment, which is never sent to the host server.
 
 ---
 
-## Supported Features
-1. **Format Conversion**
-   - Convert between JSON, XML, YAML, and `.properties` formats
-   - Bidirectional conversion between all supported formats, including `.properties`
-   - Preserves data structure and hierarchy during conversion
+## Supported Formats
 
-2. **Input Validation**
-   - Validates input data before conversion
-   - Provides clear error messages for invalid formats
-   - Handles common formatting issues
-
-3. **Output Formatting**
-   - Pretty-prints output with proper indentation
-   - Ensures valid output format according to specifications
-   - Supports downloading converted data
-
-4. **User Experience**
-   - Example placeholders for each input format
-   - Copy to clipboard functionality
-   - Download converted data with proper file extension
-   - Visual feedback for successful operations
-
-5. **Cross-Browser Compatibility**
-   - Works in all modern browsers
-   - No external dependencies required
+- **JSON**: Standard JavaScript Object Notation with full nested object and array handling.
+- **XML**: XML parsing and generation via `fast-xml-parser`, supporting root tag encapsulation and attribute mapping.
+- **YAML**: Human-readable data serialization via `js-yaml` with clean indentation.
+- **.properties**: Key-value property mapping commonly used in Java and system configuration environments.
 
 ---
 
-6. **File Drop**
-   - Click "Upload File" or drag a file onto the input to load it
-   - The file is read in the browser and never uploaded (5 MB limit, binary files rejected)
-   - A drop counts as fresh input: sample mode switches off, and the conversion
-     still honours the Auto-convert toggle
+## Features
 
-7. **Shareable Links**
-   - The Share button copies a link carrying the input plus both format selections
-   - The payload is LZ-compressed into the URL's `#c=` fragment, which browsers never
-     send to a server, so the shared data stays local
-   - Opening the link restores the input and formats, then converts immediately
-   - Links over ~8,000 characters are refused; use Download instead
-   - The codec loads as a lazy chunk on first use
+- **Bidirectional Conversion**: Convert freely from any supported format to any other supported format.
+- **Syntax Validation**: Input data is parsed and validated before conversion; clear error notifications highlight malformed syntax.
+- **Auto-Convert Mode**: Optionally triggers automatic conversion upon typing or file upload.
+- **Copy & Download**: Export results to clipboard or download with the appropriate extension (`.json`, `.xml`, `.yaml`, `.properties`).
+- **Shareable URLs**: Generate compact LZ-compressed links that retain input text and format configurations in the URL hash.
 
-## Usage Example
+---
 
-### Step-by-Step Guide
-1. **Select Input Format**
-   - Click the format button (JSON, XML, or YAML) above the input box to specify your input format
+## Usage Guide
 
-2. **Enter Data**
-   - Paste your data into the input textarea, or click "Upload File" to choose a local text file
-   - Example templates are provided in the placeholder text
+1. Choose your **Input Format** (JSON, XML, YAML, or .properties).
+2. Paste your data into the editor or drag and drop a data file.
+3. Choose your desired **Output Format**.
+4. Click **Convert** or press `Cmd/Ctrl + Enter`.
+5. Copy the output to your clipboard or download as a file.
 
-3. **Select Output Format**
-   - Click the desired output format button below the output box
+---
 
-4. **Convert Data**
-   - Click the "Convert" button to perform the conversion
-   - The converted data will appear in the output textarea
+## Testing & Validation
 
-5. **Use Results**
-   - Copy the output to clipboard using the "Copy" button
-   - Download the output as a file using the "Download" button
+Run the dedicated test suite:
 
-### Example Conversion
-**Input (JSON):**
-```json
-{
-  "name": "John",
-  "age": 30,
-  "city": "New York"
-}
+```bash
+# Run unit tests
+npm test -- data-format-converter
+
+# Typecheck
+npm run typecheck
 ```
-
-**Output (XML):**
-```xml
-<root>
-  <name>John</name>
-  <age>30</age>
-  <city>New York</city>
-</root>
-```
-
-**Output (YAML):**
-```yaml
-name: John
-age: 30
-city: New York
-```
-
-**Output (.properties):**
-```properties
-name=John
-age=30
-city=New York
-```
-
----
-
-## Technology Stack
-- **HTML**: Provides the tool structure including input/output areas and buttons
-- **CSS**: Styles the tool with a clean, responsive design
-- **JavaScript**: Implements the core conversion logic using:
-  - `js-yaml` for YAML parsing/formatting
-  - `fast-xml-parser` for XML parsing/formatting
-  - Native `JSON` methods for JSON handling
-- **Webpack**: Bundles the tool for production use
-
----
-
-## Integration Guide
-To integrate this tool into another webpage:
-1. Copy the HTML, CSS, and JavaScript files into your project
-2. Ensure all dependencies are included (js-yaml, fast-xml-parser)
-3. Preserve the element IDs to maintain functionality:
-   - `inputText`: Input textarea
-   - `outputText`: Output textarea
-   - `convertBtn`: Convert button
-   - `copyBtn`: Copy button
-   - `downloadBtn`: Download button
-
----
-
-## Known Limitations
-1. **Large Data Sets**
-   - Very large data structures may impact performance
-   - Complex nested structures may take longer to convert
-
-2. **XML Specifics**
-   - XML attributes are converted to object properties with `@` prefix
-   - XML namespaces are not fully supported
-
-3. **YAML Specifics**
-   - Some advanced YAML features may not be supported
-   - Multi-document YAML is not supported
-
----
-
-## Future Enhancements
-1. **Additional Formats**
-   - Support for CSV, TOML, and other common formats
-   - Custom format templates
-
-2. **Advanced Features**
-   - Schema validation
-   - Format auto-detection
-   - Batch conversion
-
-3. **UI Improvements**
-   - Syntax highlighting
-   - Dark mode
-   - Side-by-side comparison view
-
-4. **Performance Optimizations**
-   - Web Workers for large conversions
-   - Streaming processing for very large files
-
----
-
-## Troubleshooting
-### Issue: Conversion fails with "Invalid format" error
-- **Cause**: Input data doesn't match the selected format
-- **Solution**:
-  1. Verify the input format is correctly selected
-  2. Check for syntax errors in the input data
-  3. Use the example templates as reference
-
-### Issue: Output looks incorrect
-- **Cause**: Different formats handle data structures differently
-- **Solution**:
-  1. Check for known format differences (e.g., XML attributes vs JSON properties)
-  2. Try converting back to original format to verify round-trip consistency
-
-### Issue: Tool doesn't respond
-- **Cause**: Possible JavaScript error or conflict
-- **Solution**:
-  1. Check browser console for errors
-  2. Refresh the page
-  3. Ensure all required scripts are loaded

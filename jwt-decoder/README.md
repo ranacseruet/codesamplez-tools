@@ -110,3 +110,15 @@ The tool is built using TypeScript/TSX and modern web APIs, requiring no externa
 - `styles.css`: Responsive styling and visual design
 - `JWTDecoder.test.js`: Unit tests for the `JWTDecoder` class
 - `script.test.js`: Unit tests for the UI interactions in `script.tsx`
+
+## Testing & Validation
+
+Run the dedicated test suite for JWT Decoder:
+
+```bash
+# Run unit tests
+npm test -- jwt-decoder
+
+# Typecheck
+npm run typecheck
+```

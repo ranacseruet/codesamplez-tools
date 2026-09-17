@@ -1,170 +1,76 @@
 # Diff Checker
 
-## Summary
-The **Diff Checker Tool** is a lightweight, web-based utility designed to compare two blocks of text and highlight their differences line by line, including specific word changes within modified lines. It provides an intuitive interface for users to paste texts, compare them, and view the changes in a clear, color-coded format. The tool is particularly useful for comparing multiline texts, programming code, HTML, or any other textual content. Built entirely with plain JavaScript, CSS, and HTML, it ensures compatibility and performance without relying on external libraries or frameworks.
+A fast, client-side text and code difference viewer built with Preact and TypeScript. It compares two blocks of text or source code line-by-line from dual input panes and highlights changes at the word level, with support for unified `.patch` file export and LZ-compressed shareable links.
 
 ## Privacy & Security
-- 🔒 **100% Client-Side Processing**: All text comparisons are performed locally in your browser
-- 🚫 **No Data Storage**: Your text content is never saved or transmitted to any server
-- 💻 **Offline Capability**: Works without an internet connection once loaded
-- 🔐 **Data Privacy**: No cookies, tracking, or data collection of any kind
+
+- 🔒 **100% Client-Side Processing**: All comparisons run entirely within your browser.
+- 🚫 **No Server Communication**: Neither your original nor modified text is ever sent across the network.
+- 📁 **Safe File Loading**: Files dropped into either pane are read locally using the browser's `FileReader` API (5 MB limit, binary files rejected).
+- 🔗 **Private Sharing**: Shareable URLs encode state in the URL hash fragment (`#d=...`), which is never transmitted to the host server.
 
 ---
 
-## Supported Features
-1. **Text Comparison**
-   - Compares two blocks of text line by line
-   - Identifies additions, deletions, and unchanged lines
-   - Smart whitespace handling with configurable sensitivity
+## Features
 
-2. **Multiline Support**
-   - Handles multi-line inputs seamlessly, making it suitable for code, HTML, or large documents
-
-3. **Color-Coded Differences**
-   - Added lines are highlighted with a light green background
-   - Removed lines are highlighted with a light red background
-   - Unchanged lines are displayed as-is
-   - Specific word changes within modified lines are highlighted with darker green/red backgrounds
-
-4. **Whitespace Handling**
-   - Option to ignore or consider whitespace differences
-   - Default setting ignores whitespace for code comparison convenience
-   - Toggle available for exact whitespace matching when needed
-
-5. **Cross-Browser Compatibility**
-   - Works in all modern browsers without requiring additional plugins or configurations
-
-6. **Difference Navigation**
-    - Use the "Prev" and "Next" buttons above the results to jump between blocks of consecutive differences. A counter shows the current block number and the total count.
-
-7. **Word-Level Highlighting**
-   - Highlights specific word changes within modified lines using darker shades of red/green.
-
-8. **Visual Feedback**
-   - Displays a "Diff computation complete!" message briefly after the diff results are shown.
+1. **Line-by-Line Comparison with Dual Inputs**
+   - Compares original and modified inputs line-by-line in a unified diff display with paired line numbering.
+   - Highlights additions (green), deletions (red), and unchanged context.
+2. **Word-Level Highlighting**
+   - Precise intra-line highlighting for changed words within modified lines.
+3. **Difference Navigation**
+   - Jump through consecutive change blocks using the "Prev" and "Next" buttons with live position tracking (`Block X of Y`).
+4. **Configurable Whitespace Sensitivity**
+   - "Ignore whitespace" toggle (enabled by default) treats differences in indentation, trailing spaces, and line endings as unchanged.
+   - When unchecked, exact whitespace differences are highlighted. Carriage returns (`\r`) from dropped files or links are visually surfaced as `␍`.
+5. **Drag-and-Drop File Loading**
+   - Drag files onto either pane or use the file picker button.
+6. **Unified `.patch` Export**
+   - Export comparison results as a standard Git-compatible `.patch` file for code review or applying via `git apply`.
+7. **Shareable State Links**
+   - Generate compressed URLs via LZ-string in the hash fragment for collaboration without server-side persistence.
+8. **Responsive Iris Theme**
+   - Built on the dark-first Iris design system with accessible contrast and mobile layout protection.
 
 ---
 
-9. **File Drop**
-   - Click "Upload File" or drag a file onto either pane to load it into that side
-   - The file is read in the browser and never uploaded (5 MB limit, binary files rejected)
-   - In exact mode, dropped-file carriage returns are preserved and shown as `␍`, so CRLF/LF differences stay visible without adding blank rows
-   - A drop deliberately does not auto-compare: it fills one pane at a time, and
-     comparing against an empty pane would render the whole file as an insertion
+## Worker Offload Architecture
 
-10. **Shareable Links**
-   - The Share button copies a link carrying both panes plus the whitespace option
-   - The payload is LZ-compressed into the URL's `#d=` fragment, which browsers never
-     send to a server, so the compared text stays local
-   - Opening the link restores both panes and the option, then runs the compare
-   - Links over ~8,000 characters are refused rather than silently truncated
-   - The codec loads as a lazy chunk on first use, so visitors who never share
-     do not download it
+Text comparison algorithms (Myers diff) can be computationally expensive on large inputs. To preserve responsive 60 FPS interactions and optimize Core Web Vitals (specifically Interaction to Next Paint - INP):
 
-11. **Unified Patch Export**
-   - After comparing, click "Download .patch" to save the current result as a standard unified diff
-   - Dropped or uploaded filenames are used in the patch headers; typed content uses `original` and `modified`
-   - The patch forwards the selected Ignore Whitespace setting to `diff@9`'s native line comparison; leading/trailing whitespace is ignored, while internal whitespace follows the library's patch semantics
-   - Raw carriage returns are preserved; classic-Mac-only files may appear as a single whole-file hunk because patch generation segments lines on LF
+- **Offload Threshold**: When the combined character count of both panes exceeds **20,000 characters**, the calculation is automatically dispatched to a dedicated Web Worker (`diff.worker.ts`).
+- **Worker Pipeline**:
+  - `diff-runner.ts` wraps the worker invocation using the typed `common/worker-runner.ts` utility.
+  - The worker computes line-level and word-level diffs off the main thread.
+- **Resilient Fallback**: If Web Workers are unsupported, worker creation fails, or a timeout occurs, execution gracefully falls back to synchronous computation on the main thread.
+- **Non-blocking Rendering**: Rendered results are mounted efficiently via Preact to avoid locking the UI during DOM construction.
 
-## Usage Example
+---
 
-### Step-by-Step Guide
-1. **Input Texts**
-   - Paste the first block of text into the left textarea labeled "Paste your first text here...", or click "Upload File" in that pane
-   - Paste the second block of text into the right textarea labeled "Paste your second text here...", or click "Upload File" in that pane
-   - Browser textareas normalize typed and pasted line endings to LF. To compare raw CRLF or CR against LF, drop the files or use a shared link.
+## Usage Guide
 
-2. **Configure Options**
-   - Check/uncheck "Ignore whitespace" based on your needs:
-     - Checked (default): Ignores differences in spaces, tabs, and line endings
-     - Unchecked: Shows all available whitespace differences; carriage returns from dropped files or shared links appear as `␍`
+1. **Input Texts**:
+   - Paste or drag the original text into the left pane ("Original").
+   - Paste or drag the updated text into the right pane ("Modified").
+2. **Configure Options**:
+   - Toggle **Ignore whitespace** depending on whether whitespace and line endings should be evaluated.
+3. **Compare**:
+   - Click **Compare** or press `Cmd/Ctrl + Enter`.
+4. **Navigate & Export**:
+   - Use **Prev / Next** to step through modified blocks.
+   - Click **Download .patch** to export unified diff patch output.
+   - Click **Share** to copy a private shareable URL.
 
-3. **Compare Texts**
-   - Click the "Compare" button to analyze the differences between the two texts
+---
 
-4. **View Results**
-   - The differences will be displayed below the button in a styled output area
-   - Added lines will appear with a light green background, removed lines with a light red background, and unchanged lines will remain unstyled.
-   - Within modified lines, specific added words will have a darker green background, and removed words will have a darker red background with a strike-through.
+## Testing & Validation
 
-5. **Download the Patch**
-   - Click "Download .patch" to save the current comparison as `comparison.patch` for code reviews or patch tools.
-   - Typed-content headers use `original` and `modified`; use `git apply -p0` when applying those fallback labels directly.
+Run the dedicated test suite for Diff Checker:
 
-### Example Input
-**Text 1:**
-```javascript
-function greet(name) {
-  console.log("Hello, " + name);
-}
+```bash
+# Run unit tests
+npm test -- diff-checker
+
+# Run type check
+npm run typecheck
 ```
-
-**Text 2:**
-```javascript
-function greet(name) {
-  console.log("Hi, " + name);
-}
-```
-
-### Example Output (Conceptual Markdown)
-```diff
-function greet(name) {
-- console.log("~~Hello,~~ " + name); // Removed word "Hello,"
-+ console.log("**Hi,** " + name); // Added word "Hi,"
-}
-```
-*(Note: Actual output uses colored backgrounds for highlighting)*
-
----
-
-## Technology Stack
-- **HTML**: Provides the structure of the tool, including input fields, buttons, and result display
-- **CSS**: Styles the tool with a modern, clean design. Includes responsive layouts and color-coded highlights for differences (line and word level).
-- **JavaScript**: Implements the core diff algorithm (line and word level) to compare texts and dynamically update the UI with results. Uses the `diff` library.
-- **Plain Text Processing**: No external frameworks are used, ensuring lightweight and efficient performance.
-
----
-
-## Integration Guide
-To integrate this tool into another webpage:
-1. Copy the provided HTML, CSS, and JavaScript code into your project
-2. Ensure unique element IDs (e.g., `#diff-checker-container`, `#text1`, `#text2`) are preserved to avoid conflicts with existing elements
-3. Embed the tool within a `<div>` or `<iframe>` if necessary, depending on your layout requirements
-
----
-
-## Known Limitations
-1. **Performance with Large Inputs**
-   - Line + word diffing is inherently expensive on very large inputs. To keep the UI responsive, compares above ~20,000 combined characters offload the diff computation to a Web Worker (`diff.worker.ts` via `diff-runner.ts`), with an automatic main-thread fallback if the worker is unavailable. Smaller compares run synchronously. Rendering the result (DOM + syntax highlighting) still happens on the main thread.
-
----
-
-## Future Enhancements
-1. **Character-Level Diffs**
-   - Option for character-level diffing for even finer granularity (currently supports line and word level).
-
-2. **Syntax Highlighting (Unchanged Lines Only)**
-   - Basic syntax highlighting (currently JavaScript) is applied only to code lines that are completely **unchanged** between the two inputs.
-   - Added, removed, or modified lines (including those with only word-level differences) are *not* syntax highlighted to ensure diff markers remain clear.
-
-3. **Advanced Algorithms**
-   - Explore alternative diff algorithms or optimizations for performance improvements.
-
-4. **Dark Mode**
-   - Add a toggle for a dark mode UI to improve accessibility and user preference options.
-
----
-
-## Troubleshooting
-### Issue: Differences are not displayed correctly
-- **Cause**: The tool performs a line-by-line comparison followed by word-level comparison on modified lines. Formatting issues (e.g., extra newlines or inconsistent indentation) can affect line matching.
-- **Solution**:
-  1. Check the "Ignore whitespace" option if spacing differences should be ignored. It applies to both passes: lines that differ only in whitespace are reported as unchanged (shown once, using the original text), and on a line that also carries a real change, only the changed words are highlighted while each side keeps its own indentation.
-   2. Uncheck it if you need to see exact whitespace differences, highlighted down to the individual space or tab. Raw carriage returns are shown as `␍` so they do not become extra visual rows.
-  3. "Whitespace" here means spaces, tabs and line endings. Look-alike characters such as a non-breaking space (`U+00A0`) are always treated as real content, so swapping one for a plain space still shows up as a difference.
-  3. Ensure both texts are properly formatted before comparison.
-
-### Issue: Tool does not load or function as expected
-- **Cause**: Conflicts with existing scripts or styles on the host page.
-- **Solution**: Verify that the tool's unique element IDs and styles do not clash with other elements on the page.

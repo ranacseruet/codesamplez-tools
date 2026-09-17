@@ -82,26 +82,24 @@ Tested and works on:
 The codebase is organized into the following main components:
 
 - `tool.meta.json`: Shared page metadata used to generate the standalone document shell
-- `script.js`: Contains the `QRCodeGenerator` class which handles:
-  - UI interactions
-  - QR code generation
-  - Image export functionality
+- `script.tsx`: Preact component implementation and UI interaction handlers
+- `content.tsx`: Documentation, guide, and FAQ content
 - `styles.css`: Responsive styling and layout
 - `script.test.js`: Unit tests for core functionality
 - `images/`: Contains tool screenshot and assets
 
-### Testing
-Tests cover:
-- QR code generation with various inputs
-- Error correction level validation
-- Image export functionality
-- Input validation
-- UI interaction tests
+### Testing & Validation
 
-Run tests with:
+Run the dedicated test suite for QR Code Generator:
+
 ```bash
-npm test
+# Run unit tests
+npm test -- qr-code-generator
+
+# Typecheck
+npm run typecheck
 ```
 
 ## License
-MIT License - Feel free to use, modify, and distribute this tool as needed.
+
+This project is licensed under the [MIT License](../LICENSE).

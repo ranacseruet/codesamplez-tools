@@ -1,24 +1,61 @@
 # JSON Editor
 
-The JSON Editor is a standalone, client-side Preact tool for building and editing JSON as a visual tree.
+A standalone, privacy-preserving visual tree editor for JSON built with Preact and TypeScript. It allows developers to construct, modify, inspect, and restructure JSON documents visually without writing raw syntax.
+
+## Privacy & Security
+
+- 🔒 **100% Client-Side Processing**: All JSON tree operations, parsing, and serialization run locally in your browser.
+- 🚫 **No Server Storage**: Your JSON data is never transmitted to any external server.
+- 📁 **Local File Drop**: Drag any `.json` file into the editor to load it into the visual tree (5 MB limit, binary files rejected).
+- 🛡️ **Defensive Boundaries**: Imports are constrained to a maximum depth of 100 levels and 10,000 value nodes to prevent tab exhaustion.
+
+---
 
 ## Features
 
-- Start with an empty `{}` document or import strict JSON from paste, a local file, or drag and drop.
-- Edit object keys and primitive values inline.
-- Add properties/items, duplicate, delete, and move sibling nodes.
-- Change the root or any node between string, number, boolean, null, object, and array.
-- Expand or collapse nested containers, with Expand All and Collapse All controls.
-- Undo and redo up to 100 committed actions.
-- Preview with 2 spaces, 4 spaces, tabs, or minified output.
-- Copy the generated JSON or download it as `edited.json`.
+- **Visual Tree Builder**: View and manipulate JSON documents as an interactive hierarchical tree.
+- **Inline Editing**: Double-click or select nodes to modify object keys, array items, and primitive values (string, number, boolean, null).
+- **Type Switching**: Dynamically convert any node between string, number, boolean, null, object, and array without losing parent context.
+- **Node Operations**: Add child properties or array elements, duplicate subtrees, delete nodes, and reorder siblings up/down.
+- **Expand / Collapse All**: Deep tree traversal controls to collapse or expand all nested nodes at once.
+- **Undo / Redo History**: Full transactional history supporting up to 100 undo/redo actions.
+- **Multi-Format Preview**: Live synchronized preview with selectable formatting (2 spaces, 4 spaces, tabs, or minified).
+- **Export Capabilities**: One-click copy to clipboard or download as `edited.json`.
 
-## Safety and scope
+---
 
-Input is parsed with strict `JSON.parse` and processed locally in the browser. Imports are limited to 5 MiB, 10,000 value nodes, and a maximum nesting depth of 100; the same node and depth limits are enforced while editing. Invalid imports preserve the current document and show parser diagnostics. During tree edits, invalid numbers and duplicate object keys are rejected before they can replace a valid value. Browser JavaScript uses IEEE-754 numbers, so integer literals outside the safe integer range can be rounded during import; duplicate keys follow `JSON.parse` semantics and the last occurrence wins. Use strings for exact large identifiers and unique keys when those values matter.
+## Safety & Validation
 
-Version 1 intentionally does not include JSON Schema, JSON5/JSONC, comments, share links, local persistence, raw preview editing, search/filtering, or drag-and-drop tree reparenting.
+- **Strict Validation**: Parsed with native `JSON.parse`. Malformed imports are rejected with line/column diagnostic messages without overwriting your current work.
+- **Duplicate Key Prevention**: Object key updates prevent accidental duplication before replacing existing properties.
+- **Numeric Precision Note**: Numbers are stored using standard JavaScript IEEE-754 64-bit floats. For 64-bit integers exceeding `Number.MAX_SAFE_INTEGER` (`9007199254740991`), use string representation to prevent rounding.
 
-## Development
+---
 
-The tool is discovered from `tool.meta.json`, prerendered through `scripts/prerender-tool.js`, and bundled with the other standalone tools. Its tree model lives in `json-editor-core.ts` and has no browser or third-party editor dependency.
+## Usage Guide
+
+1. **Start or Import**:
+   - Start with a default empty `{}` object, or click **Import** / drop a `.json` file.
+2. **Edit Properties**:
+   - Click any property name or value in the visual tree to edit it.
+   - Use the type dropdown on each node to toggle types (e.g. String to Number or Object to Array).
+3. **Restructure**:
+   - Click the **+** button on an Object or Array node to append child properties.
+   - Use the up/down arrows next to any element to reorder siblings.
+4. **Preview & Export**:
+   - Select your preferred indentation in the preview pane.
+   - Click **Copy Output** or **Download**.
+
+---
+
+## Testing & Validation
+
+Run the dedicated test suite for JSON Editor:
+
+```bash
+# Run unit tests
+npm test -- json-editor
+
+# Typecheck
+npm run typecheck
+```

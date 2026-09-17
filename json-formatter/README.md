@@ -242,4 +242,16 @@ Calculation methodology:
   - High contrast toggle indicators (▼/▶)
   - Error messages with distinct styling
 
+## Testing & Validation
+
+Run the dedicated test suite for JSON Formatter:
+
+```bash
+# Run unit tests
+npm test -- json-formatter
+
+# Typecheck
+npm run typecheck
+```
+
 ![JSON Formatter Screenshot](images/featured.png)

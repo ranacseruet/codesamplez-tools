@@ -12,7 +12,7 @@ Use GitHub as the primary support channel for this repository.
 
 - [README](./README.md)
 - [Contributing Guidelines](./CONTRIBUTING.md)
-- [UI Styling Conventions](./docs/ui-styling-conventions.md)
+- [Security Policy](./SECURITY.md)
 
 ## Before Opening An Issue
 

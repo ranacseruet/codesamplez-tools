@@ -75,8 +75,18 @@ The main files are:
 - `content.tsx`: guide and FAQ content
 - `styles.css`: tool-specific layout and presentation
 - `tool.meta.json`: standalone page metadata
-- `JWTBuilder.test.js`, `script.test.js`, and `runtime-migration.test.js`: core and UI coverage
+## Testing & Validation
+
+Run the dedicated test suite for JWT Builder:
+
+```bash
+# Run unit tests
+npm test -- jwt-builder
+
+# Typecheck
+npm run typecheck
+```
 
 ## License
 
-This tool is part of the CodeSamplez collection and is available for free use.
+This project is licensed under the [MIT License](../LICENSE).
