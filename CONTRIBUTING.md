@@ -113,6 +113,36 @@ Additional checks:
 - Static root assets (`sitemap.xml`, `robots.txt`, `llms.txt`) are generated from catalog metadata.
 - Permissive Crawler Policy: AI search assistants and crawlers (Googlebot, Bingbot, GPTBot, ClaudeBot, PerplexityBot) are welcome to index and cite the client-side tools.
 
+## Analytics & Ads (Deploy-Time Configuration)
+
+Tracking is **off by default** and never wired from tracked config, so forks and
+self-hosters never inherit the upstream Google Analytics or AdSense properties.
+
+- The repo's `config/tooling-root.json` ships `analytics.googleAnalyticsId` and
+  `analytics.adsenseClientId` as `null`.
+- A deployment supplies them through environment variables, which take precedence
+  over config:
+  - `CST_GA_MEASUREMENT_ID` — GA4 measurement id (`G-XXXXXXXXXX`).
+  - `CST_ADSENSE_CLIENT_ID` — AdSense client id (`ca-pub-XXXXXXXXXXXXXXXX`).
+- Injection is **fail-closed**: only `NODE_ENV=production` builds emit trackers.
+  Development, test, CI, staging, and an unset `NODE_ENV` all resolve empty ids.
+- `CST_DISABLE_ANALYTICS` (`1`/`true`/`yes`) is a kill-switch that forces tracking
+  off even for production builds. The visual-diff, baseline, and health-monitoring
+  workflows set it so screenshots stay ad-free and deterministic.
+- In this repository the ids live as **repository variables**
+  (`vars.CST_GA_MEASUREMENT_ID`, `vars.CST_ADSENSE_CLIENT_ID`), injected into the
+  build only on `main`. They are public values embedded in client HTML, so they
+  are variables rather than secrets.
+
+To enable tracking for your own deployment:
+
+```bash
+NODE_ENV=production \
+CST_GA_MEASUREMENT_ID=G-XXXXXXXXXX \
+CST_ADSENSE_CLIENT_ID=ca-pub-XXXXXXXXXXXXXXXX \
+npm run build
+```
+
 ## Documentation Standards
 
 - Keep tool-level `README.md` files current whenever updating tool behavior or adding options.

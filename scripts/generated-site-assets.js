@@ -273,12 +273,18 @@ async function writeGeneratedSiteAssets(options = {}) {
     fs.writeFileSync(robotsPath, `${robotsTxt}\n`);
     fs.writeFileSync(llmsTxtPath, `${buildLlmsTxt()}\n`);
 
-    // ads.txt only exists when AdSense is configured; skip the file otherwise so
-    // we never ship an empty authorization record.
+    // ads.txt only exists when AdSense is configured. When it is not, remove any
+    // copy left by an earlier build: the webpack cleaners only clear their own
+    // child output directories, so an upgraded checkout that previously shipped
+    // ads.txt would otherwise keep publishing the stale authorization record.
     const adsTxt = buildAdsTxt(getAdsenseClientId());
-    const adsTxtPath = adsTxt ? path.join(buildDir, ADS_TXT_FILENAME) : null;
-    if (adsTxtPath) {
-        fs.writeFileSync(adsTxtPath, `${adsTxt}\n`);
+    const adsTxtOutputPath = path.join(buildDir, ADS_TXT_FILENAME);
+    let adsTxtPath = null;
+    if (adsTxt) {
+        fs.writeFileSync(adsTxtOutputPath, `${adsTxt}\n`);
+        adsTxtPath = adsTxtOutputPath;
+    } else {
+        fs.rmSync(adsTxtOutputPath, { force: true });
     }
 
     return {

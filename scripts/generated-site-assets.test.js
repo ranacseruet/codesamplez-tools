@@ -362,6 +362,37 @@ describe('generated site assets', () => {
         }
     });
 
+    it('removes a stale ads.txt when AdSense is no longer configured', async () => {
+        const buildDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cst-generated-assets-'));
+        const previousClientId = process.env.CST_ADSENSE_CLIENT_ID;
+        const previousNodeEnv = process.env.NODE_ENV;
+        // Seed a stale record from a previous build that had AdSense configured.
+        const staleAdsTxtPath = path.join(buildDir, 'ads.txt');
+        fs.mkdirSync(buildDir, { recursive: true });
+        fs.writeFileSync(staleAdsTxtPath, 'google.com, pub-9999999999999999, DIRECT, f08c47fec0942fa0\n');
+        process.env.NODE_ENV = 'production';
+        delete process.env.CST_ADSENSE_CLIENT_ID;
+
+        try {
+            const result = await writeGeneratedSiteAssets({ buildDir, resolveLastmod: () => null });
+
+            expect(result.adsTxtPath).toBeNull();
+            expect(fs.existsSync(staleAdsTxtPath)).toBe(false);
+        } finally {
+            if (typeof previousClientId === 'undefined') {
+                delete process.env.CST_ADSENSE_CLIENT_ID;
+            } else {
+                process.env.CST_ADSENSE_CLIENT_ID = previousClientId;
+            }
+            if (typeof previousNodeEnv === 'undefined') {
+                delete process.env.NODE_ENV;
+            } else {
+                process.env.NODE_ENV = previousNodeEnv;
+            }
+            fs.rmSync(buildDir, { force: true, recursive: true });
+        }
+    });
+
     it('uses the default build directory when one is not provided', async () => {
         await withTemporaryBuildArtifacts(async ({ sitemapPath, robotsPath, llmsTxtPath }) => {
             const result = await writeGeneratedSiteAssets({

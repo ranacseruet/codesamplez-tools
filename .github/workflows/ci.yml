@@ -60,6 +60,13 @@ jobs:
 
     - name: Build
       if: steps.affected.outputs.should_build == 'true'
+      env:
+        # GA4/AdSense ids live in repository variables, never in tracked config,
+        # so forks and self-hosters never inherit the upstream properties. These
+        # are main-only: pull_request builds resolve empty ids and stay
+        # tracker-free. Values are public in the emitted HTML — not secrets.
+        CST_GA_MEASUREMENT_ID: ${{ github.ref == 'refs/heads/main' && vars.CST_GA_MEASUREMENT_ID || '' }}
+        CST_ADSENSE_CLIENT_ID: ${{ github.ref == 'refs/heads/main' && vars.CST_ADSENSE_CLIENT_ID || '' }}
       run: |
         set -euo pipefail
         rm -rf build
@@ -173,8 +180,11 @@ jobs:
       id: affected
       # Production env so the root-asset listing includes generated assets
       # (ads.txt) — the analytics gate fails closed for any other NODE_ENV.
+      # The AdSense id must match the build job's, or ads.txt would be omitted
+      # from the deploy/invalidation path lists.
       env:
         NODE_ENV: production
+        CST_ADSENSE_CLIENT_ID: ${{ vars.CST_ADSENSE_CLIENT_ID }}
       run: |
         node scripts/detect-affected-tools.js \
           --base "${{ github.event.before }}" \
@@ -230,8 +240,11 @@ jobs:
       if: steps.affected.outputs.should_deploy == 'true'
       # Production env so the root-asset listing includes generated assets
       # (ads.txt) — the analytics gate fails closed for any other NODE_ENV.
+      # The AdSense id must match the build job's, or ads.txt is left out of the
+      # deploy set and the upload/invalidation contract drifts from the build.
       env:
         NODE_ENV: production
+        CST_ADSENSE_CLIENT_ID: ${{ vars.CST_ADSENSE_CLIENT_ID }}
       run: |
         set -euo pipefail
         DEPLOY_ARGS=(--bucket tools.codesamplez.com --distribution-id "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}")
@@ -288,9 +301,13 @@ jobs:
         # own CSS/JS/fonts instead of the production CDN. Without this, index.html
         # references https://tools.codesamplez.com/... and SnapDrift captures the
         # live site rather than the PR build, so local changes never show as drift.
+        # Trackers are disabled: ads are non-deterministic content, and PR builds
+        # have no ids anyway — capturing without them keeps PR and baseline
+        # screenshots comparable.
         run: npm run build
         env:
           CST_SITE_STATIC_ROOT_URI: http://127.0.0.1:8080
+          CST_DISABLE_ANALYTICS: '1'
 
       - name: Start app
         run: |
@@ -373,9 +390,12 @@ jobs:
         if: steps.baseline_candidate.outputs.current == 'true'
         # Local asset origin so the captured baseline loads this build's own
         # CSS/JS instead of the production CDN (see visual-diff for rationale).
+        # Trackers disabled so published baselines never embed non-deterministic
+        # ad iframes or inherit the upstream GA/AdSense properties.
         run: npm run build
         env:
           CST_SITE_STATIC_ROOT_URI: http://127.0.0.1:8080
+          CST_DISABLE_ANALYTICS: '1'
 
       - name: Start app
         if: steps.baseline_candidate.outputs.current == 'true'

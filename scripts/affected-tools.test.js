@@ -93,9 +93,10 @@ describe('detectAffectedTargets', () => {
 
   it('treats tool metadata changes as affecting the tool, root shell, and root assets', () => {
     expect(isToolMetadataPath('jwt-decoder/tool.meta.json')).toBe(true);
-    // Production env: ads.txt is part of the deployable root assets only for
-    // production builds (the analytics gate fails closed everywhere else).
-    withEnv({ NODE_ENV: 'production' }, () => {
+    // Production env + a deploy-time AdSense id: ads.txt is part of the
+    // deployable root assets only when AdSense is configured (the analytics
+    // gate fails closed everywhere else).
+    withEnv({ NODE_ENV: 'production', CST_ADSENSE_CLIENT_ID: 'ca-pub-1234567890123456' }, () => {
       expect(detectAffectedTargets(['jwt-builder/tool.meta.json'])).toEqual({
         scope: 'selected-tools',
         changedFiles: ['jwt-builder/tool.meta.json'],
@@ -135,7 +136,7 @@ describe('detectAffectedTargets', () => {
   });
 
   it('treats root stylesheet changes as root-only runtime changes', () => {
-    withEnv({ NODE_ENV: 'production' }, () => {
+    withEnv({ NODE_ENV: 'production', CST_ADSENSE_CLIENT_ID: 'ca-pub-1234567890123456' }, () => {
       expect(detectAffectedTargets(['styles.css'])).toEqual({
         scope: 'root-only',
         changedFiles: ['styles.css'],

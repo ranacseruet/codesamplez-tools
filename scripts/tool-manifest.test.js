@@ -216,7 +216,9 @@ describe('tool-manifest', () => {
         logo: 'https://tools.codesamplez.com/apple-touch-icon.png',
         sameAs: ['https://codesamplez.com/', 'https://github.com/ranacseruet/codesamplez-tools']
       },
-      analytics: { googleAnalyticsId: 'G-75J9GJXH5K', adsenseClientId: 'ca-pub-3520433969377647' },
+      // Analytics ids ship empty so forks/self-hosters never inherit the
+      // upstream GA/AdSense properties; deployments inject them via env.
+      analytics: { googleAnalyticsId: null, adsenseClientId: null },
       rootPage: {
         title: ROOT_PAGE_TITLE,
         description: ROOT_PAGE_DESCRIPTION,
@@ -509,7 +511,8 @@ describe('tool-manifest', () => {
         logo: 'https://tools.codesamplez.com/apple-touch-icon.png',
         sameAs: ['https://codesamplez.com/', 'https://github.com/ranacseruet/codesamplez-tools']
       },
-      analytics: { googleAnalyticsId: 'G-75J9GJXH5K', adsenseClientId: 'ca-pub-3520433969377647' },
+      // Analytics ids ship empty; deployments inject them via env (see above).
+      analytics: { googleAnalyticsId: null, adsenseClientId: null },
       rootPage: {
         title: ROOT_PAGE_TITLE,
         description: ROOT_PAGE_DESCRIPTION,
@@ -696,10 +699,18 @@ describe('tool-manifest', () => {
     );
     expect(() => getToolMetadataPath('not-a-real-tool')).toThrow('Unknown tool id');
 
-    // ads.txt is appended dynamically because AdSense is configured in tooling-root.json.
-    // Resolved under production env: the AdSense id (and therefore ads.txt) is
-    // only present for production builds.
-    expect(withEnv({ NODE_ENV: 'production' }, () => getRootAssets())).toEqual(['index.html', '404.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'llms.txt', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'ads.txt']);
+    // ads.txt is appended dynamically only when AdSense is configured. The repo
+    // config ships no ids, so it is the deploy-time env that turns it on — under
+    // production env, which is the only gate that injects trackers.
+    const baseRootAssets = ['index.html', '404.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'llms.txt', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2'];
+    expect(withEnv({
+      NODE_ENV: 'production',
+      CST_ADSENSE_CLIENT_ID: undefined
+    }, () => getRootAssets())).toEqual(baseRootAssets);
+    expect(withEnv({
+      NODE_ENV: 'production',
+      CST_ADSENSE_CLIENT_ID: 'ca-pub-1234567890123456'
+    }, () => getRootAssets())).toEqual([...baseRootAssets, 'ads.txt']);
     expect(getRootPageDefinition()).toEqual({
       title: ROOT_PAGE_TITLE,
       description: ROOT_PAGE_DESCRIPTION,

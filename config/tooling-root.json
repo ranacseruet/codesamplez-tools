@@ -13,8 +13,8 @@
     ]
   },
   "analytics": {
-    "googleAnalyticsId": "G-75J9GJXH5K",
-    "adsenseClientId": "ca-pub-3520433969377647"
+    "googleAnalyticsId": null,
+    "adsenseClientId": null
   },
   "rootPage": {
     "title": "Online Developer Tools",

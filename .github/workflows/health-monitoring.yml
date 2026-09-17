@@ -26,9 +26,11 @@ jobs:
         # Local asset origin so the captured baseline loads this build's own
         # CSS/JS instead of the production CDN — keeps baselines consistent with
         # PR-diff captures (see ci.yml visual-diff for the full rationale).
+        # Trackers disabled so scheduled captures stay ad-free and deterministic.
         run: npm run build
         env:
           CST_SITE_STATIC_ROOT_URI: http://127.0.0.1:8080
+          CST_DISABLE_ANALYTICS: '1'
 
       - name: Capture bundle metrics
         run: |

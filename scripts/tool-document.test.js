@@ -398,11 +398,16 @@ describe('tool document generation', () => {
         expect(html).toContain('<link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin>');
     });
 
-    it('injects the configured GA4 and AdSense ids from tooling-root config', () => {
-        const html = withEnv({ NODE_ENV: 'production' }, () => renderToolDocument(getToolById('diff-checker-tool'), '<section>SSR</section>'));
+    it('emits no tracker markup when no analytics ids are configured', () => {
+        const html = withEnv({
+            NODE_ENV: 'production',
+            CST_GA_MEASUREMENT_ID: undefined,
+            CST_ADSENSE_CLIENT_ID: undefined
+        }, () => renderToolDocument(getToolById('diff-checker-tool'), '<section>SSR</section>'));
 
-        expect(html).toContain('https://www.googletagmanager.com/gtag/js?id=G-75J9GJXH5K');
-        expect(html).toContain('client=ca-pub-3520433969377647');
+        expect(html).not.toContain('googletagmanager.com');
+        expect(html).not.toContain('googlesyndication.com');
+        expect(html).not.toContain('doubleclick.net');
     });
 
     it('omits analytics head scripts in development even when ids are present', () => {
