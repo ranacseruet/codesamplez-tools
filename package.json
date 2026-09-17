@@ -65,7 +65,7 @@
     "@babel/register": "^8.0.5",
     "@babel/traverse": "^8.0.4",
     "@babel/types": "^8.0.5",
-    "@testing-library/dom": "^10.4.1",
+    "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@types/jest": "^30.0.0",
     "@types/json-source-map": "^0.6.0",
