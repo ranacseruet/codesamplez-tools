@@ -1,0 +1,11 @@
+ignore:
+  - "base64-converter/test-utils.js"
+coverage:
+  status:
+    project:
+      default:   # default is the status check's name, not default settings
+        threshold: 5
+    patch:
+      default:
+        target: auto
+        threshold: 1%

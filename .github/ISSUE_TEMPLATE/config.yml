@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Support and usage guidance
+    url: https://github.com/ranacseruet/codesamplez-tools/blob/main/SUPPORT.md
+    about: Start here for documentation, usage questions, and contributor workflow guidance.
+  - name: Security policy
+    url: https://github.com/ranacseruet/codesamplez-tools/blob/main/SECURITY.md
+    about: Use private GitHub vulnerability reporting and do not open public security issues.

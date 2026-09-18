@@ -1,0 +1,76 @@
+name: Cross-Browser Signoff
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cross-browser-signoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Build production artifacts
+        env:
+          # Serve the checked-out build's JS/CSS locally. Without this override
+          # the generated HTML points at the hosted CDN, so worker assertions
+          # can accidentally exercise a deployed bundle instead of this commit.
+          CST_SITE_STATIC_ROOT_URI: http://127.0.0.1:8080
+        run: npm run build
+
+      - name: Start local QA server
+        run: |
+          set -euo pipefail
+          npm start > /tmp/codesamplez-cross-browser-start.log 2>&1 &
+          echo "QA_SERVER_PID=$!" >> $GITHUB_ENV
+          ready=0
+          for i in $(seq 1 45); do
+            if curl -sSf http://127.0.0.1:8080 >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "QA server failed to start on http://127.0.0.1:8080"
+            cat /tmp/codesamplez-cross-browser-start.log || true
+            exit 1
+          fi
+
+      - name: Run cross-browser signoff
+        env:
+          QA_BASE_URL: http://127.0.0.1:8080
+        run: npm run qa:cross-browser
+
+      - name: Stop local QA server
+        if: always()
+        run: kill $QA_SERVER_PID || true
+
+      - name: Upload cross-browser signoff artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cross-browser-signoff-${{ github.run_id }}
+          retention-days: 30
+          path: |
+            qa-artifacts/cross-browser-signoff/cross-browser-signoff-results.json
+            qa-artifacts/cross-browser-signoff/cross-browser-signoff-results.md

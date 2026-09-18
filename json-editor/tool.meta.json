@@ -1,0 +1,38 @@
+{
+  "id": "json-editor-tool",
+  "version": "1.0.0",
+  "title": "JSON Editor",
+  "seoTitle": "JSON Editor — Build JSON Online",
+  "description": "Free online JSON editor to build and edit JSON visually. Import existing JSON, then copy or download the result locally.",
+  "catalogGroupId": "code-formatters",
+  "catalogOrder": 4,
+  "indexDescription": "Build and edit JSON with a visual tree editor. Import JSON locally, add or rearrange values, and copy or download the finished document.",
+  "icon": "braces",
+  "status": "live",
+  "keywords": [
+    "json",
+    "editor",
+    "online json editor",
+    "json builder",
+    "json generator",
+    "edit json",
+    "json tree"
+  ],
+  "appRootId": "json-editor-app",
+  "publicPath": "/json-editor/",
+  "scriptType": "module",
+  "structuredData": {
+    "includeFaq": false,
+    "includeHowTo": false
+  },
+  "dependencyScopes": [
+    "build-system",
+    "shared-ui",
+    "shared-runtime"
+  ],
+  "relatedToolIds": [
+    "json-formatter-tool",
+    "data-format-converter",
+    "diff-checker-tool"
+  ]
+}

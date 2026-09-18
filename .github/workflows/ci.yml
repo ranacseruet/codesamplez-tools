@@ -1,0 +1,454 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    # `ready_for_review` is required so the draft-gated `visual-diff` job runs
+    # when a draft PR is marked ready — without it CI only fires on
+    # opened/synchronize/reopened and the diff would be missing until the next
+    # push (it used to live in pr-visual-diff.yml, which listed this type).
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+# Cancel superseded PR runs (stale commits), but never cancel main runs: on push
+# the group key is unique per run (run_id), so concurrent main builds proceed
+# independently. Deploy serialization is handled on its job; baseline races are
+# handled by a branch-head freshness check plus Snap's publication sequence.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Typecheck
+      run: npm run typecheck
+
+    - name: Run tests
+      run: npm test -- --coverage
+
+    - name: Dependency Audit
+      run: npm run audit:deps
+
+    - name: Detect affected runtime targets
+      id: affected
+      run: |
+        node scripts/detect-affected-tools.js \
+          --base "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}" \
+          --head "${{ github.sha }}" \
+          --write-github-output
+
+    - name: Build
+      if: steps.affected.outputs.should_build == 'true'
+      env:
+        # GA4/AdSense ids live in repository variables, never in tracked config,
+        # so forks and self-hosters never inherit the upstream properties. These
+        # are main-only: pull_request builds resolve empty ids and stay
+        # tracker-free. Values are public in the emitted HTML — not secrets.
+        CST_GA_MEASUREMENT_ID: ${{ github.ref == 'refs/heads/main' && vars.CST_GA_MEASUREMENT_ID || '' }}
+        CST_ADSENSE_CLIENT_ID: ${{ github.ref == 'refs/heads/main' && vars.CST_ADSENSE_CLIENT_ID || '' }}
+      run: |
+        set -euo pipefail
+        rm -rf build
+        BUILD_ARGS=()
+        if [ -n "${{ steps.affected.outputs.affected_tools }}" ]; then
+          BUILD_ARGS+=(--tools "${{ steps.affected.outputs.affected_tools }}")
+        fi
+        if [ "${{ steps.affected.outputs.include_root_shell }}" = "true" ]; then
+          BUILD_ARGS+=(--include-root-shell)
+        fi
+        if [ "${{ steps.affected.outputs.include_root_assets }}" = "true" ]; then
+          BUILD_ARGS+=(--include-root-assets)
+        fi
+        NODE_ENV=production npm run build -- "${BUILD_ARGS[@]}"
+
+    - name: Cache build artifacts
+      if: steps.affected.outputs.should_build == 'true'
+      uses: actions/cache@v4
+      with:
+        path: build
+        key: ${{ runner.os }}-build-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ github.sha }}
+
+    - name: Verify Build Artifacts
+      if: steps.affected.outputs.should_build == 'true'
+      run: |
+        set -euo pipefail
+        VERIFY_ARGS=()
+        if [ -n "${{ steps.affected.outputs.affected_tools }}" ]; then
+          VERIFY_ARGS+=(--tools "${{ steps.affected.outputs.affected_tools }}")
+        fi
+        if [ "${{ steps.affected.outputs.include_root_shell }}" = "true" ]; then
+          VERIFY_ARGS+=(--include-root-shell)
+        fi
+        npm run verify-build -- "${VERIFY_ARGS[@]}"
+
+    - name: Bundle Metrics Report
+      if: steps.affected.outputs.should_build == 'true'
+      run: |
+        set -euo pipefail
+        METRIC_ARGS=()
+        if [ -n "${{ steps.affected.outputs.affected_tools }}" ]; then
+          METRIC_ARGS+=(--tools "${{ steps.affected.outputs.affected_tools }}")
+        fi
+        if [ "${{ steps.affected.outputs.include_root_shell }}" = "true" ]; then
+          METRIC_ARGS+=(--include-root-shell)
+        fi
+        npm run bundle-metrics -- "${METRIC_ARGS[@]}"
+
+    - name: Bundle Budget Check
+      if: steps.affected.outputs.affected_tool_count != '0'
+      run: npm run bundle-budget-check -- --tools "${{ steps.affected.outputs.affected_tools }}"
+
+    - name: Start Local Server for QA Baselines
+      if: github.ref == 'refs/heads/main' && steps.affected.outputs.affected_tool_count != '0'
+      run: |
+        set -euo pipefail
+        npm start > /tmp/codesamplez-ci-start.log 2>&1 &
+        echo "QA_SERVER_PID=$!" >> $GITHUB_ENV
+        ready=0
+        for i in $(seq 1 45); do
+          if curl -sSf http://127.0.0.1:8080 >/dev/null; then
+            ready=1
+            break
+          fi
+          sleep 1
+        done
+        if [ "$ready" -ne 1 ]; then
+          echo "QA server failed to start on http://127.0.0.1:8080"
+          cat /tmp/codesamplez-ci-start.log || true
+          exit 1
+        fi
+
+    - name: Accessibility Baseline (report-only)
+      if: github.ref == 'refs/heads/main' && steps.affected.outputs.affected_tool_count != '0'
+      run: npm run qa:a11y:foundation -- --tools "${{ steps.affected.outputs.affected_tools }}"
+      env:
+        QA_BASE_URL: http://127.0.0.1:8080
+        QA_A11Y_FAIL_ON_VIOLATIONS: '0'
+      continue-on-error: true
+
+    - name: Stop Local QA Server
+      if: always() && github.ref == 'refs/heads/main' && steps.affected.outputs.affected_tool_count != '0'
+      run: kill $QA_SERVER_PID || true
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+  deploy:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    # Serialize production deploys. Affected-target detection diffs against the
+    # immediate predecessor (github.event.before), so back-to-back merges must
+    # deploy one-at-a-time — never cancelled — or a commit's changes would be
+    # skipped. Queuing (cancel-in-progress: false) also removes the CloudFront
+    # publish-function ETag race between concurrent deploys.
+    concurrency:
+      group: deploy-main
+      cancel-in-progress: false
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Detect affected deploy targets
+      id: affected
+      # Production env so the root-asset listing includes generated assets
+      # (ads.txt) — the analytics gate fails closed for any other NODE_ENV.
+      # The AdSense id must match the build job's, or ads.txt would be omitted
+      # from the deploy/invalidation path lists.
+      env:
+        NODE_ENV: production
+        CST_ADSENSE_CLIENT_ID: ${{ vars.CST_ADSENSE_CLIENT_ID }}
+      run: |
+        node scripts/detect-affected-tools.js \
+          --base "${{ github.event.before }}" \
+          --head "${{ github.sha }}" \
+          --write-github-output
+
+    # Only the function source, its deploy script, and this workflow can change
+    # what gets published. package.json/package-lock.json are deliberately NOT
+    # listed: the function is standalone CloudFront-JS with no npm dependencies,
+    # so dependency bumps used to trigger a no-op re-publish on every merge.
+    - name: Detect CloudFront Function changes
+      id: cloudfront_function
+      run: |
+        set -euo pipefail
+        BASE="${{ github.event.before }}"
+        HEAD="${{ github.sha }}"
+        # Fresh/rewritten-history pushes send an all-zero base, and a force-push
+        # leaves `before` outside the pushed commit's ancestry. Both mean the
+        # base diff is meaningless, so list every tracked path (full redeploy)
+        # rather than failing or producing a partial result.
+        if [[ "$BASE" =~ ^0+$ ]] || ! git merge-base --is-ancestor "$BASE" "$HEAD" 2>/dev/null; then
+          CHANGED_FILES="$(git ls-tree -r --name-only "$HEAD")"
+        else
+          CHANGED_FILES="$(git diff --name-only "$BASE" "$HEAD")"
+        fi
+        if echo "$CHANGED_FILES" | grep -E '^(infrastructure/cloudfront-functions/codesamplez-tools-rewrite-static-urls\.js|scripts/deploy-cloudfront-function\.js|\.github/workflows/ci\.yml)$' >/dev/null; then
+          echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Restore build artifacts
+      if: steps.affected.outputs.should_deploy == 'true'
+      uses: actions/cache@v4
+      with:
+        path: build
+        key: ${{ runner.os }}-build-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ github.sha }}
+
+    - name: Configure AWS credentials
+      if: steps.affected.outputs.should_deploy == 'true' || steps.cloudfront_function.outputs.should_deploy == 'true'
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    # Invoked directly rather than through `npm run deploy:cloudfront-function`
+    # so the package.json script entry cannot change what CI deploys. That keeps
+    # the trigger set above exhaustive: only the three listed paths can affect
+    # this step.
+    - name: Deploy CloudFront Function
+      if: steps.cloudfront_function.outputs.should_deploy == 'true'
+      run: |
+        node scripts/deploy-cloudfront-function.js --distribution-id "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}"
+
+    - name: Deploy affected assets
+      if: steps.affected.outputs.should_deploy == 'true'
+      # Production env so the root-asset listing includes generated assets
+      # (ads.txt) — the analytics gate fails closed for any other NODE_ENV.
+      # The AdSense id must match the build job's, or ads.txt is left out of the
+      # deploy set and the upload/invalidation contract drifts from the build.
+      env:
+        NODE_ENV: production
+        CST_ADSENSE_CLIENT_ID: ${{ vars.CST_ADSENSE_CLIENT_ID }}
+      run: |
+        set -euo pipefail
+        DEPLOY_ARGS=(--bucket tools.codesamplez.com --distribution-id "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}")
+        if [ -n "${{ steps.affected.outputs.affected_tools }}" ]; then
+          DEPLOY_ARGS+=(--tools "${{ steps.affected.outputs.affected_tools }}")
+        fi
+        if [ "${{ steps.affected.outputs.include_root_shell }}" = "true" ]; then
+          DEPLOY_ARGS+=(--include-root-shell)
+        fi
+        if [ "${{ steps.affected.outputs.include_root_assets }}" = "true" ]; then
+          DEPLOY_ARGS+=(--include-root-assets)
+        fi
+        npm run deploy:affected -- "${DEPLOY_ARGS[@]}"
+
+  # Gated on test-and-build: the visual diff is the most expensive job (Chrome
+  # screenshotting, 45-min timeout) and posts a PR comment, so there's no point
+  # running it on a PR that doesn't pass typecheck/tests/audit/budget/build.
+  # PR-only; the manual force-run path lives in pr-visual-diff.yml. On push to
+  # main the dedicated publish-baseline job publishes the complete baseline.
+  # Same-repo PRs only: forked-repo and Dependabot PRs don't receive repository
+  # secrets (GitHub passes only GITHUB_TOKEN), so SNAP_API_KEY would be empty and
+  # snapdrift's Snap provider throws at config load. Skip the job rather than fail
+  # CI after the gates for contributions that can't reach the hosted backend.
+  visual-diff:
+    needs: test-and-build
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.draft == false
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        # Point all asset URLs at the local origin so the served build loads its
+        # own CSS/JS/fonts instead of the production CDN. Without this, index.html
+        # references https://tools.codesamplez.com/... and SnapDrift captures the
+        # live site rather than the PR build, so local changes never show as drift.
+        # Trackers are disabled: ads are non-deterministic content, and PR builds
+        # have no ids anyway — capturing without them keeps PR and baseline
+        # screenshots comparable.
+        run: npm run build
+        env:
+          CST_SITE_STATIC_ROOT_URI: http://127.0.0.1:8080
+          CST_DISABLE_ANALYTICS: '1'
+
+      - name: Start app
+        run: |
+          set -euo pipefail
+          npm start > /tmp/visual-pr-diff-start.log 2>&1 &
+          echo "QA_SERVER_PID=$!" >> "$GITHUB_ENV"
+          ready=0
+          for i in $(seq 1 45); do
+            if curl -sSf http://127.0.0.1:8080 >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/visual-pr-diff-start.log || true
+            exit 1
+          fi
+
+      - name: Run visual PR diff
+        id: visual_diff
+        uses: ranacseruet/snapdrift/actions/pr-diff@e61106916b904dd85a8dfdd91e8aa44529b84003 # v0.12.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
+
+      - name: Stop app
+        if: always()
+        run: kill "$QA_SERVER_PID" || true
+
+  # Publishes a complete hosted Snap baseline after every successful main build.
+  # This job intentionally rebuilds and captures every configured route; PR diff
+  # scoping must never be applied to canonical baseline publication. It runs
+  # separately because its local asset origin differs from the deploy artifact.
+  publish-baseline:
+    needs: test-and-build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Never cancel an in-flight publisher. GitHub keeps at most one pending job
+    # per group, so intermediate candidates are dropped and the newest merge
+    # publishes after the current run finishes; intermediate SHAs are stale by
+    # then and their freshness check would skip them anyway.
+    concurrency:
+      group: visual-baseline-main-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify current main baseline candidate
+        id: baseline_candidate
+        run: |
+          set -euo pipefail
+          latest_sha="$(git ls-remote origin refs/heads/main | cut -f1)"
+          if [ -z "$latest_sha" ]; then
+            echo "::error::Could not resolve the current main commit."
+            exit 1
+          fi
+          if [ "$GITHUB_SHA" = "$latest_sha" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping stale baseline candidate $GITHUB_SHA; current main is $latest_sha."
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.baseline_candidate.outputs.current == 'true'
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.baseline_candidate.outputs.current == 'true'
+        run: npm ci
+
+      - name: Build app
+        if: steps.baseline_candidate.outputs.current == 'true'
+        # Local asset origin so the captured baseline loads this build's own
+        # CSS/JS instead of the production CDN (see visual-diff for rationale).
+        # Trackers disabled so published baselines never embed non-deterministic
+        # ad iframes or inherit the upstream GA/AdSense properties.
+        run: npm run build
+        env:
+          CST_SITE_STATIC_ROOT_URI: http://127.0.0.1:8080
+          CST_DISABLE_ANALYTICS: '1'
+
+      - name: Start app
+        if: steps.baseline_candidate.outputs.current == 'true'
+        run: |
+          set -euo pipefail
+          npm start > /tmp/visual-baseline-start.log 2>&1 &
+          echo "QA_SERVER_PID=$!" >> "$GITHUB_ENV"
+          ready=0
+          for _ in $(seq 1 45); do
+            if curl -sSf http://127.0.0.1:8080 >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/visual-baseline-start.log || true
+            exit 1
+          fi
+
+      - name: Verify current main before publication
+        id: baseline_current
+        if: steps.baseline_candidate.outputs.current == 'true'
+        run: |
+          set -euo pipefail
+          latest_sha="$(git ls-remote origin refs/heads/main | cut -f1)"
+          if [ -z "$latest_sha" ]; then
+            echo "::error::Could not resolve the current main commit before publication."
+            exit 1
+          fi
+          if [ "$GITHUB_SHA" = "$latest_sha" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping baseline publication for stale candidate $GITHUB_SHA; current main is $latest_sha."
+          fi
+
+      - name: Publish main visual baseline
+        if: >-
+          steps.baseline_candidate.outputs.current == 'true'
+          && steps.baseline_current.outputs.current == 'true'
+        uses: ranacseruet/snapdrift/actions/baseline@e61106916b904dd85a8dfdd91e8aa44529b84003 # v0.12.0
+        with:
+          upload-artifact: 'false'
+        env:
+          SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
+
+      - name: Stop app
+        if: always()
+        run: kill "$QA_SERVER_PID" || true

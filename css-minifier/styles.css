@@ -1,0 +1,155 @@
+/* Phase E tool-scoped styles for CSS Minifier */
+
+.cssm-tool .cssm-grid {
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+  align-items: stretch;
+}
+
+.cssm-tool .cssm-panel {
+  min-height: 22rem;
+}
+
+.cssm-tool .cssm-textarea {
+  min-height: 19rem;
+  background: var(--color-surface, #fff);
+}
+
+.cssm-tool .cssm-textarea:focus {
+  position: relative;
+  z-index: 1;
+}
+
+.cssm-tool .cssm-input-textarea {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 62%, var(--cst-color-mix-neutral, white)),
+      var(--cst-color-mix-neutral, white) 40%
+    );
+}
+
+.cssm-tool .cssm-output-textarea {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 88%, var(--color-surface-subtle, #f5f7fa)),
+      var(--color-surface, #fff)
+    );
+}
+
+.cssm-tool .cssm-output-textarea.processing {
+  background-image:
+    linear-gradient(
+      110deg,
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 70%, var(--cst-color-mix-neutral, white)) 25%,
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 55%, var(--cst-color-mix-neutral, white)) 42%,
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 70%, var(--cst-color-mix-neutral, white)) 60%
+    );
+  background-size: 220% 100%;
+  animation: cssm-processing-shimmer 1.15s linear infinite;
+}
+
+.cssm-tool .cssm-actions {
+  /* v4 Phase C: ghost secondary action left, primary right (spacer layout). */
+  justify-content: flex-start;
+}
+
+.cssm-tool .cssm-minify-btn,
+.cssm-tool .cssm-load-sample-btn {
+  width: auto;
+}
+
+.cssm-tool .cssm-options-panel {
+  margin: 0;
+}
+
+.cssm-tool .cssm-options-panel > :is(h2, h3) {
+  margin-bottom: var(--spacing-md, var(--default-spacing-md));
+}
+
+.cssm-tool .cssm-checkbox-group {
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.cssm-tool .cssm-checkbox-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.cssm-tool .cssm-options-toolbar {
+  margin: var(--spacing-md, var(--default-spacing-md)) 0 0;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.cssm-tool .cssm-stats-panel {
+  margin: 0;
+  background: color-mix(in srgb, var(--cst-color-mix-neutral, white) 90%, var(--color-surface-subtle, #f5f7fa));
+}
+
+.cssm-tool .cssm-stats-panel :is(h2, h3) {
+  margin-bottom: 0.55rem;
+}
+
+.cssm-tool .cssm-stat-row {
+  align-items: center;
+}
+
+.cssm-tool .cssm-stat-value,
+.cssm-tool .css-minifier-saving-percentage {
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+.cssm-tool .css-minifier-saving-percentage {
+  color: var(--color-success, #166534);
+  font-weight: 700;
+}
+
+.cssm-tool .cssm-footer {
+  padding: 0.2rem 0.25rem 0;
+}
+
+@keyframes cssm-processing-shimmer {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 100% 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .cssm-tool .cssm-actions {
+    justify-content: stretch;
+  }
+
+  .cssm-tool .cssm-checkbox-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cssm-tool .cssm-minify-btn,
+  .cssm-tool .cssm-load-sample-btn {
+    flex: 1 1 12rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .cssm-tool .cssm-options-panel {
+    padding: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .cssm-tool .cssm-checkbox-row {
+    grid-template-columns: 1fr;
+  }
+
+  .cssm-tool .cssm-textarea {
+    min-height: 16.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cssm-tool .cssm-output-textarea.processing {
+    animation: none;
+  }
+}

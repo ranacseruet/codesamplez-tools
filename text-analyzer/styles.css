@@ -1,0 +1,275 @@
+/* Phase E tool-scoped styles for Text Analyzer */
+
+.text-analyzer-tool .ta-editor-container {
+  margin: 0;
+}
+
+/* The `.text-analyzer-tool .c-tool-article…` rules that used to live here were
+   dead as of issue #327: the article moved out of the app root, so nothing
+   under `.text-analyzer-tool` matches it any more. The `margin: 0` is now
+   covered by the `.c-tool-static-shell *` reset, and the `width: fit-content`
+   CTA override is dropped deliberately — text-analyzer was the only tool that
+   opted out of the global `@media (max-width: 768px) { .c-button { width: 100% } }`,
+   and diff-checker (migrated first) never had it, so the CTA now matches every
+   other tool in the 641–768px band instead of being the one exception. */
+
+.text-analyzer-tool .ta-panel {
+  min-height: 21rem;
+}
+
+.text-analyzer-tool .ta-toolbar {
+  display: flex;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  margin: 0;
+}
+
+.text-analyzer-tool .ta-load-sample-btn {
+  white-space: nowrap;
+}
+
+.text-analyzer-tool .ta-input-textarea {
+  min-height: 19rem;
+  line-height: 1.55;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 62%, var(--cst-color-mix-neutral, white)),
+      var(--cst-color-mix-neutral, white) 42%
+    );
+}
+
+.text-analyzer-tool .ta-input-textarea:focus {
+  position: relative;
+  z-index: 1;
+}
+
+.text-analyzer-tool .ta-stats-panel,
+.text-analyzer-tool .ta-punctuation-panel,
+.text-analyzer-tool .ta-word-frequency-panel {
+  margin: 0;
+  padding: var(--spacing-md, var(--default-spacing-md));
+  background: var(--color-surface, #fff);
+}
+
+.text-analyzer-tool .ta-stats-panel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  /* v4: flat surface — gradient removed (Phase C). */
+}
+
+.text-analyzer-tool .ta-stats-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.text-analyzer-tool .ta-stats-title {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-text, #1f2937);
+}
+
+.text-analyzer-tool .ta-punctuation-panel :is(h3, h4),
+.text-analyzer-tool .ta-word-frequency-panel :is(h3, h4) {
+  margin: 0 0 var(--spacing-md, var(--default-spacing-md));
+  font-size: 1rem;
+  color: var(--color-text, #1f2937);
+}
+
+.text-analyzer-tool .ta-punctuation-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.text-analyzer-tool .ta-stat-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.8rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 92%, var(--color-surface-subtle, #f5f7fa)),
+      var(--color-surface, #fff)
+    );
+  text-align: center;
+}
+
+.text-analyzer-tool .text-analyzer-stat-label {
+  font-size: 0.86rem;
+  color: var(--color-text-secondary, #4b5563);
+  line-height: 1.3;
+}
+
+.text-analyzer-tool .text-analyzer-stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text, #1f2937);
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+.text-analyzer-tool .ta-word-frequency-chart,
+.text-analyzer-tool .word-frequency-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.text-analyzer-tool .word-frequency-empty {
+  text-align: center;
+  color: var(--color-text-secondary, #4b5563);
+  font-style: italic;
+  padding: var(--spacing-md, var(--default-spacing-md));
+  border-radius: var(--radius-md, 10px);
+  border: 1px dashed color-mix(in srgb, var(--color-border, #d7dde4) 82%, var(--cst-color-mix-neutral, white));
+  background: color-mix(in srgb, var(--cst-color-mix-neutral, white) 88%, var(--color-surface-subtle, #f5f7fa));
+}
+
+.text-analyzer-tool .word-frequency-item {
+  display: grid;
+  grid-template-columns: minmax(70px, auto) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 92%, var(--color-surface-subtle, #f5f7fa)),
+      var(--color-surface, #fff)
+    );
+  min-height: 44px;
+}
+
+.text-analyzer-tool .word-frequency-label {
+  font-size: 0.9rem;
+  color: var(--color-text, #1f2937);
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.text-analyzer-tool .word-frequency-bar-container {
+  flex: 1;
+  height: 22px;
+  background: color-mix(in srgb, var(--cst-color-mix-neutral, white) 65%, var(--color-surface-subtle, #f5f7fa));
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.text-analyzer-tool .word-frequency-bar {
+  height: 100%;
+  min-width: 8px;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-primary, #1d70b8) 86%, #0ea5a0),
+      var(--color-primary, #1d70b8)
+    );
+  border-radius: 999px;
+  transition: width 220ms ease;
+  position: relative;
+}
+
+.text-analyzer-tool .word-frequency-bar::after {
+  content: attr(data-count);
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.text-analyzer-tool .word-frequency-count {
+  min-width: 1px;
+}
+
+.text-analyzer-tool .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 900px) {
+  .text-analyzer-tool .ta-stats-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .text-analyzer-tool .ta-punctuation-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .text-analyzer-tool .ta-panel-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .text-analyzer-tool .ta-toolbar {
+    width: 100%;
+  }
+
+  .text-analyzer-tool .ta-load-sample-btn {
+    width: 100%;
+  }
+
+  .text-analyzer-tool .ta-toolbar > .c-file-upload-control {
+    flex: 0 0 auto;
+  }
+
+  .text-analyzer-tool .ta-input-textarea {
+    min-height: 16.5rem;
+  }
+
+  .text-analyzer-tool .ta-stats-panel,
+  .text-analyzer-tool .ta-punctuation-panel,
+  .text-analyzer-tool .ta-word-frequency-panel {
+    padding: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .text-analyzer-tool .ta-stats-panel,
+  .text-analyzer-tool .ta-punctuation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .text-analyzer-tool .word-frequency-item {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 0.45rem;
+  }
+
+  .text-analyzer-tool .word-frequency-label {
+    text-align: left;
+  }
+
+  .text-analyzer-tool .word-frequency-bar-container {
+    height: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text-analyzer-tool .word-frequency-bar {
+    transition: none;
+  }
+}

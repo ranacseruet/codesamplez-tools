@@ -1,0 +1,479 @@
+.jsone-tool {
+  --jsone-row-gap: 0.5rem;
+  --jsone-control-height: 2rem;
+  --jsone-action-size: 1.75rem;
+}
+
+.jsone-toolbar {
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.jsone-toolbar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.jsone-toolbar-divider {
+  width: 1px;
+  height: 1.8rem;
+  background: var(--color-border, #d7dde4);
+}
+
+.jsone-indent-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-left: auto;
+  color: var(--color-text-secondary, #596273);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.jsone-indent-control select {
+  min-height: var(--jsone-control-height);
+  padding: 0.25rem 0.5rem;
+}
+
+.jsone-import-disclosure {
+  margin: 0 0 var(--spacing-md, 1rem);
+  border: 1px solid var(--color-border, #d7dde4);
+  border-radius: var(--radius-md, 10px);
+  background: var(--color-surface, #fff);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.jsone-import-disclosure.is-drop-active {
+  border-style: dashed;
+  border-color: var(--color-accent, var(--color-primary, #6f5bf0));
+  background: var(--cst-color-accent-soft, rgba(111, 91, 240, 0.12));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jsone-import-disclosure {
+    transition: none;
+  }
+}
+
+.jsone-import-disclosure > summary {
+  cursor: pointer;
+  padding: 0.85rem 1rem;
+  color: var(--color-text, #1f2937);
+  font-weight: 700;
+}
+
+.jsone-summary-hint {
+  margin-left: 0.5rem;
+  color: var(--color-text-secondary, #596273);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.jsone-import-panel {
+  display: grid;
+  gap: 0.65rem;
+  padding: var(--spacing-md, 1rem);
+  border-top: 1px solid var(--color-border, #d7dde4);
+}
+
+.jsone-field-label {
+  color: var(--color-text-secondary, #596273);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.jsone-import-textarea,
+.jsone-preview-textarea {
+  resize: vertical;
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  line-height: 1.5;
+}
+
+.jsone-import-textarea {
+  height: 10rem;
+  min-height: 10rem;
+  background: var(--color-surface-subtle, #f5f7fa);
+}
+
+.jsone-helper,
+.jsone-drop-hint,
+.jsone-preview-note {
+  margin: 0;
+  color: var(--color-text-secondary, #596273);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.jsone-import-actions,
+.jsone-preview-actions,
+.jsone-tree-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+/* Paired header buttons stay on one row: the header wraps as a whole
+   instead of letting the pair collapse into a stacked column. */
+.jsone-preview-actions,
+.jsone-tree-actions {
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.jsone-drop-hint {
+  align-self: center;
+}
+
+.jsone-import-error {
+  margin-top: 0.2rem;
+  color: var(--color-danger, var(--default-color-danger, #b42318));
+  line-height: 1.45;
+}
+
+.jsone-workbench {
+  align-items: stretch;
+}
+
+.jsone-tree-panel,
+.jsone-preview-panel {
+  min-width: 0;
+}
+
+.jsone-tree-panel {
+  container: jsone-tree / inline-size;
+}
+
+.jsone-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: var(--spacing-md, 1rem);
+  border-bottom: 1px solid var(--color-border, #d7dde4);
+}
+
+.jsone-panel-header h2 {
+  margin: 0;
+  color: var(--color-text, #1f2937);
+  font-size: 1.05rem;
+}
+
+.jsone-panel-header p {
+  margin: 0.3rem 0 0;
+  color: var(--color-text-secondary, #596273);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.jsone-tree-scroll {
+  min-height: 22rem;
+  max-height: 52rem;
+  overflow: auto;
+  padding: var(--spacing-md, 1rem);
+  background: var(--color-surface-subtle, #f5f7fa);
+}
+
+.jsone-tree-status {
+  padding: 0.65rem 1rem;
+  border-top: 1px solid var(--color-border, #d7dde4);
+  color: var(--color-text-secondary, #596273);
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.78rem;
+}
+
+.jsone-node {
+  margin-left: 0;
+}
+
+.jsone-node + .jsone-node {
+  margin-top: var(--jsone-row-gap);
+}
+
+.jsone-node-row {
+  display: grid;
+  grid-template-columns: var(--jsone-action-size) minmax(5rem, 1fr) minmax(5rem, 0.65fr) minmax(5rem, 1.2fr) auto;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid var(--color-border, #d7dde4);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--color-surface, #fff);
+}
+
+.jsone-toggle,
+.jsone-toggle-placeholder {
+  width: var(--jsone-action-size);
+  min-width: var(--jsone-action-size);
+  height: var(--jsone-action-size);
+}
+
+.jsone-toggle {
+  padding: 0;
+  font-size: 0.9rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jsone-toggle-placeholder {
+  display: block;
+}
+
+.jsone-node-label,
+.jsone-node-value {
+  min-width: 0;
+}
+
+.jsone-root-label,
+.jsone-container-summary,
+.jsone-null-value {
+  display: inline-block;
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--color-text-secondary, #596273);
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jsone-root-label {
+  color: var(--color-text, #1f2937);
+  font-weight: 700;
+}
+
+.jsone-array-index-label {
+  color: var(--color-text, #1f2937);
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.jsone-inline-input,
+.jsone-type-select,
+.jsone-value-select {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--jsone-control-height);
+  padding: 0.25rem 0.45rem;
+  font-size: 0.85rem;
+}
+
+.jsone-key-input,
+.jsone-value-input {
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+.jsone-number-input {
+  text-align: right;
+}
+
+.jsone-editable-field {
+  display: block;
+  position: relative;
+}
+
+.jsone-field-error {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--color-danger, var(--default-color-danger, #b42318));
+  font-size: 0.74rem;
+  line-height: 1.3;
+}
+
+.jsone-node-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.jsone-node-actions .c-button--icon {
+  width: var(--jsone-action-size);
+  min-width: var(--jsone-action-size);
+  height: var(--jsone-action-size);
+  padding: 0;
+  font-size: 0.85rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jsone-node-actions .jsone-action-delete:hover:not(:disabled) {
+  background: var(--color-danger, #dc3545);
+  border-color: var(--color-danger, #dc3545);
+  color: #fff;
+}
+
+.jsone-empty-container {
+  padding: 0.45rem 0.65rem;
+  margin: 0.25rem 0;
+  border: 1px dashed var(--color-border, #d7dde4);
+  border-radius: var(--radius-sm, 6px);
+  font-size: 0.82rem;
+  color: var(--color-text-secondary, #596273);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.jsone-inline-add-btn {
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  padding: 0.3rem 0.4rem;
+  margin: -0.3rem -0.4rem;
+  color: var(--color-accent, var(--color-primary, #6f5bf0));
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.jsone-inline-add-btn:hover {
+  opacity: 0.85;
+}
+
+.jsone-children {
+  padding-left: 1rem;
+  padding-top: var(--jsone-row-gap);
+}
+
+.jsone-children[hidden] {
+  display: none;
+}
+
+.jsone-preview-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.jsone-preview-textarea {
+  flex: 1 1 auto;
+  min-height: 24rem;
+  margin: var(--spacing-md, 1rem);
+  background: var(--color-surface-subtle, #f5f7fa);
+}
+
+.jsone-preview-note {
+  padding: 0 var(--spacing-md, 1rem) var(--spacing-md, 1rem);
+}
+
+/* Row wrapping keys off the panel width, not the viewport: the workbench
+   stacks below 900px (full-width panel fits the 5-column row) while
+   side-by-side panels can be narrower than a stacked phone layout. */
+@container jsone-tree (max-width: 560px) {
+  .jsone-node-row {
+    grid-template-columns: var(--jsone-action-size) minmax(7rem, 1fr) minmax(6rem, 0.8fr);
+  }
+
+  .jsone-node-value {
+    grid-column: 2 / 4;
+  }
+
+  .jsone-node-actions {
+    grid-column: 2 / 4;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .jsone-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .jsone-toolbar-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .jsone-toolbar-actions .c-button {
+    width: 100%;
+  }
+
+  .jsone-toolbar-divider {
+    display: none;
+  }
+
+  .jsone-indent-control {
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+  }
+
+  .jsone-indent-control select {
+    width: auto;
+    flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .jsone-summary-hint {
+    display: block;
+    margin: 0.25rem 0 0;
+  }
+
+  .jsone-panel-header {
+    flex-direction: column;
+  }
+
+  .jsone-tree-scroll {
+    min-height: 18rem;
+    padding: 0.5rem;
+  }
+
+  .jsone-children {
+    padding-left: 0.4rem;
+  }
+
+  .jsone-preview-textarea {
+    min-height: 18rem;
+  }
+}
+
+@container jsone-tree (max-width: 430px) {
+  .jsone-node-row {
+    grid-template-columns: var(--jsone-action-size) minmax(0, 1fr);
+    gap: 0.35rem;
+  }
+
+  .jsone-toggle-placeholder {
+    display: none;
+  }
+
+  .jsone-node-label,
+  .jsone-type-select,
+  .jsone-node-value,
+  .jsone-node-actions {
+    grid-column: 1 / -1;
+  }
+
+  .jsone-node-row:has(.jsone-toggle) .jsone-node-label {
+    grid-column: 2;
+  }
+
+  .jsone-type-select {
+    width: 100%;
+  }
+
+  .jsone-node-actions {
+    justify-content: flex-start;
+    margin-top: 0.2rem;
+  }
+}

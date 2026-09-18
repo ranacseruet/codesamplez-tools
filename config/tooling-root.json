@@ -1,0 +1,61 @@
+{
+  "siteBaseUrl": "https://tools.codesamplez.com/",
+  "siteStaticRootUri": "https://tools.codesamplez.com/",
+  "siteName": "CodeSamplez Tools",
+  "siteDescription": "Client-side formatters, converters, token tools, and text utilities with a consistent privacy-preserving workflow.",
+  "organization": {
+    "name": "CodeSamplez",
+    "url": "https://codesamplez.com/",
+    "logo": "https://tools.codesamplez.com/apple-touch-icon.png",
+    "sameAs": [
+      "https://codesamplez.com/",
+      "https://github.com/ranacseruet/codesamplez-tools"
+    ]
+  },
+  "analytics": {
+    "googleAnalyticsId": null,
+    "adsenseClientId": null
+  },
+  "rootPage": {
+    "title": "Online Developer Tools",
+    "description": "Free online developer tools for debugging, formatting and validation needs. Access 12+ utilities to help boost your day-to-day productivity.",
+    "image": "og-home.png"
+  },
+  "catalogGroups": [
+    {
+      "id": "code-formatters",
+      "label": "Code Formatters & Validators"
+    },
+    {
+      "id": "encoders-decoders",
+      "label": "Encoders & Decoders"
+    },
+    {
+      "id": "text-analysis",
+      "label": "Text Analysis & Diff Tools"
+    },
+    {
+      "id": "image-tools",
+      "label": "Image Tools"
+    }
+  ],
+  "rootShell": {
+    "id": "root-shell",
+    "outputPath": "build/root-shell"
+  },
+  "rootAssets": [
+    "index.html",
+    "404.html",
+    "styles.css",
+    "og-home.png",
+    "robots.txt",
+    "sitemap.xml",
+    "llms.txt",
+    "BingSiteAuth.xml",
+    "favicon.ico",
+    "favicon.svg",
+    "apple-touch-icon.png",
+    "fonts/Geist-Variable.woff2",
+    "fonts/GeistMono-Variable.woff2"
+  ]
+}

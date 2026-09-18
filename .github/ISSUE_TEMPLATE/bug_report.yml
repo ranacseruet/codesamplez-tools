@@ -1,0 +1,71 @@
+name: Bug report
+description: Report a defect in a tool, shared runtime surface, build, or contributor workflow.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      description: Which part of the project is affected?
+      options:
+        - base64-converter-tool
+        - css-minifier-tool
+        - data-format-converter
+        - diff-checker-tool
+        - image-editor
+        - js-minifier-tool
+        - json-formatter-tool
+        - json-editor-tool
+        - jwt-builder-tool
+        - jwt-decoder-tool
+        - qr-code-generator
+        - text-analyzer-tool
+        - shared runtime or styling
+        - build or CI
+        - contributor workflow or docs
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the bug in one or two sentences.
+      placeholder: The diff checker crashes when...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the smallest reliable reproduction you have.
+      placeholder: |
+        1. Open ...
+        2. Paste ...
+        3. Click ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, OS, Node version, or workflow context as relevant.
+      placeholder: Chrome 135 on macOS 15, or Node 24 in GitHub Actions
+  - type: textarea
+    id: validation
+    attributes:
+      label: Relevant logs or validation output
+      description: Paste build errors, test output, screenshots, or links if available.

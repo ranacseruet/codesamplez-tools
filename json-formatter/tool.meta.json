@@ -1,0 +1,37 @@
+{
+  "id": "json-formatter-tool",
+  "version": "1.0.0",
+  "title": "JSON Formatter",
+  "seoTitle": "JSON Formatter — Beautifier, Minifier & JSON Schema Validator",
+  "description": "Format, beautify, and minify JSON in your browser, then optionally validate strict input against Draft 7 or Draft 2020-12 JSON Schema with first-issue source diagnostics.",
+  "catalogGroupId": "code-formatters",
+  "catalogOrder": 1,
+  "indexDescription": "Format, validate JSON syntax, and optionally check JSON Schema contracts in one client-side tool. Supports Draft 7 and Draft 2020-12, local references, selectable indentation, key sorting, tree view, and source diagnostics.",
+  "icon": "braces",
+  "status": "live",
+  "keywords": [
+    "json",
+    "format",
+    "validate",
+    "json schema",
+    "draft 7",
+    "draft 2020-12",
+    "beautify",
+    "minify",
+    "compact",
+    "tree view"
+  ],
+  "appRootId": "json-formatter-app",
+  "publicPath": "/json-formatter/",
+  "scriptType": "module",
+  "dependencyScopes": [
+    "build-system",
+    "shared-ui",
+    "shared-runtime"
+  ],
+  "relatedToolIds": [
+    "data-format-converter",
+    "jwt-decoder-tool",
+    "js-minifier-tool"
+  ]
+}

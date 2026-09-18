@@ -1,0 +1,360 @@
+// @ts-check
+
+const { escapeJsonForHtml } = require('./document-helpers');
+
+/**
+ * @typedef {import('./tool-manifest').ToolDefinition} ToolDefinition
+ * @typedef {import('./tool-manifest').ToolManifest} ToolManifest
+ * @typedef {{ question: string, structuredDataAnswer: string }} StructuredFaqItem
+ * @typedef {{ name: string, text: string }} StructuredHowToStep
+ */
+
+/**
+ * @param {unknown} value
+ * @returns {unknown}
+ */
+function compactValue(value) {
+    if (Array.isArray(value)) {
+        const compactedArray = value
+            .map((entry) => compactValue(entry))
+            .filter((entry) => typeof entry !== 'undefined');
+
+        return compactedArray.length > 0 ? compactedArray : undefined;
+    }
+
+    if (value && typeof value === 'object') {
+        const compactedEntries = Object.entries(value)
+            .map(([key, entry]) => [key, compactValue(entry)])
+            .filter(([, entry]) => typeof entry !== 'undefined');
+
+        if (compactedEntries.length === 0) {
+            return undefined;
+        }
+
+        return Object.fromEntries(compactedEntries);
+    }
+
+    return typeof value === 'undefined' ? undefined : value;
+}
+
+/**
+ * @param {ToolManifest} manifest
+ * @returns {string}
+ */
+function getWebsiteId(manifest) {
+    return `${manifest.siteBaseUrl}#website`;
+}
+
+/**
+ * @param {ToolManifest} manifest
+ * @returns {string}
+ */
+function getOrganizationId(manifest) {
+    return `${manifest.siteBaseUrl}#organization`;
+}
+
+/**
+ * @param {ToolDefinition} tool
+ * @returns {string}
+ */
+function getToolPageId(tool) {
+    return `${tool.absolutePageUrl}#webpage`;
+}
+
+/**
+ * @param {ToolDefinition} tool
+ * @returns {string}
+ */
+function getToolAppId(tool) {
+    return `${tool.absolutePageUrl}#webapplication`;
+}
+
+// Visible breadcrumb root label — must match BREADCRUMB_HOME_LABEL in
+// common/app-shell/AppShell.tsx so the JSON-LD names mirror the on-page trail.
+const BREADCRUMB_HOME_LABEL = 'Home';
+
+/**
+ * @param {ToolDefinition} tool
+ * @returns {string}
+ */
+function getToolBreadcrumbId(tool) {
+    return `${tool.absolutePageUrl}#breadcrumb`;
+}
+
+/**
+ * @param {ToolDefinition} tool
+ * @returns {string}
+ */
+function getToolFaqPageId(tool) {
+    return `${tool.absolutePageUrl}#faqpage`;
+}
+
+/**
+ * @param {ToolDefinition} tool
+ * @returns {string}
+ */
+function getToolHowToId(tool) {
+    return `${tool.absolutePageUrl}#howto`;
+}
+
+/**
+ * Publisher entity. A single Organization node, referenced by @id from the
+ * WebSite/WebPage publisher slots, gives search engines a stable brand entity
+ * (name, logo, social profiles) to anchor the knowledge graph.
+ * @param {ToolManifest} manifest
+ * @returns {Record<string, unknown>}
+ */
+function createOrganizationNode(manifest) {
+    return {
+        '@type': 'Organization',
+        '@id': getOrganizationId(manifest),
+        name: manifest.organization.name,
+        url: manifest.organization.url,
+        logo: {
+            '@type': 'ImageObject',
+            url: manifest.organization.logo
+        },
+        sameAs: manifest.organization.sameAs.length > 0 ? manifest.organization.sameAs : undefined
+    };
+}
+
+/**
+ * @param {ToolManifest} manifest
+ * @returns {Record<string, unknown>}
+ */
+function createWebsiteNode(manifest) {
+    return {
+        '@type': 'WebSite',
+        '@id': getWebsiteId(manifest),
+        name: manifest.siteName,
+        description: manifest.siteDescription,
+        url: `${manifest.siteBaseUrl}/`,
+        publisher: {
+            '@id': getOrganizationId(manifest)
+        }
+    };
+}
+
+/**
+ * WebApplication is the primary type (it runs in-browser, no install); the
+ * secondary SoftwareApplication type widens matching for assistants/crawlers
+ * that only recognize the broader schema.org type when picking rich results.
+ * @param {ToolDefinition} tool
+ * @param {{ featureList?: string[] }} [options]
+ * @returns {Record<string, unknown>}
+ */
+function createToolApplicationNode(tool, options = {}) {
+    return {
+        '@type': ['WebApplication', 'SoftwareApplication'],
+        '@id': getToolAppId(tool),
+        name: tool.title,
+        description: tool.description,
+        url: tool.absolutePageUrl,
+        applicationCategory: 'DeveloperApplication',
+        operatingSystem: 'Any',
+        browserRequirements: 'Requires JavaScript and a modern browser.',
+        isAccessibleForFree: true,
+        offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'USD'
+        },
+        image: tool.absoluteFeaturedImageUrl,
+        softwareVersion: tool.version,
+        keywords: tool.keywords.length > 0 ? tool.keywords.join(', ') : undefined,
+        featureList: options.featureList && options.featureList.length > 0 ? options.featureList : undefined
+    };
+}
+
+/**
+ * @param {ToolManifest} manifest
+ * @param {ToolDefinition} tool
+ * @returns {Record<string, unknown>}
+ */
+function createToolWebPageNode(manifest, tool) {
+    return {
+        '@type': 'WebPage',
+        '@id': getToolPageId(tool),
+        url: tool.absolutePageUrl,
+        name: tool.title,
+        description: tool.description,
+        isPartOf: {
+            '@id': getWebsiteId(manifest)
+        },
+        publisher: {
+            '@id': getOrganizationId(manifest)
+        },
+        mainEntity: {
+            '@id': getToolAppId(tool)
+        },
+        breadcrumb: {
+            '@id': getToolBreadcrumbId(tool)
+        },
+        primaryImageOfPage: tool.absoluteFeaturedImageUrl
+    };
+}
+
+/**
+ * BreadcrumbList for the tool page, matching the on-page breadcrumb trail
+ * rendered by ToolShellHeader (Home → tool).
+ *
+ * @param {ToolManifest} manifest
+ * @param {ToolDefinition} tool
+ * @returns {Record<string, unknown>}
+ */
+function createToolBreadcrumbNode(manifest, tool) {
+    return {
+        '@type': 'BreadcrumbList',
+        '@id': getToolBreadcrumbId(tool),
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: BREADCRUMB_HOME_LABEL,
+                item: manifest.rootPage.absoluteUrl
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: tool.title,
+                item: tool.absolutePageUrl
+            }
+        ]
+    };
+}
+
+/**
+ * @param {ToolDefinition} tool
+ * @param {StructuredFaqItem[]} faqItems
+ * @returns {Record<string, unknown>}
+ */
+function createToolFaqPageNode(tool, faqItems) {
+    return {
+        '@type': 'FAQPage',
+        '@id': getToolFaqPageId(tool),
+        url: tool.absolutePageUrl,
+        isPartOf: {
+            '@id': getToolPageId(tool)
+        },
+        mainEntity: faqItems.map((item) => ({
+            '@type': 'Question',
+            name: item.question,
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: item.structuredDataAnswer
+            }
+        }))
+    };
+}
+
+/**
+ * @param {ToolDefinition} tool
+ * @param {StructuredHowToStep[]} steps
+ * @returns {Record<string, unknown>}
+ */
+function createToolHowToNode(tool, steps) {
+    return {
+        '@type': 'HowTo',
+        '@id': getToolHowToId(tool),
+        name: `How to Use ${tool.title}`,
+        isPartOf: {
+            '@id': getToolPageId(tool)
+        },
+        step: steps.map((step, index) => ({
+            '@type': 'HowToStep',
+            position: index + 1,
+            name: step.name,
+            text: step.text
+        }))
+    };
+}
+
+/**
+ * @param {ToolManifest} manifest
+ * @param {ToolDefinition} tool
+ * @param {{ faqItems?: StructuredFaqItem[], howToSteps?: StructuredHowToStep[], featureList?: string[] }} [options]
+ * @returns {Record<string, unknown>[]}
+ */
+function buildToolStructuredDataGraph(manifest, tool, options = {}) {
+    const faqItems = Array.isArray(options.faqItems) ? options.faqItems : [];
+    const howToSteps = Array.isArray(options.howToSteps) ? options.howToSteps : [];
+
+    return [
+        createOrganizationNode(manifest),
+        createWebsiteNode(manifest),
+        createToolWebPageNode(manifest, tool),
+        createToolApplicationNode(tool, { featureList: options.featureList }),
+        createToolBreadcrumbNode(manifest, tool),
+        ...(faqItems.length > 0 ? [createToolFaqPageNode(tool, faqItems)] : []),
+        ...(howToSteps.length > 0 ? [createToolHowToNode(tool, howToSteps)] : [])
+    ];
+}
+
+/**
+ * @param {ToolManifest} manifest
+ * @returns {Record<string, unknown>[]}
+ */
+function buildRootStructuredDataGraph(manifest) {
+    const itemListId = `${manifest.rootPage.absoluteUrl}#tool-list`;
+    const groupedTools = manifest.catalogGroups.flatMap((group) => {
+        return manifest.tools
+            .filter((tool) => tool.catalogGroupId === group.id)
+            .sort((left, right) => left.catalogOrder - right.catalogOrder || left.title.localeCompare(right.title));
+    });
+
+    return [
+        createOrganizationNode(manifest),
+        createWebsiteNode(manifest),
+        {
+            '@type': 'CollectionPage',
+            '@id': `${manifest.rootPage.absoluteUrl}#collectionpage`,
+            url: manifest.rootPage.absoluteUrl,
+            name: manifest.rootPage.title,
+            description: manifest.rootPage.description,
+            isPartOf: {
+                '@id': getWebsiteId(manifest)
+            },
+            publisher: {
+                '@id': getOrganizationId(manifest)
+            },
+            mainEntity: {
+                '@id': itemListId
+            }
+        },
+        {
+            '@type': 'ItemList',
+            '@id': itemListId,
+            name: 'CodeSamplez tool directory',
+            itemListOrder: 'https://schema.org/ItemListOrderAscending',
+            numberOfItems: groupedTools.length,
+            itemListElement: groupedTools.map((tool, index) => ({
+                '@type': 'ListItem',
+                position: index + 1,
+                url: tool.absolutePageUrl,
+                item: {
+                    '@id': getToolAppId(tool)
+                }
+            }))
+        },
+        ...groupedTools.map((tool) => createToolApplicationNode(tool))
+    ];
+}
+
+/**
+ * @param {Record<string, unknown>[]} graphNodes
+ * @returns {string}
+ */
+function renderStructuredDataScript(graphNodes) {
+    const structuredData = compactValue({
+        '@context': 'https://schema.org',
+        '@graph': graphNodes
+    });
+
+    return `<script type="application/ld+json">${escapeJsonForHtml(JSON.stringify(structuredData))}</script>`;
+}
+
+module.exports = {
+    buildRootStructuredDataGraph,
+    buildToolStructuredDataGraph,
+    renderStructuredDataScript
+};

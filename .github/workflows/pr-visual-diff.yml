@@ -1,0 +1,72 @@
+# Manual force-run only. The automatic per-PR visual diff is a gated job in
+# ci.yml (runs after test-and-build passes). This workflow stays for the
+# on-demand `workflow_dispatch` path — e.g. re-running a diff against the
+# current ref without pushing a new commit.
+name: PR Visual Diff (manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  visual-diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        # Local asset origin so the served build loads its own CSS/JS instead of
+        # the production CDN (see ci.yml visual-diff for the full rationale).
+        # Trackers disabled so manual diff runs match the CI baseline capture.
+        run: npm run build
+        env:
+          CST_SITE_STATIC_ROOT_URI: http://127.0.0.1:8080
+          CST_DISABLE_ANALYTICS: '1'
+
+      - name: Start app
+        run: |
+          set -euo pipefail
+          npm start > /tmp/visual-pr-diff-start.log 2>&1 &
+          echo "QA_SERVER_PID=$!" >> "$GITHUB_ENV"
+          ready=0
+          for i in $(seq 1 45); do
+            if curl -sSf http://127.0.0.1:8080 >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/visual-pr-diff-start.log || true
+            exit 1
+          fi
+
+      - name: Run visual PR diff
+        id: visual_diff
+        uses: ranacseruet/snapdrift/actions/pr-diff@e61106916b904dd85a8dfdd91e8aa44529b84003 # v0.12.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          force-run: true
+        env:
+          SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
+
+      - name: Stop app
+        if: always()
+        run: kill "$QA_SERVER_PID" || true

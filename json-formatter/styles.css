@@ -1,0 +1,548 @@
+/* Phase E tool-scoped styles for JSON Formatter */
+
+.jsonf-tool {
+  --jsonf-well-height: 20rem;
+}
+
+/* Unified panel header bar. Both panels carry one — input holds only its title,
+   output holds the title plus the view tabs. Equal `min-height` on both bars
+   makes the input textarea and the output well begin at the same vertical
+   position, so the two columns align at the top. */
+.jsonf-tool .jsonf-panel-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  min-height: 3.5rem;
+  margin: 0;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 52%, var(--cst-color-mix-neutral, white)),
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 92%, var(--color-primary-soft, #e9f3fb))
+    );
+}
+
+.jsonf-tool .jsonf-panel-bar h3 {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
+/* Both panels mirror each other so the editing surfaces line up exactly:
+   [header bar] [content well] [footer]. Input footer holds the validation
+   status; output footer holds the Copy/Download actions. Equal bar heights
+   align the tops, equal-height wells align the bottoms, and equal-height
+   footers keep the action row level with the status row. */
+/* The shared `.o-panel-content` makes every panel section a `flex: 1` column
+   that fights for space. Pin them to their content height so the layout is
+   driven by the fixed-size bars, wells, and footers — that is what keeps both
+   panels the exact same height and their rows level. */
+.jsonf-tool .jsonf-panel .o-panel-content {
+  flex: none;
+}
+
+.jsonf-tool .jsonf-status-content,
+.jsonf-tool .jsonf-output-footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-height: 3.5rem;
+  padding-top: var(--spacing-sm, var(--default-spacing-sm));
+  padding-bottom: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.jsonf-tool .jsonf-output-footer {
+  justify-content: flex-end;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  margin-top: auto;
+}
+
+/* Validation status row: message takes the space, the jump button sits at the end. */
+.jsonf-tool .jsonf-status-content {
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.jsonf-tool .jsonf-status-content .jsonf-input-status {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.jsonf-tool .jsonf-goto-error-btn {
+  flex: none;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* `.c-button` is `inline-flex`, which outranks the UA `[hidden] { display: none }`,
+   so restore it explicitly — the control only appears when an error is locatable. */
+.jsonf-tool .jsonf-goto-error-btn[hidden] {
+  display: none;
+}
+
+.jsonf-tool .jsonf-panel-content {
+  padding: var(--spacing-md, var(--default-spacing-md));
+}
+
+.jsonf-tool .jsonf-input-textarea,
+.jsonf-tool .jsonf-plain-textarea {
+  min-height: var(--jsonf-well-height);
+  height: var(--jsonf-well-height);
+  flex: none;
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  line-height: 1.5;
+}
+
+.jsonf-tool .jsonf-input-textarea {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 62%, var(--cst-color-mix-neutral, white)),
+      var(--cst-color-mix-neutral, white) 40%
+    );
+}
+
+.jsonf-tool .jsonf-toolbar {
+  justify-content: flex-start;
+  gap: 0.75rem;
+}
+
+/* Optional validation controls stay outside the two-column workbench so the
+   formatter's established input/output geometry does not move when expanded. */
+.jsonf-tool .jsonf-schema-disclosure {
+  width: 100%;
+  margin: 0 0 var(--spacing-md, var(--default-spacing-md));
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  border-radius: var(--radius-md, 10px);
+  background: color-mix(in srgb, var(--color-surface, #fff) 96%, var(--color-surface-subtle, #f5f7fa));
+}
+
+.jsonf-tool .jsonf-schema-disclosure > summary {
+  cursor: pointer;
+  padding: 0.8rem 1rem;
+  color: var(--color-text, #1f2937);
+  font-weight: 600;
+}
+
+.jsonf-tool .jsonf-schema-optional {
+  margin-left: 0.45rem;
+  color: var(--color-text-secondary, #4b5563);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.jsonf-tool .jsonf-schema-panel {
+  display: grid;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  padding: var(--spacing-md, var(--default-spacing-md));
+  border-top: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 85%, var(--cst-color-mix-neutral, white));
+}
+
+.jsonf-tool .jsonf-schema-field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.jsonf-tool .jsonf-schema-field label,
+.jsonf-tool .jsonf-schema-draft-item label {
+  color: var(--color-text-secondary, #4b5563);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.jsonf-tool .jsonf-schema-textarea {
+  width: 100%;
+  min-height: 9rem;
+  resize: vertical;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border, #d7dde4);
+  border-radius: var(--radius-md, 10px);
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #1f2937);
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  line-height: 1.5;
+}
+
+.jsonf-tool .jsonf-schema-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.jsonf-tool .jsonf-schema-draft-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.jsonf-tool .jsonf-schema-draft-item select {
+  min-height: 2.35rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--color-border, #d7dde4);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #1f2937);
+}
+
+.jsonf-tool .jsonf-schema-helper {
+  margin: 0;
+  color: var(--color-text-secondary, #4b5563);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.jsonf-tool .jsonf-schema-status-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  min-height: 2.25rem;
+}
+
+.jsonf-tool .jsonf-schema-status {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--color-text-secondary, #4b5563);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.jsonf-tool .jsonf-schema-status.success {
+  color: var(--color-success, #176b3a);
+}
+
+.jsonf-tool .jsonf-schema-status.error {
+  color: var(--color-error, #b42318);
+}
+
+.jsonf-tool .jsonf-schema-status.warning {
+  color: var(--color-warning, #8a4b08);
+}
+
+.jsonf-tool .jsonf-schema-goto-error-btn[hidden] {
+  display: none;
+}
+
+.jsonf-tool .jsonf-schema-goto-error-btn {
+  flex: none;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* Primary action sits at the right end of the top action strip (Phase C). */
+.jsonf-tool .jsonf-format-btn {
+  min-width: 12rem;
+}
+
+/* The secondary neutral fill nearly matches the toolbar surface in dark mode, so
+   lift the hairline to the stronger outline token to keep the button legible. */
+.jsonf-tool .jsonf-sample-btn {
+  border-color: var(--md-sys-color-outline, var(--color-border));
+}
+
+.jsonf-tool .jsonf-checkbox-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  background: color-mix(in srgb, var(--color-surface, #fff) 92%, var(--color-surface-subtle, #f5f7fa));
+}
+
+.jsonf-tool .jsonf-checkbox-item label {
+  color: var(--color-text-secondary, #4b5563);
+  font-weight: 500;
+}
+
+/* Indentation selector, styled to sit alongside the pill checkboxes. */
+.jsonf-tool .jsonf-indent-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.3rem 0.5rem 0.3rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  background: color-mix(in srgb, var(--color-surface, #fff) 92%, var(--color-surface-subtle, #f5f7fa));
+}
+
+.jsonf-tool .jsonf-indent-item label {
+  color: var(--color-text-secondary, #4b5563);
+  font-weight: 500;
+}
+
+.jsonf-tool .jsonf-indent-select {
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+}
+
+.jsonf-tool .jsonf-download-btn {
+  margin-left: 0;
+}
+
+/* Compact the header tabs so the title + tabs stay on one line, keeping the
+   output bar the same height as the input bar (title only). */
+.jsonf-tool .jsonf-output-bar .c-tab-button {
+  padding: 0.32rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+/* Expand/Collapse-all float over the top-right of the tree well. Living inside
+   #treeView means they're hidden automatically in Plain View and never shift the
+   tab row in the output bar. */
+.jsonf-tool .jsonf-tree-actions {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.jsonf-tool .jsonf-tree-btn {
+  padding: 0.28rem 0.6rem;
+  font-size: 0.8rem;
+  /* Slightly translucent so a node behind the controls stays faintly visible. */
+  background: color-mix(in srgb, var(--color-secondary, #21222c) 88%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+/* Idle Copy/Download: the global disabled style fills with the dark neutral
+   `--color-secondary`, which reads as a heavy slab on the airy output panel.
+   Scope a lighter "ghost" so the not-yet-available actions recede in both themes. */
+.jsonf-tool .jsonf-output-panel .c-button--secondary:disabled {
+  background: color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 70%, transparent);
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  border-color: color-mix(in srgb, var(--color-border, #d7dde4) 80%, var(--cst-color-mix-neutral, white));
+  opacity: 1;
+}
+
+.jsonf-tool .jsonf-output-bar .jsonf-tabs {
+  margin: 0;
+  padding: 0.2rem;
+}
+
+.jsonf-tool .view-container {
+  display: none;
+}
+
+.jsonf-tool .view-container.active {
+  display: block;
+}
+
+/* Positioning context for the floating Expand/Collapse-all controls. */
+.jsonf-tool #treeView {
+  position: relative;
+}
+
+/* Empty tree well: the `.c-empty-state` block stands in for it. */
+.jsonf-tool #treeView .jsonf-code-output:has(> code:empty) {
+  display: none;
+}
+
+/* The empty state replaces the hidden tree well, so reserve the same fixed
+   height as populated output and keep the action footer anchored. */
+.jsonf-tool #treeView .c-empty-state {
+  min-height: var(--jsonf-well-height);
+}
+
+.jsonf-tool .jsonf-output-content {
+  padding-top: var(--spacing-md, var(--default-spacing-md));
+}
+
+.jsonf-tool #treeView .jsonf-code-output {
+  width: 100%;
+  /* Same fixed height as the input textarea so the output well's top and
+     bottom stay locked to it in every state; taller trees scroll inside. */
+  height: var(--jsonf-well-height);
+  margin: 0;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 88%, var(--color-surface-subtle, #f5f7fa)),
+      var(--color-surface, #fff)
+    );
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.jsonf-tool #treeView .jsonf-code-output:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring, 0 0 0 3px rgba(29, 112, 184, 0.2));
+}
+
+.jsonf-tool .jsonf-code-output code {
+  display: block;
+  min-width: max-content;
+  white-space: pre;
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.jsonf-tool .json-node {
+  position: relative;
+  margin: 0.12rem 0;
+}
+
+.jsonf-tool .json-toggle {
+  cursor: pointer;
+  margin-right: var(--spacing-xs, var(--default-spacing-xs));
+  color: var(--color-text-secondary, #4b5563);
+  user-select: none;
+  font-weight: 700;
+}
+
+.jsonf-tool .json-toggle:hover {
+  color: var(--color-accent, var(--color-primary, #1d70b8));
+}
+
+.jsonf-tool .json-children {
+  margin-left: var(--spacing-md, var(--default-spacing-md));
+}
+
+.jsonf-tool .json-node.collapsed .json-children {
+  display: none;
+}
+
+.jsonf-tool .json-key {
+  color: color-mix(in srgb, var(--color-accent, var(--color-primary, #1d70b8)) 84%, var(--color-text, #1f2937));
+  font-weight: 600;
+}
+
+.jsonf-tool .json-bracket {
+  color: var(--color-accent, var(--color-primary, #1d70b8));
+  font-weight: 700;
+}
+
+.jsonf-tool .jsonf-stats-panel {
+  background: color-mix(in srgb, var(--cst-color-mix-neutral, white) 90%, var(--color-surface-subtle, #f5f7fa));
+}
+
+.jsonf-tool .jsonf-stats-panel .c-stat-row {
+  align-items: center;
+}
+
+.jsonf-tool .jsonf-original-size,
+.jsonf-tool .jsonf-formatted-size {
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  color: var(--color-text, #1f2937);
+}
+
+@media (max-width: 900px) {
+  .jsonf-tool .jsonf-toolbar {
+    justify-content: stretch;
+  }
+
+  .jsonf-tool .jsonf-sample-btn {
+    flex: 1 1 12rem;
+  }
+
+  .jsonf-tool .jsonf-format-btn {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .jsonf-tool .jsonf-checkbox-item {
+    flex: 1 1 10rem;
+    justify-content: center;
+  }
+
+  .jsonf-tool .jsonf-indent-item {
+    flex: 1 1 10rem;
+    justify-content: center;
+  }
+
+  /* Single-column layout: keep the title and tabs on their shared bar line,
+     and let the footer actions stretch to fill the width. */
+  .jsonf-tool .jsonf-output-footer .c-button {
+    flex: 1 1 12rem;
+  }
+}
+
+/* At ≤768px the shared `.o-toolbar` switches to `flex-direction: column`, which
+   turns the row-oriented `flex: 1 1 Nrem` bases above into a vertical basis and
+   balloons every control to ~10rem tall. Pin the stacked controls to their
+   natural height and full width instead. */
+@media (max-width: 768px) {
+  .jsonf-tool .jsonf-toolbar > * {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .jsonf-tool {
+    --jsonf-well-height: 17.5rem;
+  }
+
+  .jsonf-tool .jsonf-panel-content,
+  .jsonf-tool .jsonf-toolbar {
+    padding: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .jsonf-tool .jsonf-panel-bar {
+    padding: 0.5rem 0.9rem;
+  }
+
+  .jsonf-tool .jsonf-output-bar .jsonf-tabs {
+    gap: 0.25rem;
+  }
+
+  .jsonf-tool .jsonf-schema-panel {
+    padding: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .jsonf-tool .jsonf-schema-controls,
+  .jsonf-tool .jsonf-schema-draft-item,
+  .jsonf-tool .jsonf-schema-draft-item select {
+    width: 100%;
+  }
+
+  .jsonf-tool .jsonf-schema-draft-item {
+    justify-content: space-between;
+  }
+
+  .jsonf-tool .jsonf-schema-status-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .jsonf-tool .jsonf-schema-goto-error-btn {
+    width: 100%;
+  }
+
+  .jsonf-tool .jsonf-tab {
+    text-align: center;
+  }
+
+  .jsonf-tool .jsonf-input-textarea,
+  .jsonf-tool .jsonf-plain-textarea,
+  .jsonf-tool #treeView .jsonf-code-output {
+    min-height: var(--jsonf-well-height);
+    height: var(--jsonf-well-height);
+    max-height: none;
+  }
+
+  .jsonf-tool #treeView .c-empty-state {
+    min-height: var(--jsonf-well-height);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jsonf-tool .jsonf-tab {
+    transition: none;
+  }
+}

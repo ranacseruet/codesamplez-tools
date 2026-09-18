@@ -1,0 +1,278 @@
+/* Data Format Converter - Phase E UI modernization (tool-scoped) */
+
+.dfc-tool {
+  position: relative;
+}
+
+.dfc-tool .converter-section {
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+  margin-bottom: var(--spacing-lg, var(--default-spacing-lg));
+  align-items: stretch;
+}
+
+@media (min-width: 768px) {
+  .dfc-tool .swap-container-wrapper.converter-section {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--spacing-md, var(--default-spacing-md));
+  }
+}
+
+.dfc-tool .input-section,
+.dfc-tool .output-section {
+  min-width: 0;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  padding: clamp(0.95rem, 1.2vw, 1.15rem);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 94%, var(--color-primary, #005f73) 6%) 0%,
+      var(--md-sys-color-surface-container-low, var(--color-bg-light, #f7f9fb)) 100%
+  );
+  border: 1px solid var(--color-border-light, rgba(128, 128, 128, 0.22));
+}
+
+.dfc-tool .dfc-panel-title {
+  margin: 0;
+  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.15rem);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--color-text, var(--default-color-text));
+}
+
+.dfc-tool .dfc-format-selector,
+.dfc-tool .format-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs, var(--default-spacing-xs));
+  margin-bottom: 0;
+}
+
+.dfc-tool .format-btn.c-button {
+  width: auto;
+  min-height: var(--cst-control-height-compact, 32px);
+  padding: 0.4rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--md-sys-color-surface-container, #edf1f4) 80%, var(--cst-color-mix-neutral, white) 20%) 0%,
+      var(--md-sys-color-surface-container, #edf1f4) 100%
+    );
+  color: var(--color-text-secondary, var(--default-color-secondary));
+  box-shadow: none;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.dfc-tool .format-btn.c-button:hover {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--md-sys-color-surface-container-high, #e3eaee) 82%, var(--cst-color-mix-neutral, white) 18%) 0%,
+      var(--md-sys-color-surface-container-high, #e3eaee) 100%
+    );
+  color: var(--color-text, var(--default-color-text));
+  border-color: color-mix(in srgb, var(--color-primary, #005f73) 16%, transparent);
+  transform: translateY(-1px);
+}
+
+.dfc-tool .format-btn.c-button.active,
+.dfc-tool .format-btn.c-button[aria-pressed="true"] {
+  background:
+    linear-gradient(
+      135deg,
+      var(--color-primary, #005f73) 0%,
+      var(--cst-color-primary-accent, var(--color-primary-hover, #0a7f94)) 100%
+    );
+  color: var(--color-on-primary, #fff);
+  border-color: transparent;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--cst-color-mix-neutral, #fff) 18%, transparent), var(--cst-shadow-1, none);
+}
+
+.dfc-tool .format-btn.c-button:focus-visible {
+  box-shadow: var(--cst-focus-ring, none), var(--cst-shadow-1, none);
+}
+
+.dfc-tool .dfc-textarea-actions,
+.dfc-tool .textarea-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin: 0;
+}
+
+/* Keep legacy inline Clear/Copy controls for selector/test back-compat while using overlay icons as the primary UI. */
+.dfc-tool .dfc-legacy-inline-action {
+  display: none;
+}
+
+.dfc-tool .c-button--outline {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 92%, var(--color-primary, #005f73) 8%) 0%,
+      var(--color-bg, #fff) 100%
+    );
+  color: var(--color-accent, var(--color-primary, #005f73));
+  border: 1px solid color-mix(in srgb, var(--color-primary, #005f73) 20%, transparent);
+  box-shadow: none;
+}
+
+.dfc-tool .c-button--outline:hover {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 85%, var(--color-primary, #005f73) 15%) 0%,
+      color-mix(in srgb, var(--color-bg, #fff) 92%, var(--color-primary, #005f73) 8%) 100%
+    );
+  border-color: color-mix(in srgb, var(--color-primary, #005f73) 35%, transparent);
+  color: var(--color-primary-hover, var(--default-color-primary-hover));
+}
+
+.dfc-tool .text-area.c-input--textarea,
+.dfc-tool .text-area {
+  width: 100%;
+  min-height: clamp(18rem, 36vh, 24rem);
+  margin: 0;
+  padding: var(--spacing-md, var(--default-spacing-md));
+  border-radius: var(--cst-radius-md, var(--border-radius-md, var(--default-border-radius-sm)));
+  border-color: var(--color-border, rgba(128, 128, 128, 0.28));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 98%, var(--color-primary, #005f73) 2%) 0%,
+      var(--color-bg, #fff) 100%
+    );
+  box-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.03);
+}
+
+.dfc-tool .text-area::placeholder {
+  color: color-mix(in srgb, var(--color-text-secondary, #54616f) 88%, var(--cst-color-mix-neutral, white) 12%);
+}
+
+.dfc-tool .text-area[readonly] {
+  background:
+    linear-gradient(
+      180deg,
+      var(--md-sys-color-surface-container-low, #f5f7f9) 0%,
+      color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 88%, var(--cst-color-mix-neutral, white) 12%) 100%
+    );
+}
+
+.dfc-tool .text-area:focus-visible {
+  border-color: var(--color-primary, var(--default-color-primary));
+  box-shadow: var(--cst-focus-ring, none), inset 0 1px 1px rgba(15, 23, 42, 0.03);
+}
+
+.dfc-tool .swap-action-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 0;
+}
+
+.dfc-tool .swap-action-container .c-button {
+  width: auto;
+  min-width: 6rem;
+  padding-inline: 0.85rem;
+}
+
+.dfc-tool .dfc-primary-actions.c-options-panel {
+  margin: 0;
+  /* v4: flat surface from .c-action-strip; gradient removed. */
+}
+
+.dfc-tool .dfc-convert-btn {
+  min-width: 11rem;
+  font-weight: 700;
+}
+
+.dfc-tool .dfc-auto-convert-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs, var(--default-spacing-xs));
+  cursor: pointer;
+  user-select: none;
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  color: var(--color-text, var(--default-color-text));
+}
+
+.dfc-tool .dfc-auto-convert-label:has(input:focus-visible) {
+  box-shadow: var(--cst-focus-ring, none);
+}
+
+.dfc-tool .dfc-auto-convert-label input[type="checkbox"] {
+  margin: 0;
+  accent-color: var(--color-primary, var(--default-color-primary));
+}
+
+.dfc-tool .dfc-status-banner.error,
+.dfc-tool .dfc-status-banner {
+  margin-top: var(--spacing-md, var(--default-spacing-md));
+}
+
+@media (max-width: 768px) {
+  .dfc-tool .converter-section {
+    gap: var(--spacing-sm, var(--default-spacing-sm));
+    margin-bottom: var(--spacing-md, var(--default-spacing-md));
+  }
+
+  .dfc-tool .input-section,
+  .dfc-tool .output-section {
+    padding: var(--spacing-md, var(--default-spacing-md));
+  }
+
+  .dfc-tool .format-btn.c-button {
+    flex: 1 1 calc(50% - var(--spacing-xs, var(--default-spacing-xs)));
+    min-width: 0;
+  }
+
+  .dfc-tool .swap-action-container {
+    padding: 0;
+  }
+
+  .dfc-tool .swap-action-container .c-button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dfc-tool .dfc-primary-actions.c-options-panel {
+    justify-content: stretch;
+    gap: var(--spacing-xs, var(--default-spacing-xs));
+  }
+
+  .dfc-tool .dfc-primary-actions.c-options-panel > * {
+    width: 100%;
+  }
+
+  .dfc-tool .dfc-auto-convert-label {
+    justify-content: center;
+    padding-block: 0.5rem;
+  }
+
+  .dfc-tool .dfc-convert-btn,
+  .dfc-tool #downloadBtn {
+    width: 100%;
+  }
+
+  .dfc-tool .text-area.c-input--textarea,
+  .dfc-tool .text-area {
+    min-height: 15rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dfc-tool .format-btn.c-button,
+  .dfc-tool .c-button--outline,
+  .dfc-tool .text-area {
+    transition: none;
+  }
+
+  .dfc-tool .format-btn.c-button:hover {
+    transform: none;
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "data-format-converter",
+  "version": "1.0.0",
+  "title": "Data Format Converter",
+  "description": "Use our free online data format converter tool to convert between JSON, XML, and YAML data formats seamlessly. 100% client-side processing.",
+  "catalogGroupId": "encoders-decoders",
+  "catalogOrder": 5,
+  "indexDescription": "Convert between JSON, XML, and YAML formats with real-time conversion. Perfect for working with different API formats and configuration files.",
+  "icon": "repeat",
+  "status": "live",
+  "keywords": [
+    "json",
+    "xml",
+    "yaml",
+    "properties",
+    "convert"
+  ],
+  "appRootId": "data-format-converter-app",
+  "publicPath": "/data-format-converter/",
+  "scriptType": "module",
+  "dependencyScopes": [
+    "build-system",
+    "shared-ui",
+    "shared-runtime"
+  ],
+  "relatedToolIds": [
+    "json-formatter-tool",
+    "base64-converter-tool",
+    "diff-checker-tool"
+  ]
+}

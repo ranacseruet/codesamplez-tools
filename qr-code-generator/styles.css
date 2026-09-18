@@ -1,0 +1,213 @@
+/* Phase E tool-scoped styles for QR Code Generator */
+
+.qr-tool__main-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+}
+
+@media (min-width: 1024px) {
+  .qr-tool__main-content {
+    grid-template-columns: minmax(19rem, 1fr) minmax(0, 1.25fr);
+    align-items: start;
+  }
+}
+
+.qr-tool__controls {
+  padding: var(--spacing-md, var(--default-spacing-md));
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md, var(--default-spacing-md));
+  /* v4: flat surface — gradient chrome removed (Phase C). */
+}
+
+.qr-tool__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  padding: 0 0 0.8rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
+}
+
+.qr-tool__section-title {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+}
+
+.qr-tool__form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.qr-tool__label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text, #1f2937);
+  line-height: 1.35;
+}
+
+.qr-tool__label span {
+  color: var(--color-accent, var(--color-primary, #1d70b8));
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-weight: 700;
+}
+
+/* Shared ClearButton wraps the textarea dynamically */
+.qr-tool__form-group > .clear-button-wrapper {
+  width: 100%;
+  display: block;
+}
+
+.qr-tool__textarea {
+  width: 100%;
+  min-height: 7.5rem;
+  resize: vertical;
+  line-height: 1.5;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 62%, var(--cst-color-mix-neutral, white)),
+      var(--cst-color-mix-neutral, white) 40%
+    );
+}
+
+.qr-tool__select {
+  min-height: 44px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--cst-color-mix-neutral, white) 90%, var(--color-surface-subtle, #f5f7fa)),
+      var(--color-surface, #fff)
+    );
+}
+
+.qr-tool__slider {
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 999px;
+  border: none;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-primary, #1d70b8) 18%, var(--cst-color-mix-neutral, white)),
+      color-mix(in srgb, var(--color-primary, #1d70b8) 8%, var(--cst-color-mix-neutral, white))
+    );
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.qr-tool__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  border: 2px solid white;
+  background: var(--color-primary, #1d70b8);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+}
+
+.qr-tool__slider::-moz-range-thumb {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  border: 2px solid white;
+  background: var(--color-primary, #1d70b8);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+}
+
+.qr-tool__slider:focus-visible {
+  box-shadow: var(--focus-ring, 0 0 0 3px rgba(29, 112, 184, 0.2));
+}
+
+.qr-tool__preview {
+  padding: clamp(1rem, 2vw, 1.25rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md, var(--default-spacing-md));
+  justify-content: center;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 75%, var(--cst-color-mix-neutral, white)), transparent 62%),
+    linear-gradient(180deg, var(--cst-color-mix-neutral, white), color-mix(in srgb, var(--cst-color-mix-neutral, white) 92%, var(--color-surface-subtle, #f5f7fa)));
+}
+
+.qr-tool__qr-container {
+  width: 100%;
+  min-height: 20rem;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.9rem, 1.8vw, 1.25rem);
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  background:
+    conic-gradient(from 0deg at 50% 50%, color-mix(in srgb, var(--cst-color-mix-neutral, white) 94%, var(--color-primary-soft, #e9f3fb)), var(--cst-color-mix-neutral, white), color-mix(in srgb, var(--cst-color-mix-neutral, white) 94%, var(--color-primary-soft, #e9f3fb))),
+    white;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+.qr-tool__qr-container canvas {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md, 10px);
+  background: white;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
+}
+
+.qr-tool__button {
+  min-width: 12rem;
+  justify-content: center;
+}
+
+.qr-tool__button .c-button--icon-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.qr-tool__error-message {
+  min-height: 1.25rem;
+  margin: 0;
+  text-align: center;
+  color: var(--color-danger, #dc2626);
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.qr-tool__error-message:empty {
+  display: none;
+}
+
+.qr-tool__footer {
+  min-height: 0;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .qr-tool__controls,
+  .qr-tool__preview {
+    padding: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .qr-tool__qr-container {
+    min-height: 16rem;
+  }
+
+  .qr-tool__button {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qr-tool__slider,
+  .qr-tool__qr-container canvas {
+    transition: none;
+  }
+}

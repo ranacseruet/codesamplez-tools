@@ -1,0 +1,149 @@
+{
+  "name": "codesamplez-tools",
+  "version": "1.0.0",
+  "description": "Browser-based developer utilities that run client-side and build into standalone static artifacts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ranacseruet/codesamplez-tools.git"
+  },
+  "homepage": "https://github.com/ranacseruet/codesamplez-tools#readme",
+  "bugs": {
+    "url": "https://github.com/ranacseruet/codesamplez-tools/issues"
+  },
+  "keywords": [
+    "developer-tools",
+    "browser-tools",
+    "client-side",
+    "formatters",
+    "converters",
+    "preact"
+  ],
+  "engines": {
+    "node": ">=24.15.0 <25"
+  },
+  "browserslist": [
+    "last 2 Chrome major versions",
+    "last 2 Edge major versions",
+    "last 2 Firefox major versions",
+    "last 2 Safari major versions",
+    "last 2 iOS major versions",
+    "last 2 ChromeAndroid major versions",
+    "not dead",
+    "not ie <= 11"
+  ],
+  "scripts": {
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "start": "http-server build -c-1 -p 8080",
+    "dev": "NODE_ENV=development webpack serve --mode development",
+    "build": "node scripts/build-tools.js --mode production",
+    "build:dev": "node scripts/build-tools.js --mode development",
+    "verify-build": "node scripts/run-build-verification.js",
+    "detect-affected-tools": "node scripts/detect-affected-tools.js",
+    "typecheck": "tsc --project tsconfig.json",
+    "audit:deps": "npm audit --audit-level=high",
+    "bundle-metrics": "node scripts/measure-bundles.js --format markdown --write-default-json",
+    "bundle-budget-check": "node scripts/check-bundle-budgets.js",
+    "og:images": "node scripts/generate-og-images.mjs",
+    "favicons": "node scripts/generate-favicons.mjs",
+    "qa:a11y:foundation": "node scripts/a11y-baseline-ui-foundation.mjs",
+    "qa:cross-browser": "node scripts/cross-browser-signoff.mjs",
+    "tool:versions": "node scripts/tool-release.js list",
+    "tool:version:bump": "node scripts/tool-release.js bump",
+    "tool:tag-release": "node scripts/tool-release.js tag",
+    "deploy:affected": "node scripts/deploy-affected-assets.js",
+    "deploy:cloudfront-function": "node scripts/deploy-cloudfront-function.js"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@babel/core": "^8.0.1",
+    "@babel/generator": "^8.0.0",
+    "@babel/parser": "^8.0.4",
+    "@babel/preset-env": "^8.0.5",
+    "@babel/preset-react": "^8.0.1",
+    "@babel/preset-typescript": "^8.0.1",
+    "@babel/register": "^8.0.5",
+    "@babel/traverse": "^8.0.4",
+    "@babel/types": "^8.0.5",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@types/jest": "^30.0.0",
+    "@types/json-source-map": "^0.6.0",
+    "@types/node": "^26.4.1",
+    "babel-jest": "^30.3.0",
+    "babel-loader": "^10.1.1",
+    "babel-plugin-polyfill-corejs3": "^1.0.0",
+    "babel-plugin-transform-import-meta": "^3.0.0",
+    "clean-webpack-plugin": "^4.0.0",
+    "copy-webpack-plugin": "^14.0.0",
+    "css-loader": "^7.1.5",
+    "css-minimizer-webpack-plugin": "^8.0.0",
+    "cssnano": "^8.0.7",
+    "file-loader": "^6.2.0",
+    "http-server": "^14.1.1",
+    "jest": "^30.5.1",
+    "jest-environment-jsdom": "^30.5.0",
+    "jsdom": "^30.0.1",
+    "mini-css-extract-plugin": "^2.10.2",
+    "playwright": "^1.63.0",
+    "postcss-cli": "^11.0.1",
+    "style-loader": "^4.0.0",
+    "terser-webpack-plugin": "^5.6.1",
+    "typescript": "^7.0.2",
+    "webpack": "^5.110.3",
+    "webpack-cli": "^7.2.3",
+    "webpack-dev-server": "^6.0.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": [
+      "./jest.setup.js"
+    ],
+    "testMatch": [
+      "**/*.test.[jt]s?(x)"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx|js|jsx)$": [
+        "babel-jest",
+        {
+          "rootMode": "upward"
+        }
+      ]
+    },
+    "moduleNameMapper": {
+      "^jsdom$": "<rootDir>/scripts/test-jsdom-compat.js",
+      "^preact$": "<rootDir>/node_modules/preact/dist/preact.js",
+      "^preact/hooks$": "<rootDir>/node_modules/preact/hooks/dist/hooks.js",
+      "^preact/jsx-runtime$": "<rootDir>/node_modules/preact/jsx-runtime/dist/jsxRuntime.js"
+    },
+    "testEnvironmentOptions": {
+      "url": "http://localhost"
+    }
+  },
+  "dependencies": {
+    "@material/web": "^2.5.0",
+    "ajv": "^8.20.0",
+    "core-js": "^3.50.0",
+    "diff": "^9.0.0",
+    "fast-xml-parser": "^5.11.1",
+    "js-yaml": "^5.4.1",
+    "json-source-map": "^0.6.1",
+    "lz-string": "^1.5.0",
+    "preact": "^10.29.8",
+    "preact-render-to-string": "^6.7.0",
+    "prismjs": "^1.30.0",
+    "qrcode": "^1.5.4",
+    "sitemap": "^9.0.1"
+  },
+  "overrides": {
+    "brace-expansion": "^5.0.8",
+    "js-yaml": "$js-yaml",
+    "postcss": "^8.5.23",
+    "svgo": "^4.1.0",
+    "test-exclude": "^8.0.0",
+    "uuid": "^11.1.1"
+  }
+}

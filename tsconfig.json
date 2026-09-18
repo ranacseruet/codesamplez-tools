@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["DOM", "DOM.Iterable", "ES2020"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node", "jest"]
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "types/**/*.d.ts",
+    "scripts/build-verification.js",
+    "scripts/check-bundle-budgets.js",
+    "scripts/a11y-baseline-ui-foundation.mjs",
+    "scripts/cross-browser-signoff.mjs",
+    "scripts/prerender-tool.js",
+    "scripts/measure-bundles.js",
+  ],
+  "exclude": ["build", "coverage", "node_modules", "qa-artifacts", "reports"]
+}

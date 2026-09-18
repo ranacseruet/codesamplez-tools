@@ -1,0 +1,336 @@
+/* ==========================================================================
+   CodeSamplez Tools — Design System v2 (dark-first iris)
+   Canonical token palette. Mirrored by name in the claude.ai design system:
+   https://claude.ai/design/p/70ca769d-08d6-490f-9721-4991f21b3028
+   Dark is the default theme (:root). Light is opt-in via [data-theme="light"].
+   ========================================================================== */
+
+/* Self-hosted Geist + Geist Mono (variable, OFL) — no third-party font CDN.
+   url() is relative to the emitted CSS (/<tool>/ and /root-shell/ are one level
+   below the deployed /fonts/ dir), so it resolves correctly regardless of the
+   configured static-root host or path prefix. css-loader is configured to leave
+   these `fonts/` urls untouched (see webpack.config.js). */
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/Geist-Variable.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/GeistMono-Variable.woff2") format("woff2");
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Material-inspired semantic colors (dark — default) */
+  --md-sys-color-primary: #6f5bf0;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #2a2550;
+  --md-sys-color-on-primary-container: #ded7ff;
+  --md-sys-color-secondary: #21222c;
+  --md-sys-color-on-secondary: #ededf2;
+  --md-sys-color-secondary-container: #1c1c25;
+  --md-sys-color-on-secondary-container: #c9cad6;
+  --md-sys-color-tertiary: #5fe0c2;
+  --md-sys-color-on-tertiary: #06231c;
+  --md-sys-color-tertiary-container: #133f36;
+  --md-sys-color-on-tertiary-container: #b6f5e6;
+  --md-sys-color-error: #ff6b6b;
+  --md-sys-color-on-error: #2a0606;
+  --md-sys-color-error-container: #4a1414;
+  --md-sys-color-on-error-container: #ffd2d2;
+
+  /* Near-black surface ramp with a faint violet undertone (#08080d → #24242f) */
+  --md-sys-color-surface: #0b0b11;
+  --md-sys-color-surface-dim: #08080d;
+  --md-sys-color-surface-bright: #131319;
+  --md-sys-color-surface-container-low: #0e0e14;
+  --md-sys-color-surface-container: #15151c;
+  --md-sys-color-surface-container-high: #1c1c25;
+  --md-sys-color-surface-container-highest: #24242f;
+  --md-sys-color-on-surface: #ededf2;
+  --md-sys-color-on-surface-variant: #9a9bab;
+  --md-sys-color-outline: #51515e;
+  --md-sys-color-outline-variant: #2b2b36;
+  --md-sys-color-inverse-surface: #ededf2;
+  --md-sys-color-inverse-on-surface: #15151c;
+
+  /* Shared system tokens */
+  --cst-color-primary-hover: #7d6bff;
+  /* Bright foreground accent — links, titles, icons on near-black. */
+  --cst-color-accent: #a99cff;
+  --cst-color-accent-hover: #bcb2ff;
+  --cst-color-secondary-hover: #2a2b37;
+  --cst-color-danger-hover: #ff8585;
+  --cst-color-success: #4ade80;
+  --cst-color-success-hover: #6ee79b;
+  --cst-color-warning: #fbbf24;
+  --cst-color-shadow: rgba(0, 0, 0, 0.5);
+  --cst-color-shadow-strong: rgba(0, 0, 0, 0.66);
+  --cst-color-focus-ring: rgba(125, 107, 255, 0.55);
+
+  /* v4 accents: soft brand tint + per-category hues (landing cards, section
+     markers). formatters = iris, encoders = mint, text = amber, media = rose. */
+  --cst-color-accent-soft: rgba(169, 156, 255, 0.14);
+  --cst-color-category-formatters: #a99cff;
+  --cst-color-category-formatters-soft: rgba(169, 156, 255, 0.16);
+  --cst-color-category-encoders: #5fe0c2;
+  --cst-color-category-encoders-soft: rgba(95, 224, 194, 0.14);
+  --cst-color-category-text: #f5c542;
+  --cst-color-category-text-soft: rgba(245, 197, 66, 0.14);
+  --cst-color-category-media: #f472b6;
+  --cst-color-category-media-soft: rgba(244, 114, 182, 0.14);
+
+  --cst-font-family-base: "Geist", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --cst-font-family-display: "Geist", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --cst-font-family-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  --cst-font-size-1: 0.8125rem;
+  --cst-font-size-2: 0.875rem;
+  --cst-font-size-3: 1rem;
+  --cst-font-size-4: 1.125rem;
+  --cst-font-size-5: 1.5rem;
+  --cst-font-size-6: 2.25rem;
+  --cst-line-height-tight: 1.3;
+  --cst-line-height-base: 1.55;
+
+  --cst-space-1: 0.25rem;
+  --cst-space-2: 0.375rem;
+  --cst-space-3: 0.5rem;
+  --cst-space-4: 0.75rem;
+  --cst-space-5: 1rem;
+  --cst-space-6: 1.25rem;
+  --cst-space-7: 1.5rem;
+  --cst-space-8: 2rem;
+
+  /* Tightened for a crisper surface: inputs 8 · panels/chips 10 · cards 14 · header 18 */
+  --cst-radius-sm: 0.5rem;
+  --cst-radius-md: 0.625rem;
+  --cst-radius-lg: 0.875rem;
+  --cst-radius-xl: 1.125rem;
+  --cst-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.35);
+  --cst-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --cst-shadow-3: 0 16px 36px rgba(0, 0, 0, 0.55), 0 4px 14px rgba(0, 0, 0, 0.45);
+  --cst-focus-ring-width: 3px;
+  --cst-focus-ring: 0 0 0 var(--cst-focus-ring-width) var(--cst-color-focus-ring);
+
+  --cst-motion-fast: 140ms;
+  --cst-motion-medium: 220ms;
+  --cst-motion-slow: 320ms;
+  --cst-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --cst-ease-emphasized: cubic-bezier(0.2, 0.9, 0.2, 1);
+
+  --cst-control-height: 2.5rem;
+  --cst-control-height-compact: 2rem;
+  --cst-icon-button-size: 1.875rem;
+
+  /* Shared themed surfaces (standalone shell + tool container chrome) */
+  --cst-page-backdrop-base: var(--md-sys-color-surface, #0b0b11);
+  --cst-page-backdrop-spot-primary: rgba(111, 91, 240, 0.18);
+  --cst-page-backdrop-spot-secondary: rgba(95, 224, 194, 0.1);
+  --cst-page-grid-dot: rgba(169, 156, 255, 0.06);
+  --cst-tool-surface-overlay-top: rgba(19, 19, 25, 0.92);
+  --cst-tool-surface-overlay-bottom: rgba(11, 11, 17, 0.82);
+  --cst-shell-header-spot: rgba(111, 91, 240, 0.16);
+  --cst-shell-header-bg-start: rgba(21, 21, 28, 0.95);
+  --cst-shell-header-bg-end: #0e0e14;
+  --cst-shell-footer-bg-start: rgba(19, 19, 25, 0.7);
+  --cst-shell-footer-bg-end: rgba(11, 11, 17, 0.85);
+  --cst-shell-brand-chip-bg: rgba(111, 91, 240, 0.14);
+  --cst-shell-brand-chip-border: rgba(111, 91, 240, 0.28);
+  --cst-shell-brand-chip-bg-hover: rgba(111, 91, 240, 0.22);
+  --cst-shell-theme-toggle-bg: rgba(21, 21, 28, 0.7);
+  --cst-shell-theme-toggle-bg-hover: rgba(28, 28, 37, 0.92);
+  --cst-shell-theme-toggle-border: rgba(154, 155, 171, 0.2);
+  --cst-shell-theme-toggle-border-hover: rgba(154, 155, 171, 0.36);
+  --cst-shell-theme-toggle-text: var(--md-sys-color-on-surface, #ededf2);
+  /* Dark-mode active icon tracks the warning role (amber sun). */
+  --cst-shell-theme-toggle-icon-active: var(--cst-color-warning, #fbbf24);
+  --cst-color-mix-neutral: var(--md-sys-color-surface-container-highest, #24242f);
+}
+
+/* Embedded tools can live inside host pages that define their own Material-style
+   `--md-sys-color-*` variables. Re-declare the palette on `.tool-container` so
+   descendant tool styles resolve our token values instead of host values. */
+.tool-container {
+  color-scheme: dark;
+
+  --md-sys-color-primary: #6f5bf0;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #2a2550;
+  --md-sys-color-on-primary-container: #ded7ff;
+  --md-sys-color-secondary: #21222c;
+  --md-sys-color-on-secondary: #ededf2;
+  --md-sys-color-secondary-container: #1c1c25;
+  --md-sys-color-on-secondary-container: #c9cad6;
+  --md-sys-color-tertiary: #5fe0c2;
+  --md-sys-color-on-tertiary: #06231c;
+  --md-sys-color-tertiary-container: #133f36;
+  --md-sys-color-on-tertiary-container: #b6f5e6;
+  --md-sys-color-error: #ff6b6b;
+  --md-sys-color-on-error: #2a0606;
+  --md-sys-color-error-container: #4a1414;
+  --md-sys-color-on-error-container: #ffd2d2;
+
+  --md-sys-color-surface: #0b0b11;
+  --md-sys-color-surface-dim: #08080d;
+  --md-sys-color-surface-bright: #131319;
+  --md-sys-color-surface-container-low: #0e0e14;
+  --md-sys-color-surface-container: #15151c;
+  --md-sys-color-surface-container-high: #1c1c25;
+  --md-sys-color-surface-container-highest: #24242f;
+  --md-sys-color-on-surface: #ededf2;
+  --md-sys-color-on-surface-variant: #9a9bab;
+  --md-sys-color-outline: #51515e;
+  --md-sys-color-outline-variant: #2b2b36;
+  --md-sys-color-inverse-surface: #ededf2;
+  --md-sys-color-inverse-on-surface: #15151c;
+}
+
+:root[data-theme="dark"],
+:root[data-cst-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* -------------------------------------------------------------------------
+   Light theme — opt-in via data-theme="light" (the same iris system, in daylight)
+   ------------------------------------------------------------------------- */
+:root[data-theme="light"],
+:root[data-cst-theme="light"] {
+  color-scheme: light;
+
+  --md-sys-color-primary: #6450e6;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #e4dfff;
+  --md-sys-color-on-primary-container: #1a1147;
+  --md-sys-color-secondary: #5a5b6b;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #e6e6ee;
+  --md-sys-color-on-secondary-container: #1a1a22;
+  --md-sys-color-tertiary: #0f9d7d;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-tertiary-container: #b8f0e2;
+  --md-sys-color-on-tertiary-container: #00271d;
+  --md-sys-color-error: #d92020;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: #ffdad6;
+  --md-sys-color-on-error-container: #410002;
+
+  --md-sys-color-surface: #f7f7fa;
+  --md-sys-color-surface-dim: #e2e2ea;
+  --md-sys-color-surface-bright: #ffffff;
+  --md-sys-color-surface-container-low: #f2f2f7;
+  --md-sys-color-surface-container: #ededf3;
+  --md-sys-color-surface-container-high: #e4e4ec;
+  --md-sys-color-surface-container-highest: #dadae4;
+  --md-sys-color-on-surface: #1a1a22;
+  --md-sys-color-on-surface-variant: #5a5a68;
+  --md-sys-color-outline: #8a8a98;
+  --md-sys-color-outline-variant: #d6d6e0;
+  --md-sys-color-inverse-surface: #2a2a34;
+  --md-sys-color-inverse-on-surface: #f2f2f7;
+
+  /* Shared system token adjustments */
+  --cst-color-primary-hover: #5341d6;
+  --cst-color-accent: #6450e6;
+  --cst-color-accent-hover: #5341d6;
+  --cst-color-secondary-hover: #45465a;
+  --cst-color-danger-hover: #b51818;
+  /* AA-compliant as small text on white and on success-tinted surfaces
+     (#1d9d63 failed at ~3.4:1; #157a4c is ~5.3:1 on white, ~4.7:1 on tint). */
+  --cst-color-success: #157a4c;
+  --cst-color-success-hover: #11633c;
+  --cst-color-warning: #b06b00;
+  --cst-color-shadow: rgba(30, 27, 60, 0.12);
+  --cst-color-shadow-strong: rgba(30, 27, 60, 0.2);
+  /* Strengthened from 0.3 alpha — the 3px ring was too subtle on light-gray
+     surfaces to read as a focus indicator. */
+  --cst-color-focus-ring: rgba(100, 80, 230, 0.45);
+
+  /* v4 accents (light): darker hues keep AA contrast on near-white. */
+  --cst-color-accent-soft: rgba(100, 80, 230, 0.08);
+  --cst-color-category-formatters: #6450e6;
+  --cst-color-category-formatters-soft: rgba(100, 80, 230, 0.1);
+  --cst-color-category-encoders: #0f9d7d;
+  --cst-color-category-encoders-soft: rgba(15, 157, 125, 0.12);
+  --cst-color-category-text: #b45309;
+  --cst-color-category-text-soft: rgba(180, 83, 9, 0.12);
+  --cst-color-category-media: #be185d;
+  --cst-color-category-media-soft: rgba(190, 24, 93, 0.12);
+  --cst-shadow-1: 0 1px 2px rgba(30, 27, 60, 0.08), 0 4px 14px rgba(30, 27, 60, 0.05);
+  --cst-shadow-2: 0 6px 20px rgba(30, 27, 60, 0.1), 0 2px 6px rgba(30, 27, 60, 0.07);
+  --cst-shadow-3: 0 14px 30px rgba(30, 27, 60, 0.14), 0 4px 12px rgba(30, 27, 60, 0.1);
+
+  /* Shared themed surfaces (light overrides) */
+  --cst-page-backdrop-base: var(--md-sys-color-surface, #f7f7fa);
+  --cst-page-backdrop-spot-primary: rgba(111, 91, 240, 0.16);
+  --cst-page-backdrop-spot-secondary: rgba(15, 157, 125, 0.1);
+  --cst-page-grid-dot: rgba(100, 80, 230, 0.05);
+  --cst-tool-surface-overlay-top: rgba(255, 255, 255, 0.92);
+  --cst-tool-surface-overlay-bottom: rgba(255, 255, 255, 0.82);
+  --cst-shell-header-spot: rgba(111, 91, 240, 0.14);
+  --cst-shell-header-bg-start: rgba(255, 255, 255, 0.98);
+  --cst-shell-header-bg-end: var(--md-sys-color-surface-container, #ededf3);
+  --cst-shell-footer-bg-start: rgba(255, 255, 255, 0.75);
+  --cst-shell-footer-bg-end: rgba(242, 242, 247, 0.9);
+  --cst-shell-brand-chip-bg: rgba(100, 80, 230, 0.08);
+  --cst-shell-brand-chip-border: rgba(100, 80, 230, 0.16);
+  --cst-shell-brand-chip-bg-hover: rgba(100, 80, 230, 0.13);
+  --cst-shell-theme-toggle-bg: rgba(255, 255, 255, 0.72);
+  --cst-shell-theme-toggle-bg-hover: rgba(255, 255, 255, 0.9);
+  --cst-shell-theme-toggle-border: rgba(90, 90, 104, 0.18);
+  --cst-shell-theme-toggle-border-hover: rgba(90, 90, 104, 0.34);
+  --cst-shell-theme-toggle-text: var(--md-sys-color-on-surface, #1a1a22);
+  --cst-shell-theme-toggle-icon-active: var(--cst-color-warning, #b06b00);
+  --cst-color-mix-neutral: #ffffff;
+}
+
+:root[data-theme="light"] .tool-container,
+:root[data-cst-theme="light"] .tool-container {
+  color-scheme: light;
+
+  --md-sys-color-primary: #6450e6;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #e4dfff;
+  --md-sys-color-on-primary-container: #1a1147;
+  --md-sys-color-secondary: #5a5b6b;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #e6e6ee;
+  --md-sys-color-on-secondary-container: #1a1a22;
+  --md-sys-color-tertiary: #0f9d7d;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-tertiary-container: #b8f0e2;
+  --md-sys-color-on-tertiary-container: #00271d;
+  --md-sys-color-error: #d92020;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: #ffdad6;
+  --md-sys-color-on-error-container: #410002;
+
+  --md-sys-color-surface: #f7f7fa;
+  --md-sys-color-surface-dim: #e2e2ea;
+  --md-sys-color-surface-bright: #ffffff;
+  --md-sys-color-surface-container-low: #f2f2f7;
+  --md-sys-color-surface-container: #ededf3;
+  --md-sys-color-surface-container-high: #e4e4ec;
+  --md-sys-color-surface-container-highest: #dadae4;
+  --md-sys-color-on-surface: #1a1a22;
+  --md-sys-color-on-surface-variant: #5a5a68;
+  --md-sys-color-outline: #8a8a98;
+  --md-sys-color-outline-variant: #d6d6e0;
+  --md-sys-color-inverse-surface: #2a2a34;
+  --md-sys-color-inverse-on-surface: #f2f2f7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --cst-motion-fast: 1ms;
+    --cst-motion-medium: 1ms;
+    --cst-motion-slow: 1ms;
+  }
+}

@@ -1,0 +1,53 @@
+name: Feature request
+description: Propose a new capability or improvement for a tool, shared runtime surface, or contributor workflow.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Target area
+      description: Which part of the project should change?
+      options:
+        - base64-converter-tool
+        - css-minifier-tool
+        - data-format-converter
+        - diff-checker-tool
+        - image-editor
+        - js-minifier-tool
+        - json-formatter-tool
+        - json-editor-tool
+        - jwt-builder-tool
+        - jwt-decoder-tool
+        - qr-code-generator
+        - text-analyzer-tool
+        - shared runtime or styling
+        - build or CI
+        - contributor workflow or docs
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What limitation or missed opportunity are you trying to solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the behavior or workflow you want.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches did you consider?
+  - type: textarea
+    id: impact
+    attributes:
+      label: User or contributor impact
+      description: Who benefits, and what tradeoffs or risks should be considered?

@@ -1,0 +1,234 @@
+/* Copy Button Component Styles */
+
+.copy-button-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.copy-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--color-primary, #2563eb);
+    color: white;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: none;
+    z-index: 10;
+    width: var(--cst-icon-button-size, 28px);
+    height: var(--cst-icon-button-size, 28px);
+    border-radius: var(--cst-radius-sm, 6px);
+    font-weight: 500;
+    text-align: center;
+    line-height: 28px;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0, 95, 115, 0.22);
+    transition:
+        background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+        transform var(--cst-motion-fast, 140ms) var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+        box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+    overflow: hidden;
+}
+
+
+.copy-button:hover {
+    background: var(--color-primary-hover, #1d4ed8);
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 6px 14px rgba(0, 95, 115, 0.28);
+}
+
+.copy-button:focus {
+    outline: none;
+}
+
+.copy-button:focus-visible {
+    outline: none;
+    box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.22)), 0 6px 14px rgba(0, 95, 115, 0.28);
+}
+
+.copy-button:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Copy icon using CSS */
+.copy-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid currentColor;
+    border-radius: 2px;
+    background: transparent;
+}
+
+.copy-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-40%, -60%);
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid currentColor;
+    border-radius: 2px;
+    background: var(--color-primary, #2563eb);
+    z-index: -1;
+}
+
+/* Success animation */
+.copy-button.copy-success {
+    background: var(--color-success, #28a745);
+    animation: copySuccess 0.6s var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.copy-button.copy-success::before {
+    content: '';
+    width: 6px;
+    height: 10px;
+    border: none;
+    border-right: 2px solid white;
+    border-bottom: 2px solid white;
+    transform: translate(-50%, -60%) rotate(45deg);
+    background: transparent;
+}
+
+.copy-button.copy-success::after {
+    display: none;
+}
+
+/* Error animation */
+.copy-button.copy-error {
+    background: var(--color-danger, #dc3545);
+    animation: copyError 0.6s var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.copy-button.copy-error::before {
+    content: '!';
+    width: auto;
+    height: auto;
+    border: none;
+    transform: translate(-50%, -50%);
+    font-size: 16px;
+    font-weight: bold;
+    background: transparent;
+}
+
+.copy-button.copy-error::after {
+    display: none;
+}
+
+/* Keyframe animations */
+@keyframes copySuccess {
+    0% {
+        transform: translateY(-1px) scale(1.05);
+    }
+    50% {
+        transform: translateY(-2px) scale(1.1);
+        box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+    }
+    100% {
+        transform: translateY(-1px) scale(1.05);
+    }
+}
+
+@keyframes copyError {
+    0%, 100% {
+        transform: translateY(-1px) scale(1.05);
+    }
+    25% {
+        transform: translateY(-1px) scale(1.05) rotate(-5deg);
+    }
+    75% {
+        transform: translateY(-1px) scale(1.05) rotate(5deg);
+    }
+}
+
+/* Pulse effect on click */
+.copy-button:active::before {
+    animation: pulse 0.3s ease-out;
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* Ensure textarea respects the button's position */
+.copy-button-wrapper .c-input--textarea,
+.copy-button-wrapper textarea {
+    padding-right: 45px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .copy-button {
+        width: 32px;
+        height: 32px;
+        line-height: 32px;
+        top: 6px;
+        right: 6px;
+    }
+    
+    .copy-button-wrapper .c-input--textarea,
+    .copy-button-wrapper textarea {
+        padding-right: 50px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .copy-button {
+        border: 2px solid currentColor;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .copy-button {
+        transition: none;
+    }
+    
+    .copy-button.copy-success,
+    .copy-button.copy-error {
+        animation: none;
+    }
+    
+    .copy-button:active::before {
+        animation: none;
+    }
+}
+
+/* Dark mode support (if implemented in the future) */
+@media (prefers-color-scheme: dark) {
+    .copy-button {
+        box-shadow: 0 2px 8px rgba(0, 95, 115, 0.45);
+    }
+    
+    .copy-button:hover {
+        box-shadow: 0 4px 12px rgba(0, 95, 115, 0.55);
+    }
+}
+
+:root[data-theme="dark"] .copy-button,
+:root[data-cst-theme="dark"] .copy-button {
+    box-shadow: 0 2px 8px rgba(0, 95, 115, 0.45);
+}
+
+:root[data-theme="dark"] .copy-button:hover,
+:root[data-cst-theme="dark"] .copy-button:hover {
+    box-shadow: 0 4px 12px rgba(0, 95, 115, 0.55);
+}

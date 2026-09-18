@@ -1,0 +1,304 @@
+/* Clear Button Component Styles */
+
+.clear-button-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.clear-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: linear-gradient(135deg, var(--color-danger, #dc3545) 0%, #b02a37 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: none;
+    z-index: 10;
+    width: var(--cst-icon-button-size, 28px);
+    height: var(--cst-icon-button-size, 28px);
+    border-radius: 50%;
+    font-weight: 600;
+    text-align: center;
+    line-height: 28px;
+    font-size: 14px;
+    box-shadow: 0 3px 12px rgba(186, 26, 26, 0.28), 0 1px 3px rgba(15, 23, 42, 0.08);
+    transition:
+        background-color var(--cst-motion-fast, 140ms) var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+        transform var(--cst-motion-fast, 140ms) var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+        box-shadow var(--cst-motion-fast, 140ms) var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+    overflow: hidden;
+}
+
+.clear-button:hover {
+    background: linear-gradient(135deg, var(--color-danger-hover, #c82333) 0%, #a02329 100%);
+    transform: translateY(-2px) scale(1.08);
+    box-shadow: 0 6px 20px rgba(186, 26, 26, 0.35), 0 3px 8px rgba(15, 23, 42, 0.12);
+}
+
+.clear-button:focus {
+    outline: none;
+}
+
+.clear-button:active {
+    transform: translateY(-1px) scale(1.02);
+    transition:
+        transform 0.1s var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+        box-shadow 0.1s var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+/* Enhanced trash can icon using CSS */
+.clear-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 12px;
+    border: 1.5px solid currentColor;
+    border-top: none;
+    border-radius: 0 0 2px 2px;
+    background: transparent;
+}
+
+.clear-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -65%);
+    width: 12px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 1px;
+}
+
+/* Add trash can lid detail */
+.clear-button:before {
+    box-shadow: 
+        0 -3px 0 -1px currentColor, /* lid */
+        inset 2px 0 0 -1px currentColor, /* left line */
+        inset -2px 0 0 -1px currentColor; /* right line */
+}
+
+/* Clear success animation */
+.clear-button.clear-success {
+    background: linear-gradient(135deg, var(--color-success, #28a745) 0%, #1e7e34 100%);
+    animation: clearSuccess 0.8s var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.clear-button.clear-success::before {
+    content: '';
+    width: 6px;
+    height: 10px;
+    border: none;
+    border-right: 2px solid white;
+    border-bottom: 2px solid white;
+    transform: translate(-50%, -60%) rotate(45deg);
+    background: transparent;
+    box-shadow: none;
+}
+
+.clear-button.clear-success::after {
+    display: none;
+}
+
+/* Ripple effect on click */
+.clear-button::before {
+    position: relative;
+}
+
+.clear-button:active::before {
+    animation: ripple 0.4s ease-out;
+}
+
+/* Keyframe animations */
+@keyframes clearSuccess {
+    0% {
+        transform: translateY(-2px) scale(1.08);
+    }
+    30% {
+        transform: translateY(-4px) scale(1.15) rotate(5deg);
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.6), 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    60% {
+        transform: translateY(-3px) scale(1.12) rotate(-2deg);
+    }
+    100% {
+        transform: translateY(-2px) scale(1.08);
+    }
+}
+
+@keyframes ripple {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 0.7;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Pulse effect for enhanced feedback */
+.clear-button:hover::before {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* Sweep animation on clear */
+.clear-button.clearing {
+    animation: sweep 0.6s var(--cst-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+@keyframes sweep {
+    0% {
+        transform: translateY(-2px) scale(1.08) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-3px) scale(1.12) rotate(-10deg);
+    }
+    50% {
+        transform: translateY(-4px) scale(1.15) rotate(5deg);
+    }
+    75% {
+        transform: translateY(-3px) scale(1.12) rotate(-3deg);
+    }
+    100% {
+        transform: translateY(-2px) scale(1.08) rotate(0deg);
+    }
+}
+
+/* Ensure textarea respects the button's position */
+.clear-button-wrapper .c-input--textarea,
+.clear-button-wrapper textarea {
+    padding-right: 40px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .clear-button {
+        width: 32px;
+        height: 32px;
+        line-height: 32px;
+        top: 6px;
+        right: 6px;
+        font-size: 16px;
+    }
+    
+    .clear-button::before {
+        width: 12px;
+        height: 14px;
+    }
+    
+    .clear-button::after {
+        width: 14px;
+    }
+    
+    .clear-button-wrapper .c-input--textarea,
+    .clear-button-wrapper textarea {
+        padding-right: 45px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .clear-button {
+        border: 2px solid currentColor;
+        box-shadow: none;
+    }
+    
+    .clear-button:hover {
+        box-shadow: none;
+        border-color: white;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .clear-button {
+        transition: background-color 0.2s;
+    }
+    
+    .clear-button:hover {
+        transform: none;
+        box-shadow: 0 3px 12px rgba(220, 53, 69, 0.4), 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .clear-button:active {
+        transform: none;
+    }
+    
+    .clear-button.clear-success,
+    .clear-button.clearing {
+        animation: none;
+    }
+    
+    .clear-button:active::before,
+    .clear-button:hover::before {
+        animation: none;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .clear-button {
+        box-shadow: 0 3px 12px rgba(220, 53, 69, 0.6), 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+    
+    .clear-button:hover {
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.7), 0 3px 8px rgba(0, 0, 0, 0.4);
+    }
+}
+
+:root[data-theme="dark"] .clear-button,
+:root[data-cst-theme="dark"] .clear-button {
+    box-shadow: 0 3px 12px rgba(220, 53, 69, 0.6), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] .clear-button:hover,
+:root[data-cst-theme="dark"] .clear-button:hover {
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.7), 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Enhanced focus styles for better accessibility */
+.clear-button:focus-visible {
+    outline: none;
+    box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.22)), 0 6px 20px rgba(186, 26, 26, 0.35);
+}
+
+/* Loading state (if needed for async operations) */
+.clear-button.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.clear-button.loading::before {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}

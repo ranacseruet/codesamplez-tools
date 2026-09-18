@@ -1,0 +1,474 @@
+/* Phase E tool-scoped styles for Diff Checker */
+
+.diffc-tool {
+  /* The shell now has a fixed app bar (`.cst-appbar`, height `--cst-appbar-height`).
+     The sticky options bar and result header must pin *below* that bar instead of
+     flush to the viewport top, otherwise they slide underneath it on scroll. */
+  --sticky-offset-base: var(--cst-appbar-height, 3.5rem);
+  /* Desktop-shaped fallback only. The real height varies from ~80px to ~272px
+     depending on how the strip's controls wrap, so `trackOptionsHeight`
+     (`sticky-offset.ts`) measures the strip and overrides this inline; the
+     per-breakpoint constants that used to live here had drifted ~190px out of
+     date and pinned the result header behind the strip. */
+  --diffc-options-height: 80px;
+
+  /* Diff accent palette: deliberately more saturated than the semantic
+     success/error tokens so added/removed fills stay legible at low
+     color-mix percentages in both themes. Single point of change. */
+  --diffc-added-accent: #16a34a;
+  --diffc-added-deep: #14532d;
+  --diffc-removed-accent: #dc2626;
+  --diffc-removed-deep: #7f1d1d;
+
+  /* Syntax-highlight palette for the result pane. Dark values live here
+     (dark is the system default); light overrides are set under
+     `[data-theme="light"]` below, and every token rule reads these vars. */
+  --diffc-syntax-comment: #93a4ab;
+  --diffc-syntax-punctuation: #c3d0d4;
+  --diffc-syntax-property: #7dd3fc;
+  --diffc-syntax-number: #f6c177;
+  --diffc-syntax-string: #86efac;
+  --diffc-syntax-operator: #d2dce0;
+  --diffc-syntax-keyword: #c4b5fd;
+  --diffc-syntax-function: #f9a8d4;
+  /* Shared by regex/important and deleted tokens — a single "danger" hue. */
+  --diffc-syntax-danger: #fda4af;
+}
+
+/* Light-theme syntax palette — mirrors the dark hues with AA-checked
+   equivalents (the stock Prism light colors fail contrast on white, e.g.
+   punctuation #999 at ~2.8:1). */
+:root[data-theme="light"] .diffc-tool,
+:root[data-cst-theme="light"] .diffc-tool {
+  --diffc-syntax-comment: #6e6e80;
+  --diffc-syntax-punctuation: #5a5a68;
+  --diffc-syntax-property: #0e7490;
+  --diffc-syntax-number: #92400e;
+  --diffc-syntax-string: #157a4c;
+  --diffc-syntax-operator: #47475c;
+  --diffc-syntax-keyword: #6450e6;
+  --diffc-syntax-function: #be185d;
+  --diffc-syntax-danger: #be123c;
+}
+
+.diffc-tool .diffc-grid {
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+  align-items: stretch;
+}
+
+.diffc-tool .diffc-panel,
+.diffc-tool .diffc-result-panel {
+  margin: 0;
+}
+
+.diffc-tool .diffc-panel {
+  min-height: 22rem;
+}
+
+.diffc-tool .diffc-panel-content {
+  padding: 0;
+}
+
+.diffc-tool .diffc-textarea {
+  min-height: 19rem;
+  line-height: 1.55;
+  background: var(--color-surface, #fff);
+}
+
+.diffc-tool .diffc-textarea:focus {
+  position: relative;
+  z-index: 1;
+}
+
+/* The opaque surface a sticky strip needs comes from `.c-action-strip`
+   (v4 flat surface) — do not repaint it here. */
+.diffc-tool .diffc-options {
+  position: sticky;
+  top: var(--sticky-offset-base, 0px);
+  z-index: 10;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.diffc-tool .diffc-checkbox-group {
+  gap: 0;
+  margin: 0;
+}
+
+.diffc-tool .diffc-checkbox-item {
+  --c-checkbox-card-padding: 0.8rem 0.95rem;
+  --c-checkbox-card-surface-mix: 93%;
+  --c-checkbox-card-active-top-mix: 60%;
+}
+
+.diffc-tool .diffc-compare-button {
+  min-width: 10rem;
+  width: auto;
+}
+
+/* Inline error row: no stray empty band under the action strip. */
+.diffc-tool .diffc-error-status:empty {
+  display: none;
+}
+
+/* Empty output well: the `.c-empty-state` block stands in for it. */
+.diffc-tool .diffc-result-output:empty {
+  display: none;
+}
+
+.diffc-tool .diffc-result-panel {
+  min-height: 28rem;
+  /* `.c-surface-panel` clips with `overflow: hidden`, which would make this a
+     scroll container and break the sticky header below. `clip` still honours
+     the card's border radius — without it the result content paints square
+     corners over the card's rounded ones. */
+  overflow: clip;
+}
+
+/* Chrome/padding/background come from `.c-surface-panel__header`; only the
+   sticky positioning is tool-specific. */
+.diffc-tool .diffc-result-header {
+  position: sticky;
+  top: calc(var(--sticky-offset-base, 0px) + var(--diffc-options-height, 80px));
+  z-index: 9;
+}
+
+.diffc-tool .diffc-navigation {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.diffc-tool #diff-counter {
+  min-width: 4.5rem;
+  text-align: center;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.diffc-tool .diffc-result-panel-content {
+  flex: 1;
+  min-height: 0;
+  padding: 0.5rem;
+}
+
+.diffc-tool .diffc-result-output {
+  margin: 0;
+  min-height: 24rem;
+  width: 100%;
+  /* Left padding doubles as the +/- marker gutter: `.diff-line::before` hangs
+     14px into it, and `overflow: auto` clips anything left of this box. */
+  padding: 0.3rem 0.3rem 0.3rem 1.25rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+  background: var(--color-surface, #fff);
+  overflow: auto;
+  line-height: 1.45;
+}
+
+/* One focus-ring system: `--cst-focus-ring` is a box-shadow value, so it cannot
+   be handed to `outline`. The inset well shadow is repeated because
+   `box-shadow` replaces rather than adds. */
+.diffc-tool .diffc-result-output:focus-visible {
+  outline: none;
+  box-shadow:
+    var(--cst-focus-ring, 0 0 0 3px rgba(125, 107, 255, 0.55)),
+    inset 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+/* Prism emits generic `.token` spans, and host pages often ship global Prism themes.
+   Scope a curated palette to the diff result pane so syntax highlighting stays
+   readable in both themes. Colors come from the `--diffc-syntax-*` vars above
+   (dark defaults on `.diffc-tool`, light overrides under [data-theme="light"]). */
+.diffc-tool .diffc-result-output .token {
+  background: transparent !important;
+  text-shadow: none !important;
+}
+
+.diffc-tool .diffc-result-output .token.comment,
+.diffc-tool .diffc-result-output .token.prolog,
+.diffc-tool .diffc-result-output .token.doctype,
+.diffc-tool .diffc-result-output .token.cdata {
+  color: var(--diffc-syntax-comment, #93a4ab) !important;
+}
+
+.diffc-tool .diffc-result-output .token.punctuation {
+  color: var(--diffc-syntax-punctuation, #c3d0d4) !important;
+}
+
+.diffc-tool .diffc-result-output .token.property,
+.diffc-tool .diffc-result-output .token.tag,
+.diffc-tool .diffc-result-output .token.constant,
+.diffc-tool .diffc-result-output .token.symbol {
+  color: var(--diffc-syntax-property, #7dd3fc) !important;
+}
+
+.diffc-tool .diffc-result-output .token.boolean,
+.diffc-tool .diffc-result-output .token.number {
+  color: var(--diffc-syntax-number, #f6c177) !important;
+}
+
+.diffc-tool .diffc-result-output .token.selector,
+.diffc-tool .diffc-result-output .token.attr-name,
+.diffc-tool .diffc-result-output .token.string,
+.diffc-tool .diffc-result-output .token.char,
+.diffc-tool .diffc-result-output .token.builtin,
+.diffc-tool .diffc-result-output .token.inserted {
+  color: var(--diffc-syntax-string, #86efac) !important;
+}
+
+.diffc-tool .diffc-result-output .token.operator,
+.diffc-tool .diffc-result-output .token.entity,
+.diffc-tool .diffc-result-output .token.url,
+.diffc-tool .diffc-result-output .token.variable {
+  color: var(--diffc-syntax-operator, #d2dce0) !important;
+}
+
+.diffc-tool .diffc-result-output .token.atrule,
+.diffc-tool .diffc-result-output .token.attr-value,
+.diffc-tool .diffc-result-output .token.keyword {
+  color: var(--diffc-syntax-keyword, #c4b5fd) !important;
+}
+
+.diffc-tool .diffc-result-output .token.function,
+.diffc-tool .diffc-result-output .token.class-name {
+  color: var(--diffc-syntax-function, #f9a8d4) !important;
+}
+
+.diffc-tool .diffc-result-output .token.regex,
+.diffc-tool .diffc-result-output .token.important {
+  color: var(--diffc-syntax-danger, #fda4af) !important;
+}
+
+.diffc-tool .diffc-result-output .token.deleted {
+  color: var(--diffc-syntax-danger, #fda4af) !important;
+  opacity: 0.9;
+}
+
+.diffc-tool .diffc-result-output .token.bold,
+.diffc-tool .diffc-result-output .token.important {
+  font-weight: 600;
+}
+
+.diffc-tool .diffc-result-output .token.italic {
+  font-style: italic;
+}
+
+.diffc-tool .diff-line {
+  display: flex;
+  margin: 1px 0;
+  position: relative;
+  border-left: 4px solid transparent;
+  border-radius: 6px;
+}
+
+.diffc-tool .diff-content {
+  flex-grow: 1;
+  padding: 2px 12px;
+  border-radius: 0 6px 6px 0;
+  transition: background-color 140ms ease;
+  display: inline-block;
+  width: 100%;
+  color: var(--color-text, #1f2937);
+}
+
+.diffc-tool ins.diff-content,
+.diffc-tool del.diff-content {
+  text-decoration: none;
+}
+
+.diffc-tool .diff-line:has(.diff-content.diff-added) {
+  background-color: color-mix(in srgb, var(--diffc-added-accent, #16a34a) 10%, var(--cst-color-mix-neutral, white));
+  border-left-color: var(--diffc-added-accent, #16a34a);
+}
+
+.diffc-tool .diff-line:has(.diff-content.diff-removed) {
+  background-color: color-mix(in srgb, var(--diffc-removed-accent, #dc2626) 10%, var(--cst-color-mix-neutral, white));
+  border-left-color: var(--diffc-removed-accent, #dc2626);
+}
+
+.diffc-tool .diff-content.diff-added {
+  color: color-mix(in srgb, var(--color-success, #1d7f4f) 86%, var(--color-text, #1f2937));
+}
+
+.diffc-tool .diff-content.diff-removed {
+  color: color-mix(in srgb, var(--color-danger, #ba1a1a) 84%, var(--color-text, #1f2937));
+}
+
+.diffc-tool .word-added {
+  background-color: color-mix(in srgb, var(--diffc-added-accent, #16a34a) 36%, var(--cst-color-mix-neutral, white));
+  padding: 1px 2px;
+  border-radius: 3px;
+  color: color-mix(in srgb, var(--color-success, #1d7f4f) 90%, var(--color-text, #1f2937));
+  font-weight: 600;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--diffc-added-accent, #16a34a) 52%, var(--cst-color-mix-neutral, white)),
+    inset 0 -1px 0 color-mix(in srgb, var(--diffc-added-deep, #14532d) 22%, transparent);
+}
+
+.diffc-tool .word-removed {
+  background-color: color-mix(in srgb, var(--diffc-removed-accent, #dc2626) 34%, var(--cst-color-mix-neutral, white));
+  text-decoration: line-through;
+  padding: 1px 2px;
+  border-radius: 3px;
+  color: color-mix(in srgb, var(--color-danger, #ba1a1a) 88%, var(--color-text, #1f2937));
+  font-weight: 600;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--diffc-removed-accent, #dc2626) 48%, var(--cst-color-mix-neutral, white)),
+    inset 0 -1px 0 color-mix(in srgb, var(--diffc-removed-deep, #7f1d1d) 18%, transparent);
+}
+
+/* Light theme: the chip text mixes toward --color-text (dark gray), which is not
+   enough contrast against the saturated light chip fills — measured 4.04:1
+   (added) and 3.44:1 (removed). Mixing the semantic hue toward black instead of
+   gray clears WCAG AA (~4.9:1 / ~5.2:1) while keeping the same chip fills. */
+:root[data-theme="light"] .diffc-tool .word-added,
+:root[data-cst-theme="light"] .diffc-tool .word-added {
+  color: color-mix(in srgb, var(--color-success, #1d7f4f) 80%, black);
+}
+
+:root[data-theme="light"] .diffc-tool .word-removed,
+:root[data-cst-theme="light"] .diffc-tool .word-removed {
+  color: color-mix(in srgb, var(--color-danger, #ba1a1a) 64%, black);
+}
+
+.diffc-tool .diff-line:has(.diff-content.diff-added):hover {
+  background-color: color-mix(in srgb, var(--diffc-added-accent, #16a34a) 14%, var(--cst-color-mix-neutral, white));
+}
+
+.diffc-tool .diff-line:has(.diff-content.diff-removed):hover {
+  background-color: color-mix(in srgb, var(--diffc-removed-accent, #dc2626) 14%, var(--cst-color-mix-neutral, white));
+}
+
+.diffc-tool .diff-line::before {
+  position: absolute;
+  left: -14px;
+  top: 2px;
+  color: var(--color-text, #1f2937);
+  opacity: 0.42;
+  font-weight: 900;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.diffc-tool .diff-line:has(.diff-content.diff-added)::before {
+  content: '+';
+}
+
+.diffc-tool .diff-line:has(.diff-content.diff-removed)::before {
+  content: '-';
+}
+
+.diffc-tool .diff-line-number {
+  opacity: 0.72;
+  display: inline-block;
+  flex-shrink: 0;
+  min-width: 62px;
+  padding: 2px 6px;
+  text-align: right;
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12px;
+  user-select: none;
+  white-space: pre;
+  background-color: color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 76%, var(--cst-color-mix-neutral, white));
+  border-right: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
+  line-height: 1.45;
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.diffc-tool .diff-line.current-diff-single {
+  outline: 2px solid var(--color-primary, #1d70b8);
+  outline-offset: -1px;
+  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, var(--cst-color-mix-neutral, white));
+}
+
+.diffc-tool .diff-line.current-diff-start {
+  border-top: 2px solid var(--color-primary, #1d70b8);
+  border-left: 2px solid var(--color-primary, #1d70b8);
+  border-right: 2px solid var(--color-primary, #1d70b8);
+  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, var(--cst-color-mix-neutral, white));
+}
+
+.diffc-tool .diff-line.current-diff-middle {
+  border-left: 2px solid var(--color-primary, #1d70b8);
+  border-right: 2px solid var(--color-primary, #1d70b8);
+  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, var(--cst-color-mix-neutral, white));
+}
+
+.diffc-tool .diff-line.current-diff-end {
+  border-bottom: 2px solid var(--color-primary, #1d70b8);
+  border-left: 2px solid var(--color-primary, #1d70b8);
+  border-right: 2px solid var(--color-primary, #1d70b8);
+  background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, var(--cst-color-mix-neutral, white));
+}
+
+@media (max-width: 900px) {
+  .diffc-tool .diffc-options {
+    align-items: stretch;
+  }
+
+  .diffc-tool .diffc-compare-button {
+    flex: 1 1 12rem;
+    width: 100%;
+  }
+
+  .diffc-tool .diffc-result-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .diffc-tool .diffc-navigation {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 640px) {
+  .diffc-tool .diffc-panel {
+    min-height: 19rem;
+  }
+
+  .diffc-tool .diffc-checkbox-item {
+    width: 100%;
+  }
+
+  .diffc-tool .diffc-navigation {
+    gap: 0.4rem;
+  }
+
+  .diffc-tool .diffc-navigation .c-button {
+    flex: 1 1 0;
+  }
+
+  .diffc-tool #diff-counter {
+    min-width: 100%;
+    order: 3;
+  }
+
+  .diffc-tool .diffc-result-panel-content {
+    padding: 0.35rem;
+  }
+
+  .diffc-tool .diffc-result-output {
+    min-height: 18rem;
+    /* Markers are hidden at this width; reclaim the gutter. */
+    padding-left: 0.45rem;
+  }
+
+  .diffc-tool .diff-content {
+    padding: 2px 8px;
+  }
+
+  .diffc-tool .diff-line-number {
+    min-width: 54px;
+    font-size: 11px;
+    padding: 2px 4px;
+  }
+
+  .diffc-tool .diff-line::before {
+    display: none;
+  }
+}

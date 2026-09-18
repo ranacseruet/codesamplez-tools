@@ -1,0 +1,4 @@
+# Default reviewers. Every pull request requests a review from the maintainer.
+# Adjust or add paths if ownership of specific areas changes.
+
+* @ranacseruet

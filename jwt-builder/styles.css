@@ -1,0 +1,331 @@
+/* JWT Builder - Phase E UI modernization (tool-scoped) */
+
+.jwt-builder-container {
+  --jwtb-accent: var(--color-primary, #005f73);
+  --jwtb-surface-soft: color-mix(in srgb, var(--md-sys-color-surface-container-low, #f5f7f9) 90%, var(--cst-color-mix-neutral, white) 10%);
+  --jwtb-border-soft: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 78%, var(--cst-color-mix-neutral, white) 22%);
+  --jwtb-success: color-mix(in srgb, var(--color-success, #1f7a4d) 88%, #0f5132 12%);
+}
+
+.jwt-builder-form {
+  gap: var(--spacing-md, var(--default-spacing-md));
+}
+
+.jwt-builder-grid.o-grid-2col {
+  gap: var(--spacing-md, var(--default-spacing-md));
+  margin-bottom: 0;
+}
+
+.jwt-builder-container .jwt-builder-section.c-form-group {
+  border-radius: var(--border-radius-md, var(--default-border-radius-sm));
+  border-color: var(--jwtb-border-soft);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 96%, var(--jwtb-accent) 4%) 0%,
+      var(--jwtb-surface-soft) 100%
+    );
+  box-shadow: var(--cst-shadow-1, none);
+}
+
+.jwt-builder-container .c-form-group-header {
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.jwt-builder-container .c-form-group-header :is(h2, h3),
+.jwt-builder-container .c-form-group > :is(h2, h3).c-form-group-header {
+  letter-spacing: 0.01em;
+}
+
+.jwt-builder-container .c-form-row {
+  padding: 0.2rem 0;
+}
+
+.jwt-builder-container .c-form-row label {
+  font-weight: 600;
+}
+
+.jwt-builder-container .c-input {
+  font-family: var(--font-family-mono, var(--default-font-family-mono));
+  color: color-mix(in srgb, var(--color-text, #111827) 92%, black 8%);
+  font-weight: 500;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 98%, var(--jwtb-accent) 2%) 0%,
+      var(--color-bg, #fff) 100%
+    );
+  border-color: color-mix(in srgb, var(--color-border, rgba(128, 128, 128, 0.3)) 82%, var(--cst-color-mix-neutral, white) 18%);
+}
+
+.jwt-builder-container .c-input:focus {
+  color: color-mix(in srgb, var(--color-text, #111827) 96%, black 4%);
+}
+
+.jwt-builder-container .c-input::placeholder {
+  color: color-mix(in srgb, var(--color-text-secondary, #6b7280) 84%, var(--cst-color-mix-neutral, white) 16%);
+  opacity: 1;
+  font-weight: 400;
+}
+
+.jwt-builder-inline-actions {
+  min-width: 0;
+}
+
+.jwt-builder-quick-set-buttons.quick-set-buttons {
+  margin-top: var(--spacing-xs, var(--default-spacing-xs));
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs, var(--default-spacing-xs));
+}
+
+.jwt-builder-quick-set-btn {
+  min-width: 0;
+}
+
+.jwt-builder-container .jwt-builder-signature-row {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.jwt-builder-container .jwt-builder-signature-row[hidden] {
+  display: none;
+}
+
+.jwt-builder-container .jwt-builder-signature-row > label {
+  flex: none;
+  width: 100%;
+  padding-top: 0;
+}
+
+.jwt-builder-field-control {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--spacing-xs, var(--default-spacing-xs));
+  min-width: 0;
+  width: 100%;
+}
+
+.jwt-builder-algorithm-select {
+  width: 100%;
+  min-height: var(--cst-control-height, 40px);
+}
+
+.jwt-builder-field-help {
+  margin: 0;
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  font-size: var(--font-size-small, var(--default-font-size-small));
+  line-height: 1.45;
+}
+
+.jwt-builder-secret-control {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  min-width: 0;
+}
+
+.jwt-builder-secret-generate {
+  background: color-mix(in srgb, var(--color-bg, #fff) 90%, var(--jwtb-accent) 10%) !important;
+  border: 1px solid color-mix(in srgb, var(--jwtb-accent) 20%, transparent) !important;
+  color: var(--jwtb-accent) !important;
+  padding: 0.35rem !important;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  width: 2.25rem;
+  flex: 0 0 2.25rem;
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  box-shadow: none !important;
+}
+
+.jwt-builder-secret-generate:hover {
+  background: color-mix(in srgb, var(--color-bg, #fff) 82%, var(--jwtb-accent) 18%) !important;
+  color: var(--color-accent-hover, var(--color-primary-hover, var(--default-color-primary-hover))) !important;
+  transform: translateY(-1px);
+}
+
+.jwt-builder-secret-generate svg {
+  width: 18px;
+  height: 18px;
+}
+
+.jwt-builder-container .copy-button-wrapper {
+  flex: 1;
+  display: flex;
+  position: relative;
+  min-width: 0;
+}
+
+.jwt-builder-container .copy-button-wrapper .c-input {
+  padding-right: 45px;
+  flex: 1;
+}
+
+.jwt-builder-container .jwt-builder-private-key.c-input--textarea {
+  width: 100%;
+  height: auto;
+  min-height: 11rem;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.jwt-builder-container .add-claim {
+  white-space: nowrap;
+}
+
+.jwt-builder-container .custom-claim-row {
+  padding: var(--spacing-sm, var(--default-spacing-sm));
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  border: 1px solid color-mix(in srgb, var(--jwtb-accent) 12%, var(--jwtb-border-soft));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 96%, var(--jwtb-accent) 4%) 0%,
+      color-mix(in srgb, var(--color-bg, #fff) 99%, var(--jwtb-accent) 1%) 100%
+    );
+}
+
+.jwt-builder-custom-claim-fields {
+  min-width: 0;
+  flex: 1;
+}
+
+.jwt-builder-custom-claim-label {
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  font-weight: 600;
+}
+
+.jwt-builder-custom-claim-input {
+  min-width: 0;
+}
+
+.jwt-builder-container .custom-claim-row .delete-claim {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  flex-shrink: 0;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jwt-builder-container .empty-claims-message {
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  font-style: italic;
+  padding: var(--spacing-sm, var(--default-spacing-sm)) 0;
+}
+
+.jwt-builder-build-btn#buildJwtBtn {
+  align-self: center;
+  min-width: 11.5rem;
+  font-weight: 700;
+}
+
+.jwt-builder-container .result-section.jwt-builder-result-panel {
+  margin-top: var(--spacing-md, var(--default-spacing-md));
+  border-color: var(--jwtb-border-soft);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg, #fff) 96%, var(--jwtb-accent) 4%) 0%,
+      var(--jwtb-surface-soft) 100%
+    );
+}
+
+.jwt-builder-result-container.result-container {
+  align-items: flex-start;
+}
+
+.jwt-builder-container .jwt-token-output {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--jwtb-success);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-success, #198754) 8%, var(--cst-color-mix-neutral, white) 92%) 0%,
+      color-mix(in srgb, var(--color-success, #198754) 4%, var(--cst-color-mix-neutral, white) 96%) 100%
+    );
+  border: 1px solid color-mix(in srgb, var(--color-success, #198754) 24%, transparent);
+  line-height: 1.65;
+  letter-spacing: 0.02em;
+  border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--cst-color-mix-neutral, #fff) 55%, transparent);
+}
+
+.jwt-builder-container .jwt-token-output:empty::before {
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+  font-weight: 400;
+  letter-spacing: normal;
+}
+
+/* Shared utility patch retained for legacy usage in this tool */
+.u-gap-xs {
+  gap: var(--spacing-xs, var(--default-spacing-xs));
+}
+
+@media (max-width: 768px) {
+  .jwt-builder-form {
+    gap: var(--spacing-sm, var(--default-spacing-sm));
+  }
+
+  .jwt-builder-container .c-form-group {
+    padding: var(--spacing-md, var(--default-spacing-md));
+  }
+
+  .jwt-builder-container .c-form-group-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .jwt-builder-container .custom-claim-row {
+    padding: var(--spacing-xs, var(--default-spacing-xs));
+  }
+
+  .jwt-builder-container .custom-claim-row > .jwt-builder-custom-claim-fields,
+  .jwt-builder-container .custom-claim-row > div.u-flex {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: var(--spacing-xs, var(--default-spacing-xs));
+  }
+
+  .jwt-builder-container .custom-claim-row .jwt-builder-custom-claim-label,
+  .jwt-builder-container .custom-claim-row label {
+    flex-basis: auto;
+    width: 100%;
+    margin-bottom: 0;
+    padding-top: 0;
+  }
+
+  .jwt-builder-container .custom-claim-row .c-input {
+    width: 100%;
+  }
+
+  .jwt-builder-container .custom-claim-row .delete-claim {
+    align-self: flex-end;
+    margin-top: var(--spacing-xs, var(--default-spacing-xs));
+  }
+
+  .jwt-builder-result-container.result-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .jwt-builder-build-btn#buildJwtBtn {
+    width: 100%;
+    min-width: 0;
+    align-self: stretch;
+  }
+
+  .jwt-builder-container .copy-button-wrapper .c-input {
+    padding-right: 50px;
+  }
+
+  .jwt-builder-secret-control {
+    align-items: stretch;
+  }
+}

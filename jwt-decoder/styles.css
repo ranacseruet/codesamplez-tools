@@ -1,0 +1,301 @@
+/* Phase E tool-scoped styles for JWT Decoder */
+
+.jwt-decoder-tool .jwt-decoder-options-panel {
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 86%, var(--cst-color-mix-neutral, white));
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary, #1d70b8) 12%, transparent), transparent 60%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface, #fff) 82%, var(--color-primary-soft, #e9f3fb)),
+      var(--color-surface, #fff)
+    );
+}
+
+.jwt-decoder-tool .jwt-decoder-options-panel :is(h2, h3) {
+  margin: 0 0 var(--spacing-sm, var(--default-spacing-sm));
+  font-size: clamp(1rem, 0.9rem + 0.35vw, 1.15rem);
+}
+
+.jwt-decoder-tool .jwt-decoder-options-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.jwt-decoder-tool .jwt-decoder-secret-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  align-items: stretch;
+}
+
+.jwt-decoder-tool .jwt-decoder-secret-input {
+  min-height: 44px;
+}
+
+.jwt-decoder-tool .jwt-decoder-secret-help {
+  align-self: stretch;
+  min-width: 42px;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  background: color-mix(in srgb, var(--color-surface, #fff) 88%, var(--color-surface-subtle, #f5f7fa));
+  color: var(--color-text-secondary, #4b5563);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.jwt-decoder-tool .jwt-decoder-secret-help:hover {
+  background: color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 70%, var(--cst-color-mix-neutral, white));
+  color: var(--color-accent, var(--color-primary, #1d70b8));
+}
+
+.jwt-decoder-tool .jwt-decoder-secret-help:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring, 0 0 0 3px rgba(29, 112, 184, 0.2));
+}
+
+.jwt-decoder-tool .jwt-decoder-algorithm-info {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--color-warning, #b06b00) 34%, var(--color-border, #d7dde4));
+  background: color-mix(in srgb, var(--color-warning-soft, #fff7de) 88%, var(--color-surface, #fff));
+  color: color-mix(in srgb, var(--color-warning, #b06b00) 82%, var(--color-text, #1f2937));
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.jwt-decoder-tool .jwt-decoder-layout-grid {
+  gap: var(--spacing-lg, var(--default-spacing-lg));
+}
+
+.jwt-decoder-tool .jwt-decoder-panel {
+}
+
+.jwt-decoder-tool .jwt-decoder-panel-header {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 54%, var(--cst-color-mix-neutral, white)),
+      color-mix(in srgb, var(--color-surface, #fff) 92%, var(--color-primary-soft, #e9f3fb))
+    );
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+}
+
+.jwt-decoder-tool .jwt-decoder-panel-header :is(h2, h3) {
+  margin: 0;
+}
+
+.jwt-decoder-tool .jwt-decoder-panel-content {
+}
+
+.jwt-decoder-tool .jwt-decoder-panel-content .c-input--textarea {
+  min-height: 20rem;
+  height: 20rem;
+  flex: none;
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  line-height: 1.5;
+  border-radius: var(--radius-md, 10px);
+}
+
+.jwt-decoder-tool .jwt-decoder-token-input {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 65%, var(--cst-color-mix-neutral, white)),
+      var(--cst-color-mix-neutral, white) 38%
+    );
+}
+
+.jwt-decoder-tool .jwt-decoder-json-container {
+  min-height: 20rem;
+  height: 20rem;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-md, 10px);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-surface, #fff) 90%, var(--color-surface-subtle, #f5f7fa));
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+}
+
+.jwt-decoder-tool .jwt-decoder-tabs {
+  padding: 0.55rem 0.55rem 0;
+  background: color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 75%, var(--cst-color-mix-neutral, white));
+}
+
+.jwt-decoder-tool .jwt-decoder-tab {
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 90%, var(--cst-color-mix-neutral, white));
+  border-bottom: none;
+  background: color-mix(in srgb, var(--cst-color-mix-neutral, white) 78%, var(--color-surface-subtle, #f5f7fa));
+  color: var(--color-text-secondary, #4b5563);
+  border-radius: 0.7rem 0.7rem 0 0;
+  padding: 0.6rem 0.8rem;
+  line-height: 1.1;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.jwt-decoder-tool .jwt-decoder-tab:hover {
+  background: color-mix(in srgb, var(--color-primary-soft, #e9f3fb) 72%, var(--cst-color-mix-neutral, white));
+  color: var(--color-accent, var(--color-primary, #1d70b8));
+}
+
+.jwt-decoder-tool .jwt-decoder-tab.active {
+  background: var(--color-surface, #fff);
+  color: var(--color-accent, var(--color-primary, #1d70b8));
+  border-color: color-mix(in srgb, var(--color-primary, #1d70b8) 24%, var(--color-border, #d7dde4));
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--color-primary, #1d70b8) 28%, var(--cst-color-mix-neutral, white));
+}
+
+.jwt-decoder-tool .jwt-decoder-tab-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface, #fff);
+}
+
+.jwt-decoder-tool .jwt-decoder-tab-pane {
+  display: none;
+  flex: 1;
+  min-height: 0;
+}
+
+.jwt-decoder-tool .jwt-decoder-tab-pane.active {
+  display: flex;
+  flex-direction: column;
+}
+
+.jwt-decoder-tool .jwt-decoder-json-viewer {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.95rem 1rem 1rem;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface, #fff) 90%, var(--color-surface-subtle, #f5f7fa)),
+      var(--color-surface, #fff)
+    );
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.jwt-decoder-tool .jwt-decoder-json-key {
+  color: color-mix(in srgb, var(--color-primary, #1d70b8) 84%, var(--color-text, #1f2937));
+  font-weight: 700;
+}
+
+.jwt-decoder-tool .jwt-decoder-json-string {
+  color: color-mix(in srgb, var(--color-success, #1d7f4f) 86%, var(--color-text, #1f2937));
+}
+
+.jwt-decoder-tool .jwt-decoder-json-number,
+.jwt-decoder-tool .jwt-decoder-json-boolean {
+  color: color-mix(in srgb, var(--color-danger, #ba1a1a) 72%, var(--color-warning, #b06b00));
+}
+
+.jwt-decoder-tool .jwt-decoder-json-null {
+  color: var(--color-text-secondary, #6b7280);
+  font-style: italic;
+}
+
+.jwt-decoder-tool .jwt-decoder-json-key-value {
+  position: relative;
+}
+
+.jwt-decoder-tool .jwt-decoder-toolbar {
+  margin: 0;
+}
+
+.jwt-decoder-tool .jwt-decoder-primary-actions {
+  display: flex;
+  flex: 1 1 auto;
+  gap: var(--spacing-sm, var(--default-spacing-sm));
+  flex-wrap: wrap;
+}
+
+.jwt-decoder-tool .jwt-decoder-action-btn {
+  /* v4: ghost secondary actions keep natural width; only the primary
+     (Validate) stretches. */
+}
+
+.jwt-decoder-tool #jwt-decoder-validate-btn.jwt-decoder-action-btn {
+  flex: 1 1 13.5rem;
+}
+
+.jwt-decoder-tool .jwt-decoder-copy-btn {
+  justify-self: end;
+  white-space: nowrap;
+}
+
+.jwt-decoder-tool .jwt-decoder-result-panel {
+  border: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 88%, var(--cst-color-mix-neutral, white));
+}
+
+.jwt-decoder-tool .jwt-decoder-result-panel :is(h2, h3) {
+  margin-bottom: 0.35rem;
+}
+
+.jwt-decoder-tool .jwt-decoder-status-container {
+  margin-top: var(--spacing-sm, var(--default-spacing-sm));
+}
+
+.jwt-decoder-tool .jwt-decoder-status {
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+@media (max-width: 900px) {
+  .jwt-decoder-tool .jwt-decoder-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .jwt-decoder-tool .jwt-decoder-copy-btn {
+    justify-self: stretch;
+  }
+}
+
+@media (max-width: 640px) {
+  .jwt-decoder-tool .jwt-decoder-secret-row {
+    grid-template-columns: 1fr;
+  }
+
+  .jwt-decoder-tool .jwt-decoder-secret-help {
+    min-height: 42px;
+    width: 100%;
+  }
+
+  .jwt-decoder-tool .jwt-decoder-tabs {
+    gap: 0.25rem;
+    padding: 0.45rem 0.45rem 0;
+  }
+
+  .jwt-decoder-tool .jwt-decoder-tab {
+    padding: 0.55rem 0.45rem;
+  }
+
+  .jwt-decoder-tool .jwt-decoder-panel-content .c-input--textarea,
+  .jwt-decoder-tool .jwt-decoder-json-container {
+    min-height: 17.5rem;
+    height: 17.5rem;
+  }
+
+  .jwt-decoder-tool .jwt-decoder-action-btn {
+    flex-basis: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jwt-decoder-tool .jwt-decoder-tab,
+  .jwt-decoder-tool .jwt-decoder-secret-help {
+    transition: none;
+  }
+}

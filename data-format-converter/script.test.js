@@ -1,0 +1,845 @@
+import { jest } from '@jest/globals';
+import { fireEvent, waitFor } from '@testing-library/dom';
+import { render as preactRender } from 'preact';
+import { fireFileDragEvent, fireFileDrop, flushFileDrop } from '../common/drop-zone-test-utils';
+import { buildShareHash, parseShareHash } from './share-url';
+
+const mockClearButtonInstances = [];
+const mockCopyButtonInstances = [];
+const SAMPLE_JSON_FRAGMENT = '"app": "codesamplez-tools"';
+const SAMPLE_XML_FRAGMENT = '<app>codesamplez-tools</app>';
+const SAMPLE_YAML_FRAGMENT = 'app: codesamplez-tools';
+const SAMPLE_PROPERTIES_FRAGMENT = 'app=codesamplez-tools';
+
+jest.mock('../common/clear-button/ClearButton', () => ({
+    __esModule: true,
+    default: jest.fn().mockImplementation(() => {
+        const instance = {
+            updateVisibility: jest.fn(),
+            disconnect: jest.fn()
+        };
+        mockClearButtonInstances.push(instance);
+        return instance;
+    })
+}));
+
+jest.mock('../common/copy-button/CopyButton', () => ({
+    __esModule: true,
+    default: jest.fn().mockImplementation(() => {
+        const instance = {
+            updateVisibility: jest.fn(),
+            disconnect: jest.fn()
+        };
+        mockCopyButtonInstances.push(instance);
+        return instance;
+    })
+}));
+
+import { DataFormatConverterUI, getSelectedFormat } from './script';
+import { DataFormatConverter } from './DataFormatConverter';
+import { NotificationManager } from '../common/notification-manager';
+import DownloadManager from '../common/DownloadManager';
+import ClearButton from '../common/clear-button/ClearButton';
+import CopyButton from '../common/copy-button/CopyButton';
+import { SITE_BASE_URL } from '../common/siteBaseUrl';
+
+// Mock the NotificationManager
+jest.mock('../common/notification-manager', () => ({
+    NotificationManager: {
+        show: jest.fn()
+    }
+}));
+
+// Mock DownloadManager
+jest.mock('../common/DownloadManager', () => ({
+    __esModule: true,
+    default: jest.fn().mockImplementation(() => ({
+        downloadFile: jest.fn()
+    }))
+}));
+
+describe('DataFormatConverterUI Integration', () => {
+    let ui;
+    const flush = () => Promise.resolve();
+
+    beforeEach(async () => {
+        jest.useFakeTimers();
+        jest.clearAllMocks();
+        mockClearButtonInstances.length = 0;
+        mockCopyButtonInstances.length = 0;
+
+        // Setup DOM
+        document.body.innerHTML = `
+            <div id="data-format-converter-app"></div>
+        `;
+
+        Object.defineProperty(window.navigator, 'clipboard', {
+            configurable: true,
+            value: {
+                writeText: jest.fn().mockResolvedValue(undefined)
+            }
+        });
+
+        ui = new DataFormatConverterUI();
+        await flush();
+        await flush();
+
+        // Mock converter methods to control behavior
+        jest.spyOn(ui.converter, 'parseInput');
+        jest.spyOn(ui.converter, 'formatOutput');
+        jest.spyOn(ui.converter, 'detectFormat');
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        jest.useRealTimers();
+    });
+
+    it('initializes shared clear/copy overlay buttons for the textareas', () => {
+        expect(ClearButton).toHaveBeenCalledWith(document.getElementById('inputText'));
+        expect(CopyButton).toHaveBeenCalledWith(document.getElementById('outputText'));
+        expect(mockClearButtonInstances).toHaveLength(1);
+        expect(mockCopyButtonInstances).toHaveLength(1);
+    });
+
+    it('returns the active selected format from a format button group', () => {
+        expect(getSelectedFormat('.input-section', 'properties')).toBe('json');
+    });
+
+    it('falls back when no active format button is available', () => {
+        preactRender(null, document.getElementById('data-format-converter-app'));
+        document.body.innerHTML = '<div class="input-section"></div>';
+
+        expect(getSelectedFormat('.input-section', 'properties')).toBe('properties');
+    });
+
+
+    it('keeps sample mode disabled by default', () => {
+        expect(document.getElementById('loadSampleBtn')).not.toBeNull();
+        expect(document.getElementById('inputText')?.value).toBe('');
+        expect(document.getElementById('outputText')?.value).toBe('');
+    });
+
+    it('loads sample input and output immediately when the sample button is clicked', async () => {
+        fireEvent.click(document.getElementById('loadSampleBtn'));
+        await flush();
+
+        expect(document.getElementById('inputText')?.value).toContain(SAMPLE_JSON_FRAGMENT);
+        expect(document.getElementById('outputText')?.value).toContain(SAMPLE_XML_FRAGMENT);
+    });
+
+    it('replaces the input with matching sample data when input format changes in sample mode', async () => {
+        fireEvent.click(document.getElementById('loadSampleBtn'));
+        await flush();
+
+        fireEvent.click(document.querySelector('.input-section .format-btn[data-format="yaml"]'));
+        await flush();
+
+        expect(document.querySelector('.input-section .format-btn[data-format="yaml"]')?.getAttribute('aria-pressed')).toBe('true');
+        expect(document.getElementById('inputText')?.value).toContain(SAMPLE_YAML_FRAGMENT);
+        expect(document.getElementById('outputText')?.value).toContain(SAMPLE_XML_FRAGMENT);
+    });
+
+    it('reconverts sample output without replacing the current sample input on output format changes', async () => {
+        fireEvent.click(document.getElementById('loadSampleBtn'));
+        await flush();
+
+        const originalInput = document.getElementById('inputText')?.value;
+        fireEvent.click(document.querySelector('.output-section .format-btn[data-format="yaml"]'));
+        await flush();
+
+        expect(document.getElementById('inputText')?.value).toBe(originalInput);
+        expect(document.querySelector('.output-section .format-btn[data-format="yaml"]')?.getAttribute('aria-pressed')).toBe('true');
+        expect(document.getElementById('outputText')?.value).toContain(SAMPLE_YAML_FRAGMENT);
+    });
+
+    it('disables sample mode when fresh input is typed', async () => {
+        fireEvent.click(document.getElementById('loadSampleBtn'));
+        await flush();
+        fireEvent.click(document.querySelector('.input-section .format-btn[data-format="yaml"]'));
+        await flush();
+        expect(document.getElementById('inputText')?.value).toContain(SAMPLE_YAML_FRAGMENT);
+
+        // Typing fresh input disables sample mode...
+        fireEvent.input(document.getElementById('inputText'), { target: { value: 'key: value' } });
+        await flush();
+
+        // ...so a later format switch no longer reloads the sample (it follows
+        // the existing clear-on-format-switch path for typed input).
+        fireEvent.click(document.querySelector('.input-section .format-btn[data-format="json"]'));
+        await flush();
+        expect(document.getElementById('inputText')?.value).not.toContain(SAMPLE_JSON_FRAGMENT);
+        expect(NotificationManager.show).toHaveBeenCalledWith('Input cleared', expect.any(Number), expect.any(Object));
+    });
+
+    it('loads a dropped file and disables sample mode like typed input does', async () => {
+        fireEvent.click(document.getElementById('loadSampleBtn'));
+        await flush();
+        expect(document.getElementById('inputText')?.value).toContain(SAMPLE_JSON_FRAGMENT);
+
+        // The drop pipeline reads the file through a promise that these specs'
+        // fake timers would stall, so run just that stretch on real timers.
+        jest.useRealTimers();
+        fireFileDrop(document.getElementById('inputText'), '{"dropped": true}', 'payload.json');
+        // Poll rather than waiting a fixed number of turns: the file read plus
+        // the Preact re-render took longer than two macrotasks on a loaded CI
+        // runner, which turned this spec red on main.
+        await waitFor(() => expect(document.getElementById('inputText')?.value).toBe('{"dropped": true}'));
+        jest.useFakeTimers();
+        await flush();
+
+        expect(NotificationManager.show).toHaveBeenCalledWith(
+            'Loaded payload.json',
+            expect.any(Number),
+            expect.objectContaining({ type: 'success' })
+        );
+
+        // A dropped file is fresh input, so the one-way sample contract applies:
+        // a later format switch must not reload the sample.
+        fireEvent.click(document.querySelector('.input-section .format-btn[data-format="yaml"]'));
+        await flush();
+        expect(document.getElementById('inputText')?.value).not.toContain(SAMPLE_JSON_FRAGMENT);
+    });
+
+    it('re-detects the input format from a dropped file', async () => {
+        jest.useRealTimers();
+        // Input format is JSON by default; dropping YAML must switch it.
+        fireFileDrop(document.getElementById('inputText'), 'name: Ada\nage: 36\n', 'person.yaml');
+        await flushFileDrop();
+        jest.useFakeTimers();
+        await flush();
+
+        expect(
+            document.querySelector('.input-section .format-btn[data-format="yaml"]')?.classList.contains('active')
+        ).toBe(true);
+        expect(document.getElementById('outputText')?.value.length).toBeGreaterThan(0);
+    });
+
+    it('does not convert a dropped file while Auto-convert is off', async () => {
+        fireEvent.change(document.getElementById('autoConvert'), { target: { checked: false } });
+        await flush();
+
+        jest.useRealTimers();
+        fireFileDrop(document.getElementById('inputText'), '{"dropped": true}', 'payload.json');
+        await flushFileDrop();
+        jest.useFakeTimers();
+        await flush();
+
+        expect(document.getElementById('inputText')?.value).toBe('{"dropped": true}');
+        expect(document.getElementById('outputText')?.value).toBe('');
+    });
+
+    it('surfaces a rejected drop as an error toast', async () => {
+        jest.useRealTimers();
+        fireFileDragEvent(document.getElementById('inputText'), 'drop', []);
+        await flushFileDrop();
+        jest.useFakeTimers();
+
+        expect(NotificationManager.show).toHaveBeenCalledWith(
+            expect.stringContaining('No file'),
+            expect.any(Number),
+            expect.objectContaining({ type: 'error' })
+        );
+    });
+
+    describe('share links', () => {
+        const flushShare = async () => {
+            jest.useRealTimers();
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            jest.useFakeTimers();
+        };
+
+        it('copies a hash-fragment link carrying the input and both formats', async () => {
+            fireEvent.input(document.getElementById('inputText'), { target: { value: '{"a":1}' } });
+            await flush();
+
+            fireEvent.click(document.getElementById('shareBtn'));
+            await flushShare();
+
+            const writeText = window.navigator.clipboard.writeText;
+            expect(writeText).toHaveBeenCalledTimes(1);
+            const url = writeText.mock.calls[0][0];
+            expect(url).toContain('#c=');
+            // The shared data must live in the fragment, never the query string.
+            expect(url.split('#')[0]).not.toContain('c=');
+            expect(parseShareHash(`#${url.split('#')[1]}`)).toEqual({
+                input: '{"a":1}',
+                inputFormat: 'json',
+                outputFormat: 'xml'
+            });
+        });
+
+        it('refuses to share an empty input', async () => {
+            fireEvent.click(document.getElementById('shareBtn'));
+            await flushShare();
+
+            expect(window.navigator.clipboard.writeText).not.toHaveBeenCalled();
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                expect.stringContaining('before sharing'),
+                expect.any(Number),
+                expect.objectContaining({ type: 'error' })
+            );
+        });
+
+        it('refuses to share a payload that would exceed the URL ceiling', async () => {
+            // High-entropy text so LZ compression cannot bring it under the ceiling.
+            let bulky = '';
+            for (let i = 0; i < 30000; i += 1) {
+                bulky += Math.random().toString(36).slice(2, 6);
+            }
+            fireEvent.input(document.getElementById('inputText'), { target: { value: bulky } });
+            await flush();
+
+            fireEvent.click(document.getElementById('shareBtn'));
+            await flushShare();
+
+            expect(window.navigator.clipboard.writeText).not.toHaveBeenCalled();
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                expect.stringContaining('too large to share'),
+                expect.any(Number),
+                expect.objectContaining({ type: 'error' })
+            );
+        });
+
+        it('reports a clipboard failure instead of claiming success', async () => {
+            window.navigator.clipboard.writeText.mockRejectedValue(new Error('denied'));
+            fireEvent.input(document.getElementById('inputText'), { target: { value: '{"a":1}' } });
+            await flush();
+
+            fireEvent.click(document.getElementById('shareBtn'));
+            await flushShare();
+
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                expect.stringContaining('Failed to copy share link'),
+                expect.any(Number),
+                expect.objectContaining({ type: 'error' })
+            );
+        });
+
+        it('warns when a payload arrives via the legacy query string', async () => {
+            preactRender(null, document.getElementById('data-format-converter-app'));
+            document.body.innerHTML = '<div id="data-format-converter-app"></div>';
+            const { pathname } = window.location;
+            window.history.replaceState({}, '', `${pathname}?${buildShareHash({
+                input: '{"a":1}',
+                inputFormat: 'json',
+                outputFormat: 'yaml'
+            })}`);
+
+            jest.useRealTimers();
+            new DataFormatConverterUI();
+            await waitFor(() => expect(NotificationManager.show).toHaveBeenCalledWith(
+                expect.stringContaining('Legacy ?c='),
+                expect.any(Number),
+                expect.objectContaining({ type: 'warning' })
+            ));
+            jest.useFakeTimers();
+            await flush();
+
+
+            window.history.replaceState({}, '', pathname);
+        });
+
+        it('does not overwrite input entered while the share chunk loads', async () => {
+            preactRender(null, document.getElementById('data-format-converter-app'));
+            document.body.innerHTML = '<div id="data-format-converter-app"></div>';
+            window.location.hash = `#${buildShareHash({
+                input: 'name: Ada\n',
+                inputFormat: 'yaml',
+                outputFormat: 'json'
+            })}`;
+
+            jest.useRealTimers();
+            new DataFormatConverterUI();
+            // Synchronously after mount — i.e. while the dynamic import of the
+            // share codec is still pending, which is the slow-connection case.
+            document.getElementById('inputText').value = 'typed while the chunk loaded';
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            jest.useFakeTimers();
+
+            expect(document.getElementById('inputText').value).toBe('typed while the chunk loaded');
+            expect(NotificationManager.show).not.toHaveBeenCalledWith(
+                'Loaded data from shared link.',
+                expect.any(Number),
+                expect.any(Object)
+            );
+
+            window.location.hash = '';
+        });
+
+        it('drops a share payload whose chunk resolves after unmount', async () => {
+            preactRender(null, document.getElementById('data-format-converter-app'));
+            document.body.innerHTML = '<div id="data-format-converter-app"></div>';
+            window.location.hash = `#${buildShareHash({
+                input: 'name: Ada\n',
+                inputFormat: 'yaml',
+                outputFormat: 'json'
+            })}`;
+
+            jest.useRealTimers();
+            new DataFormatConverterUI();
+            // Unmount before the lazy chunk can resolve: the payload must not
+            // be applied to a tree that no longer exists.
+            preactRender(null, document.getElementById('data-format-converter-app'));
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            jest.useFakeTimers();
+
+            expect(NotificationManager.show).not.toHaveBeenCalledWith(
+                'Loaded data from shared link.',
+                expect.any(Number),
+                expect.any(Object)
+            );
+
+            window.location.hash = '';
+        });
+
+        it('preloads input and formats from a shared link and converts on mount', async () => {
+            preactRender(null, document.getElementById('data-format-converter-app'));
+            document.body.innerHTML = '<div id="data-format-converter-app"></div>';
+            window.location.hash = `#${buildShareHash({
+                input: 'name: Ada\n',
+                inputFormat: 'yaml',
+                outputFormat: 'json'
+            })}`;
+
+            // The share module is a lazy chunk (it pulls lz-string), so the
+            // preload resolves a dynamic import and then re-renders. Run that
+            // stretch on real timers, as the drop-zone spec does.
+            jest.useRealTimers();
+            new DataFormatConverterUI();
+            await waitFor(() => expect(document.getElementById('inputText')?.value).toBe('name: Ada\n'));
+            jest.useFakeTimers();
+            await flush();
+
+            expect(
+                document.querySelector('.input-section .format-btn[data-format="yaml"]')?.classList.contains('active')
+            ).toBe(true);
+            expect(document.getElementById('outputText')?.value).toContain('Ada');
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                'Loaded data from shared link.',
+                expect.any(Number),
+                expect.objectContaining({ type: 'success' })
+            );
+
+            window.location.hash = '';
+        });
+
+        it('ignores a malformed share hash instead of throwing', async () => {
+            preactRender(null, document.getElementById('data-format-converter-app'));
+            document.body.innerHTML = '<div id="data-format-converter-app"></div>';
+            window.location.hash = '#c=not-actually-compressed';
+
+            expect(() => new DataFormatConverterUI()).not.toThrow();
+            await flush();
+            expect(document.getElementById('inputText')?.value).toBe('');
+
+            window.location.hash = '';
+        });
+    });
+
+    it('restores sample data when the sample button is clicked again after typing', async () => {
+        fireEvent.click(document.getElementById('loadSampleBtn'));
+        await flush();
+        fireEvent.input(document.getElementById('inputText'), { target: { value: 'custom input' } });
+        await flush();
+
+        fireEvent.click(document.getElementById('loadSampleBtn'));
+        await flush();
+
+        expect(document.getElementById('inputText')?.value).toContain(SAMPLE_JSON_FRAGMENT);
+        expect(document.getElementById('outputText')?.value).toContain(SAMPLE_XML_FRAGMENT);
+    });
+
+    it('should initialize aria attributes', () => {
+        const jsonBtn = document.querySelector('.input-section .format-btn[data-format="json"]');
+        expect(jsonBtn.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('should handle format selection click', async () => {
+        fireEvent.click(document.querySelector('.input-section .format-btn[data-format="xml"]'));
+        await flush();
+        const xmlBtn = document.querySelector('.input-section .format-btn[data-format="xml"]');
+
+        expect(xmlBtn.classList.contains('active')).toBe(true);
+        expect(xmlBtn.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('should handle convert button click', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+
+        ui.converter.parseInput.mockReturnValue({a:1});
+        ui.converter.formatOutput.mockReturnValue('<xml></xml>');
+
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+
+        expect(ui.converter.parseInput).toHaveBeenCalled();
+        expect(document.getElementById('outputText').value).toBe('<xml></xml>');
+    });
+
+    it('should report non-Error conversion failures with stringified message', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+
+        ui.converter.parseInput.mockImplementation(() => {
+            throw 'string-conversion-failure';
+        });
+
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+
+        // v4 contract: conversion errors surface inline, not as toasts.
+        expect(NotificationManager.show).not.toHaveBeenCalled();
+        expect(document.getElementById('inputError').textContent).toContain('Conversion failed: string-conversion-failure');
+    });
+
+    it('should handle auto-convert input event', () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+
+        ui.converter.parseInput.mockReturnValue({a:1});
+        ui.converter.formatOutput.mockReturnValue('<xml></xml>');
+
+        // Trigger input event
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+
+        jest.advanceTimersByTime(500);
+
+        expect(ui.converter.parseInput).toHaveBeenCalled();
+    });
+
+    it('clears debounce timers when the app is unmounted', async () => {
+        const input = document.getElementById('inputText');
+        const root = document.getElementById('data-format-converter-app');
+        const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
+        fireEvent.input(input, { target: { value: '{"queued":true}' } });
+        await flush();
+
+        preactRender(null, root);
+
+        expect(clearTimeoutSpy).toHaveBeenCalled();
+        clearTimeoutSpy.mockRestore();
+    });
+
+    it('should skip auto-convert when debounced input is empty after trim', () => {
+        const input = document.getElementById('inputText');
+
+        fireEvent.input(input, { target: { value: '   ' } });
+        jest.advanceTimersByTime(500);
+
+        expect(ui.converter.detectFormat).not.toHaveBeenCalled();
+        expect(ui.converter.parseInput).not.toHaveBeenCalled();
+    });
+
+    it('should handle swap button click', async () => {
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+
+        fireEvent.input(inputText, { target: { value: 'in' } });
+        await flush();
+        ui.converter.parseInput.mockReturnValue('parsed');
+        ui.converter.formatOutput.mockReturnValue('out');
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+
+        ui.converter.formatOutput.mockReturnValue('formatted');
+
+        fireEvent.click(document.getElementById('swapBtn'));
+        await flush();
+
+        expect(inputText.value).toBe('out');
+        expect(outputText.value).toBe('formatted');
+        expect(document.querySelector('.input-section .format-btn[data-format="xml"]').getAttribute('aria-pressed')).toBe('true');
+        expect(document.querySelector('.output-section .format-btn[data-format="json"]').getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('should handle download button click', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+        ui.converter.parseInput.mockReturnValue({a:1});
+        ui.converter.formatOutput.mockReturnValue('content');
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+
+        const mockDownloadFile = jest.fn();
+        DownloadManager.mockImplementation(() => ({
+            downloadFile: mockDownloadFile
+        }));
+
+        fireEvent.click(document.getElementById('downloadBtn'));
+        await flush();
+
+        expect(DownloadManager).toHaveBeenCalled();
+        expect(mockDownloadFile).toHaveBeenCalledWith('content', 'data.xml', 'application/xml');
+    });
+
+    it('should handle clear and copy actions', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+        fireEvent.click(document.getElementById('clearInputBtn'));
+        await flush();
+        expect(NotificationManager.show).toHaveBeenCalledWith("Input cleared", expect.any(Number), expect.any(Object));
+
+        ui.converter.parseInput.mockReturnValue({a:1});
+        ui.converter.formatOutput.mockReturnValue('<xml></xml>');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+
+        NotificationManager.show.mockClear();
+        fireEvent.click(document.getElementById('copyOutputBtn'));
+        await flush();
+        await flush();
+
+        expect(window.navigator.clipboard.writeText).toHaveBeenCalledWith('<xml></xml>');
+        expect(NotificationManager.show).toHaveBeenCalledWith("Copied to clipboard!", expect.any(Number), expect.any(Object));
+    });
+
+    it('should react to shared overlay custom events', async () => {
+        const input = document.getElementById('inputText');
+        const output = document.getElementById('outputText');
+        const errorDiv = document.getElementById('inputError');
+
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+        expect(errorDiv.style.display).toBe('block');
+
+        NotificationManager.show.mockClear();
+        input.value = '';
+        input.dispatchEvent(new CustomEvent('textCleared', { bubbles: true }));
+        await flush();
+
+        expect(errorDiv.style.display).toBe('none');
+        expect(NotificationManager.show).toHaveBeenCalledWith('Input cleared', expect.any(Number), expect.any(Object));
+
+        NotificationManager.show.mockClear();
+        fireEvent.click(document.getElementById('downloadBtn'));
+        await flush();
+        expect(errorDiv.style.display).toBe('block');
+
+        output.dispatchEvent(new CustomEvent('contentCopied', { bubbles: true }));
+        await flush();
+
+        expect(errorDiv.style.display).toBe('none');
+        expect(NotificationManager.show).toHaveBeenCalledWith('Copied to clipboard!', expect.any(Number), expect.any(Object));
+    });
+
+    it('should use execCommand clipboard fallback when Clipboard API is unavailable', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+        ui.converter.parseInput.mockReturnValue({ a: 1 });
+        ui.converter.formatOutput.mockReturnValue('<xml></xml>');
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+
+        Object.defineProperty(window.navigator, 'clipboard', {
+            configurable: true,
+            value: undefined
+        });
+        document.execCommand = jest.fn().mockReturnValue(true);
+
+        NotificationManager.show.mockClear();
+        fireEvent.click(document.getElementById('copyOutputBtn'));
+        await flush();
+
+        expect(document.execCommand).toHaveBeenCalledWith('copy');
+        expect(NotificationManager.show).toHaveBeenCalledWith('Copied to clipboard!', expect.any(Number), expect.any(Object));
+    });
+
+    it('should show error when clipboard fallback fails', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+        ui.converter.parseInput.mockReturnValue({ a: 1 });
+        ui.converter.formatOutput.mockReturnValue('<xml></xml>');
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+
+        Object.defineProperty(window.navigator, 'clipboard', {
+            configurable: true,
+            value: undefined
+        });
+        document.execCommand = jest.fn().mockReturnValue(false);
+
+        NotificationManager.show.mockClear();
+        fireEvent.click(document.getElementById('copyOutputBtn'));
+        await flush();
+
+        expect(NotificationManager.show).toHaveBeenCalledWith('Failed to copy output', expect.any(Number), expect.any(Object));
+    });
+
+    it('should show error when copy is requested with empty output', async () => {
+        fireEvent.click(document.getElementById('copyOutputBtn'));
+        await flush();
+
+        expect(NotificationManager.show).toHaveBeenCalledWith('No output to copy', expect.any(Number), expect.any(Object));
+    });
+
+    it('should not auto-convert if checkbox unchecked', async () => {
+        const autoConvert = document.getElementById('autoConvert');
+        fireEvent.change(autoConvert, { target: { checked: false } });
+        await flush();
+        expect(autoConvert.checked).toBe(false);
+
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: 'data' } });
+        await flush();
+        jest.advanceTimersByTime(500);
+        expect(ui.converter.parseInput).not.toHaveBeenCalled();
+    });
+
+    it('should handle format selection with empty input', () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '' } });
+        fireEvent.click(document.querySelector('.output-section .format-btn[data-format="json"]'));
+        // convertData is not called
+        expect(ui.converter.parseInput).not.toHaveBeenCalled();
+    });
+
+    it('should handle output format selection with populated input', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+        ui.converter.parseInput.mockReturnValue({a:1});
+        ui.converter.formatOutput.mockReturnValue('{\n  "a": 1\n}');
+
+        fireEvent.click(document.querySelector('.output-section .format-btn[data-format="json"]'));
+        await flush();
+
+        expect(ui.converter.parseInput).toHaveBeenCalled();
+        expect(document.getElementById('outputText').value).toBe('{\n  "a": 1\n}');
+    });
+
+    it('should load properties sample input when sample mode is enabled after selecting properties', async () => {
+        fireEvent.click(document.querySelector('.input-section .format-btn[data-format="properties"]'));
+        await flush();
+
+        fireEvent.click(document.getElementById('loadSampleBtn'));
+        await flush();
+
+        expect(document.getElementById('inputText')?.value).toContain(SAMPLE_PROPERTIES_FRAGMENT);
+        expect(document.getElementById('outputText')?.value).toContain(SAMPLE_XML_FRAGMENT);
+    });
+
+    it('should auto-detect and switch input format during auto-convert', async () => {
+        const input = document.getElementById('inputText');
+        ui.converter.detectFormat.mockReturnValue('yaml');
+        ui.converter.parseInput.mockReturnValue({ name: 'alex' });
+        ui.converter.formatOutput.mockReturnValue('<name>alex</name>');
+
+        fireEvent.input(input, { target: { value: 'name: alex' } });
+        jest.advanceTimersByTime(500);
+        await flush();
+
+        const detectedInputButton = document.querySelector('.input-section .format-btn[data-format="yaml"]');
+        expect(detectedInputButton.classList.contains('active')).toBe(true);
+    });
+
+    it('should clear previous input when input format changes', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+
+        NotificationManager.show.mockClear();
+        fireEvent.click(document.querySelector('.input-section .format-btn[data-format="xml"]'));
+        await flush();
+
+        expect(document.getElementById('inputText').value).toBe('');
+        expect(NotificationManager.show).toHaveBeenCalledWith('Input cleared', expect.any(Number), expect.any(Object));
+    });
+
+    it('should show error on convert with empty input', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: '' } });
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+        // v4 contract: convert errors surface inline, not as toasts.
+        expect(NotificationManager.show).not.toHaveBeenCalled();
+        expect(document.getElementById('inputError').textContent).toContain('Please enter some data');
+    });
+
+    it('should handle conversion error', async () => {
+        const input = document.getElementById('inputText');
+        fireEvent.input(input, { target: { value: 'invalid' } });
+        await flush();
+        ui.converter.parseInput.mockImplementation(() => { throw new Error('Parse error'); });
+
+        fireEvent.click(document.getElementById('convertBtn'));
+        await flush();
+
+        const errorDiv = document.getElementById('inputError');
+        expect(errorDiv.style.display).toBe('block');
+        expect(errorDiv.textContent).toContain('Parse error');
+    });
+
+    it('should attempt conversion when auto-convert is toggled back on', async () => {
+        const autoConvert = document.getElementById('autoConvert');
+        const input = document.getElementById('inputText');
+
+        fireEvent.change(autoConvert, { target: { checked: false } });
+        await flush();
+
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        await flush();
+
+        ui.converter.parseInput.mockReturnValue({ a: 1 });
+        ui.converter.formatOutput.mockReturnValue('<xml></xml>');
+
+        fireEvent.change(autoConvert, { target: { checked: true } });
+        await flush();
+
+        expect(ui.converter.parseInput).toHaveBeenCalled();
+    });
+
+    it('should unmount cleanly and clear debounce timer on teardown', () => {
+        const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+        const input = document.getElementById('inputText');
+
+        fireEvent.input(input, { target: { value: '{"a":1}' } });
+        preactRender(null, document.getElementById('data-format-converter-app'));
+
+        expect(clearTimeoutSpy).toHaveBeenCalled();
+        expect(mockClearButtonInstances.at(-1)?.disconnect).toHaveBeenCalled();
+        expect(mockCopyButtonInstances.at(-1)?.disconnect).toHaveBeenCalled();
+    });
+
+    it('should show error on download with empty output', () => {
+        fireEvent.click(document.getElementById('downloadBtn'));
+        expect(NotificationManager.show).toHaveBeenCalledWith('No data to download', expect.any(Number), expect.any(Object));
+    });
+
+    it('should throw if no mount root is available', () => {
+        document.body.innerHTML = '';
+        expect(() => new DataFormatConverterUI('#missing-root')).toThrow('Data Format Converter root element not found');
+    });
+
+    it('should fallback to .tool-container when explicit root selector is missing', () => {
+        document.body.innerHTML = '<div class="tool-container"></div>';
+
+        expect(() => new DataFormatConverterUI('#missing-root')).not.toThrow();
+        expect(document.getElementById('convertBtn')).not.toBeNull();
+    });
+
+    it('should bootstrap shell and app on DOMContentLoaded', async () => {
+        document.body.innerHTML = `
+            <div id="app-shell-header"></div>
+            <div id="data-format-converter-app"></div>
+            <div id="app-shell-footer"></div>
+        `;
+
+        document.dispatchEvent(new Event('DOMContentLoaded'));
+        await flush();
+
+        expect(document.querySelector('.cst-shell__title')?.textContent).toBe('Data Format Converter');
+        expect(document.querySelector('.cst-shell__footer-brand-link')?.getAttribute('href')).toBe(SITE_BASE_URL);
+        expect(document.getElementById('convertBtn')).not.toBeNull();
+    });
+});
