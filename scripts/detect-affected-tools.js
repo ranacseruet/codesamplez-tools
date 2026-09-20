@@ -208,4 +208,10 @@ function main() {
     console.log(JSON.stringify(result, null, 2));
 }
 
-main();
+if (require.main === module) {
+    main();
+}
+
+module.exports = {
+    getChangedFilesFromGit
+};

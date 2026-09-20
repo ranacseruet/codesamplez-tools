@@ -9,12 +9,26 @@ const VERSIONS_FILENAME = 'versions.json';
 const REPO_ROOT = path.resolve(__dirname, '..');
 
 /**
+ * Memoized per process: every document in one build (root HTML, all tool
+ * HTMLs, versions.json) must stamp the SAME commit, and webpack watch
+ * recompiles re-render documents repeatedly — a per-call `git rev-parse` would
+ * spawn ~14 subprocesses per build and could resolve different commits
+ * mid-build, breaking the "page attribute matches versions.json" invariant.
+ * @type {string | null}
+ */
+let memoizedBuildCommit = null;
+
+/**
  * Resolves the git commit SHA for the working tree at build time. Falls back to
  * 'unknown' when git is unavailable (e.g. tarball artifact builds) so HTML
  * generation never fails on provenance metadata.
  * @returns {string}
  */
 function resolveBuildCommit() {
+    if (memoizedBuildCommit) {
+        return memoizedBuildCommit;
+    }
+
     try {
         const result = execFileSync('git', ['rev-parse', 'HEAD'], {
             cwd: REPO_ROOT,
@@ -23,20 +37,24 @@ function resolveBuildCommit() {
         });
         const commit = result.trim();
 
-        return /^[0-9a-f]{40}$/u.test(commit) ? commit : 'unknown';
+        memoizedBuildCommit = /^[0-9a-f]{40}$/u.test(commit) ? commit : 'unknown';
     } catch {
-        return 'unknown';
+        memoizedBuildCommit = 'unknown';
     }
+
+    return memoizedBuildCommit;
 }
 
 /**
+ * Byte-stable for a given commit: no wall-clock timestamps. A timestamp would
+ * make versions.json differ on every rebuild of the same commit, paying an S3
+ * upload + cache invalidation per build for zero information — buildCommit
+ * already carries the provenance.
  * @param {string} [buildCommit]
- * @param {string} [generatedAt]
  * @returns {string}
  */
-function buildVersionsJson(buildCommit = resolveBuildCommit(), generatedAt = new Date().toISOString()) {
+function buildVersionsJson(buildCommit = resolveBuildCommit()) {
     const manifest = {
-        generatedAt,
         buildCommit,
         tools: getToolDefinitions()
             .map((tool) => ({
@@ -54,7 +72,7 @@ function buildVersionsJson(buildCommit = resolveBuildCommit(), generatedAt = new
  * tool id to its released version plus the build's source commit. Deployed as
  * a root asset so `https://<site>/versions.json` answers "what is live?" for
  * regression triage.
- * @param {{ buildDir?: string, buildCommit?: string, generatedAt?: string }} [options]
+ * @param {{ buildDir?: string, buildCommit?: string }} [options]
  * @returns {string}
  */
 function writeVersionsManifest(options = {}) {
@@ -62,7 +80,7 @@ function writeVersionsManifest(options = {}) {
     const outputPath = path.join(buildDir, VERSIONS_FILENAME);
 
     fs.mkdirSync(buildDir, { recursive: true });
-    fs.writeFileSync(outputPath, buildVersionsJson(options.buildCommit, options.generatedAt));
+    fs.writeFileSync(outputPath, buildVersionsJson(options.buildCommit));
 
     return outputPath;
 }

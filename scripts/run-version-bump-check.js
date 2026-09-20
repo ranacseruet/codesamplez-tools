@@ -1,12 +1,15 @@
 // @ts-check
 
 const { findMissingBumps, SKIP_LABEL } = require('./check-version-bumps');
+const { getChangedFilesFromGit } = require('./detect-affected-tools');
 
 /**
  * CI entry point: fails when changed tool runtime files ship without a version
  * bump. Usage:
  *   node scripts/run-version-bump-check.js <base-revision> [changed-file...]
- * Changed files default to `git diff --name-only <base>..HEAD`.
+ * Changed files default to the hardened base..HEAD diff used by
+ * detect-affected-tools.js (all-zero / non-ancestor bases fall back to the
+ * full tracked-file list instead of throwing or under-diffing).
  */
 function main() {
     const [baseRevision, ...explicitFiles] = process.argv.slice(2);
@@ -16,18 +19,9 @@ function main() {
         process.exit(1);
     }
 
-    let changedFiles = explicitFiles.filter(Boolean);
-
-    if (changedFiles.length === 0) {
-        changedFiles = require('child_process')
-            .execFileSync('git', ['diff', '--name-only', `${baseRevision}..HEAD`], {
-                cwd: process.cwd(),
-                encoding: 'utf8'
-            })
-            .split(/\r?\n/u)
-            .map((line) => line.trim())
-            .filter(Boolean);
-    }
+    const changedFiles = explicitFiles.filter(Boolean).length > 0
+        ? explicitFiles.filter(Boolean)
+        : getChangedFilesFromGit(baseRevision, 'HEAD');
 
     const missingBumps = findMissingBumps(changedFiles, baseRevision);
 

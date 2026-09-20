@@ -235,6 +235,11 @@ function renderChangelogEntry(toolId, version, note) {
  */
 function addChangelogNote(toolId, version, note, dryRun, options = {}) {
     const changelogPath = getToolChangelogPath(toolId, options);
+
+    if (changelogHasVersionEntry(toolId, version, options)) {
+        throw new Error(`${changelogPath} already has an entry for ${version} — edit it directly instead of adding a duplicate`);
+    }
+
     const entry = renderChangelogEntry(toolId, version, note);
 
     if (dryRun) {
@@ -362,16 +367,31 @@ function main() {
             throw new Error('The note command requires exactly one tool via --tool');
         }
 
-        const noteVersion = args.noteVersion || args.setVersion;
-        if (!noteVersion || !parseVersion(noteVersion)) {
-            throw new Error('Specify a valid version via --version <x.y.z>');
+        if (args.setVersion) {
+            throw new Error('The note command takes --version <x.y.z>; --set-version belongs to the bump command');
+        }
+
+        if (!args.noteVersion) {
+            throw new Error('Specify a version via --version <x.y.z>');
+        }
+
+        let noteVersion;
+
+        try {
+            noteVersion = parseVersion(args.noteVersion) && args.noteVersion;
+        } catch {
+            throw new Error(`Unsupported version format: ${args.noteVersion} — use semver x.y.z (e.g. 1.0.2)`);
         }
 
         if (!args.noteText || args.noteText.trim().length === 0) {
             throw new Error('Specify a changelog entry via --note "<text>"');
         }
 
-        addChangelogNote(selectedTools[0], noteVersion, args.noteText.trim(), args.dryRun);
+        if (changelogHasVersionEntry(selectedTools[0], /** @type {string} */ (noteVersion))) {
+            throw new Error(`${getToolChangelogPath(selectedTools[0])} already has an entry for ${noteVersion} — edit it directly instead of adding a duplicate`);
+        }
+
+        addChangelogNote(selectedTools[0], /** @type {string} */ (noteVersion), args.noteText.trim(), args.dryRun);
 
         if (!args.dryRun) {
             console.log(`Added ${noteVersion} entry to ${getToolChangelogPath(selectedTools[0])}`);
