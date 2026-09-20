@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.1] - 2026-09-20
+
+### JWT Builder
+
+- Per-tool versioning rollout: every built tool page now stamps <meta name="tool-version"> and the build commit, and the site publishes versions.json for regression triage.
+
 ## [1.0.0] - 2026-09-20
 
 ### JWT Builder

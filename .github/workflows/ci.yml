@@ -64,10 +64,12 @@ jobs:
     # accurate even when the label is added after the run started.
     - name: Check tool version bumps
       if: github.event_name == 'pull_request'
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
         BASE="${{ github.event.pull_request.base.sha }}"
-        if gh pr view "${{ github.event.pull_request.number }}" --json labels --jq '.labels[].name' | grep -Fxq 'skip-version-bump'; then
+        if gh pr view "${{ github.event.pull_request.number }}" --json labels --jq '.labels[].name' 2>/dev/null | grep -Fxq 'skip-version-bump'; then
           echo "skip-version-bump label present; skipping version bump enforcement."
           exit 0
         fi
