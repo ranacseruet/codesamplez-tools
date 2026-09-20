@@ -105,8 +105,8 @@ describe('detectAffectedTargets', () => {
         includeRootAssets: true,
         shouldBuild: true,
         shouldDeploy: true,
-        deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'base64-converter', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'jwt-builder', 'jwt-decoder', 'llms.txt', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
-        invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/base64-converter/', '/base64-converter/*', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/llms.txt', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
+        deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'base64-converter', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'jwt-builder', 'jwt-decoder', 'llms.txt', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css', 'versions.json'],
+        invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/base64-converter/', '/base64-converter/*', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/llms.txt', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css', '/versions.json']
       });
     });
   });
@@ -145,8 +145,8 @@ describe('detectAffectedTargets', () => {
         includeRootAssets: true,
         shouldBuild: true,
         shouldDeploy: true,
-        deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'llms.txt', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css'],
-        invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/llms.txt', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css']
+        deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'llms.txt', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css', 'versions.json'],
+        invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/llms.txt', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css', '/versions.json']
       });
     });
   });

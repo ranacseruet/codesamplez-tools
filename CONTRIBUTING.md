@@ -63,10 +63,49 @@ For compute-intensive operations (such as text analysis, large diffs, or JSON fo
    - `script.tsx`: Preact component implementation and tool shell mount.
    - `content.tsx`: Documentation copy, FAQ items, and feature lists for prerendering.
    - `README.md`: Tool-specific documentation, usage guide, architecture, and tests.
+   - `CHANGELOG.md`: Per-tool release history (see "Tool Versioning").
    - `images/featured.png`: Social card asset.
 3. Reuse shared shell (`common/app-shell`) and shared UI primitives before creating new local patterns.
 4. Keep tool URLs, output shape, and standalone deployment assumptions consistent.
 5. Add the tool to `config/tooling-root.json` and manifest registries.
+
+## Tool Versioning
+
+Every tool is versioned independently so a regression on a deployed page can be
+traced to an exact release. The version lives in `<tool>/tool.meta.json`
+(`version`), must be semver (`x.y.z`), and is stamped into the built page as
+`<meta name="tool-version">` plus `data-build-commit` on `<html>`; the deployed
+site also exposes `versions.json` at the root listing every tool's live version
+and the build's source commit.
+
+**When to bump:** any PR that changes a tool's runtime output (code, styles,
+prerendered copy, shared `common/` modules the tool consumes) must bump that
+tool's version in the same PR. CI enforces this and fails with the list of
+tools missing a bump. Docs-only or CI-only PRs can add the `skip-version-bump`
+label to skip the check.
+
+**Semver guidance:**
+
+- **Patch** — bug fixes, copy tweaks, visual corrections: no behavioral surface changes.
+- **Minor** — new features or options, backwards-compatible behavior.
+- **Major** — changed or removed user-facing behavior, new requirements on inputs.
+
+**Release flow:**
+
+```sh
+# 1. Document the change (creates/prepends the entry in <tool>/CHANGELOG.md)
+npm run tool:version:note -- --tool <tool-id> --version <x.y.z> --note "What changed"
+
+# 2. Bump the version in <tool>/tool.meta.json
+npm run tool:version:bump -- --tool <tool-id> --release <patch|minor|major>
+
+# 3. After the version is live on main, tag the release
+npm run tool:tag-release -- --tool <tool-id>
+```
+
+Tags are annotated git tags named `<tool-id>/v<x.y.z>`. The `tag` command
+refuses to run when the changelog has no entry for the version being tagged.
+`npm run tool:versions` lists every tool's current version.
 
 ## Code Style
 

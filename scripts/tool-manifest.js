@@ -142,6 +142,21 @@ function requireNonEmptyString(value, label) {
 /**
  * @param {unknown} value
  * @param {string} label
+ * @returns {string}
+ */
+function requireSemanticVersion(value, label) {
+    const version = requireNonEmptyString(value, label);
+
+    if (!/^\d+\.\d+\.\d+$/u.test(version)) {
+        throw new Error(`${label} must be a semantic version (x.y.z), got: ${version}`);
+    }
+
+    return version;
+}
+
+/**
+ * @param {unknown} value
+ * @param {string} label
  * @returns {number}
  */
 function requirePositiveInteger(value, label) {
@@ -567,7 +582,7 @@ function readToolMetadata(metadataPath) {
 
     return {
         id: requireNonEmptyString(metadataRecord.id, 'Tool id'),
-        version: requireNonEmptyString(metadataRecord.version, 'Tool version'),
+        version: requireSemanticVersion(metadataRecord.version, 'Tool version'),
         title: requireNonEmptyString(metadataRecord.title, 'Tool title'),
         seoTitle: normalizeOptionalString(metadataRecord.seoTitle, 'Tool seoTitle'),
         description: requireNonEmptyString(metadataRecord.description, 'Tool description'),

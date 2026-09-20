@@ -13,6 +13,7 @@ const { renderAnalyticsHeadMarkup, renderAnalyticsResourceHints } = require('./a
 const { getToolFaqItems } = require('./tool-faq-metadata');
 const { getToolHowToSteps } = require('./tool-howto-metadata');
 const { getToolFeatureList } = require('./tool-feature-metadata');
+const { getBuildCommitAttributeMarkup } = require('./provenance-manifest');
 const { ensureBabelRegister } = require('./register-node-transforms');
 
 const THEME_COLOR = '#0b0b11';
@@ -104,7 +105,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
         : '';
 
     return `<!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark"${getBuildCommitAttributeMarkup()}>
 
 <head>
     <meta charset="UTF-8">
@@ -112,6 +113,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
     ${THEME_INIT_SCRIPT}
     <title>${escapeHtml(documentTitle)}</title>
     <meta name="description" content="${escapedDescription}">
+    <meta name="tool-version" content="${escapeAttribute(tool.version)}">
     <meta name="theme-color" content="${THEME_COLOR}">
     ${renderFaviconLinks(tool.siteStaticRootUri)}
     ${renderFontPreloads(tool.siteStaticRootUri)}${analyticsResourceHints ? `\n    ${analyticsResourceHints}` : ''}

@@ -30,6 +30,12 @@ const ALL_TOOL_TRIGGER_FILES = new Set([
     // prerender time, so a change here can alter the emitted markup. Pre-existing
     // gap, surfaced by the generator-input guard test in affected-tools.test.js.
     'scripts/register-node-transforms.js',
+    // Stamps data-build-commit into tool and root HTML and prerenders
+    // build/versions.json. Required by tool-document.js, so a change here can
+    // alter every emitted document; without the trigger the detector returns
+    // `shouldDeploy: false` and production keeps serving the stale provenance
+    // (same silent-staleness trap noted on generated-site-assets.js below).
+    'scripts/provenance-manifest.js',
     // Pair-specific related-tools copy. Prerendered into every tool document,
     // so a copy-only edit must still rebuild and redeploy them — otherwise it
     // is classified as a no-op and production keeps the old wording, the same

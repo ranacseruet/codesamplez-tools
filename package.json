@@ -50,7 +50,9 @@
     "qa:cross-browser": "node scripts/cross-browser-signoff.mjs",
     "tool:versions": "node scripts/tool-release.js list",
     "tool:version:bump": "node scripts/tool-release.js bump",
+    "tool:version:note": "node scripts/tool-release.js note",
     "tool:tag-release": "node scripts/tool-release.js tag",
+    "tool:check-version-bumps": "node scripts/run-version-bump-check.js",
     "deploy:affected": "node scripts/deploy-affected-assets.js",
     "deploy:cloudfront-function": "node scripts/deploy-cloudfront-function.js"
   },
