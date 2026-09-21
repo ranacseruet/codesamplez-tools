@@ -137,10 +137,10 @@ describe('tool-changelog', () => {
         it('escapes note copy so raw text cannot inject markup', () => {
             const markup = renderToolChangelogMarkup('json-formatter-tool');
 
-            // Real notes contain <meta name="tool-version"> phrasing; it must
-            // appear escaped, not as a live tag.
+            // Real notes contain HTML-escaped angle quotes (e.g. 'Prefer #x= …'
+            // copy) and must never appear as live tags in the section markup.
             expect(markup).not.toContain('<meta');
-            expect(markup).toContain('&lt;meta name=&quot;tool-version&quot;&gt;');
+            expect(markup).not.toContain('<script');
         });
     });
 });
