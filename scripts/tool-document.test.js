@@ -61,7 +61,7 @@ describe('tool document generation', () => {
 
         expect(html).toContain('<title>Diff Checker - Compare Text &amp; Code Instantly | Free Online Dev Tools by CodeSamplez</title>');
         expect(html).toContain('<meta name="description" content="Free online diff checker to quickly compare code or text differences. Perfect for developers, writers, and editors seeking instant results.">');
-        expect(html).toContain('<meta name="tool-version" content="1.0.2">');
+        expect(html).toContain('<meta name="tool-version" content="1.0.3">');
         expect(html).toContain('<meta name="theme-color" content="#0b0b11">');
         expect(html).toMatch(/<html lang="en" data-theme="dark" data-build-commit="[0-9a-f]{40}">/);
         expect(html).toContain("localStorage.getItem('cst-standalone-theme-mode')");
@@ -160,9 +160,11 @@ describe('tool document generation', () => {
             // Heading + per-version blocks + full-history link
             expect(section).toContain('<h3 class="c-tool-changelog__heading" id="c-tool-changelog-heading">Changelog</h3>');
             expect(section).toContain(`href="https://github.com/ranacseruet/codesamplez-tools/blob/main/${tool.sourceRoot}/CHANGELOG.md"`);
-            // Seeded changelogs carry 1.0.2/1.0.1/1.0.0; the section shows the latest ones.
+            // Seeded changelogs carry 1.0.3/1.0.2/1.0.1; the section shows the
+            // latest ones. (Follows the versions in the tool fixtures; update
+            // alongside any tool version bump in this repo.)
             expect(section).toContain('c-tool-changelog__version');
-            expect(section).toContain('1.0.0');
+            expect(section).toContain('1.0.1');
         });
     });
 
