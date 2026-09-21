@@ -6,6 +6,7 @@ const {
   detectAffectedTargets,
   isAllToolsTrigger,
   isRootOnlyTrigger,
+  isToolChangelogPath,
   isToolMetadataPath
 } = require('./affected-tools');
 
@@ -260,6 +261,30 @@ describe('detectAffectedTargets', () => {
       deployPaths: [],
       invalidationPaths: []
     });
+  });
+
+  it('treats a tool-local CHANGELOG.md as a runtime change for its tool', () => {
+    // The changelog is prerendered onto the tool page by tool-changelog.js:
+    // a release-note edit without any metadata change must still rebuild and
+    // redeploy that tool's page, or production keeps the old changelog.
+    const result = detectAffectedTargets(['jwt-decoder/CHANGELOG.md']);
+
+    expect(result.scope).toBe('selected-tools');
+    expect(result.affectedTools).toEqual(['jwt-decoder-tool']);
+    expect(result.shouldBuild).toBe(true);
+    expect(result.shouldDeploy).toBe(true);
+    expect(result.deployPaths).toEqual(['jwt-decoder']);
+  });
+
+  it('keeps the root CHANGELOG.md doc-only', () => {
+    expect(detectAffectedTargets(['CHANGELOG.md']).shouldBuild).toBe(false);
+  });
+
+  it('classifies tool changelog paths via isToolChangelogPath', () => {
+    expect(isToolChangelogPath('jwt-decoder/CHANGELOG.md')).toBe(true);
+    expect(isToolChangelogPath('future-tool/CHANGELOG.md')).toBe(false);
+    expect(isToolChangelogPath('CHANGELOG.md')).toBe(false);
+    expect(isToolChangelogPath('jwt-decoder/README.md')).toBe(false);
   });
 
   it('surfaces the defensive missing-tool guard when finalizing selected tools', () => {

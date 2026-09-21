@@ -162,7 +162,19 @@ function isToolMetadataPath(filePath) {
  * @returns {boolean}
  */
 function isToolRuntimeChange(filePath) {
-    return !isToolDocPath(filePath);
+    // The tool-local CHANGELOG.md is prerendered into the tool's own page by
+    // scripts/tool-changelog.js, so an edit there is a runtime change for
+    // that tool — NOT docs-only like README.md or the root CHANGELOG.md
+    // (which stays doc-only because getToolIdForPath never maps it).
+    return isToolChangelogPath(filePath) || !isToolDocPath(filePath);
+}
+
+/**
+ * @param {string} filePath
+ * @returns {boolean}
+ */
+function isToolChangelogPath(filePath) {
+    return filePath.endsWith('/CHANGELOG.md') && Boolean(getToolIdForPath(filePath));
 }
 
 /**
@@ -293,6 +305,7 @@ module.exports = {
     detectAffectedTargets,
     getToolIdForPath,
     isToolMetadataPath,
+    isToolChangelogPath,
     isAllToolsTrigger,
     isRootOnlyTrigger,
     isToolDocPath,
