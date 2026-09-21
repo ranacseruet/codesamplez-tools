@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.3] - 2026-09-21
+
+### JSON Formatter
+
+- Fixed: a formatting run superseded by a newer one (e.g. an indent change while a large worker format is in flight) no longer paints a transient 'Invalid JSON' error over the newer run's output or disables its Copy/Download/Expand/Collapse controls until the newer run completes.
+
 ## [1.0.2] - 2026-09-21
 
 ### JSON Formatter

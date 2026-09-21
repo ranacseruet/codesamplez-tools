@@ -173,6 +173,7 @@ Calculation methodology:
 - Disables output buttons on invalid JSON
 - Reports the exact line and column of the first syntax error
 - Shows a "Go to error" button that focuses the input, scrolls to the error line, and selects the offending character (jump-to-error)
+- Stale-run safety: each format run carries a monotonic run id; a run superseded by a newer one drops its result or error entirely (including while the worker chunk is still loading), so a slow run's failure never paints "Invalid JSON" over a newer run's output or disables its controls
 
 ### JSON Schema Validation
 - Uses a dedicated lazily loaded Web Worker with Ajv 8 and `json-source-map`; the existing formatting worker and initial bundle do not include the validator.
