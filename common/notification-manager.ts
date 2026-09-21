@@ -16,7 +16,7 @@ export class NotificationManager {
    * @param {string} message - The message to display
    * @param {number} [duration=2000] - Duration in milliseconds (default: 2000)
    * @param {object} [options] - Additional options
-   * @param {string} [options.type] - Notification type ('error', 'success', etc.)
+   * @param {NotificationType} [options.type] - Notification type ('error' | 'success' | 'warning' | 'default')
    */
   static show(message: string, duration = 2000, options: NotificationOptions = {}): void {
     const notification = document.getElementById('notification');
