@@ -665,7 +665,8 @@ body.standalone-app {
 
 .c-notification {
   position: fixed;
-  bottom: var(--spacing-lg, var(--default-spacing-lg));
+  /* Top-right, directly beneath the fixed app bar (--cst-appbar-height from app-shell.css). */
+  top: calc(var(--cst-appbar-height, 3.5rem) + var(--spacing-sm, var(--default-spacing-sm)));
   right: var(--spacing-lg, var(--default-spacing-lg));
   /* v4: flat semantic fill (no gradient, no white hairline). */
   background-color: var(--color-success, var(--default-color-success));
@@ -673,7 +674,7 @@ body.standalone-app {
   padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-lg, var(--default-spacing-lg));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   box-shadow: var(--cst-shadow-3, var(--box-shadow, var(--default-box-shadow)));
-  transform: translateY(100px);
+  transform: translateY(-100px);
   opacity: 0;
   transition:
     transform var(--cst-motion-medium, 220ms) var(--cst-ease-emphasized, ease),
