@@ -622,12 +622,15 @@ export class JSONFormatter {
         sortKeys: this.sortCheckbox.checked,
         indent: this.getIndentOption()
       };
-      const { formatted, formattedString } = inputValue.length <= JSON_WORKER_CHAR_THRESHOLD
+      const result = inputValue.length <= JSON_WORKER_CHAR_THRESHOLD
         ? formatJson(request)
-        : await this.lazyFormatRunner.run(request);
+        : await this.lazyFormatRunner.run(request, () => runId !== this.currentRunId);
 
-      // Abort if a newer run started while the worker was computing.
+      // Abort if a newer run started while the worker was computing. Checked
+      // before the destructure below: a run superseded while the runner chunk
+      // was loading resolves to a sentinel the caller must drop, never use.
       if (runId !== this.currentRunId) return;
+      const { formatted, formattedString } = result;
 
       // Clear previous output
       this.output.replaceChildren();
@@ -672,6 +675,10 @@ export class JSONFormatter {
         );
       }
     } catch (error: unknown) {
+      // A superseded run must never paint its failure over a newer run's
+      // output: skip error reporting (and the schema call below) entirely.
+      // The finally block's own runId check restores button state correctly.
+      if (runId !== this.currentRunId) return;
       const fallbackMessage = error instanceof Error ? error.message : String(error);
       this.reportJsonError(this.input.value, this.autoFixCheckbox.checked, fallbackMessage);
       this.copyBtn.disabled = true;
@@ -685,7 +692,9 @@ export class JSONFormatter {
       }
       this.updateStats(this.input.value, '');
 
-      if (hasSchema && runId === this.currentRunId) {
+      // Unreachable for a superseded run (the guard above bailed out), so the
+      // schema call below always belongs to the current run.
+      if (hasSchema) {
         await this.runSchemaValidation(
           { data: this.input.value, schema: schemaText, draft: this.getSchemaDraft() },
           runId,
