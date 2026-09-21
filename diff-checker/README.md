@@ -43,6 +43,7 @@ Text comparison algorithms (Myers diff) can be computationally expensive on larg
   - `diff-runner.ts` wraps the worker invocation using the typed `common/worker-runner.ts` utility.
   - The worker computes line-level and word-level diffs off the main thread.
 - **Resilient Fallback**: If Web Workers are unsupported, worker creation fails, or a timeout occurs, execution gracefully falls back to synchronous computation on the main thread.
+- **Stale-run safety**: each compare carries a monotonic run id; a run superseded by a newer one drops its result or error entirely (including while the runner chunk is still loading), so a stale failure can never paint "Error computing diff" over a newer run's output, and only the current run restores the Compare button.
 - **Non-blocking Rendering**: Rendered results are mounted efficiently via Preact to avoid locking the UI during DOM construction.
 
 ---

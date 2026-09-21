@@ -440,6 +440,12 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   };
   let lastSuccessfulComparison: ComparisonSnapshot | null = null;
 
+  // Monotonic run id: lets a compare that is superseded by a newer one (the
+  // button is disabled while a run is in flight, but a handler must still be
+  // safe if re-entrancy is ever unlocked) drop its stale result or error
+  // instead of painting either over the newer run's output.
+  let compareRunId = 0;
+
   // One-click copy for the rendered diff output (CopyButton targets <pre>).
   const resultCopyButton = diffResultElement instanceof HTMLPreElement
     ? new CopyButton(diffResultElement)
@@ -632,6 +638,7 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   if (compareButton && text1 && text2) {
     registerPrimaryActionShortcut(compareButton);
     compareButton.addEventListener('click', async function () {
+      const runId = ++compareRunId;
       const originalText = getPaneText(text1);
       const modifiedText = getPaneText(text2);
       const ignoreWhitespace = ignoreWhitespaceToggle?.checked ?? true;
@@ -664,10 +671,18 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
 
         // Small compares run synchronously (cheap, no worker round-trip);
         // large ones are offloaded to the worker. DOM rendering below always
-        // stays on the main thread.
+        // stays on the main thread. A run superseded while the runner chunk
+        // was loading resolves to a sentinel the caller must drop, never use.
         const diffResults = (originalText.length + modifiedText.length) <= DIFF_WORKER_CHAR_THRESHOLD
           ? computeDiff(originalLines, modifiedLines, ignoreWhitespace)
-          : await diffRunner.run({ originalLines, modifiedLines, ignoreWhitespace });
+          : await diffRunner.run(
+            { originalLines, modifiedLines, ignoreWhitespace },
+            () => runId !== compareRunId
+          );
+
+        // A newer compare superseded this one: drop the result (and skip the
+        // error path below) instead of rendering stale or undefined output.
+        if (runId !== compareRunId) return;
 
         if (diffEmptyState) {
           diffEmptyState.style.display = 'none';
@@ -686,13 +701,19 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
         // Show notification
         NotificationManager.show('Diff computation complete!');
       } catch (error) {
+        // A superseded run must never paint its failure over a newer run's
+        // rendered diff.
+        if (runId !== compareRunId) return;
         const errorMessage = error instanceof Error ? error.message : String(error);
         setInlineError('Error computing diff: ' + errorMessage);
         console.error(error);
       } finally {
-        // Restore UI state (first-text-node swap keeps `.c-kbd`)
-        setPrimaryButtonLabel('Compare');
-        compareButton.disabled = false;
+        // Restore UI state ONLY if this is still the current run (first-text-
+        // node swap keeps `.c-kbd`)
+        if (runId === compareRunId) {
+          setPrimaryButtonLabel('Compare');
+          compareButton.disabled = false;
+        }
       }
     });
   }

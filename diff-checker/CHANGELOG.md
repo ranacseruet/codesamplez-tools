@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.3] - 2026-09-21
+
+### Diff Checker
+
+- Fixed: a compare run superseded by a newer one now drops its stale result or error instead of painting 'Error computing diff' over the newer run's output; the compare button is only restored by the current run.
+
 ## [1.0.2] - 2026-09-21
 
 ### Diff Checker
