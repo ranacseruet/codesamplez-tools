@@ -24,5 +24,6 @@ declare var __CST_APP_SHELL_CATALOG__: {
         publicPath: string;
         catalogGroupId: string;
         catalogOrder: number;
+        version: string;
     }>;
 } | undefined;

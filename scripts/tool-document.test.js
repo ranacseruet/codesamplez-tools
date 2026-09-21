@@ -105,6 +105,8 @@ describe('tool document generation', () => {
         expect(html).toContain('<button type="button" class="cst-share__btn cst-share__btn--copy" aria-label="Copy link"');
         expect(html).toContain('<div id="app-shell-footer"><footer class="cst-shell__footer">');
         expect(html).toContain('<a href="https://codesamplez.com" class="cst-shell__footer-link">CodeSamplez.com</a>');
+        // Footer badge: the tool's released version, from tool.meta.json.
+        expect(html).toContain(`<span class="cst-shell__footer-version" title="This tool's release version: v${tool.version}">v${tool.version}</span>`);
         expect(html).toContain('<h1 class="cst-shell__title">Diff Checker</h1>');
         expect(html).toContain('<p class="cst-shell__description">Free online diff checker to quickly compare code or text differences. Perfect for developers, writers, and editors seeking instant results.</p>');
         expect(html).toContain('<main class="c-tool-page-main" aria-labelledby="diff-checker-app-workspace-heading">');

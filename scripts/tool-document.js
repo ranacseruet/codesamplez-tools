@@ -211,7 +211,8 @@ function renderToolShellFooterMarkup(tool) {
     const { ToolShellFooter } = require('../common/app-shell/AppShell');
 
     return renderToString(h(ToolShellFooter, {
-        homeHref: tool.siteBaseUrl
+        homeHref: tool.siteBaseUrl,
+        version: tool.version
     }));
 }
 

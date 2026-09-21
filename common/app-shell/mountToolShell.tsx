@@ -1,7 +1,7 @@
 import { render } from 'preact';
 import { ToolShellFooter, ToolShellHeader, createToolBreadcrumbItems } from './AppShell';
 import { ShareBar } from './ShareBar';
-import { resolveToolIdFromPath } from './toolCatalog';
+import { resolveToolIdFromPath, resolveToolVersionFromPath } from './toolCatalog';
 import { recordToolVisit } from '../recent-tools';
 import { openShortcutHelp, registerShortcutHelp } from '../shortcut-utils';
 import { SITE_BASE_URL } from '../siteBaseUrl';
@@ -179,7 +179,11 @@ export function mountToolShell({
     renderHeader();
 
     if (footerRoot) {
-        render(<ToolShellFooter homeHref={resolvedHomeHref} />, footerRoot);
+        // Version badge: the catalog is the single source of truth (same data
+        // the prerendered footer and versions.json carry), matched by path so
+        // no per-tool wiring can drift. Off-tool pages resolve to no version.
+        const version = isStandaloneMode ? resolveToolVersionFromPath(window.location.pathname) : null;
+        render(<ToolShellFooter homeHref={resolvedHomeHref} version={version ?? undefined} />, footerRoot);
     }
 
     // The share rail lives only on standalone tool pages. Re-render it on the

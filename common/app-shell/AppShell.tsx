@@ -245,9 +245,10 @@ export function ToolShellHeader({
 
 interface ToolShellFooterProps {
     homeHref?: string;
+    version?: string;
 }
 
-export function ToolShellFooter({ homeHref = SITE_BASE_URL }: ToolShellFooterProps): JSX.Element {
+export function ToolShellFooter({ homeHref = SITE_BASE_URL, version }: ToolShellFooterProps): JSX.Element {
     const currentYear = new Date().getFullYear();
     return (
         <footer className="cst-shell__footer">
@@ -287,6 +288,12 @@ export function ToolShellFooter({ homeHref = SITE_BASE_URL }: ToolShellFooterPro
                     <a href={MAIN_SITE_URL} className="cst-shell__footer-link">CodeSamplez.com</a>
                     <span aria-hidden="true">·</span>
                     <span>© {currentYear} CodeSamplez</span>
+                    {version ? (
+                        <>
+                            <span aria-hidden="true">·</span>
+                            <span className="cst-shell__footer-version" title={`This tool's release version: v${version}`}>v{version}</span>
+                        </>
+                    ) : null}
                 </div>
             </div>
         </footer>

@@ -1,6 +1,6 @@
 {
   "id": "jwt-builder-tool",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "title": "JWT Builder",
   "seoTitle": "JWT Generator – Create JSON Web Tokens Instantly",
   "description": "Free online JWT Generator – create signed JSON Web Tokens instantly. Customize header/payload claims and get your JWT ready for use.",

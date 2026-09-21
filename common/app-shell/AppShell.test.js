@@ -201,6 +201,23 @@ describe('AppShell components', () => {
         expect(mainSiteLink?.getAttribute('href')).toBe('https://codesamplez.com');
         const repoLink = bottomLinks.find((link) => link.textContent === 'GitHub');
         expect(repoLink?.getAttribute('href')).toBe('https://github.com/ranacseruet/codesamplez-tools');
+        // No version prop → no badge (index/404 footer).
+        expect(root.querySelector('.cst-shell__footer-version')).toBeNull();
+    });
+
+    it('renders the version badge in the footer when a version is provided', () => {
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+
+        render(<ToolShellFooter version="1.0.2" />, root);
+
+        const badge = root.querySelector('.cst-shell__footer-version');
+        expect(badge).not.toBeNull();
+        expect(badge?.textContent).toBe('v1.0.2');
+        // The badge is informational: same element order as the no-version
+        // footer, appended after the copyright inside the bottom row.
+        const bottomItems = [...root.querySelectorAll('.cst-shell__footer-bottom > *')];
+        expect(bottomItems[bottomItems.length - 1]).toBe(badge);
     });
 
     it('closes the Browse Tools menu on outside click and Escape', () => {
