@@ -49,7 +49,7 @@ a production deployment that explicitly supplies them loads GA4/AdSense. See
 
 ### Prerequisites
 
-- **Node.js**: `>= 24.15.0 < 25`
+- **Node.js**: `>= 24.15.0 < 25` (enforced at install time via `.npmrc`; Jest additionally requires Node >= 24.9 for native `require(esm)`)
 - **npm**: `>= 10.0.0`
 
 ### Setup
@@ -58,6 +58,9 @@ a production deployment that explicitly supplies them loads GA4/AdSense. See
 # Clone the repository
 git clone https://github.com/ranacseruet/codesamplez-tools.git
 cd codesamplez-tools
+
+# Use the pinned Node version (see .nvmrc)
+nvm install && nvm use
 
 # Install dependencies
 npm install

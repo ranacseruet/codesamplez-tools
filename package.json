@@ -33,7 +33,7 @@
     "not ie <= 11"
   ],
   "scripts": {
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test": "node scripts/check-node-version.js && NODE_OPTIONS=--experimental-vm-modules jest",
     "start": "http-server build -c-1 -p 8080",
     "dev": "NODE_ENV=development webpack serve --mode development",
     "build": "node scripts/build-tools.js --mode production",

@@ -127,7 +127,7 @@ refuses to run when the changelog has no entry for the version being tagged.
 Required validation gates:
 
 - `npm run typecheck`: TypeScript compilation check across all tools and scripts.
-- `npm test`: Jest unit/integration tests (requires Node 24).
+- `npm test`: Jest unit/integration tests (requires Node 24; the `test` script runs `scripts/check-node-version.js` first and fails fast with setup guidance on older runtimes — Jest 30 needs Node >= 24.9 for native `require(esm)`).
 - `npm run audit:deps`: Security vulnerability audit.
 - `npm run build`: Production build of all tools and static assets.
 - `npm run verify-build`: Checks that all required bundles, styles, and HTML files are emitted cleanly.
