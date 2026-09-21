@@ -14,6 +14,7 @@ const { getToolFaqItems } = require('./tool-faq-metadata');
 const { getToolHowToSteps } = require('./tool-howto-metadata');
 const { getToolFeatureList } = require('./tool-feature-metadata');
 const { getBuildCommitAttributeMarkup } = require('./provenance-manifest');
+const { renderToolChangelogMarkup } = require('./tool-changelog');
 const { ensureBabelRegister } = require('./register-node-transforms');
 
 const THEME_COLOR = '#0b0b11';
@@ -145,6 +146,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
         ${wrappedBeforeMarkup}
         <div id="${escapedAppRootId}">${prerenderedMarkup}</div>
         ${renderToolVersionLineMarkup(tool)}
+        ${renderToolChangelogMarkup(tool.id)}
         ${wrappedAfterMarkup}
         <div id="app-shell-share">${shellShareMarkup}</div>
     </main>
@@ -217,18 +219,22 @@ function renderToolShellFooterMarkup(tool) {
 }
 
 /**
- * The version line sits immediately under the app root — unambiguously THIS
+ * The version caption sits immediately under the app root — unambiguously THIS
  * tool's release (the footer is site chrome and would read as a site version).
- * Prerendered static markup outside the Preact app root: hydration never owns
- * this node, so it cannot be matched-and-replaced (the destructive-injection
- * failure mode noted in lessons), and it cannot drift because it is rendered
- * from tool.version at document build time — same value as the
+ * Reads "{Tool Title} vX.Y.Z" so the version names what it describes, centered
+ * and deliberately visible (the point is that users can report it). Prerendered
+ * static markup outside the Preact app root: hydration never owns this node,
+ * so it cannot be matched-and-replaced (the destructive-injection failure mode
+ * noted in lessons), and it cannot drift because it is rendered from
+ * tool.version at document build time — same value as the
  * <meta name="tool-version"> tag in the same document.
  * @param {ToolDefinition} tool
  * @returns {string}
  */
 function renderToolVersionLineMarkup(tool) {
-    return `<p class="c-tool-version" data-tool-version="${escapeAttribute(tool.version)}">v${escapeHtml(tool.version)}</p>`;
+    const label = `${tool.title} v${tool.version}`;
+
+    return `<p class="c-tool-version" data-tool-version="${escapeAttribute(tool.version)}">${escapeHtml(label)}</p>`;
 }
 
 /**

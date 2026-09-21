@@ -106,15 +106,17 @@ describe('tool document generation', () => {
         expect(html).toContain('<div id="app-shell-footer"><footer class="cst-shell__footer">');
         expect(html).toContain('<a href="https://codesamplez.com" class="cst-shell__footer-link">CodeSamplez.com</a>');
         // Footer badge: the tool's released version, from tool.meta.json.
-        // Version line sits directly under the app root, before the after-app
-        // shell, outside Preact's hydration container.
+        // Version caption sits directly under the app root, before the changelog
+        // section and the after-app shell, outside Preact's hydration container.
         expect(html).toContain(`<div id="${tool.appRootId}">`);
-        expect(html).toContain(`<p class="c-tool-version" data-tool-version="${tool.version}">v${tool.version}</p>`);
+        expect(html).toContain(`<p class="c-tool-version" data-tool-version="${tool.version}">${escapeHtml(`${tool.title} v${tool.version}`)}</p>`);
         const versionLineIndex = html.indexOf('<p class="c-tool-version"');
         const appRootIndex = html.indexOf(`<div id="${tool.appRootId}">`);
+        const changelogIndex = html.indexOf('c-tool-changelog');
         const afterShellIndex = html.indexOf('c-tool-static-shell--after');
         expect(versionLineIndex).toBeGreaterThan(appRootIndex);
-        expect(versionLineIndex).toBeLessThan(afterShellIndex);
+        expect(versionLineIndex).toBeLessThan(changelogIndex);
+        expect(changelogIndex).toBeLessThan(afterShellIndex);
         expect(html).toContain('<h1 class="cst-shell__title">Diff Checker</h1>');
         expect(html).toContain('<p class="cst-shell__description">Free online diff checker to quickly compare code or text differences. Perfect for developers, writers, and editors seeking instant results.</p>');
         expect(html).toContain('<main class="c-tool-page-main" aria-labelledby="diff-checker-app-workspace-heading">');
@@ -138,13 +140,29 @@ describe('tool document generation', () => {
         });
     });
 
-    it('renders exactly one version line per tool, matching the meta tag', () => {
+    it('renders exactly one version caption per tool, named and matching the meta tag', () => {
         getToolDefinitions().forEach((tool) => {
             const html = generateToolDocument(tool.id);
-            const expected = `<p class="c-tool-version" data-tool-version="${tool.version}">v${tool.version}</p>`;
+            const expected = `<p class="c-tool-version" data-tool-version="${tool.version}">${escapeHtml(`${tool.title} v${tool.version}`)}</p>`;
 
             expect(html.split(expected).length - 1).toBe(1);
             expect(html).toContain(`<meta name="tool-version" content="${tool.version}">`);
+        });
+    });
+
+    it('renders a changelog section with the latest versions and a GitHub link for every tool', () => {
+        getToolDefinitions().forEach((tool) => {
+            const html = generateToolDocument(tool.id);
+            const changelogStart = html.indexOf('<section class="c-tool-changelog"');
+            const changelogEnd = html.indexOf('</section>', changelogStart) + '</section>'.length;
+            const section = html.slice(changelogStart, changelogEnd);
+
+            // Heading + per-version blocks + full-history link
+            expect(section).toContain('<h3 class="c-tool-changelog__heading" id="c-tool-changelog-heading">Changelog</h3>');
+            expect(section).toContain(`href="https://github.com/ranacseruet/codesamplez-tools/blob/main/${tool.sourceRoot}/CHANGELOG.md"`);
+            // Seeded changelogs carry 1.0.2/1.0.1/1.0.0; the section shows the latest ones.
+            expect(section).toContain('c-tool-changelog__version');
+            expect(section).toContain('1.0.0');
         });
     });
 

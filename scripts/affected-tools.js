@@ -36,6 +36,10 @@ const ALL_TOOL_TRIGGER_FILES = new Set([
     // `shouldDeploy: false` and production keeps serving the stale provenance
     // (same silent-staleness trap noted on generated-site-assets.js below).
     'scripts/provenance-manifest.js',
+    // Renders the per-tool on-page changelog section into every tool
+    // document, so a change to its parsing or markup must rebuild all tool
+    // pages (same generator-input rule as tool-document.js).
+    'scripts/tool-changelog.js',
     // Pair-specific related-tools copy. Prerendered into every tool document,
     // so a copy-only edit must still rebuild and redeploy them — otherwise it
     // is classified as a no-op and production keeps the old wording, the same

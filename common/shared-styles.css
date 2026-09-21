@@ -1367,26 +1367,98 @@ button.c-tooltip-container {
   margin-bottom: 1rem;
 }
 
-/* The tool's release version, rendered directly under the app root. Same
-   container alignment tokens as the static shells above/below so it tracks the
-   tool UI's content edges; subdued so it informs without competing with the
-   workspace. Declared after the `.c-tool-static-shell *` reset (specificity
-   0-1-0 — same as this class) so source order keeps it un-flattened. */
+/* The tool's release version, rendered directly under the app root as
+   "{Tool Title} vX.Y.Z". Centered so it reads as a caption for the workspace
+   above it; deliberately visible (secondary color, not faint) — the point is
+   that users can find and report it. Declared after the
+   `.c-tool-static-shell *` reset (specificity 0-1-0 — same as this class) so
+   source order keeps it un-flattened. */
 .c-tool-version {
   max-width: var(--container-max-width, var(--default-container-max-width, 1280px));
   margin-left: auto;
   margin-right: auto;
   box-sizing: content-box;
   padding-inline: clamp(0.85rem, 2vw, var(--spacing-lg, var(--default-spacing-lg)));
-  padding-top: 0.35rem;
-  margin-top: 0.25rem;
-  margin-bottom: 1rem;
+  margin-top: 0.35rem;
+  margin-bottom: 1.25rem;
   font-family: var(--font-family-base, var(--default-font-family-base));
-  font-size: 0.78rem;
-  line-height: 1.4;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.5;
   color: var(--color-text-secondary, var(--md-sys-color-on-surface-variant, #5f6b6a));
   font-variant-numeric: tabular-nums;
-  text-align: left;
+  text-align: center;
+}
+
+/* --- Tool changelog section (below the tool, above the article) --- */
+.c-tool-changelog {
+  max-width: var(--container-max-width, var(--default-container-max-width, 1280px));
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: content-box;
+  padding-inline: clamp(0.85rem, 2vw, var(--spacing-lg, var(--default-spacing-lg)));
+  margin-top: 0.25rem;
+  margin-bottom: 1.5rem;
+  font-family: var(--font-family-base, var(--default-font-family-base));
+  font-size: var(--font-size-base, var(--default-font-size-base, 14px));
+  line-height: var(--line-height-base, var(--default-line-height-base, 1.6));
+  color: var(--color-text, var(--default-color-text, #333));
+}
+
+.c-tool-changelog__heading {
+  margin: 0 0 0.6rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.c-tool-changelog__version-block {
+  margin: 0 0 0.85rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--border-radius-lg, 8px);
+  border: 1px solid var(--color-border, #d7dde4);
+  background: var(--color-surface, #fff);
+}
+
+.c-tool-changelog__version {
+  margin: 0 0 0.25rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-text, var(--default-color-text, #333));
+}
+
+.c-tool-changelog__date {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary, var(--md-sys-color-on-surface-variant, #5f6b6a));
+  font-variant-numeric: tabular-nums;
+}
+
+.c-tool-changelog__notes {
+  margin: 0.25rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.c-tool-changelog__notes li {
+  margin: 0.2rem 0;
+}
+
+.c-tool-changelog__link {
+  display: inline-block;
+  color: var(--color-accent, var(--cst-color-accent, #a99cff));
+  font-size: 0.88rem;
+  text-decoration: none;
+  text-underline-offset: 0.16em;
+  border-radius: 4px;
+}
+
+.c-tool-changelog__link:hover {
+  text-decoration: underline;
+}
+
+.c-tool-changelog :is(a):focus-visible {
+  outline: none;
+  box-shadow: var(--cst-focus-ring, 0 0 0 3px rgba(125, 107, 255, 0.55));
 }
 
 /* Mirror `.tool-container`'s ≤768px padding bump so the shell keeps tracking
