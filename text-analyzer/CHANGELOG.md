@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.3] - 2026-09-21
+
+### Text Analyzer
+
+- Fixed notification toasts: overlapping shows no longer cut each other short; warning/success/default types render their proper colors; toasts now appear top-right beneath the fixed app bar.
+
 ## [1.0.2] - 2026-09-21
 
 ### Text Analyzer
