@@ -1,6 +1,6 @@
 {
   "id": "json-formatter-tool",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "title": "JSON Formatter",
   "seoTitle": "JSON Formatter — Beautifier, Minifier & JSON Schema Validator",
   "description": "Format, beautify, and minify JSON in your browser, then optionally validate strict input against Draft 7 or Draft 2020-12 JSON Schema with first-issue source diagnostics.",
