@@ -30,6 +30,10 @@ const SHARED_TOOL_LASTMOD_INPUTS = [
     path.resolve(REPO_ROOT, 'scripts/analytics.js'),
     path.resolve(REPO_ROOT, 'scripts/document-helpers.js'),
     path.resolve(REPO_ROOT, 'scripts/structured-data.js'),
+    // Renders the on-page changelog section into every tool page, so its
+    // parsing/markup changes alter the deployed HTML and must bump every
+    // tool's sitemap lastmod.
+    path.resolve(REPO_ROOT, 'scripts/tool-changelog.js'),
     path.resolve(REPO_ROOT, 'scripts/tool-document.js')
 ];
 const ROOT_PAGE_LASTMOD_INPUTS = [

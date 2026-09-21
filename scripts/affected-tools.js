@@ -36,6 +36,10 @@ const ALL_TOOL_TRIGGER_FILES = new Set([
     // `shouldDeploy: false` and production keeps serving the stale provenance
     // (same silent-staleness trap noted on generated-site-assets.js below).
     'scripts/provenance-manifest.js',
+    // Renders the per-tool on-page changelog section into every tool
+    // document, so a change to its parsing or markup must rebuild all tool
+    // pages (same generator-input rule as tool-document.js).
+    'scripts/tool-changelog.js',
     // Pair-specific related-tools copy. Prerendered into every tool document,
     // so a copy-only edit must still rebuild and redeploy them — otherwise it
     // is classified as a no-op and production keeps the old wording, the same
@@ -158,7 +162,19 @@ function isToolMetadataPath(filePath) {
  * @returns {boolean}
  */
 function isToolRuntimeChange(filePath) {
-    return !isToolDocPath(filePath);
+    // The tool-local CHANGELOG.md is prerendered into the tool's own page by
+    // scripts/tool-changelog.js, so an edit there is a runtime change for
+    // that tool — NOT docs-only like README.md or the root CHANGELOG.md
+    // (which stays doc-only because getToolIdForPath never maps it).
+    return isToolChangelogPath(filePath) || !isToolDocPath(filePath);
+}
+
+/**
+ * @param {string} filePath
+ * @returns {boolean}
+ */
+function isToolChangelogPath(filePath) {
+    return filePath.endsWith('/CHANGELOG.md') && Boolean(getToolIdForPath(filePath));
 }
 
 /**
@@ -289,6 +305,7 @@ module.exports = {
     detectAffectedTargets,
     getToolIdForPath,
     isToolMetadataPath,
+    isToolChangelogPath,
     isAllToolsTrigger,
     isRootOnlyTrigger,
     isToolDocPath,

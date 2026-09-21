@@ -10,10 +10,12 @@ const {
     buildRobotsTxt,
     buildSitemapEntries,
     buildSitemapXml,
+    getToolPageLastmodPaths,
     resolveGitLastmodForPaths,
     toSitemapUrlItem,
     writeGeneratedSiteAssets
 } = require('./generated-site-assets');
+const { REPO_ROOT } = require('./tool-manifest');
 
 function withEnv(overrides, run) {
     const originalEnv = { ...process.env };
@@ -154,6 +156,15 @@ describe('generated site assets', () => {
 
         expect(urls[0].lastmod).toBe(rootTimestamp);
         expect(urls.slice(1).every((entry) => entry.lastmod === toolTimestamp)).toBe(true);
+    });
+
+    it('counts the on-page changelog renderer as a lastmod input for every tool page', () => {
+        // Derived guard: tool-changelog.js alters every tool page's HTML, so a
+        // change to it must bump every tool's sitemap lastmod — exactly the
+        // class of gap the shared lastmod inputs exist to prevent.
+        const lastmodPaths = getToolPageLastmodPaths(getToolDefinitions()[0]);
+
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-changelog.js'));
     });
 
     it('omits lastmod when the resolver cannot determine a timestamp', async () => {

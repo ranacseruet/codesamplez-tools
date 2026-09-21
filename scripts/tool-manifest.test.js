@@ -474,7 +474,7 @@ describe('tool-manifest', () => {
         sourceRoot: 'jwt-decoder',
         outputDir: 'jwt-decoder',
         outputPath: 'build/jwt-decoder',
-        version: '1.0.1',
+        version: '1.0.2',
         title: 'JWT Decoder & Validator',
         description: 'Free online JWT decoder – instantly reveal a token’s header, payload, and verify its signature. Paste your JWT to decode it now.',
         indexDescription: 'Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.',
