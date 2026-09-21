@@ -3,10 +3,14 @@
  * Provides consistent notification behavior across all tools
  */
 interface NotificationOptions {
-  type?: string;
+  type?: NotificationType;
 }
 
+type NotificationType = 'error' | 'success' | 'warning' | 'default';
+
 export class NotificationManager {
+  /** Timer for the currently displayed notification, so a new show() can cancel the pending hide. */
+  private static hideTimer: ReturnType<typeof setTimeout> | null = null;
   /**
    * Show a notification message
    * @param {string} message - The message to display
@@ -21,6 +25,12 @@ export class NotificationManager {
       return;
     }
     
+    // Cancel the pending hide from a previous notification so it can't cut this one short
+    if (NotificationManager.hideTimer !== null) {
+      clearTimeout(NotificationManager.hideTimer);
+      NotificationManager.hideTimer = null;
+    }
+
     // Clear previous notification state
     notification.className = 'c-notification';
     notification.textContent = message;
@@ -34,8 +44,9 @@ export class NotificationManager {
     notification.classList.add('show');
     
     // Auto-hide after duration
-    setTimeout(() => {
+    NotificationManager.hideTimer = setTimeout(() => {
       notification.classList.remove('show');
+      NotificationManager.hideTimer = null;
     }, duration);
   }
 }

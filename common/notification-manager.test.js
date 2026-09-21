@@ -37,6 +37,23 @@ describe('NotificationManager', () => {
     jest.useRealTimers();
   });
 
+  test('a later show() is not cut short by the previous one’s hide timer', () => {
+    jest.useFakeTimers();
+    NotificationManager.show('First', 1000);
+    jest.advanceTimersByTime(500);
+    NotificationManager.show('Second', 4000);
+    
+    // Previous timer (fires at t=1000) must not hide the second toast early
+    jest.advanceTimersByTime(500);
+    expect(notificationElement.classList.contains('show')).toBe(true);
+    
+    // Second toast hides after its own full duration (t=4500)
+    jest.advanceTimersByTime(3500);
+    expect(notificationElement.classList.contains('show')).toBe(false);
+    
+    jest.useRealTimers();
+  });
+
   test('show() applies type class when specified', () => {
     NotificationManager.show('Error', 2000, { type: 'error' });
     

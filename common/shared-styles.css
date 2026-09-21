@@ -684,6 +684,18 @@ body.standalone-app {
   background-color: var(--color-danger, var(--default-color-danger));
 }
 
+.c-notification.notification-warning {
+  background-color: var(--color-warning, #b06b00);
+}
+
+.c-notification.notification-success {
+  background-color: var(--color-success, var(--default-color-success));
+}
+
+.c-notification.notification-default {
+  background-color: var(--color-primary, var(--default-color-primary));
+}
+
 .c-notification.show {
   transform: translateY(0);
   opacity: 1;
