@@ -135,12 +135,45 @@ describe('tool-changelog', () => {
         });
 
         it('escapes note copy so raw text cannot inject markup', () => {
-            const markup = renderToolChangelogMarkup('json-formatter-tool');
+            // The real json-formatter changelog no longer has angle-bracket
+            // notes inside the visible window, so seed a fixture and map the
+            // tool's real changelog path onto it (same fs-stub trick the
+            // readToolChangelog tests use).
+            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tool-changelog-escape-test-'));
+            const fixturePath = path.join(tempDir, 'CHANGELOG.md');
+            const toolChangelogPath = getToolChangelogFilePath('json-formatter-tool');
+            const realExistsSync = fs.existsSync;
+            const realReadFileSync = fs.readFileSync;
 
-            // Real notes contain <meta name="tool-version"> phrasing; it must
-            // appear escaped, not as a live tag.
-            expect(markup).not.toContain('<meta');
-            expect(markup).toContain('&lt;meta name=&quot;tool-version&quot;&gt;');
+            try {
+                fs.writeFileSync(fixturePath, [
+                    '# Changelog',
+                    '',
+                    '## [1.0.0] - 2026-09-21',
+                    '',
+                    '### Some Tool',
+                    '',
+                    '- Stamps <meta name="tool-version"> and blocks <script>alert(1)</script>.'
+                ].join('\n'));
+
+                jest.spyOn(fs, 'existsSync').mockImplementation((target) => (
+                    String(target) === toolChangelogPath ? realExistsSync(fixturePath) : realExistsSync(target)
+                ));
+                jest.spyOn(fs, 'readFileSync').mockImplementation(((target, options) => (
+                    String(target) === toolChangelogPath ? realReadFileSync(fixturePath, options) : realReadFileSync(target, options)
+                )));
+
+                const markup = renderToolChangelogMarkup('json-formatter-tool');
+
+                expect(markup).not.toContain('<meta');
+                expect(markup).not.toContain('<script');
+                expect(markup).toContain('&lt;meta name=&quot;tool-version&quot;&gt;');
+                expect(markup).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+            } finally {
+                fs.existsSync.mockRestore();
+                fs.readFileSync.mockRestore();
+                fs.rmSync(tempDir, { recursive: true, force: true });
+            }
         });
     });
 });

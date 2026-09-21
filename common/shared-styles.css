@@ -665,15 +665,19 @@ body.standalone-app {
 
 .c-notification {
   position: fixed;
-  bottom: var(--spacing-lg, var(--default-spacing-lg));
+  /* Top-right, directly beneath the fixed app bar (--cst-appbar-height from app-shell.css). */
+  top: calc(var(--cst-appbar-height, 3.5rem) + var(--spacing-sm, var(--default-spacing-sm)));
   right: var(--spacing-lg, var(--default-spacing-lg));
+  /* Above sticky tool strips (z-index ~10) that pin at the same top band;
+     below full-viewport overlays (z-index 60). */
+  z-index: 45;
   /* v4: flat semantic fill (no gradient, no white hairline). */
   background-color: var(--color-success, var(--default-color-success));
   color: var(--color-bg, #fff);
   padding: var(--spacing-sm, var(--default-spacing-sm)) var(--spacing-lg, var(--default-spacing-lg));
   border-radius: var(--border-radius-sm, var(--default-border-radius-sm));
   box-shadow: var(--cst-shadow-3, var(--box-shadow, var(--default-box-shadow)));
-  transform: translateY(100px);
+  transform: translateY(-100px);
   opacity: 0;
   transition:
     transform var(--cst-motion-medium, 220ms) var(--cst-ease-emphasized, ease),
@@ -682,6 +686,19 @@ body.standalone-app {
 
 .c-notification.notification-error {
   background-color: var(--color-danger, var(--default-color-danger));
+}
+
+.c-notification.notification-warning {
+  background-color: var(--color-warning, #b06b00);
+}
+
+.c-notification.notification-success {
+  background-color: var(--color-success, var(--default-color-success));
+}
+
+.c-notification.notification-default {
+  background-color: var(--color-primary, var(--default-color-primary));
+  color: var(--color-on-primary, #fff);
 }
 
 .c-notification.show {
