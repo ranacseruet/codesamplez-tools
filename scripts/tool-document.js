@@ -144,6 +144,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
         <h2 id="${escapedMainHeadingId}" class="u-visually-hidden">${escapeHtml(workspaceHeading)}</h2>
         ${wrappedBeforeMarkup}
         <div id="${escapedAppRootId}">${prerenderedMarkup}</div>
+        ${renderToolVersionLineMarkup(tool)}
         ${wrappedAfterMarkup}
         <div id="app-shell-share">${shellShareMarkup}</div>
     </main>
@@ -211,9 +212,23 @@ function renderToolShellFooterMarkup(tool) {
     const { ToolShellFooter } = require('../common/app-shell/AppShell');
 
     return renderToString(h(ToolShellFooter, {
-        homeHref: tool.siteBaseUrl,
-        version: tool.version
+        homeHref: tool.siteBaseUrl
     }));
+}
+
+/**
+ * The version line sits immediately under the app root — unambiguously THIS
+ * tool's release (the footer is site chrome and would read as a site version).
+ * Prerendered static markup outside the Preact app root: hydration never owns
+ * this node, so it cannot be matched-and-replaced (the destructive-injection
+ * failure mode noted in lessons), and it cannot drift because it is rendered
+ * from tool.version at document build time — same value as the
+ * <meta name="tool-version"> tag in the same document.
+ * @param {ToolDefinition} tool
+ * @returns {string}
+ */
+function renderToolVersionLineMarkup(tool) {
+    return `<p class="c-tool-version" data-tool-version="${escapeAttribute(tool.version)}">v${escapeHtml(tool.version)}</p>`;
 }
 
 /**

@@ -10,7 +10,6 @@ export interface AppShellToolCatalogEntry {
     publicPath: string;
     catalogGroupId: string;
     catalogOrder: number;
-    version: string;
 }
 
 export interface AppShellRootPageMetadata {
@@ -33,7 +32,6 @@ interface AppShellToolMetadata {
     publicPath: string;
     catalogGroupId: string;
     catalogOrder: number;
-    version: string;
 }
 
 interface AppShellToolCatalog {
@@ -105,28 +103,6 @@ export function resolveToolIdFromPath(pathName: string): string | null {
     return null;
 }
 
-/**
- * Resolves the current tool's released version from the injected catalog, or
- * `null` off-tool (index/404) — the footer badge only renders on tool pages.
- * Same slug matching as `resolveToolIdFromPath`: correct under sub-directory
- * hosting, no per-tool wiring that could drift from the catalog.
- */
-export function resolveToolVersionFromPath(pathName: string): string | null {
-    const slug = getToolPathSlug(pathName);
-    if (!slug) {
-        return null;
-    }
-
-    for (let index = 0; index < TOOL_CATALOG_ENTRIES.length; index += 1) {
-        const entry = TOOL_CATALOG_ENTRIES[index];
-        if (getToolPathSlug(entry.publicPath) === slug) {
-            return entry.version;
-        }
-    }
-
-    return null;
-}
-
 export function normalizeToolCatalog(
     rawRootConfig: AppShellRootConfig,
     toolMetadata: AppShellToolMetadata[]
@@ -143,8 +119,7 @@ export function normalizeToolCatalog(
                 description: tool.indexDescription,
                 publicPath: tool.publicPath,
                 catalogGroupId: tool.catalogGroupId,
-                catalogOrder: tool.catalogOrder,
-                version: tool.version
+                catalogOrder: tool.catalogOrder
             }))
             .sort((left, right) => {
                 const leftGroupOrder = groupOrder.get(left.catalogGroupId) ?? Number.MAX_SAFE_INTEGER;

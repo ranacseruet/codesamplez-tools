@@ -1367,6 +1367,28 @@ button.c-tooltip-container {
   margin-bottom: 1rem;
 }
 
+/* The tool's release version, rendered directly under the app root. Same
+   container alignment tokens as the static shells above/below so it tracks the
+   tool UI's content edges; subdued so it informs without competing with the
+   workspace. Declared after the `.c-tool-static-shell *` reset (specificity
+   0-1-0 — same as this class) so source order keeps it un-flattened. */
+.c-tool-version {
+  max-width: var(--container-max-width, var(--default-container-max-width, 1280px));
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: content-box;
+  padding-inline: clamp(0.85rem, 2vw, var(--spacing-lg, var(--default-spacing-lg)));
+  padding-top: 0.35rem;
+  margin-top: 0.25rem;
+  margin-bottom: 1rem;
+  font-family: var(--font-family-base, var(--default-font-family-base));
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--color-text-secondary, var(--md-sys-color-on-surface-variant, #5f6b6a));
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+
 /* Mirror `.tool-container`'s ≤768px padding bump so the shell keeps tracking
    the tool UI's content edges on small screens too. */
 @media (max-width: 768px) {

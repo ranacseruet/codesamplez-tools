@@ -6,7 +6,7 @@ All notable changes to this tool are documented in this file.
 
 ### Text Analyzer
 
-- Footer now shows the tool's release version (v1.0.2) so users can report it in support tickets.
+- The tool's release version (v1.0.2) is now displayed directly under the tool workspace so users can report it in support tickets.
 
 ## [1.0.1] - 2026-09-20
 

@@ -11,8 +11,7 @@ const { REPO_ROOT, ROOT_CONFIG_PATH, getCatalogGroups, getRootPageDefinition, ge
  *   description: string,
  *   publicPath: string,
  *   catalogGroupId: string,
- *   catalogOrder: number,
- *   version: string
+ *   catalogOrder: number
  * }} AppShellToolCatalogEntry
  * @typedef {{
  *   rootPage: AppShellRootPageMetadata,
@@ -64,8 +63,7 @@ function getAppShellCatalogDefinition() {
                 description: tool.indexDescription,
                 publicPath: tool.publicPath,
                 catalogGroupId: tool.catalogGroupId,
-                catalogOrder: tool.catalogOrder,
-                version: tool.version
+                catalogOrder: tool.catalogOrder
             })),
             groups
         )

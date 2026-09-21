@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Tool footers show the tool's release version as a `v<x.y.z>` badge, rendered
-  from the app-shell catalog so prerendered and hydrated markup cannot drift.
+- Each tool page displays the tool's release version as a small `v<x.y.z>`
+  line directly under the tool workspace, emitted from `tool.meta.json` at
+  document build time.
 - Per-tool versioning: each tool's semver lives in its `tool.meta.json`, is
   stamped into built pages (`<meta name="tool-version">`,
   `data-build-commit` on `<html>`), and is published site-wide in

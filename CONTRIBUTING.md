@@ -75,10 +75,11 @@ Every tool is versioned independently so a regression on a deployed page can be
 traced to an exact release. The version lives in `<tool>/tool.meta.json`
 (`version`), must be semver (`x.y.z`), and is stamped into the built page as
 `<meta name="tool-version">` plus `data-build-commit` on `<html>`; each tool's
-footer also shows the version as a small `v<x.y.z>` badge (rendered from the
-injected app-shell catalog, so prerender and hydration cannot drift); the
-deployed site also exposes `versions.json` at the root listing every tool's live
-version and the build's source commit.
+page also displays the version directly under the tool workspace as a small
+`v<x.y.z>` line (prerendered static markup outside the app root, emitted from
+`tool.version` at document build time); the deployed site also exposes
+`versions.json` at the root listing every tool's live version and the build's
+source commit.
 
 **When to bump:** any PR that changes a tool's runtime output (code, styles,
 prerendered copy, shared `common/` modules the tool consumes) must bump that

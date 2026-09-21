@@ -106,7 +106,15 @@ describe('tool document generation', () => {
         expect(html).toContain('<div id="app-shell-footer"><footer class="cst-shell__footer">');
         expect(html).toContain('<a href="https://codesamplez.com" class="cst-shell__footer-link">CodeSamplez.com</a>');
         // Footer badge: the tool's released version, from tool.meta.json.
-        expect(html).toContain(`<span class="cst-shell__footer-version" title="This tool's release version: v${tool.version}">v${tool.version}</span>`);
+        // Version line sits directly under the app root, before the after-app
+        // shell, outside Preact's hydration container.
+        expect(html).toContain(`<div id="${tool.appRootId}">`);
+        expect(html).toContain(`<p class="c-tool-version" data-tool-version="${tool.version}">v${tool.version}</p>`);
+        const versionLineIndex = html.indexOf('<p class="c-tool-version"');
+        const appRootIndex = html.indexOf(`<div id="${tool.appRootId}">`);
+        const afterShellIndex = html.indexOf('c-tool-static-shell--after');
+        expect(versionLineIndex).toBeGreaterThan(appRootIndex);
+        expect(versionLineIndex).toBeLessThan(afterShellIndex);
         expect(html).toContain('<h1 class="cst-shell__title">Diff Checker</h1>');
         expect(html).toContain('<p class="cst-shell__description">Free online diff checker to quickly compare code or text differences. Perfect for developers, writers, and editors seeking instant results.</p>');
         expect(html).toContain('<main class="c-tool-page-main" aria-labelledby="diff-checker-app-workspace-heading">');
@@ -127,6 +135,16 @@ describe('tool document generation', () => {
             expect(getHeadingMatches(html, 1)).toHaveLength(1);
             expect(html).toContain(`<h1 class="cst-shell__title">${escapeHtml(tool.title)}</h1>`);
             expect(html).not.toContain('c-tool-page-heading');
+        });
+    });
+
+    it('renders exactly one version line per tool, matching the meta tag', () => {
+        getToolDefinitions().forEach((tool) => {
+            const html = generateToolDocument(tool.id);
+            const expected = `<p class="c-tool-version" data-tool-version="${tool.version}">v${tool.version}</p>`;
+
+            expect(html.split(expected).length - 1).toBe(1);
+            expect(html).toContain(`<meta name="tool-version" content="${tool.version}">`);
         });
     });
 

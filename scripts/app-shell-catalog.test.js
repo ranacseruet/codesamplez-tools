@@ -53,17 +53,13 @@ describe('app-shell catalog helper', () => {
                     description: tool.indexDescription,
                     publicPath: tool.publicPath,
                     catalogGroupId: tool.catalogGroupId,
-                    catalogOrder: tool.catalogOrder,
-                    version: tool.version
+                    catalogOrder: tool.catalogOrder
                 })),
                 getCatalogGroups()
             )
         );
         expect(catalog.entries[0]).not.toHaveProperty('absolutePageUrl');
         expect(catalog.entries[0]).not.toHaveProperty('relatedToolIds');
-        // The version rides the catalog so the hydrated footer badge and the
-        // prerendered one cannot drift from tool.meta.json.
-        expect(catalog.entries.every((entry) => /^\d+\.\d+\.\d+$/.test(entry.version))).toBe(true);
     });
 
     it('tracks root config, tool metadata, and repo context as dependencies', () => {
