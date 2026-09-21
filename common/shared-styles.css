@@ -668,6 +668,9 @@ body.standalone-app {
   /* Top-right, directly beneath the fixed app bar (--cst-appbar-height from app-shell.css). */
   top: calc(var(--cst-appbar-height, 3.5rem) + var(--spacing-sm, var(--default-spacing-sm)));
   right: var(--spacing-lg, var(--default-spacing-lg));
+  /* Above sticky tool strips (z-index ~10) that pin at the same top band;
+     below full-viewport overlays (z-index 60). */
+  z-index: 45;
   /* v4: flat semantic fill (no gradient, no white hairline). */
   background-color: var(--color-success, var(--default-color-success));
   color: var(--color-bg, #fff);
