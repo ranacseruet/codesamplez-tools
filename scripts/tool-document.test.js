@@ -61,7 +61,7 @@ describe('tool document generation', () => {
 
         expect(html).toContain('<title>Diff Checker - Compare Text &amp; Code Instantly | Free Online Dev Tools by CodeSamplez</title>');
         expect(html).toContain('<meta name="description" content="Free online diff checker to quickly compare code or text differences. Perfect for developers, writers, and editors seeking instant results.">');
-        expect(html).toContain('<meta name="tool-version" content="1.0.1">');
+        expect(html).toContain('<meta name="tool-version" content="1.0.2">');
         expect(html).toContain('<meta name="theme-color" content="#0b0b11">');
         expect(html).toMatch(/<html lang="en" data-theme="dark" data-build-commit="[0-9a-f]{40}">/);
         expect(html).toContain("localStorage.getItem('cst-standalone-theme-mode')");
