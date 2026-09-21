@@ -58,6 +58,23 @@ jobs:
           --head "${{ github.sha }}" \
           --write-github-output
 
+    # Fail the PR when tool runtime files change without a version bump. The
+    # "skip-version-bump" label is the escape hatch for PRs that cannot bump
+    # (docs-only, CI-only); label presence is checked via the API so this stays
+    # accurate even when the label is added after the run started.
+    - name: Check tool version bumps
+      if: github.event_name == 'pull_request'
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        BASE="${{ github.event.pull_request.base.sha }}"
+        if gh pr view "${{ github.event.pull_request.number }}" --json labels --jq '.labels[].name' 2>/dev/null | grep -Fxq 'skip-version-bump'; then
+          echo "skip-version-bump label present; skipping version bump enforcement."
+          exit 0
+        fi
+        node scripts/run-version-bump-check.js "$BASE"
+
     - name: Build
       if: steps.affected.outputs.should_build == 'true'
       env:

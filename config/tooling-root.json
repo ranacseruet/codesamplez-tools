@@ -51,6 +51,7 @@
     "robots.txt",
     "sitemap.xml",
     "llms.txt",
+    "versions.json",
     "BingSiteAuth.xml",
     "favicon.ico",
     "favicon.svg",

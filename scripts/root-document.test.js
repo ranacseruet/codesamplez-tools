@@ -34,7 +34,7 @@ describe('root document generation', () => {
     expect(html).toContain('<title>Online Developer Tools | CodeSamplez</title>');
     expect(html).toContain('<meta name="description" content="Free online developer tools for debugging, formatting and validation needs. Access 12+ utilities to help boost your day-to-day productivity.">');
     expect(html).toContain('<meta name="theme-color" content="#0b0b11">');
-    expect(html).toContain('<html lang="en" data-theme="dark">');
+    expect(html).toMatch(/<html lang="en" data-theme="dark"( data-build-commit="[0-9a-f]{40}")?>/);
     expect(html).toContain("localStorage.getItem('cst-standalone-theme-mode')");
     expect(html).toContain(`<link rel="icon" href="${buildSiteAssetUri('/favicon.ico')}" sizes="any">`);
     expect(html).toContain(`<link rel="icon" type="image/svg+xml" href="${buildSiteAssetUri('/favicon.svg')}">`);

@@ -115,7 +115,8 @@ npm run audit:deps
 ```
 codesamplez-tools/
 ├── <tool-name>/          # Standalone tool implementations (Preact + TypeScript/CSS)
-│   ├── tool.meta.json    # Catalog metadata, SEO configuration, dependencies
+│   ├── tool.meta.json    # Catalog metadata, SEO configuration, dependencies, version
+│   ├── CHANGELOG.md      # Per-tool release history
 │   ├── script.tsx        # UI components and tool shell integration
 │   ├── styles.css        # Scoped styling rules
 │   └── README.md         # Tool-specific documentation and algorithms
@@ -131,6 +132,15 @@ Each tool compiles to an independent, self-contained deployment contract:
 - `build/<tool>/index.html` (prerendered HTML)
 - `build/<tool>/styles.main.css` (scoped styles)
 - `build/<tool>/bundle.main.js` (hydrated script)
+
+### Tool versioning
+
+Tools are versioned and released independently: each tool's semver lives in its
+`tool.meta.json`, changes are documented in its `CHANGELOG.md`, and CI requires
+a version bump whenever a tool's runtime output changes. Built pages expose the
+version via `<meta name="tool-version">`, and `build/versions.json` (deployed at
+the site root) maps every tool to its live version plus the source commit. See
+[CONTRIBUTING.md](./CONTRIBUTING.md) for the release flow.
 
 ---
 

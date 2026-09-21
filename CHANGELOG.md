@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Per-tool versioning: each tool's semver lives in its `tool.meta.json`, is
+  stamped into built pages (`<meta name="tool-version">`,
+  `data-build-commit` on `<html>`), and is published site-wide in
+  `versions.json` for regression triage.
+- `npm run tool:version:note` records release notes in `<tool>/CHANGELOG.md`;
+  `npm run tool:tag-release` now refuses to tag a version without a changelog
+  entry.
+- CI fails PRs whose tool runtime changes ship without a version bump
+  (`skip-version-bump` label skips the check for docs/CI-only PRs).
 - Open-source project documentation: contributing guidelines, security policy,
   support guidelines, and a contributor covenant code of conduct.
 - `.editorconfig`, `CODEOWNERS`, and this changelog.

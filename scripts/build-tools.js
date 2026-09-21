@@ -6,6 +6,7 @@ const { spawnSync } = require('child_process');
 const { getToolIds, normalizeSelection, parseToolSelectionArgs, selectTools } = require('./tool-manifest');
 const { assertNoAnalyticsInHtml } = require('./build-verification');
 const { writeGeneratedSiteAssets } = require('./generated-site-assets');
+const { writeVersionsManifest } = require('./provenance-manifest');
 
 function printHelp() {
     console.log('Usage: node scripts/build-tools.js [options] [-- <webpack args>]');
@@ -182,6 +183,9 @@ async function mainAsync() {
 
         if (shouldGenerateRootAssets) {
             await writeGeneratedSiteAssets({
+                buildDir: path.resolve(process.cwd(), 'build')
+            });
+            writeVersionsManifest({
                 buildDir: path.resolve(process.cwd(), 'build')
             });
         }

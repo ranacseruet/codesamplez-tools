@@ -8,6 +8,7 @@ const { buildRootStructuredDataGraph, renderStructuredDataScript } = require('./
 const { renderAnalyticsHeadMarkup, renderAnalyticsResourceHints } = require('./analytics');
 const { renderInlineIcon } = require('./lucide-icons');
 const { getGroupCategorySlug } = require('./tool-categories');
+const { getBuildCommitAttributeMarkup } = require('./provenance-manifest');
 
 const THEME_COLOR = '#0b0b11';
 
@@ -153,7 +154,7 @@ function generateRootDocument() {
     const escapedRootShellBundleUrl = escapeAttribute(buildAbsoluteUrl(manifest.siteStaticRootUri, '/root-shell/bundle.main.js'));
 
     return `<!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark"${getBuildCommitAttributeMarkup()}>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
