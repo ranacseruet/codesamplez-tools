@@ -698,6 +698,7 @@ body.standalone-app {
 
 .c-notification.notification-default {
   background-color: var(--color-primary, var(--default-color-primary));
+  color: var(--color-on-primary, #fff);
 }
 
 .c-notification.show {
