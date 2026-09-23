@@ -24,6 +24,14 @@ describe('autoFixJSON', () => {
     it('quotes unquoted keys', () => {
         expect(autoFixJSON('{a:1}')).toBe('{"a":1}');
     });
+
+    it('preserves valid double-quoted strings containing fix-up-like text', () => {
+        const input = JSON.stringify({
+            a: "escaped \" quote don't,}",
+            b: "{word: stay"
+        });
+        expect(autoFixJSON(input)).toBe(input);
+    });
 });
 
 describe('sortKeysAlphabetically', () => {
@@ -57,9 +65,24 @@ describe('formatJson', () => {
         expect(Object.keys(result.formatted as Record<string, unknown>)).toEqual(['b', 'a']);
     });
 
-    it('applies auto-fix before parsing when enabled', () => {
+    it('applies auto-fix when the raw parse fails', () => {
         const result = formatJson({ input: '{a:1,}', autoFix: true, sortKeys: false });
         expect(result.formatted).toEqual({ a: 1 });
+    });
+
+    it('preserves valid JSON values containing apostrophes when auto-fix is enabled', () => {
+        const input = JSON.stringify({ a: "don't", b: "won't" });
+        const result = formatJson({ input, autoFix: true, sortKeys: false });
+
+        expect(result.formatted).toEqual({ a: "don't", b: "won't" });
+    });
+
+    it('fixes invalid structure without rewriting fix-up-like text inside strings', () => {
+        const value = "say \"don't\",} and {word: text";
+        const input = '{a: ' + JSON.stringify(value) + ',}';
+        const result = formatJson({ input, autoFix: true, sortKeys: false });
+
+        expect(result.formatted).toEqual({ a: value });
     });
 
     it('throws on invalid JSON', () => {
@@ -148,6 +171,11 @@ describe('locateJsonError', () => {
         expect(locateJsonError('{"a":1}')).toBeNull();
         expect(locateJsonError('   ')).toBeNull();
         expect(locateJsonError('')).toBeNull();
+    });
+
+    it('returns null for valid apostrophe-containing JSON when auto-fix is enabled', () => {
+        const raw = JSON.stringify({ a: "don't", b: "won't" });
+        expect(locateJsonError(raw, true)).toBeNull();
     });
 
     it('locates a syntax error with a message, index, and line/column', () => {

@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.5] - 2026-09-23
+
+### JSON Formatter
+
+- Preserve valid JSON strings during auto-fix.
+
 ## [1.0.4] - 2026-09-21
 
 ### JSON Formatter
