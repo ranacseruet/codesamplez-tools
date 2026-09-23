@@ -160,11 +160,8 @@ describe('tool document generation', () => {
             // Heading + per-version blocks + full-history link
             expect(section).toContain('<h3 class="c-tool-changelog__heading" id="c-tool-changelog-heading">Changelog</h3>');
             expect(section).toContain(`href="https://github.com/ranacseruet/codesamplez-tools/blob/main/${tool.sourceRoot}/CHANGELOG.md"`);
-            // Seeded changelogs carry 1.0.4/1.0.3/1.0.2; the section shows the
-            // latest ones. (Follows the versions in the tool fixtures; update
-            // alongside any tool version bump in this repo.)
-            expect(section).toContain('c-tool-changelog__version');
-            expect(section).toContain('1.0.2');
+            // The latest changelog entry matches the tool's current version.
+            expect(section).toContain(`<h4 class="c-tool-changelog__version">${tool.version}`);
         });
     });
 

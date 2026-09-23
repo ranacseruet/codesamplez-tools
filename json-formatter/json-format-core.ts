@@ -123,14 +123,23 @@ function mapLineColumnToRaw(raw: string, line: number, column: number): number {
 /**
  * Locate the first JSON syntax error in `raw`, or `null` if it parses, is blank, or
  * the engine reports no usable position. When `autoFix` is on, the error is located
- * against the *same* auto-fixed string `formatJson` parses — so the message reflects
- * the real residual error, not a token auto-fix would have repaired — then mapped back
- * onto the raw textarea (line-for-line, column clamped) for jump-to-error highlighting.
+ * against the same auto-fixed string `formatJson` parses, but only after the raw input
+ * fails to parse. The residual error is then mapped back onto the raw textarea
+ * (line-for-line, column clamped) for jump-to-error highlighting.
  */
 export function locateJsonError(raw: string, autoFix = false): JsonErrorLocation | null {
     if (!raw.trim()) return null;
     // Keep raw's line breaks (don't trim) so candidate lines stay aligned with raw.
-    const candidate = autoFix ? autoFixJSON(raw) : raw;
+    let candidate = raw;
+    if (autoFix) {
+        try {
+            JSON.parse(raw);
+            return null;
+        } catch {
+            candidate = autoFixJSON(raw);
+        }
+    }
+
     try {
         JSON.parse(candidate);
         return null;
@@ -158,10 +167,10 @@ export interface JsonFormatResult {
     formattedString: string;
 }
 
-/** Lenient pre-parse fix-ups: trailing commas, single quotes, unquoted keys. */
-export function autoFixJSON(jsonString: string): string {
+/** Apply the lenient fix-ups to text outside an existing double-quoted string. */
+function autoFixJsonSegment(segment: string): string {
     // Remove trailing commas
-    let fixedJson = jsonString.replace(/,\s*([}\]])/g, '$1');
+    let fixedJson = segment.replace(/,\s*([}\]])/g, '$1');
 
     // Convert single-quoted strings to double-quoted (handles escaped quotes)
     fixedJson = fixedJson.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"');
@@ -170,6 +179,41 @@ export function autoFixJSON(jsonString: string): string {
     fixedJson = fixedJson.replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":');
 
     return fixedJson;
+}
+
+/** Lenient pre-parse fix-ups: trailing commas, single quotes, unquoted keys. */
+export function autoFixJSON(jsonString: string): string {
+    const fixedSegments: string[] = [];
+    let segmentStart = 0;
+    let index = 0;
+
+    while (index < jsonString.length) {
+        if (jsonString[index] !== '"') {
+            index += 1;
+            continue;
+        }
+
+        fixedSegments.push(autoFixJsonSegment(jsonString.slice(segmentStart, index)));
+        const stringStart = index;
+        index += 1;
+
+        while (index < jsonString.length) {
+            if (jsonString[index] === '\\') {
+                index += Math.min(2, jsonString.length - index);
+            } else if (jsonString[index] === '"') {
+                index += 1;
+                break;
+            } else {
+                index += 1;
+            }
+        }
+
+        fixedSegments.push(jsonString.slice(stringStart, index));
+        segmentStart = index;
+    }
+
+    fixedSegments.push(autoFixJsonSegment(jsonString.slice(segmentStart)));
+    return fixedSegments.join('');
 }
 
 /** Recursively sort object keys alphabetically; arrays keep order, recurse into items. */
@@ -191,17 +235,21 @@ export function sortKeysAlphabetically(obj: unknown): unknown {
 }
 
 /**
- * The compute half of the JSON formatter: optional auto-fix, parse, optional
- * key sort, and stringify. Throws on invalid JSON (the caller surfaces the
+ * The compute half of the JSON formatter: parse, optional auto-fix on failure,
+ * optional key sort, and stringify. Throws on invalid JSON (the caller surfaces the
  * message); both the main thread and the worker run this same function.
  */
 export function formatJson(request: JsonFormatRequest): JsonFormatResult {
     let inputValue = request.input.trim();
-    if (request.autoFix) {
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(inputValue) as unknown;
+    } catch (error) {
+        if (!request.autoFix) throw error;
         inputValue = autoFixJSON(inputValue);
+        parsed = JSON.parse(inputValue) as unknown;
     }
 
-    const parsed = JSON.parse(inputValue) as unknown;
     const formatted = request.sortKeys ? sortKeysAlphabetically(parsed) : parsed;
 
     return {
