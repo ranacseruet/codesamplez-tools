@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.4] - 2026-09-23
+
+### JavaScript Minifier
+
+- Use Babel AST parsing and generation to safely validate modules and minify JavaScript.
+
 ## [1.0.3] - 2026-09-21
 
 ### JavaScript Minifier

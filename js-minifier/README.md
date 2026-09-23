@@ -88,18 +88,9 @@ const user={a:"John",b:"Doe",c:function(){return this.a+" "+this.b}};
   - Always test minified code before deployment
   - Can conflict with external dependencies
 
-### ES6+ Support Limitations
-- Limited support for:
-  - Arrow functions
-  - Destructuring assignments
-  - Spread/rest operators
-  - Template literals with expressions
-  - Classes and inheritance
-  - async/await syntax
-- Does not handle:
-  - Module imports/exports
-  - Advanced optimizations like tree-shaking
-  - Dynamic imports
+### JavaScript and Module Syntax
+- Parses and minifies modern JavaScript syntax, including ES module imports and exports, dynamic imports, and top-level `await`.
+- Preserves the input's JavaScript syntax; it does not transpile, bundle, or tree-shake code.
 
 ## Error Handling
 

@@ -16,7 +16,7 @@ describe('JS Minifier', () => {
     test('should respect removeComments=false in minify', () => {
       const minifier = new JSMinifier({ removeComments: false });
       const input = `// comment\nconst x = 1;`;
-      expect(minifier.minify(input)).toBe(`//comment const x=1;`);
+      expect(minifier.minify(input)).toBe(`// comment\nconst x=1;`);
     });
 
     test('should respect removeWhitespace=false in minify', () => {
@@ -78,6 +78,14 @@ describe('JS Minifier', () => {
     expect(minifier.minify(input)).toBe(output);
   });
 
+  test('should preserve token boundaries between unary and binary operators', () => {
+    const input = `function addPositive(a, b) { return a + +b; }`;
+    const output = minifier.minify(input);
+
+    expect(output).toContain('a+ +b');
+    expect(new Function(`${output} return addPositive(2, 3);`)()).toBe(5);
+  });
+
   describe('string handling', () => {
     test('should preserve strings when removing comments', () => {
       const input = `const str = "// not a comment"; // real comment`;
@@ -95,6 +103,14 @@ describe('JS Minifier', () => {
       const input = `const regex = /\\/\\/ not a comment/g; // real comment`;
       const output = `const regex=/\\/\\/ not a comment/g;`;
       expect(minifier.minify(input)).toBe(output);
+    });
+
+    test('should preserve regex literals containing // and following code', () => {
+      const input = `const regex = /ab\\/\\/x/; const ok = 1;`;
+      const output = minifier.minify(input);
+
+      expect(output).toBe(`const regex=/ab\\/\\/x/;const ok=1;`);
+      expect(new Function(`${output} return regex.test('ab//x');`)()).toBe(true);
     });
 
     test('should handle escaped quotes in strings', () => {
@@ -120,7 +136,7 @@ describe('JS Minifier', () => {
     test('should not shorten variables when disabled', () => {
       const minifier = new JSMinifier({ shortenVariables: false });
       const input = `function test() { const longVariableName = 1; return longVariableName; }`;
-      const output = `function test(){const longVariableName=1;return longVariableName;}`;
+      const output = `function test(){const longVariableName=1;return longVariableName}`;
       expect(minifier.minify(input)).toBe(output);
     });
 
@@ -246,7 +262,11 @@ describe('JS Minifier', () => {
       const minifier = new JSMinifier({ mangleProperties: true });
       const input = `const obj = { longPropertyName: 1 }; obj.longPropertyName;`;
       const output = minifier.minify(input);
-      expect(output).toMatch(/const obj=\{[a-zA-Z$_][a-zA-Z0-9$_]*:1\};obj\.[a-zA-Z$_][a-zA-Z0-9$_]*;/);
+      const propertyMatch = output.match(/const obj=\{([a-zA-Z$_][a-zA-Z0-9$_]*):1\};obj\.([a-zA-Z$_][a-zA-Z0-9$_]*);/);
+
+      expect(propertyMatch).not.toBeNull();
+      expect(propertyMatch![1]).toBe(propertyMatch![2]);
+      expect(new Function(`${output} return obj.${propertyMatch![1]};`)()).toBe(1);
       expect(output.length).toBeLessThan(input.length);
     });
 
@@ -254,7 +274,11 @@ describe('JS Minifier', () => {
       const minifier = new JSMinifier({ mangleProperties: true });
       const input = `const obj = { 'longPropertyName': 1 }; obj['longPropertyName'];`;
       const output = minifier.minify(input);
-      expect(output).toMatch(/const obj=\{"[a-zA-Z$_][a-zA-Z0-9$_]*":1\};obj\["[a-zA-Z$_][a-zA-Z0-9$_]*"\];/);
+      const propertyMatch = output.match(/const obj=\{['"]([a-zA-Z$_][a-zA-Z0-9$_]*)['"]:1\};obj\[['"]([a-zA-Z$_][a-zA-Z0-9$_]*)['"]\];/);
+
+      expect(propertyMatch).not.toBeNull();
+      expect(propertyMatch![1]).toBe(propertyMatch![2]);
+      expect(new Function(`${output} return obj[${JSON.stringify(propertyMatch![1])}];`)()).toBe(1);
       expect(output.length).toBeLessThan(input.length);
     });
 
@@ -269,14 +293,31 @@ describe('JS Minifier', () => {
       const minifier = new JSMinifier({ mangleProperties: true });
       const input = `const obj = { nested: { deepProperty: 1 } }; obj.nested.deepProperty;`;
       const output = minifier.minify(input);
-      expect(output).toMatch(/const obj=\{nested:\{[a-zA-Z$_][a-zA-Z0-9$_]*:1\}\};obj\.[a-zA-Z$_][a-zA-Z0-9$_]*\.[a-zA-Z$_][a-zA-Z0-9$_]*;/);
+      const propertyMatch = output.match(/const obj=\{([a-zA-Z$_][a-zA-Z0-9$_]*):\{([a-zA-Z$_][a-zA-Z0-9$_]*):1\}\};obj\.([a-zA-Z$_][a-zA-Z0-9$_]*)\.([a-zA-Z$_][a-zA-Z0-9$_]*);/);
+
+      expect(propertyMatch).not.toBeNull();
+      expect(propertyMatch![1]).toBe(propertyMatch![3]);
+      expect(propertyMatch![2]).toBe(propertyMatch![4]);
+      expect(new Function(`${output} return obj.${propertyMatch![3]}.${propertyMatch![4]};`)()).toBe(1);
     });
 
     test('should handle computed properties', () => {
       const minifier = new JSMinifier({ mangleProperties: true });
       const input = `const prop = 'name'; const obj = { [prop]: 'value' }; obj[prop];`;
       const output = minifier.minify(input);
-      expect(output).toMatch(/const prop='name';const obj=\{\[prop\]:["']\w+["']\};obj\[prop\];/);
+
+      expect(new Function(`${output} return obj[prop];`)()).toBe('value');
+    });
+
+    test('preserves string values that match mangled property names', () => {
+      const minifier = new JSMinifier({ mangleProperties: true });
+      const input = `const message = "longPropertyName"; const obj = { "longPropertyName": "longPropertyName" }; const result = obj.longPropertyName;`;
+      const output = minifier.minify(input);
+      const result = new Function(`${output} return { message, result };`)();
+
+      expect(result).toEqual({ message: 'longPropertyName', result: 'longPropertyName' });
+      expect(output).toContain('obj.a');
+      expect(output).not.toContain('obj.longPropertyName');
     });
 
     test('generates multi-character property names when properties count exceeds 54', () => {
@@ -340,7 +381,16 @@ describe('JS Minifier', () => {
       expect(minifier.getSyntaxError('const x = 1;')).toBeNull();
       const error = minifier.getSyntaxError('const x = ;');
       expect(error).toBeInstanceOf(SyntaxError);
-      expect(error!.message).toContain('Unexpected token');
+      expect(error!.message).toContain('Unexpected token (1:10)');
+    });
+
+    test('reports line and column for invalid module input', () => {
+      const invalidCode = `export const x = 1;\nconst y = ;`;
+      const error = minifier.getSyntaxError(invalidCode);
+
+      expect(error).toBeInstanceOf(SyntaxError);
+      expect(error!.message).toContain('(2:10)');
+      expect(() => minifier.minify(invalidCode)).toThrow(/Invalid JavaScript syntax: .*\(2:10\)/);
     });
 
     test('should handle complex syntax structures', () => {
@@ -363,32 +413,42 @@ describe('JS Minifier', () => {
 
     test('should handle dynamic imports', () => {
       const importCode = `const module = await import('./module.js');`;
-      expect(minifier.isValidJavaScript(importCode)).toBe(false);
+      expect(minifier.isValidJavaScript(importCode)).toBe(true);
     });
 
-    test('should re-throw non-SyntaxError exceptions', () => {
-      const originalError = new Error('Custom error');
-      const throwingCode = `throw originalError;`;
-      
-      // Mock the Function constructor to throw our custom error
+    test('should accept and minify ES modules and top-level await', () => {
+      const moduleCode = `import value from './value.js'; export const result = await value;`;
+
+      expect(minifier.isValidJavaScript(moduleCode)).toBe(true);
+      const output = minifier.minify(moduleCode);
+      expect(output).toContain('import value');
+      expect(output).toContain('export const result=await value');
+      expect(minifier.getSyntaxError(output)).toBeNull();
+    });
+
+    test('does not execute code to validate its syntax', () => {
       const originalFunction = global.Function;
-      global.Function = jest.fn().mockImplementation(() => {
-        throw originalError;
-      }) as any;
+      const functionMock = jest.fn();
+      global.Function = functionMock as any;
+      let isValid = false;
 
       try {
-        expect(() => minifier.isValidJavaScript(throwingCode)).toThrow(originalError);
+        isValid = minifier.isValidJavaScript('const x = 1;');
       } finally {
         global.Function = originalFunction;
       }
+
+      expect(isValid).toBe(true);
+      expect(functionMock).not.toHaveBeenCalled();
     });
   });
 
   describe('string placeholder handling', () => {
     test('should correctly restore string placeholders', () => {
       const input = `const str1 = "// not a comment"; const str2 = '/* not a comment */';`;
-      const output = `const str1="// not a comment";const str2='/* not a comment */';`;
-      expect(minifier.minify(input)).toBe(output);
+      const output = minifier.minify(input);
+
+      expect(new Function(`${output} return [str1, str2];`)()).toEqual(['// not a comment', '/* not a comment */']);
     });
 
     test('should handle multiple string placeholders', () => {
@@ -407,13 +467,13 @@ describe('JS Minifier', () => {
   describe('keyword spacing', () => {
     test('should maintain proper spacing for keywords', () => {
       const input = `if(x)return;else if(y)throw new Error();`;
-      const output = `if(x)return;else if(y)throw new Error();`;
+      const output = `if(x)return;else if(y)throw new Error;`;
       expect(minifier.minify(input)).toBe(output);
     });
 
     test('should handle complex keyword combinations', () => {
       const input = `function test(){return x instanceof Array&&y in obj;}`;
-      const output = `function test(){return x instanceof Array&&y in obj;}`;
+      const output = `function test(){return x instanceof Array&&y in obj}`;
       expect(minifier.minify(input)).toBe(output);
     });
 
