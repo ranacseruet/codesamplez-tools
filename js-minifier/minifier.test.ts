@@ -64,6 +64,11 @@ describe('JS Minifier', () => {
       expect(minifier.minify(input)).toBe(output);
     });
 
+    test('removes a full-line comment while preserving its line break', () => {
+      const minifier = new JSMinifier({ removeWhitespace: false });
+      expect(minifier.removeComments(`// note\nconst x = 1;`)).toBe(`\nconst x = 1;`);
+    });
+
     test('keeps token boundaries when removing comments', () => {
       const minifier = new JSMinifier({ removeWhitespace: false });
       const input = `function read() { return/* comment */value; } const value = 7;`;
@@ -342,6 +347,13 @@ describe('JS Minifier', () => {
       expect(output.length).toBeLessThan(input.length);
     });
 
+    test('does not mangle properties on exported object literals', () => {
+      const minifier = new JSMinifier({ mangleProperties: true });
+      const output = minifier.mangleObjectProperties(`export const settings = { longProperty: 1 };`);
+
+      expect(output).toContain('longProperty:1');
+    });
+
     test('should mangle bracket notation properties when enabled', () => {
       const minifier = new JSMinifier({ mangleProperties: true });
       const input = `const obj = { 'longPropertyName': 1 }; obj['longPropertyName'];`;
@@ -522,6 +534,41 @@ describe('JS Minifier', () => {
       const output = minifier.minify(input);
 
       expect(new Function(output)()).toEqual([2, 1, true, true]);
+    });
+
+    test('leaves object literals containing top-level this unchanged', () => {
+      const minifier = new JSMinifier({ mangleProperties: true });
+      const input = `const obj = { longProperty: this.value }; return obj.longProperty;`;
+      const output = minifier.mangleObjectProperties(input);
+
+      expect(output).toContain('longProperty:this.value');
+      expect(new Function(output).call({ value: 7 })).toBe(7);
+    });
+
+    test('leaves object literals with methods unchanged', () => {
+      const minifier = new JSMinifier({ mangleProperties: true });
+      const output = minifier.mangleObjectProperties(`const obj = { longProperty: 1, longMethod() {} }; return obj.longProperty;`);
+
+      expect(output).toContain('longProperty:1');
+      expect(output).toContain('longMethod()');
+      expect(new Function(output)()).toBe(1);
+    });
+
+    test('leaves object literals with dynamic keys unchanged', () => {
+      const minifier = new JSMinifier({ mangleProperties: true });
+      const output = minifier.mangleObjectProperties(`const key = 'longProperty'; const obj = { [key]: 1 }; return obj.longProperty;`);
+
+      expect(output).toContain('[key]:1');
+      expect(new Function(output)()).toBe(1);
+    });
+
+    test('leaves object literals with prototype setters unchanged', () => {
+      const minifier = new JSMinifier({ mangleProperties: true });
+      const output = minifier.mangleObjectProperties(`const proto = {}; const obj = { __proto__: proto, longProperty: 1 }; return obj.longProperty;`);
+
+      expect(output).toContain('__proto__:proto');
+      expect(output).toContain('longProperty:1');
+      expect(new Function(output)()).toBe(1);
     });
 
     test('mangles optional access and shorthand keys on a local object', () => {
