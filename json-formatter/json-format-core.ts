@@ -15,7 +15,7 @@ export type IndentOption = 2 | 4 | 'tab' | 'minify';
 export interface JsonFormatRequest {
     /** Raw textarea contents (untrimmed — `formatJson` trims). */
     input: string;
-    /** Apply the lenient auto-fix pass (trailing commas, quotes) before parsing. */
+    /** If parsing fails, attempt lenient repairs (trailing commas, single quotes, unquoted keys). */
     autoFix: boolean;
     /** Sort object keys alphabetically (recursively). */
     sortKeys: boolean;

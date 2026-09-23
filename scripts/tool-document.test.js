@@ -162,6 +162,9 @@ describe('tool document generation', () => {
             expect(section).toContain(`href="https://github.com/ranacseruet/codesamplez-tools/blob/main/${tool.sourceRoot}/CHANGELOG.md"`);
             // The latest changelog entry matches the tool's current version.
             expect(section).toContain(`<h4 class="c-tool-changelog__version">${tool.version}`);
+            // Historical changelog entries render alongside the current version.
+            const renderedVersions = [...section.matchAll(/<h4 class="c-tool-changelog__version">([^<]+)/g)];
+            expect(renderedVersions.some(([, version]) => version !== tool.version)).toBe(true);
         });
     });
 
