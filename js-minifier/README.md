@@ -90,6 +90,7 @@ const user={a:"John",b:"Doe",c:function(){return this.a+" "+this.b}};
 
 ### JavaScript and Module Syntax
 - Parses and minifies modern JavaScript syntax, including ES module imports and exports, dynamic imports, and top-level `await`.
+- TypeScript and JSX must be transpiled before minification.
 - Preserves the input's JavaScript syntax; it does not transpile, bundle, or tree-shake code.
 
 ## Error Handling

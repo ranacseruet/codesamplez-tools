@@ -166,7 +166,7 @@ const user={a:"John",b:"Doe",c:function(){return this.a+" "+this.b}};`}</code></
                 <ToolArticleSection id="js-minifier-limitations" title="Limitations">
                     <ul>
                         <li><strong>Variable name shortening and property mangling are experimental:</strong> they may break code in some cases, so test carefully.</li>
-                        <li><strong>Build-pipeline optimizations are outside the scope:</strong> this browser tool parses and minifies modules but does not bundle or tree-shake code.</li>
+                        <li><strong>Input syntax:</strong> TypeScript and JSX must be transpiled to JavaScript first; this tool does not transpile, bundle, or tree-shake code.</li>
                         <li><strong>Reflection and dynamic property access can be risky:</strong> property mangling may break code that depends on property names remaining unchanged.</li>
                         <li><strong>Browser-specific behavior still needs validation:</strong> minified output should be tested in the environments you ship.</li>
                     </ul>

@@ -16,8 +16,7 @@ function parseJavaScript(code: string): MinifierAst {
   return parse(code, {
     sourceType: 'unambiguous',
     allowReturnOutsideFunction: true,
-    allowAwaitOutsideFunction: true,
-    plugins: ['jsx', 'typescript']
+    allowAwaitOutsideFunction: true
   });
 }
 
@@ -250,6 +249,7 @@ export class JSMinifier {
   private manglePropertiesInAst(ast: MinifierAst): void {
     const traverseFn = getTraverseFunction();
     const foundProperties = new Set<string>();
+    const destructuredProperties = new Set<string>();
     const propertyName = (key: any, computed: boolean): string | null => {
       if (key?.type === 'StringLiteral') {
         return key.value;
@@ -272,6 +272,12 @@ export class JSMinifier {
         foundProperties.add(name);
       }
     };
+    const collectDestructuredProperty = (node: any) => {
+      const name = propertyName(node.key, node.computed);
+      if (name) {
+        destructuredProperties.add(name);
+      }
+    };
 
     traverseFn(ast, {
       MemberExpression(path: any) {
@@ -283,6 +289,13 @@ export class JSMinifier {
       ObjectProperty(path: any) {
         collectPropertyKey(path.node);
       },
+      ObjectPattern(path: any) {
+        for (const property of path.node.properties) {
+          if (property.type === 'ObjectProperty') {
+            collectDestructuredProperty(property);
+          }
+        }
+      },
       ObjectMethod(path: any) {
         collectPropertyKey(path.node);
       },
@@ -291,9 +304,6 @@ export class JSMinifier {
       },
       ClassProperty(path: any) {
         collectPropertyKey(path.node);
-      },
-      ClassAccessorProperty(path: any) {
-        collectPropertyKey(path.node);
       }
     });
 
@@ -301,10 +311,16 @@ export class JSMinifier {
     const commonProperties = new Set([
       'length', 'prototype', 'constructor', 'toString', 'valueOf', 'hasOwnProperty',
       'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', 'apply', 'call', 'bind',
+      'map', 'filter', 'reduce', 'reduceRight', 'forEach', 'find', 'findIndex', 'some',
+      'every', 'includes', 'indexOf', 'lastIndexOf', 'push', 'pop', 'shift', 'unshift',
+      'slice', 'splice', 'concat', 'join', 'sort', 'reverse', 'flat', 'flatMap', 'fill',
+      'copyWithin', 'entries', 'keys', 'values', 'at',
       'name', 'arguments', 'callee', 'caller', 'super', 'this', 'window', 'document',
       'console', 'log', 'warn', 'error', 'info', 'debug'
     ]);
-    const properties = [...foundProperties].filter((property) => !commonProperties.has(property));
+    const properties = [...foundProperties].filter((property) =>
+      !commonProperties.has(property) && !destructuredProperties.has(property)
+    );
 
     // Create property name mapping
     const propMap = new Map<string, string>();
@@ -373,9 +389,6 @@ export class JSMinifier {
         renamePropertyKey(path.node);
       },
       ClassProperty(path: any) {
-        renamePropertyKey(path.node);
-      },
-      ClassAccessorProperty(path: any) {
         renamePropertyKey(path.node);
       }
     });

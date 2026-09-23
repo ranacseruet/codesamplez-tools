@@ -6,7 +6,9 @@ All notable changes to this tool are documented in this file.
 
 ### JavaScript Minifier
 
-- Use Babel AST parsing and generation to safely validate modules and minify JavaScript.
+- Use Babel AST parsing and generation to validate JavaScript modules and minify without corrupting comments, strings, regular expressions, or operator boundaries.
+- Keep object destructuring keys and common built-in array methods intact when experimental property mangling is enabled.
+- Require TypeScript and JSX to be transpiled before minification.
 
 ## [1.0.3] - 2026-09-21
 

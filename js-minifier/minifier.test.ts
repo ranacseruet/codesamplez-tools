@@ -42,10 +42,31 @@ describe('JS Minifier', () => {
       expect(minifier.removeComments(input)).toBe(input);
     });
 
+    test('removes comments by source range while preserving line breaks', () => {
+      const minifier = new JSMinifier({ removeWhitespace: false });
+      const input = `const x = 1; // line comment\nconst y = 2; /* block comment */`;
+      const output = minifier.removeComments(input);
+
+      expect(output).not.toContain('// line comment');
+      expect(output).not.toContain('/* block comment */');
+      expect(output.split('\n')).toHaveLength(2);
+      expect(minifier.minify(input)).toBe(output);
+    });
+
+    test('uses the syntax-aware generator for the whitespace helper', () => {
+      expect(new JSMinifier().removeWhitespace('const x = 1;')).toBe('const x=1;');
+    });
+
     test('returns original code when shortenVariableNames is called with shortenVariables=false', () => {
       const minifier = new JSMinifier({ shortenVariables: false });
       const input = `function test() { const longName = 1; return longName; }`;
       expect(minifier.shortenVariableNames(input)).toBe(input);
+    });
+
+    test('shortens bindings through the syntax-aware helper', () => {
+      const minifier = new JSMinifier({ shortenVariables: true });
+
+      expect(minifier.shortenVariableNames('const longName = 1;')).toBe('const a=1;');
     });
 
     test('returns original code when mangleObjectProperties is called with mangleProperties=false', () => {
@@ -320,6 +341,37 @@ describe('JS Minifier', () => {
       expect(output).not.toContain('obj.longPropertyName');
     });
 
+    test('preserves property names used by object destructuring', () => {
+      const minifier = new JSMinifier({ mangleProperties: true });
+      const input = `const source = { longPropertyName: 7 }; function read(input) { const { longPropertyName } = input; return longPropertyName; }`;
+      const output = minifier.minify(input);
+
+      expect(output).toContain('{longPropertyName}');
+      expect(new Function(`${output} return read({ longPropertyName: 7 });`)()).toBe(7);
+    });
+
+    test('preserves built-in array methods while mangling custom properties', () => {
+      const minifier = new JSMinifier({ mangleProperties: true });
+      const input = `const values = [1, 2]; const doubled = values.map(value => value * 2);`;
+      const output = minifier.minify(input);
+
+      expect(output).toContain('.map(');
+      expect(new Function(`${output} return doubled;`)()).toEqual([2, 4]);
+    });
+
+    test('mangles optional access, object methods, class fields, and shorthand keys consistently', () => {
+      const minifier = new JSMinifier({ mangleProperties: true });
+      const input = `const longPropertyName = 1; const obj = { longPropertyName, longMethod() { return this.longPropertyName; } }; class Example { longField = 2; longClassMethod() { return this.longField; } } const result = obj?.longPropertyName;`;
+      const output = minifier.minify(input);
+      const { obj, instance, result } = new Function(`${output}; return { obj, instance: new Example(), result };`)();
+      const objectMethod = Object.keys(obj).find((key) => typeof obj[key] === 'function');
+      const classMethod = Object.getOwnPropertyNames(Object.getPrototypeOf(instance)).find((name) => name !== 'constructor');
+
+      expect(result).toBe(1);
+      expect(obj[objectMethod]()).toBe(1);
+      expect(instance[classMethod]()).toBe(2);
+    });
+
     test('generates multi-character property names when properties count exceeds 54', () => {
       const minifier = new JSMinifier({ mangleProperties: true });
       const props = Array.from({ length: 60 }, (_, i) => `prop_${i}`);
@@ -425,6 +477,14 @@ describe('JS Minifier', () => {
       expect(output).toContain('export const result=await value');
       expect(minifier.getSyntaxError(output)).toBeNull();
     });
+
+    test.each(['const value: number = 1;', 'const element = <div />;'])(
+      'rejects non-JavaScript syntax as input: %s',
+      (input) => {
+        expect(minifier.isValidJavaScript(input)).toBe(false);
+        expect(() => minifier.minify(input)).toThrow(/Invalid JavaScript syntax/);
+      }
+    );
 
     test('does not execute code to validate its syntax', () => {
       const originalFunction = global.Function;
