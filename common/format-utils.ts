@@ -1,12 +1,26 @@
+const BYTE_UNITS: readonly string[] = ['B', 'KiB', 'MB', 'GB', 'TB'];
+
 /**
- * Format bytes to human readable string.
+ * Format a byte count as a compact, human-readable size ("512 B", "1.5 KiB",
+ * "5 MB"). Whole values drop the decimal so limits read cleanly in toasts
+ * ("limit 5 MB", not "5.0 MB"). Non-finite or negative input — a size that
+ * could not be measured — renders as "unknown size" rather than "NaN" text.
  */
 export function formatBytes(bytes: number): string {
-    if (bytes <= 0) {
-        return '0 bytes';
+    if (!Number.isFinite(bytes) || bytes < 0) {
+        return 'unknown size';
     }
 
-    const units: readonly string[] = ['bytes', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-    return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`;
+    if (bytes < 1024) {
+        return `${Math.round(bytes)} B`;
+    }
+
+    let value = bytes;
+    let unitIndex = 0;
+    while (value >= 1024 && unitIndex < BYTE_UNITS.length - 1) {
+        value /= 1024;
+        unitIndex += 1;
+    }
+
+    return `${value % 1 === 0 ? value : value.toFixed(1)} ${BYTE_UNITS[unitIndex]}`;
 }

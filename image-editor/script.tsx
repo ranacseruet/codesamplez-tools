@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import { formatBytes } from '../common/format-utils';
 import toolMetadata from './tool.meta.json';
 import {
     ADJUSTMENT_PRESETS,
@@ -23,7 +24,6 @@ import {
     computeResizeDims,
     exportFilename,
     exportMime,
-    formatBytes,
     isDefaultAdjustments,
     matchAdjustmentPreset,
     moveCropBox,

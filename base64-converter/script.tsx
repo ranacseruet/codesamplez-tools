@@ -8,6 +8,7 @@ import { buildShareUrl, readHashOrQueryParam, SHARE_URL_MAX_LENGTH } from '../co
 import { copyTextToClipboard } from '../common/clipboard';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import { formatBytes } from '../common/format-utils';
 import FileUploadButton from '../common/file-upload';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -253,21 +254,6 @@ export function sniffRasterImageMimeType(bytes: Uint8Array | null): string | nul
         }
     }
     return null;
-}
-
-export function formatByteSize(bytes: number): string {
-    if (!Number.isFinite(bytes) || bytes < 0) {
-        return 'unknown size';
-    }
-    if (bytes < 1024) {
-        return `${bytes} B`;
-    }
-    if (bytes < 1024 * 1024) {
-        const kibibytes = bytes / 1024;
-        return `${kibibytes % 1 === 0 ? kibibytes : kibibytes.toFixed(1)} KiB`;
-    }
-    const megabytes = bytes / (1024 * 1024);
-    return `${megabytes % 1 === 0 ? megabytes : megabytes.toFixed(1)} MB`;
 }
 
 /**
@@ -650,7 +636,7 @@ const createConverter = (): Base64ConverterInstance => {
                     }
                     const decodedSize = base64DecodedSize(base64Payload);
                     this.imagePreviewMetaBase = previewMimeType
-                        ? `${previewMimeType} · ${decodedSize === null ? 'unknown size' : formatByteSize(decodedSize)}`
+                        ? `${previewMimeType} · ${decodedSize === null ? 'unknown size' : formatBytes(decodedSize)}`
                         : null;
                 }
                 this.downloadSource = isBinaryOutputKind(outputKind) ? rawInput : null;
@@ -755,7 +741,7 @@ const createConverter = (): Base64ConverterInstance => {
                 if (uploadMeta) {
                     uploadMeta.hidden = false;
                     uploadMeta.textContent =
-                        `Preview skipped: file is larger than ${formatByteSize(UPLOAD_PREVIEW_MAX_BYTES)}. ` +
+                        `Preview skipped: file is larger than ${formatBytes(UPLOAD_PREVIEW_MAX_BYTES)}. ` +
                         'Base64 output and Download are still available.';
                 }
                 return;
@@ -779,7 +765,7 @@ const createConverter = (): Base64ConverterInstance => {
                                 ? ` · ${uploadPreview.naturalWidth}×${uploadPreview.naturalHeight}px`
                                 : '';
                         if (uploadMeta) {
-                            uploadMeta.textContent = `${fileMimeType} · ${formatByteSize(file.size)}${dimensions}`;
+                            uploadMeta.textContent = `${fileMimeType} · ${formatBytes(file.size)}${dimensions}`;
                         }
                     };
                     uploadPreview.src = objectUrl;
@@ -787,7 +773,7 @@ const createConverter = (): Base64ConverterInstance => {
                 }
                 if (uploadMeta) {
                     uploadMeta.hidden = false;
-                    uploadMeta.textContent = `${fileMimeType} · ${formatByteSize(file.size)}`;
+                    uploadMeta.textContent = `${fileMimeType} · ${formatBytes(file.size)}`;
                 }
             } catch (_previewError: unknown) {
                 this.clearUploadPreview();
