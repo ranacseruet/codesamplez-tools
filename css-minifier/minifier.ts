@@ -8,6 +8,7 @@
     while (css.indexOf(placeholderPrefix) !== -1) {
       placeholderPrefix = '_' + placeholderPrefix;
     }
+    const placeholderPattern = new RegExp(`${placeholderPrefix}(\\d+)__`, 'g');
 
     const tokens: string[] = [];
     let maskedCss = '';
@@ -56,11 +57,9 @@
     return {
       maskedCss,
       restore(transformedCss: string) {
-        let result = transformedCss;
-        tokens.forEach((token, tokenIndex) => {
-          result = result.split(placeholderPrefix + tokenIndex + '__').join(token);
+        return transformedCss.replace(placeholderPattern, (placeholder, tokenIndex: string) => {
+          return tokens[Number(tokenIndex)] ?? placeholder;
         });
-        return result;
       }
     };
   }
