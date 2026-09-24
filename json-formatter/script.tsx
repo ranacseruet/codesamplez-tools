@@ -575,7 +575,11 @@ export class JSONFormatter {
     }
 
     if (this.input) {
-      const debouncedUpdate = JSONFormatter.debounce(() => {
+      // Skip the typing-stats refresh if a format run started after the
+      // edit (e.g. Cmd+Enter right after typing): that run reports its own
+      // stats, and this late update would zero its Formatted Size.
+      const debouncedUpdate = JSONFormatter.debounce((runIdAtEdit: number) => {
+        if (runIdAtEdit !== this.currentRunId) return;
         this.updateStats(this.input.value, '');
       }, 150);
 
@@ -583,7 +587,7 @@ export class JSONFormatter {
         this.clearError();
         this.clearValidationStatus();
         this.updatePrimaryActionLabel();
-        debouncedUpdate();
+        debouncedUpdate(this.currentRunId);
       });
     }
 

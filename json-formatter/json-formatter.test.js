@@ -1143,6 +1143,19 @@ describe('JSONFormatter', () => {
       jest.useRealTimers();
     });
 
+    test('skips the debounced typing stats when a format run started after the edit', () => {
+      jest.useFakeTimers();
+      formatter.clearError = jest.fn();
+      formatter.updateStats = jest.fn();
+      formatter.initializeEvents();
+      callbacks.input.input();
+      // A format run (e.g. Cmd+Enter) starts inside the debounce window.
+      formatter.currentRunId += 1;
+      jest.advanceTimersByTime(200);
+      expect(formatter.updateStats).not.toHaveBeenCalled();
+      jest.useRealTimers();
+    });
+
     test('should trigger switchView on tab click', () => {
       formatter.switchView = jest.fn();
       const tab0Mock = jest.fn((event, callback) => {
