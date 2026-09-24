@@ -147,23 +147,68 @@ export class DataFormatConverter {
     escapeProp(str: unknown): string {
         return String(str)
             .replace(/\\/g, '\\\\')
+            .replace(/\r/g, '\\r')
             .replace(/\n/g, '\\n')
             .replace(/\t/g, '\\t')
+            .replace(/\f/g, '\\f')
             .replace(/:/g, '\\:')
             .replace(/=/g, '\\=');
     }
 
     unescapeProp(str: string): string {
-        return str.replace(/\\(.)/g, (match, char) => {
-            switch(char) {
-                case 'n': return '\n';
-                case 't': return '\t';
-                case ':': return ':';
-                case '=': return '=';
-                case '\\': return '\\';
-                default: return char;
+        let result = '';
+        for (let index = 0; index < str.length; index += 1) {
+            if (str[index] !== '\\' || index === str.length - 1) {
+                result += str[index];
+                continue;
             }
-        });
+
+            const escaped = str[index + 1];
+            switch (escaped) {
+                case 'n':
+                    result += '\n';
+                    index += 1;
+                    break;
+                case 'r':
+                    result += '\r';
+                    index += 1;
+                    break;
+                case 't':
+                    result += '\t';
+                    index += 1;
+                    break;
+                case 'f':
+                    result += '\f';
+                    index += 1;
+                    break;
+                case ':':
+                    result += ':';
+                    index += 1;
+                    break;
+                case '=':
+                    result += '=';
+                    index += 1;
+                    break;
+                case '\\':
+                    result += '\\';
+                    index += 1;
+                    break;
+                case 'u': {
+                    const unicode = str.slice(index + 2, index + 6);
+                    if (!/^[0-9a-fA-F]{4}$/.test(unicode)) {
+                        throw new Error('Invalid Unicode escape in properties');
+                    }
+                    result += String.fromCharCode(parseInt(unicode, 16));
+                    index += 5;
+                    break;
+                }
+                default:
+                    result += escaped;
+                    index += 1;
+                    break;
+            }
+        }
+        return result;
     }
 
     xmlToObject(xmlNode: Node): unknown {
