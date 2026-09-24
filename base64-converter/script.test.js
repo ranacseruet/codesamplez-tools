@@ -368,6 +368,18 @@ describe('Base64Converter UI (script.tsx)', () => {
             expect(elements.input.value).toContain('[File: dropped.txt uploaded');
         });
 
+        test('should warn when a multi-file drop only encodes the first file', () => {
+            const first = new File(['one'], 'one.txt', { type: 'text/plain' });
+            fireFileDragEvent(elements.input, 'drop', [first, new File(['two'], 'two.txt')]);
+
+            expect(mockFileReaderInstance.readAsDataURL).toHaveBeenCalledWith(first);
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                'Loaded one.txt. Only one file is used at a time, so 1 other file was ignored.',
+                4000,
+                expect.objectContaining({ type: 'warning' })
+            );
+        });
+
         test('should surface a rejected drop as an error toast', async () => {
             fireFileDragEvent(elements.input, 'drop', []);
             await new Promise((resolve) => setTimeout(resolve, 0));

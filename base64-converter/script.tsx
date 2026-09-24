@@ -7,7 +7,7 @@ import CopyButton from '../common/copy-button/CopyButton';
 import { buildShareUrl, readHashOrQueryParam, SHARE_URL_MAX_LENGTH } from '../common/share-url';
 import { copyTextToClipboard } from '../common/clipboard';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import { describeLoadedFile, registerDropZone, registerFileInput, type LoadedFileDetail } from '../common/drop-zone';
 import { formatBytes } from '../common/format-utils';
 import FileUploadButton from '../common/file-upload';
 import { hydrate, render } from 'preact';
@@ -1196,7 +1196,12 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
         sampleButton.addEventListener('click', sampleHandler);
     }
 
-    const handleRawFile = (file: File) => {
+    const handleRawFile = (file: File, detail: LoadedFileDetail) => {
+        // Uploads show no success toast of their own, so a multi-file drop
+        // gets a dedicated note naming the file that was actually encoded.
+        if (detail.ignoredFileCount > 0) {
+            NotificationManager.show(describeLoadedFile(file.name, detail), 4000, { type: 'warning' });
+        }
         void converter.handleFileUpload({ target: { files: [file], value: null } });
     };
 
