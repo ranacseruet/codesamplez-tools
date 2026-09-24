@@ -33,17 +33,14 @@ describe('hmacSha256', () => {
         expect(sig).toBeInstanceOf(Uint8Array);
     });
 
-    it('should throw if crypto is undefined and log error', async () => {
+    it('should throw if crypto is undefined, leaving logging to the caller', async () => {
         const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
         const originalCrypto = globalThis.crypto;
         delete (globalThis as { crypto?: unknown }).crypto;
 
         try {
             await expect(hmacSha256('message', 'key')).rejects.toThrow('Web Crypto API');
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-                'HMAC generation error:',
-                expect.any(Error)
-            );
+            expect(consoleErrorSpy).not.toHaveBeenCalled();
         } finally {
             globalThis.crypto = originalCrypto;
             consoleErrorSpy.mockRestore();

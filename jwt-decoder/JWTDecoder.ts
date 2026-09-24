@@ -19,32 +19,28 @@ export async function hmacSha256(message: string, key: string): Promise<Uint8Arr
         throw new Error('Invalid input: message and key are required');
     }
 
-    try {
-        // Use Web Crypto API if available (browser environment).
-        if (typeof crypto !== 'undefined' && crypto.subtle) {
-            const encoder = new TextEncoder();
-            const messageBuffer = encoder.encode(message);
-            const keyBuffer = encoder.encode(key);
+    // Failures propagate to the caller unlogged: verifySignature is the one
+    // place that logs, so a single failure isn't reported twice.
+    // Use Web Crypto API if available (browser environment).
+    if (typeof crypto !== 'undefined' && crypto.subtle) {
+        const encoder = new TextEncoder();
+        const messageBuffer = encoder.encode(message);
+        const keyBuffer = encoder.encode(key);
 
-            const cryptoKey = await crypto.subtle.importKey(
-                'raw',
-                keyBuffer,
-                { name: 'HMAC', hash: { name: 'SHA-256' } },
-                false,
-                ['sign']
-            );
+        const cryptoKey = await crypto.subtle.importKey(
+            'raw',
+            keyBuffer,
+            { name: 'HMAC', hash: { name: 'SHA-256' } },
+            false,
+            ['sign']
+        );
 
-            const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageBuffer);
-            return new Uint8Array(signature);
-        }
-
-        // If Web Crypto is not available.
-        throw new Error('Web Crypto API (crypto.subtle) not available');
-    } catch (error: unknown) {
-        console.error('HMAC generation error:', error);
-        // Re-throw the specific error or a generic one if needed.
-        throw error;
+        const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageBuffer);
+        return new Uint8Array(signature);
     }
+
+    // If Web Crypto is not available.
+    throw new Error('Web Crypto API (crypto.subtle) not available');
 }
 
 /**
