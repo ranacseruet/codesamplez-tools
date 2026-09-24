@@ -1,12 +1,84 @@
   
   // Helper Functions for CSS Minification
+  function maskCssTokens(
+    css: string,
+    protectComments = true
+  ): { maskedCss: string; restore: (transformedCss: string) => string } {
+    let placeholderPrefix = '__CSS_MINIFIER_TOKEN_';
+    while (css.indexOf(placeholderPrefix) !== -1) {
+      placeholderPrefix = '_' + placeholderPrefix;
+    }
+    const placeholderPattern = new RegExp(`${placeholderPrefix}(\\d+)__`, 'g');
+
+    const tokens: string[] = [];
+    let maskedCss = '';
+    const maskToken = (token: string) => {
+      maskedCss += placeholderPrefix + tokens.length + '__';
+      tokens.push(token);
+    };
+
+    let index = 0;
+    while (index < css.length) {
+      const char = css[index];
+      if (char === '\\' && index + 1 < css.length) {
+        maskedCss += css.slice(index, index + 2);
+        index += 2;
+        continue;
+      }
+
+      if (char === '"' || char === "'") {
+        const start = index;
+        index += 1;
+        while (index < css.length) {
+          if (css[index] === '\\') {
+            index += 2;
+          } else if (css[index] === char) {
+            index += 1;
+            break;
+          } else {
+            index += 1;
+          }
+        }
+        maskToken(css.slice(start, index));
+        continue;
+      }
+
+      if (char === '/' && css[index + 1] === '*') {
+        const commentEnd = css.indexOf('*/', index + 2);
+        const nextIndex = commentEnd === -1 ? css.length : commentEnd + 2;
+        const comment = css.slice(index, nextIndex);
+        if (protectComments) {
+          maskToken(comment);
+        } else {
+          maskedCss += comment;
+        }
+        index = nextIndex;
+        continue;
+      }
+
+      maskedCss += char;
+      index += 1;
+    }
+
+    return {
+      maskedCss,
+      restore(transformedCss: string) {
+        return transformedCss.replace(placeholderPattern, (placeholder, tokenIndex: string) => {
+          return tokens[Number(tokenIndex)] ?? placeholder;
+        });
+      }
+    };
+  }
+
   function removeCommentsFromCss(css) {
     // Remove both single-line and multi-line comments
-    return css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const tokenized = maskCssTokens(css, false);
+    return tokenized.restore(tokenized.maskedCss.replace(/\/\*[\s\S]*?\*\//g, ''));
   }
   
   function removeWhitespaceFromCss(css) {
-    let minified = css;
+    const tokenized = maskCssTokens(css);
+    let minified = tokenized.maskedCss;
     
     // Remove line breaks and extra spaces
     minified = minified.replace(/[\r\n\t]+/g, ' ');
@@ -35,7 +107,7 @@
     // Remove space before !important
     minified = minified.replace(/\s+!important/g, '!important');
     
-    return minified;
+    return tokenized.restore(minified);
   }
 
   // Pre-compiled regex for hex color shortening
@@ -57,7 +129,8 @@
   const colorRegex = new RegExp(`(:|\\s)(${colorPattern})(?=(;|\\s|\\}|$))`, 'gi');
   
   function shortenColorsInCss(css) {
-    let minified = css;
+    const tokenized = maskCssTokens(css);
+    let minified = tokenized.maskedCss;
     
     // Replace #RRGGBB with #RGB when possible
     minified = minified.replace(hexColorRegex, '#$1$2$3');
@@ -67,20 +140,26 @@
       return `${prefix}${colorMap[color.toLowerCase()]}`;
     });
     
-    return minified;
+    return tokenized.restore(minified);
   }
   
   function removeUnnecessaryUnits(css) {
     // Remove units from zero values (0px, 0em, etc)
-    return css.replace(/(\s|:)0(px|em|rem|pt|pc|vh|vw|vmin|vmax|ex|ch|mm|cm|in|%)/g, '$10');
+    const tokenized = maskCssTokens(css);
+    return tokenized.restore(
+      tokenized.maskedCss.replace(/(\s|:)0(px|em|rem|pt|pc|vh|vw|vmin|vmax|ex|ch|mm|cm|in|%)/g, '$10')
+    );
   }
   
   function removeLastSemicolonsFromCss(css) {
     // Remove last semicolon in each declaration block
-    return css.replace(/;}/g, '}');
+    const tokenized = maskCssTokens(css);
+    return tokenized.restore(tokenized.maskedCss.replace(/;}/g, '}'));
   }
   
   function combineSelectorsInCss(css) {
+    const tokenized = maskCssTokens(css);
+    const protectedCss = tokenized.maskedCss;
     let result = '';
     
     // Helper function to clean declarations
@@ -100,7 +179,7 @@
     }
 
     // Process media queries first
-    const mediaBlocks = css.match(/@media[^{]+\{([^{}]|\{[^{}]*\})*\}/g) || [];
+    const mediaBlocks = protectedCss.match(/@media[^{]+\{([^{}]|\{[^{}]*\})*\}/g) || [];
     const processedMedia = mediaBlocks.map(block => {
       const mediaQuery = block.match(/@media[^{]+/)[0];
       const innerContent = block.slice(block.indexOf('{'));
@@ -116,14 +195,14 @@
     }).join('');
 
     // Process regular rules
-    const regularCss = css.replace(/@media[^{]+\{([^{}]|\{[^{}]*\})*\}/g, '');
+    const regularCss = protectedCss.replace(/@media[^{]+\{([^{}]|\{[^{}]*\})*\}/g, '');
     const regularRules = regularCss.match(/[^{]+\{[^}]+\}/g) || [];
     const processedRegular = regularRules.map(rule => {
       const [selector, declarations] = rule.split('{');
       return processCssRule(selector, declarations);
     }).join('');
 
-    return processedMedia + processedRegular;
+    return tokenized.restore(processedMedia + processedRegular);
   }
 
 function minifyCSS(css) { // Made synchronous for now

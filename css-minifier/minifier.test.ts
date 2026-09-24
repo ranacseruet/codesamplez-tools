@@ -25,6 +25,11 @@ describe('minifier helper functions', () => {
       const input = 'body { margin: 0; }';
       expect(removeCommentsFromCss(input)).toBe('body { margin: 0; }');
     });
+
+    test('preserves comment markers inside quoted strings', () => {
+      const input = 'a { content: "/* keep this */"; /* remove this */ color: red; }';
+      expect(removeCommentsFromCss(input)).toBe('a { content: "/* keep this */";  color: red; }');
+    });
   });
 
   describe('removeWhitespaceFromCss', () => {
@@ -56,6 +61,17 @@ describe('minifier helper functions', () => {
     test('removes space between consecutive declaration blocks', () => {
       const input = '.a { color: red; }   .b { color: blue; }';
       expect(removeWhitespaceFromCss(input)).toBe('.a{color:red;}.b{color:blue;}');
+    });
+
+    test('preserves delimiters, operators, and whitespace inside strings', () => {
+      const input = '.a::before { content: "a, b + c > d; }"; } [data-x="a b"] { content: "}"; }';
+      const expected = '.a::before{content:"a, b + c > d; }";}[data-x="a b"]{content:"}";}';
+      expect(removeWhitespaceFromCss(input)).toBe(expected);
+    });
+
+    test('preserves escaped quotes inside strings', () => {
+      const input = '.a { content: "say \\"a, b; }"; }';
+      expect(removeWhitespaceFromCss(input)).toBe('.a{content:"say \\"a, b; }";}');
     });
   });
 
@@ -93,6 +109,10 @@ describe('minifier helper functions', () => {
       expect(shortenColorsInCss('color: red;')).toBe('color: #f00;');
     });
 
+    test('does not shorten colors inside strings', () => {
+      expect(shortenColorsInCss('a{content:"#aabbcc";}')).toBe('a{content:"#aabbcc";}');
+    });
+
     test('handles consecutive colors separated by space or newlines', () => {
       expect(shortenColorsInCss('border-color: red green;')).toBe('border-color: #f00 #0f0;');
       expect(shortenColorsInCss('border-color: red green blue;')).toBe('border-color: #f00 #0f0 #00f;');
@@ -116,6 +136,10 @@ describe('minifier helper functions', () => {
       expect(removeUnnecessaryUnits('left:0px')).toBe('left:0');
       expect(removeUnnecessaryUnits('margin: 0px')).toBe('margin: 0');
     });
+
+    test('does not remove units inside strings', () => {
+      expect(removeUnnecessaryUnits('a{content:"x:0px";}')).toBe('a{content:"x:0px";}');
+    });
   });
 
   describe('removeLastSemicolonsFromCss', () => {
@@ -127,6 +151,10 @@ describe('minifier helper functions', () => {
     test('leaves declarations without trailing semicolons untouched', () => {
       const input = 'body{color:red}';
       expect(removeLastSemicolonsFromCss(input)).toBe('body{color:red}');
+    });
+
+    test('preserves semicolon-brace pairs inside strings', () => {
+      expect(removeLastSemicolonsFromCss('a{content:"value;}";}')).toBe('a{content:"value;}"}');
     });
   });
 
@@ -148,6 +176,16 @@ describe('minifier helper functions', () => {
     test('cleans and ignores empty declaration blocks', () => {
       const input = 'body { } p { color: blue; }';
       expect(combineSelectorsInCss(input)).toBe('p{color: blue;}');
+    });
+
+    test('preserves braces and semicolons inside declaration strings', () => {
+      const input = 'body { content: "};{"; }';
+      expect(combineSelectorsInCss(input)).toBe('body{content: "};{";}');
+    });
+
+    test('preserves escaped quotes outside strings in selectors', () => {
+      const input = '.foo\\"bar { color: red; }';
+      expect(combineSelectorsInCss(input)).toBe('.foo\\"bar{color: red;}');
     });
   });
 });
@@ -185,6 +223,12 @@ describe('CSS Minifier (minifyCSS)', () => {
       }
     `;
     const expected = '@media (max-width:600px){.test{color:red;}}';
+    expect(minifyCSS(input)).toBe(expected);
+  });
+
+  test('preserves comment markers and minifier delimiters inside content strings', () => {
+    const input = '.test::before { content: "a, b + c > d /* keep */; }"; }';
+    const expected = '.test::before{content:"a, b + c > d /* keep */; }";}';
     expect(minifyCSS(input)).toBe(expected);
   });
 

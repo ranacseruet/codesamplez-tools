@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.4] - 2026-09-24
+
+### Data Format Converter
+
+- Round-trip carriage returns and form-feeds, and decode Java Unicode escapes in properties files.
+
 ## [1.0.3] - 2026-09-21
 
 ### Data Format Converter

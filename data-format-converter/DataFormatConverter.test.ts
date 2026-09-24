@@ -260,6 +260,31 @@ age=30`;
             const result = converter.parseInput(input, 'properties');
             expect(result).toEqual({ key: '\t\\z' });
         });
+
+        it('should round-trip carriage returns, form-feeds, and trailing backslashes', () => {
+            const values = {
+                carriageReturn: 'ending\r',
+                formFeed: 'ending\f',
+                trailingSlash: 'ends\\'
+            };
+
+            const formatted = converter.formatOutput(values, 'properties');
+            expect(formatted).toBe('carriageReturn=ending\\r\nformFeed=ending\\f\ntrailingSlash=ends\\\\');
+            expect(converter.parseInput(formatted, 'properties')).toEqual(values);
+        });
+
+        it('should decode Java Unicode escapes, including surrogate pairs', () => {
+            const input = 'name=Montr\\u00E9al emoji=\\uD83D\\uDE00';
+            expect(converter.parseInput(input, 'properties')).toEqual({
+                name: 'Montréal emoji=😀'
+            });
+        });
+
+        it('should reject malformed Java Unicode escapes', () => {
+            expect(() => converter.parseInput('name=\\u12G4', 'properties')).toThrow(
+                'Invalid Unicode escape in properties'
+            );
+        });
     });
 
     describe('detectFormat', () => {
