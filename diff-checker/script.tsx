@@ -112,15 +112,29 @@ class DiffDisplay {
   diffResultElement: HTMLElement;
   originalLineNumber: number;
   modifiedLineNumber: number;
+  // Gutter width for the current render, sized to the largest line number it
+  // will print so every row pads the same (a per-row width jumps at 1000).
+  lineNumberDigits: number;
 
   constructor(diffResultElement: HTMLElement) {
     this.diffResultElement = diffResultElement;
     this.originalLineNumber = 1;
     this.modifiedLineNumber = 1;
+    this.lineNumberDigits = 0;
   }
 
   displayDiff(diffResults, isCodeContent) {
     this.diffResultElement.innerHTML = '';
+    let originalLineCount = 0;
+    let modifiedLineCount = 0;
+    diffResults.forEach(([changeType]) => {
+      if (changeType !== 'added') originalLineCount++;
+      if (changeType !== 'removed') modifiedLineCount++;
+    });
+    this.lineNumberDigits = String(Math.max(
+      this.originalLineNumber + originalLineCount - 1,
+      this.modifiedLineNumber + modifiedLineCount - 1
+    )).length;
     diffResults.forEach(([changeType, lineContent, highlights]) => {
       const lineElement = this.createLineElement(changeType, lineContent, isCodeContent, highlights);
       this.diffResultElement.appendChild(lineElement);
@@ -248,9 +262,10 @@ class DiffDisplay {
 
   // Renamed from createLineNumberHTML to getLineNumberText to reflect it returns text
   getLineNumberText(changeType, minDigits = 3) {
-    // Ensure minimum width for alignment, calculate max digits needed
-    // This calculation might need refinement based on total lines, but is a start
+    // Pad to the render-wide width, never narrower than the numbers on this
+    // row (rows built outside displayDiff) or the visual minimum.
     const maxDigits = Math.max(
+      this.lineNumberDigits,
       this.originalLineNumber.toString().length,
       this.modifiedLineNumber.toString().length,
       minDigits // Ensure a minimum width visually

@@ -78,6 +78,29 @@ describe('DiffDisplay', () => {
     });
   });
 
+  describe('gutter width', () => {
+    const gutterTexts = () => mockElement.appendChild.mock.calls.map(([line]) => line.children[0].textContent);
+
+    it('pads every row to the widest line number, not per row', () => {
+      const diffResults = Array.from({ length: 1000 }, (_, index) => ['unchanged', `line ${index + 1}`]);
+      diffResults.push(['added', 'extra']);
+
+      diffDisplay.displayDiff(diffResults, false);
+
+      const texts = gutterTexts();
+      expect(texts[0]).toBe('   1│   1');
+      expect(texts[998]).toBe(' 999│ 999');
+      expect(texts[999]).toBe('1000│1000');
+      expect(texts[1000]).toBe('    │1001');
+      expect(new Set(texts.map((text) => text.length)).size).toBe(1);
+    });
+
+    it('keeps the three-digit minimum for short diffs', () => {
+      diffDisplay.displayDiff([['removed', 'a'], ['added', 'b']], false);
+      expect(gutterTexts()).toEqual(['  1│   ', '   │  1']);
+    });
+  });
+
   describe('escapeHtml', () => {
     it('should escape HTML special characters', () => {
       const html = '<div class="test">Hello & goodbye</div>';
