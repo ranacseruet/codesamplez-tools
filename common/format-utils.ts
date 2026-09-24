@@ -22,5 +22,13 @@ export function formatBytes(bytes: number): string {
         unitIndex += 1;
     }
 
-    return `${value % 1 === 0 ? value : value.toFixed(1)} ${BYTE_UNITS[unitIndex]}`;
+    // Round before choosing the final unit and format: 1023.99 KiB must read
+    // "1 MB", not "1024.0 KiB", and 1.99 KiB rounds to a whole "2 KiB".
+    let rounded = Math.round(value * 10) / 10;
+    if (rounded >= 1024 && unitIndex < BYTE_UNITS.length - 1) {
+        rounded = Math.round((rounded / 1024) * 10) / 10;
+        unitIndex += 1;
+    }
+
+    return `${rounded % 1 === 0 ? rounded : rounded.toFixed(1)} ${BYTE_UNITS[unitIndex]}`;
 }

@@ -16,6 +16,13 @@ describe('formatBytes', () => {
         expect(formatBytes(1024 ** 5)).toBe('1024 TB');
     });
 
+    test('rounds before picking the unit, so near-boundary values promote cleanly', () => {
+        expect(formatBytes(1024 * 1024 - 1)).toBe('1 MB');
+        expect(formatBytes(2047)).toBe('2 KiB');
+        expect(formatBytes(1023)).toBe('1023 B');
+        expect(formatBytes(1024 ** 3 - 1)).toBe('1 GB');
+    });
+
     test('renders unmeasurable sizes as unknown instead of NaN/Infinity text', () => {
         expect(formatBytes(Number.NaN)).toBe('unknown size');
         expect(formatBytes(Number.POSITIVE_INFINITY)).toBe('unknown size');
