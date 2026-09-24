@@ -56,10 +56,12 @@ function formatStatValue(key: string, value: unknown, keyword?: string | null): 
         if (typeof value !== 'number') {
             return String(value);
         }
-        const boundedValue = key === 'readabilityScore'
-            ? Math.min(Math.max(value, 0), 100)
-            : Math.max(value, 0);
-        return boundedValue.toFixed(2);
+        // Flesch Reading Ease is shown unclamped: the formula runs past 100
+        // for very simple text and below 0 for very hard text, and clamping
+        // made every hard text read as the same 0.00. A negative grade level
+        // carries no meaning, so that one still floors at 0.
+        const displayValue = key === 'readabilityScore' ? value : Math.max(value, 0);
+        return displayValue.toFixed(2);
     }
 
     if (key === 'keywordDensity') {

@@ -105,16 +105,23 @@ describe('TextAnalyzer Preact runtime', () => {
         expect(chart.textContent.toLowerCase()).toContain('hello');
     });
 
-    it('shows bounded readability scores and an em dash for inapplicable text', async () => {
+    it('shows the true reading-ease score, a floored grade, and an em dash for inapplicable text', async () => {
         new TextAnalyzerToolUI();
         await flushEffects();
 
         const input = document.getElementById('textInput');
+        // 206.835 - 1.015 * (1 word / 1 sentence) - 84.6 * (1 syllable / 1 word)
         fireEvent.input(input, { target: { value: 'Go.' } });
         await flushEffects();
 
-        expect(document.getElementById('readabilityScore')?.textContent).toBe('100.00');
+        expect(document.getElementById('readabilityScore')?.textContent).toBe('121.22');
         expect(document.getElementById('gradeLevel')?.textContent).toBe('0.00');
+
+        // One long sentence of polysyllabic words scores below zero.
+        fireEvent.input(input, { target: { value: `${'Institutionalization notwithstanding '.repeat(12)}considerations.` } });
+        await flushEffects();
+
+        expect(Number(document.getElementById('readabilityScore')?.textContent)).toBeLessThan(0);
 
         fireEvent.input(input, { target: { value: 'Это тест.' } });
         await flushEffects();

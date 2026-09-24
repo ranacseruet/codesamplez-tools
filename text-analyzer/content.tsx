@@ -92,7 +92,7 @@ export function TextAnalyzerArticle(): JSX.Element {
                         </li>
                         <li><strong>Word frequency analysis:</strong> Shows the top 5 most frequently used non-stop words; numeric-only tokens are ignored.</li>
                         <li><strong>Reading time:</strong> Estimates reading time at 200 words per minute, rounded up to the next minute.</li>
-                        <li><strong>Readability:</strong> Reports Flesch Reading Ease and Flesch-Kincaid grade level from estimated syllable counts; shows an em dash when no applicable English score is available.</li>
+                        <li><strong>Readability:</strong> Reports Flesch Reading Ease and Flesch-Kincaid grade level from estimated syllable counts; shows an em dash when no applicable English score is available. Reading Ease is shown unclamped, so very simple text can score above 100 and very dense text below 0.</li>
                         <li><strong>Keyword density:</strong> Reports the most frequent non-stop word and what percentage of all words it represents.</li>
                         <li><strong>Local file input:</strong> Click Upload File or drag a text file into the input; files are read in the browser and never uploaded.</li>
                     </ul>
