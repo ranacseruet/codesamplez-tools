@@ -165,7 +165,7 @@ export function ToolSearch(): JSX.Element {
         if (event.key === 'ArrowDown') {
             event.preventDefault();
             setIsOpen(true);
-            setActiveIndex((index) => Math.min(index + 1, paletteItems.length - 1));
+            setActiveIndex((index) => Math.max(0, Math.min(index + 1, paletteItems.length - 1)));
             return;
         }
 
