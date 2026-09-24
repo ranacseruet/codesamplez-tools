@@ -129,6 +129,36 @@ describe('ClearButton', () => {
             jest.advanceTimersByTime(800);
             expect(clearButtonInstance.clearButton.classList.contains('clear-success')).toBe(false);
         });
+
+        test('restarts the animation on a click that lands mid-animation', () => {
+            const button = clearButtonInstance.clearButton;
+            button.click();
+            jest.advanceTimersByTime(300); // first click is now in its success phase
+
+            textArea.value = 'typed again';
+            button.click();
+            expect(button.classList.contains('clearing')).toBe(true);
+            expect(button.classList.contains('clear-success')).toBe(false);
+
+            // The first click's 800ms success timer would fire here; it must not
+            // cut the second click's animation short.
+            jest.advanceTimersByTime(299);
+            expect(button.classList.contains('clearing')).toBe(true);
+
+            jest.advanceTimersByTime(1);
+            expect(button.classList.contains('clear-success')).toBe(true);
+            jest.advanceTimersByTime(799);
+            expect(button.classList.contains('clear-success')).toBe(true);
+            jest.advanceTimersByTime(1);
+            expect(button.classList.contains('clear-success')).toBe(false);
+            expect(jest.getTimerCount()).toBe(0);
+        });
+
+        test('cancels a pending animation step on disconnect', () => {
+            clearButtonInstance.clearButton.click();
+            clearButtonInstance.disconnect();
+            expect(jest.getTimerCount()).toBe(0);
+        });
     });
 
     test('should add event listeners on initialization', () => {
