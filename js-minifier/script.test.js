@@ -270,6 +270,19 @@ describe('JavaScript Minifier Preact runtime', () => {
     expect(document.getElementById('js-minifier-output')?.value.length).toBeGreaterThan(0);
   });
 
+  it('does not report empty input when an option is toggled with no code', async () => {
+    new JSMinifierToolUI();
+    await flushEffects();
+
+    fireEvent.click(document.getElementById('js-minifier-shorten-variables'));
+    await flushEffects();
+    await flushEffects();
+
+    expect(document.getElementById('js-minifier-shorten-variables')?.checked).toBe(true);
+    expect(document.getElementById('js-minifier-error-status')?.textContent).toBe('');
+    expect(JSMinifier).not.toHaveBeenCalled();
+  });
+
   it('loads sample code and minifies it', async () => {
     new JSMinifierToolUI();
     await flushEffects();

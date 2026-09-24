@@ -246,6 +246,11 @@ export function JSMinifierApp() {
     const checked = Boolean(event.target.checked);
     const nextOptions = { ...options, [key]: checked };
     setOptions(nextOptions);
+    // Flipping an option only re-runs an existing minify; with nothing to
+    // minify it must not surface the empty-input error.
+    if (!inputCode.trim()) {
+      return;
+    }
     await runMinify(inputCode, nextOptions);
   };
 
