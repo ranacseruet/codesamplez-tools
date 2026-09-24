@@ -208,6 +208,26 @@ describe('formatJSON superseded-run guards', () => {
     expect(formatter.formatBtn.disabled).toBe(false);
   });
 
+  test('error-path stats describe the input that failed, not a later edit', async () => {
+    const formatter = createFormatter();
+    const failedInput = overThresholdInput('failed');
+    formatter.lazyFormatRunner = {
+      run: jest.fn(() => {
+        // The textarea changes while the worker computes, without starting a
+        // new run (e.g. a keystroke inside the debounce window).
+        formatter.input.value = 'newer';
+        return Promise.reject(new Error('boom'));
+      }),
+      terminate: jest.fn()
+    };
+
+    formatter.input.value = failedInput;
+    await formatter.formatJSON();
+
+    expect(formatter.errorStatus.textContent).toContain('boom');
+    expect(formatter.originalSizeEl.textContent).toBe(`${new Blob([failedInput]).size} formatted`);
+  });
+
   test('passes a staleness probe to the runner for over-threshold input', async () => {
     const formatter = createFormatter();
     const run = jest.fn((payload, shouldAbort) => {

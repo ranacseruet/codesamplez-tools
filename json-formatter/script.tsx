@@ -597,9 +597,13 @@ export class JSONFormatter {
     const validationRunId = ++this.schemaValidationRunId;
     const schemaText = this.schemaInput?.value ?? '';
     const hasSchema = Boolean(schemaText.trim());
+    // Snapshot the input once: every report this run makes (stats, error
+    // position, schema data) must describe the text it actually formatted,
+    // not whatever the textarea holds by the time an await resolves.
+    const rawInput = this.input.value;
 
     try {
-      let inputValue = this.input.value.trim();
+      let inputValue = rawInput.trim();
 
       // UI Feedback: Show loading state (first-text-node swap keeps `.c-kbd`)
       this.setPrimaryButtonLabel(hasSchema ? 'Formatting & validating...' : 'Formatting...');
@@ -654,7 +658,7 @@ export class JSONFormatter {
       this.downloadBtn.disabled = false;
       this.expandAllBtn.disabled = false;
       this.collapseAllBtn.disabled = false;
-      this.updateStats(this.input.value.trim(), formattedString);
+      this.updateStats(inputValue, formattedString);
 
       // Minified output is identical in the tree view, so surface the effect by
       // switching to the plain (single-line) view automatically.
@@ -669,7 +673,7 @@ export class JSONFormatter {
 
       if (hasSchema) {
         await this.runSchemaValidation(
-          { data: this.input.value, schema: schemaText, draft: this.getSchemaDraft() },
+          { data: rawInput, schema: schemaText, draft: this.getSchemaDraft() },
           runId,
           validationRunId
         );
@@ -680,7 +684,7 @@ export class JSONFormatter {
       // The finally block's own runId check restores button state correctly.
       if (runId !== this.currentRunId) return;
       const fallbackMessage = error instanceof Error ? error.message : String(error);
-      this.reportJsonError(this.input.value, this.autoFixCheckbox.checked, fallbackMessage);
+      this.reportJsonError(rawInput, this.autoFixCheckbox.checked, fallbackMessage);
       this.copyBtn.disabled = true;
       this.downloadBtn.disabled = true;
       this.expandAllBtn.disabled = true;
@@ -690,13 +694,13 @@ export class JSONFormatter {
       if (this.emptyStateEl) {
         this.emptyStateEl.style.display = '';
       }
-      this.updateStats(this.input.value, '');
+      this.updateStats(rawInput, '');
 
       // Unreachable for a superseded run (the guard above bailed out), so the
       // schema call below always belongs to the current run.
       if (hasSchema) {
         await this.runSchemaValidation(
-          { data: this.input.value, schema: schemaText, draft: this.getSchemaDraft() },
+          { data: rawInput, schema: schemaText, draft: this.getSchemaDraft() },
           runId,
           validationRunId
         );
