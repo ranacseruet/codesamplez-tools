@@ -142,7 +142,7 @@ Additional checks:
 ## Building
 
 - Production build: `npm run build`
-- Dev server: `npm run dev` (serves tracker-free local dev at `http://localhost:8081`)
+- Dev server: `npm run dev` (serves tracker-free local dev at `http://localhost:8081`; unknown paths render the generated `404.html`, as CloudFront does in production)
 - Serve production build locally: `npm start` (serves `build/` at `http://localhost:8080`)
 - Targeted builds:
   - `npm run build -- --tool jwt-decoder-tool`
