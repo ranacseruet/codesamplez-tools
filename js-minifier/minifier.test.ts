@@ -69,6 +69,13 @@ describe('JS Minifier', () => {
       expect(minifier.removeComments(`// note\nconst x = 1;`)).toBe(`\nconst x = 1;`);
     });
 
+    test('removes a block comment at the start of a line before following code', () => {
+      const minifier = new JSMinifier({ removeWhitespace: false });
+      const input = `const x = 1;\n/* note */const y = 2;`;
+
+      expect(minifier.removeComments(input)).toBe(`const x = 1;\nconst y = 2;`);
+    });
+
     test('keeps token boundaries when removing comments', () => {
       const minifier = new JSMinifier({ removeWhitespace: false });
       const input = `function read() { return/* comment */value; } const value = 7;`;
