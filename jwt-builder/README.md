@@ -31,7 +31,7 @@ The **Load Sample** action restores the standard sample claims, selects HS256, r
 
 ## Input Processing and Validation
 
-- Time-based claims accept ISO 8601 dates or UNIX timestamps and are converted to JWT NumericDate values.
+- Time-based claims accept ISO 8601 dates or UNIX timestamps in seconds (10+ digits) and are converted to JWT NumericDate values. Shorter integers such as a bare year (`2025`) are rejected rather than read as a 1970 timestamp.
 - A non-empty invalid datetime is rejected instead of being silently omitted.
 - Custom-claim values beginning with `{` or `[` are parsed as JSON when valid; malformed JSON-style values fall back to strings.
 - Missing issuer, expiration time, or active signing key is reported inline.

@@ -139,6 +139,14 @@ describe('JWTBuilder', () => {
       expect(jwtBuilder.parseDateTime('-Infinity')).toBeNull();
     });
 
+    test('rejects short integers such as a bare year instead of reading them as 1970 timestamps', () => {
+      expect(jwtBuilder.parseDateTime('2025')).toBeNull();
+      expect(jwtBuilder.parseDateTime('0')).toBeNull();
+      expect(jwtBuilder.parseDateTime('999999999')).toBeNull();
+      expect(jwtBuilder.parseDateTime('1000000000')).toBe(1000000000);
+      expect(jwtBuilder.parseDateTime('-1000000000')).toBe(-1000000000);
+    });
+
     test('rejects numeric-looking timestamps that are not decimal integers', () => {
       expect(jwtBuilder.parseDateTime('1e10')).toBeNull();
       expect(jwtBuilder.parseDateTime('1.7e9')).toBeNull();
