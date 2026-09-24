@@ -2,7 +2,7 @@ import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { NotificationManager } from '../common/notification-manager';
 import ClearButton from '../common/clear-button/ClearButton';
-import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import { describeLoadedFile, registerDropZone, registerFileInput } from '../common/drop-zone';
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -163,9 +163,9 @@ export function TextAnalyzerApp() {
         }
 
         const fileOptions = {
-            onText: (droppedText, file) => {
+            onText: (droppedText, file, detail) => {
                 setText(droppedText);
-                NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
+                NotificationManager.show(describeLoadedFile(file.name, detail), 2000, { type: 'success' });
             },
             onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
         };

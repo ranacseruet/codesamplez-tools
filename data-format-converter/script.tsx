@@ -4,7 +4,7 @@ import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import { describeLoadedFile, registerDropZone, registerFileInput } from '../common/drop-zone';
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
 import type { ConverterSharePayload } from './share-url';
@@ -290,14 +290,14 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
         }
 
         const fileOptions = {
-            onText: (text, file) => {
+            onText: (text, file, detail) => {
                 clearTimeout(debounceTimerRef.current as ReturnType<typeof setTimeout>);
                 setInputText(text);
                 setErrorMessage('');
                 if (useSampleData) {
                     setUseSampleData(false);
                 }
-                NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
+                NotificationManager.show(describeLoadedFile(file.name, detail), 2000, { type: 'success' });
 
                 const autoConvertElement = document.getElementById('autoConvert') as HTMLInputElement | null;
                 const shouldAutoConvert = autoConvertElement ? autoConvertElement.checked : autoConvert;

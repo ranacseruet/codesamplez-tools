@@ -5,7 +5,7 @@ import type { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import { describeLoadedFile, registerDropZone, registerFileInput, type LoadedFileDetail } from '../common/drop-zone';
 import { formatBytes } from '../common/format-utils';
 import toolMetadata from './tool.meta.json';
 import {
@@ -274,7 +274,7 @@ export function ImageEditorApp() {
     // even if the first decode resolves last, so each load checks that it
     // is still the latest request before installing anything.
     const loadSeqRef = useRef(0);
-    const loadFileRef = useRef<(file: File) => void>(() => undefined);
+    const loadFileRef = useRef<(file: File, detail?: LoadedFileDetail) => void>(() => undefined);
     const exportRef = useRef<() => void>(() => undefined);
 
     const setLoadedImage = (next: LoadedImage | null) => {
@@ -330,7 +330,7 @@ export function ImageEditorApp() {
         return true;
     };
 
-    const loadImageFile = async (file: File) => {
+    const loadImageFile = async (file: File, detail?: LoadedFileDetail) => {
         const validationError = validateImageFile(file);
         if (validationError) {
             notifyError(validationError);
@@ -363,7 +363,7 @@ export function ImageEditorApp() {
             });
             resetEditState();
             syncResizeInputs(bitmap.width, bitmap.height);
-            notifySuccess(`Loaded ${file.name} (${bitmap.width} × ${bitmap.height})`);
+            notifySuccess(describeLoadedFile(`${file.name} (${bitmap.width} × ${bitmap.height})`, detail));
         } catch {
             if (requestId === loadSeqRef.current) {
                 notifyError(`Could not decode “${file.name}”. Try a different file.`);
@@ -587,7 +587,7 @@ export function ImageEditorApp() {
     // once; the wrappers delegate to refs so handlers always see fresh state.
     useEffect(() => {
         const fileOptions = {
-            onFile: (file: File) => loadFileRef.current(file),
+            onFile: (file: File, detail: LoadedFileDetail) => loadFileRef.current(file, detail),
             onError: (message: string) => notifyError(message),
             maxBytes: MAX_IMAGE_BYTES
         };

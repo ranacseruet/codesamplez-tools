@@ -11,7 +11,13 @@ import CopyButton from '../common/copy-button/CopyButton';
 import { NotificationManager } from '../common/notification-manager';
 import { scheduleTask } from '../common/scheduler-utils';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone, registerFileInput, type DropZoneCleanup } from '../common/drop-zone';
+import {
+  describeLoadedFile,
+  registerDropZone,
+  registerFileInput,
+  type DropZoneCleanup,
+  type LoadedFileDetail
+} from '../common/drop-zone';
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
 import DownloadManager from '../common/DownloadManager';
@@ -603,11 +609,11 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     getClearButton: () => ClearButton | null
   ) => {
     const fileOptions = {
-      onText: (text: string, file: File) => {
+      onText: (text: string, file: File, detail: LoadedFileDetail) => {
         rememberPaneText(pane, text, file.name);
         getClearButton()?.updateVisibility();
         setInlineError('');
-        NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
+        NotificationManager.show(describeLoadedFile(file.name, detail), 2000, { type: 'success' });
       },
       onError: (message: string) => NotificationManager.show(message, 3000, { type: 'error' as const })
     };

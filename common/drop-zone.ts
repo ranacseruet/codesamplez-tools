@@ -47,6 +47,15 @@ interface DropZoneBaseOptions {
 }
 
 /**
+ * Context about the drop or pick that produced a file. Only the first file of
+ * a multi-file drop is loaded; `ignoredFileCount` says how many were skipped
+ * so the tool's own "Loaded …" toast can say so (see `describeLoadedFile`).
+ */
+export interface LoadedFileDetail {
+    ignoredFileCount: number;
+}
+
+/**
  * Handlers are mutually exclusive: `onText` gets the decoded contents (and the
  * module applies the binary-content guard), while `onFile` hands over the raw
  * `File` unread, for tools like base64-converter that have their own
@@ -54,9 +63,24 @@ interface DropZoneBaseOptions {
  */
 export type DropZoneOptions = DropZoneBaseOptions &
     (
-        | { onText: (text: string, file: File) => void; onFile?: never }
-        | { onFile: (file: File) => void; onText?: never }
+        | { onText: (text: string, file: File, detail: LoadedFileDetail) => void; onFile?: never }
+        | { onFile: (file: File, detail: LoadedFileDetail) => void; onText?: never }
     );
+
+/**
+ * The success message for a loaded file: "Loaded notes.txt", plus a note when
+ * other files in the same drop were skipped. Tools share one notification
+ * element, so the skip note rides along with the load toast rather than being
+ * a separate toast the load message would immediately replace.
+ */
+export function describeLoadedFile(label: string, detail?: LoadedFileDetail): string {
+    const ignored = detail?.ignoredFileCount ?? 0;
+    if (ignored <= 0) {
+        return `Loaded ${label}`;
+    }
+
+    return `Loaded ${label}. Only one file is used at a time, so ${ignored} other ${ignored === 1 ? 'file was' : 'files were'} ignored.`;
+}
 
 /**
  * True when a drag carries at least one file, as opposed to text or nothing.
@@ -121,6 +145,7 @@ function releaseDocumentGuard(): void {
  */
 function processFile(
     file: File,
+    detail: LoadedFileDetail,
     options: DropZoneOptions,
     beginRead: () => () => boolean
 ): void {
@@ -135,7 +160,7 @@ function processFile(
 
     if (options.onFile) {
         if (!isStale()) {
-            options.onFile(file);
+            options.onFile(file, detail);
         }
         return;
     }
@@ -151,7 +176,7 @@ function processFile(
                 options.onError?.(`"${file.name}" looks like a binary file. Use a text file instead.`);
                 return;
             }
-            onText(text, file);
+            onText(text, file, detail);
         })
         .catch(() => {
             // A superseded or disposed read reports nothing: the user has
@@ -241,13 +266,14 @@ export function registerDropZone(target: HTMLElement, options: DropZoneOptions):
         event.preventDefault();
         reset();
 
-        const file = event.dataTransfer?.files?.[0];
+        const files = event.dataTransfer?.files;
+        const file = files?.[0];
         if (!file) {
             options.onError?.('No file found in that drop. Try again.');
             return;
         }
 
-        processFile(file, { ...options, maxBytes }, () => {
+        processFile(file, { ignoredFileCount: files.length - 1 }, { ...options, maxBytes }, () => {
             const readId = (latestReadId += 1);
             return () => disposed || readId !== latestReadId;
         });
@@ -289,11 +315,13 @@ export function registerFileInput(target: HTMLInputElement, options: DropZoneOpt
     let latestReadId = 0;
 
     const handleChange = () => {
-        const file = target.files?.[0];
+        const files = target.files;
+        const file = files?.[0];
+        const ignoredFileCount = files ? files.length - 1 : 0;
         target.value = '';
         if (!file) return;
 
-        processFile(file, options, () => {
+        processFile(file, { ignoredFileCount }, options, () => {
             const readId = (latestReadId += 1);
             return () => disposed || readId !== latestReadId;
         });

@@ -15,7 +15,7 @@ import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { scheduleTask } from '../common/scheduler-utils';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone } from '../common/drop-zone';
+import { describeLoadedFile, registerDropZone } from '../common/drop-zone';
 import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -235,10 +235,10 @@ export function CssMinifierApp() {
     }
 
     return registerDropZone(inputRef.current, {
-      onText: (text, file) => {
+      onText: (text, file, detail) => {
         setInputCss(text);
         setErrorMessage('');
-        NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
+        NotificationManager.show(describeLoadedFile(file.name, detail), 2000, { type: 'success' });
         void runMinify(text);
       },
       onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })

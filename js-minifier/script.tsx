@@ -4,7 +4,7 @@ import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { scheduleTask } from '../common/scheduler-utils';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import { describeLoadedFile, registerDropZone, registerFileInput } from '../common/drop-zone';
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
@@ -221,11 +221,11 @@ export function JSMinifierApp() {
     }
 
     const fileOptions = {
-      onText: (text, file) => {
+      onText: (text, file, detail) => {
         latestInputRef.current = text;
         setInputCode(text);
         setErrorMessage('');
-        NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
+        NotificationManager.show(describeLoadedFile(file.name, detail), 2000, { type: 'success' });
         void runMinify(text, options);
       },
       onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })

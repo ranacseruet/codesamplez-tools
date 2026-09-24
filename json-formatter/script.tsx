@@ -4,7 +4,7 @@ import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
 import { scheduleTask, nextFrame } from '../common/scheduler-utils';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import { describeLoadedFile, registerDropZone, registerFileInput, type LoadedFileDetail } from '../common/drop-zone';
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
@@ -487,7 +487,7 @@ export class JSONFormatter {
 
     if (this.input) {
       registerDropZone(this.input, {
-        onText: (text, file) => this.loadDroppedText(text, file.name),
+        onText: (text, file, detail) => this.loadDroppedText(text, file.name, detail),
         onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
       });
     }
@@ -495,7 +495,7 @@ export class JSONFormatter {
     const fileInput = document.getElementById('json-formatter-file');
     if (fileInput instanceof HTMLInputElement) {
       registerFileInput(fileInput, {
-        onText: (text, file) => this.loadDroppedText(text, file.name),
+        onText: (text, file, detail) => this.loadDroppedText(text, file.name, detail),
         onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
       });
     }
@@ -1079,7 +1079,7 @@ export class JSONFormatter {
    * Load a dropped file's contents as if they had been pasted. Reuses the
    * Load Sample path so the tree, stats, and Clear button all refresh.
    */
-  loadDroppedText(text: string, fileName: string): void {
+  loadDroppedText(text: string, fileName: string, detail?: LoadedFileDetail): void {
     this.input.value = text;
     this.clearValidationStatus();
     this.updatePrimaryActionLabel();
@@ -1087,7 +1087,7 @@ export class JSONFormatter {
     // Toast before formatting, not after: `formatJSON` raises its own
     // success toast, and they share one notification element — announcing the
     // load first leaves the sequence in the order the user experiences it.
-    NotificationManager.show(`Loaded ${fileName}`, 2000, { type: 'success' });
+    NotificationManager.show(describeLoadedFile(fileName, detail), 2000, { type: 'success' });
     this.formatJSON();
   }
 

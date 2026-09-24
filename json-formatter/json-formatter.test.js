@@ -1061,7 +1061,7 @@ describe('JSONFormatter', () => {
         fileInput.dispatchEvent(new Event('change', { bubbles: true }));
         await new Promise((resolve) => setTimeout(resolve, 0));
 
-        expect(formatter.loadDroppedText).toHaveBeenCalledWith('{"picker": true}', 'picker.json');
+        expect(formatter.loadDroppedText).toHaveBeenCalledWith('{"picker": true}', 'picker.json', { ignoredFileCount: 0 });
       });
 
       test('surfaces a picker binary-content error through the shared path', async () => {
