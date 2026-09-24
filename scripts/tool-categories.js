@@ -6,9 +6,9 @@
  * chips, the section markers and the related-tools cards. Extracted here so the
  * build side has one copy rather than one per generator.
  *
- * Two client-side copies still exist, in `common/app-shell/ToolSearch.tsx` and
- * `common/app-shell/RecentTools.tsx`, because those run in tool bundles and
- * cannot require a CommonJS module. Keep all three in sync.
+ * Client bundles (ToolSearch, RecentTools) import the ESM twin in
+ * `common/app-shell/categorySlugs.ts`, since they cannot require a CommonJS
+ * module. `tool-categories.test.js` fails if the two copies drift apart.
  */
 
 const GROUP_CATEGORY_SLUGS = {

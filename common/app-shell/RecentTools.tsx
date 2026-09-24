@@ -23,15 +23,7 @@ import {
     clearRecentToolVisits,
     readRecentToolVisits
 } from '../recent-tools';
-
-// Keep in sync with GROUP_CATEGORY_SLUGS in ToolSearch.tsx and
-// scripts/root-document.js (the shared v4 category accent slugs).
-const GROUP_CATEGORY_SLUGS: Record<string, string> = {
-    'code-formatters': 'formatters',
-    'encoders-decoders': 'encoders',
-    'text-analysis': 'text',
-    'image-tools': 'media'
-};
+import { getGroupCategorySlug } from './categorySlugs';
 
 export interface RecentToolLink {
     id: string;
@@ -61,7 +53,7 @@ export function resolveRecentToolLinks(limit: number = MAX_RECENT_TOOLS_SHOWN): 
             id: entry.id,
             title: entry.title,
             href: buildSiteHref(entry.publicPath),
-            categorySlug: GROUP_CATEGORY_SLUGS[entry.catalogGroupId] ?? 'formatters'
+            categorySlug: getGroupCategorySlug(entry.catalogGroupId)
         });
     });
 

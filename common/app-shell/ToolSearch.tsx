@@ -4,15 +4,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { TOOL_CATALOG_ENTRIES, TOOL_CATALOG_GROUPS } from './toolCatalog';
 import { formatModifierChord, isEditableTarget } from '../shortcut-utils';
 import { buildSiteHref } from '../siteBaseUrl';
-
-// Maps catalog group ids to the v4 category accent slug (chip/palette hues).
-// Keep in sync with GROUP_CATEGORY_SLUGS in scripts/root-document.js.
-const GROUP_CATEGORY_SLUGS: Record<string, string> = {
-    'code-formatters': 'formatters',
-    'encoders-decoders': 'encoders',
-    'text-analysis': 'text',
-    'image-tools': 'media'
-};
+import { getGroupCategorySlug } from './categorySlugs';
 
 const MAX_PALETTE_ITEMS = 8;
 
@@ -33,7 +25,7 @@ const TOOL_SEARCH_ENTRIES: ToolSearchEntry[] = TOOL_CATALOG_ENTRIES.map((entry) 
     href: buildSiteHref(entry.publicPath),
     groupId: entry.catalogGroupId,
     groupLabel: TOOL_CATALOG_GROUPS.find((group) => group.id === entry.catalogGroupId)?.label ?? '',
-    categorySlug: GROUP_CATEGORY_SLUGS[entry.catalogGroupId] ?? 'formatters'
+    categorySlug: getGroupCategorySlug(entry.catalogGroupId)
 }));
 
 function matchesQueryTokens(tool: ToolSearchEntry, queryTokens: string[]): boolean {
@@ -255,7 +247,7 @@ export function ToolSearch(): JSX.Element {
                     All tools
                 </a>
                 {TOOL_CATALOG_GROUPS.map((group) => {
-                    const slug = GROUP_CATEGORY_SLUGS[group.id] ?? 'formatters';
+                    const slug = getGroupCategorySlug(group.id);
                     return (
                         <a
                             key={group.id}
