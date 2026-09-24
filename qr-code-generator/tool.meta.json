@@ -1,6 +1,6 @@
 {
   "id": "qr-code-generator",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "title": "QR Code Generator",
   "description": "Free custom QR code generator by codesamplez.com. Create QR codes for URLs/ text. Easy to use and fully customizable with option to download.",
   "catalogGroupId": "encoders-decoders",

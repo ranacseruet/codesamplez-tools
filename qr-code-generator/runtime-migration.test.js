@@ -36,6 +36,7 @@ import { mountToolShell } from '../common/app-shell/mountToolShell';
 import QRCode from 'qrcode';
 import { QRCodeGeneratorToolUI } from './script';
 import ClearButton from '../common/clear-button/ClearButton';
+import DownloadManager from '../common/DownloadManager';
 import { NotificationManager } from '../common/notification-manager';
 
 describe('QRCodeGenerator Preact runtime', () => {
@@ -65,6 +66,27 @@ describe('QRCodeGenerator Preact runtime', () => {
         expect(document.getElementById('qr-text')?.value).toBe('https://codesamplez.com');
         expect(document.getElementById('size-label')?.textContent).toBe('256px');
         expect(QRCode.toCanvas).toHaveBeenCalledTimes(1);
+        expect(QRCode.toCanvas.mock.calls[0]?.[2]).toEqual({
+            width: 256,
+            color: { dark: '#000000ff', light: '#ffffffff' },
+            errorCorrectionLevel: 'M',
+            margin: 2
+        });
+    });
+
+    it('updates the canvas accessible label and truncates long payloads', async () => {
+        new QRCodeGeneratorToolUI();
+
+        const input = document.getElementById('qr-text');
+        const canvas = document.getElementById('qr-canvas');
+        await waitFor(() => expect(canvas?.getAttribute('aria-label')).toBe('QR code for: https://codesamplez.com'));
+        expect(canvas?.getAttribute('role')).toBe('img');
+
+        const longText = 'a'.repeat(60);
+        fireEvent.input(input, { target: { value: longText } });
+        await waitFor(() =>
+            expect(canvas?.getAttribute('aria-label')).toBe(`QR code for: ${longText.substring(0, 50)}...`)
+        );
     });
 
     it('shows error and hides canvas for empty input', async () => {
@@ -109,11 +131,17 @@ describe('QRCodeGenerator Preact runtime', () => {
             expect(document.getElementById('size-label')?.textContent).toBe('320px');
             expect(document.getElementById('margin-label')?.textContent).toBe('4');
             const lastCall = QRCode.toCanvas.mock.calls.at(-1);
-            expect(lastCall?.[2]).toMatchObject({ width: 320, height: 320, margin: 4 });
+            expect(lastCall?.[2]).toMatchObject({ width: 320, margin: 4 });
         });
 
         fireEvent.click(document.getElementById('download-btn'));
         expect(HTMLCanvasElement.prototype.toDataURL).toHaveBeenCalledWith('image/png');
+        const downloadManagerInstance = DownloadManager.mock.results.at(-1)?.value;
+        expect(downloadManagerInstance.downloadFile).toHaveBeenCalledWith(
+            'data:image/png;base64,mockdata',
+            expect.stringMatching(/^qrcode-\d+\.png$/),
+            'image/png'
+        );
     });
 
     it('updates error correction and shows QR library callback error state', async () => {

@@ -10,140 +10,6 @@ import toolMetadata from './tool.meta.json';
 const QR_EMPTY_INPUT_MESSAGE = 'Please enter text or a URL to generate a QR code.';
 const QR_TOO_LONG_ERROR_MESSAGE = 'Error: Input data is too long for the selected error correction level. Try reducing data or increasing error correction.';
 
-type QrGeneratorDomOptions = {
-  qrTextId: string;
-  qrSizeId: string;
-  sizeLabelId: string;
-  qrMarginId: string;
-  marginLabelId: string;
-  errorCorrectionId: string;
-  qrCanvasId: string;
-  downloadBtnId: string;
-  errorMessageId: string;
-};
-
-export class QRCodeGeneratorUI {
-  qrText: HTMLTextAreaElement | null = null;
-  qrSize: HTMLInputElement | null = null;
-  sizeLabel: HTMLElement | null = null;
-  qrMargin: HTMLInputElement | null = null;
-  marginLabel: HTMLElement | null = null;
-  errorCorrection: HTMLSelectElement | null = null;
-  qrCanvas: HTMLCanvasElement | null = null;
-  downloadBtn: HTMLElement | null = null;
-  errorMessage: HTMLElement | null = null;
-  downloadManager!: DownloadManager;
-  clearButton: ClearButton | null = null;
-  debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-  constructor(options: QrGeneratorDomOptions) {
-    this.qrText = document.getElementById(options.qrTextId) as HTMLTextAreaElement | null;
-    this.qrSize = document.getElementById(options.qrSizeId) as HTMLInputElement | null;
-    this.sizeLabel = document.getElementById(options.sizeLabelId);
-    this.qrMargin = document.getElementById(options.qrMarginId) as HTMLInputElement | null;
-    this.marginLabel = document.getElementById(options.marginLabelId);
-    this.errorCorrection = document.getElementById(options.errorCorrectionId) as HTMLSelectElement | null;
-    this.qrCanvas = document.getElementById(options.qrCanvasId) as HTMLCanvasElement | null;
-    this.downloadBtn = document.getElementById(options.downloadBtnId);
-    this.errorMessage = document.getElementById(options.errorMessageId);
-    this.downloadManager = new DownloadManager();
-
-    // Initialize ClearButton
-    if (this.qrText) {
-      this.clearButton = new ClearButton(this.qrText);
-    }
-
-    this.debounceTimer = null;
-    this.bindEvents();
-    this.initializeApp();
-  }
-
-  generateQRCode() {
-    if (!this.qrText || !this.qrSize || !this.errorCorrection || !this.qrMargin || !this.qrCanvas || !this.errorMessage) {
-      return;
-    }
-
-    clearTimeout(this.debounceTimer);
-    this.debounceTimer = setTimeout(() => {
-      const text = this.qrText.value;
-      if (!text) {
-        this.qrCanvas.style.display = 'none';
-        this.errorMessage.textContent = QR_EMPTY_INPUT_MESSAGE;
-        return;
-      }
-
-      this.qrCanvas.style.display = 'block';
-      this.errorMessage.textContent = '';
-
-      const options = {
-        text: text,
-        width: parseInt(this.qrSize.value, 10),
-        height: parseInt(this.qrSize.value, 10),
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        errorCorrectionLevel: this.errorCorrection.value,
-        margin: parseInt(this.qrMargin.value, 10),
-      };
-
-      QRCode.toCanvas(this.qrCanvas, text, options, (error) => {
-        if (error) {
-          console.error(error);
-          this.errorMessage.textContent = QR_TOO_LONG_ERROR_MESSAGE;
-          this.qrCanvas.style.display = 'none';
-        } else {
-          this.qrCanvas.style.display = 'block';
-          this.qrCanvas.setAttribute('role', 'img');
-          this.qrCanvas.setAttribute('aria-label', getQrCanvasAriaLabel(text));
-          this.errorMessage.textContent = '';
-        }
-      });
-    }, 250);
-  }
-
-  bindEvents() {
-    if (!this.qrText || !this.qrSize || !this.sizeLabel || !this.qrMargin || !this.marginLabel || !this.errorCorrection || !this.downloadBtn) {
-      return;
-    }
-
-    try {
-      this.qrText.addEventListener('input', () => this.generateQRCode());
-      this.qrText.addEventListener('textCleared', () => this.generateQRCode()); // Listen for clear event
-      this.qrSize.addEventListener('input', () => {
-        this.sizeLabel.textContent = `${this.qrSize.value}px`;
-        this.generateQRCode();
-      });
-      this.qrMargin.addEventListener('input', () => {
-        this.marginLabel.textContent = this.qrMargin.value;
-        this.generateQRCode();
-      });
-      this.errorCorrection.addEventListener('change', () => this.generateQRCode());
-      this.downloadBtn.addEventListener('click', () => this.downloadQRCode());
-    } catch (error) {
-      console.error("Error binding events:", error);
-    }
-  }
-
-  downloadQRCode() {
-    if (!this.qrCanvas) {
-      return;
-    }
-
-    const dataUrl = this.qrCanvas.toDataURL('image/png');
-    const filename = `qrcode-${Date.now()}.png`;
-    this.downloadManager.downloadFile(dataUrl, filename, 'image/png');
-  }
-
-  initializeApp() {
-    if (!this.sizeLabel || !this.qrSize || !this.marginLabel || !this.qrMargin) {
-      return;
-    }
-
-    this.sizeLabel.textContent = `${this.qrSize.value}px`;
-    this.marginLabel.textContent = this.qrMargin.value;
-    this.generateQRCode();
-  }
-}
-
 const DEFAULT_QR_STATE = {
   text: 'https://codesamplez.com',
   size: 256,
@@ -151,12 +17,24 @@ const DEFAULT_QR_STATE = {
   errorCorrection: 'M'
 };
 
-function createQrCanvasOptions({ text, size, margin, errorCorrection }) {
+// qrcode@1.5.4 does not include TypeScript declarations for its renderer options.
+type QrCanvasOptions = {
+  width: number;
+  color: { dark: string; light: string };
+  errorCorrectionLevel: string;
+  margin: number;
+};
+
+type QrCanvasOptionsInput = {
+  size: number;
+  margin: number;
+  errorCorrection: string;
+};
+
+function createQrCanvasOptions({ size, margin, errorCorrection }: QrCanvasOptionsInput): QrCanvasOptions {
   return {
     width: size,
-    height: size,
-    colorDark: '#000000',
-    colorLight: '#ffffff',
+    color: { dark: '#000000ff', light: '#ffffffff' },
     errorCorrectionLevel: errorCorrection,
     margin
   };
@@ -220,7 +98,7 @@ export function QRCodeGeneratorApp() {
       setCanvasVisible(true);
       setErrorMessage('');
 
-      const options = createQrCanvasOptions({ text, size, margin, errorCorrection });
+      const options = createQrCanvasOptions({ size, margin, errorCorrection });
       QRCode.toCanvas(canvas, text, options, (error) => {
         if (error) {
           console.error(error);
