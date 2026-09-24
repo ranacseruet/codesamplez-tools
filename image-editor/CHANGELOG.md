@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.4] - 2026-09-24
+
+### Image Editor
+
+- Controls stay disabled until every overlapping load, bake, or export finishes; multi-file drops and multi-image pastes say which file was loaded; size labels use the shared formatter.
+
 ## [1.0.3] - 2026-09-21
 
 ### Image Editor

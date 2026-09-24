@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.6] - 2026-09-24
+
+### JSON Formatter
+
+- Error-path stats describe the input that failed, not a later edit; Formatted Size no longer resets to 0 B when formatting right after typing; a schema passing under the Draft 7 fallback warns about Draft 2020-12 keywords it ignored; a multi-file drop says which file was loaded; size labels use the shared formatter.
+
 ## [1.0.5] - 2026-09-23
 
 ### JSON Formatter

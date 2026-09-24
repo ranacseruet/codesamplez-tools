@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.4] - 2026-09-24
+
+### Text Analyzer
+
+- Flesch Reading Ease is shown unclamped, so very dense text scores below 0 instead of a flat 0.00; a multi-file drop says which file was loaded.
+
 ## [1.0.3] - 2026-09-21
 
 ### Text Analyzer

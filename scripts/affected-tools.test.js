@@ -57,7 +57,7 @@ describe('tool metadata discovery', () => {
         sourceRoot: 'jwt-decoder',
         outputDir: 'jwt-decoder',
         outputPath: 'build/jwt-decoder',
-        version: '1.0.3'
+        version: '1.0.4'
       })
     ]));
   });

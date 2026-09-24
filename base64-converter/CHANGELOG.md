@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.4] - 2026-09-24
+
+### Base64 Converter
+
+- Uploads and drops are capped at 25 MB with a clear error; decoded text downloads as text/plain; file sizes use the shared B/KiB/MB formatter.
+
 ## [1.0.3] - 2026-09-21
 
 ### Base64 Converter
