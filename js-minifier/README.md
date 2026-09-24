@@ -68,16 +68,11 @@ function a(b){let c=0;for(let d=0;d<b.length;d++)c=c+b[d];return c}
 ### Property Mangling (Experimental)
 ```javascript
 // Original code
-const user = {
-    firstName: "John",
-    lastName: "Doe",
-    getFullName: function() {
-        return this.firstName + " " + this.lastName;
-    }
-};
+const user = { firstName: "John", lastName: "Doe" };
+console.log(user.firstName + " " + user.lastName);
 
 // Minified with property mangling
-const user={a:"John",b:"Doe",c:function(){return this.a+" "+this.b}};
+const user={a:"John",b:"Doe"};console.log(user.a+" "+user.b);
 ```
 
 ## Limitations
@@ -87,19 +82,13 @@ const user={a:"John",b:"Doe",c:function(){return this.a+" "+this.b}};
   - May break code in some cases
   - Always test minified code before deployment
   - Can conflict with external dependencies
+- Property mangling only shortens static keys on local object literals that do not escape, use dynamic access, act as method receivers, or are visible to dynamic `eval`/`Function` code or `with` scopes; API/config objects, `this`-dependent objects, and class members stay unchanged
+- Bindings visible to direct or script-level indirect `eval`, referenced by a `Function` constructor, or referenced inside `with` blocks are left unchanged when shortening variable names
 
-### ES6+ Support Limitations
-- Limited support for:
-  - Arrow functions
-  - Destructuring assignments
-  - Spread/rest operators
-  - Template literals with expressions
-  - Classes and inheritance
-  - async/await syntax
-- Does not handle:
-  - Module imports/exports
-  - Advanced optimizations like tree-shaking
-  - Dynamic imports
+### JavaScript and Module Syntax
+- Parses and minifies modern JavaScript syntax, including ES module imports and exports, dynamic imports, and top-level `await`.
+- TypeScript and JSX must be transpiled before minification.
+- Preserves the input's JavaScript syntax; it does not transpile, bundle, or tree-shake code.
 
 ## Error Handling
 

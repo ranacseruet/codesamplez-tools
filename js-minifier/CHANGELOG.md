@@ -2,6 +2,16 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.4] - 2026-09-23
+
+### JavaScript Minifier
+
+- Use Babel AST parsing and generation to validate JavaScript modules and minify without corrupting comments, strings, regular expressions, or operator boundaries.
+- Limit experimental property mangling to statically keyed properties on local object literals; leave API/config objects, method receivers, `this`-dependent objects, objects visible to `eval`/`Function` code and `with` scopes, class members, reflected objects, and dynamic access unchanged.
+- Avoid generated names that collide with existing local properties, and preserve ECMAScript Unicode line terminators when removing comments.
+- Preserve bindings visible to direct or script-level indirect `eval`, referenced by a `Function` constructor, or inside `with` statements when shortening variable names.
+- Require TypeScript and JSX to be transpiled before minification.
+
 ## [1.0.3] - 2026-09-21
 
 ### JavaScript Minifier

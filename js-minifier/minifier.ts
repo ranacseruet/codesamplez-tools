@@ -3,12 +3,157 @@ import traverse from '@babel/traverse';
 import generate from '@babel/generator';
 
 type MinifierInput = string | null | undefined;
+type MinifierAst = ReturnType<typeof parse>;
+const SHORT_NAME_CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_';
 
 interface JSMinifierOptions {
   removeComments: boolean;
   removeWhitespace: boolean;
   shortenVariables: boolean;
   mangleProperties: boolean;
+}
+
+function parseJavaScript(code: string): MinifierAst {
+  return parse(code, {
+    sourceType: 'unambiguous',
+    allowReturnOutsideFunction: true,
+    allowAwaitOutsideFunction: true
+  });
+}
+
+function createShortNameGenerator(): () => string {
+  let counter = 0;
+
+  return () => {
+    let shortName = '';
+    let current = counter++;
+
+    do {
+      shortName = SHORT_NAME_CHARS[current % SHORT_NAME_CHARS.length] + shortName;
+      current = Math.floor(current / SHORT_NAME_CHARS.length);
+    } while (current > 0);
+
+    return shortName;
+  };
+}
+
+function getTraverseFunction(): typeof traverse {
+  return ((traverse as any).default || traverse) as typeof traverse;
+}
+
+function getEvalScopes(ast: MinifierAst): { direct: any[]; hasIndirect: boolean } {
+  const direct: any[] = [];
+  let hasIndirect = false;
+  const traverseFn = getTraverseFunction();
+  const isDynamicCodeProperty = (property: any, computed: boolean) => {
+    const name = !computed && property.type === 'Identifier'
+      ? property.name
+      : computed && property.type === 'StringLiteral'
+        ? property.value
+        : computed && property.type === 'TemplateLiteral' && property.expressions.length === 0
+          ? property.quasis[0]?.value.cooked ?? property.quasis[0]?.value.raw
+        : undefined;
+    return name === 'eval' || name === 'Function';
+  };
+  const checkDynamicCodeAccess = (path: any) => {
+    const { property, computed } = path.node;
+    if (isDynamicCodeProperty(property, computed)) {
+      hasIndirect = true;
+    }
+  };
+
+  traverseFn(ast, {
+    ReferencedIdentifier(path: any) {
+      if (path.node.name === 'Function' && !path.scope.getBinding('Function')) {
+        hasIndirect = true;
+        return;
+      }
+
+      if (path.node.name !== 'eval') {
+        return;
+      }
+
+      const parent = path.parentPath;
+      if (parent?.node?.type === 'CallExpression' && parent.node.callee === path.node) {
+        direct.push(parent.scope);
+      } else {
+        hasIndirect = true;
+      }
+    },
+    MemberExpression(path: any) {
+      checkDynamicCodeAccess(path);
+    },
+    OptionalMemberExpression(path: any) {
+      checkDynamicCodeAccess(path);
+    },
+    ObjectPattern(path: any) {
+      if (path.node.properties.some((property: any) =>
+        property.type === 'ObjectProperty' && isDynamicCodeProperty(property.key, property.computed)
+      )) {
+        hasIndirect = true;
+      }
+    }
+  });
+
+  return { direct, hasIndirect };
+}
+
+function isInsideWithStatement(path: any): boolean {
+  let current = path.parentPath;
+  while (current) {
+    if (current.node?.type === 'WithStatement') {
+      return true;
+    }
+    current = current.parentPath;
+  }
+  return false;
+}
+
+function generateJavaScript(ast: MinifierAst, options: { minified: boolean; comments: boolean }): string {
+  const generateFn = (generate as any).default || generate;
+  return generateFn(ast, options).code;
+}
+
+function removeCommentsFromSource(code: string, ast: MinifierAst): string {
+  const comments = [...(ast.comments ?? [])].sort((left, right) => right.start! - left.start!);
+  let result = code;
+
+  for (const comment of comments) {
+    const start = comment.start!;
+    const end = comment.end!;
+    let before = result.slice(0, start);
+    let after = result.slice(end);
+    const commentText = code.slice(start, end);
+    const lineBreaks = commentText.match(/\r\n|\r|\n|\u2028|\u2029/gu) ?? [];
+
+    if (lineBreaks.length > 0) {
+      result = `${before}${lineBreaks.join('')}${after}`;
+      continue;
+    }
+
+    if (after.length === 0 || /^[\r\n\u2028\u2029]/u.test(after)) {
+      before = before.replace(/[ \t]+$/u, '');
+      result = `${before}${after}`;
+      continue;
+    }
+
+    const lineStart = Math.max(
+      before.lastIndexOf('\n'),
+      before.lastIndexOf('\r'),
+      before.lastIndexOf('\u2028'),
+      before.lastIndexOf('\u2029')
+    ) + 1;
+    const isAtLineStart = before.slice(lineStart).trim().length === 0;
+    if (!isAtLineStart) {
+      before = before.replace(/[ \t]+$/u, '');
+      after = after.replace(/^[ \t]+/u, '');
+      result = `${before} ${after}`;
+    } else {
+      result = `${before}${after}`;
+    }
+  }
+
+  return result;
 }
 
 // JavaScript Minifier Implementation
@@ -28,14 +173,13 @@ export class JSMinifier {
   // Non-syntax errors are re-thrown so genuine bugs are not silently swallowed.
   getSyntaxError(code: string): SyntaxError | null {
     try {
-      // eslint-disable-next-line no-new-func
-      new Function(code);
+      parseJavaScript(code);
       return null;
     } catch (e: unknown) {
       if (e instanceof SyntaxError) {
         return e;
       }
-      throw e; // Re-throw non-syntax errors
+      throw e;
     }
   }
 
@@ -55,104 +199,52 @@ export class JSMinifier {
       return '';
     }
 
-    const syntaxError = this.getSyntaxError(code);
-    if (syntaxError) {
-      // Surface the parser's message (with its line/column) so the UI can show a
-      // specific validation error instead of a generic "invalid" notice.
-      throw new Error(`Invalid JavaScript syntax: ${syntaxError.message}`);
+    let ast: MinifierAst;
+    try {
+      ast = parseJavaScript(code);
+    } catch (error: unknown) {
+      if (error instanceof SyntaxError) {
+        throw new Error(`Invalid JavaScript syntax: ${error.message}`);
+      }
+      throw error;
     }
 
-    let result = code;
+    const hasAstTransforms = this.options.shortenVariables || this.options.mangleProperties;
 
-    // Remove comments
-    if (this.options.removeComments) {
-      result = this.removeComments(result);
+    if (!this.options.removeComments && !this.options.removeWhitespace && !hasAstTransforms) {
+      return code;
     }
 
-    // Remove whitespace
-    if (this.options.removeWhitespace) {
-      result = this.removeWhitespace(result);
+    if (!this.options.removeWhitespace && !hasAstTransforms) {
+      return this.options.removeComments ? removeCommentsFromSource(code, ast) : code;
     }
 
-    // Apply variable shortening (if enabled)
     if (this.options.shortenVariables) {
-      result = this.shortenVariableNames(result);
+      this.shortenBindings(ast);
     }
 
-    // Apply property mangling (if enabled)
     if (this.options.mangleProperties) {
-      result = this.mangleObjectProperties(result);
+      this.manglePropertiesInAst(ast);
     }
 
-    return result;
+    return generateJavaScript(ast, {
+      minified: this.options.removeWhitespace,
+      comments: !this.options.removeComments
+    });
   }
 
-  // Remove all comments (single line and multi-line)
+  // Remove all comments using parser comment ranges, not text-pattern matching.
   removeComments(code: string): string {
     if (!this.options.removeComments) {
       return code;
     }
 
-    // First handle strings to avoid removing comments within strings
-    const stringPlaceholders: string[] = [];
-    let processedCode = code.replace(/(['"`])(?:\\[\s\S]|(?!\1)[^\\])*\1/g, (match) => {
-      stringPlaceholders.push(match);
-      return `__STRING_PLACEHOLDER_${stringPlaceholders.length - 1}__`;
-    });
-
-    // Remove single line comments
-    processedCode = processedCode.replace(/\/\/.*?(?:\n|$)/g, '\n');
-
-    // Remove multi-line comments
-    processedCode = processedCode.replace(/\/\*[\s\S]*?\*\//g, '');
-
-    // Restore strings
-    stringPlaceholders.forEach((str, i) => {
-      processedCode = processedCode.replace(`__STRING_PLACEHOLDER_${i}__`, str);
-    });
-
-    return processedCode;
+    return removeCommentsFromSource(code, parseJavaScript(code));
   }
 
-  // Remove unnecessary whitespace
+  // Remove unnecessary whitespace through Babel's syntax-aware generator.
   removeWhitespace(code: string): string {
-    // Save strings and regular expressions
-    const patterns: string[] = [];
-    let processedCode = code.replace(
-      /(['"`])(?:\\[\s\S]|(?!\1)[^\\])*\1|\/(?:\\[\s\S]|[^\\\/])+\/(?:[gimsuy]*)/g,
-      (match) => {
-        patterns.push(match);
-        return `__PATTERN_${patterns.length - 1}__`;
-      }
-    );
-
-    // Replace multiple spaces with a single space
-    processedCode = processedCode.replace(/\s+/g, ' ');
-
-    // Remove spaces that aren't needed for syntax
-    processedCode = processedCode.replace(/\s*([{}\[\]()=+\-*/<>!?:;,.|&])\s*/g, '$1');
-
-    // Fix spaces that are needed to avoid syntax errors
-    processedCode = processedCode.replace(/([+\-*/<>!&|])=(?!=)/g, '$1 =');
-    processedCode = processedCode.replace(/\bin\b/g, ' in ');
-    processedCode = processedCode.replace(/\binstanceof\b/g, ' instanceof ');
-    processedCode = processedCode.replace(/([+\-*/%<>=&|!])\s+([+\-*/%<>=&|!])/g, '$1$2');
-
-    // Ensure keywords have proper spacing
-    const keywords = [
-      'if', 'else', 'for', 'while', 'do', 'switch', 'try', 'catch', 'finally', 'with',
-      'return', 'throw', 'var', 'let', 'const', 'function', 'typeof', 'instanceof', 'in'
-    ];
-    const keywordRegex = new RegExp(`([^a-zA-Z0-9_$])\\s*(${keywords.join('|')})\\s*([^a-zA-Z0-9_$])`, 'g');
-    processedCode = processedCode.replace(keywordRegex, '$1$2$3');
-
-    // Restore strings and regexes
-    patterns.forEach((pattern, i) => {
-      processedCode = processedCode.replace(`__PATTERN_${i}__`, pattern);
-    });
-
-    // Trim leading/trailing whitespace
-    return processedCode.trim();
+    return generateJavaScript(parseJavaScript(code), { minified: true, comments: true });
   }
 
   // Experimental: Shorten variable names
@@ -161,95 +253,94 @@ export class JSMinifier {
       return code;
     }
 
+    let ast: MinifierAst;
     try {
-      const ast = parse(code, {
-        sourceType: 'module',
-        allowReturnOutsideFunction: true,
-        plugins: ['jsx', 'typescript']
-      });
+      ast = parseJavaScript(code);
+    } catch (error: unknown) {
+      if (error instanceof SyntaxError) {
+        console.warn('AST Parse failed, falling back to original code', error);
+        return code;
+      }
+      throw error;
+    }
 
-      const allBindings = new Set<any>();
+    this.shortenBindings(ast);
+    return generateJavaScript(ast, {
+      minified: this.options.removeWhitespace,
+      comments: !this.options.removeComments
+    });
+  }
 
-      // Collect all bindings
-      const traverseFn = (traverse as any).default || traverse;
-      traverseFn(ast, {
-        Scope(path: any) {
-          for (const name in path.scope.bindings) {
-            allBindings.add(path.scope.bindings[name]);
-          }
-        }
-      });
+  private shortenBindings(ast: MinifierAst): void {
+    const allBindings = new Set<any>();
 
-      // Filter and Rename
-      const shortNameChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_';
-      let shortNameCounter = 0;
-
-      const getNextShortName = () => {
-        let shortName = '';
-        let counter = shortNameCounter++;
-        do {
-          shortName = shortNameChars[counter % shortNameChars.length] + shortName;
-          counter = Math.floor(counter / shortNameChars.length);
-        } while (counter > 0);
-        return shortName;
-      };
-
-      const reserved = new Set([
-        'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default',
-        'delete', 'do', 'else', 'export', 'extends', 'false', 'finally', 'for', 'function',
-        'if', 'import', 'in', 'instanceof', 'new', 'null', 'return', 'super', 'switch',
-        'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield',
-        'let', 'static', 'await', 'async'
-      ]);
-
-      const getSafeShortName = () => {
-        let name: string;
-        do {
-          name = getNextShortName();
-        } while (reserved.has(name));
-        return name;
-      };
-
-      const bindingsToRename: any[] = [];
-      const namesInUse = new Set<string>();
-
-      // Preserve function names and other critical identifiers
-      for (const binding of allBindings) {
-        if (binding.path.isFunctionDeclaration() || binding.path.isClassDeclaration()) {
-          namesInUse.add(binding.identifier.name);
-        } else {
-          bindingsToRename.push(binding);
+    // Collect all bindings
+    const traverseFn = getTraverseFunction();
+    const evalScopes = getEvalScopes(ast);
+    traverseFn(ast, {
+      Scope(path: any) {
+        for (const name in path.scope.bindings) {
+          allBindings.add(path.scope.bindings[name]);
         }
       }
+    });
 
-      // Collect globals used
-      traverseFn(ast, {
-        Program(path: any) {
-          Object.keys(path.scope.globals).forEach((g) => namesInUse.add(g));
-        }
-      });
+    // Filter and Rename
+    const getNextShortName = createShortNameGenerator();
 
-      // Rename bindings
-      for (const binding of bindingsToRename) {
-        let newName = getSafeShortName();
-        // Ensure uniqueness against preserved names and globals.
-        while (namesInUse.has(newName)) {
-          newName = getSafeShortName();
-        }
+    const reserved = new Set([
+      'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default',
+      'delete', 'do', 'else', 'export', 'extends', 'false', 'finally', 'for', 'function',
+      'if', 'import', 'in', 'instanceof', 'new', 'null', 'return', 'super', 'switch',
+      'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield',
+      'let', 'static', 'await', 'async'
+    ]);
 
-        binding.scope.rename(binding.identifier.name, newName);
+    const getSafeShortName = () => {
+      let name: string;
+      do {
+        name = getNextShortName();
+      } while (reserved.has(name));
+      return name;
+    };
+
+    const bindingsToRename: any[] = [];
+    const namesInUse = new Set<string>();
+
+    // Preserve function names and other critical identifiers
+    for (const binding of allBindings) {
+      const isObservedDynamically = evalScopes.direct.some((scope) =>
+        scope.getBinding(binding.identifier.name) === binding
+      ) || (evalScopes.hasIndirect && binding.scope.path.node.type === 'Program') ||
+        binding.referencePaths.some(isInsideWithStatement);
+
+      if (
+        binding.path.isFunctionDeclaration() ||
+        binding.path.isClassDeclaration() ||
+        isObservedDynamically
+      ) {
+        namesInUse.add(binding.identifier.name);
+      } else {
+        bindingsToRename.push(binding);
+      }
+    }
+
+    // Collect globals used
+    traverseFn(ast, {
+      Program(path: any) {
+        Object.keys(path.scope.globals).forEach((g) => namesInUse.add(g));
+      }
+    });
+
+    // Rename bindings
+    for (const binding of bindingsToRename) {
+      let newName = getSafeShortName();
+      // Ensure uniqueness against preserved names and globals.
+      while (namesInUse.has(newName)) {
+        newName = getSafeShortName();
       }
 
-      const generateFn = (generate as any).default || generate;
-      const { code: newCode } = generateFn(ast, {
-        minified: true,
-        comments: false
-      });
-
-      return newCode;
-    } catch (e) {
-      console.warn('AST Parse failed, falling back to original code', e);
-      return code;
+      binding.scope.rename(binding.identifier.name, newName);
     }
   }
 
@@ -259,59 +350,225 @@ export class JSMinifier {
       return code;
     }
 
-    // This is a simplified implementation.
-    // Finding object properties is complex and requires proper parsing.
-    // This basic regex looks for patterns like obj.property or obj["property"].
-    const propRegex = /\.([a-zA-Z_$][a-zA-Z0-9_$]*)|["']([a-zA-Z_$][a-zA-Z0-9_$]*)["']/g;
-    const foundProps = new Set<string>();
-
-    let match: RegExpExecArray | null;
-    while ((match = propRegex.exec(code)) !== null) {
-      if (match[1]) {
-        foundProps.add(match[1]); // dot notation
+    let ast: MinifierAst;
+    try {
+      ast = parseJavaScript(code);
+    } catch (error: unknown) {
+      if (error instanceof SyntaxError) {
+        console.warn('AST Parse failed, falling back to original code', error);
+        return code;
       }
-      if (match[2]) {
-        foundProps.add(match[2]); // bracket notation
-      }
+      throw error;
     }
 
-    // Filter out common methods and properties
-    const commonProps = new Set([
-      'length', 'prototype', 'constructor', 'toString', 'valueOf', 'hasOwnProperty',
-      'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', 'apply', 'call', 'bind',
-      'name', 'arguments', 'callee', 'caller', 'super', 'this', 'window', 'document',
-      'console', 'log', 'warn', 'error', 'info', 'debug'
-    ]);
+    this.manglePropertiesInAst(ast);
+    return generateJavaScript(ast, {
+      minified: this.options.removeWhitespace,
+      comments: !this.options.removeComments
+    });
+  }
 
-    const properties = [...foundProps].filter((p) => !commonProps.has(p));
+  private manglePropertiesInAst(ast: MinifierAst): void {
+    const traverseFn = getTraverseFunction();
+    type LocalObjectProperties = {
+      propertyNodes: Map<string, any[]>;
+      usedNames: Set<string>;
+    };
 
-    // Create property name mapping
-    const propMap: Record<string, string> = {};
-    const shortNameChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_';
-    let shortNameCounter = 0;
+    const localObjects = new Map<any, LocalObjectProperties>();
+    const propertyMappings = new Map<any, Map<string, string>>();
+    const propertyName = (key: any, computed: boolean): string | null => {
+      if (key?.type === 'StringLiteral') {
+        return key.value;
+      }
+      if (!computed && key?.type === 'Identifier') {
+        return key.name;
+      }
+      return null;
+    };
+    const evalScopes = getEvalScopes(ast);
 
-    properties.forEach((propName) => {
-      let shortName = '';
-      let counter = shortNameCounter++;
+    traverseFn(ast, {
+      VariableDeclarator(path: any) {
+        const { id, init } = path.node;
+        if (id.type !== 'Identifier' || init?.type !== 'ObjectExpression') {
+          return;
+        }
 
-      do {
-        shortName = shortNameChars[counter % shortNameChars.length] + shortName;
-        counter = Math.floor(counter / shortNameChars.length);
-      } while (counter > 0);
+        const declarationParent = path.parentPath.parentPath;
+        if (declarationParent?.node?.type === 'ExportNamedDeclaration') {
+          return;
+        }
 
-      propMap[propName] = shortName;
+        const binding = path.scope.getBinding(id.name);
+        if (
+          !binding ||
+          binding.constantViolations.length > 0 ||
+          evalScopes.direct.some((scope) => scope.getBinding(id.name) === binding) ||
+          (evalScopes.hasIndirect && binding.scope.path.node.type === 'Program') ||
+          binding.referencePaths.some(isInsideWithStatement)
+        ) {
+          return;
+        }
+
+        const hasUnsafeReference = binding.referencePaths.some((reference: any) => {
+          const member = reference.parentPath;
+          if (
+            (!member?.isMemberExpression() && !member?.isOptionalMemberExpression()) ||
+            member.node.object !== reference.node
+          ) {
+            return true;
+          }
+
+          if (member.node.computed && !propertyName(member.node.property, member.node.computed)) {
+            return true;
+          }
+
+          let accessedProperty = member;
+          let parent = accessedProperty.parentPath;
+          while (
+            (parent?.isMemberExpression() || parent?.isOptionalMemberExpression()) &&
+            parent.node.object === accessedProperty.node
+          ) {
+            accessedProperty = parent;
+            parent = accessedProperty.parentPath;
+          }
+
+          return (
+            ((parent?.node?.type === 'CallExpression' || parent?.node?.type === 'OptionalCallExpression') &&
+              parent.node.callee === accessedProperty.node) ||
+            (parent?.node?.type === 'TaggedTemplateExpression' && parent.node.tag === accessedProperty.node)
+          );
+        });
+        if (hasUnsafeReference) {
+          return;
+        }
+
+        let containsThis = false;
+        path.get('init').traverse({
+          ThisExpression() {
+            containsThis = true;
+          }
+        });
+        if (containsThis || init.properties.some((property: any) => property.type !== 'ObjectProperty')) {
+          return;
+        }
+
+        const propertyNodes = new Map<string, any[]>();
+        let hasDynamicProperty = false;
+        let hasPrototypeSetter = false;
+        for (const property of init.properties) {
+          const name = propertyName(property.key, property.computed);
+          if (!name) {
+            hasDynamicProperty = true;
+            break;
+          }
+          if (name === '__proto__' && !property.computed && !property.shorthand) {
+            hasPrototypeSetter = true;
+          }
+          const nodes = propertyNodes.get(name) ?? [];
+          nodes.push(property);
+          propertyNodes.set(name, nodes);
+        }
+        if (hasDynamicProperty || hasPrototypeSetter) {
+          return;
+        }
+
+        localObjects.set(binding, {
+          propertyNodes,
+          usedNames: new Set(propertyNodes.keys())
+        });
+      }
     });
 
-    // Replace property names (this is a simplified approach)
-    let result = code;
-    Object.keys(propMap).forEach((propName) => {
-      const dotRegex = new RegExp(`\\.${propName}\\b`, 'g');
-      const bracketRegex = new RegExp(`["']${propName}["']`, 'g');
+    const collectUsedMemberName = (path: any) => {
+      if (path.node.object.type !== 'Identifier') {
+        return;
+      }
 
-      result = result.replace(dotRegex, `.${propMap[propName]}`);
-      result = result.replace(bracketRegex, `"${propMap[propName]}"`);
+      const binding = path.scope.getBinding(path.node.object.name);
+      const localObject = localObjects.get(binding);
+      const name = propertyName(path.node.property, path.node.computed);
+      if (localObject && name) {
+        localObject.usedNames.add(name);
+      }
+    };
+
+    traverseFn(ast, {
+      MemberExpression: collectUsedMemberName,
+      OptionalMemberExpression: collectUsedMemberName
     });
 
-    return result;
+    const propertyNodeMappings = new Map<any, string>();
+    for (const [binding, localObject] of localObjects) {
+      const propMap = new Map<string, string>();
+      const getNextShortName = createShortNameGenerator();
+      const usedPropertyNames = new Set(localObject.usedNames);
+
+      for (const [propName, nodes] of localObject.propertyNodes) {
+        if (propName === '__proto__') {
+          continue;
+        }
+
+        let shortName = getNextShortName();
+        while (usedPropertyNames.has(shortName)) {
+          shortName = getNextShortName();
+        }
+
+        propMap.set(propName, shortName);
+        usedPropertyNames.add(shortName);
+        for (const node of nodes) {
+          propertyNodeMappings.set(node, shortName);
+        }
+      }
+
+      propertyMappings.set(binding, propMap);
+    }
+
+    const renameMemberProperty = (path: any) => {
+      if (path.node.object.type !== 'Identifier') {
+        return;
+      }
+
+      const binding = path.scope.getBinding(path.node.object.name);
+      const propMap = propertyMappings.get(binding);
+      const name = propertyName(path.node.property, path.node.computed);
+      const mangledName = name ? propMap?.get(name) : undefined;
+      if (!mangledName) {
+        return;
+      }
+
+      if (path.node.property.type === 'Identifier') {
+        path.node.property.name = mangledName;
+      } else {
+        path.node.property.value = mangledName;
+        path.node.property.extra = undefined;
+      }
+    };
+    const renamePropertyKey = (node: any) => {
+      const mangledName = propertyNodeMappings.get(node);
+      if (!mangledName) {
+        return;
+      }
+
+      if (node.key.type === 'Identifier') {
+        node.key.name = mangledName;
+      } else {
+        node.key.value = mangledName;
+        node.key.extra = undefined;
+      }
+
+      if (node.type === 'ObjectProperty' && node.shorthand) {
+        node.shorthand = false;
+      }
+    };
+
+    traverseFn(ast, {
+      MemberExpression: renameMemberProperty,
+      OptionalMemberExpression: renameMemberProperty,
+      ObjectProperty(path: any) {
+        renamePropertyKey(path.node);
+      }
+    });
   }
 }

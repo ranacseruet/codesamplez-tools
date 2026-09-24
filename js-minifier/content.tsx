@@ -151,22 +151,19 @@ console.log("The sum is: " + result);`}</code></pre>
 
                     <h3>Property Mangling (Experimental)</h3>
                     <pre><code>{`// Original code
-const user = {
-  firstName: "John",
-  lastName: "Doe",
-  getFullName: function() {
-    return this.firstName + " " + this.lastName;
-  }
-};
+const user = { firstName: "John", lastName: "Doe" };
+console.log(user.firstName + " " + user.lastName);
 
 // Minified with property mangling
-const user={a:"John",b:"Doe",c:function(){return this.a+" "+this.b}};`}</code></pre>
+const user={a:"John",b:"Doe"};console.log(user.a+" "+user.b);`}</code></pre>
                 </ToolArticleSection>
 
                 <ToolArticleSection id="js-minifier-limitations" title="Limitations">
                     <ul>
                         <li><strong>Variable name shortening and property mangling are experimental:</strong> they may break code in some cases, so test carefully.</li>
-                        <li><strong>Complex JavaScript features are not fully handled:</strong> advanced ES syntax, modules, and build-pipeline optimizations are outside the scope of this browser tool.</li>
+                        <li><strong>Property mangling scope:</strong> only static keys on local object literals that do not escape, use dynamic access, act as method receivers, or are visible to direct <code>eval</code> or <code>with</code> scopes are renamed; API/config objects, <code>this</code>-dependent objects, and class members stay unchanged.</li>
+                        <li><strong>Dynamic scopes:</strong> bindings visible to direct <code>eval</code> or referenced inside <code>with</code> statements are not shortened.</li>
+                        <li><strong>Input syntax:</strong> TypeScript and JSX must be transpiled to JavaScript first; this tool does not transpile, bundle, or tree-shake code.</li>
                         <li><strong>Reflection and dynamic property access can be risky:</strong> property mangling may break code that depends on property names remaining unchanged.</li>
                         <li><strong>Browser-specific behavior still needs validation:</strong> minified output should be tested in the environments you ship.</li>
                     </ul>
