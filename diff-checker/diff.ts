@@ -1,14 +1,14 @@
 // Import the diff library
 import * as Diff from 'diff';
 
-// NOTE: escapeHtml function removed due to tool limitations causing file corruption.
-// Relying on innerHTML assignment in script.js for necessary escaping during rendering.
-
 /**
  * Serializable request/response shapes for offloading `computeDiff` to a Web
- * Worker. The compute is pure (no DOM) and both ends are structured-cloneable:
- * two line arrays + a flag in, an array of `[changeType, lineContent]` tuples
- * out. Rendering (DOM build, Prism highlighting) stays on the main thread.
+ * Worker. The compute is pure (no DOM, no markup) and both ends are
+ * structured-cloneable: two line arrays + a flag in, an array of
+ * `[changeType, lineText, highlights?]` tuples out. `lineText` is always the
+ * raw line; `highlights` marks the changed words of a word-diffed row as
+ * `[start, end)` offsets into it. Rendering — escaping, highlight spans, Prism
+ * — happens on the main thread, so user text never round-trips through HTML.
  */
 export interface DiffComputeRequest {
   originalLines: string[];
@@ -17,7 +17,8 @@ export interface DiffComputeRequest {
 }
 
 export type DiffChangeType = 'added' | 'removed' | 'unchanged';
-export type DiffResultLine = [DiffChangeType, string];
+export type DiffHighlightRange = [start: number, end: number];
+export type DiffResultLine = [DiffChangeType, string, DiffHighlightRange[]?];
 export type DiffComputeResult = DiffResultLine[];
 
 // Class to handle the diff computation
@@ -231,8 +232,8 @@ function hasNonWhitespace(value: string): boolean {
  * Word-level refinement of one original/modified line pair.
  *
  * Returns a single `unchanged` row when every remaining difference is
- * ignorable, otherwise a `removed`/`added` pair with the changed words wrapped
- * in highlight spans.
+ * ignorable, otherwise a `removed`/`added` pair whose highlight ranges mark
+ * the changed words.
  *
  * The line-level pass honours `ignoreWhitespace`, but a line that also carries
  * a real change drops into this refinement, where `diffWordsWithSpace` treats
@@ -240,7 +241,7 @@ function hasNonWhitespace(value: string): boolean {
  * change reappeared here as a highlighted token even with the toggle on —
  * issue #76.
  */
-function renderLinePair(originalLine: string, modifiedLine: string, ignoreWhitespace: boolean) {
+function renderLinePair(originalLine: string, modifiedLine: string, ignoreWhitespace: boolean): DiffResultLine[] {
   const wordDiff = Diff.diffWordsWithSpace(originalLine, modifiedLine);
 
   const isEffectivelyUnchanged = wordDiff.every(
@@ -251,26 +252,26 @@ function renderLinePair(originalLine: string, modifiedLine: string, ignoreWhites
     return [['unchanged', originalLine]];
   }
 
-  let removedHtml = '';
-  let addedHtml = '';
+  const removed = { text: '', highlights: [] as DiffHighlightRange[] };
+  const added = { text: '', highlights: [] as DiffHighlightRange[] };
 
   wordDiff.forEach(part => {
     const value = part.value;
     if (part.added) {
-      addedHtml += renderWordDiffPart(value, 'word-added', ignoreWhitespace);
+      appendChangedPart(added, value, ignoreWhitespace);
     } else if (part.removed) {
-      removedHtml += renderWordDiffPart(value, 'word-removed', ignoreWhitespace);
+      appendChangedPart(removed, value, ignoreWhitespace);
     } else {
-      removedHtml += value;
-      addedHtml += value;
+      removed.text += value;
+      added.text += value;
     }
   });
 
-  return [['removed', removedHtml], ['added', addedHtml]];
+  return [['removed', removed.text, removed.highlights], ['added', added.text, added.highlights]];
 }
 
 /**
- * Wraps a changed part in its highlight span.
+ * Appends a changed part to one pane and records its highlight range.
  *
  * With "Ignore Whitespace" on, only the non-whitespace core is highlighted;
  * the whitespace around it is still written to this pane, just unmarked. That
@@ -281,8 +282,8 @@ function renderLinePair(originalLine: string, modifiedLine: string, ignoreWhites
  * side's whitespace in its own part, so a line rendered as a removed/added
  * pair stays byte-for-byte faithful on both sides.
  *
- * A part that is entirely whitespace gets no span at all — the case reported
- * in issue #76.
+ * A part that is entirely whitespace gets no highlight at all — the case
+ * reported in issue #76.
  *
  * Scanned by index rather than matched with `/^(\s*)([\s\S]*?)(\s*)$/`: that
  * pattern backtracks quadratically on a part with a long interior whitespace
@@ -291,9 +292,17 @@ function renderLinePair(originalLine: string, modifiedLine: string, ignoreWhites
  * Column-padded reports and ASCII tables hit exactly that shape, and this runs
  * on the default path.
  */
-function renderWordDiffPart(value: string, className: string, ignoreWhitespace: boolean): string {
+function appendChangedPart(
+  pane: { text: string; highlights: DiffHighlightRange[] },
+  value: string,
+  ignoreWhitespace: boolean
+): void {
+  const offset = pane.text.length;
+  pane.text += value;
+
   if (!ignoreWhitespace) {
-    return `<span class="${className}">${value}</span>`;
+    pane.highlights.push([offset, offset + value.length]);
+    return;
   }
 
   let start = 0;
@@ -301,7 +310,7 @@ function renderWordDiffPart(value: string, className: string, ignoreWhitespace: 
     start++;
   }
   if (start === value.length) {
-    return value;
+    return;
   }
 
   let end = value.length;
@@ -309,7 +318,7 @@ function renderWordDiffPart(value: string, className: string, ignoreWhitespace: 
     end--;
   }
 
-  return `${value.slice(0, start)}<span class="${className}">${value.slice(start, end)}</span>${value.slice(end)}`;
+  pane.highlights.push([offset + start, offset + end]);
 }
 
 function areArraysEqual(arr1, arr2) {
