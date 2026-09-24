@@ -119,7 +119,12 @@ describe('QRCodeGeneratorUI', () => {
     expect(QRCode.toCanvas).toHaveBeenCalledWith(
       qrCanvas,
       'Initial Text',
-      expect.any(Object),
+      {
+        width: 256,
+        color: { dark: '#000000ff', light: '#ffffffff' },
+        errorCorrectionLevel: 'M',
+        margin: 4,
+      },
       expect.any(Function)
     );
   });
@@ -194,7 +199,7 @@ describe('QRCodeGeneratorUI', () => {
     expect(QRCode.toCanvas).toHaveBeenCalledWith(
       qrCanvas,
       'Initial Text',
-      expect.objectContaining({ width: 300, height: 300 }),
+      expect.objectContaining({ width: 300 }),
       expect.any(Function)
     );
   });

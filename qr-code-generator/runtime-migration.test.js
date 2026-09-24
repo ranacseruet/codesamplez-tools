@@ -65,6 +65,12 @@ describe('QRCodeGenerator Preact runtime', () => {
         expect(document.getElementById('qr-text')?.value).toBe('https://codesamplez.com');
         expect(document.getElementById('size-label')?.textContent).toBe('256px');
         expect(QRCode.toCanvas).toHaveBeenCalledTimes(1);
+        expect(QRCode.toCanvas.mock.calls[0]?.[2]).toEqual({
+            width: 256,
+            color: { dark: '#000000ff', light: '#ffffffff' },
+            errorCorrectionLevel: 'M',
+            margin: 2
+        });
     });
 
     it('shows error and hides canvas for empty input', async () => {
@@ -109,7 +115,7 @@ describe('QRCodeGenerator Preact runtime', () => {
             expect(document.getElementById('size-label')?.textContent).toBe('320px');
             expect(document.getElementById('margin-label')?.textContent).toBe('4');
             const lastCall = QRCode.toCanvas.mock.calls.at(-1);
-            expect(lastCall?.[2]).toMatchObject({ width: 320, height: 320, margin: 4 });
+            expect(lastCall?.[2]).toMatchObject({ width: 320, margin: 4 });
         });
 
         fireEvent.click(document.getElementById('download-btn'));

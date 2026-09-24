@@ -75,15 +75,11 @@ export class QRCodeGeneratorUI {
       this.qrCanvas.style.display = 'block';
       this.errorMessage.textContent = '';
 
-      const options = {
-        text: text,
-        width: parseInt(this.qrSize.value, 10),
-        height: parseInt(this.qrSize.value, 10),
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        errorCorrectionLevel: this.errorCorrection.value,
+      const options = createQrCanvasOptions({
+        size: parseInt(this.qrSize.value, 10),
         margin: parseInt(this.qrMargin.value, 10),
-      };
+        errorCorrection: this.errorCorrection.value
+      });
 
       QRCode.toCanvas(this.qrCanvas, text, options, (error) => {
         if (error) {
@@ -151,12 +147,10 @@ const DEFAULT_QR_STATE = {
   errorCorrection: 'M'
 };
 
-function createQrCanvasOptions({ text, size, margin, errorCorrection }) {
+function createQrCanvasOptions({ size, margin, errorCorrection }) {
   return {
     width: size,
-    height: size,
-    colorDark: '#000000',
-    colorLight: '#ffffff',
+    color: { dark: '#000000ff', light: '#ffffffff' },
     errorCorrectionLevel: errorCorrection,
     margin
   };
@@ -220,7 +214,7 @@ export function QRCodeGeneratorApp() {
       setCanvasVisible(true);
       setErrorMessage('');
 
-      const options = createQrCanvasOptions({ text, size, margin, errorCorrection });
+      const options = createQrCanvasOptions({ size, margin, errorCorrection });
       QRCode.toCanvas(canvas, text, options, (error) => {
         if (error) {
           console.error(error);
