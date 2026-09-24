@@ -182,6 +182,11 @@ describe('minifier helper functions', () => {
       const input = 'body { content: "};{"; }';
       expect(combineSelectorsInCss(input)).toBe('body{content: "};{";}');
     });
+
+    test('preserves escaped quotes outside strings in selectors', () => {
+      const input = '.foo\\"bar { color: red; }';
+      expect(combineSelectorsInCss(input)).toBe('.foo\\"bar{color: red;}');
+    });
   });
 });
 

@@ -20,6 +20,12 @@
     let index = 0;
     while (index < css.length) {
       const char = css[index];
+      if (char === '\\' && index + 1 < css.length) {
+        maskedCss += css.slice(index, index + 2);
+        index += 2;
+        continue;
+      }
+
       if (char === '"' || char === "'") {
         const start = index;
         index += 1;
