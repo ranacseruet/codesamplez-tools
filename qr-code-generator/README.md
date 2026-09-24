@@ -40,7 +40,7 @@ The QR Code Generator Tool allows users to create QR codes from text or URLs. Th
 ## Technical Implementation
 The QR code generator is built using pure JavaScript with the following key components:
 
-- QR Code generation using the `qrcode-generator` library (bundled)
+- QR code generation using the `qrcode` library (bundled)
 - Canvas API for rendering QR codes
 - Clipboard API for copy functionality
 - File API for download functionality
@@ -50,10 +50,10 @@ The QR code generator is built using pure JavaScript with the following key comp
 1. Input validation and sanitization
 2. Error correction level selection
 3. QR code matrix generation
-4. Canvas rendering with customizable:
+4. Canvas rendering with:
    - Module size (dots per module)
    - Margin (quiet zone)
-   - Colors (foreground and background)
+   - Black foreground and white background
 5. Image export options:
    - PNG generation via canvas.toDataURL()
    - Clipboard copy via navigator.clipboard.write()
@@ -85,7 +85,8 @@ The codebase is organized into the following main components:
 - `script.tsx`: Preact component implementation and UI interaction handlers
 - `content.tsx`: Documentation, guide, and FAQ content
 - `styles.css`: Responsive styling and layout
-- `script.test.js`: Unit tests for core functionality
+- `runtime-migration.test.js`: Tests for the Preact tool behavior
+- `qrcode-options.integration.test.js`: Tests the real `qrcode` canvas renderer options
 - `images/`: Contains tool screenshot and assets
 
 ### Testing & Validation
