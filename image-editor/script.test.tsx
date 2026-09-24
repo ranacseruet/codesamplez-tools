@@ -780,6 +780,51 @@ describe('ImageEditor Preact runtime', () => {
         await waitFor(() => expect(byId('image-editor-info')).toHaveTextContent('800 × 1200 px'));
     });
 
+    it('stays busy until every overlapping operation has finished', async () => {
+        await loadSample();
+
+        let resolveRotate: ((bitmap: FakeBitmap) => void) | undefined;
+        const decodeResolvers: ((bitmap: FakeBitmap) => void)[] = [];
+        const mockedCreateImageBitmap = globalThis.createImageBitmap as jest.Mock;
+        const defaultCreateImageBitmap = mockedCreateImageBitmap.getMockImplementation()!;
+        // Hold the rotate bake (a canvas source) and every File decode open;
+        // anything else resolves as usual. All decodes are held, not just the
+        // first, because instances leaked by earlier tests in this file still
+        // listen for document paste events and decode the same File.
+        mockedCreateImageBitmap.mockImplementation((source: unknown) => {
+            if (source instanceof File) {
+                return new Promise<FakeBitmap>((resolve) => { decodeResolvers.push(resolve); });
+            }
+            if (source instanceof HTMLCanvasElement && !resolveRotate) {
+                return new Promise<FakeBitmap>((resolve) => { resolveRotate = resolve; });
+            }
+            return defaultCreateImageBitmap(source);
+        });
+
+        fireEvent.click(byId('image-editor-rotate-right'));
+        await waitFor(() => expect(byId('image-editor-export')).toHaveTextContent('Working…'));
+
+        // A paste is not gated on busy, so it starts a decode mid-bake.
+        const file = new File(['pasted-bytes'], 'pasted.png', { type: 'image/png' });
+        const paste = new Event('paste', { bubbles: true, cancelable: true });
+        Object.defineProperty(paste, 'clipboardData', {
+            value: { files: { length: 1, item: (index: number) => (index === 0 ? file : null) } }
+        });
+        document.dispatchEvent(paste);
+        await waitFor(() => expect(decodeResolvers.length).toBeGreaterThan(0));
+
+        // The bake finishing must not re-enable controls while the decode runs.
+        await waitFor(() => expect(resolveRotate).toBeDefined());
+        resolveRotate!({ width: 800, height: 1200, close: jest.fn() });
+        await waitFor(() => expect(byId('image-editor-info')).toHaveTextContent('800 × 1200 px'));
+        expect(byId('image-editor-export')).toHaveTextContent('Working…');
+        expect(byId('image-editor-rotate-left')).toBeDisabled();
+
+        decodeResolvers.forEach((resolve) => resolve({ width: 640, height: 480, close: jest.fn() }));
+        await waitFor(() => expect(byId('image-editor-info')).toHaveTextContent('pasted.png'));
+        expect(byId('image-editor-rotate-left')).not.toBeDisabled();
+    });
+
     it('starts a selection at the pointer origin on an unmeasured frame', async () => {
         await loadSample();
 
