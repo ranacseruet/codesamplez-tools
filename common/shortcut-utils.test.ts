@@ -67,6 +67,20 @@ describe('registerPrimaryActionShortcut', () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
+  it('fires once per press, ignoring key auto-repeat while the chord is held', () => {
+    const callback = jest.fn();
+    cleanup = registerPrimaryActionShortcut(callback);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', metaKey: true }));
+    const repeat = new KeyboardEvent('keydown', { key: 'Enter', metaKey: true, repeat: true, cancelable: true });
+    document.dispatchEvent(repeat);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', metaKey: true, repeat: true }));
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    // Repeats are still swallowed so the browser default doesn't leak through.
+    expect(repeat.defaultPrevented).toBe(true);
+  });
+
   it('ignores plain Enter without a modifier', () => {
     const button = document.createElement('button');
     const clickSpy = jest.spyOn(button, 'click');

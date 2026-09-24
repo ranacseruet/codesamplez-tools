@@ -39,7 +39,16 @@ export interface SchemaDiagnostic {
 }
 
 export type SchemaValidationResult =
-    | { outcome: 'valid'; draft: SupportedSchemaDraft }
+    | {
+          outcome: 'valid';
+          draft: SupportedSchemaDraft;
+          /**
+           * Draft 2020-12 keywords the schema uses that Draft 7 does not
+           * enforce. Only reported when Draft 7 was the no-`$schema` fallback,
+           * since then the user never chose to have them ignored.
+           */
+          ignoredKeywords?: string[];
+      }
     | { outcome: 'invalid-data'; draft: SupportedSchemaDraft; diagnostic: SchemaDiagnostic }
     | {
           outcome: 'invalid-json';
@@ -154,54 +163,93 @@ function schemaDepth(schema: unknown): number {
 }
 
 /**
- * Walk only schema-bearing positions. Values under `const`, `enum`, `default`,
- * and `examples` are data, so a literal object containing a `$ref` property
- * must not be mistaken for a reference the validator would resolve.
+ * Visit every schema object, walking only schema-bearing positions. Values
+ * under `const`, `enum`, `default`, and `examples` are data, and the keys of
+ * `properties`-style maps are names, so neither is mistaken for a keyword.
+ * `visit` returns true to stop the walk early.
  */
-function findExternalReference(schema: unknown): string | null {
-    const visitSchemaMap = (value: unknown): string | null => {
-        if (value === null || typeof value !== 'object' || Array.isArray(value)) return null;
+function walkSchemaObjects(schema: unknown, visit: (node: Record<string, unknown>) => boolean): void {
+    let stopped = false;
+
+    const visitSchemaMap = (value: unknown): void => {
+        if (value === null || typeof value !== 'object' || Array.isArray(value)) return;
         for (const child of Object.values(value)) {
-            const external = visitSchema(child);
-            if (external !== null) return external;
+            if (stopped) return;
+            visitSchema(child);
         }
-        return null;
     };
 
-    const visitSchema = (value: unknown): string | null => {
+    const visitSchema = (value: unknown): void => {
+        if (stopped) return;
         if (Array.isArray(value)) {
-            for (const child of value) {
-                const external = visitSchema(child);
-                if (external !== null) return external;
-            }
-            return null;
+            for (const child of value) visitSchema(child);
+            return;
         }
-        if (value === null || typeof value !== 'object') return null;
+        if (value === null || typeof value !== 'object') return;
 
-        for (const [key, child] of Object.entries(value)) {
-            if (
-                (key === '$ref' || key === '$dynamicRef' || key === '$recursiveRef') &&
-                typeof child === 'string' &&
-                !child.startsWith('#')
-            ) {
-                return child;
-            }
+        const node = value as Record<string, unknown>;
+        if (visit(node)) {
+            stopped = true;
+            return;
+        }
 
-            let external: string | null = null;
+        for (const [key, child] of Object.entries(node)) {
             if (SCHEMA_MAP_KEYWORDS.has(key)) {
-                external = visitSchemaMap(child);
+                visitSchemaMap(child);
             } else if (SCHEMA_ARRAY_KEYWORDS.has(key) || SCHEMA_VALUE_KEYWORDS.has(key)) {
-                external = visitSchema(child);
+                visitSchema(child);
             } else if (key === 'dependencies' && child !== null && typeof child === 'object' && !Array.isArray(child)) {
                 // Draft 7 dependencies can be either string arrays or schemas.
-                external = visitSchemaMap(child);
+                visitSchemaMap(child);
             }
-            if (external !== null) return external;
         }
-        return null;
     };
 
-    return visitSchema(schema);
+    visitSchema(schema);
+}
+
+function findExternalReference(schema: unknown): string | null {
+    let external: string | null = null;
+    walkSchemaObjects(schema, (node) => {
+        for (const key of ['$ref', '$dynamicRef', '$recursiveRef']) {
+            const reference = node[key];
+            if (typeof reference === 'string' && !reference.startsWith('#')) {
+                external = reference;
+                return true;
+            }
+        }
+        return false;
+    });
+    return external;
+}
+
+/**
+ * Keywords Draft 2020-12 added that the Draft 7 validator does not enforce:
+ * Ajv's Draft 7 build silently skips them (verified per keyword), so a schema
+ * relying on one can pass data it was written to reject.
+ */
+const DRAFT_2020_ONLY_KEYWORDS = [
+    '$anchor',
+    '$dynamicAnchor',
+    '$dynamicRef',
+    'dependentRequired',
+    'dependentSchemas',
+    'maxContains',
+    'minContains',
+    'prefixItems',
+    'unevaluatedItems',
+    'unevaluatedProperties'
+];
+
+function findDraft2020OnlyKeywords(schema: unknown): string[] {
+    const found = new Set<string>();
+    walkSchemaObjects(schema, (node) => {
+        for (const keyword of DRAFT_2020_ONLY_KEYWORDS) {
+            if (Object.prototype.hasOwnProperty.call(node, keyword)) found.add(keyword);
+        }
+        return false;
+    });
+    return DRAFT_2020_ONLY_KEYWORDS.filter((keyword) => found.has(keyword));
 }
 
 function declaredDraft(schema: unknown): { draft?: SupportedSchemaDraft; declared?: string; error?: string } {
@@ -220,7 +268,7 @@ function declaredDraft(schema: unknown): { draft?: SupportedSchemaDraft; declare
 }
 
 function resolveDraft(schema: unknown, requested: SchemaDraft | undefined):
-    | { draft: SupportedSchemaDraft; declared?: string }
+    | { draft: SupportedSchemaDraft; declared?: string; fallback?: true }
     | { unsupported: true; declared?: string }
     | { invalidSchema: true; message: string } {
     const declaration = declaredDraft(schema);
@@ -233,7 +281,7 @@ function resolveDraft(schema: unknown, requested: SchemaDraft | undefined):
     }
     if (declaration.draft) return { draft: declaration.draft, declared: declaration.declared };
     if (declaration.declared) return { unsupported: true, declared: declaration.declared };
-    return { draft: 'draft-07' };
+    return { draft: 'draft-07', fallback: true };
 }
 
 function rfc6901Segment(segment: string): string {
@@ -355,7 +403,12 @@ export function validateJsonSchema(request: SchemaValidationRequest): SchemaVali
     try {
         const validator = makeAjv(resolved.draft).compile(schemaForCompile(schemaParsed.data, resolved.draft) as object | boolean);
         const valid = validator(dataParsed.data);
-        if (valid) return { outcome: 'valid', draft: resolved.draft };
+        if (valid) {
+            const ignoredKeywords = resolved.fallback ? findDraft2020OnlyKeywords(schemaParsed.data) : [];
+            return ignoredKeywords.length > 0
+                ? { outcome: 'valid', draft: resolved.draft, ignoredKeywords }
+                : { outcome: 'valid', draft: resolved.draft };
+        }
 
         const error = validator.errors?.[0];
         if (!error) {

@@ -1,7 +1,7 @@
 // @ts-check
 
 const { buildAbsoluteUrl } = require('./tool-manifest');
-const { escapeAttribute, escapeHtml, formatRootDocumentTitle } = require('./document-helpers');
+const { THEME_INIT_SCRIPT, escapeAttribute, escapeHtml, formatRootDocumentTitle } = require('./document-helpers');
 const { getGroupedToolDefinitions, loadManifest } = require('./tool-manifest');
 const { renderRootPageIntro, renderRootPagePostIndexSections } = require('./root-page-content');
 const { buildRootStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
@@ -16,10 +16,6 @@ const THEME_COLOR = '#0b0b11';
 // scripts/generate-og-images.mjs.
 const OG_IMAGE_WIDTH = '1200';
 const OG_IMAGE_HEIGHT = '630';
-
-// Pre-paint theme init: apply the saved theme (default dark) before CSS paints
-// so the choice persists across pages with no flash. Must run before stylesheets.
-const THEME_INIT_SCRIPT = `<script>(function(){try{var t=localStorage.getItem('cst-standalone-theme-mode');var m=t==='light'?'light':'dark';var e=document.documentElement;e.setAttribute('data-theme',m);e.setAttribute('data-cst-theme',m);}catch(e){}})();</script>`;
 
 // v2 design system: self-hosted Geist fonts (icons are inlined SVGs — no CDN).
 // Preloads use the configured static-root absolute URL so they resolve to the

@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.5] - 2026-09-24
+
+### Data Format Converter
+
+- A multi-file drop says which file was loaded and how many were ignored.
+
 ## [1.0.4] - 2026-09-24
 
 ### Data Format Converter

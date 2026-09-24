@@ -1,6 +1,37 @@
-import { computeDiff, DiffComputer, type DiffResultLine } from './diff';
+import { computeDiff as computeDiffRows, DiffComputer, type DiffResultLine } from './diff';
+
+/**
+ * The compute layer returns raw line text plus highlight ranges; the page
+ * turns those into `word-added`/`word-removed` spans. For readable
+ * expectations, render each range the same way (unescaped) so a row reads as
+ * the line would display. Rows without ranges pass through as `[type, text]`.
+ */
+function withInlineHighlights(rows: DiffResultLine[]): [string, string][] {
+  return rows.map(([changeType, text, highlights]) => {
+    if (!highlights) {
+      return [changeType, text];
+    }
+    const className = changeType === 'added' ? 'word-added' : 'word-removed';
+    let markup = '';
+    let cursor = 0;
+    highlights.forEach(([start, end]) => {
+      markup += `${text.slice(cursor, start)}<span class="${className}">${text.slice(start, end)}</span>`;
+      cursor = end;
+    });
+    return [changeType, markup + text.slice(cursor)];
+  });
+}
+
+const computeDiff = (...args: Parameters<typeof computeDiffRows>) => withInlineHighlights(computeDiffRows(...args));
 
 describe('Base Functionality', () => {
+  test('word-diffed rows carry raw text plus highlight ranges, never markup', () => {
+    expect(computeDiffRows(['Hello <b>world</b>'], ['Hello <b>there</b>'])).toEqual([
+      ['removed', 'Hello <b>world</b>', [[9, 14]]],
+      ['added', 'Hello <b>there</b>', [[9, 14]]]
+    ]);
+  });
+
   test('empty inputs should return empty array', () => {
     const result = computeDiff([], []);
     expect(result).toEqual([]);
@@ -165,7 +196,7 @@ describe('Whitespace Handling', () => {
     test('keeps each pane on its own indentation when ignoreWhitespace is true', () => {
       // Both panes are built from one parts list, so the danger is a pane
       // rendering whitespace copied from the other side's line.
-      const [, [, removedHtml], [, addedHtml]] = computeDiff(original, modified, true) as DiffResultLine[];
+      const [, [, removedHtml], [, addedHtml]] = computeDiff(original, modified, true);
       expect(stripSpans(removedHtml)).toBe(original[1]);
       expect(stripSpans(addedHtml)).toBe(modified[1]);
     });
@@ -230,7 +261,7 @@ describe('Whitespace Handling', () => {
         ['x', 'const foo   =   1;'],
         ['x', 'const bar = 1;'],
         true
-      ) as DiffResultLine[];
+      );
       expect(removedHtml).not.toContain('word-removed">   <');
       expect(addedHtml).not.toContain('word-added"> <');
       expect(stripSpans(removedHtml)).toBe('const foo   =   1;');

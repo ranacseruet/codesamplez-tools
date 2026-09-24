@@ -4,6 +4,8 @@ class ClearButton {
     wrapper: HTMLDivElement;
     boundClearText: (() => void) | null;
     boundUpdateVisibility: (() => void) | null;
+    /** Pending step of the clear animation, so a new click restarts it cleanly. */
+    animationTimer: ReturnType<typeof setTimeout> | null;
 
     constructor(textAreaElement: HTMLTextAreaElement) {
         if (!(textAreaElement instanceof HTMLTextAreaElement)) {
@@ -15,6 +17,7 @@ class ClearButton {
         this.wrapper = document.createElement('div');
         this.boundClearText = null;
         this.boundUpdateVisibility = null;
+        this.animationTimer = null;
         this.appendClearButton();
         this.addEventListeners();
         this.updateVisibility();
@@ -51,6 +54,8 @@ class ClearButton {
     }
 
     disconnect(): void {
+        this.cancelAnimation();
+
         // Remove event listeners to prevent memory leaks
         if (this.boundUpdateVisibility) {
             this.textArea.removeEventListener('input', this.boundUpdateVisibility);
@@ -65,8 +70,18 @@ class ClearButton {
         }
     }
 
+    cancelAnimation(): void {
+        if (this.animationTimer !== null) {
+            clearTimeout(this.animationTimer);
+            this.animationTimer = null;
+        }
+    }
+
     clearText(): void {
-        // Add clearing animation
+        // Restart the animation: a click landing mid-animation must not leave
+        // the previous click's timers stripping classes from this one.
+        this.cancelAnimation();
+        this.clearButton.classList.remove('clear-success');
         this.clearButton.classList.add('clearing');
         
         // Clear the text
@@ -82,12 +97,13 @@ class ClearButton {
         this.textArea.dispatchEvent(clearEvent);
         
         // Show success feedback
-        setTimeout(() => {
+        this.animationTimer = setTimeout(() => {
             this.clearButton.classList.remove('clearing');
             this.clearButton.classList.add('clear-success');
             
             // Remove success state after animation
-            setTimeout(() => {
+            this.animationTimer = setTimeout(() => {
+                this.animationTimer = null;
                 this.clearButton.classList.remove('clear-success');
             }, 800);
         }, 300);

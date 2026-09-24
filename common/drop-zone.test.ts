@@ -4,6 +4,7 @@ import {
     DROP_ZONE_TARGET_ATTRIBUTE,
     registerDropZone,
     registerFileInput,
+    describeLoadedFile,
     readFileAsText,
     type DropZoneCleanup,
 } from './drop-zone';
@@ -66,7 +67,7 @@ describe('registerDropZone', () => {
 
         fire(target, 'drop', fileDrag([file]));
 
-        await waitFor(() => expect(onText).toHaveBeenCalledWith('{"a":1}', file));
+        await waitFor(() => expect(onText).toHaveBeenCalledWith('{"a":1}', file, { ignoredFileCount: 0 }));
     });
 
     it('marks the element as a drop target for as long as it is registered', () => {
@@ -89,7 +90,18 @@ describe('registerDropZone', () => {
 
         fire(target, 'drop', fileDrag([file]));
 
-        expect(onFile).toHaveBeenCalledWith(file);
+        expect(onFile).toHaveBeenCalledWith(file, { ignoredFileCount: 0 });
+    });
+
+    it('loads only the first file of a multi-file drop and reports how many were skipped', () => {
+        const onFile = jest.fn();
+        cleanup = registerDropZone(target, { onFile });
+        const first = new File(['a'], 'a.png');
+
+        fire(target, 'drop', fileDrag([first, new File(['b'], 'b.png'), new File(['c'], 'c.png')]));
+
+        expect(onFile).toHaveBeenCalledTimes(1);
+        expect(onFile).toHaveBeenCalledWith(first, { ignoredFileCount: 2 });
     });
 
     it('highlights the target while a file drag hovers it', () => {
@@ -218,7 +230,7 @@ describe('registerDropZone', () => {
 
         expect(onError).toHaveBeenCalledWith(expect.stringContaining('too large'));
         valid.resolve();
-        await waitFor(() => expect(onText).toHaveBeenCalledWith('valid contents', valid.file));
+        await waitFor(() => expect(onText).toHaveBeenCalledWith('valid contents', valid.file, { ignoredFileCount: 0 }));
     });
 
     it('reports an unreadable file', async () => {
@@ -314,7 +326,7 @@ describe('registerDropZone', () => {
         await flush();
 
         expect(onText).toHaveBeenCalledTimes(1);
-        expect(onText).toHaveBeenCalledWith('second dropped, resolves first', quick.file);
+        expect(onText).toHaveBeenCalledWith('second dropped, resolves first', quick.file, { ignoredFileCount: 0 });
     });
 
     it('stays silent when a superseded read fails', async () => {
@@ -333,7 +345,7 @@ describe('registerDropZone', () => {
         await flush();
 
         expect(onError).not.toHaveBeenCalled();
-        expect(onText).toHaveBeenCalledWith('winner', quick.file);
+        expect(onText).toHaveBeenCalledWith('winner', quick.file, { ignoredFileCount: 0 });
     });
 
     it('honours a custom active class', () => {
@@ -447,7 +459,7 @@ describe('registerFileInput', () => {
         const file = new File(['selected contents'], 'selected.txt');
 
         select(file);
-        await waitFor(() => expect(onText).toHaveBeenCalledWith('selected contents', file));
+        await waitFor(() => expect(onText).toHaveBeenCalledWith('selected contents', file, { ignoredFileCount: 0 }));
 
         select(file);
         await waitFor(() => expect(onText).toHaveBeenCalledTimes(2));
@@ -471,7 +483,7 @@ describe('registerFileInput', () => {
 
         select(file);
 
-        expect(onFile).toHaveBeenCalledWith(file);
+        expect(onFile).toHaveBeenCalledWith(file, { ignoredFileCount: 0 });
     });
 
     it('uses the shared size and binary-content validation', async () => {
@@ -528,5 +540,19 @@ describe('readFileAsText', () => {
         await expect(readFileAsText(file)).rejects.toThrow();
 
         jest.restoreAllMocks();
+    });
+});
+
+describe('describeLoadedFile', () => {
+    it('names the loaded file', () => {
+        expect(describeLoadedFile('notes.txt')).toBe('Loaded notes.txt');
+        expect(describeLoadedFile('notes.txt', { ignoredFileCount: 0 })).toBe('Loaded notes.txt');
+    });
+
+    it('says how many other dropped files were ignored', () => {
+        expect(describeLoadedFile('a.json', { ignoredFileCount: 1 }))
+            .toBe('Loaded a.json. Only one file is used at a time, so 1 other file was ignored.');
+        expect(describeLoadedFile('a.json', { ignoredFileCount: 3 }))
+            .toBe('Loaded a.json. Only one file is used at a time, so 3 other files were ignored.');
     });
 });

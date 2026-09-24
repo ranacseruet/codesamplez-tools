@@ -173,6 +173,17 @@ describe('JWTDecoder Class', () => {
             expect(isValid).toBe(false);
         });
 
+        it('treats a wrong secret as a normal outcome, not a console error', async () => {
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+            try {
+                const decoder = new JWTDecoder(validToken);
+                expect(await decoder.verifySignature(invalidSecret, mockHmacSha256)).toBe(false);
+                expect(consoleErrorSpy).not.toHaveBeenCalled();
+            } finally {
+                consoleErrorSpy.mockRestore();
+            }
+        });
+
         it('uses default hmacSha256 when no hmacFunc parameter is passed', async () => {
             const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
             const decoder = new JWTDecoder(validToken);
@@ -245,6 +256,7 @@ describe('JWTDecoder Class', () => {
             const isValid = await decoder.verifySignature(validSecret, failingHmac);
 
             expect(isValid).toBe(false);
+            expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
             expect(consoleErrorSpy).toHaveBeenCalledWith('Error validating JWT signature:', 'verification-runtime-error');
             consoleErrorSpy.mockRestore();
         });

@@ -10,6 +10,40 @@ const run = (data: string, schema: string, draft: SchemaValidationRequest['draft
   validateJsonSchema({ data, schema, draft });
 
 describe('JSON Schema validation core', () => {
+  test('flags Draft 2020-12-only keywords that the no-$schema Draft 7 fallback ignores', () => {
+    const schema = JSON.stringify({
+      type: 'object',
+      properties: {
+        tags: { type: 'array', prefixItems: [{ type: 'string' }] },
+        // A property *named* like a keyword is data, not a keyword.
+        minContains: { type: 'number' }
+      },
+      dependentRequired: { a: ['b'] }
+    });
+
+    expect(run('{"tags":[1],"a":1}', schema)).toEqual({
+      outcome: 'valid',
+      draft: 'draft-07',
+      ignoredKeywords: ['dependentRequired', 'prefixItems']
+    });
+  });
+
+  test('does not flag 2020-12 keywords when the draft was chosen explicitly', () => {
+    const schema = JSON.stringify({ type: 'array', prefixItems: [{ type: 'string' }] });
+
+    expect(run('[1]', schema, 'draft-07')).toEqual({ outcome: 'valid', draft: 'draft-07' });
+    expect(run('[1]', JSON.stringify({ $schema: 'http://json-schema.org/draft-07/schema#', prefixItems: [] }))).toEqual({
+      outcome: 'valid',
+      draft: 'draft-07'
+    });
+    expect(run('["a"]', schema, '2020-12')).toEqual({ outcome: 'valid', draft: '2020-12' });
+  });
+
+  test('ignores 2020-12 keyword names that appear only inside data positions', () => {
+    const schema = JSON.stringify({ const: { prefixItems: [] }, default: { unevaluatedItems: false } });
+    expect(run('{"prefixItems":[]}', schema)).toEqual({ outcome: 'valid', draft: 'draft-07' });
+  });
+
   test('validates Draft 7 and returns only the first diagnostic', () => {
     const result = run(
       '{"name":"Ada","extra":true}',

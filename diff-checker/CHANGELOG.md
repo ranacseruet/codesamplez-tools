@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.5] - 2026-09-24
+
+### Diff Checker
+
+- Word-level highlights are built from ranges rather than re-parsed markup, so text that looks like a highlight span shows as text; the line-number gutter keeps one width past line 999; a multi-file drop says which file was loaded.
+
 ## [1.0.4] - 2026-09-21
 
 ### Diff Checker

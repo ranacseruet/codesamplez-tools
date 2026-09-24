@@ -3,7 +3,8 @@
 const webpack = require('webpack');
 const { findTrackerMarkupOffenders } = require('./analytics');
 const { getAppShellCatalogDefinition } = require('./app-shell-catalog');
-const { REPO_ROOT, ROOT_CONFIG_PATH, getToolById, getToolDefinitions, getToolMetadataPath } = require('./tool-manifest');
+const { REPO_ROOT, ROOT_CONFIG_PATH, getToolById, getToolDefinitions, getToolMetadataPath, withRootConfigPass } = require('./tool-manifest');
+const { resetBuildCommit } = require('./provenance-manifest');
 const { generateRootDocument } = require('./root-document');
 const { generateNotFoundDocument } = require('./error-document');
 const { generateToolDocument } = require('./tool-document');
@@ -54,6 +55,14 @@ function ensureNodeAppShellCatalog() {
  * @returns {{ filename: string, source: string }[]}
  */
 function buildGeneratedHtmlAssets(options = {}) {
+    return withRootConfigPass(() => renderGeneratedHtmlAssets(options));
+}
+
+/**
+ * @param {GeneratedHtmlPluginOptions} options
+ * @returns {{ filename: string, source: string }[]}
+ */
+function renderGeneratedHtmlAssets(options) {
     ensureNodeAppShellCatalog();
 
     /** @type {{ filename: string, source: string }[]} */
@@ -124,6 +133,14 @@ class GeneratedHtmlPlugin {
      * @returns {void}
      */
     apply(compiler) {
+        // The build commit is memoized per process so one build stamps one SHA
+        // everywhere. A watch-mode recompile is a new build, though: without
+        // this reset, commits made while `webpack --watch` runs would keep
+        // stamping the SHA from when the watcher started.
+        compiler.hooks.watchRun.tap('GeneratedHtmlPlugin', () => {
+            resetBuildCommit();
+        });
+
         compiler.hooks.thisCompilation.tap('GeneratedHtmlPlugin', (compilation) => {
             registerGeneratedHtmlDependencies(compilation);
 

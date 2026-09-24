@@ -14,6 +14,7 @@ const REPO_ROOT = path.resolve(__dirname, '..');
  * recompiles re-render documents repeatedly — a per-call `git rev-parse` would
  * spawn ~14 subprocesses per build and could resolve different commits
  * mid-build, breaking the "page attribute matches versions.json" invariant.
+ * Cleared by `resetBuildCommit()` when a watch-mode recompile starts.
  * @type {string | null}
  */
 let memoizedBuildCommit = null;
@@ -43,6 +44,15 @@ function resolveBuildCommit() {
     }
 
     return memoizedBuildCommit;
+}
+
+/**
+ * Drops the memoized commit so the next build resolves HEAD afresh. Called at
+ * the start of each watch-mode recompile (see GeneratedHtmlPlugin).
+ * @returns {void}
+ */
+function resetBuildCommit() {
+    memoizedBuildCommit = null;
 }
 
 /**
@@ -98,6 +108,7 @@ module.exports = {
     VERSIONS_FILENAME,
     buildVersionsJson,
     getBuildCommitAttributeMarkup,
+    resetBuildCommit,
     resolveBuildCommit,
     writeVersionsManifest
 };

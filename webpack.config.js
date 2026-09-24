@@ -372,7 +372,12 @@ const developmentConfig = {
     port: process.env.PORT || 8081,
     hot: true,
     open: false,
-    historyApiFallback: true
+    // Multi-page site, no client routing: unknown paths get the generated
+    // branded 404 page (what CloudFront serves in production) rather than
+    // the landing page, so 404.html can be exercised in `npm run dev`.
+    historyApiFallback: {
+      index: '/404.html'
+    }
   }
 };
 

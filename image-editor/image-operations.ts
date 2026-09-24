@@ -7,6 +7,8 @@
  * caption layout, and export mapping.
  */
 
+import { formatBytes } from '../common/format-utils';
+
 export interface CropRect {
     x: number;
     y: number;
@@ -495,20 +497,3 @@ export function scaleEstimateBytes(measuredBytes: number, fullWidth: number, ful
     return Math.round((measuredBytes * fullArea) / previewArea);
 }
 
-export function formatBytes(bytes: number): string {
-    if (!Number.isFinite(bytes) || bytes < 0) {
-        return '—';
-    }
-
-    if (bytes < 1024) {
-        return `${Math.round(bytes)} B`;
-    }
-
-    const kibibytes = bytes / 1024;
-    if (kibibytes < 1024) {
-        return kibibytes % 1 === 0 ? `${kibibytes} KiB` : `${kibibytes.toFixed(1)} KiB`;
-    }
-
-    const mebibytes = kibibytes / 1024;
-    return mebibytes % 1 === 0 ? `${mebibytes} MB` : `${mebibytes.toFixed(1)} MB`;
-}

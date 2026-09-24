@@ -270,6 +270,19 @@ describe('JavaScript Minifier Preact runtime', () => {
     expect(document.getElementById('js-minifier-output')?.value.length).toBeGreaterThan(0);
   });
 
+  it('does not report empty input when an option is toggled with no code', async () => {
+    new JSMinifierToolUI();
+    await flushEffects();
+
+    fireEvent.click(document.getElementById('js-minifier-shorten-variables'));
+    await flushEffects();
+    await flushEffects();
+
+    expect(document.getElementById('js-minifier-shorten-variables')?.checked).toBe(true);
+    expect(document.getElementById('js-minifier-error-status')?.textContent).toBe('');
+    expect(JSMinifier).not.toHaveBeenCalled();
+  });
+
   it('loads sample code and minifies it', async () => {
     new JSMinifierToolUI();
     await flushEffects();
@@ -295,6 +308,23 @@ describe('JavaScript Minifier Preact runtime', () => {
     expect(document.getElementById('js-minifier-output')?.value.length).toBeGreaterThan(0);
     expect(NotificationManager.show).toHaveBeenCalledWith(
       'Loaded app.js',
+      expect.any(Number),
+      expect.objectContaining({ type: 'success' })
+    );
+  });
+
+  it('tells the user when a multi-file drop only loaded the first file', async () => {
+    new JSMinifierToolUI();
+    await flushEffects();
+
+    fireFileDragEvent(document.getElementById('js-minifier-input'), 'drop', [
+      new File(['const first = 1;'], 'first.js'),
+      new File(['const second = 2;'], 'second.js')
+    ]);
+    await waitFor(() => expect(document.getElementById('js-minifier-input')?.value).toBe('const first = 1;'));
+
+    expect(NotificationManager.show).toHaveBeenCalledWith(
+      'Loaded first.js. Only one file is used at a time, so 1 other file was ignored.',
       expect.any(Number),
       expect.objectContaining({ type: 'success' })
     );

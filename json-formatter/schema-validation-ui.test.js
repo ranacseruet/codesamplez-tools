@@ -101,6 +101,16 @@ describe('JSON Schema validation UI flow', () => {
     formatter.setValidationStatus({ outcome: 'valid', draft: '2020-12' });
     expect(formatter.schemaStatus.textContent).toBe('Valid against Draft 2020-12.');
 
+    formatter.setValidationStatus({ outcome: 'valid', draft: 'draft-07', ignoredKeywords: ['prefixItems'] });
+    expect(formatter.schemaStatus.textContent).toBe(
+      'Valid against Draft 7, but prefixItems is a Draft 2020-12 keyword that Draft 7 ignores. Add a $schema declaration or select Draft 2020-12.'
+    );
+    expect(formatter.schemaStatus.classList.contains('warning')).toBe(true);
+    expect(formatter.schemaStatus.classList.contains('success')).toBe(false);
+
+    formatter.setValidationStatus({ outcome: 'valid', draft: 'draft-07', ignoredKeywords: ['prefixItems', 'unevaluatedProperties'] });
+    expect(formatter.schemaStatus.textContent).toContain('prefixItems, unevaluatedProperties are Draft 2020-12 keywords');
+
     formatter.setValidationStatus({ outcome: 'invalid-schema', message: 'Schema is malformed.', line: 2, column: 4 });
     expect(formatter.schemaStatus.textContent).toContain('Invalid schema: Schema is malformed. (line 2, col 4)');
 

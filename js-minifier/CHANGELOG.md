@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.5] - 2026-09-24
+
+### JavaScript Minifier
+
+- Toggling an option with no input no longer shows an empty-input error; a multi-file drop says which file was loaded; size labels use the shared B/KiB/MB formatter.
+
 ## [1.0.4] - 2026-09-23
 
 ### JavaScript Minifier

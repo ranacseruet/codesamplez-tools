@@ -10,7 +10,6 @@ import {
     exportExtension,
     exportFilename,
     exportMime,
-    formatBytes,
     isDefaultAdjustments,
     matchAdjustmentPreset,
     moveCropBox,
@@ -266,16 +265,5 @@ describe('scaleEstimateBytes', () => {
 
     it('returns 0 for invalid measurements', () => {
         expect(scaleEstimateBytes(Number.NaN, 100, 100, 10, 10)).toBe(0);
-    });
-});
-
-describe('formatBytes', () => {
-    it('formats bytes, KiB, and MB like the shared drop-zone helper', () => {
-        expect(formatBytes(512)).toBe('512 B');
-        expect(formatBytes(2048)).toBe('2 KiB');
-        expect(formatBytes(1536)).toBe('1.5 KiB');
-        expect(formatBytes(5 * 1024 * 1024)).toBe('5 MB');
-        expect(formatBytes(1.5 * 1024 * 1024)).toBe('1.5 MB');
-        expect(formatBytes(Number.NaN)).toBe('—');
     });
 });

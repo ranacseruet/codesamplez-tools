@@ -1,11 +1,23 @@
 // Import shared components and styles
-import { computeDiff, type DiffComputeRequest, type DiffComputeResult } from './diff';
+import {
+  computeDiff,
+  type DiffChangeType,
+  type DiffComputeRequest,
+  type DiffComputeResult,
+  type DiffHighlightRange
+} from './diff';
 import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { NotificationManager } from '../common/notification-manager';
 import { scheduleTask } from '../common/scheduler-utils';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone, registerFileInput, type DropZoneCleanup } from '../common/drop-zone';
+import {
+  describeLoadedFile,
+  registerDropZone,
+  registerFileInput,
+  type DropZoneCleanup,
+  type LoadedFileDetail
+} from '../common/drop-zone';
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
 import DownloadManager from '../common/DownloadManager';
@@ -106,61 +118,51 @@ class DiffDisplay {
   diffResultElement: HTMLElement;
   originalLineNumber: number;
   modifiedLineNumber: number;
+  // Gutter width for the current render, sized to the largest line number it
+  // will print so every row pads the same (a per-row width jumps at 1000).
+  lineNumberDigits: number;
 
   constructor(diffResultElement: HTMLElement) {
     this.diffResultElement = diffResultElement;
     this.originalLineNumber = 1;
     this.modifiedLineNumber = 1;
+    this.lineNumberDigits = 0;
   }
 
   displayDiff(diffResults, isCodeContent) {
     this.diffResultElement.innerHTML = '';
-    diffResults.forEach(([changeType, lineContent]) => {
-      const lineElement = this.createLineElement(changeType, lineContent, isCodeContent);
+    let originalLineCount = 0;
+    let modifiedLineCount = 0;
+    diffResults.forEach(([changeType]) => {
+      if (changeType !== 'added') originalLineCount++;
+      if (changeType !== 'removed') modifiedLineCount++;
+    });
+    this.lineNumberDigits = String(Math.max(
+      this.originalLineNumber + originalLineCount - 1,
+      this.modifiedLineNumber + modifiedLineCount - 1
+    )).length;
+    diffResults.forEach(([changeType, lineContent, highlights]) => {
+      const lineElement = this.createLineElement(changeType, lineContent, isCodeContent, highlights);
       this.diffResultElement.appendChild(lineElement);
     });
   }
 
-  // Helper function to escape HTML but preserve word-level diff spans
-  escapeHtmlPreserveDiff(html) {
-    // If the content already has word-level diff spans, we need to handle them specially
-    if (html.indexOf('class="word-added"') !== -1 || html.indexOf('class="word-removed"') !== -1) {
-      // Split the string by the opening and closing tags of word-level diff spans
-      const parts = [];
-      let currentIndex = 0;
+  // Escapes a line and wraps its word-diff highlight ranges in spans. Built
+  // from the compute layer's offsets, never by re-parsing markup, so line text
+  // that itself looks like a highlight span is shown as text.
+  renderHighlightedLine(lineContent: string, changeType: DiffChangeType, highlights: DiffHighlightRange[] = []): string {
+    const renderText = (text: string) => this.escapeHtml(text.replace(/\r/g, CARRIAGE_RETURN_MARKER));
+    const className = changeType === 'added' ? 'word-added' : 'word-removed';
+    let html = '';
+    let cursor = 0;
 
-      // Regular expression to match word-level diff spans
-      const spanRegex = /(<span class="word-(added|removed)">(.*?)<\/span>)/g;
-      let match;
+    highlights.forEach(([start, end]) => {
+      html += renderText(lineContent.slice(cursor, start));
+      html += `<span class="${className}">${renderText(lineContent.slice(start, end))}</span>`;
+      cursor = end;
+    });
 
-      while ((match = spanRegex.exec(html)) !== null) {
-        // Add the text before the span (escaped)
-        if (match.index > currentIndex) {
-          const textBefore = html.substring(currentIndex, match.index);
-          parts.push(this.escapeHtml(textBefore));
-        }
-
-        // Preserve the diff span wrapper but escape its inner content so code/HTML
-        // inside word-level diffs is displayed as text instead of becoming live DOM.
-        const diffType = match[2];
-        const spanContent = match[3];
-        parts.push(`<span class="word-${diffType}">${this.escapeHtml(spanContent)}</span>`);
-
-        // Update the current index
-        currentIndex = match.index + match[0].length;
-      }
-
-      // Add any remaining text after the last span (escaped)
-      if (currentIndex < html.length) {
-        const textAfter = html.substring(currentIndex);
-        parts.push(this.escapeHtml(textAfter));
-      }
-
-      return parts.join('');
-    }
-
-    // If no word-level diff spans, escape all HTML
-    return this.escapeHtml(html);
+    return html + renderText(lineContent.slice(cursor));
   }
 
   // Basic HTML escaping function
@@ -175,7 +177,7 @@ class DiffDisplay {
 
   // Updated createLineElement to separate line number and content spans
   // Pass changeType to formatLine
-  createLineElement(changeType, lineContent, isCodeContent) {
+  createLineElement(changeType, lineContent, isCodeContent, highlights?: DiffHighlightRange[]) {
     const lineContainer = document.createElement('div');
     const lineNumberElement = document.createElement('span');
 
@@ -194,7 +196,7 @@ class DiffDisplay {
 
     // All content formatting is now handled by formatLine
     // Pass changeType to formatLine
-    contentElement.innerHTML = this.formatLine(lineContent, isCodeContent, changeType);
+    contentElement.innerHTML = this.formatLine(lineContent, isCodeContent, changeType, highlights);
 
     contentElement.classList.add('diff-content');
     if (changeType !== 'unchanged') {
@@ -216,9 +218,10 @@ class DiffDisplay {
    *   - 'added': The line was added.
    *   - 'removed': The line was removed.
    *   - 'unchanged': The line is unchanged.
+   * @param {DiffHighlightRange[]} [highlights] - Changed-word ranges of a word-diffed row.
    * @returns {string} The formatted line content, with appropriate HTML and syntax highlighting.
    */
-  formatLine(lineContent, isCodeContent, changeType) {
+  formatLine(lineContent, isCodeContent, changeType, highlights?: DiffHighlightRange[]) {
     // A carriage return is a meaningful diff input when whitespace is not
     // ignored. Show it explicitly instead of writing it to the HTML container,
     // whose parser normalizes it to a newline and creates an extra visual row.
@@ -242,9 +245,9 @@ class DiffDisplay {
         return this.escapeHtml(displayLineContent) + '\n';
       }
     } else {
-      // For added, removed, or non-code lines, or lines with word diffs (handled by escapeHtmlPreserveDiff)
-      // Use escapeHtmlPreserveDiff to handle potential word-diff spans correctly
-      return this.escapeHtmlPreserveDiff(displayLineContent) + '\n';
+      // Added, removed, or non-code lines: escape the text and wrap any
+      // word-diff highlight ranges.
+      return this.renderHighlightedLine(lineContent, changeType, highlights) + '\n';
     }
   }
 
@@ -265,9 +268,10 @@ class DiffDisplay {
 
   // Renamed from createLineNumberHTML to getLineNumberText to reflect it returns text
   getLineNumberText(changeType, minDigits = 3) {
-    // Ensure minimum width for alignment, calculate max digits needed
-    // This calculation might need refinement based on total lines, but is a start
+    // Pad to the render-wide width, never narrower than the numbers on this
+    // row (rows built outside displayDiff) or the visual minimum.
     const maxDigits = Math.max(
+      this.lineNumberDigits,
       this.originalLineNumber.toString().length,
       this.modifiedLineNumber.toString().length,
       minDigits // Ensure a minimum width visually
@@ -605,11 +609,11 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     getClearButton: () => ClearButton | null
   ) => {
     const fileOptions = {
-      onText: (text: string, file: File) => {
+      onText: (text: string, file: File, detail: LoadedFileDetail) => {
         rememberPaneText(pane, text, file.name);
         getClearButton()?.updateVisibility();
         setInlineError('');
-        NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
+        NotificationManager.show(describeLoadedFile(file.name, detail), 2000, { type: 'success' });
       },
       onError: (message: string) => NotificationManager.show(message, 3000, { type: 'error' as const })
     };

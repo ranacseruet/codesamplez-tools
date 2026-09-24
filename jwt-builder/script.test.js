@@ -457,7 +457,7 @@ describe('JWT Builder UI Tests', () => {
       expect(jwt).toBeNull();
       expect(mockBuilder.buildJWT).not.toHaveBeenCalled();
       expect(document.getElementById('jwt-builder-error-status').textContent)
-        .toBe('Error: Expiration Time (exp) must be an ISO 8601 date or UNIX timestamp');
+        .toBe('Error: Expiration Time (exp) must be an ISO 8601 date or a UNIX timestamp in seconds (10+ digits)');
       expect(document.getElementById('exp').getAttribute('aria-invalid')).toBe('true');
     });
 
@@ -469,7 +469,7 @@ describe('JWT Builder UI Tests', () => {
       expect(jwt).toBeNull();
       expect(mockBuilder.buildJWT).not.toHaveBeenCalled();
       expect(document.getElementById('jwt-builder-error-status').textContent)
-        .toBe('Error: Expiration Time (exp) must be an ISO 8601 date or UNIX timestamp');
+        .toBe('Error: Expiration Time (exp) must be an ISO 8601 date or a UNIX timestamp in seconds (10+ digits)');
     });
 
     test('handles invalid date input for nbf', async () => {
@@ -480,7 +480,7 @@ describe('JWT Builder UI Tests', () => {
       expect(jwt).toBeNull();
       expect(mockBuilder.buildJWT).not.toHaveBeenCalled();
       expect(document.getElementById('jwt-builder-error-status').textContent)
-        .toBe('Error: Not Before (nbf) must be an ISO 8601 date or UNIX timestamp');
+        .toBe('Error: Not Before (nbf) must be an ISO 8601 date or a UNIX timestamp in seconds (10+ digits)');
     });
 
     test('handles invalid date input for iat', async () => {
@@ -491,7 +491,7 @@ describe('JWT Builder UI Tests', () => {
       expect(jwt).toBeNull();
       expect(mockBuilder.buildJWT).not.toHaveBeenCalled();
       expect(document.getElementById('jwt-builder-error-status').textContent)
-        .toBe('Error: Issued At (iat) must be an ISO 8601 date or UNIX timestamp');
+        .toBe('Error: Issued At (iat) must be an ISO 8601 date or a UNIX timestamp in seconds (10+ digits)');
     });
   });
 

@@ -1,6 +1,6 @@
 {
   "id": "data-format-converter",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "title": "Data Format Converter",
   "description": "Use our free online data format converter tool to convert between JSON, XML, and YAML data formats seamlessly. 100% client-side processing.",
   "catalogGroupId": "encoders-decoders",

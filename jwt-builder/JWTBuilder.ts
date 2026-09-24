@@ -23,7 +23,10 @@ export class JWTBuilder {
     const trimmedValue = value.trim();
     const numericValue = Number(trimmedValue);
     if (trimmedValue !== '' && Number.isFinite(numericValue)) {
-      if (!/^[+-]?\d+$/.test(trimmedValue) || !Number.isSafeInteger(numericValue)) {
+      // Require seconds-precision width (10+ digits, i.e. 2001 onward): a
+      // short integer like "2025" is almost always a year typed into the
+      // field, and accepting it would silently mint exp = 1970-01-01T00:33:45Z.
+      if (!/^[+-]?\d{10,}$/.test(trimmedValue) || !Number.isSafeInteger(numericValue)) {
         return null;
       }
       return numericValue;

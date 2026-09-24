@@ -78,6 +78,29 @@ describe('DiffDisplay', () => {
     });
   });
 
+  describe('gutter width', () => {
+    const gutterTexts = () => mockElement.appendChild.mock.calls.map(([line]) => line.children[0].textContent);
+
+    it('pads every row to the widest line number, not per row', () => {
+      const diffResults = Array.from({ length: 1000 }, (_, index) => ['unchanged', `line ${index + 1}`]);
+      diffResults.push(['added', 'extra']);
+
+      diffDisplay.displayDiff(diffResults, false);
+
+      const texts = gutterTexts();
+      expect(texts[0]).toBe('   1│   1');
+      expect(texts[998]).toBe(' 999│ 999');
+      expect(texts[999]).toBe('1000│1000');
+      expect(texts[1000]).toBe('    │1001');
+      expect(new Set(texts.map((text) => text.length)).size).toBe(1);
+    });
+
+    it('keeps the three-digit minimum for short diffs', () => {
+      diffDisplay.displayDiff([['removed', 'a'], ['added', 'b']], false);
+      expect(gutterTexts()).toEqual(['  1│   ', '   │  1']);
+    });
+  });
+
   describe('escapeHtml', () => {
     it('should escape HTML special characters', () => {
       const html = '<div class="test">Hello & goodbye</div>';
@@ -95,32 +118,39 @@ describe('DiffDisplay', () => {
     });
   });
 
-  describe('escapeHtmlPreserveDiff', () => {
-    it('should preserve word-level diff spans while escaping other HTML', () => {
-      const html = '<div>Hello <span class="word-removed">world</span> & <span class="word-added">earth</span></div>';
-      const expected = '&lt;div&gt;Hello <span class="word-removed">world</span> &amp; <span class="word-added">earth</span>&lt;/div&gt;';
-      expect(diffDisplay.escapeHtmlPreserveDiff(html)).toBe(expected);
+  describe('renderHighlightedLine', () => {
+    it('wraps highlight ranges in spans and escapes everything', () => {
+      const line = '<div>Hello world & earth</div>';
+      expect(diffDisplay.renderHighlightedLine(line, 'removed', [[11, 16]])).toBe(
+        '&lt;div&gt;Hello <span class="word-removed">world</span> &amp; earth&lt;/div&gt;'
+      );
+      expect(diffDisplay.renderHighlightedLine(line, 'added', [[19, 24]])).toBe(
+        '&lt;div&gt;Hello world &amp; <span class="word-added">earth</span>&lt;/div&gt;'
+      );
     });
 
-    it('should escape all HTML if no word-level diff spans present', () => {
-      const html = '<div>Hello world</div>';
-      const expected = '&lt;div&gt;Hello world&lt;/div&gt;';
-      expect(diffDisplay.escapeHtmlPreserveDiff(html)).toBe(expected);
+    it('escapes the whole line when there are no ranges', () => {
+      expect(diffDisplay.renderHighlightedLine('<div>Hello world</div>', 'unchanged')).toBe('&lt;div&gt;Hello world&lt;/div&gt;');
+      expect(diffDisplay.renderHighlightedLine('', 'added', [])).toBe('');
     });
 
-    it('should handle empty string', () => {
-      expect(diffDisplay.escapeHtmlPreserveDiff('')).toBe('');
+    it('renders adjacent ranges as separate spans', () => {
+      expect(diffDisplay.renderHighlightedLine('Helloworld', 'added', [[0, 5], [5, 10]])).toBe(
+        '<span class="word-added">Hello</span><span class="word-added">world</span>'
+      );
     });
 
-    it('should handle string with only word-level diff spans', () => {
-      const html = '<span class="word-removed">Hello</span><span class="word-added">world</span>';
-      expect(diffDisplay.escapeHtmlPreserveDiff(html)).toBe(html);
+    it('shows line text that looks like a highlight span as text, not markup', () => {
+      const line = 'x <span class="word-added">fake</span> y';
+      expect(diffDisplay.renderHighlightedLine(line, 'added', [[0, 1]])).toBe(
+        '<span class="word-added">x</span> &lt;span class=&quot;word-added&quot;&gt;fake&lt;/span&gt; y'
+      );
     });
 
-    it('should escape HTML inside word-level diff spans', () => {
-      const html = '<span class="word-added"><div id="app-shell-footer"></div></span>';
-      const expected = '<span class="word-added">&lt;div id=&quot;app-shell-footer&quot;&gt;&lt;/div&gt;</span>';
-      expect(diffDisplay.escapeHtmlPreserveDiff(html)).toBe(expected);
+    it('marks carriage returns inside and outside highlight ranges', () => {
+      expect(diffDisplay.renderHighlightedLine('a\rb\r', 'removed', [[2, 4]])).toBe(
+        'a\u240d<span class="word-removed">b\u240d</span>'
+      );
     });
   });
 
@@ -177,16 +207,15 @@ describe('DiffDisplay', () => {
       expect(contentSpan.textContent).toBe('<h1>Hello</h1>\n');
     });
 
-    it('should preserve word-level diff spans while escaping other HTML', () => {
-      const htmlWithDiff = '<div>Hello <span class="word-removed">world</span></div>';
-      const lineContainer = diffDisplay.createLineElement('removed', htmlWithDiff, false);
+    it('should wrap highlight ranges in word-level spans while escaping other HTML', () => {
+      const lineContainer = diffDisplay.createLineElement('removed', '<div>Hello world</div>', false, [[11, 16]]);
       const contentSpan = lineContainer.children[1];
       expect(contentSpan.innerHTML).toBe('&lt;div&gt;Hello <span class="word-removed">world</span>&lt;/div&gt;\n');
     });
 
     it('should render HTML inside word-level added spans as text, not live elements', () => {
-      const footerAsWordAdded = '<span class="word-added"><div id="app-shell-footer"></div></span>';
-      const lineContainer = diffDisplay.createLineElement('added', footerAsWordAdded, false);
+      const footer = '<div id="app-shell-footer"></div>';
+      const lineContainer = diffDisplay.createLineElement('added', footer, false, [[0, footer.length]]);
       const contentElement = lineContainer.children[1];
 
       expect(contentElement.innerHTML).toBe(

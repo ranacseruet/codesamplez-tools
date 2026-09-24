@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.4] - 2026-09-24
+
+### JSON Editor
+
+- Holding Cmd/Ctrl+Enter runs the primary action once instead of repeating.
+
 ## [1.0.3] - 2026-09-21
 
 ### JSON Editor

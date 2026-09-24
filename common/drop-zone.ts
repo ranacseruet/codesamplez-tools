@@ -19,6 +19,8 @@
  *   long as at least one drop zone is registered.
  */
 
+import { formatBytes } from './format-utils';
+
 export type DropZoneCleanup = () => void;
 
 /**
@@ -45,6 +47,15 @@ interface DropZoneBaseOptions {
 }
 
 /**
+ * Context about the drop or pick that produced a file. Only the first file of
+ * a multi-file drop is loaded; `ignoredFileCount` says how many were skipped
+ * so the tool's own "Loaded …" toast can say so (see `describeLoadedFile`).
+ */
+export interface LoadedFileDetail {
+    ignoredFileCount: number;
+}
+
+/**
  * Handlers are mutually exclusive: `onText` gets the decoded contents (and the
  * module applies the binary-content guard), while `onFile` hands over the raw
  * `File` unread, for tools like base64-converter that have their own
@@ -52,19 +63,23 @@ interface DropZoneBaseOptions {
  */
 export type DropZoneOptions = DropZoneBaseOptions &
     (
-        | { onText: (text: string, file: File) => void; onFile?: never }
-        | { onFile: (file: File) => void; onText?: never }
+        | { onText: (text: string, file: File, detail: LoadedFileDetail) => void; onFile?: never }
+        | { onFile: (file: File, detail: LoadedFileDetail) => void; onText?: never }
     );
 
-function formatSizeLimit(bytes: number): string {
-    if (bytes < 1024 * 1024) {
-        const kibibytes = bytes / 1024;
-        return kibibytes % 1 === 0 ? `${kibibytes} KiB` : `${kibibytes.toFixed(1)} KiB`;
+/**
+ * The success message for a loaded file: "Loaded notes.txt", plus a note when
+ * other files in the same drop were skipped. Tools share one notification
+ * element, so the skip note rides along with the load toast rather than being
+ * a separate toast the load message would immediately replace.
+ */
+export function describeLoadedFile(label: string, detail?: LoadedFileDetail): string {
+    const ignored = detail?.ignoredFileCount ?? 0;
+    if (ignored <= 0) {
+        return `Loaded ${label}`;
     }
 
-    const megabytes = bytes / (1024 * 1024);
-    // Whole numbers read better in an error toast ("limit 5 MB", not "5.0 MB").
-    return megabytes % 1 === 0 ? `${megabytes} MB` : `${megabytes.toFixed(1)} MB`;
+    return `Loaded ${label}. Only one file is used at a time, so ${ignored} other ${ignored === 1 ? 'file was' : 'files were'} ignored.`;
 }
 
 /**
@@ -130,13 +145,14 @@ function releaseDocumentGuard(): void {
  */
 function processFile(
     file: File,
+    detail: LoadedFileDetail,
     options: DropZoneOptions,
     beginRead: () => () => boolean
 ): void {
     const maxBytes = options.maxBytes ?? DROP_ZONE_MAX_BYTES;
 
     if (file.size > maxBytes) {
-        options.onError?.(`"${file.name}" is too large to load (limit ${formatSizeLimit(maxBytes)}).`);
+        options.onError?.(`"${file.name}" is too large to load (limit ${formatBytes(maxBytes)}).`);
         return;
     }
 
@@ -144,7 +160,7 @@ function processFile(
 
     if (options.onFile) {
         if (!isStale()) {
-            options.onFile(file);
+            options.onFile(file, detail);
         }
         return;
     }
@@ -160,7 +176,7 @@ function processFile(
                 options.onError?.(`"${file.name}" looks like a binary file. Use a text file instead.`);
                 return;
             }
-            onText(text, file);
+            onText(text, file, detail);
         })
         .catch(() => {
             // A superseded or disposed read reports nothing: the user has
@@ -250,13 +266,14 @@ export function registerDropZone(target: HTMLElement, options: DropZoneOptions):
         event.preventDefault();
         reset();
 
-        const file = event.dataTransfer?.files?.[0];
+        const files = event.dataTransfer?.files;
+        const file = files?.[0];
         if (!file) {
             options.onError?.('No file found in that drop. Try again.');
             return;
         }
 
-        processFile(file, { ...options, maxBytes }, () => {
+        processFile(file, { ignoredFileCount: files.length - 1 }, { ...options, maxBytes }, () => {
             const readId = (latestReadId += 1);
             return () => disposed || readId !== latestReadId;
         });
@@ -298,11 +315,13 @@ export function registerFileInput(target: HTMLInputElement, options: DropZoneOpt
     let latestReadId = 0;
 
     const handleChange = () => {
-        const file = target.files?.[0];
+        const files = target.files;
+        const file = files?.[0];
+        const ignoredFileCount = files ? files.length - 1 : 0;
         target.value = '';
         if (!file) return;
 
-        processFile(file, options, () => {
+        processFile(file, { ignoredFileCount }, options, () => {
             const readId = (latestReadId += 1);
             return () => disposed || readId !== latestReadId;
         });

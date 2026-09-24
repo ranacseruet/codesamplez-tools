@@ -1061,7 +1061,7 @@ describe('JSONFormatter', () => {
         fileInput.dispatchEvent(new Event('change', { bubbles: true }));
         await new Promise((resolve) => setTimeout(resolve, 0));
 
-        expect(formatter.loadDroppedText).toHaveBeenCalledWith('{"picker": true}', 'picker.json');
+        expect(formatter.loadDroppedText).toHaveBeenCalledWith('{"picker": true}', 'picker.json', { ignoredFileCount: 0 });
       });
 
       test('surfaces a picker binary-content error through the shared path', async () => {
@@ -1140,6 +1140,19 @@ describe('JSONFormatter', () => {
       } else {
         throw new Error('input callback not set');
       }
+      jest.useRealTimers();
+    });
+
+    test('skips the debounced typing stats when a format run started after the edit', () => {
+      jest.useFakeTimers();
+      formatter.clearError = jest.fn();
+      formatter.updateStats = jest.fn();
+      formatter.initializeEvents();
+      callbacks.input.input();
+      // A format run (e.g. Cmd+Enter) starts inside the debounce window.
+      formatter.currentRunId += 1;
+      jest.advanceTimersByTime(200);
+      expect(formatter.updateStats).not.toHaveBeenCalled();
       jest.useRealTimers();
     });
 

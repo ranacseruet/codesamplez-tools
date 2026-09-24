@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.5] - 2026-09-24
+
+### CSS Minifier
+
+- One minification pipeline (minifyCSS) backs the UI; CSS validation no longer adds and removes a style element in the page; a multi-file drop says which file was loaded; size labels use the shared B/KiB/MB formatter.
+
 ## [1.0.4] - 2026-09-24
 
 ### CSS Minifier

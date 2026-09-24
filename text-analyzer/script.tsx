@@ -2,7 +2,7 @@ import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { NotificationManager } from '../common/notification-manager';
 import ClearButton from '../common/clear-button/ClearButton';
-import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import { describeLoadedFile, registerDropZone, registerFileInput } from '../common/drop-zone';
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -56,10 +56,12 @@ function formatStatValue(key: string, value: unknown, keyword?: string | null): 
         if (typeof value !== 'number') {
             return String(value);
         }
-        const boundedValue = key === 'readabilityScore'
-            ? Math.min(Math.max(value, 0), 100)
-            : Math.max(value, 0);
-        return boundedValue.toFixed(2);
+        // Flesch Reading Ease is shown unclamped: the formula runs past 100
+        // for very simple text and below 0 for very hard text, and clamping
+        // made every hard text read as the same 0.00. A negative grade level
+        // carries no meaning, so that one still floors at 0.
+        const displayValue = key === 'readabilityScore' ? value : Math.max(value, 0);
+        return displayValue.toFixed(2);
     }
 
     if (key === 'keywordDensity') {
@@ -163,9 +165,9 @@ export function TextAnalyzerApp() {
         }
 
         const fileOptions = {
-            onText: (droppedText, file) => {
+            onText: (droppedText, file, detail) => {
                 setText(droppedText);
-                NotificationManager.show(`Loaded ${file.name}`, 2000, { type: 'success' });
+                NotificationManager.show(describeLoadedFile(file.name, detail), 2000, { type: 'success' });
             },
             onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
         };

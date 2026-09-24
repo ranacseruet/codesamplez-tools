@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.4] - 2026-09-24
+
+### JWT Decoder & Validator
+
+- A signature-verification runtime failure is logged once instead of twice; holding Cmd/Ctrl+Enter no longer repeats.
+
 ## [1.0.3] - 2026-09-21
 
 ### JWT Decoder & Validator

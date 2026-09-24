@@ -339,6 +339,21 @@ describe('Base64Converter UI (script.tsx)', () => {
             );
         });
 
+        test('should reject an upload over the 25 MB ceiling with a toast', () => {
+            const mockFile = new File(['x'], 'huge.bin', { type: 'application/octet-stream' });
+            Object.defineProperty(mockFile, 'size', { configurable: true, value: 25 * 1024 * 1024 + 1 });
+            Object.defineProperty(elements.fileInput, 'files', { configurable: true, value: [mockFile] });
+
+            elements.fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+            expect(mockFileReaderInstance.readAsDataURL).not.toHaveBeenCalled();
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                '"huge.bin" is too large to load (limit 25 MB).',
+                3000,
+                expect.objectContaining({ type: 'error' })
+            );
+        });
+
         test('should encode a file dropped on the input through the upload path', () => {
             const mockFile = new File(['Test content'], 'dropped.txt', { type: 'text/plain' });
 
@@ -351,6 +366,18 @@ describe('Base64Converter UI (script.tsx)', () => {
 
             expect(elements.result.textContent).toBe('VGVzdCBjb250ZW50');
             expect(elements.input.value).toContain('[File: dropped.txt uploaded');
+        });
+
+        test('should warn when a multi-file drop only encodes the first file', () => {
+            const first = new File(['one'], 'one.txt', { type: 'text/plain' });
+            fireFileDragEvent(elements.input, 'drop', [first, new File(['two'], 'two.txt')]);
+
+            expect(mockFileReaderInstance.readAsDataURL).toHaveBeenCalledWith(first);
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                'Loaded one.txt. Only one file is used at a time, so 1 other file was ignored.',
+                4000,
+                expect.objectContaining({ type: 'warning' })
+            );
         });
 
         test('should surface a rejected drop as an error toast', async () => {
@@ -655,7 +682,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             
             await converter.handleDownload();
             
-            expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith('Hello World', 'output.txt', 'application/octet-stream');
+            expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith('Hello World', 'output.txt', 'text/plain;charset=utf-8');
             expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.txt"', 2000, { type: 'success' });
         });
 
@@ -677,7 +704,7 @@ describe('Base64Converter UI (script.tsx)', () => {
 
             await converter.handleDownload();
 
-            expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith(textOutput, 'output.txt', 'application/octet-stream');
+            expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith(textOutput, 'output.txt', 'text/plain;charset=utf-8');
         });
 
         test('should handle binary content download from Data URI', async () => {
@@ -1383,8 +1410,7 @@ describe('Base64Converter UI (script.tsx)', () => {
         const {
             base64HeadToBytes,
             sniffRasterImageMimeType,
-            base64DecodedSize,
-            formatByteSize
+            base64DecodedSize
         } = require('./script');
 
         test('base64HeadToBytes decodes only a bounded head', () => {
@@ -1422,17 +1448,6 @@ describe('Base64Converter UI (script.tsx)', () => {
             expect(base64DecodedSize('SGVsbG8=')).toBe(5);
             expect(base64DecodedSize('SGVsbG8gV29ybGQ=')).toBe(11);
             expect(base64DecodedSize('YWI=')).toBe(2);
-        });
-
-        test('formatByteSize formats across units', () => {
-            expect(formatByteSize(Number.NaN)).toBe('unknown size');
-            expect(formatByteSize(-1)).toBe('unknown size');
-            expect(formatByteSize(0)).toBe('0 B');
-            expect(formatByteSize(512)).toBe('512 B');
-            expect(formatByteSize(2048)).toBe('2 KiB');
-            expect(formatByteSize(1536)).toBe('1.5 KiB');
-            expect(formatByteSize(5 * 1024 * 1024)).toBe('5 MB');
-            expect(formatByteSize(1.5 * 1024 * 1024)).toBe('1.5 MB');
         });
 
     });

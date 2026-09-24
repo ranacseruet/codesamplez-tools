@@ -338,7 +338,7 @@ export async function buildJWT() {
     }
     if (invalidDateClaim) {
       setInlineError(
-        `Error: ${DATE_CLAIM_LABELS[invalidDateClaim]} must be an ISO 8601 date or UNIX timestamp`,
+        `Error: ${DATE_CLAIM_LABELS[invalidDateClaim]} must be an ISO 8601 date or a UNIX timestamp in seconds (10+ digits)`,
         invalidDateClaim
       );
       resultDiv.textContent = '';

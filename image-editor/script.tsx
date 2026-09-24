@@ -5,7 +5,8 @@ import type { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import { describeLoadedFile, registerDropZone, registerFileInput, type LoadedFileDetail } from '../common/drop-zone';
+import { formatBytes } from '../common/format-utils';
 import toolMetadata from './tool.meta.json';
 import {
     ADJUSTMENT_PRESETS,
@@ -23,7 +24,6 @@ import {
     computeResizeDims,
     exportFilename,
     exportMime,
-    formatBytes,
     isDefaultAdjustments,
     matchAdjustmentPreset,
     moveCropBox,
@@ -260,7 +260,25 @@ export function ImageEditorApp() {
     const [format, setFormat] = useState<ExportFormat>('png');
     const [quality, setQuality] = useState(92);
     const [estimate, setEstimate] = useState<string | null>(null);
+    // Controls are disabled while any async operation (decode, bake, export)
+    // is in flight. Operations can overlap — a file dropped mid-crop starts a
+    // decode — so busy is ref-counted: each operation's `endBusy` only
+    // re-enables the UI once every other in-flight operation has finished too.
     const [busy, setBusy] = useState(false);
+    const busyCountRef = useRef(0);
+    const beginBusy = () => {
+        busyCountRef.current += 1;
+        setBusy(true);
+        let ended = false;
+        return () => {
+            if (ended) return;
+            ended = true;
+            busyCountRef.current -= 1;
+            if (busyCountRef.current === 0) {
+                setBusy(false);
+            }
+        };
+    };
     const [openSections, setOpenSections] = useState<Record<ConfigSectionId, boolean>>({ ...DEFAULT_OPEN_SECTIONS });
 
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -274,7 +292,7 @@ export function ImageEditorApp() {
     // even if the first decode resolves last, so each load checks that it
     // is still the latest request before installing anything.
     const loadSeqRef = useRef(0);
-    const loadFileRef = useRef<(file: File) => void>(() => undefined);
+    const loadFileRef = useRef<(file: File, detail?: LoadedFileDetail) => void>(() => undefined);
     const exportRef = useRef<() => void>(() => undefined);
 
     const setLoadedImage = (next: LoadedImage | null) => {
@@ -330,7 +348,7 @@ export function ImageEditorApp() {
         return true;
     };
 
-    const loadImageFile = async (file: File) => {
+    const loadImageFile = async (file: File, detail?: LoadedFileDetail) => {
         const validationError = validateImageFile(file);
         if (validationError) {
             notifyError(validationError);
@@ -340,7 +358,7 @@ export function ImageEditorApp() {
         loadSeqRef.current += 1;
         const requestId = loadSeqRef.current;
 
-        setBusy(true);
+        const endBusy = beginBusy();
         try {
             const bitmap = await createImageBitmap(file);
             if (requestId !== loadSeqRef.current) {
@@ -363,13 +381,13 @@ export function ImageEditorApp() {
             });
             resetEditState();
             syncResizeInputs(bitmap.width, bitmap.height);
-            notifySuccess(`Loaded ${file.name} (${bitmap.width} × ${bitmap.height})`);
+            notifySuccess(describeLoadedFile(`${file.name} (${bitmap.width} × ${bitmap.height})`, detail));
         } catch {
             if (requestId === loadSeqRef.current) {
                 notifyError(`Could not decode “${file.name}”. Try a different file.`);
             }
         } finally {
-            setBusy(false);
+            endBusy();
         }
     };
 
@@ -379,7 +397,7 @@ export function ImageEditorApp() {
         loadSeqRef.current += 1;
         const requestId = loadSeqRef.current;
 
-        setBusy(true);
+        const endBusy = beginBusy();
         try {
             const sample = await buildSampleImage();
             if (requestId !== loadSeqRef.current) {
@@ -395,14 +413,13 @@ export function ImageEditorApp() {
                 notifyError('Could not build the sample image in this browser.');
             }
         } finally {
-            setBusy(false);
+            endBusy();
         }
     };
 
     const clearImage = () => {
         setLoadedImage(null);
         resetEditState();
-        setBusy(false);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -433,7 +450,7 @@ export function ImageEditorApp() {
         }
 
         const box = clampCropRect(cropBox, current.working.width, current.working.height, null);
-        setBusy(true);
+        const endBusy = beginBusy();
         try {
             const bitmap = await renderToBitmap(current.working, box.width, box.height, (ctx) => {
                 ctx.drawImage(current.working, box.x, box.y, box.width, box.height, 0, 0, box.width, box.height);
@@ -446,7 +463,7 @@ export function ImageEditorApp() {
                 notifyError('Could not apply the crop in this browser.');
             }
         } finally {
-            setBusy(false);
+            endBusy();
         }
     };
 
@@ -462,7 +479,7 @@ export function ImageEditorApp() {
             ? rotatedDimensions(source.width, source.height, 90)
             : { width: source.width, height: source.height };
 
-        setBusy(true);
+        const endBusy = beginBusy();
         try {
             const bitmap = await renderToBitmap(source, dims.width, dims.height, (ctx) => {
                 ctx.translate(dims.width / 2, dims.height / 2);
@@ -485,7 +502,7 @@ export function ImageEditorApp() {
                 notifyError('Could not rotate or flip in this browser.');
             }
         } finally {
-            setBusy(false);
+            endBusy();
         }
     };
 
@@ -516,7 +533,7 @@ export function ImageEditorApp() {
             return;
         }
 
-        setBusy(true);
+        const endBusy = beginBusy();
         try {
             const bitmap = await renderToBitmap(current.working, dims.width, dims.height, (ctx) => {
                 ctx.imageSmoothingEnabled = true;
@@ -531,7 +548,7 @@ export function ImageEditorApp() {
                 notifyError('Could not resize in this browser.');
             }
         } finally {
-            setBusy(false);
+            endBusy();
         }
     };
 
@@ -541,7 +558,7 @@ export function ImageEditorApp() {
             return;
         }
 
-        setBusy(true);
+        const endBusy = beginBusy();
         try {
             const { working } = current;
             const canvas = document.createElement('canvas');
@@ -575,7 +592,7 @@ export function ImageEditorApp() {
         } catch {
             notifyError('Export failed in this browser. Try a different format.');
         } finally {
-            setBusy(false);
+            endBusy();
         }
     };
 
@@ -587,7 +604,7 @@ export function ImageEditorApp() {
     // once; the wrappers delegate to refs so handlers always see fresh state.
     useEffect(() => {
         const fileOptions = {
-            onFile: (file: File) => loadFileRef.current(file),
+            onFile: (file: File, detail: LoadedFileDetail) => loadFileRef.current(file, detail),
             onError: (message: string) => notifyError(message),
             maxBytes: MAX_IMAGE_BYTES
         };
@@ -617,7 +634,7 @@ export function ImageEditorApp() {
             }
 
             event.preventDefault();
-            loadFileRef.current(files[0]);
+            loadFileRef.current(files[0], { ignoredFileCount: files.length - 1 });
         };
 
         document.addEventListener('paste', handlePaste);

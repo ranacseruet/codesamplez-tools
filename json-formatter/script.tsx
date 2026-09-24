@@ -4,7 +4,7 @@ import DownloadManager from '../common/DownloadManager';
 import ClearButton from '../common/clear-button/ClearButton';
 import { scheduleTask, nextFrame } from '../common/scheduler-utils';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import { describeLoadedFile, registerDropZone, registerFileInput, type LoadedFileDetail } from '../common/drop-zone';
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
@@ -117,7 +117,7 @@ export function JsonFormatterApp() {
             </div>
           </div>
           <p id="jsonSchemaHelper" className="jsonf-schema-helper">
-            Draft 7 is used when <code>$schema</code> is missing. Validation runs locally on strict raw JSON; local fragment references are supported, while external references are not fetched.
+            Draft 7 is used when <code>$schema</code> is missing; Draft 2020-12-only keywords such as <code>prefixItems</code> are flagged, since Draft 7 ignores them. Validation runs locally on strict raw JSON; local fragment references are supported, while external references are not fetched.
           </p>
           <div className="jsonf-schema-status-row">
             <div id="jsonSchemaStatus" className="jsonf-schema-status" role="status" aria-live="polite" />
@@ -396,7 +396,14 @@ export class JSONFormatter {
     this.schemaStatus.classList.remove('error', 'success', 'warning');
 
     if (result.outcome === 'valid') {
-      this.schemaStatus.textContent = `Valid against ${result.draft === 'draft-07' ? 'Draft 7' : 'Draft 2020-12'}.`;
+      const draftLabel = result.draft === 'draft-07' ? 'Draft 7' : 'Draft 2020-12';
+      if (result.ignoredKeywords?.length) {
+        // A pass that skipped keywords the schema relies on is not a clean pass.
+        this.schemaStatus.textContent = `Valid against ${draftLabel}, but ${result.ignoredKeywords.join(', ')} ${result.ignoredKeywords.length === 1 ? 'is a Draft 2020-12 keyword' : 'are Draft 2020-12 keywords'} that Draft 7 ignores. Add a $schema declaration or select Draft 2020-12.`;
+        this.schemaStatus.classList.add('warning');
+        return;
+      }
+      this.schemaStatus.textContent = `Valid against ${draftLabel}.`;
       this.schemaStatus.classList.add('success');
       return;
     }
@@ -487,7 +494,7 @@ export class JSONFormatter {
 
     if (this.input) {
       registerDropZone(this.input, {
-        onText: (text, file) => this.loadDroppedText(text, file.name),
+        onText: (text, file, detail) => this.loadDroppedText(text, file.name, detail),
         onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
       });
     }
@@ -495,7 +502,7 @@ export class JSONFormatter {
     const fileInput = document.getElementById('json-formatter-file');
     if (fileInput instanceof HTMLInputElement) {
       registerFileInput(fileInput, {
-        onText: (text, file) => this.loadDroppedText(text, file.name),
+        onText: (text, file, detail) => this.loadDroppedText(text, file.name, detail),
         onError: (message) => NotificationManager.show(message, 3000, { type: 'error' })
       });
     }
@@ -568,7 +575,11 @@ export class JSONFormatter {
     }
 
     if (this.input) {
-      const debouncedUpdate = JSONFormatter.debounce(() => {
+      // Skip the typing-stats refresh if a format run started after the
+      // edit (e.g. Cmd+Enter right after typing): that run reports its own
+      // stats, and this late update would zero its Formatted Size.
+      const debouncedUpdate = JSONFormatter.debounce((runIdAtEdit: number) => {
+        if (runIdAtEdit !== this.currentRunId) return;
         this.updateStats(this.input.value, '');
       }, 150);
 
@@ -576,7 +587,7 @@ export class JSONFormatter {
         this.clearError();
         this.clearValidationStatus();
         this.updatePrimaryActionLabel();
-        debouncedUpdate();
+        debouncedUpdate(this.currentRunId);
       });
     }
 
@@ -597,9 +608,13 @@ export class JSONFormatter {
     const validationRunId = ++this.schemaValidationRunId;
     const schemaText = this.schemaInput?.value ?? '';
     const hasSchema = Boolean(schemaText.trim());
+    // Snapshot the input once: every report this run makes (stats, error
+    // position, schema data) must describe the text it actually formatted,
+    // not whatever the textarea holds by the time an await resolves.
+    const rawInput = this.input.value;
 
     try {
-      let inputValue = this.input.value.trim();
+      let inputValue = rawInput.trim();
 
       // UI Feedback: Show loading state (first-text-node swap keeps `.c-kbd`)
       this.setPrimaryButtonLabel(hasSchema ? 'Formatting & validating...' : 'Formatting...');
@@ -654,7 +669,7 @@ export class JSONFormatter {
       this.downloadBtn.disabled = false;
       this.expandAllBtn.disabled = false;
       this.collapseAllBtn.disabled = false;
-      this.updateStats(this.input.value.trim(), formattedString);
+      this.updateStats(inputValue, formattedString);
 
       // Minified output is identical in the tree view, so surface the effect by
       // switching to the plain (single-line) view automatically.
@@ -669,7 +684,7 @@ export class JSONFormatter {
 
       if (hasSchema) {
         await this.runSchemaValidation(
-          { data: this.input.value, schema: schemaText, draft: this.getSchemaDraft() },
+          { data: rawInput, schema: schemaText, draft: this.getSchemaDraft() },
           runId,
           validationRunId
         );
@@ -680,7 +695,7 @@ export class JSONFormatter {
       // The finally block's own runId check restores button state correctly.
       if (runId !== this.currentRunId) return;
       const fallbackMessage = error instanceof Error ? error.message : String(error);
-      this.reportJsonError(this.input.value, this.autoFixCheckbox.checked, fallbackMessage);
+      this.reportJsonError(rawInput, this.autoFixCheckbox.checked, fallbackMessage);
       this.copyBtn.disabled = true;
       this.downloadBtn.disabled = true;
       this.expandAllBtn.disabled = true;
@@ -690,13 +705,13 @@ export class JSONFormatter {
       if (this.emptyStateEl) {
         this.emptyStateEl.style.display = '';
       }
-      this.updateStats(this.input.value, '');
+      this.updateStats(rawInput, '');
 
       // Unreachable for a superseded run (the guard above bailed out), so the
       // schema call below always belongs to the current run.
       if (hasSchema) {
         await this.runSchemaValidation(
-          { data: this.input.value, schema: schemaText, draft: this.getSchemaDraft() },
+          { data: rawInput, schema: schemaText, draft: this.getSchemaDraft() },
           runId,
           validationRunId
         );
@@ -1075,7 +1090,7 @@ export class JSONFormatter {
    * Load a dropped file's contents as if they had been pasted. Reuses the
    * Load Sample path so the tree, stats, and Clear button all refresh.
    */
-  loadDroppedText(text: string, fileName: string): void {
+  loadDroppedText(text: string, fileName: string, detail?: LoadedFileDetail): void {
     this.input.value = text;
     this.clearValidationStatus();
     this.updatePrimaryActionLabel();
@@ -1083,7 +1098,7 @@ export class JSONFormatter {
     // Toast before formatting, not after: `formatJSON` raises its own
     // success toast, and they share one notification element — announcing the
     // load first leaves the sequence in the order the user experiences it.
-    NotificationManager.show(`Loaded ${fileName}`, 2000, { type: 'success' });
+    NotificationManager.show(describeLoadedFile(fileName, detail), 2000, { type: 'success' });
     this.formatJSON();
   }
 

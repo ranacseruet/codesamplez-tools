@@ -16,4 +16,10 @@ describe('tool category slugs', () => {
     it('falls back to the default slug for an unknown group', () => {
         expect(getGroupCategorySlug('not-a-real-group')).toBe(DEFAULT_CATEGORY_SLUG);
     });
+
+    it('matches the client-bundle copy in common/app-shell/categorySlugs.ts', () => {
+        const clientSlugs = require('../common/app-shell/categorySlugs');
+        expect(clientSlugs.GROUP_CATEGORY_SLUGS).toEqual(GROUP_CATEGORY_SLUGS);
+        expect(clientSlugs.DEFAULT_CATEGORY_SLUG).toBe(DEFAULT_CATEGORY_SLUG);
+    });
 });

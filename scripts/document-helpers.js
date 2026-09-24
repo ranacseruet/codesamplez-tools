@@ -1,5 +1,9 @@
 // @ts-check
 
+// Pre-paint theme init: apply the saved theme (default dark) before CSS paints
+// so the choice persists across pages with no flash. Must run before stylesheets.
+const THEME_INIT_SCRIPT = `<script>(function(){try{var t=localStorage.getItem('cst-standalone-theme-mode');var m=t==='light'?'light':'dark';var e=document.documentElement;e.setAttribute('data-theme',m);e.setAttribute('data-cst-theme',m);}catch(e){}})();</script>`;
+
 /**
  * @param {string} value
  * @returns {string}
@@ -68,6 +72,7 @@ function formatRootDocumentTitle(pageTitle, brandName) {
 }
 
 module.exports = {
+    THEME_INIT_SCRIPT,
     escapeAttribute,
     escapeHtml,
     escapeJsonForHtml,

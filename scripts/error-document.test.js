@@ -27,7 +27,9 @@ describe('not found document generation', () => {
     it('renders a branded, noindex 404 page that links back to the tools index', () => {
         const html = generateNotFoundDocument();
 
-        expect(html).toContain('<html lang="en" data-theme="dark">');
+        // Same provenance stamp as root/tool pages, so a live 404 is traceable to a build.
+        expect(html).toMatch(/<html lang="en" data-theme="dark" data-build-commit="[0-9a-f]{40}">/);
+        expect(html).toContain("localStorage.getItem('cst-standalone-theme-mode')");
         expect(html).toContain('<title>Page Not Found | CodeSamplez</title>');
         expect(html).toContain('<meta name="robots" content="noindex, follow">');
         expect(html).toContain('<h1 class="main-title">404 — Page Not Found</h1>');

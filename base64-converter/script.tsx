@@ -7,7 +7,8 @@ import CopyButton from '../common/copy-button/CopyButton';
 import { buildShareUrl, readHashOrQueryParam, SHARE_URL_MAX_LENGTH } from '../common/share-url';
 import { copyTextToClipboard } from '../common/clipboard';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
-import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import { describeLoadedFile, registerDropZone, registerFileInput, type LoadedFileDetail } from '../common/drop-zone';
+import { formatBytes } from '../common/format-utils';
 import FileUploadButton from '../common/file-upload';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -171,6 +172,15 @@ const IMAGE_SNIFF_BYTE_BUDGET = 48;
  */
 const UPLOAD_PREVIEW_MAX_BYTES = 15 * 1024 * 1024;
 
+/**
+ * Ceiling for an uploaded or dropped file. Encoding reads the whole file into
+ * memory via `readAsDataURL` and renders a Base64 string a third larger, so an
+ * unbounded multi-GB drop would jank or crash the tab before anything shows.
+ * Set above the preview ceiling: 15-25 MB files still encode, just without a
+ * thumbnail.
+ */
+const UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
+
 function isPreviewableRasterMimeType(mimeType: string | null): boolean {
     return Boolean(mimeType && PREVIEWABLE_RASTER_MIME_TYPES.has(mimeType.toLowerCase()));
 }
@@ -253,21 +263,6 @@ export function sniffRasterImageMimeType(bytes: Uint8Array | null): string | nul
         }
     }
     return null;
-}
-
-export function formatByteSize(bytes: number): string {
-    if (!Number.isFinite(bytes) || bytes < 0) {
-        return 'unknown size';
-    }
-    if (bytes < 1024) {
-        return `${bytes} B`;
-    }
-    if (bytes < 1024 * 1024) {
-        const kibibytes = bytes / 1024;
-        return `${kibibytes % 1 === 0 ? kibibytes : kibibytes.toFixed(1)} KiB`;
-    }
-    const megabytes = bytes / (1024 * 1024);
-    return `${megabytes % 1 === 0 ? megabytes : megabytes.toFixed(1)} MB`;
 }
 
 /**
@@ -650,7 +645,7 @@ const createConverter = (): Base64ConverterInstance => {
                     }
                     const decodedSize = base64DecodedSize(base64Payload);
                     this.imagePreviewMetaBase = previewMimeType
-                        ? `${previewMimeType} · ${decodedSize === null ? 'unknown size' : formatByteSize(decodedSize)}`
+                        ? `${previewMimeType} · ${decodedSize === null ? 'unknown size' : formatBytes(decodedSize)}`
                         : null;
                 }
                 this.downloadSource = isBinaryOutputKind(outputKind) ? rawInput : null;
@@ -755,7 +750,7 @@ const createConverter = (): Base64ConverterInstance => {
                 if (uploadMeta) {
                     uploadMeta.hidden = false;
                     uploadMeta.textContent =
-                        `Preview skipped: file is larger than ${formatByteSize(UPLOAD_PREVIEW_MAX_BYTES)}. ` +
+                        `Preview skipped: file is larger than ${formatBytes(UPLOAD_PREVIEW_MAX_BYTES)}. ` +
                         'Base64 output and Download are still available.';
                 }
                 return;
@@ -779,7 +774,7 @@ const createConverter = (): Base64ConverterInstance => {
                                 ? ` · ${uploadPreview.naturalWidth}×${uploadPreview.naturalHeight}px`
                                 : '';
                         if (uploadMeta) {
-                            uploadMeta.textContent = `${fileMimeType} · ${formatByteSize(file.size)}${dimensions}`;
+                            uploadMeta.textContent = `${fileMimeType} · ${formatBytes(file.size)}${dimensions}`;
                         }
                     };
                     uploadPreview.src = objectUrl;
@@ -787,7 +782,7 @@ const createConverter = (): Base64ConverterInstance => {
                 }
                 if (uploadMeta) {
                     uploadMeta.hidden = false;
-                    uploadMeta.textContent = `${fileMimeType} · ${formatByteSize(file.size)}`;
+                    uploadMeta.textContent = `${fileMimeType} · ${formatBytes(file.size)}`;
                 }
             } catch (_previewError: unknown) {
                 this.clearUploadPreview();
@@ -806,6 +801,9 @@ const createConverter = (): Base64ConverterInstance => {
             try {
                 let content;
                 let filename = 'output.txt';
+                // Text output is a JS string, which Blob always writes as UTF-8
+                // regardless of the encoding selected for decoding — label it so.
+                let mimeType = 'text/plain;charset=utf-8';
 
                 if (shouldDownloadBinary) {
                     const rawInputValue = (this.downloadSource ?? this.elements.input.value).trim();
@@ -840,11 +838,12 @@ const createConverter = (): Base64ConverterInstance => {
                     // Name the file by sniffed raster type when the bytes are a
                     // known image; otherwise keep the legacy .bin name.
                     filename = `output.${this.getFileExtensionFromMimeType(this.detectMimeTypeFromBinary(bytes) || '')}`;
+                    mimeType = 'application/octet-stream';
                 } else {
                     content = outputContent;
                 }
 
-                downloadManager.downloadFile(content, filename, 'application/octet-stream'); // Default to octet-stream for binary
+                downloadManager.downloadFile(content, filename, mimeType);
                 NotificationManager.show(`Content downloaded as "${filename}"`, 2000, { type: 'success' });
             } catch (error: unknown) {
                 console.error('Download error:', error);
@@ -1197,16 +1196,21 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
         sampleButton.addEventListener('click', sampleHandler);
     }
 
-    const handleRawFile = (file: File) => {
+    const handleRawFile = (file: File, detail: LoadedFileDetail) => {
+        // Uploads show no success toast of their own, so a multi-file drop
+        // gets a dedicated note naming the file that was actually encoded.
+        if (detail.ignoredFileCount > 0) {
+            NotificationManager.show(describeLoadedFile(file.name, detail), 4000, { type: 'warning' });
+        }
         void converter.handleFileUpload({ target: { files: [file], value: null } });
     };
 
-    // Base64 is intentionally open to arbitrary binary input and preserves
-    // the legacy picker behavior without the text-tool size ceiling.
+    // Base64 is intentionally open to arbitrary binary input, so it gets its
+    // own ceiling well above the text tools' 5 MB default.
     const fileOptions = {
         onFile: handleRawFile,
         onError: (message: string) => NotificationManager.show(message, 3000, { type: 'error' as const }),
-        maxBytes: Number.POSITIVE_INFINITY
+        maxBytes: UPLOAD_MAX_BYTES
     };
 
     registerFileInput(typedElements.fileInput, fileOptions);
