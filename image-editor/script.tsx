@@ -634,7 +634,7 @@ export function ImageEditorApp() {
             }
 
             event.preventDefault();
-            loadFileRef.current(files[0]);
+            loadFileRef.current(files[0], { ignoredFileCount: files.length - 1 });
         };
 
         document.addEventListener('paste', handlePaste);

@@ -14,6 +14,7 @@ jest.mock('../common/notification-manager', () => ({
 }));
 
 jest.mock('../common/drop-zone', () => ({
+    describeLoadedFile: jest.requireActual('../common/drop-zone').describeLoadedFile,
     registerDropZone: jest.fn(() => jest.fn()),
     registerFileInput: jest.fn(() => jest.fn())
 }));
@@ -903,6 +904,29 @@ describe('ImageEditor Preact runtime', () => {
         document.dispatchEvent(event);
 
         await waitFor(() => expect(byId('image-editor-info')).toHaveTextContent('pasted.png'));
+    });
+
+    it('says when a multi-image paste only loaded the first image', async () => {
+        new ImageEditorToolUI();
+        await waitFor(() =>
+            expect((registerDropZone as jest.Mock).mock.calls.length).toBeGreaterThan(0)
+        );
+
+        const files = [
+            new File(['a'], 'first.png', { type: 'image/png' }),
+            new File(['b'], 'second.png', { type: 'image/png' })
+        ];
+        const event = new Event('paste', { bubbles: true, cancelable: true });
+        Object.defineProperty(event, 'clipboardData', {
+            value: { files: { length: files.length, item: (index: number) => files[index] ?? null } }
+        });
+        document.dispatchEvent(event);
+
+        await waitFor(() => expect(NotificationManager.show).toHaveBeenCalledWith(
+            'Loaded first.png (1200 × 800). Only one file is used at a time, so 1 other file was ignored.',
+            expect.any(Number),
+            expect.anything()
+        ));
     });
 
     it('exports the working image and reports its size', async () => {
