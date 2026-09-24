@@ -801,6 +801,9 @@ const createConverter = (): Base64ConverterInstance => {
             try {
                 let content;
                 let filename = 'output.txt';
+                // Text output is a JS string, which Blob always writes as UTF-8
+                // regardless of the encoding selected for decoding — label it so.
+                let mimeType = 'text/plain;charset=utf-8';
 
                 if (shouldDownloadBinary) {
                     const rawInputValue = (this.downloadSource ?? this.elements.input.value).trim();
@@ -835,11 +838,12 @@ const createConverter = (): Base64ConverterInstance => {
                     // Name the file by sniffed raster type when the bytes are a
                     // known image; otherwise keep the legacy .bin name.
                     filename = `output.${this.getFileExtensionFromMimeType(this.detectMimeTypeFromBinary(bytes) || '')}`;
+                    mimeType = 'application/octet-stream';
                 } else {
                     content = outputContent;
                 }
 
-                downloadManager.downloadFile(content, filename, 'application/octet-stream'); // Default to octet-stream for binary
+                downloadManager.downloadFile(content, filename, mimeType);
                 NotificationManager.show(`Content downloaded as "${filename}"`, 2000, { type: 'success' });
             } catch (error: unknown) {
                 console.error('Download error:', error);

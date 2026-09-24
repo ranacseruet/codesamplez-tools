@@ -670,7 +670,7 @@ describe('Base64Converter UI (script.tsx)', () => {
             
             await converter.handleDownload();
             
-            expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith('Hello World', 'output.txt', 'application/octet-stream');
+            expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith('Hello World', 'output.txt', 'text/plain;charset=utf-8');
             expect(NotificationManager.show).toHaveBeenCalledWith('Content downloaded as "output.txt"', 2000, { type: 'success' });
         });
 
@@ -692,7 +692,7 @@ describe('Base64Converter UI (script.tsx)', () => {
 
             await converter.handleDownload();
 
-            expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith(textOutput, 'output.txt', 'application/octet-stream');
+            expect(converter.downloadManager.downloadFile).toHaveBeenCalledWith(textOutput, 'output.txt', 'text/plain;charset=utf-8');
         });
 
         test('should handle binary content download from Data URI', async () => {
