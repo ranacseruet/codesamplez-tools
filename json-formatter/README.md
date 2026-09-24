@@ -177,7 +177,7 @@ Calculation methodology:
 
 ### JSON Schema Validation
 - Uses a dedicated lazily loaded Web Worker with Ajv 8 and `json-source-map`; the existing formatting worker and initial bundle do not include the validator.
-- Supports Draft 7 and Draft 2020-12 with separate Ajv dialect implementations. `$schema` is auto-detected, with Draft 7 as the missing-declaration default.
+- Supports Draft 7 and Draft 2020-12 with separate Ajv dialect implementations. `$schema` is auto-detected, with Draft 7 as the missing-declaration default. When that default is used and the schema contains Draft 2020-12-only keywords that Draft 7 ignores (`prefixItems`, `unevaluatedProperties`, `dependentRequired`, …), a passing result is reported as a warning naming them.
 - Validates strict raw JSON with no data mutation, one actionable error (`allErrors: false`), and `format` treated as annotation (`validateFormats: false`).
 - Supports fragment-local `$ref`, `$defs`, and `definitions`; external references are rejected and never fetched.
 - Limits schemas to 256 KiB and depth 100, with a five-second worker deadline. A timeout or unavailable worker reports `unavailable` and never runs Ajv on the main thread.

@@ -117,7 +117,7 @@ export function JsonFormatterApp() {
             </div>
           </div>
           <p id="jsonSchemaHelper" className="jsonf-schema-helper">
-            Draft 7 is used when <code>$schema</code> is missing. Validation runs locally on strict raw JSON; local fragment references are supported, while external references are not fetched.
+            Draft 7 is used when <code>$schema</code> is missing; Draft 2020-12-only keywords such as <code>prefixItems</code> are flagged, since Draft 7 ignores them. Validation runs locally on strict raw JSON; local fragment references are supported, while external references are not fetched.
           </p>
           <div className="jsonf-schema-status-row">
             <div id="jsonSchemaStatus" className="jsonf-schema-status" role="status" aria-live="polite" />
@@ -396,7 +396,14 @@ export class JSONFormatter {
     this.schemaStatus.classList.remove('error', 'success', 'warning');
 
     if (result.outcome === 'valid') {
-      this.schemaStatus.textContent = `Valid against ${result.draft === 'draft-07' ? 'Draft 7' : 'Draft 2020-12'}.`;
+      const draftLabel = result.draft === 'draft-07' ? 'Draft 7' : 'Draft 2020-12';
+      if (result.ignoredKeywords?.length) {
+        // A pass that skipped keywords the schema relies on is not a clean pass.
+        this.schemaStatus.textContent = `Valid against ${draftLabel}, but ${result.ignoredKeywords.join(', ')} ${result.ignoredKeywords.length === 1 ? 'is a Draft 2020-12 keyword' : 'are Draft 2020-12 keywords'} that Draft 7 ignores. Add a $schema declaration or select Draft 2020-12.`;
+        this.schemaStatus.classList.add('warning');
+        return;
+      }
+      this.schemaStatus.textContent = `Valid against ${draftLabel}.`;
       this.schemaStatus.classList.add('success');
       return;
     }
