@@ -136,7 +136,8 @@ The "Upload File" feature allows you to directly encode any file into its Base64
 3.  The resulting Base64 string will be displayed in the **Output** area.
 4.  The **Input** area will show a placeholder message, for example: `[File: yourfile.png uploaded and encoded to output]`.
 5.  If the uploaded file is a raster image (PNG, JPEG, GIF, WebP, BMP, AVIF — SVG excluded), a thumbnail preview with its MIME type and size appears alongside the Base64 output. The Base64 output itself is unchanged bare Base64, so copying it back into the **Input** area previews it via magic-byte detection.
-6.  The character encoding selection (`UTF-8`, `ASCII`, etc.) is not applicable when uploading files this way, as the file is treated as binary data for direct Base64 encoding.
+6.  Files up to 25 MB can be uploaded or dropped; larger files are rejected with an error toast, since the whole file is read into browser memory to encode it.
+7.  The character encoding selection (`UTF-8`, `ASCII`, etc.) is not applicable when uploading files this way, as the file is treated as binary data for direct Base64 encoding.
 
 #### Decoding Base64 to Files
 

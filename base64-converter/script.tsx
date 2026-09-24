@@ -172,6 +172,15 @@ const IMAGE_SNIFF_BYTE_BUDGET = 48;
  */
 const UPLOAD_PREVIEW_MAX_BYTES = 15 * 1024 * 1024;
 
+/**
+ * Ceiling for an uploaded or dropped file. Encoding reads the whole file into
+ * memory via `readAsDataURL` and renders a Base64 string a third larger, so an
+ * unbounded multi-GB drop would jank or crash the tab before anything shows.
+ * Set above the preview ceiling: 15-25 MB files still encode, just without a
+ * thumbnail.
+ */
+const UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
+
 function isPreviewableRasterMimeType(mimeType: string | null): boolean {
     return Boolean(mimeType && PREVIEWABLE_RASTER_MIME_TYPES.has(mimeType.toLowerCase()));
 }
@@ -1187,12 +1196,12 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
         void converter.handleFileUpload({ target: { files: [file], value: null } });
     };
 
-    // Base64 is intentionally open to arbitrary binary input and preserves
-    // the legacy picker behavior without the text-tool size ceiling.
+    // Base64 is intentionally open to arbitrary binary input, so it gets its
+    // own ceiling well above the text tools' 5 MB default.
     const fileOptions = {
         onFile: handleRawFile,
         onError: (message: string) => NotificationManager.show(message, 3000, { type: 'error' as const }),
-        maxBytes: Number.POSITIVE_INFINITY
+        maxBytes: UPLOAD_MAX_BYTES
     };
 
     registerFileInput(typedElements.fileInput, fileOptions);

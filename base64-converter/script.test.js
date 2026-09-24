@@ -339,6 +339,21 @@ describe('Base64Converter UI (script.tsx)', () => {
             );
         });
 
+        test('should reject an upload over the 25 MB ceiling with a toast', () => {
+            const mockFile = new File(['x'], 'huge.bin', { type: 'application/octet-stream' });
+            Object.defineProperty(mockFile, 'size', { configurable: true, value: 25 * 1024 * 1024 + 1 });
+            Object.defineProperty(elements.fileInput, 'files', { configurable: true, value: [mockFile] });
+
+            elements.fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+            expect(mockFileReaderInstance.readAsDataURL).not.toHaveBeenCalled();
+            expect(NotificationManager.show).toHaveBeenCalledWith(
+                '"huge.bin" is too large to load (limit 25 MB).',
+                3000,
+                expect.objectContaining({ type: 'error' })
+            );
+        });
+
         test('should encode a file dropped on the input through the upload path', () => {
             const mockFile = new File(['Test content'], 'dropped.txt', { type: 'text/plain' });
 
