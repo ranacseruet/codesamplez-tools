@@ -2,6 +2,7 @@ import {
   combineSelectorsInCss,
   isValidCSS,
   minifyCSS,
+  DEFAULT_MINIFY_OPTIONS,
   removeCommentsFromCss,
   removeLastSemicolonsFromCss,
   removeUnnecessaryUnits,
@@ -199,7 +200,7 @@ describe('CSS Minifier (minifyCSS)', () => {
         margin: 0px;
       }
     `;
-    const expected = '.test{color:red;margin:0;}';
+    const expected = '.test{color:#f00;margin:0}';
     expect(minifyCSS(input)).toBe(expected);
   });
 
@@ -210,7 +211,7 @@ describe('CSS Minifier (minifyCSS)', () => {
         padding: 0px 10px;
       }
     `;
-    const expected = '.test{color:red!important;padding:0 10px;}';
+    const expected = '.test{color:#f00!important;padding:0 10px}';
     expect(minifyCSS(input)).toBe(expected);
   });
 
@@ -222,25 +223,24 @@ describe('CSS Minifier (minifyCSS)', () => {
         }
       }
     `;
-    const expected = '@media (max-width:600px){.test{color:red;}}';
+    const expected = '@media (max-width:600px){.test{color:#f00}}';
     expect(minifyCSS(input)).toBe(expected);
   });
 
   test('preserves comment markers and minifier delimiters inside content strings', () => {
     const input = '.test::before { content: "a, b + c > d /* keep */; }"; }';
-    const expected = '.test::before{content:"a, b + c > d /* keep */; }";}';
+    const expected = '.test::before{content:"a, b + c > d /* keep */; }"}';
     expect(minifyCSS(input)).toBe(expected);
   });
 
-  test('throws error for invalid CSS input', () => {
-    let errorSpy: jest.SpyInstance | undefined;
-    try {
-      errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      const input = 'body { color: red'; // missing closing brace
-      expect(() => minifyCSS(input)).toThrow('Invalid CSS input');
-    } finally {
-      errorSpy?.mockRestore();
-    }
+  test('skips steps whose option is turned off', () => {
+    const input = '.a { color: red; margin: 0px; } /* note */';
+    const options = { ...DEFAULT_MINIFY_OPTIONS, shortenColors: false, removeUnits: false, removeLastSemicolons: false };
+    expect(minifyCSS(input, options)).toBe('.a{color:red;margin:0px;}');
+  });
+
+  test('is a pure transform that leaves validation to the caller', () => {
+    expect(() => minifyCSS('body { color: red')).not.toThrow();
   });
 });
 

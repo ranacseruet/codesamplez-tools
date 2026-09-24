@@ -5,7 +5,9 @@ import {
   removeUnnecessaryUnits,
   removeLastSemicolonsFromCss,
   combineSelectorsInCss,
-  isValidCSS
+  minifyCSS,
+  isValidCSS,
+  DEFAULT_MINIFY_OPTIONS
 } from './minifier';
 import { NotificationManager } from '../common/notification-manager';
 import { formatBytes } from '../common/format-utils';
@@ -18,15 +20,6 @@ import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import toolMetadata from './tool.meta.json';
-
-const DEFAULT_OPTIONS = {
-  removeComments: true,
-  removeWhitespace: true,
-  combineSelectors: true,
-  shortenColors: true,
-  removeUnits: true,
-  removeLastSemicolons: true
-};
 
 const SAMPLE_CSS = `/* Basic styles for a simple page */
 body {
@@ -74,32 +67,7 @@ type CssMinifierWindow = Window & {
 const browserWindow = typeof window !== 'undefined' ? (window as CssMinifierWindow) : null;
 
 function createDefaultOptions() {
-  return { ...DEFAULT_OPTIONS };
-}
-
-function applyCssMinificationPipeline(css, options) {
-  let result = css;
-
-  if (options.removeComments) {
-    result = removeCommentsFromCss(result);
-  }
-  if (options.combineSelectors) {
-    result = combineSelectorsInCss(result);
-  }
-  if (options.shortenColors) {
-    result = shortenColorsInCss(result);
-  }
-  if (options.removeUnits) {
-    result = removeUnnecessaryUnits(result);
-  }
-  if (options.removeWhitespace) {
-    result = removeWhitespaceFromCss(result);
-  }
-  if (options.removeLastSemicolons) {
-    result = removeLastSemicolonsFromCss(result);
-  }
-
-  return result;
+  return { ...DEFAULT_MINIFY_OPTIONS };
 }
 
 function calculateStats(original = '', minified = '') {
@@ -223,7 +191,7 @@ export function CssMinifierApp() {
         return false;
       }
 
-      const result = applyCssMinificationPipeline(originalCss, options);
+      const result = minifyCSS(originalCss, options);
       setOutputCss(result);
       setErrorMessage('');
 

@@ -205,20 +205,51 @@
     return tokenized.restore(processedMedia + processedRegular);
   }
 
-function minifyCSS(css) { // Made synchronous for now
-  // First validate the CSS
-  if (!isValidCSS(css)) { // Synchronous call
-    throw new Error('Invalid CSS input');
+export interface CssMinifyOptions {
+  removeComments: boolean;
+  removeWhitespace: boolean;
+  combineSelectors: boolean;
+  shortenColors: boolean;
+  removeUnits: boolean;
+  removeLastSemicolons: boolean;
+}
+
+const DEFAULT_MINIFY_OPTIONS: Readonly<CssMinifyOptions> = {
+  removeComments: true,
+  removeWhitespace: true,
+  combineSelectors: true,
+  shortenColors: true,
+  removeUnits: true,
+  removeLastSemicolons: true
+};
+
+// The single minification pipeline the UI runs. Step order matters: selectors
+// are combined before whitespace is stripped, and the trailing-semicolon pass
+// runs last so it sees the final `;}` boundaries. Validation is the caller's
+// job (see isValidCSS) so this stays a pure string transform.
+function minifyCSS(css: string, options: CssMinifyOptions = DEFAULT_MINIFY_OPTIONS): string {
+  let result = css;
+
+  if (options.removeComments) {
+    result = removeCommentsFromCss(result);
+  }
+  if (options.combineSelectors) {
+    result = combineSelectorsInCss(result);
+  }
+  if (options.shortenColors) {
+    result = shortenColorsInCss(result);
+  }
+  if (options.removeUnits) {
+    result = removeUnnecessaryUnits(result);
+  }
+  if (options.removeWhitespace) {
+    result = removeWhitespaceFromCss(result);
+  }
+  if (options.removeLastSemicolons) {
+    result = removeLastSemicolonsFromCss(result);
   }
 
-  let minified = css;
-  minified = removeCommentsFromCss(minified);
-  minified = removeWhitespaceFromCss(minified);
-  // Don't shorten colors to preserve color names
-  minified = removeUnnecessaryUnits(minified);
-  // Don't remove last semicolons to match test expectations
-  minified = combineSelectorsInCss(minified); // Re-enable this step
-  return minified;
+  return result;
 }
 
 // CSS Validation Function - Reverted to DOM-based for JSDOM compatibility in tests
@@ -286,4 +317,4 @@ function isValidCSS(cssString) {
   return isValid;
 }
 
-export { removeCommentsFromCss, removeWhitespaceFromCss, shortenColorsInCss, removeUnnecessaryUnits, removeLastSemicolonsFromCss, combineSelectorsInCss, minifyCSS, isValidCSS };
+export { removeCommentsFromCss, removeWhitespaceFromCss, shortenColorsInCss, removeUnnecessaryUnits, removeLastSemicolonsFromCss, combineSelectorsInCss, minifyCSS, isValidCSS, DEFAULT_MINIFY_OPTIONS };
