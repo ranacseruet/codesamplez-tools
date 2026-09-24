@@ -375,6 +375,55 @@ describe('CSS Validator (isValidCSS)', () => {
     }
   });
 
+  describe('with constructable stylesheets (replaceSync)', () => {
+    const OriginalCSSStyleSheet = globalThis.CSSStyleSheet;
+    let parsedRules: Array<{ style: { length: number } }>;
+    let replaceSync: jest.Mock;
+
+    beforeEach(() => {
+      parsedRules = [{ style: { length: 1 } }];
+      replaceSync = jest.fn();
+      class StubSheet {
+        get cssRules() {
+          return parsedRules;
+        }
+      }
+      (StubSheet.prototype as unknown as { replaceSync: jest.Mock }).replaceSync = replaceSync;
+      (globalThis as { CSSStyleSheet: unknown }).CSSStyleSheet = StubSheet;
+    });
+
+    afterEach(() => {
+      (globalThis as { CSSStyleSheet: unknown }).CSSStyleSheet = OriginalCSSStyleSheet;
+    });
+
+    test('parses detached without touching the live document head', () => {
+      const appendSpy = jest.spyOn(document.head, 'appendChild');
+      try {
+        expect(isValidCSS('body { color: red; }')).toBe(true);
+        expect(replaceSync).toHaveBeenCalledWith('body { color: red; }');
+        expect(appendSpy).not.toHaveBeenCalled();
+      } finally {
+        appendSpy.mockRestore();
+      }
+    });
+
+    test('applies the same empty-declaration heuristic to detached rules', () => {
+      parsedRules = [{ style: { length: 0 } }];
+      expect(isValidCSS('body { color: }')).toBe(false);
+    });
+
+    test('falls back to a <style> element for @import, which replaceSync drops', () => {
+      const appendSpy = jest.spyOn(document.head, 'appendChild');
+      try {
+        isValidCSS('@import url("a.css");');
+        expect(replaceSync).not.toHaveBeenCalled();
+        expect(appendSpy).toHaveBeenCalled();
+      } finally {
+        appendSpy.mockRestore();
+      }
+    });
+  });
+
   test('cleans up the style element from document.head after validation', () => {
     const initialHeadChildCount = document.head.children.length;
     isValidCSS('body { color: red; }');
