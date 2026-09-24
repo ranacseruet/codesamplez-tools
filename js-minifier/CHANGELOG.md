@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.1.0] - 2026-09-24
+
+### JavaScript Minifier
+
+- The article call-to-action now links directly to this tool's three related tools instead of a generic Explore More Dev Tools link to the index.
+
 ## [1.0.4] - 2026-09-23
 
 ### JavaScript Minifier

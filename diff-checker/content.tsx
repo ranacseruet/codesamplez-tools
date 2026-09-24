@@ -1,6 +1,6 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL, buildSiteAssetUri } from '../common/siteBaseUrl';
-import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { buildSiteAssetUri } from '../common/siteBaseUrl';
+import { ToolArticleNextSteps, ToolArticleSection, ToolFaqList, type ToolArticleProps, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -58,7 +58,7 @@ export function DiffCheckerIntro(): JSX.Element {
     );
 }
 
-export function DiffCheckerArticle(): JSX.Element {
+export function DiffCheckerArticle({ relatedTools }: ToolArticleProps): JSX.Element {
     return (
         <section className="c-tool-article c-surface-card" aria-labelledby="diff-checker-article-heading">
             <div className="c-tool-article__content">
@@ -121,11 +121,7 @@ export function DiffCheckerArticle(): JSX.Element {
                         </li>
                     </ul>
 
-                    <div className="c-tool-article__cta-row">
-                        <a className="c-button" href={SITE_BASE_URL}>
-                            Explore More Dev Tools
-                        </a>
-                    </div>
+                    <ToolArticleNextSteps relatedTools={relatedTools} />
                 </ToolArticleSection>
 
                 <ToolArticleSection id="diff-checker-usage" title="Usage Example">

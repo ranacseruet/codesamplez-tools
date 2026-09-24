@@ -1,6 +1,6 @@
 import type { JSX } from 'preact';
-import { buildSiteHref, SITE_BASE_URL } from '../common/siteBaseUrl';
-import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { buildSiteHref } from '../common/siteBaseUrl';
+import { ToolArticleNextSteps, ToolArticleSection, ToolFaqList, type ToolArticleProps, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -48,7 +48,7 @@ export function JwtBuilderIntro(): JSX.Element {
     );
 }
 
-export function JwtBuilderArticle(): JSX.Element {
+export function JwtBuilderArticle({ relatedTools }: ToolArticleProps): JSX.Element {
     return (
         <section className="c-tool-article c-surface-card" aria-labelledby="jwt-builder-article-heading">
             <div className="c-tool-article__content">
@@ -78,11 +78,7 @@ export function JwtBuilderArticle(): JSX.Element {
                         <li><strong>Copy-ready output and validation feedback:</strong> build the token and copy it from the result panel.</li>
                     </ul>
 
-                    <div className="c-tool-article__cta-row">
-                        <a className="c-button" href={SITE_BASE_URL}>
-                            Explore More Dev Tools
-                        </a>
-                    </div>
+                    <ToolArticleNextSteps relatedTools={relatedTools} />
                 </ToolArticleSection>
 
                 <ToolArticleSection id="jwt-builder-how-to-use" title="How To Use The JWT Generator:">

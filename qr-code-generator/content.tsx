@@ -1,6 +1,5 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL } from '../common/siteBaseUrl';
-import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { ToolArticleNextSteps, ToolArticleSection, ToolFaqList, type ToolArticleProps, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -61,7 +60,7 @@ export function QRCodeGeneratorIntro(): JSX.Element {
     );
 }
 
-export function QRCodeGeneratorArticle(): JSX.Element {
+export function QRCodeGeneratorArticle({ relatedTools }: ToolArticleProps): JSX.Element {
     return (
         <section className="c-tool-article c-surface-card" aria-labelledby="qr-code-generator-article-heading">
             <div className="c-tool-article__content">
@@ -103,11 +102,7 @@ export function QRCodeGeneratorArticle(): JSX.Element {
                         <li><strong>Preview changes instantly</strong> as you edit the payload or settings.</li>
                     </ul>
 
-                    <div className="c-tool-article__cta-row">
-                        <a className="c-button" href={SITE_BASE_URL}>
-                            Explore More Dev Tools
-                        </a>
-                    </div>
+                    <ToolArticleNextSteps relatedTools={relatedTools} />
                 </ToolArticleSection>
 
                 <ToolArticleSection id="qr-code-generator-technology" title="Technology">

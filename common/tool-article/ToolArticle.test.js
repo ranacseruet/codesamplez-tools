@@ -1,5 +1,6 @@
 import { render } from 'preact';
-import { ToolArticleSection, ToolFaqList } from './ToolArticle';
+import { SITE_BASE_URL, buildSiteHref } from '../siteBaseUrl';
+import { ToolArticleNextSteps, ToolArticleSection, ToolFaqList } from './ToolArticle';
 
 describe('ToolArticle primitives', () => {
     beforeEach(() => {
@@ -46,5 +47,34 @@ describe('ToolArticle primitives', () => {
 
         expect(questions).toEqual(['Question 1', 'Question 2']);
         expect(answers).toEqual(['String answer', 'JSX answer']);
+    });
+
+    it('links the CTA row to each related tool, in order', () => {
+        const root = document.getElementById('test-root');
+
+        render(
+            <ToolArticleNextSteps
+                relatedTools={[
+                    { id: 'jwt-builder-tool', title: 'JWT Builder', publicPath: '/jwt-builder/' },
+                    { id: 'base64-converter-tool', title: 'Base64 Converter', publicPath: '/base64-converter/' }
+                ]}
+            />,
+            root
+        );
+
+        const links = [...root.querySelectorAll('.c-tool-article__cta-row a')];
+        expect(links.map((link) => link.textContent)).toEqual(['JWT Builder', 'Base64 Converter']);
+        expect(links.map((link) => link.getAttribute('href')))
+            .toEqual([buildSiteHref('/jwt-builder/'), buildSiteHref('/base64-converter/')]);
+    });
+
+    it('falls back to the tools index when no related tools are passed', () => {
+        const root = document.getElementById('test-root');
+
+        render(<ToolArticleNextSteps />, root);
+
+        const links = root.querySelectorAll('.c-tool-article__cta-row a');
+        expect(links).toHaveLength(1);
+        expect(links[0].getAttribute('href')).toBe(SITE_BASE_URL);
     });
 });

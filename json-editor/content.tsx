@@ -1,6 +1,5 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL } from '../common/siteBaseUrl';
-import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { ToolArticleNextSteps, ToolArticleSection, ToolFaqList, type ToolArticleProps, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createFaqItem(question: string, answer: string): ToolFaqItem {
     return { question, answer, structuredDataAnswer: answer };
@@ -109,7 +108,7 @@ export function JsonEditorIntro(): JSX.Element {
     );
 }
 
-export function JsonEditorArticle(): JSX.Element {
+export function JsonEditorArticle({ relatedTools }: ToolArticleProps): JSX.Element {
     return (
         <section className="c-tool-article c-surface-card" aria-labelledby="json-editor-article-heading">
             <div className="c-tool-article__content">
@@ -124,9 +123,7 @@ export function JsonEditorArticle(): JSX.Element {
                         <li><strong>History:</strong> Undo and redo imports, edits, type changes, and structure changes for the current tab session.</li>
                         <li><strong>Local export:</strong> Copy the read-only generated JSON or download it as <code>edited.json</code>.</li>
                     </ul>
-                    <div className="c-tool-article__cta-row">
-                        <a className="c-button" href={SITE_BASE_URL}>Explore More Dev Tools</a>
-                    </div>
+                    <ToolArticleNextSteps relatedTools={relatedTools} />
                 </ToolArticleSection>
 
                 <ToolArticleSection id="json-editor-how-to-use" title="How to Build JSON (Step-by-Step)">

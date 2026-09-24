@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   forks and self-hosters never inherit the upstream properties.
 - Visual-diff, baseline, and health-monitoring workflows build with
   `CST_DISABLE_ANALYTICS=1` so screenshots stay ad-free and deterministic.
+- Tool article call-to-action rows link to the tool's three related tools
+  (the same set as the "Next step" section) instead of a single generic
+  "Explore More Dev Tools" link to the index.
 
 ### Removed
 

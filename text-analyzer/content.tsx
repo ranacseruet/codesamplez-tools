@@ -1,6 +1,5 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL } from '../common/siteBaseUrl';
-import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { ToolArticleNextSteps, ToolArticleSection, ToolFaqList, type ToolArticleProps, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -51,7 +50,7 @@ export function TextAnalyzerIntro(): JSX.Element {
     );
 }
 
-export function TextAnalyzerArticle(): JSX.Element {
+export function TextAnalyzerArticle({ relatedTools }: ToolArticleProps): JSX.Element {
     return (
         <section className="c-tool-article c-surface-card" aria-labelledby="text-analyzer-article-heading">
             <div className="c-tool-article__content">
@@ -97,11 +96,7 @@ export function TextAnalyzerArticle(): JSX.Element {
                         <li><strong>Local file input:</strong> Click Upload File or drag a text file into the input; files are read in the browser and never uploaded.</li>
                     </ul>
 
-                    <div className="c-tool-article__cta-row">
-                        <a className="c-button" href={SITE_BASE_URL}>
-                            Explore More Dev Tools
-                        </a>
-                    </div>
+                    <ToolArticleNextSteps relatedTools={relatedTools} />
                 </ToolArticleSection>
 
                 <ToolArticleSection id="how-to-use-text-analyzer" title="How To Use The Text Analyzer:">

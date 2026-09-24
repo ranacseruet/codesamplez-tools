@@ -1,6 +1,5 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL } from '../common/siteBaseUrl';
-import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { ToolArticleNextSteps, ToolArticleSection, ToolFaqList, type ToolArticleProps, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -127,7 +126,7 @@ export function JsonFormatterIntro(): JSX.Element {
     );
 }
 
-export function JsonFormatterArticle(): JSX.Element {
+export function JsonFormatterArticle({ relatedTools }: ToolArticleProps): JSX.Element {
     return (
         <section className="c-tool-article c-surface-card" aria-labelledby="json-formatter-article-heading">
             <div className="c-tool-article__content">
@@ -141,11 +140,7 @@ export function JsonFormatterArticle(): JSX.Element {
                         <li>Secure and can work offline once loaded. Runs in your browser, so your data is not sent to a server.</li>
                     </ul>
 
-                    <div className="c-tool-article__cta-row">
-                        <a className="c-button" href={SITE_BASE_URL}>
-                            Explore More Dev Tools
-                        </a>
-                    </div>
+                    <ToolArticleNextSteps relatedTools={relatedTools} />
                 </ToolArticleSection>
 
                 <ToolArticleSection id="json-formatter-features" title="JSON Formatter Features">

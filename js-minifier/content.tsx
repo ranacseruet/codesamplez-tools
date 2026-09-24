@@ -1,6 +1,5 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL } from '../common/siteBaseUrl';
-import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { ToolArticleNextSteps, ToolArticleSection, ToolFaqList, type ToolArticleProps, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -53,7 +52,7 @@ export function JSMinifierIntro(): JSX.Element {
     );
 }
 
-export function JSMinifierArticle(): JSX.Element {
+export function JSMinifierArticle({ relatedTools }: ToolArticleProps): JSX.Element {
     return (
         <section className="c-tool-article c-surface-card" aria-labelledby="js-minifier-article-heading">
             <div className="c-tool-article__content">
@@ -72,11 +71,7 @@ export function JSMinifierArticle(): JSX.Element {
                         <li><strong>Same functionality, smaller footprint:</strong> The code still does the same job after comments and extra spacing are removed.</li>
                     </ul>
 
-                    <div className="c-tool-article__cta-row">
-                        <a className="c-button" href={SITE_BASE_URL}>
-                            Explore More Dev Tools
-                        </a>
-                    </div>
+                    <ToolArticleNextSteps relatedTools={relatedTools} />
                 </ToolArticleSection>
 
                 <ToolArticleSection id="js-minifier-how-to-use" title="How to Use the JavaScript Minifier">

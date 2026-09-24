@@ -42,7 +42,11 @@ function createArticleAfterAppNode(toolId) {
         const Intro = resolveContentExport(content, 'Intro', toolId);
         const Article = resolveContentExport(content, 'Article', toolId);
 
-        return h(Fragment, null, h(Intro, {}), h(Article, {}));
+        // The article's CTA row links to the same related tools as the
+        // "Next step" section — see ToolArticleNextSteps.
+        const relatedTools = getRelatedTools(toolId).map(({ id, title, publicPath }) => ({ id, title, publicPath }));
+
+        return h(Fragment, null, h(Intro, {}), h(Article, { relatedTools }));
     };
 }
 
@@ -50,7 +54,7 @@ function createArticleAfterAppNode(toolId) {
  * @param {Record<string, unknown>} content
  * @param {string} suffix
  * @param {string} toolId
- * @returns {import('preact').ComponentType<{}>}
+ * @returns {import('preact').ComponentType<import('../common/tool-article/ToolArticle').ToolArticleProps>}
  */
 function resolveContentExport(content, suffix, toolId) {
     const matches = Object.keys(content).filter(
@@ -64,7 +68,7 @@ function resolveContentExport(content, suffix, toolId) {
         );
     }
 
-    return /** @type {import('preact').ComponentType<{}>} */ (content[matches[0]]);
+    return /** @type {import('preact').ComponentType<import('../common/tool-article/ToolArticle').ToolArticleProps>} */ (content[matches[0]]);
 }
 
 /** @type {ToolPrerenderRegistry} */

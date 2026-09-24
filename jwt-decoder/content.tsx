@@ -1,6 +1,6 @@
 import type { JSX } from 'preact';
-import { buildSiteHref, SITE_BASE_URL } from '../common/siteBaseUrl';
-import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { buildSiteHref } from '../common/siteBaseUrl';
+import { ToolArticleNextSteps, ToolArticleSection, ToolFaqList, type ToolArticleProps, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -48,7 +48,7 @@ export function JwtDecoderIntro(): JSX.Element {
     );
 }
 
-export function JwtDecoderArticle(): JSX.Element {
+export function JwtDecoderArticle({ relatedTools }: ToolArticleProps): JSX.Element {
     return (
         <section className="c-tool-article c-surface-card" aria-labelledby="jwt-decoder-article-heading">
             <div className="c-tool-article__content">
@@ -74,11 +74,7 @@ export function JwtDecoderArticle(): JSX.Element {
                         <li><strong>Copy Functionality:</strong> Single-click copy-to-clipboard functionality for the decoded token.</li>
                     </ul>
 
-                    <div className="c-tool-article__cta-row">
-                        <a className="c-button" href={SITE_BASE_URL}>
-                            Explore More Dev Tools
-                        </a>
-                    </div>
+                    <ToolArticleNextSteps relatedTools={relatedTools} />
                 </ToolArticleSection>
 
                 <ToolArticleSection id="jwt-decoder-how-to-decode" title="How to Decode a JWT Token">
