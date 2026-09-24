@@ -484,9 +484,54 @@ function normalizeOptionalStringArray(value, label) {
 }
 
 /**
+ * Root config parsed once for the current build pass, or null outside one.
+ * `loadRootConfig()` is called per tool and by every getter, so a manifest
+ * build would otherwise re-read and re-validate the file ~20 times. The cache
+ * is scoped to a pass (see `withRootConfigPass`) rather than the process so
+ * watch-mode edits to the config file and env overrides still take effect.
+ * @type {{ config: RootConfig | null } | null}
+ */
+let rootConfigPass = null;
+
+/**
+ * Runs `task` with root config reads memoized for its duration. Nested calls
+ * join the outer pass.
+ * @template T
+ * @param {() => T} task
+ * @returns {T}
+ */
+function withRootConfigPass(task) {
+    if (rootConfigPass) {
+        return task();
+    }
+
+    rootConfigPass = { config: null };
+    try {
+        return task();
+    } finally {
+        rootConfigPass = null;
+    }
+}
+
+/**
  * @returns {RootConfig}
  */
 function loadRootConfig() {
+    if (!rootConfigPass) {
+        return readRootConfig();
+    }
+
+    if (!rootConfigPass.config) {
+        rootConfigPass.config = readRootConfig();
+    }
+
+    return rootConfigPass.config;
+}
+
+/**
+ * @returns {RootConfig}
+ */
+function readRootConfig() {
     /** @type {unknown} */
     const rawRootConfig = JSON.parse(fs.readFileSync(ROOT_CONFIG_PATH, 'utf8'));
     if (!rawRootConfig || typeof rawRootConfig !== 'object') {
@@ -761,7 +806,9 @@ function validateToolDefinitions(toolDefinitions, catalogGroups = loadRootConfig
  * @returns {ToolDefinition[]}
  */
 function getToolDefinitions() {
-    return validateToolDefinitions(listToolMetadataPaths().map((metadataPath) => createToolDefinition(metadataPath)));
+    return withRootConfigPass(() => validateToolDefinitions(
+        listToolMetadataPaths().map((metadataPath) => createToolDefinition(metadataPath))
+    ));
 }
 
 /**
@@ -1054,6 +1101,7 @@ function selectTools(requestedTools) {
 }
 
 module.exports = {
+    withRootConfigPass,
     ADS_TXT_FILENAME,
     DEFAULT_FEATURED_IMAGE_DIRECTORY,
     DEFAULT_FEATURED_IMAGE_EXTENSION,

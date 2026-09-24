@@ -105,6 +105,7 @@ describe('generated html plugin', () => {
     };
     const compiler = {
       hooks: {
+        watchRun: { tap: jest.fn() },
         thisCompilation: {
           tap: jest.fn((name, handler) => {
             handler(compilation);
@@ -133,5 +134,54 @@ describe('generated html plugin', () => {
     expect(String(compilation.emitAsset.mock.calls[2][1].source())).toContain('JWT Decoder &amp; Validator');
     expect(compilation.fileDependencies.has(ROOT_CONFIG_PATH)).toBe(true);
     expect(compilation.contextDependencies.has(REPO_ROOT)).toBe(true);
+  });
+
+  it('re-resolves the build commit on each watch-mode recompile', () => {
+    jest.isolateModules(() => {
+      const shas = ['a'.repeat(40), 'b'.repeat(40)];
+      const execFileSync = jest.fn(() => `${shas.shift()}\n`);
+      jest.doMock('child_process', () => ({ ...jest.requireActual('child_process'), execFileSync }));
+      const { resolveBuildCommit } = require('./provenance-manifest');
+      const { GeneratedHtmlPlugin: IsolatedPlugin } = require('./generated-html-plugin');
+      let watchRunHandler = () => {};
+      new IsolatedPlugin().apply({
+        hooks: {
+          watchRun: { tap: jest.fn((name, handler) => { watchRunHandler = handler; }) },
+          thisCompilation: { tap: jest.fn() }
+        }
+      });
+
+      // One build stamps one commit, however many documents ask for it.
+      expect(resolveBuildCommit()).toBe('a'.repeat(40));
+      expect(resolveBuildCommit()).toBe('a'.repeat(40));
+      expect(execFileSync).toHaveBeenCalledTimes(1);
+
+      // A commit landed while the watcher was running; the next rebuild sees it.
+      watchRunHandler();
+      expect(resolveBuildCommit()).toBe('b'.repeat(40));
+    });
+    jest.dontMock('child_process');
+  });
+
+  it('reads the root config once per generated-html pass, not once per getter', () => {
+    const fs = require('fs');
+    const actualReadFileSync = fs.readFileSync;
+    const readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockImplementation((...args) => actualReadFileSync(...args));
+    const rootConfigReads = () => readFileSyncSpy.mock.calls.filter(([targetPath]) => targetPath === ROOT_CONFIG_PATH).length;
+
+    try {
+      buildGeneratedHtmlAssets({
+        includeRootAssets: true,
+        rootHtmlAsset: 'index.html',
+        toolHtmlAssets: { 'jwt-decoder-tool': 'jwt-decoder/index.html' }
+      });
+      expect(rootConfigReads()).toBe(1);
+
+      // The cache is scoped to the pass, so a later pass sees config edits.
+      buildGeneratedHtmlAssets({ includeRootAssets: true, rootHtmlAsset: 'index.html' });
+      expect(rootConfigReads()).toBe(2);
+    } finally {
+      readFileSyncSpy.mockRestore();
+    }
   });
 });
