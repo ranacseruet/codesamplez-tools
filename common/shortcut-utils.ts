@@ -59,6 +59,10 @@ export function registerPrimaryActionShortcut(
       return;
     }
     event.preventDefault();
+    // Holding the chord auto-repeats keydown; fire the action once per press.
+    if (event.repeat) {
+      return;
+    }
     if (typeof target === 'function') {
       target();
     } else {
