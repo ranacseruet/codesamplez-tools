@@ -139,9 +139,30 @@ export class DataFormatConverter {
         if (obj === null || obj === undefined || typeof obj !== 'object') {
             throw new Error('Cannot format to properties');
         }
-        return Object.entries(obj)
-            .map(([key, value]) => `${this.escapeProp(key)}=${this.escapeProp(value)}`)
-            .join('\n');
+        // Properties is a flat key=value format: nested objects and arrays
+        // are flattened with dot-separated paths (db.host, items.0) instead
+        // of being coerced to "[object Object]" and destroyed.
+        const lines: string[] = [];
+        const flatten = (value: unknown, prefix: string): void => {
+            if (Array.isArray(value)) {
+                value.forEach((child, index) => flatten(child, prefix ? `${prefix}.${index}` : String(index)));
+                return;
+            }
+            // Recurse only into plain objects: non-plain ones (a YAML11 Date,
+            // for instance) have no enumerable entries and would be silently
+            // dropped — stringify them like any other scalar instead.
+            const prototype = value === null ? null : Object.getPrototypeOf(value);
+            const isPlainObject = prototype === null || prototype === Object.prototype;
+            if (value !== null && typeof value === 'object' && isPlainObject) {
+                Object.entries(value).forEach(([key, child]) => {
+                    flatten(child, prefix ? `${prefix}.${key}` : key);
+                });
+                return;
+            }
+            lines.push(`${this.escapeProp(prefix)}=${this.escapeProp(value ?? '')}`);
+        };
+        flatten(obj, '');
+        return lines.join('\n');
     }
 
     escapeProp(str: unknown): string {
@@ -265,7 +286,10 @@ export class DataFormatConverter {
         
         const builder = new XMLBuilder({
             ignoreAttributes: false,
-            attributeNamePrefix: '@',
+            // Must match the parsers' '@_' prefix (parseXML fallback and
+            // xmlElementToObject), or every attribute gains a stray '_' on
+            // XML round-trips.
+            attributeNamePrefix: '@_',
             format: true,
             indentBy: '  ',
             suppressEmptyNode: true
@@ -311,14 +335,26 @@ export class DataFormatConverter {
         if (trimmed.startsWith('<')) return 'xml';
         if (trimmed.startsWith('{') || trimmed.startsWith('[')) return 'json';
 
-        // Simple heuristics for Properties vs YAML
-        // Properties typically uses = or : but YAML strictly uses : followed by space or newline
-        const hasEquals = trimmed.includes('=');
-        const hasColonSpace = trimmed.includes(': ');
-        const hasColonNewline = /:\s*\n/.test(trimmed);
+        // Simple heuristics for Properties vs YAML.
+        // The strongest properties signal is an `=` before any `:` on a line:
+        // YAML puts its delimiter first (`key: a=b` has the `=` inside the
+        // value), while a properties value may freely contain colons
+        // (`greeting=Hello: World`). Comments are ignored so a `# see: https://`
+        // line cannot tip the scale.
+        const contentLines = trimmed
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter((line) => line && !line.startsWith('#') && !line.startsWith('!'));
+        const hasEqualsBeforeColon = contentLines.some((line) => {
+            // YAML list items (`- NODE_ENV=production`, `- --flag=value`) are
+            // not properties lines even though they carry a bare `=`.
+            if (line === '-' || line.startsWith('- ')) return false;
+            const equalsIndex = line.indexOf('=');
+            const colonIndex = line.indexOf(':');
+            return equalsIndex !== -1 && (colonIndex === -1 || equalsIndex < colonIndex);
+        });
 
-        if (hasEquals && !hasColonSpace && !hasColonNewline) return 'properties';
-        if ((hasColonSpace || hasColonNewline) && !hasEquals) return 'yaml';
+        if (hasEqualsBeforeColon) return 'properties';
 
         // If ambiguous, default to YAML as it's more flexible
         return 'yaml';

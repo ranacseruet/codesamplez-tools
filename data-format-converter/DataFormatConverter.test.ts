@@ -280,6 +280,49 @@ age=30`;
             });
         });
 
+        it('should flatten nested objects with dot notation instead of [object Object]', () => {
+            const output = converter.formatProperties({ db: { host: 'localhost', port: 5432 } });
+            expect(output).toBe('db.host=localhost\ndb.port=5432');
+        });
+
+        it('should flatten arrays with indexed keys', () => {
+            const output = converter.formatProperties({ items: ['a', 'b'] });
+            expect(output).toBe('items.0=a\nitems.1=b');
+        });
+
+        it('should not prepend a dot for a root-level array', () => {
+            const output = converter.formatProperties(['apple', 'banana']);
+            expect(output).toBe('0=apple\n1=banana');
+            expect(converter.parseInput(output, 'properties')).toEqual({ '0': 'apple', '1': 'banana' });
+        });
+
+        it('should escape delimiters inside flattened keys and keep output parseable', () => {
+            const data = { 'we:ird': { 'ke=y': 'value' } };
+            const output = converter.formatProperties(data);
+            expect(output).toBe('we\\:ird.ke\\=y=value');
+            expect(converter.parseInput(output, 'properties')).toEqual({ 'we:ird.ke=y': 'value' });
+        });
+
+        it('should emit an empty value for null properties values', () => {
+            expect(converter.formatProperties({ missing: null })).toBe('missing=');
+        });
+
+        it('should stringify non-plain objects (e.g. YAML11 dates) instead of dropping them', () => {
+            const output = converter.formatProperties({ createdAt: new Date('2026-09-26T10:00:00Z') });
+            // Colons in the stringified value are escaped per properties rules.
+            expect(output).toBe(
+                `createdAt=${converter.escapeProp(new Date('2026-09-26T10:00:00Z').toString())}`
+            );
+        });
+
+        it('should keep flattened properties output parseable by the validator', () => {
+            const nested = { server: { url: 'https://example.com', timeout: 30 } };
+            const output = converter.formatOutput(nested, 'properties');
+            // Colons in values are escaped, per properties escaping rules.
+            expect(output).toBe('server.url=https\\://example.com\nserver.timeout=30');
+            expect(converter.validateOutput(output, 'properties')).toBe(true);
+        });
+
         it('should reject malformed Java Unicode escapes', () => {
             expect(() => converter.parseInput('name=\\u12G4', 'properties')).toThrow(
                 'Invalid Unicode escape in properties'
@@ -310,6 +353,24 @@ age=30`;
             expect(converter.detectFormat('just a string')).toBe('yaml'); // Default
         });
 
+        it('should keep detecting properties when values contain colons', () => {
+            expect(converter.detectFormat('greeting=Hello: World')).toBe('properties');
+            expect(converter.detectFormat('url=https://example.com')).toBe('properties');
+        });
+
+        it('should not misread YAML whose values contain = as properties', () => {
+            expect(converter.detectFormat('command: echo a=b')).toBe('yaml');
+        });
+
+        it('should not misread YAML environment lists as properties', () => {
+            expect(converter.detectFormat('environment:\n  - NODE_ENV=production\n  - PORT=8080')).toBe('yaml');
+            expect(converter.detectFormat('args:\n  - --flag=value')).toBe('yaml');
+        });
+
+        it('should ignore comments when distinguishing properties from YAML', () => {
+            expect(converter.detectFormat('# see: https://example.com\nkey=value')).toBe('properties');
+        });
+
         it('should return null for empty input', () => {
             expect(converter.detectFormat('')).toBe(null);
             expect(converter.detectFormat('   ')).toBe(null);
@@ -335,6 +396,18 @@ age=30`;
             const xml = converter.formatOutput(data, 'xml');
 
             expect(converter.parseInput(xml, 'xml')).toEqual(data);
+        });
+
+        it('should round-trip XML attributes without gaining underscores', () => {
+            const xml = '<item id="101" name="Widget"/>';
+            const data = converter.parseInput(xml, 'xml');
+            const rebuilt = converter.formatOutput(data, 'xml');
+
+            expect(rebuilt).toContain('id="101"');
+            expect(rebuilt).toContain('name="Widget"');
+            expect(rebuilt).not.toContain('_id');
+            // Full round-trip must preserve the attribute payload.
+            expect(converter.parseInput(rebuilt, 'xml')).toEqual(data);
         });
 
         it('should format to YAML', () => {
