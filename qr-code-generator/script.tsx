@@ -8,7 +8,7 @@ import { mountToolShell } from '../common/app-shell/mountToolShell';
 import toolMetadata from './tool.meta.json';
 
 const QR_EMPTY_INPUT_MESSAGE = 'Please enter text or a URL to generate a QR code.';
-const QR_TOO_LONG_ERROR_MESSAGE = 'Error: Input data is too long for the selected error correction level. Try reducing data or increasing error correction.';
+const QR_TOO_LONG_ERROR_MESSAGE = 'Error: Input data is too long for the selected error correction level. Try shorter text or lower the error correction level.';
 
 const DEFAULT_QR_STATE = {
   text: 'https://codesamplez.com',
@@ -118,16 +118,20 @@ export function QRCodeGeneratorApp() {
     };
   }, [text, size, margin, errorCorrection]);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     const canvas = canvasRef.current;
     if (!canvas) {
       return;
     }
 
-    const dataUrl = canvas.toDataURL('image/png');
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) {
+      return;
+    }
+
     const filename = `qrcode-${Date.now()}.png`;
     const downloadManager = new DownloadManager();
-    downloadManager.downloadFile(dataUrl, filename, 'image/png');
+    downloadManager.downloadFile(blob, filename, 'image/png');
     NotificationManager.show('QR code downloaded', 2000, { type: 'success' });
   };
 
@@ -257,7 +261,7 @@ export function QRCodeGeneratorApp() {
               style={{ display: canvasVisible ? 'block' : 'none' }}
             />
           </div>
-          <button id="download-btn" className="qr-tool__button c-button" onClick={handleDownload}>
+          <button id="download-btn" className="qr-tool__button c-button" onClick={handleDownload} disabled={Boolean(errorMessage) || !text.trim()}>
             <span className="c-button--icon-download">Download PNG</span>
           </button>
           <p id="error-message" className="qr-tool__error-message" role="alert" aria-live="assertive">

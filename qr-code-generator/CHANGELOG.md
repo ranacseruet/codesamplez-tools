@@ -2,6 +2,14 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.6] - 2026-09-25
+
+### QR Code Generator
+
+- Fixed Download PNG saving a text file containing the raw data URL instead of a valid binary PNG image (canvas is now exported via `toBlob`).
+- Download PNG is disabled while the input is empty or the QR library reports an error (e.g. data too long).
+- The data-too-long error message now correctly suggests lowering the error correction level, which raises data capacity.
+
 ## [1.0.5] - 2026-09-24
 
 ### QR Code Generator
