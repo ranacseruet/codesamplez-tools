@@ -52,9 +52,9 @@ describe('QRCodeGenerator Preact runtime', () => {
         jest.clearAllMocks();
         document.body.innerHTML = '<div id="qr-code-generator-app"></div>';
 
-        Object.defineProperty(HTMLCanvasElement.prototype, 'toDataURL', {
+        Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
             configurable: true,
-            value: jest.fn(() => 'data:image/png;base64,mockdata')
+            value: jest.fn((callback) => callback(new Blob([new Uint8Array(8)], { type: 'image/png' })))
         });
     });
 
@@ -135,13 +135,76 @@ describe('QRCodeGenerator Preact runtime', () => {
         });
 
         fireEvent.click(document.getElementById('download-btn'));
-        expect(HTMLCanvasElement.prototype.toDataURL).toHaveBeenCalledWith('image/png');
-        const downloadManagerInstance = DownloadManager.mock.results.at(-1)?.value;
-        expect(downloadManagerInstance.downloadFile).toHaveBeenCalledWith(
-            'data:image/png;base64,mockdata',
-            expect.stringMatching(/^qrcode-\d+\.png$/),
-            'image/png'
+        await waitFor(() => {
+            const downloadManagerInstance = DownloadManager.mock.results.at(-1)?.value;
+            expect(downloadManagerInstance?.downloadFile).toHaveBeenCalledWith(
+                expect.any(Blob),
+                expect.stringMatching(/^qrcode-\d+\.png$/),
+                'image/png'
+            );
+        });
+    });
+
+    it('disables Download PNG on empty input and re-enables once text returns', async () => {
+        new QRCodeGeneratorToolUI();
+        await flushEffects();
+
+        const downloadButton = document.getElementById('download-btn');
+        expect(downloadButton?.hasAttribute('disabled')).toBe(false);
+
+        fireEvent.input(document.getElementById('qr-text'), { target: { value: '' } });
+        await waitFor(() =>
+            expect(document.getElementById('error-message')?.textContent).toContain(QR_EMPTY_INPUT_PREFIX)
         );
+        expect(downloadButton?.hasAttribute('disabled')).toBe(true);
+
+        fireEvent.input(document.getElementById('qr-text'), { target: { value: 'hello' } });
+        await waitFor(() => expect(downloadButton?.hasAttribute('disabled')).toBe(false));
+    });
+
+    it('disables Download PNG while the QR library reports an error', async () => {
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        new QRCodeGeneratorToolUI();
+        await waitFor(() => expect(QRCode.toCanvas).toHaveBeenCalled());
+
+        QRCode.toCanvas.mockImplementationOnce((canvas, text, options, callback) => callback(new Error('Too long')));
+
+        fireEvent.change(document.getElementById('error-correction'), { target: { value: 'H' } });
+        await waitFor(() =>
+            expect(document.getElementById('error-message')?.textContent).toContain('Input data is too long')
+        );
+        expect(document.getElementById('download-btn')?.hasAttribute('disabled')).toBe(true);
+        // Guidance must point at lowering error correction, which raises capacity.
+        expect(document.getElementById('error-message')?.textContent).toContain('lower the error correction level');
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('treats whitespace-only input as empty: error state and disabled download', async () => {
+        new QRCodeGeneratorToolUI();
+        await flushEffects();
+
+        fireEvent.input(document.getElementById('qr-text'), { target: { value: '   ' } });
+        await waitFor(() =>
+            expect(document.getElementById('error-message')?.textContent).toContain(QR_EMPTY_INPUT_PREFIX)
+        );
+        expect(document.getElementById('qr-canvas')?.style.display).toBe('none');
+        expect(document.getElementById('download-btn')?.hasAttribute('disabled')).toBe(true);
+    });
+
+    it('shows an error toast and skips the download when toBlob yields null', async () => {
+        new QRCodeGeneratorToolUI();
+        await flushEffects();
+
+        const toBlobMock = HTMLCanvasElement.prototype.toBlob;
+        toBlobMock.mockImplementationOnce((callback) => callback(null));
+
+        fireEvent.click(document.getElementById('download-btn'));
+        await waitFor(() =>
+            expect(NotificationManager.show).toHaveBeenCalledWith('Failed to generate image for download', 2000, { type: 'error' })
+        );
+
+        const downloadManagerInstance = DownloadManager.mock.results.at(-1)?.value;
+        expect(downloadManagerInstance).toBeUndefined();
     });
 
     it('updates error correction and shows QR library callback error state', async () => {
