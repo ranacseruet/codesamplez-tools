@@ -290,6 +290,12 @@ age=30`;
             expect(output).toBe('items.0=a\nitems.1=b');
         });
 
+        it('should not prepend a dot for a root-level array', () => {
+            const output = converter.formatProperties(['apple', 'banana']);
+            expect(output).toBe('0=apple\n1=banana');
+            expect(converter.parseInput(output, 'properties')).toEqual({ '0': 'apple', '1': 'banana' });
+        });
+
         it('should escape delimiters inside flattened keys and keep output parseable', () => {
             const data = { 'we:ird': { 'ke=y': 'value' } };
             const output = converter.formatProperties(data);
@@ -354,6 +360,11 @@ age=30`;
 
         it('should not misread YAML whose values contain = as properties', () => {
             expect(converter.detectFormat('command: echo a=b')).toBe('yaml');
+        });
+
+        it('should not misread YAML environment lists as properties', () => {
+            expect(converter.detectFormat('environment:\n  - NODE_ENV=production\n  - PORT=8080')).toBe('yaml');
+            expect(converter.detectFormat('args:\n  - --flag=value')).toBe('yaml');
         });
 
         it('should ignore comments when distinguishing properties from YAML', () => {

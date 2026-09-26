@@ -145,7 +145,7 @@ export class DataFormatConverter {
         const lines: string[] = [];
         const flatten = (value: unknown, prefix: string): void => {
             if (Array.isArray(value)) {
-                value.forEach((child, index) => flatten(child, `${prefix}.${index}`));
+                value.forEach((child, index) => flatten(child, prefix ? `${prefix}.${index}` : String(index)));
                 return;
             }
             // Recurse only into plain objects: non-plain ones (a YAML11 Date,
@@ -346,6 +346,9 @@ export class DataFormatConverter {
             .map((line) => line.trim())
             .filter((line) => line && !line.startsWith('#') && !line.startsWith('!'));
         const hasEqualsBeforeColon = contentLines.some((line) => {
+            // YAML list items (`- NODE_ENV=production`, `- --flag=value`) are
+            // not properties lines even though they carry a bare `=`.
+            if (line === '-' || line.startsWith('- ')) return false;
             const equalsIndex = line.indexOf('=');
             const colonIndex = line.indexOf(':');
             return equalsIndex !== -1 && (colonIndex === -1 || equalsIndex < colonIndex);
