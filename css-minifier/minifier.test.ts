@@ -59,6 +59,32 @@ describe('minifier helper functions', () => {
       expect(removeWhitespaceFromCss(input)).toBe('p{color:red!important;}');
     });
 
+    test('preserves whitespace around calc() operators (calc(100%+20px) is invalid CSS)', () => {
+      const input = '.box { width: calc(100% - 20px); height: calc(100% + 20px); }';
+      expect(removeWhitespaceFromCss(input)).toBe(
+        '.box{width:calc(100% - 20px);height:calc(100% + 20px);}'
+      );
+    });
+
+    test('preserves nested calc() and sibling math functions', () => {
+      const input = '.box { width: calc(calc(100% - 10px) + 5px); } .v { top: clamp(0px, 1rem + 2px, 3rem); }';
+      expect(removeWhitespaceFromCss(input)).toBe(
+        '.box{width:calc(calc(100% - 10px) + 5px);}.v{top:clamp(0px, 1rem + 2px, 3rem);}'
+      );
+    });
+
+    test('still strips selector combinators next to calc() declarations', () => {
+      const input = 'div > p { margin: calc(1px + 2px); }';
+      expect(removeWhitespaceFromCss(input)).toBe('div>p{margin:calc(1px + 2px);}');
+    });
+
+    test('does not mask min/max in media query feature names', () => {
+      const input = '@media (min-width: 400px) and (max-width: 600px) { body { font-size: 14px; } }';
+      expect(removeWhitespaceFromCss(input)).toBe(
+        '@media (min-width:400px) and (max-width:600px){body{font-size:14px;}}'
+      );
+    });
+
     test('removes space between consecutive declaration blocks', () => {
       const input = '.a { color: red; }   .b { color: blue; }';
       expect(removeWhitespaceFromCss(input)).toBe('.a{color:red;}.b{color:blue;}');
@@ -74,14 +100,43 @@ describe('minifier helper functions', () => {
       const input = '.a { content: "say \\"a, b; }"; }';
       expect(removeWhitespaceFromCss(input)).toBe('.a{content:"say \\"a, b; }";}');
     });
+
+    test('normalizes newlines and indentation inside multiline calc() to single spaces', () => {
+      const input = '.box {\n  width: calc(\n    100% -\n    20px\n  );\n}';
+      expect(removeWhitespaceFromCss(input)).toBe('.box{width:calc(100% - 20px);}');
+    });
+
+    test('normalizes whitespace inside multiline clamp() the same way', () => {
+      const input = '.v { top: clamp(\n  0px,\n  1rem + 2px,\n  3rem\n); }';
+      expect(removeWhitespaceFromCss(input)).toBe('.v{top:clamp(0px, 1rem + 2px, 3rem);}');
+    });
+
+    test('does not confuse math placeholders with literal __CSS_MINIFIER_MATH_ text in the input', () => {
+      const input = '.a { content: "__CSS_MINIFIER_MATH_0__"; width: calc(1px + 2px); }';
+      expect(removeWhitespaceFromCss(input)).toBe(
+        '.a{content:"__CSS_MINIFIER_MATH_0__";width:calc(1px + 2px);}'
+      );
+    });
+
+    test('does not treat identifier tails like admin( or fmin( as math functions', () => {
+      const input = '.a { padding: admin(1px, 2px); top: fmin(1px, 2px); }';
+      expect(removeWhitespaceFromCss(input)).toBe('.a{padding:admin(1px,2px);top:fmin(1px,2px);}');
+    });
   });
 
   describe('shortenColorsInCss', () => {
     test('shortens named colors', () => {
-      const input = 'color: white; background: black; border-color: red green blue yellow cyan magenta;';
+      const input = 'color: white; background: black; border-color: red blue yellow cyan magenta;';
       expect(shortenColorsInCss(input)).toBe(
-        'color: #fff; background: #000; border-color: #f00 #0f0 #00f #ff0 #0ff #f0f;'
+        'color: #fff; background: #000; border-color: #f00 #00f #ff0 #0ff #f0f;'
       );
+    });
+
+    test('leaves green alone (CSS green is #008000, not lime)', () => {
+      // Replacing green with #0f0 would render bright lime instead of dark
+      // forest green; the keyword is already byte-shortest.
+      expect(shortenColorsInCss('color: green;')).toBe('color: green;');
+      expect(shortenColorsInCss('border-color: red green;')).toBe('border-color: #f00 green;');
     });
 
     test('shortens hex colors #RRGGBB to #RGB', () => {
@@ -115,9 +170,9 @@ describe('minifier helper functions', () => {
     });
 
     test('handles consecutive colors separated by space or newlines', () => {
-      expect(shortenColorsInCss('border-color: red green;')).toBe('border-color: #f00 #0f0;');
-      expect(shortenColorsInCss('border-color: red green blue;')).toBe('border-color: #f00 #0f0 #00f;');
-      expect(shortenColorsInCss('color: red;\nbackground: green;')).toBe('color: #f00;\nbackground: #0f0;');
+      expect(shortenColorsInCss('border-color: red blue;')).toBe('border-color: #f00 #00f;');
+      expect(shortenColorsInCss('border-color: red blue cyan;')).toBe('border-color: #f00 #00f #0ff;');
+      expect(shortenColorsInCss('color: red;\nbackground: white;')).toBe('color: #f00;\nbackground: #fff;');
     });
   });
 
@@ -188,6 +243,71 @@ describe('minifier helper functions', () => {
       const input = '.foo\\"bar { color: red; }';
       expect(combineSelectorsInCss(input)).toBe('.foo\\"bar{color: red;}');
     });
+
+    test('keeps document order between regular rules and at-rule blocks (no cascade inversion)', () => {
+      const input = 'body { color: red; } @media (max-width: 600px) { body { color: blue; } }';
+      const output = combineSelectorsInCss(input);
+      expect(output).toBe('body{color: red;}@media (max-width: 600px) {body{color: blue;}}');
+      // The base rule must stay before the media override.
+      expect(output.indexOf('body{color: red;}')).toBeLessThan(output.indexOf('@media'));
+    });
+
+    test('processes nested at-rule blocks (@supports, @keyframes, @layer, @container)', () => {
+      const input = [
+        '@supports (display: grid) { .grid { display: grid; } }',
+        '@keyframes spin { from { opacity: 0; } to { opacity: 1; } }',
+        '@layer base { .card { padding: 1rem; } }',
+        '@container sidebar (min-width: 400px) { .card { padding: 2rem; } }'
+      ].join('\n');
+      const output = combineSelectorsInCss(input);
+      expect(output).toContain('@supports (display: grid) {.grid{display: grid;}}');
+      expect(output).toContain('@keyframes spin {from{opacity: 0;}to{opacity: 1;}}');
+      expect(output).toContain('@layer base {.card{padding: 1rem;}}');
+      expect(output).toContain('@container sidebar (min-width: 400px) {.card{padding: 2rem;}}');
+    });
+
+    test('recurses through at-rule nesting (@media inside @supports)', () => {
+      const input = '@supports (display: grid) { @media (max-width: 600px) { .grid { display: grid; } } }';
+      const output = combineSelectorsInCss(input);
+      expect(output).toBe(
+        '@supports (display: grid) {@media (max-width: 600px) {.grid{display: grid;}}}'
+      );
+    });
+
+    test('passes @font-face and statement at-rules through without dropping them', () => {
+      const input = "@font-face { font-family: 'X'; src: url('x.woff2') format('woff2'); } @import url('theme.css'); .a { color: red; }";
+      const output = combineSelectorsInCss(input);
+      expect(output).toContain("@font-face {font-family: 'X';src: url('x.woff2') format('woff2')}");
+      expect(output).toContain("@import url('theme.css');");
+      expect(output).toContain('.a{color: red;}');
+      // The @import statement must survive before the rule that follows it.
+      expect(output.indexOf('@import')).toBeLessThan(output.indexOf('.a{'));
+    });
+
+    test('normalizes declarations in @font-face and @page bodies', () => {
+      const input = "@font-face { font-family: 'X' ; ; src: url('x.woff2') format('woff2'); } @page { margin: 1cm ; }";
+      const output = combineSelectorsInCss(input);
+      expect(output).toContain("@font-face {font-family: 'X';src: url('x.woff2') format('woff2')}");
+      expect(output).toContain('@page {margin: 1cm}');
+    });
+
+    test('processes every rule in a sequence of three or more rules', () => {
+      const input = '.a{color:red;}.b{color:blue;}.c{color:green;}.d{color:yellow;}';
+      expect(combineSelectorsInCss(input)).toBe(
+        '.a{color:red;}.b{color:blue;}.c{color:green;}.d{color:yellow;}'
+      );
+    });
+
+    test('keeps every rule inside nested at-rule blocks with three or more rules', () => {
+      const input = '@media (min-width:768px){.a{color:red;}.b{color:blue;}.c{color:green;}}';
+      expect(combineSelectorsInCss(input)).toBe(
+        '@media (min-width:768px){.a{color:red;}.b{color:blue;}.c{color:green;}}'
+      );
+    });
+
+    test('leaves a malformed at-rule without a block or semicolon untouched', () => {
+      expect(combineSelectorsInCss('@media screen')).toBe('@media screen');
+    });
   });
 });
 
@@ -225,6 +345,30 @@ describe('CSS Minifier (minifyCSS)', () => {
     `;
     const expected = '@media (max-width:600px){.test{color:#f00}}';
     expect(minifyCSS(input)).toBe(expected);
+  });
+
+  test('minifies calc(), nested at-rules, and cascade order without corrupting them', () => {
+    const input = `
+      body { color: green; }
+      @supports (display: grid) {
+        .box { width: calc(100% + 20px); }
+      }
+      @media (max-width: 600px) {
+        body { color: blue; }
+      }
+    `;
+    const expected = 'body{color:green}@supports (display:grid){.box{width:calc(100% + 20px)}}@media (max-width:600px){body{color:#00f}}';
+    expect(minifyCSS(input)).toBe(expected);
+  });
+
+  test('normalizes multiline calc() through the full pipeline', () => {
+    const input = '.box {\n  width: calc(\n    100% -\n    20px\n  );\n}';
+    expect(minifyCSS(input)).toBe('.box{width:calc(100% - 20px)}');
+  });
+
+  test('minifies three or more sequential rules without dropping any', () => {
+    const input = '.a { color: red; } .b { color: blue; } .c { color: cyan; }';
+    expect(minifyCSS(input)).toBe('.a{color:#f00}.b{color:#00f}.c{color:#0ff}');
   });
 
   test('preserves comment markers and minifier delimiters inside content strings', () => {
