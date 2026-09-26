@@ -148,8 +148,13 @@ export class DataFormatConverter {
                 value.forEach((child, index) => flatten(child, `${prefix}.${index}`));
                 return;
             }
-            if (value !== null && typeof value === 'object') {
-                Object.entries(value as Record<string, unknown>).forEach(([key, child]) => {
+            // Recurse only into plain objects: non-plain ones (a YAML11 Date,
+            // for instance) have no enumerable entries and would be silently
+            // dropped — stringify them like any other scalar instead.
+            const prototype = value === null ? null : Object.getPrototypeOf(value);
+            const isPlainObject = prototype === null || prototype === Object.prototype;
+            if (value !== null && typeof value === 'object' && isPlainObject) {
+                Object.entries(value).forEach(([key, child]) => {
                     flatten(child, prefix ? `${prefix}.${key}` : key);
                 });
                 return;

@@ -301,6 +301,14 @@ age=30`;
             expect(converter.formatProperties({ missing: null })).toBe('missing=');
         });
 
+        it('should stringify non-plain objects (e.g. YAML11 dates) instead of dropping them', () => {
+            const output = converter.formatProperties({ createdAt: new Date('2026-09-26T10:00:00Z') });
+            // Colons in the stringified value are escaped per properties rules.
+            expect(output).toBe(
+                `createdAt=${converter.escapeProp(new Date('2026-09-26T10:00:00Z').toString())}`
+            );
+        });
+
         it('should keep flattened properties output parseable by the validator', () => {
             const nested = { server: { url: 'https://example.com', timeout: 30 } };
             const output = converter.formatOutput(nested, 'properties');
