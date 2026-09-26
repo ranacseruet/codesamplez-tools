@@ -100,6 +100,28 @@ describe('minifier helper functions', () => {
       const input = '.a { content: "say \\"a, b; }"; }';
       expect(removeWhitespaceFromCss(input)).toBe('.a{content:"say \\"a, b; }";}');
     });
+
+    test('normalizes newlines and indentation inside multiline calc() to single spaces', () => {
+      const input = '.box {\n  width: calc(\n    100% -\n    20px\n  );\n}';
+      expect(removeWhitespaceFromCss(input)).toBe('.box{width:calc(100% - 20px);}');
+    });
+
+    test('normalizes whitespace inside multiline clamp() the same way', () => {
+      const input = '.v { top: clamp(\n  0px,\n  1rem + 2px,\n  3rem\n); }';
+      expect(removeWhitespaceFromCss(input)).toBe('.v{top:clamp(0px, 1rem + 2px, 3rem);}');
+    });
+
+    test('does not confuse math placeholders with literal __CSS_MINIFIER_MATH_ text in the input', () => {
+      const input = '.a { content: "__CSS_MINIFIER_MATH_0__"; width: calc(1px + 2px); }';
+      expect(removeWhitespaceFromCss(input)).toBe(
+        '.a{content:"__CSS_MINIFIER_MATH_0__";width:calc(1px + 2px);}'
+      );
+    });
+
+    test('does not treat identifier tails like admin( or fmin( as math functions', () => {
+      const input = '.a { padding: admin(1px, 2px); top: fmin(1px, 2px); }';
+      expect(removeWhitespaceFromCss(input)).toBe('.a{padding:admin(1px,2px);top:fmin(1px,2px);}');
+    });
   });
 
   describe('shortenColorsInCss', () => {
@@ -255,11 +277,36 @@ describe('minifier helper functions', () => {
     test('passes @font-face and statement at-rules through without dropping them', () => {
       const input = "@font-face { font-family: 'X'; src: url('x.woff2') format('woff2'); } @import url('theme.css'); .a { color: red; }";
       const output = combineSelectorsInCss(input);
-      expect(output).toContain("@font-face {font-family: 'X'; src: url('x.woff2') format('woff2'); }");
+      expect(output).toContain("@font-face {font-family: 'X';src: url('x.woff2') format('woff2')}");
       expect(output).toContain("@import url('theme.css');");
       expect(output).toContain('.a{color: red;}');
       // The @import statement must survive before the rule that follows it.
       expect(output.indexOf('@import')).toBeLessThan(output.indexOf('.a{'));
+    });
+
+    test('normalizes declarations in @font-face and @page bodies', () => {
+      const input = "@font-face { font-family: 'X' ; ; src: url('x.woff2') format('woff2'); } @page { margin: 1cm ; }";
+      const output = combineSelectorsInCss(input);
+      expect(output).toContain("@font-face {font-family: 'X';src: url('x.woff2') format('woff2')}");
+      expect(output).toContain('@page {margin: 1cm}');
+    });
+
+    test('processes every rule in a sequence of three or more rules', () => {
+      const input = '.a{color:red;}.b{color:blue;}.c{color:green;}.d{color:yellow;}';
+      expect(combineSelectorsInCss(input)).toBe(
+        '.a{color:red;}.b{color:blue;}.c{color:green;}.d{color:yellow;}'
+      );
+    });
+
+    test('keeps every rule inside nested at-rule blocks with three or more rules', () => {
+      const input = '@media (min-width:768px){.a{color:red;}.b{color:blue;}.c{color:green;}}';
+      expect(combineSelectorsInCss(input)).toBe(
+        '@media (min-width:768px){.a{color:red;}.b{color:blue;}.c{color:green;}}'
+      );
+    });
+
+    test('leaves a malformed at-rule without a block or semicolon untouched', () => {
+      expect(combineSelectorsInCss('@media screen')).toBe('@media screen');
     });
   });
 });
@@ -312,6 +359,16 @@ describe('CSS Minifier (minifyCSS)', () => {
     `;
     const expected = 'body{color:green}@supports (display:grid){.box{width:calc(100% + 20px)}}@media (max-width:600px){body{color:#00f}}';
     expect(minifyCSS(input)).toBe(expected);
+  });
+
+  test('normalizes multiline calc() through the full pipeline', () => {
+    const input = '.box {\n  width: calc(\n    100% -\n    20px\n  );\n}';
+    expect(minifyCSS(input)).toBe('.box{width:calc(100% - 20px)}');
+  });
+
+  test('minifies three or more sequential rules without dropping any', () => {
+    const input = '.a { color: red; } .b { color: blue; } .c { color: cyan; }';
+    expect(minifyCSS(input)).toBe('.a{color:#f00}.b{color:#00f}.c{color:#0ff}');
   });
 
   test('preserves comment markers and minifier delimiters inside content strings', () => {

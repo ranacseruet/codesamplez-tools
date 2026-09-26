@@ -9,6 +9,8 @@ All notable changes to this tool are documented in this file.
 - calc()/min()/max()/clamp() math expressions are masked during whitespace stripping, so `calc(100% + 20px)` no longer becomes the invalid `calc(100%+20px)` that browsers drop.
 - Named-color shortening no longer rewrites `green` to `#0f0` (which is lime); the keyword stays, which is both color-correct and byte-shortest.
 - The selector-combining pass now walks rules in document order and recurses into nested at-rule blocks, so @supports/@keyframes/@layer/@container are no longer severed into orphan braces, @media overrides no longer get hoisted above the base rules they override (cascade inversion), and statement at-rules such as @import/@charset/@font-face are preserved instead of being silently dropped.
+- Whitespace inside multiline math expressions is normalized to single spaces (newlines and indentation stripped) while the mandatory spaces around `+`/`-` stay intact.
+- Rule scanning no longer skips rules after the second one in a sequence (orphan `}` corruption); @font-face/@page declaration bodies get the same declaration cleaning as normal rules.
 
 ## [1.0.5] - 2026-09-24
 

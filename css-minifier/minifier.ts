@@ -89,6 +89,23 @@
       mathPlaceholderPrefix = '_' + mathPlaceholderPrefix;
     }
     const mathTokens = [];
+    // Math tokens bypass every whitespace pass below, so normalize their own
+    // whitespace here: collapse newlines/tabs/runs of spaces to single spaces
+    // and trim the edges inside the outer parens. The required single spaces
+    // around `+`/`-` are untouched — only redundant whitespace goes.
+    function normalizeMathToken(token) {
+      const openIndex = token.indexOf('(');
+      const closeIndex = token.lastIndexOf(')');
+      if (openIndex === -1 || closeIndex === -1 || closeIndex < openIndex) {
+        return token.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+      const inner = token
+        .slice(openIndex + 1, closeIndex)
+        .replace(/[\r\n\t]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      return token.slice(0, openIndex + 1) + inner + token.slice(closeIndex);
+    }
     const mathFnPattern = /(calc|clamp|min|max)\(/gi;
     let mathMasked = '';
     let scanIndex = 0;
@@ -114,7 +131,7 @@
         }
       }
       mathMasked += minified.slice(scanIndex, fnStart) + mathPlaceholderPrefix + mathTokens.length + '__';
-      mathTokens.push(minified.slice(fnStart, fnEnd));
+      mathTokens.push(normalizeMathToken(minified.slice(fnStart, fnEnd)));
       scanIndex = fnEnd;
       mathFnPattern.lastIndex = fnEnd;
     }
@@ -267,7 +284,12 @@
             const bodyEnd = closeIndex === -1 ? remaining.length : closeIndex;
             const header = remaining.slice(0, braceIndex);
             const body = remaining.slice(braceIndex + 1, bodyEnd);
-            const processedBody = processRuleSequence(body);
+            // @font-face/@page bodies hold declarations, not brace rules;
+            // running them through cleanDeclarations trims the stray spaces
+            // and empty segments the style-rule path would never touch.
+            const processedBody = body.includes('{')
+              ? processRuleSequence(body)
+              : cleanDeclarations(body);
             result += processedBody ? `${header}{${processedBody}}` : `${header}{}`;
             index += closeIndex === -1 ? remaining.length : closeIndex + 1;
             continue;
@@ -295,7 +317,7 @@
         const ruleEnd = closeIndex === -1 ? css.length : closeIndex + 1;
         const [selector, declarations] = css.slice(index, ruleEnd).split('{');
         result += processCssRule(selector, declarations);
-        index += ruleEnd;
+        index = ruleEnd;
       }
 
       return result;
