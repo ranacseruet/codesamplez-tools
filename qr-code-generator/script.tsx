@@ -89,7 +89,7 @@ export function QRCodeGeneratorApp() {
         return;
       }
 
-      if (!text) {
+      if (!text.trim()) {
         setCanvasVisible(false);
         setErrorMessage(QR_EMPTY_INPUT_MESSAGE);
         return;
@@ -126,6 +126,7 @@ export function QRCodeGeneratorApp() {
 
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
     if (!blob) {
+      NotificationManager.show('Failed to generate image for download', 2000, { type: 'error' });
       return;
     }
 
