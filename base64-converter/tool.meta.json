@@ -1,9 +1,9 @@
 {
   "id": "base64-converter-tool",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "title": "Base64 Converter",
   "seoTitle": "Base64 Converter - Encode/Decode Text/Image Instantly",
-  "description": "Quickly encode or decode Base64 strings. No data sent to server – all in-browser. Supports files & multiple text encodings for convenience.",
+  "description": "Quickly encode or decode Base64 strings. No data sent to server \u2013 all in-browser. Supports files & multiple text encodings for convenience.",
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 1,
   "indexDescription": "Convert text and files to Base64 encoding and decode Base64 strings back to their original format. Supports multiple encodings and file uploads.",

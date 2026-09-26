@@ -11,13 +11,20 @@ class Base64Codec {
     }
 
     /**
-     * Maps the URL-safe alphabet (`-`/`_`) back to standard base64 (`+`/`/`).
+     * Maps the URL-safe alphabet (`-`/`_`) back to standard base64 (`+`/`/`)
+     * and restores the `=` padding URL-safe base64 omits (RFC 4648 §5).
      * Every consumer that hands a payload to `atob` (or that embeds it in a
      * `data:` URL) must use this, otherwise a payload `isBase64` accepted can
-     * still fail at decode/download/preview time.
+     * still fail at decode/download/preview time. Payloads that already carry
+     * padding are passed through unchanged so malformed padding stays visible
+     * to `isBase64`'s strict checks.
      */
     normalizePayload(payload: string): string {
-        return payload.replace(/-/g, '+').replace(/_/g, '/');
+        let output = payload.replace(/-/g, '+').replace(/_/g, '/');
+        if (!output.includes('=')) {
+            output += '='.repeat((4 - (output.length % 4)) % 4);
+        }
+        return output;
     }
 
     isBase64(payload: unknown): boolean { // Expects only the base64 data payload, no prefix

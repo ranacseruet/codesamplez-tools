@@ -20,7 +20,10 @@ describe('Base64Codec', () => {
             expect(codec.isBase64('SGVsbG8===')).toBe(false); // Too many padding chars
             expect(codec.isBase64('SG VsbG8=')).toBe(false); // Space not allowed
             expect(codec.isBase64('!')).toBe(false); // Invalid char
-            expect(codec.isBase64('SGVsbG')).toBe(false); // Invalid length
+            // Unpadded length-6 payloads are valid base64url (RFC 4648 §5),
+            // so this is no longer "invalid length" — but length-1 is:
+            expect(codec.isBase64('SGVsbG')).toBe(true);
+            expect(codec.isBase64('abcde')).toBe(false); // Data part is 1 mod 4
             expect(codec.isBase64('=')).toBe(false); // Just padding
             expect(codec.isBase64('YWJjZA=')).toBe(false); // Wrong padding
             expect(codec.isBase64('')).toBe(false); // Empty string
@@ -31,6 +34,14 @@ describe('Base64Codec', () => {
         test('validates base64 strings with padding in middle', () => {
             expect(codec.isBase64('SGVs=G8=')).toBe(false);
             expect(codec.isBase64('SG==bG8=')).toBe(false);
+        });
+
+        test('accepts unpadded URL-safe base64 (RFC 4648 §5)', () => {
+            // JWT payload from issue #36: 75 chars, no padding.
+            expect(codec.isBase64('eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ')).toBe(true);
+            expect(codec.isBase64('SGVsbG9-fg')).toBe(true); // unpadded URL-safe
+            expect(codec.isBase64('YWJj')).toBe(true); // unpadded standard, length 4
+            expect(codec.isBase64('ab')).toBe(true); // unpadded, length 2
         });
     });
 
@@ -116,6 +127,17 @@ describe('Base64Codec', () => {
             expect(codec.decodeText('SGVsbG9-fg==', 'utf8')).toBe(codec.decodeText('SGVsbG9+fg==', 'utf8'));
         });
 
+        test('decodes unpadded URL-safe base64 the same as its padded form', () => {
+            // Regression (issue #36): unpadded base64url was rejected by
+            // isBase64, so decode mode threw and auto mode wrongly encoded.
+            expect(codec.decodeText('SGVsbG9-fg', 'utf8')).toBe('Hello~~');
+            expect(codec.decodeText('SGVsbG9-fg', 'utf8')).toBe(codec.decodeText('SGVsbG9+fg==', 'utf8'));
+            expect(codec.decodeText(
+                'eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ',
+                'utf8'
+            )).toBe('{"sub":"1234567890","name":"John Doe","iat":1516239022}');
+        });
+
         test('handles special characters', () => {
             expect(codec.decodeText('SGVsbG8gwqkgV29ybGQ=', 'utf8')).toBe('Hello © World');
             expect(codec.decodeText('SGVsbG8g8J+MjQ==', 'utf8')).toBe('Hello 🌍');
@@ -138,8 +160,12 @@ describe('Base64Codec', () => {
         test('throws error for invalid UCS-2 sequences', () => {
             // Test odd number of bytes
             expect(() => codec.decodeText('AA==', 'ucs2')).toThrow('Invalid UCS-2 byte sequence');
-            // Test truncated sequence
-            expect(() => codec.decodeText('SABlAGwAbAB', 'ucs2')).toThrow('Invalid base64 string');
+            // Truncated sequence: 10 unpadded data chars decode to an odd
+            // 7 bytes, surfacing as a UCS-2 error rather than a base64 one.
+            expect(() => codec.decodeText('SABlAGwAbA', 'ucs2')).toThrow('Invalid UCS-2 byte sequence');
+            // 11 unpadded data chars decode to an even byte count, so the
+            // previously-rejected payload now decodes cleanly.
+            expect(typeof codec.decodeText('SABlAGwAbAB', 'ucs2')).toBe('string');
         });
 
         test('provides specific error messages', () => {
