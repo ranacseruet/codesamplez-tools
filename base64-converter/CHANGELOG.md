@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.5] - 2026-09-26
+
+### Base64 Converter
+
+- Unpadded URL-safe Base64 (RFC 4648 §5 — no trailing `=`, as in JWT payloads) is now accepted: decode mode decodes it and auto mode decodes it instead of re-encoding it as if it were plain text. The codec's normalization now restores the omitted padding for every consumer (validation, decoding, preview, download).
+
 ## [1.0.4] - 2026-09-24
 
 ### Base64 Converter

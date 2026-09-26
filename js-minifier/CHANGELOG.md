@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.6] - 2026-09-26
+
+### JavaScript Minifier
+
+- Housekeeping patch bump for the shared common/Base64Codec fix (unpadded Base64URL acceptance); this tool does not bundle the codec and its behavior is unchanged.
+
 ## [1.0.5] - 2026-09-24
 
 ### JavaScript Minifier
