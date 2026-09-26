@@ -2,6 +2,14 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.6] - 2026-09-26
+
+### Data Format Converter
+
+- XML attributes no longer gain a stray `_` on XML→JSON→XML round-trips (builder prefix now matches the parsers' `@_`).
+- Converting nested objects/arrays to properties flattens them with dot-separated paths (`db.host=localhost`, `items.0=a`) instead of destroying values as `[object Object]`; `null` values render as empty.
+- Auto-detection no longer misreads a properties file as YAML just because a value contains `: ` (e.g. `greeting=Hello: World`); comment lines are ignored during detection.
+
 ## [1.0.5] - 2026-09-24
 
 ### Data Format Converter
