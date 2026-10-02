@@ -27,3 +27,7 @@ updates:
       types:
         patterns:
           - "@types/*"
+      webpack:
+        patterns:
+          - "webpack"
+          - "webpack-*"
