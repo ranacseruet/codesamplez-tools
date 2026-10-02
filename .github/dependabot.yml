@@ -14,3 +14,8 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    groups:
+      babel:
+        patterns:
+          - "@babel/*"
+          - "babel-*"
