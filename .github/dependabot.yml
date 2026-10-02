@@ -18,4 +18,12 @@ updates:
       babel:
         patterns:
           - "@babel/*"
-          - "babel-*"
+      jest:
+        patterns:
+          - "jest"
+          - "jest-*"
+          - "babel-jest"
+          - "@types/jest"
+      types:
+        patterns:
+          - "@types/*"
