@@ -116,7 +116,7 @@ function buildReverseImportGraph(rootDirectory) {
  *
  * Returns `null` when the impact cannot be narrowed safely, and callers must
  * then treat every tool as affected. That covers files this resolver does not
- * handle, files missing at HEAD (deleted or renamed), and `common/` modules
+ * handle, non-test files missing at HEAD (deleted or renamed), and `common/` modules
  * imported directly by code outside any tool (build config, scripts), which
  * shape every tool's output.
  * @param {string} filePath repo-relative, forward slashes
@@ -126,7 +126,18 @@ function buildReverseImportGraph(rootDirectory) {
 function resolveToolsReachedByCommonFile(filePath, options = {}) {
     const rootDirectory = options.rootDirectory || process.cwd();
 
-    if (!isResolvableCommonFile(filePath) || !fs.existsSync(path.join(rootDirectory, filePath))) {
+    if (!isResolvableCommonFile(filePath)) {
+        return null;
+    }
+
+    // Test files are never part of a bundle. Decide this from the path alone,
+    // before the existence check: a deleted or renamed test no longer exists at
+    // HEAD but must not fall back to "every tool".
+    if (isTestFile(filePath)) {
+        return [];
+    }
+
+    if (!fs.existsSync(path.join(rootDirectory, filePath))) {
         return null;
     }
 

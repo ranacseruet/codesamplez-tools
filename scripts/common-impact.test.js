@@ -100,6 +100,20 @@ describe('common-impact', () => {
             expect(resolve('common/leaf.ts')).toEqual([]);
         });
 
+        it('treats a deleted or renamed test file as reaching no tool, without the missing-file fallback', () => {
+            write('common/leaf.ts');
+            write('tool-a/script.ts', "import '../common/leaf';");
+
+            expect(resolve('common/removed-helper.test.ts')).toEqual([]);
+            expect(resolve('common/nested/old-name.test.js')).toEqual([]);
+        });
+
+        it('still falls back to every tool for a deleted non-test module', () => {
+            write('common/leaf.ts');
+
+            expect(resolve('common/removed-helper.ts')).toBeNull();
+        });
+
         it('treats a test file itself as reaching no tool', () => {
             write('common/leaf.ts');
             write('common/leaf.test.js', "import './leaf';");

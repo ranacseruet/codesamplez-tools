@@ -278,6 +278,15 @@ describe('check-version-bumps', () => {
                 expect(missing).toEqual(['diff-checker-tool', 'jwt-builder-tool', 'jwt-decoder-tool']);
             });
 
+            it('demands nothing when a common/ test file is deleted or renamed', () => {
+                const missing = findMissingBumps(['common/removed-helper.test.ts'], 'any-base', {
+                    workingVersions: versionsWith([]),
+                    readVersionAt: readVersionAtMergeBase
+                });
+
+                expect(missing).toEqual([]);
+            });
+
             it('resolves the real Base64Codec change to exactly its three importers', () => {
                 const missing = findMissingBumps(['common/Base64Codec.ts', 'common/Base64Codec.test.js'], 'any-base', {
                     workingVersions: versionsWith([]),
