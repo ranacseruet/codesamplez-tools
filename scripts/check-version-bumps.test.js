@@ -210,6 +210,93 @@ describe('check-version-bumps', () => {
             expect(missing).toEqual([]);
         });
 
+        describe('common/ modules resolved through the import graph', () => {
+            const allToolIds = detectAffectedTargets(['common/clipboard.ts']).affectedTools;
+            const versionsWith = (bumped) => Object.fromEntries(
+                allToolIds.map((id) => [id, bumped.includes(id) ? '1.0.1' : '1.0.0'])
+            );
+
+            it('demands a bump only from the tools that import the changed module', () => {
+                const importers = ['base64-converter-tool', 'jwt-builder-tool'];
+                const missing = findMissingBumps(['common/Base64Codec.ts'], 'any-base', {
+                    workingVersions: versionsWith([]),
+                    readVersionAt: readVersionAtMergeBase,
+                    resolveCommonImpact: () => importers
+                });
+
+                expect(missing).toEqual(importers);
+            });
+
+            it('passes when the importing tools bumped and unrelated tools did not', () => {
+                const importers = ['base64-converter-tool', 'jwt-builder-tool'];
+                const missing = findMissingBumps(['common/Base64Codec.ts'], 'any-base', {
+                    workingVersions: versionsWith(importers),
+                    readVersionAt: readVersionAtMergeBase,
+                    resolveCommonImpact: () => importers
+                });
+
+                expect(missing).toEqual([]);
+            });
+
+            it('demands nothing for a common/ module that no tool imports', () => {
+                const missing = findMissingBumps(['common/drop-zone-test-utils.ts'], 'any-base', {
+                    workingVersions: versionsWith([]),
+                    readVersionAt: readVersionAtMergeBase,
+                    resolveCommonImpact: () => []
+                });
+
+                expect(missing).toEqual([]);
+            });
+
+            it('falls back to every tool when the impact cannot be resolved', () => {
+                const missing = findMissingBumps(['common/shared-styles.css'], 'any-base', {
+                    workingVersions: versionsWith([]),
+                    readVersionAt: readVersionAtMergeBase,
+                    resolveCommonImpact: () => null
+                });
+
+                expect(missing).toEqual([...allToolIds].sort());
+            });
+
+            it('never narrows non-common shared triggers such as build config', () => {
+                const missing = findMissingBumps(['webpack.config.js'], 'any-base', {
+                    workingVersions: versionsWith([]),
+                    readVersionAt: readVersionAtMergeBase,
+                    resolveCommonImpact: () => ['base64-converter-tool']
+                });
+
+                expect(missing).toEqual([...allToolIds].sort());
+            });
+
+            it('unions importers across several changed common/ modules and a tool file', () => {
+                const missing = findMissingBumps(['common/a.ts', 'common/b.ts', 'diff-checker/diff.ts'], 'any-base', {
+                    workingVersions: versionsWith([]),
+                    readVersionAt: readVersionAtMergeBase,
+                    resolveCommonImpact: (filePath) => (filePath === 'common/a.ts' ? ['jwt-builder-tool'] : ['jwt-decoder-tool'])
+                });
+
+                expect(missing).toEqual(['diff-checker-tool', 'jwt-builder-tool', 'jwt-decoder-tool']);
+            });
+
+            it('demands nothing when a common/ test file is deleted or renamed', () => {
+                const missing = findMissingBumps(['common/removed-helper.test.ts'], 'any-base', {
+                    workingVersions: versionsWith([]),
+                    readVersionAt: readVersionAtMergeBase
+                });
+
+                expect(missing).toEqual([]);
+            });
+
+            it('resolves the real Base64Codec change to exactly its three importers', () => {
+                const missing = findMissingBumps(['common/Base64Codec.ts', 'common/Base64Codec.test.js'], 'any-base', {
+                    workingVersions: versionsWith([]),
+                    readVersionAt: readVersionAtMergeBase
+                });
+
+                expect(missing).toEqual(['base64-converter-tool', 'jwt-builder-tool', 'jwt-decoder-tool']);
+            });
+        });
+
         it('deduplicates candidates from multiple changed files of one tool', () => {
             const missing = findMissingBumps([
                 'base64-converter/script.tsx',
