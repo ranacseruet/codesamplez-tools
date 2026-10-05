@@ -16,7 +16,8 @@ const ALLOWED_ADVISORIES = {
     // webpack-cli -> webpack-dev-server -> http-proxy-middleware -> micromatch,
     // i.e. the `npm run dev` proxy matcher. Nothing in that chain is bundled
     // into the shipped static site, and the vulnerable input is dev-server proxy
-    // config we author ourselves, not untrusted data.
+    // config we author ourselves, not untrusted data. main() enforces the
+    // dev-only premise by re-auditing with --omit=dev and no waivers.
     'GHSA-vfj7-8cjw-p6xm': {
         reason: 'braces has no patched version; dev-server-only transitive dependency',
         expires: '2026-11-04',
@@ -98,50 +99,136 @@ function evaluateAudit(report, options = {}) {
     return { blocking, expired, tolerated, unusedAllowances };
 }
 
-function main() {
-    const result = spawnSync('npm', ['audit', '--json', '--audit-level=high'], {
-        encoding: 'utf8',
-        maxBuffer: 64 * 1024 * 1024,
-    });
+/**
+ * Prefers the npm CLI that launched this script (`npm_execpath`, set by `npm
+ * run`) executed through the current Node binary, which avoids the Windows
+ * `npm.cmd` launcher that cannot be spawned without a shell. Falls back to
+ * `npm` on PATH, using a shell on Windows only.
+ *
+ * @param {NodeJS.ProcessEnv} env
+ * @param {string} platform
+ * @param {string[]} args npm arguments
+ * @returns {{ command: string, args: string[], shell: boolean }}
+ */
+function resolveNpmInvocation(env, platform, args) {
+    if (env.npm_execpath) {
+        return { command: process.execPath, args: [env.npm_execpath, ...args], shell: false };
+    }
+    return { command: 'npm', args, shell: platform === 'win32' };
+}
+
+/**
+ * Parses `npm audit --json` output, failing closed. An unparseable, empty or
+ * non-object payload must never be read as "no vulnerabilities".
+ *
+ * @param {string | null | undefined} stdout
+ * @returns {any}
+ */
+function parseAuditOutput(stdout) {
+    if (typeof stdout !== 'string' || stdout.trim() === '') {
+        throw new Error('npm audit produced no output');
+    }
 
     let report;
     try {
-        report = JSON.parse(result.stdout);
+        report = JSON.parse(stdout);
     } catch (error) {
-        console.error('Could not parse `npm audit --json` output:', result.stderr || String(error));
-        process.exit(1);
+        throw new Error(`npm audit output was not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
     }
 
-    if (report && report.error) {
-        console.error(`npm audit failed: ${report.error.summary || report.error.code}`);
-        process.exit(1);
+    if (typeof report !== 'object' || report === null) {
+        throw new Error('npm audit output was not a JSON object');
     }
-
-    const { blocking, expired, tolerated, unusedAllowances } = evaluateAudit(report);
-
-    for (const id of tolerated) {
-        console.warn(`Tolerated ${id} until ${ALLOWED_ADVISORIES[id].expires}: ${ALLOWED_ADVISORIES[id].reason}`);
+    if (report.error) {
+        throw new Error(`npm audit failed: ${report.error.summary || report.error.code}`);
     }
-    for (const id of unusedAllowances) {
-        console.warn(`Allowlist entry ${id} no longer matches any advisory; remove it from scripts/audit-deps.js.`);
-    }
+    return report;
+}
 
+/**
+ * @param {string[]} extraArgs
+ * @returns {any}
+ */
+function runAudit(extraArgs) {
+    const invocation = resolveNpmInvocation(process.env, process.platform, ['audit', '--json', '--audit-level=high', ...extraArgs]);
+    const result = spawnSync(invocation.command, invocation.args, {
+        encoding: 'utf8',
+        maxBuffer: 64 * 1024 * 1024,
+        shell: invocation.shell,
+    });
+
+    if (result.error) {
+        throw new Error(`could not run npm audit: ${result.error.message}`);
+    }
+    // npm audit exits 1 when it finds vulnerabilities; anything else (signal, 2+) is a tooling failure.
+    if (result.status !== 0 && result.status !== 1) {
+        throw new Error(`npm audit exited with status ${result.status}: ${result.stderr || 'no stderr'}`);
+    }
+    return parseAuditOutput(result.stdout);
+}
+
+/**
+ * @param {string} label
+ * @param {ReturnType<typeof evaluateAudit>} outcome
+ * @returns {boolean} true when the audit passed
+ */
+function reportOutcome(label, outcome) {
+    const { blocking, expired } = outcome;
     if (blocking.length === 0) {
-        console.log('Dependency audit passed: no high/critical advisories outside the allowlist.');
-        return;
+        return true;
     }
 
-    console.error('Dependency audit failed. Blocking advisories:');
+    console.error(`${label} audit failed. Blocking advisories:`);
     for (const advisory of blocking) {
         const suffix = advisory.id && expired.includes(advisory.id) ? ' (allowlist entry expired)' : '';
         console.error(`  - [${advisory.severity}] ${advisory.packageName}: ${advisory.title} ${advisory.id || ''}${suffix}`);
     }
-    console.error('Run `npm audit` for the dependency paths.');
-    process.exit(1);
+    return false;
+}
+
+function main() {
+    let fullReport;
+    let productionReport;
+    try {
+        fullReport = runAudit([]);
+        productionReport = runAudit(['--omit=dev']);
+    } catch (error) {
+        console.error(`Dependency audit could not complete: ${error instanceof Error ? error.message : String(error)}`);
+        process.exit(1);
+    }
+
+    const full = evaluateAudit(fullReport);
+    // The allowlist is justified by the advisory being dev-only, so production
+    // dependencies get no waivers: if it ever becomes reachable from them, this fails.
+    const production = evaluateAudit(productionReport, { allowed: {} });
+
+    for (const id of full.tolerated) {
+        console.warn(`Tolerated ${id} until ${ALLOWED_ADVISORIES[id].expires}: ${ALLOWED_ADVISORIES[id].reason}`);
+    }
+    for (const id of full.unusedAllowances) {
+        console.warn(`Allowlist entry ${id} no longer matches any advisory; remove it from scripts/audit-deps.js.`);
+    }
+
+    const fullPassed = reportOutcome('Dependency', full);
+    const productionPassed = reportOutcome('Production dependency', production);
+
+    if (!fullPassed || !productionPassed) {
+        console.error('Run `npm audit` for the dependency paths.');
+        process.exit(1);
+    }
+
+    console.log('Dependency audit passed: production dependencies are clean and no high/critical dev advisories are outside the allowlist.');
 }
 
 if (require.main === module) {
     main();
 }
 
-module.exports = { ALLOWED_ADVISORIES, advisoryIdFromUrl, collectAdvisories, evaluateAudit };
+module.exports = {
+    ALLOWED_ADVISORIES,
+    advisoryIdFromUrl,
+    collectAdvisories,
+    evaluateAudit,
+    parseAuditOutput,
+    resolveNpmInvocation,
+};

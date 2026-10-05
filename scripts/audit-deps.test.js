@@ -1,4 +1,11 @@
-const { ALLOWED_ADVISORIES, advisoryIdFromUrl, collectAdvisories, evaluateAudit } = require('./audit-deps');
+const {
+    ALLOWED_ADVISORIES,
+    advisoryIdFromUrl,
+    collectAdvisories,
+    evaluateAudit,
+    parseAuditOutput,
+    resolveNpmInvocation,
+} = require('./audit-deps');
 
 const BRACES_ID = 'GHSA-vfj7-8cjw-p6xm';
 
@@ -79,5 +86,39 @@ describe('audit-deps', () => {
             expect(entry.reason.length).toBeGreaterThan(0);
             expect(Number.isNaN(Date.parse(`${entry.expires}T00:00:00Z`))).toBe(false);
         }
+    });
+
+    describe('parseAuditOutput fails closed', () => {
+        test.each([
+            ['null', null],
+            ['undefined', undefined],
+            ['empty string', ''],
+            ['whitespace', '  \n'],
+            ['JSON null', 'null'],
+            ['JSON array scalar', '"ok"'],
+            ['invalid JSON', '{not json'],
+        ])('rejects %s', (_label, input) => {
+            expect(() => parseAuditOutput(input)).toThrow();
+        });
+
+        test('rejects an npm error payload', () => {
+            expect(() => parseAuditOutput(JSON.stringify({ error: { code: 'ENOAUDIT', summary: 'offline' } }))).toThrow(/offline/);
+        });
+
+        test('accepts a normal report', () => {
+            expect(parseAuditOutput(JSON.stringify({ vulnerabilities: {} }))).toEqual({ vulnerabilities: {} });
+        });
+    });
+
+    describe('resolveNpmInvocation', () => {
+        test('runs the launching npm CLI through node, with no shell, when npm_execpath is set', () => {
+            const invocation = resolveNpmInvocation({ npm_execpath: '/x/npm-cli.js' }, 'win32', ['audit']);
+            expect(invocation).toEqual({ command: process.execPath, args: ['/x/npm-cli.js', 'audit'], shell: false });
+        });
+
+        test('falls back to npm on PATH, using a shell only on Windows', () => {
+            expect(resolveNpmInvocation({}, 'win32', ['audit'])).toEqual({ command: 'npm', args: ['audit'], shell: true });
+            expect(resolveNpmInvocation({}, 'linux', ['audit'])).toEqual({ command: 'npm', args: ['audit'], shell: false });
+        });
     });
 });

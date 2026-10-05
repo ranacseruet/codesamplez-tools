@@ -111,7 +111,7 @@ npm run bundle-budget-check
 npm run audit:deps
 ```
 
-`audit:deps` wraps `npm audit` (`scripts/audit-deps.js`) so a single advisory with no upstream fix can be tolerated without disabling the check. Exceptions live in `ALLOWED_ADVISORIES`, keyed by GHSA id, and each needs a reason and an expiry date; once it expires the audit fails again. Remove an entry as soon as the advisory is patched.
+`audit:deps` wraps `npm audit` (`scripts/audit-deps.js`) so a single advisory with no upstream fix can be tolerated without disabling the check. Exceptions live in `ALLOWED_ADVISORIES`, keyed by GHSA id, and each needs a reason and an expiry date; once it expires the audit fails again. Exceptions never apply to production dependencies: the script also audits with `--omit=dev` and no waivers, so an advisory only tolerated while it is dev-only fails as soon as it becomes reachable from a production dependency. A failed or unparseable `npm audit` run fails the check rather than passing it. Remove an entry as soon as the advisory is patched.
 
 ---
 
