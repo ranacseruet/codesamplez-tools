@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.7] - 2026-10-05
+
+### JSON Formatter
+
+- Updated the bundled fast-uri (used by the schema validator's Ajv) to 3.1.8 to pick up a host-normalization security fix; no change to formatting or schema validation behavior.
+
 ## [1.0.6] - 2026-09-24
 
 ### JSON Formatter
