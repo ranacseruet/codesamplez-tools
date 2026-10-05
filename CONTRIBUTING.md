@@ -87,6 +87,14 @@ tool's version in the same PR. CI enforces this and fails with the list of
 tools missing a bump. Docs-only or CI-only PRs can add the `skip-version-bump`
 label to skip the check.
 
+A tool's version describes that tool, so a change to a `common/` source module
+only requires a bump from the tools that import it, directly or through other
+modules (`scripts/common-impact.js` reads the import graph; test files never
+count). Shared inputs the import graph cannot attribute to particular tools
+still require a bump from every tool: build config, `package.json`, shared
+scripts, `common/` CSS and shims, and any `common/` module that scripts or
+config import directly, such as the app shell.
+
 **Semver guidance:**
 
 - **Patch** — bug fixes, copy tweaks, visual corrections: no behavioral surface changes.

@@ -9,6 +9,7 @@ const {
 } = require('./tool-manifest');
 const { parseVersion } = require('./tool-release');
 const { detectAffectedTargets, getToolIdForPath, isToolMetadataPath, isAllToolsTrigger, isRootOnlyTrigger } = require('./affected-tools');
+const { isResolvableCommonFile, resolveToolsReachedByCommonFile } = require('./common-impact');
 
 const SKIP_LABEL = 'skip-version-bump';
 const NON_TOOL_DOC_EXTENSIONS = new Set(['.md', '.mdx', '.txt']);
@@ -216,15 +217,22 @@ function compareVersions(versionA, versionB) {
 
 /**
  * Computes the tools whose runtime files changed without a version bump.
+ *
+ * A version tracks one tool's shipped behavior, so a `common/` source module
+ * only demands a bump from the tools that actually import it (directly or
+ * transitively). Shared inputs the import graph cannot attribute to specific
+ * tools (build config, CSS, shims, modules scripts import directly) still
+ * demand a bump from every tool.
  * @param {string[]} changedFiles
  * @param {string} baseRevision
- * @param {{ workingVersions?: Record<string, string>, readVersionAt?: typeof readVersionAtRevision, readFileAt?: (revision: string, filePath: string) => string | null }} [options]
+ * @param {{ workingVersions?: Record<string, string>, readVersionAt?: typeof readVersionAtRevision, readFileAt?: (revision: string, filePath: string) => string | null, resolveCommonImpact?: (filePath: string) => string[] | null }} [options]
  * @returns {string[]}
  */
 function findMissingBumps(changedFiles, baseRevision, options = {}) {
     const affectedTargets = detectAffectedTargets(changedFiles);
     const readVersionAt = options.readVersionAt || readVersionAtRevision;
     const readFileAt = options.readFileAt || defaultReadFileAt;
+    const resolveCommonImpact = options.resolveCommonImpact || ((filePath) => resolveToolsReachedByCommonFile(filePath));
     const workingVersions = options.workingVersions
         || Object.fromEntries(getToolDefinitions().map((tool) => [tool.id, tool.version]));
     const candidates = new Set();
@@ -242,9 +250,15 @@ function findMissingBumps(changedFiles, baseRevision, options = {}) {
         if (toolId) {
             candidates.add(toolId);
         } else {
-            // Shared trigger (common/, build config, shared scripts) — every
-            // tool's runtime is affected.
-            affectedTargets.affectedTools.forEach((toolId) => candidates.add(toolId));
+            // Shared trigger. A resolvable common/ module only affects its
+            // importers; anything else (build config, shared scripts, CSS, shims,
+            // or a module the resolver cannot attribute) affects every tool.
+            const reachedTools = isResolvableCommonFile(filePath) ? resolveCommonImpact(filePath) : null;
+            const impactedTools = reachedTools
+                ? affectedTargets.affectedTools.filter((toolId) => reachedTools.includes(toolId))
+                : affectedTargets.affectedTools;
+
+            impactedTools.forEach((toolId) => candidates.add(toolId));
         }
     });
 
