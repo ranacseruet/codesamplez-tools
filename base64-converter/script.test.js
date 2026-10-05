@@ -931,6 +931,25 @@ describe('Base64Converter UI (script.tsx)', () => {
             expect(elements.swapButton.disabled).toBe(false);
         });
 
+        test('should decode unpadded base64url in auto mode instead of encoding it', () => {
+            // Regression (issue #36): unpadded base64url failed isBase64, so
+            // auto mode treated the JWT payload as plain text and encoded it.
+            elements.input.value = 'eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ';
+            elements.mode.value = 'auto';
+            converter.processInput();
+
+            expect(elements.result.textContent).toBe('{"sub":"1234567890","name":"John Doe","iat":1516239022}');
+            expect(NotificationManager.show).toHaveBeenCalledWith('Decoded using UTF-8', 2000, { type: 'success' });
+        });
+
+        test('should decode unpadded base64url in decode mode', () => {
+            elements.input.value = 'SGVsbG9-fg';
+            elements.mode.value = 'decode';
+            converter.processInput();
+
+            expect(elements.result.textContent).toBe('Hello~~');
+        });
+
         test('should handle null characters in decoded content', () => {
             // Base64 string with null characters (binary data)
             elements.input.value = 'SGVsbG8AAHdvcmxk'; // Contains null character

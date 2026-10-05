@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.5] - 2026-09-26
+
+### JWT Decoder & Validator
+
+- Shared Base64Codec fix: unpadded URL-safe Base64 (RFC 4648 §5, e.g. JWT segments) is now accepted by validation and decoding instead of being rejected.
+
 ## [1.0.4] - 2026-09-24
 
 ### JWT Decoder & Validator
