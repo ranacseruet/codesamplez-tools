@@ -107,9 +107,11 @@ npm run verify-build
 # Enforce bundle size budgets
 npm run bundle-budget-check
 
-# Audit dependencies for known vulnerabilities
+# Audit dependencies for known vulnerabilities (high/critical fail the run)
 npm run audit:deps
 ```
+
+`audit:deps` wraps `npm audit` (`scripts/audit-deps.js`) so a single advisory with no upstream fix can be tolerated without disabling the check. Exceptions live in `ALLOWED_ADVISORIES`, keyed by GHSA id, and each needs a reason and an expiry date; once it expires the audit fails again. Remove an entry as soon as the advisory is patched.
 
 ---
 
