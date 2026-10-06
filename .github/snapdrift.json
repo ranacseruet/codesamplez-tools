@@ -2,8 +2,6 @@
   "baselineArtifactName": "ui-foundation-visual-baseline",
   "workingDirectory": ".",
   "baseUrl": "http://127.0.0.1:8080",
-  "readyUrl": "http://127.0.0.1:8080",
-  "readyTimeoutSeconds": 45,
   "resultsFile": "qa-artifacts/visual-baselines/current/visual-baseline-results.json",
   "manifestFile": "qa-artifacts/visual-baselines/current/visual-screenshot-manifest.json",
   "screenshotsRoot": "qa-artifacts/visual-baselines/current",
