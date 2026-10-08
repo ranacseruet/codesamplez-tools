@@ -96,20 +96,80 @@ function getPrismRuntime(): PrismRuntime {
   return globalPrism || Prism;
 }
 
+const JSON_GRAMMAR = {
+  property: /"(?:\\.|[^\\"\r\n])*"(?=:)/,
+  string: /"(?:\\.|[^\\"\r\n])*"/,
+  number: /-?\d+(\.\d+)?\b/,
+  punctuation: /[{}\[\],]/,
+  operator: /:/,
+  boolean: /\b(true|false|null)\b/
+};
+
+const DIFF_HIGHLIGHT_CLASSES = ['current-diff', 'current-diff-single', 'current-diff-start', 'current-diff-middle', 'current-diff-end'];
+
 // Class to detect if content is code (used for syntax highlighting)
 class CodeDetector {
   static KEYWORDS = ['function', 'const', 'let', 'var', 'import', 'export', 'class', 'return'];
   static CODE_CHARACTERS = ['{', '}', '(', ')', '[', ']', ';', ':', '=', '=>', '.', ','];
 
-  static isCode(textContent) {
-    const keywordCount = this.countOccurrences(textContent, this.KEYWORDS);
-    const syntaxCharCount = this.countOccurrences(textContent, this.CODE_CHARACTERS);
-    return keywordCount > 2 || syntaxCharCount > 5;
+  static isCode(textContent: string): boolean {
+    if (!textContent || typeof textContent !== 'string') return false;
+    return this.countOccurrences(textContent, this.KEYWORDS) > 2
+      || this.countOccurrences(textContent, this.CODE_CHARACTERS) > 5
+      || this.detectLanguage(textContent) !== null;
   }
 
-  static countOccurrences(textContent, searchPatterns) {
-    return searchPatterns.reduce((totalCount, pattern) =>
-      totalCount + (textContent.split(pattern).length - 1), 0);
+  static countOccurrences(textContent: string, searchPatterns: string[]): number {
+    return searchPatterns.reduce((t, p) => t + (textContent.split(p).length - 1), 0);
+  }
+
+  /**
+   * Detects programming/markup language once on the full input text.
+   * Applying this consistently across all lines prevents flickering and
+   * conflicting tokens caused by isolated per-line heuristic detection.
+   */
+  static detectLanguage(textContent: string): string | null {
+    if (!textContent || typeof textContent !== 'string') return null;
+    const trimmed = textContent.trim();
+    if (!trimmed) return null;
+
+    // 1. JSON check: must start and end with braces or brackets and parse
+    const c0 = trimmed[0];
+    if (c0 === '{' ? trimmed.slice(-1) === '}' : c0 === '[' && trimmed.slice(-1) === ']') {
+      try {
+        JSON.parse(trimmed);
+        return 'json';
+      } catch {
+        if (/^(\{\s*"[^"]+"\s*:|\[)/.test(trimmed)) return 'json';
+      }
+    }
+
+    // 2. Full HTML document check
+    if (/^<(!DOCTYPE\s+html|html[\s>])/i.test(trimmed)) {
+      return 'html';
+    }
+
+    // 3. JavaScript module / statement check (prioritized over HTML tags for JSX/TS/modern JS)
+    if (/(?:^|[^@\w])import\s+|export\s+(default|\*|\{)|=>|\bconst\b|\blet\s+[\w$]+\s*[=;]|async\s+function|await\s+/.test(textContent)) {
+      return 'javascript';
+    }
+
+    // 4. HTML / Markup check
+    if (/<\/?(div|span|p|a|table|ul|li|h\d|form|input|button|header|footer|nav|section|body|head|meta|link|script|style)\b/i.test(trimmed)) {
+      return 'html';
+    }
+
+    // 5. CSS check: selectors and rules
+    if (/[.#\w-]+\s*\{[^}]*(color|background|margin|padding|border|display|flex)\s*:/i.test(textContent)) {
+      return 'css';
+    }
+
+    // 6. JavaScript keywords fallback (functions, classes, returns with code syntax)
+    if (/\b(function|class|return|async|await)\b/.test(textContent) && /[;{}()]/.test(textContent)) {
+      return 'javascript';
+    }
+
+    return null;
   }
 }
 
@@ -129,7 +189,7 @@ class DiffDisplay {
     this.lineNumberDigits = 0;
   }
 
-  displayDiff(diffResults, isCodeContent) {
+  displayDiff(diffResults, isCodeContent: boolean | string = false) {
     this.diffResultElement.innerHTML = '';
     let originalLineCount = 0;
     let modifiedLineCount = 0;
@@ -141,10 +201,18 @@ class DiffDisplay {
       this.originalLineNumber + originalLineCount - 1,
       this.modifiedLineNumber + modifiedLineCount - 1
     )).length;
+
+    // Use DocumentFragment to batch DOM insertions in a single atomic operation,
+    // avoiding main-thread layout thrashing and UI freezing on large diffs (>1,000 lines).
+    const fragment = document.createDocumentFragment();
     diffResults.forEach(([changeType, lineContent, highlights]) => {
-      const lineElement = this.createLineElement(changeType, lineContent, isCodeContent, highlights);
-      this.diffResultElement.appendChild(lineElement);
+      fragment.appendChild(this.createLineElement(changeType, lineContent, isCodeContent, highlights));
     });
+    this.diffResultElement.appendChild(fragment);
+  }
+
+  render(diffResults, isCodeContent: boolean | string = false) {
+    return this.displayDiff(diffResults, isCodeContent);
   }
 
   // Escapes a line and wraps its word-diff highlight ranges in spans. Built
@@ -177,7 +245,7 @@ class DiffDisplay {
 
   // Updated createLineElement to separate line number and content spans
   // Pass changeType to formatLine
-  createLineElement(changeType, lineContent, isCodeContent, highlights?: DiffHighlightRange[]) {
+  createLineElement(changeType, lineContent, isCodeContent: boolean | string = false, highlights?: DiffHighlightRange[]) {
     const lineContainer = document.createElement('div');
     const lineNumberElement = document.createElement('span');
 
@@ -213,7 +281,7 @@ class DiffDisplay {
   /**
    * Formats a line of content for the diff view.
    * @param {string} lineContent - The content of the line.
-   * @param {boolean} isCodeContent - Whether the line contains code content.
+   * @param {boolean | string} isCodeContent - Whether the line contains code content, or specific language.
    * @param {string} changeType - The type of change for the line. Expected values are:
    *   - 'added': The line was added.
    *   - 'removed': The line was removed.
@@ -221,7 +289,7 @@ class DiffDisplay {
    * @param {DiffHighlightRange[]} [highlights] - Changed-word ranges of a word-diffed row.
    * @returns {string} The formatted line content, with appropriate HTML and syntax highlighting.
    */
-  formatLine(lineContent, isCodeContent, changeType, highlights?: DiffHighlightRange[]) {
+  formatLine(lineContent, isCodeContent: boolean | string = false, changeType, highlights?: DiffHighlightRange[]) {
     // A carriage return is a meaningful diff input when whitespace is not
     // ignored. Show it explicitly instead of writing it to the HTML container,
     // whose parser normalizes it to a newline and creates an extra visual row.
@@ -229,19 +297,21 @@ class DiffDisplay {
 
     // Only apply Prism highlighting if the line is unchanged and it's code content
     if (changeType === 'unchanged' && isCodeContent) {
+      const language = typeof isCodeContent === 'string' ? isCodeContent : 'javascript';
+      const grammarName = language === 'html' ? 'markup' : language;
       try {
-        const prismRuntime = getPrismRuntime();
-        // Ensure Prism is available
-        if (prismRuntime.languages && prismRuntime.languages.javascript && prismRuntime.highlight) {
-          return prismRuntime.highlight(displayLineContent, prismRuntime.languages.javascript, 'javascript') + '\n';
-        } else {
-          console.warn('Prism.js or javascript language not available. Falling back to escaped HTML.');
-          // Fallback for Prism errors or unavailability: escaped HTML
-          return this.escapeHtml(displayLineContent) + '\n';
+        const prism = getPrismRuntime();
+        const langs = prism.languages;
+        const grammar = language === 'json'
+          ? ((langs && langs.json) || JSON_GRAMMAR)
+          : langs && langs[grammarName];
+        if (grammar && prism.highlight) {
+          return prism.highlight(displayLineContent, grammar, grammarName) + '\n';
         }
+        console.warn(`Prism.js or ${language} language not available. Falling back to escaped HTML.`);
+        return this.escapeHtml(displayLineContent) + '\n';
       } catch (error) {
         console.warn('Syntax highlighting failed:', error);
-        // Fallback for Prism errors: escaped HTML
         return this.escapeHtml(displayLineContent) + '\n';
       }
     } else {
@@ -343,8 +413,7 @@ class DiffNavigator {
   }
 
   reset() {
-    // Remove any existing highlight
-    this.resultElement.querySelectorAll('.current-diff').forEach(el => el.classList.remove('current-diff'));
+    this.resultElement.querySelectorAll('[class*="current-diff"]').forEach(el => el.classList.remove(...DIFF_HIGHLIGHT_CLASSES));
     this.currentDiffIndex = -1;
     this.updateNavigationState();
   }
@@ -375,7 +444,7 @@ class DiffNavigator {
     // Remove highlight from the previous block
     if (this.currentDiffIndex !== -1 && this.diffElements[this.currentDiffIndex]) {
       this.diffElements[this.currentDiffIndex].forEach(el => {
-        el.classList.remove('current-diff-single', 'current-diff-start', 'current-diff-middle', 'current-diff-end');
+        el.classList.remove(...DIFF_HIGHLIGHT_CLASSES);
       });
     }
 
@@ -669,7 +738,15 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
         // Yield to main thread
         await scheduleTask(20);
 
-        const isCodeContent = CodeDetector.isCode(originalText) || CodeDetector.isCode(modifiedText);
+        const fullInput = `${originalText}\n${modifiedText}`;
+        const lang1 = CodeDetector.detectLanguage(originalText);
+        const lang2 = CodeDetector.detectLanguage(modifiedText);
+        const isCodeContent = (lang1 && lang1 === lang2 ? lang1 : null)
+          || CodeDetector.detectLanguage(fullInput)
+          || lang1
+          || lang2
+          || CodeDetector.isCode(originalText)
+          || CodeDetector.isCode(modifiedText);
         const originalLines = splitLines(originalText, ignoreWhitespace);
         const modifiedLines = splitLines(modifiedText, ignoreWhitespace);
 
