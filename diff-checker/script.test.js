@@ -243,6 +243,14 @@ describe('DiffDisplay', () => {
   });
 
   describe('formatLine', () => {
+    let originalPrism;
+    beforeEach(() => {
+      originalPrism = global.Prism;
+    });
+    afterEach(() => {
+      global.Prism = originalPrism;
+    });
+
     it('should return plain text for non-code content', () => {
       const result = diffDisplay.formatLine('test line', false);
       expect(result).toBe('test line\n');
@@ -717,6 +725,11 @@ describe('CodeDetector', () => {
       expect(CodeDetector.detectLanguage(json)).toBe('json');
     });
 
+    test('detects JSON array data', () => {
+      const json = '[\n  {"id": 1},\n  {"id": 2}\n]';
+      expect(CodeDetector.detectLanguage(json)).toBe('json');
+    });
+
     test('detects HTML markup', () => {
       const html = '<!DOCTYPE html>\n<html>\n<body>\n  <div class="test">Hello</div>\n</body>\n</html>';
       expect(CodeDetector.detectLanguage(html)).toBe('html');
@@ -1058,6 +1071,22 @@ describe('initializeDiffChecker', () => {
     // Verify results were populated
     const result = document.getElementById('diff-result');
     expect(result.children.length).toBeGreaterThan(0);
+  });
+
+  test('preserves json language when comparing two arrays', async () => {
+    initializeDiffChecker();
+
+    document.getElementById('text1').value = '[\n  "apple",\n  "banana"\n]';
+    document.getElementById('text2').value = '[\n  "apple",\n  "orange"\n]';
+    document.getElementById('compare-button').click();
+
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    const result = document.getElementById('diff-result');
+    expect(result.children.length).toBeGreaterThan(0);
+    // Unchanged line '  "apple",' should be highlighted with JSON grammar (token string)
+    const unchangedLine = result.querySelector('.diff-line:nth-child(2) .diff-content');
+    expect(unchangedLine.innerHTML).toContain('token string');
   });
 
   test('enables patch download after a comparison and uses typed labels', async () => {

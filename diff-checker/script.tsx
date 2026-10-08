@@ -99,14 +99,13 @@ function getPrismRuntime(): PrismRuntime {
 const JSON_GRAMMAR = {
   property: /"(?:\\.|[^\\"\r\n])*"(?=:)/,
   string: /"(?:\\.|[^\\"\r\n])*"/,
-  number: /-?\b\d+(\.\d+)?\b/,
+  number: /-?\d+(\.\d+)?\b/,
   punctuation: /[{}\[\],]/,
   operator: /:/,
   boolean: /\b(true|false|null)\b/
 };
 
 const DIFF_HIGHLIGHT_CLASSES = ['current-diff', 'current-diff-single', 'current-diff-start', 'current-diff-middle', 'current-diff-end'];
-const DIFF_HIGHLIGHT_SELECTOR = '.' + DIFF_HIGHLIGHT_CLASSES.join(', .');
 
 // Class to detect if content is code (used for syntax highlighting)
 class CodeDetector {
@@ -135,12 +134,13 @@ class CodeDetector {
     if (!trimmed) return null;
 
     // 1. JSON check: must start and end with braces or brackets and parse
-    if ((trimmed[0] === '{' && trimmed.slice(-1) === '}') || (trimmed[0] === '[' && trimmed.slice(-1) === ']')) {
+    const c0 = trimmed[0];
+    if (c0 === '{' ? trimmed.slice(-1) === '}' : c0 === '[' && trimmed.slice(-1) === ']') {
       try {
         JSON.parse(trimmed);
         return 'json';
       } catch {
-        if (/^\{\s*"[^"]+"\s*:/.test(trimmed)) return 'json';
+        if (/^(\{\s*"[^"]+"\s*:|\[)/.test(trimmed)) return 'json';
       }
     }
 
@@ -150,7 +150,7 @@ class CodeDetector {
     }
 
     // 3. JavaScript module / statement check (prioritized over HTML tags for JSX/TS/modern JS)
-    if (/(?:^|[^@\w])import\s+|export\s+(default|const|let|var|function|class|\{)|=>|\bconst\b|\blet\s+[\w$]+\s*[=;]|async\s+function|await\s+/.test(textContent)) {
+    if (/(?:^|[^@\w])import\s+|export\s+(default|\*|\{)|=>|\bconst\b|\blet\s+[\w$]+\s*[=;]|async\s+function|await\s+/.test(textContent)) {
       return 'javascript';
     }
 
@@ -304,15 +304,15 @@ class DiffDisplay {
     // Only apply Prism highlighting if the line is unchanged and it's code content
     if (changeType === 'unchanged' && isCodeContent) {
       const language = typeof isCodeContent === 'string' ? isCodeContent : 'javascript';
-      const grammarName = (language === 'html' || language === 'xml') ? 'markup' : language;
+      const grammarName = language === 'html' ? 'markup' : language;
       try {
-        const prismRuntime = getPrismRuntime();
-        const langs = prismRuntime.languages;
+        const prism = getPrismRuntime();
+        const langs = prism.languages;
         const grammar = language === 'json'
           ? ((langs && langs.json) || JSON_GRAMMAR)
-          : langs && (langs[grammarName] || langs[language]);
-        if (grammar && prismRuntime.highlight) {
-          return prismRuntime.highlight(displayLineContent, grammar, grammarName) + '\n';
+          : langs && langs[grammarName];
+        if (grammar && prism.highlight) {
+          return prism.highlight(displayLineContent, grammar, grammarName) + '\n';
         }
         console.warn(`Prism.js or ${language} language not available. Falling back to escaped HTML.`);
         return this.escapeHtml(displayLineContent) + '\n';
@@ -419,8 +419,7 @@ class DiffNavigator {
   }
 
   reset() {
-    // Remove any existing highlight across all block chunk class variants
-    this.resultElement.querySelectorAll(DIFF_HIGHLIGHT_SELECTOR).forEach(el => el.classList.remove(...DIFF_HIGHLIGHT_CLASSES));
+    this.resultElement.querySelectorAll('[class*="current-diff"]').forEach(el => el.classList.remove(...DIFF_HIGHLIGHT_CLASSES));
     this.currentDiffIndex = -1;
     this.updateNavigationState();
   }
@@ -746,7 +745,12 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
         await scheduleTask(20);
 
         const fullInput = `${originalText}\n${modifiedText}`;
-        const isCodeContent = CodeDetector.detectLanguage(fullInput)
+        const lang1 = CodeDetector.detectLanguage(originalText);
+        const lang2 = CodeDetector.detectLanguage(modifiedText);
+        const isCodeContent = (lang1 && lang1 === lang2 ? lang1 : null)
+          || CodeDetector.detectLanguage(fullInput)
+          || lang1
+          || lang2
           || CodeDetector.isCode(originalText)
           || CodeDetector.isCode(modifiedText);
         const originalLines = splitLines(originalText, ignoreWhitespace);
