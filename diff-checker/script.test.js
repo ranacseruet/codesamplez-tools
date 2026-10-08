@@ -735,6 +735,23 @@ describe('CodeDetector', () => {
       expect(CodeDetector.detectLanguage(html)).toBe('html');
     });
 
+    test('detects HTML markup snippets without document tags', () => {
+      const snippet = '<div class="content"><p>Paragraph text</p></div>';
+      expect(CodeDetector.detectLanguage(snippet)).toBe('html');
+    });
+
+    test('detects JSON objects and arrays with relaxed trailing commas or parse errors', () => {
+      const relaxedObject = '{\n  "key": "value",\n}';
+      expect(CodeDetector.detectLanguage(relaxedObject)).toBe('json');
+      const relaxedArray = '[\n  "alpha",\n  "beta",\n]';
+      expect(CodeDetector.detectLanguage(relaxedArray)).toBe('json');
+    });
+
+    test('falls through when braces enclose invalid non-JSON content', () => {
+      const nonJson = '{ not-json content here }';
+      expect(CodeDetector.detectLanguage(nonJson)).toBeNull();
+    });
+
     test('detects CSS rules', () => {
       const css = '.diff-line {\n  display: flex;\n  color: #333;\n  font-size: 14px;\n}';
       expect(CodeDetector.detectLanguage(css)).toBe('css');
@@ -743,6 +760,14 @@ describe('CodeDetector', () => {
     test('returns null for plain text', () => {
       const text = 'This is just regular English sentences without any code or tags.';
       expect(CodeDetector.detectLanguage(text)).toBeNull();
+    });
+
+    test('returns null for empty, whitespace-only, or invalid input', () => {
+      expect(CodeDetector.detectLanguage('')).toBeNull();
+      expect(CodeDetector.detectLanguage('   \n\t  ')).toBeNull();
+      expect(CodeDetector.detectLanguage(null)).toBeNull();
+      expect(CodeDetector.detectLanguage(undefined)).toBeNull();
+      expect(CodeDetector.detectLanguage(123)).toBeNull();
     });
 
     test('applies consistent JavaScript language when lines contain subsequent braces or tags', () => {
