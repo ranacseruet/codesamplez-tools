@@ -2,6 +2,14 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.6] - 2026-10-08
+
+### Diff Checker
+
+- Fixed navigation reset to clear all highlight class variants (`current-diff-single`, `current-diff-start`, `current-diff-middle`, `current-diff-end`) rather than only `.current-diff`.
+- Detect language once on full input text to maintain consistent syntax highlighting across all lines.
+- Batch DOM insertions using DocumentFragment to prevent main thread freezing on large diffs, and added `DiffDisplay.render` alias.
+
 ## [1.0.5] - 2026-09-24
 
 ### Diff Checker

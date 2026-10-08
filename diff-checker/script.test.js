@@ -61,7 +61,7 @@ describe('DiffDisplay', () => {
   });
 
   describe('displayDiff', () => {
-    it('should clear the element and display diff results', () => {
+    it('should clear the element and batch diff results in a DocumentFragment', () => {
       const diffResults = [
         ['added', 'new line'],
         ['removed', 'old line'],
@@ -71,15 +71,21 @@ describe('DiffDisplay', () => {
       diffDisplay.displayDiff(diffResults, false);
 
       expect(mockElement.innerHTML).toBe('');
-      // Check that appendChild was called for each result
-      expect(mockElement.appendChild).toHaveBeenCalledTimes(diffResults.length);
-      // Check that the first appended child is a div (our line container) - use toLowerCase() for robustness
-      expect(mockElement.appendChild.mock.calls[0][0].tagName.toLowerCase()).toBe('div');
+      // DocumentFragment batches all line elements into a single appendChild call
+      expect(mockElement.appendChild).toHaveBeenCalledTimes(1);
+      const fragment = mockElement.appendChild.mock.calls[0][0];
+      expect(fragment.nodeType).toBe(Node.DOCUMENT_FRAGMENT_NODE);
+      expect(fragment.children.length).toBe(diffResults.length);
+      expect(fragment.children[0].tagName.toLowerCase()).toBe('div');
     });
   });
 
   describe('gutter width', () => {
-    const gutterTexts = () => mockElement.appendChild.mock.calls.map(([line]) => line.children[0].textContent);
+    const gutterTexts = () => {
+      const lastCall = mockElement.appendChild.mock.calls[mockElement.appendChild.mock.calls.length - 1];
+      const fragment = lastCall[0];
+      return Array.from(fragment.children).map((line) => line.children[0].textContent);
+    };
 
     it('pads every row to the widest line number, not per row', () => {
       const diffResults = Array.from({ length: 1000 }, (_, index) => ['unchanged', `line ${index + 1}`]);
@@ -284,6 +290,48 @@ describe('DiffDisplay', () => {
 
       expect(result).toBe('first␍\n');
       expect(result).not.toContain('\r');
+    });
+
+    it('highlights JSON with prism json grammar', () => {
+      global.Prism = {
+        highlight: jest.fn().mockReturnValue('json-highlighted'),
+        languages: { json: {} }
+      };
+
+      const result = diffDisplay.formatLine('{"key": "value"}', 'json', 'unchanged');
+      expect(result).toBe('json-highlighted\n');
+      expect(Prism.highlight).toHaveBeenCalledWith('{"key": "value"}', Prism.languages.json, 'json');
+    });
+
+    it('highlights HTML with prism markup grammar', () => {
+      global.Prism = {
+        highlight: jest.fn().mockReturnValue('html-highlighted'),
+        languages: { markup: {} }
+      };
+
+      const result = diffDisplay.formatLine('<div class="x"></div>', 'html', 'unchanged');
+      expect(result).toBe('html-highlighted\n');
+      expect(Prism.highlight).toHaveBeenCalledWith('<div class="x"></div>', Prism.languages.markup, 'markup');
+    });
+
+    it('highlights CSS with prism css grammar', () => {
+      global.Prism = {
+        highlight: jest.fn().mockReturnValue('css-highlighted'),
+        languages: { css: {} }
+      };
+
+      const result = diffDisplay.formatLine('.test { color: red; }', 'css', 'unchanged');
+      expect(result).toBe('css-highlighted\n');
+      expect(Prism.highlight).toHaveBeenCalledWith('.test { color: red; }', Prism.languages.css, 'css');
+    });
+  });
+
+  describe('render alias', () => {
+    it('delegates to displayDiff', () => {
+      const spy = jest.spyOn(diffDisplay, 'displayDiff');
+      const diffResults = [['unchanged', 'test']];
+      diffDisplay.render(diffResults, 'javascript');
+      expect(spy).toHaveBeenCalledWith(diffResults, 'javascript');
     });
   });
 
@@ -620,6 +668,25 @@ describe('DiffNavigator', () => { // Test the class directly
     expect(block[1].classList.contains('current-diff-middle')).toBe(true);
     expect(block[2].classList.contains('current-diff-end')).toBe(true);
   });
+
+  it('clears navigation highlight classes from existing DOM elements on reset', () => {
+    setupRealDiffLines(['added', 'added', 'added']);
+    navigator.navigateToIndex(0);
+
+    const block = navigator.diffElements[0];
+    expect(block[0].classList.contains('current-diff-start')).toBe(true);
+    expect(block[1].classList.contains('current-diff-middle')).toBe(true);
+    expect(block[2].classList.contains('current-diff-end')).toBe(true);
+
+    // Call reset directly while elements are still in the DOM
+    navigator.reset();
+
+    expect(block[0].classList.contains('current-diff-start')).toBe(false);
+    expect(block[1].classList.contains('current-diff-middle')).toBe(false);
+    expect(block[2].classList.contains('current-diff-end')).toBe(false);
+    expect(diffResultElement.querySelectorAll('.current-diff, .current-diff-single, .current-diff-start, .current-diff-middle, .current-diff-end').length).toBe(0);
+    expect(navigator.currentDiffIndex).toBe(-1);
+  });
 });
 
 
@@ -637,6 +704,38 @@ describe('CodeDetector', () => {
   test('should not detect plain text as code', () => {
     const text = 'This is just some plain text with no code symbols.';
     expect(CodeDetector.isCode(text)).toBe(false);
+  });
+
+  describe('detectLanguage', () => {
+    test('detects JavaScript code', () => {
+      const code = 'import React from "react";\nconst [state, setState] = useState(null);\nexport default state;';
+      expect(CodeDetector.detectLanguage(code)).toBe('javascript');
+    });
+
+    test('detects JSON data', () => {
+      const json = '{\n  "name": "codesamplez",\n  "tools": [1, 2, 3]\n}';
+      expect(CodeDetector.detectLanguage(json)).toBe('json');
+    });
+
+    test('detects HTML markup', () => {
+      const html = '<!DOCTYPE html>\n<html>\n<body>\n  <div class="test">Hello</div>\n</body>\n</html>';
+      expect(CodeDetector.detectLanguage(html)).toBe('html');
+    });
+
+    test('detects CSS rules', () => {
+      const css = '.diff-line {\n  display: flex;\n  color: #333;\n  font-size: 14px;\n}';
+      expect(CodeDetector.detectLanguage(css)).toBe('css');
+    });
+
+    test('returns null for plain text', () => {
+      const text = 'This is just regular English sentences without any code or tags.';
+      expect(CodeDetector.detectLanguage(text)).toBeNull();
+    });
+
+    test('applies consistent JavaScript language when lines contain subsequent braces or tags', () => {
+      const mixed = 'import App from "./App";\n<div className="container">\n{ margin: 0 };';
+      expect(CodeDetector.detectLanguage(mixed)).toBe('javascript');
+    });
   });
 });
 
