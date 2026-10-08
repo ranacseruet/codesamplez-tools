@@ -204,17 +204,11 @@ class DiffDisplay {
 
     // Use DocumentFragment to batch DOM insertions in a single atomic operation,
     // avoiding main-thread layout thrashing and UI freezing on large diffs (>1,000 lines).
-    const fragment = typeof document !== 'undefined' && document.createDocumentFragment
-      ? document.createDocumentFragment()
-      : this.diffResultElement;
-
+    const fragment = document.createDocumentFragment();
     diffResults.forEach(([changeType, lineContent, highlights]) => {
       fragment.appendChild(this.createLineElement(changeType, lineContent, isCodeContent, highlights));
     });
-
-    if (fragment !== this.diffResultElement) {
-      this.diffResultElement.appendChild(fragment);
-    }
+    this.diffResultElement.appendChild(fragment);
   }
 
   render(diffResults, isCodeContent: boolean | string = false) {
