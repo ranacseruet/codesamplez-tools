@@ -555,10 +555,12 @@ describe('ImageEditor Preact runtime', () => {
         // JPEG has no alpha channel: the composite must be copied onto an
         // opaque white canvas (full working size) before it is encoded.
         expect(contextStub.fillRect).toHaveBeenCalledWith(0, 0, 1200, 800);
-        const canvasSources = contextStub.drawImage.mock.calls.filter(
-            ([source]) => source instanceof HTMLCanvasElement
+        // The encode source is the flattened copy of the full-size export
+        // canvas (the preview-canvas estimate flatten is only 720px wide).
+        const exportFlattenDraws = contextStub.drawImage.mock.calls.filter(
+            ([source]) => source instanceof HTMLCanvasElement && (source as HTMLCanvasElement).width === 1200
         );
-        expect(canvasSources.length).toBeGreaterThan(0);
+        expect(exportFlattenDraws.length).toBeGreaterThan(0);
     });
 
     it('encodes PNG exports without a white underlay', async () => {
