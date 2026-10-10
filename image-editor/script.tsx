@@ -31,6 +31,7 @@ import {
     resizeCropBox,
     rotatedDimensions,
     scaleEstimateBytes,
+    supportsAlpha,
     supportsQuality,
     validateImageFile,
     type Adjustments,
@@ -98,6 +99,28 @@ async function renderToBitmap(
 
     draw(ctx);
     return createImageBitmap(canvas);
+}
+
+/**
+ * Copies a composited canvas onto an opaque white background for encode.
+ * Formats without alpha (JPEG) composite transparent pixels against black
+ * when encoding, so a transparent image would export with pitch-black
+ * empty areas unless it is flattened first.
+ */
+function flattenOntoWhite(source: HTMLCanvasElement): HTMLCanvasElement {
+    const flattened = document.createElement('canvas');
+    flattened.width = source.width;
+    flattened.height = source.height;
+
+    const ctx = flattened.getContext('2d');
+    if (!ctx) {
+        throw new Error('Canvas 2D is not available in this browser.');
+    }
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, flattened.width, flattened.height);
+    ctx.drawImage(source, 0, 0);
+    return flattened;
 }
 
 /** Paints the active caption onto a context sized outputWidth × outputHeight. */
@@ -579,8 +602,11 @@ export function ImageEditorApp() {
             }
 
             const mime = exportMime(format);
+            // JPEG keeps no alpha: flatten onto white so transparent areas
+            // export as white instead of compositing against black.
+            const encodeCanvas = supportsAlpha(format) ? canvas : flattenOntoWhite(canvas);
             const blob = await new Promise<Blob | null>((resolve) => {
-                canvas.toBlob(resolve, mime, supportsQuality(format) ? qualityToFraction(quality) : undefined);
+                encodeCanvas.toBlob(resolve, mime, supportsQuality(format) ? qualityToFraction(quality) : undefined);
             });
 
             if (!blob) {
@@ -692,7 +718,10 @@ export function ImageEditorApp() {
             }
 
             const mime = exportMime(format);
-            canvas.toBlob((blob) => {
+            // Mirror the export pipeline: alpha-less formats estimate from a
+            // white-flattened copy, not the transparent preview canvas.
+            const encodeCanvas = supportsAlpha(format) ? canvas : flattenOntoWhite(canvas);
+            encodeCanvas.toBlob((blob) => {
                 if (!blob) {
                     setEstimate(null);
                     return;

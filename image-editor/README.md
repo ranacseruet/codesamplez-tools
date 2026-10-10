@@ -34,6 +34,7 @@ The Image Editor Tool is a free browser based image editor that allows users to 
 - Files up to 15 MB; decoded images up to 25 megapixels
 - Supported inputs: PNG, JPEG, WebP, GIF (first frame), AVIF, BMP
 - Exports are re-encoded, so original EXIF metadata is not preserved
+- JPEG has no transparency; transparent areas are composited onto white when exporting to JPEG
 
 ## Technical Implementation
 The editor is built with Preact and zero runtime dependencies:

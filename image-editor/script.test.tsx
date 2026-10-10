@@ -539,6 +539,38 @@ describe('ImageEditor Preact runtime', () => {
         );
     });
 
+    it('flattens transparency onto white when exporting as JPEG', async () => {
+        await loadSample();
+        contextStub.fillRect.mockClear();
+
+        fireEvent.click(byId('image-editor-format-jpeg'));
+        await waitFor(() =>
+            expect(byId('image-editor-format-jpeg')).toHaveAttribute('aria-pressed', 'true')
+        );
+
+        fireEvent.click(byId('image-editor-export'));
+
+        await waitFor(() => expect(downloadCalls()).toHaveBeenCalled());
+
+        // JPEG has no alpha channel: the composite must be copied onto an
+        // opaque white canvas (full working size) before it is encoded.
+        expect(contextStub.fillRect).toHaveBeenCalledWith(0, 0, 1200, 800);
+        const canvasSources = contextStub.drawImage.mock.calls.filter(
+            ([source]) => source instanceof HTMLCanvasElement
+        );
+        expect(canvasSources.length).toBeGreaterThan(0);
+    });
+
+    it('encodes PNG exports without a white underlay', async () => {
+        await loadSample();
+        contextStub.fillRect.mockClear();
+
+        fireEvent.click(byId('image-editor-export'));
+
+        await waitFor(() => expect(downloadCalls()).toHaveBeenCalled());
+        expect(contextStub.fillRect).not.toHaveBeenCalled();
+    });
+
     it('shows an output-size estimate after edits settle', async () => {
         await loadSample();
 
