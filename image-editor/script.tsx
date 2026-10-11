@@ -102,10 +102,23 @@ async function renderToBitmap(
 }
 
 /**
- * Copies a composited canvas onto an opaque white background for encode.
- * Formats without alpha (JPEG) composite transparent pixels against black
- * when encoding, so a transparent image would export with pitch-black
- * empty areas unless it is flattened first.
+ * Paints an opaque white layer beneath existing canvas content
+ * (`destination-over`), so transparent areas encode as white instead of
+ * compositing against black in alpha-less formats like JPEG.
+ */
+function paintWhiteUnderlay(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+}
+
+/**
+ * Copies a canvas onto an opaque white background for encode. Only for
+ * canvases that must not be mutated (the visible preview): export paints
+ * the underlay in place instead, so full-resolution buffers are never
+ * duplicated.
  */
 function flattenOntoWhite(source: HTMLCanvasElement): HTMLCanvasElement {
     const flattened = document.createElement('canvas');
@@ -117,9 +130,8 @@ function flattenOntoWhite(source: HTMLCanvasElement): HTMLCanvasElement {
         throw new Error('Canvas 2D is not available in this browser.');
     }
 
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, flattened.width, flattened.height);
     ctx.drawImage(source, 0, 0);
+    paintWhiteUnderlay(ctx, flattened.width, flattened.height);
     return flattened;
 }
 
@@ -602,11 +614,16 @@ export function ImageEditorApp() {
             }
 
             const mime = exportMime(format);
-            // JPEG keeps no alpha: flatten onto white so transparent areas
-            // export as white instead of compositing against black.
-            const encodeCanvas = supportsAlpha(format) ? canvas : flattenOntoWhite(canvas);
+            // Formats without alpha (JPEG) composite transparent pixels
+            // against black when encoding, so paint white beneath the
+            // finished composite first. Done in place on this throwaway
+            // canvas: duplicating a full-resolution buffer would double the
+            // ~100 MB peak at the 25-megapixel cap.
+            if (!supportsAlpha(format)) {
+                paintWhiteUnderlay(ctx, canvas.width, canvas.height);
+            }
             const blob = await new Promise<Blob | null>((resolve) => {
-                encodeCanvas.toBlob(resolve, mime, supportsQuality(format) ? qualityToFraction(quality) : undefined);
+                canvas.toBlob(resolve, mime, supportsQuality(format) ? qualityToFraction(quality) : undefined);
             });
 
             if (!blob) {
@@ -718,8 +735,10 @@ export function ImageEditorApp() {
             }
 
             const mime = exportMime(format);
-            // Mirror the export pipeline: alpha-less formats estimate from a
-            // white-flattened copy, not the transparent preview canvas.
+            // Mirror the export pipeline for alpha-less formats. The preview
+            // canvas is visible (its checkerboard is CSS), so the white
+            // underlay goes on this small throwaway copy instead of the
+            // displayed original.
             const encodeCanvas = supportsAlpha(format) ? canvas : flattenOntoWhite(canvas);
             encodeCanvas.toBlob((blob) => {
                 if (!blob) {
