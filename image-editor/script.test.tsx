@@ -45,6 +45,8 @@ function makeContextStub() {
     const stub: {
         filter: string;
         filtersAtDraw: string[];
+        globalCompositeOperation: string;
+        compositesAtFill: string[];
         drawImage: jest.Mock;
         fillText: jest.Mock;
         fillRect: jest.Mock;
@@ -73,6 +75,8 @@ function makeContextStub() {
     } = {
         filter: 'none',
         filtersAtDraw: [],
+        globalCompositeOperation: 'source-over',
+        compositesAtFill: [],
         drawImage: jest.fn(),
         fillText: jest.fn(),
         fillRect: jest.fn(),
@@ -108,8 +112,19 @@ function makeContextStub() {
             currentFilter = value;
         }
     });
+    let currentComposite = 'source-over';
+    Object.defineProperty(stub, 'globalCompositeOperation', {
+        configurable: true,
+        get: () => currentComposite,
+        set: (value: string) => {
+            currentComposite = value;
+        }
+    });
     stub.drawImage.mockImplementation(() => {
         stub.filtersAtDraw.push(currentFilter);
+    });
+    stub.fillRect.mockImplementation(() => {
+        stub.compositesAtFill.push(currentComposite);
     });
 
     return stub;
@@ -537,6 +552,49 @@ describe('ImageEditor Preact runtime', () => {
             expect.any(Number),
             expect.any(Number)
         );
+    });
+
+    it('flattens transparency onto white when exporting as JPEG', async () => {
+        await loadSample();
+        contextStub.fillRect.mockClear();
+        contextStub.compositesAtFill.length = 0;
+
+        fireEvent.click(byId('image-editor-format-jpeg'));
+        await waitFor(() =>
+            expect(byId('image-editor-format-jpeg')).toHaveAttribute('aria-pressed', 'true')
+        );
+
+        fireEvent.click(byId('image-editor-export'));
+
+        await waitFor(() => expect(downloadCalls()).toHaveBeenCalled());
+
+        // JPEG has no alpha channel: white must be composited beneath the
+        // full-size export canvas (destination-over), not painted over it.
+        const exportFillIndex = contextStub.fillRect.mock.calls.findIndex(
+            ([, , width, height]) => width === 1200 && height === 800
+        );
+        expect(exportFillIndex).toBeGreaterThanOrEqual(0);
+        expect(contextStub.compositesAtFill[exportFillIndex]).toBe('destination-over');
+
+        // The visible preview stays untouched: the estimate path still
+        // flattens a throwaway copy of the (at most 720px) preview canvas.
+        await waitFor(() => {
+            const previewCopies = contextStub.drawImage.mock.calls.filter(
+                ([source]) => source instanceof HTMLCanvasElement && (source as HTMLCanvasElement).width === 720
+            );
+            expect(previewCopies.length).toBeGreaterThan(0);
+        });
+    });
+
+    it('encodes PNG exports without a white underlay', async () => {
+        await loadSample();
+        contextStub.fillRect.mockClear();
+        contextStub.compositesAtFill.length = 0;
+
+        fireEvent.click(byId('image-editor-export'));
+
+        await waitFor(() => expect(downloadCalls()).toHaveBeenCalled());
+        expect(contextStub.fillRect).not.toHaveBeenCalled();
     });
 
     it('shows an output-size estimate after edits settle', async () => {

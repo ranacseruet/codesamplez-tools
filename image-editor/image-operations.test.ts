@@ -17,6 +17,7 @@ import {
     resizeCropBox,
     rotatedDimensions,
     scaleEstimateBytes,
+    supportsAlpha,
     supportsQuality,
     validateImageFile
 } from './image-operations';
@@ -92,6 +93,23 @@ describe('clampCropRect', () => {
     it('shrinks an oversized box to the image bounds', () => {
         expect(clampCropRect({ x: 0, y: 0, width: 5000, height: 5000 }, 800, 600, null))
             .toEqual({ x: 0, y: 0, width: 800, height: 600 });
+    });
+
+    it('preserves a locked ratio when fitting the box inside wider bounds', () => {
+        // A 1:1 selection on an 800x400 image must shrink to 400x400, not
+        // clamp each side independently into a ratio-breaking 500x400 box.
+        expect(clampCropRect({ x: 0, y: 0, width: 500, height: 500 }, 800, 400, 1))
+            .toEqual({ x: 0, y: 0, width: 400, height: 400 });
+    });
+
+    it('preserves a locked ratio when fitting the box inside taller bounds', () => {
+        expect(clampCropRect({ x: 0, y: 0, width: 1000, height: 500 }, 400, 800, 2))
+            .toEqual({ x: 0, y: 0, width: 400, height: 200 });
+    });
+
+    it('keeps the ratio intact for anchored resizes that overflow the bounds', () => {
+        const resized = resizeCropBox({ x: 0, y: 0, width: 300, height: 300 }, 'se', 500, 500, 800, 400, 1);
+        expect(resized).toEqual({ x: 0, y: 0, width: 400, height: 400 });
     });
 });
 
@@ -220,6 +238,10 @@ describe('export mapping', () => {
         expect(supportsQuality('png')).toBe(false);
         expect(supportsQuality('webp')).toBe(true);
         expect(supportsQuality('unknown' as any)).toBe(false);
+        expect(supportsAlpha('png')).toBe(true);
+        expect(supportsAlpha('jpeg')).toBe(false);
+        expect(supportsAlpha('webp')).toBe(true);
+        expect(supportsAlpha('unknown' as any)).toBe(true);
     });
 
     it('converts UI quality to a toBlob fraction', () => {

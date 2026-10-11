@@ -31,6 +31,7 @@ import {
     resizeCropBox,
     rotatedDimensions,
     scaleEstimateBytes,
+    supportsAlpha,
     supportsQuality,
     validateImageFile,
     type Adjustments,
@@ -98,6 +99,40 @@ async function renderToBitmap(
 
     draw(ctx);
     return createImageBitmap(canvas);
+}
+
+/**
+ * Paints an opaque white layer beneath existing canvas content
+ * (`destination-over`), so transparent areas encode as white instead of
+ * compositing against black in alpha-less formats like JPEG.
+ */
+function paintWhiteUnderlay(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+}
+
+/**
+ * Copies a canvas onto an opaque white background for encode. Only for
+ * canvases that must not be mutated (the visible preview): export paints
+ * the underlay in place instead, so full-resolution buffers are never
+ * duplicated.
+ */
+function flattenOntoWhite(source: HTMLCanvasElement): HTMLCanvasElement {
+    const flattened = document.createElement('canvas');
+    flattened.width = source.width;
+    flattened.height = source.height;
+
+    const ctx = flattened.getContext('2d');
+    if (!ctx) {
+        throw new Error('Canvas 2D is not available in this browser.');
+    }
+
+    ctx.drawImage(source, 0, 0);
+    paintWhiteUnderlay(ctx, flattened.width, flattened.height);
+    return flattened;
 }
 
 /** Paints the active caption onto a context sized outputWidth × outputHeight. */
@@ -579,6 +614,14 @@ export function ImageEditorApp() {
             }
 
             const mime = exportMime(format);
+            // Formats without alpha (JPEG) composite transparent pixels
+            // against black when encoding, so paint white beneath the
+            // finished composite first. Done in place on this throwaway
+            // canvas: duplicating a full-resolution buffer would double the
+            // ~100 MB peak at the 25-megapixel cap.
+            if (!supportsAlpha(format)) {
+                paintWhiteUnderlay(ctx, canvas.width, canvas.height);
+            }
             const blob = await new Promise<Blob | null>((resolve) => {
                 canvas.toBlob(resolve, mime, supportsQuality(format) ? qualityToFraction(quality) : undefined);
             });
@@ -692,7 +735,12 @@ export function ImageEditorApp() {
             }
 
             const mime = exportMime(format);
-            canvas.toBlob((blob) => {
+            // Mirror the export pipeline for alpha-less formats. The preview
+            // canvas is visible (its checkerboard is CSS), so the white
+            // underlay goes on this small throwaway copy instead of the
+            // displayed original.
+            const encodeCanvas = supportsAlpha(format) ? canvas : flattenOntoWhite(canvas);
+            encodeCanvas.toBlob((blob) => {
                 if (!blob) {
                     setEstimate(null);
                     return;

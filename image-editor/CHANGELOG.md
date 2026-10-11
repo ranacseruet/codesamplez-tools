@@ -2,6 +2,13 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.5] - 2026-10-10
+
+### Image Editor
+
+- Fixed locked crop ratios breaking against the image bounds: a ratio-constrained selection that overflows the image now shrinks as a unit (a 1:1 box on an 800×400 photo becomes 400×400, not a distorted 500×400).
+- JPEG exports now composite transparency onto a white background instead of pitch black; the output-size estimate mirrors this.
+
 ## [1.0.4] - 2026-09-24
 
 ### Image Editor

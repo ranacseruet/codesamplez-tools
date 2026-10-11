@@ -43,12 +43,14 @@ export interface ExportFormatOption {
     mime: string;
     extension: string;
     supportsQuality: boolean;
+    /** Whether the format keeps transparency; false formats flatten onto white. */
+    supportsAlpha: boolean;
 }
 
 export const EXPORT_FORMATS: ExportFormatOption[] = [
-    { id: 'png', label: 'PNG', mime: 'image/png', extension: 'png', supportsQuality: false },
-    { id: 'jpeg', label: 'JPEG', mime: 'image/jpeg', extension: 'jpg', supportsQuality: true },
-    { id: 'webp', label: 'WebP', mime: 'image/webp', extension: 'webp', supportsQuality: true }
+    { id: 'png', label: 'PNG', mime: 'image/png', extension: 'png', supportsQuality: false, supportsAlpha: true },
+    { id: 'jpeg', label: 'JPEG', mime: 'image/jpeg', extension: 'jpg', supportsQuality: true, supportsAlpha: false },
+    { id: 'webp', label: 'WebP', mime: 'image/webp', extension: 'webp', supportsQuality: true, supportsAlpha: true }
 ];
 
 /** Brightness/contrast/saturate are multipliers around 1; grayscale 0..1; blur in px. */
@@ -224,6 +226,24 @@ export function clampCropRect(
         }
         width = Math.max(MIN_CROP_SIDE, width);
         height = Math.max(MIN_CROP_SIDE, height);
+
+        // Shrink an out-of-bounds box as a unit so the ratio survives bounds
+        // clamping. Clamping width and height independently would distort a
+        // locked ratio: a 500x500 selection on an 800x400 image must become
+        // 400x400, not clamp to a ratio-breaking 500x400.
+        if (width > boundsWidth || height > boundsHeight) {
+            if (boundsWidth / boundsHeight > ratio) {
+                // The image is wider than the target ratio, so height binds:
+                // fit to it and derive the width from the locked ratio.
+                height = Math.min(height, boundsHeight);
+                width = Math.floor(height * ratio);
+            } else {
+                width = Math.min(width, boundsWidth);
+                height = Math.floor(width / ratio);
+            }
+            width = Math.max(MIN_CROP_SIDE, width);
+            height = Math.max(MIN_CROP_SIDE, height);
+        }
 
         if (anchor !== null) {
             if (anchor.corner === 'ne' || anchor.corner === 'se') {
@@ -429,6 +449,11 @@ export function exportExtension(format: ExportFormat): string {
 
 export function supportsQuality(format: ExportFormat): boolean {
     return EXPORT_FORMATS.find((option) => option.id === format)?.supportsQuality ?? false;
+}
+
+/** JPEG has no alpha channel; transparent pixels encode against black. */
+export function supportsAlpha(format: ExportFormat): boolean {
+    return EXPORT_FORMATS.find((option) => option.id === format)?.supportsAlpha ?? true;
 }
 
 /** toBlob quality is 0..1; the UI works in 1..100. */
