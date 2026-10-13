@@ -43,3 +43,8 @@ updates:
         patterns:
           - "playwright"
           - "*playwright*"
+      css:
+        patterns:
+          - "cssnano"
+          - "css-*"
+          - "postcss*"
