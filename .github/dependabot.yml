@@ -31,6 +31,7 @@ updates:
           - "jest-*"
           - "babel-jest"
           - "@types/jest"
+          - "jsdom"
       types:
         patterns:
           - "@types/*"
@@ -38,3 +39,7 @@ updates:
         patterns:
           - "webpack"
           - "webpack-*"
+      playwright:
+        patterns:
+          - "playwright"
+          - "*playwright*"
