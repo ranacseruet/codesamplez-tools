@@ -4,6 +4,45 @@ const STOP_WORDS = new Set(
 
 const WORDS_PER_MINUTE = 200;
 
+type IntlSegmentLike = {
+    segment: string;
+    isWordLike?: boolean;
+};
+
+type IntlSegmenterLike = {
+    segment(input: string): Iterable<IntlSegmentLike>;
+};
+
+// Scripts that do not separate words with spaces, so whitespace splitting
+// reports whole paragraphs as a single word. Hangul is excluded because
+// Korean text conventionally uses spaces between words.
+const NO_SPACE_SCRIPT_PATTERN = /\p{Script=Han}|\p{Script=Hiragana}|\p{Script=Katakana}|\p{Script=Thai}|\p{Script=Khmer}|\p{Script=Lao}|\p{Script=Myanmar}/u;
+
+/**
+ * Extract word tokens for counting and downstream metrics. Whitespace
+ * splitting cannot see word boundaries in scripts that do not use spaces
+ * (Chinese, Japanese, Thai), so those inputs are handed to a locale-aware
+ * Intl.Segmenter when the runtime provides one; space-delimited text keeps
+ * the plain whitespace split, which matches the conventional word count
+ * (hyphenated compounds stay one word).
+ */
+export function extractWords(text: string): string[] {
+    const trimmedText = text.trim();
+    if (!trimmedText) {
+        return [];
+    }
+
+    const segmenterCtor = (globalThis as { Intl?: { Segmenter?: new (locale: string, options: { granularity: 'word' }) => IntlSegmenterLike } }).Intl?.Segmenter;
+    if (segmenterCtor && NO_SPACE_SCRIPT_PATTERN.test(trimmedText)) {
+        const segmenter = new segmenterCtor('en', { granularity: 'word' });
+        return Array.from(segmenter.segment(trimmedText), (item) => item)
+            .filter((segment) => segment.isWordLike === true)
+            .map((segment) => segment.segment);
+    }
+
+    return trimmedText.split(/\s+/);
+}
+
 type WordFrequencyEntry = {
     word: string;
     count: number;
@@ -64,6 +103,65 @@ function roundMetric(value: number): number {
     return Number(value.toFixed(2));
 }
 
+// Periods following these abbreviations are essentially never sentence
+// terminators, so they are masked before sentence splitting regardless of
+// what follows ("Dr. Smith", "Team A vs. Team B").
+const SENTENCE_ALWAYS_SAFE_ABBREVIATIONS = [
+    'Mr', 'Mrs', 'Ms', 'Messrs', 'Dr', 'Prof', 'St', 'Sr', 'Jr', 'Mt',
+    'Rev', 'Hon', 'Gen', 'Col', 'Lt', 'Sgt', 'Capt', 'Sen', 'Rep', 'Gov',
+    'Pres', 'vs'
+];
+
+// Other abbreviations and initialisms (e.g. "U.S.", "p.m.", "Ph.D.", "etc.")
+// are only masked when clearly continuing into more of the same sentence:
+// a following lowercase word, or another lettered abbreviation. A following
+// capitalized word is left as a real boundary ("...at 5 p.m. The next day").
+// Capitalized company-suffix spellings are listed explicitly.
+const SENTENCE_CONTINUING_ABBREVIATIONS = ['etc', 'cf', 'viz', 'al', 'inc', 'Inc', 'ltd', 'Ltd'];
+
+// Placeholder substituted for periods that must not terminate sentences.
+// A private-use code point can never appear in normal input and is not
+// matched by the [.!?] terminator class.
+const SENTENCE_PERIOD_PLACEHOLDER = '\uE000';
+
+/**
+ * Replace periods that follow known abbreviations with a placeholder so the
+ * sentence splitter does not treat them as sentence boundaries. Only periods
+ * followed by whitespace or end of input matter, because a period attached to
+ * more text (as in "Ph.D" or "U.S.A") can never terminate a sentence.
+ */
+export function maskAbbreviationPeriods(text: string): string {
+    let maskedText = text.replace(
+        new RegExp(`\\b(${SENTENCE_ALWAYS_SAFE_ABBREVIATIONS.join('|')})\\.(?=\\s|$)`, 'g'),
+        (_match, abbreviation: string) => abbreviation + SENTENCE_PERIOD_PLACEHOLDER
+    );
+
+    // Initialisms: runs of letter+period groups like "U.S.", "D.C.", "e.g.",
+    // "i.e.", "a.m.", "p.m.", "Ph.D.". Mask the final period when a lowercase
+    // word or another abbreviation continues the sentence.
+    maskedText = maskedText.replace(
+        /\b(?:\p{L}+\.)+\p{L}\.(?=\s+[a-z]|\s+\p{L}+\.)/gu,
+        (match) => `${match.slice(0, -1)}${SENTENCE_PERIOD_PLACEHOLDER}`
+    );
+
+    maskedText = maskedText.replace(
+        new RegExp(`\\b(${SENTENCE_CONTINUING_ABBREVIATIONS.join('|')})\\.(?=\\s+[a-z]|\\s+\\p{L}+\\.)`, 'gu'),
+        (_match, abbreviation: string) => abbreviation + SENTENCE_PERIOD_PLACEHOLDER
+    );
+
+    // Single-letter tokens: initials ("J. K. Rowling"). Masked when a lowercase
+    // word, another initial, or a capitalized word follows, which is the
+    // shape of a name continuation rather than a sentence end. The lookbehind
+    // skips letters that belong to an initialism run ("U.S."), which the run
+    // rule above already evaluated correctly.
+    maskedText = maskedText.replace(
+        /(?<!\p{L}\.)\b\p{L}\.(?=\s+[a-z]|\s+\p{L}\.|\s+\p{Lu}\p{Ll})/gu,
+        (match) => `${match.slice(0, -1)}${SENTENCE_PERIOD_PLACEHOLDER}`
+    );
+
+    return maskedText;
+}
+
 export function analyzeText(text = ''): TextAnalysisResult {
     // Convert null/undefined to empty string and ensure we're working with a string
     text = String(text);
@@ -93,29 +191,28 @@ export function analyzeText(text = ''): TextAnalysisResult {
     // Character count is straightforward
     const charCount = text.length;
 
-    // Word count: split on whitespace and filter out empty strings
-    const words = text.trim() ? text.trim().split(/\s+/) : [];
+    // Word count: prefer Intl.Segmenter so CJK text (which has no spaces)
+    // is segmented into words; falls back to whitespace splitting.
+    const words = extractWords(text);
     const wordCount = words.length;
 
-    // Average Word Length: calculate after stripping punctuation
-    const totalWordLength = words.reduce((sum, word) => sum + word.replace(/[^a-zA-Z0-9]/g, '').length, 0);
+    // Average Word Length: calculate after stripping punctuation. Letter and
+    // number classes are Unicode-aware so CJK words keep their length.
+    const totalWordLength = words.reduce((sum, word) => sum + word.replace(/[^\p{L}\p{N}]/gu, '').length, 0);
     const avgWordLength = wordCount > 0 ? (totalWordLength / wordCount).toFixed(2) : '0.00';
 
     // Line count: split on newlines, but return 0 for empty string
     const lineCount = text ? text.split('\n').length : 0;
 
-    // Sentence count
+    // Sentence count. Periods protected by maskAbbreviationPeriods are
+    // hidden from the terminator class, so "Dr. Smith met Mr. Jones at
+    // 5 p.m." stays a single sentence.
     let sentenceCount = 0;
     const trimmedText = text.trim();
     if (trimmedText) {
-        // Match sentences ending with . ! ? followed by whitespace or end of string
-        const sentences = trimmedText.match(/[^.!?]+[.!?]+(?:\s+|$)/g) || [];
-        sentenceCount = sentences.length;
-        // If there's remaining text without punctuation, count it as a sentence
-        const remainingText = trimmedText.replace(/[^.!?]+[.!?]+(?:\s+|$)/g, '').trim();
-        if (remainingText) {
-            sentenceCount++;
-        }
+        const maskedText = maskAbbreviationPeriods(trimmedText);
+        const sentencePieces = maskedText.split(/[.!?]+(?:\s+|$)/);
+        sentenceCount = sentencePieces.filter((piece) => piece.trim()).length;
     }
 
     // Paragraph count
@@ -190,8 +287,8 @@ export function analyzeText(text = ''): TextAnalysisResult {
     if (words.length > 0) {
         words.forEach((word) => {
             // Clean word: remove punctuation and convert to lowercase
-            const cleanWord = word.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
-            if (cleanWord && /[a-zA-Z]/.test(cleanWord) && !STOP_WORDS.has(cleanWord)) {
+            const cleanWord = word.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+            if (cleanWord && /\p{L}/u.test(cleanWord) && !STOP_WORDS.has(cleanWord)) {
                 wordFrequency[cleanWord] = (wordFrequency[cleanWord] || 0) + 1;
             }
         });

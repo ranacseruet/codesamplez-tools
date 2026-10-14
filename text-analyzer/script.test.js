@@ -128,7 +128,9 @@ describe('TextAnalyzer Preact runtime', () => {
 
         expect(document.getElementById('readabilityScore')?.textContent).toBe('—');
         expect(document.getElementById('gradeLevel')?.textContent).toBe('—');
-        expect(document.getElementById('keywordDensity')?.textContent).toBe('—');
+        // Readability stays inapplicable for non-English text, but the top
+        // keyword is script-agnostic, so Cyrillic words are reported.
+        expect(document.getElementById('keywordDensity')?.textContent).toBe('это — 50.00%');
     });
 
     it('analyzes large inputs via the async (worker/fallback) path', async () => {

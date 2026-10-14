@@ -2,6 +2,13 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.5] - 2026-10-14
+
+### Text Analyzer
+
+- Sentence counting no longer breaks sentences at common abbreviations (`Dr.`, `Mr.`, `Prof.`, `e.g.`, `i.e.`, `vs.`, `etc.`, `U.S.`, `D.C.`, `p.m.`, spaced initials), so Flesch Reading Ease and Flesch-Kincaid grade levels are no longer distorted by inflated sentence counts.
+- Word counting now segments Chinese, Japanese, Thai, and other space-less scripts via `Intl.Segmenter`, fixing a whole paragraph being reported as one word; average word length and keyword detection are script-aware for non-Latin text.
+
 ## [1.0.4] - 2026-09-24
 
 ### Text Analyzer

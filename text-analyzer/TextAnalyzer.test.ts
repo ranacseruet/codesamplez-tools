@@ -1,4 +1,4 @@
-import { analyzeText, countSyllables } from './TextAnalyzer';
+import { analyzeText, countSyllables, extractWords, maskAbbreviationPeriods } from './TextAnalyzer';
 
 describe('TextAnalyzer', () => {
     describe('countSyllables', () => {
@@ -47,6 +47,31 @@ describe('TextAnalyzer', () => {
         it('counts words separated by newlines correctly', () => {
             const text = 'The quick\nbrown fox';
             expect(analyzeText(text).wordCount).toBe(4);
+        });
+
+        it('counts multiple words in Chinese text without spaces (issue #44)', () => {
+            const text = '今天天气很好，我们去公园散步，然后吃了午饭。';
+            expect(analyzeText(text).wordCount).toBeGreaterThan(1);
+        });
+
+        it('counts multiple words in Japanese text without spaces', () => {
+            const text = '猫が座った。今日は晴れです。';
+            expect(analyzeText(text).wordCount).toBeGreaterThan(1);
+        });
+
+        it('reports more than one word for a long CJK paragraph', () => {
+            const text = '这是一段很长的中文段落'.repeat(60);
+            const result = analyzeText(text);
+            expect(result.wordCount).toBeGreaterThan(100);
+            expect(result.avgWordLength).not.toBe('0.00');
+        });
+
+        it('keeps English word counting unchanged for hyphenated compounds', () => {
+            expect(extractWords("don't stop state-of-the-art now")).toHaveLength(4);
+        });
+
+        it('falls back to whitespace splitting for space-delimited scripts', () => {
+            expect(extractWords('The quick brown fox')).toEqual(['The', 'quick', 'brown', 'fox']);
         });
     });
 
@@ -105,6 +130,39 @@ describe('TextAnalyzer', () => {
         it('handles mixed punctuation with a trailing incomplete sentence', () => {
             const text = 'Hello world! How are you? Doing well';
             expect(analyzeText(text).sentenceCount).toBe(3);
+        });
+
+        it('does not split sentences on common abbreviations (issue #44)', () => {
+            const text = 'Dr. Smith met Mr. Jones at 5 p.m. in Washington, D.C. yesterday. The meeting went well.';
+            expect(analyzeText(text).sentenceCount).toBe(2);
+        });
+
+        it('does not split on other titles and honorifics', () => {
+            expect(analyzeText('Prof. Lee arrived early. Class began.').sentenceCount).toBe(2);
+            expect(analyzeText('Mrs. Chen and Ms. Patel met Sr. Ortega.').sentenceCount).toBe(1);
+        });
+
+        it('does not split on lowercase Latin abbreviations mid-sentence', () => {
+            expect(analyzeText('Use tools, e.g. hammers and nails, with care.').sentenceCount).toBe(1);
+            expect(analyzeText('Bring tools, etc. and be ready.').sentenceCount).toBe(1);
+        });
+
+        it('still ends sentences when an abbreviation is followed by a capitalized word', () => {
+            expect(analyzeText('Apples, bananas, etc. Next topic.').sentenceCount).toBe(2);
+            expect(analyzeText('He lives in the U.S. She does not.').sentenceCount).toBe(2);
+            expect(analyzeText('The party starts at 9 p.m. Bring drinks.').sentenceCount).toBe(2);
+        });
+
+        it('keeps spaced initials together as one sentence', () => {
+            expect(analyzeText('J. K. Rowling wrote it. It sold well.').sentenceCount).toBe(2);
+        });
+
+        it('treats a trailing abbreviation period as the sentence terminator', () => {
+            expect(analyzeText('She moved to Washington, D.C.').sentenceCount).toBe(1);
+        });
+
+        it('leaves text without abbreviations unchanged', () => {
+            expect(maskAbbreviationPeriods('One two three. Four! Five?')).toBe('One two three. Four! Five?');
         });
     });
 
