@@ -113,7 +113,7 @@ export function JwtBuilderArticle(): JSX.Element {
                     <ul>
                         <li>Checks for missing required fields such as the algorithm-specific signing key. Issuer and expiration are optional per RFC 7519.</li>
                         <li>Validates supported datetime formats before token generation.</li>
-                        <li>Parses JSON-style custom claim values when possible — including booleans, numbers, arrays, and objects — and falls back safely to strings. Integer literals too large for exact JavaScript number representation keep their string form.</li>
+                        <li>Parses JSON-style custom claim values when possible — including booleans, numbers, arrays, and objects — and falls back safely to strings. Numeric literals whose exact value cannot be represented as a JavaScript number (e.g. very large identifiers) keep their string form.</li>
                         <li>Explains malformed, unsupported, or public RSA keys without exposing sensitive values.</li>
                         <li>Reports when Web Crypto is unavailable separately from RSA key-format errors.</li>
                         <li>Keeps the result area clear when generation fails so invalid output is not reused accidentally.</li>

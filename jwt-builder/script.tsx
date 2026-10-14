@@ -266,6 +266,41 @@ export function removeClaim(button: HTMLElement | null) {
   }
 }
 
+function isExactNumberLiteral(literal: string, parsed: number): boolean {
+  // True when the JSON number literal's exact value survives the round trip
+  // through IEEE-754 double storage, i.e. JSON.parse loses no information.
+  if (!Number.isFinite(parsed)) {
+    return false;
+  }
+
+  const match = literal.match(/^-?(\d+)(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/);
+  if (!match) {
+    return false;
+  }
+
+  const [, intDigits, fracDigits = '', expToken] = match;
+  const exponent = expToken ? parseInt(expToken, 10) : 0;
+  let digits = intDigits + fracDigits;
+  let scale = exponent - fracDigits.length; // exact value = digits × 10^scale
+
+  if (scale < 0) {
+    // Strip trailing zeros to see whether the literal is integer-valued
+    // (e.g. "100.0" is exactly the integer 100).
+    while (scale < 0 && digits.endsWith('0')) {
+      digits = digits.slice(0, -1);
+      scale += 1;
+    }
+    if (scale < 0) {
+      // Genuinely fractional literal: the parsed double is the nearest
+      // representable value, the same rounding every JSON consumer applies.
+      return true;
+    }
+  }
+
+  const exactValue = BigInt(digits) * 10n ** BigInt(scale);
+  return exactValue === BigInt(parsed);
+}
+
 export async function buildJWT() {
   const payload: Record<string, unknown> = {};
   let invalidDateClaim: keyof typeof DATE_CLAIM_LABELS | null = null;
@@ -296,18 +331,14 @@ export async function buildJWT() {
     if (name?.trim() && value?.trim()) {
       try {
         const parsed = JSON.parse(value);
-        if (typeof parsed === 'number' && !Number.isFinite(parsed)) {
-          // JSON.parse renders out-of-range numeric literals as ±Infinity,
-          // which JSON.stringify would serialize as null — keep the string.
-          payload[name] = value;
-        } else if (typeof parsed === 'number' && !Number.isSafeInteger(parsed) && /^-?\d+$/.test(value.trim())) {
-          // Integer literals beyond Number's exact range (e.g. 19-digit
-          // snowflake IDs) would be silently corrupted — keep the exact
-          // string form instead.
-          payload[name] = value.trim();
-        } else {
-          payload[name] = parsed;
-        }
+        // Keep the exact string whenever JSON.parse loses information —
+        // unsafe integers in any notation ("9007199254740993", "9007199254740993.0",
+        // "9.007199254740993e15") or magnitudes beyond the double range — so
+        // claim values are never silently corrupted.
+        payload[name] =
+          typeof parsed === 'number' && !isExactNumberLiteral(value.trim(), parsed)
+            ? value.trim()
+            : parsed;
       } catch {
         payload[name] = value;
       }

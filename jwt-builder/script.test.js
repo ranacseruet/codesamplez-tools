@@ -343,6 +343,52 @@ describe('JWT Builder UI Tests', () => {
       );
     });
 
+    test('keeps unsafe integers written in decimal and exponent notation as exact strings', async () => {
+      scriptModule.addClaim();
+      const claimRow = document.querySelector('.custom-claim-row');
+      claimRow.querySelector('input[name="claimName"]').value = 'decimalId';
+      claimRow.querySelector('input[name="claimValue"]').value = '9007199254740993.0';
+
+      scriptModule.addClaim();
+      const claimRow2 = document.querySelectorAll('.custom-claim-row')[1];
+      claimRow2.querySelector('input[name="claimName"]').value = 'exponentId';
+      claimRow2.querySelector('input[name="claimValue"]').value = '9.007199254740993e15';
+
+      await scriptModule.buildJWT();
+
+      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
+        expect.objectContaining({
+          decimalId: '9007199254740993.0',
+          exponentId: '9.007199254740993e15'
+        }),
+        expect.any(String),
+        'HS256'
+      );
+    });
+
+    test('parses exact integer values in decimal and exponent notation as numbers', async () => {
+      scriptModule.addClaim();
+      const claimRow = document.querySelector('.custom-claim-row');
+      claimRow.querySelector('input[name="claimName"]').value = 'level';
+      claimRow.querySelector('input[name="claimValue"]').value = '100.0';
+
+      scriptModule.addClaim();
+      const claimRow2 = document.querySelectorAll('.custom-claim-row')[1];
+      claimRow2.querySelector('input[name="claimName"]').value = 'score';
+      claimRow2.querySelector('input[name="claimValue"]').value = '1.5e2';
+
+      await scriptModule.buildJWT();
+
+      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 100,
+          score: 150
+        }),
+        expect.any(String),
+        'HS256'
+      );
+    });
+
     test('keeps out-of-range numeric literals as strings instead of Infinity', async () => {
       scriptModule.addClaim();
       const claimRow = document.querySelector('.custom-claim-row');

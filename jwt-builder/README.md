@@ -12,7 +12,7 @@ JWT Builder creates HS256 and RS256 tokens entirely in the browser. Choose an al
 - RS256 signing with an unencrypted PKCS#8 or PKCS#1 RSA private key (2048 bits or stronger) using RSASSA-PKCS1-v1_5 and SHA-256
 - An algorithm selector with signing-key guidance that adapts to HS256 or RS256
 - Standard JWT claims: `iss`, `sub`, `aud`, `exp`, `nbf`, `iat`, and `jti` — all optional per RFC 7519; omit `exp` to build a non-expiring token
-- Dynamic custom claims with string, boolean, number, object, and array values (integer literals beyond JavaScript's exact number range keep their string form)
+- Dynamic custom claims with string, boolean, number, object, and array values (numeric literals whose exact value is not representable as a JavaScript number keep their string form)
 - ISO 8601 and UNIX timestamp input for time-based claims
 - Cryptographically random 32-character Base64URL shared-secret generation for HS256 testing
 - Copy-ready token output and shared-secret control
