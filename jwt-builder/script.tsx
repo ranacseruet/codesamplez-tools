@@ -296,13 +296,18 @@ export async function buildJWT() {
     if (name?.trim() && value?.trim()) {
       try {
         const parsed = JSON.parse(value);
-        // Integer literals beyond Number's exact range (e.g. 19-digit
-        // snowflake IDs) would be silently corrupted by JSON.parse — keep
-        // their exact string form instead.
-        const trimmed = value.trim();
-        payload[name] = (typeof parsed === 'number' && !Number.isSafeInteger(parsed) && /^-?\d+$/.test(trimmed))
-          ? trimmed
-          : parsed;
+        if (typeof parsed === 'number' && !Number.isFinite(parsed)) {
+          // JSON.parse renders out-of-range numeric literals as ±Infinity,
+          // which JSON.stringify would serialize as null — keep the string.
+          payload[name] = value;
+        } else if (typeof parsed === 'number' && !Number.isSafeInteger(parsed) && /^-?\d+$/.test(value.trim())) {
+          // Integer literals beyond Number's exact range (e.g. 19-digit
+          // snowflake IDs) would be silently corrupted — keep the exact
+          // string form instead.
+          payload[name] = value.trim();
+        } else {
+          payload[name] = parsed;
+        }
       } catch {
         payload[name] = value;
       }

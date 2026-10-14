@@ -343,6 +343,23 @@ describe('JWT Builder UI Tests', () => {
       );
     });
 
+    test('keeps out-of-range numeric literals as strings instead of Infinity', async () => {
+      scriptModule.addClaim();
+      const claimRow = document.querySelector('.custom-claim-row');
+      claimRow.querySelector('input[name="claimName"]').value = 'huge';
+      claimRow.querySelector('input[name="claimValue"]').value = '1e309';
+
+      await scriptModule.buildJWT();
+
+      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
+        expect.objectContaining({
+          huge: '1e309'
+        }),
+        expect.any(String),
+        'HS256'
+      );
+    });
+
     test('falls back to string when custom claim JSON parsing fails', async () => {
       scriptModule.addClaim();
       const claimRow = document.querySelector('.custom-claim-row');
