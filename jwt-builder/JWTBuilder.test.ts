@@ -387,6 +387,16 @@ describe('JWTBuilder', () => {
       ).rejects.toThrow('Invalid RSA private key');
     });
 
+    test('rejects PKCS#1 private keys whose DER body is not an RSA structure', async () => {
+      await expect(
+        jwtBuilder.generateSignature(
+          'header.payload',
+          '-----BEGIN RSA PRIVATE KEY-----\nZm9v\n-----END RSA PRIVATE KEY-----',
+          'RS256'
+        )
+      ).rejects.toThrow('Invalid RSA private key');
+    });
+
     test('rejects encrypted RSA private keys for RS256 signing', async () => {
       await expect(
         jwtBuilder.generateSignature(
