@@ -1,6 +1,6 @@
 import Base64Codec from '../common/Base64Codec';
 
-export type JwtObject = Record<string, unknown>;
+type JwtObject = Record<string, unknown>;
 type HmacFunction = (message: string, key: string) => Promise<Uint8Array>;
 
 export type TimestampClaim = {
