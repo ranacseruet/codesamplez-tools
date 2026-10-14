@@ -105,19 +105,22 @@ function roundMetric(value: number): number {
 
 // Periods following these abbreviations are essentially never sentence
 // terminators, so they are masked before sentence splitting regardless of
-// what follows ("Dr. Smith", "Team A vs. Team B").
+// what follows ("Dr. Smith", "Team A vs. Team B"). Abbreviations that also
+// appear at real sentence ends (Jr./Sr. as name suffixes) belong in the
+// continuation list instead.
 const SENTENCE_ALWAYS_SAFE_ABBREVIATIONS = [
-    'Mr', 'Mrs', 'Ms', 'Messrs', 'Dr', 'Prof', 'St', 'Sr', 'Jr', 'Mt',
+    'Mr', 'Mrs', 'Ms', 'Messrs', 'Dr', 'Prof', 'St', 'Mt',
     'Rev', 'Hon', 'Gen', 'Col', 'Lt', 'Sgt', 'Capt', 'Sen', 'Rep', 'Gov',
     'Pres', 'vs'
 ];
 
-// Other abbreviations and initialisms (e.g. "U.S.", "p.m.", "Ph.D.", "etc.")
-// are only masked when clearly continuing into more of the same sentence:
-// a following lowercase word, or another lettered abbreviation. A following
-// capitalized word is left as a real boundary ("...at 5 p.m. The next day").
+// Other abbreviations and initialisms (e.g. "U.S.", "p.m.", "Ph.D.", "etc.",
+// name suffixes "Jr.", "Sr.") are only masked when clearly continuing into
+// more of the same sentence: a following lowercase word, or another lettered
+// abbreviation. A following capitalized word is left as a real boundary
+// ("...at 5 p.m. The next day", "Martin King Jr. He lives elsewhere.").
 // Capitalized company-suffix spellings are listed explicitly.
-const SENTENCE_CONTINUING_ABBREVIATIONS = ['etc', 'cf', 'viz', 'al', 'inc', 'Inc', 'ltd', 'Ltd'];
+const SENTENCE_CONTINUING_ABBREVIATIONS = ['etc', 'cf', 'viz', 'al', 'inc', 'Inc', 'ltd', 'Ltd', 'Jr', 'Sr'];
 
 // Placeholder substituted for periods that must not terminate sentences.
 // A private-use code point can never appear in normal input and is not

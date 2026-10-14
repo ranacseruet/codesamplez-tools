@@ -117,6 +117,11 @@ describe('TextAnalyzer', () => {
             expect(analyzeText('').sentenceCount).toBe(0);
         });
 
+        it('returns 0 sentences for punctuation-only input', () => {
+            expect(analyzeText('...').sentenceCount).toBe(0);
+            expect(analyzeText('???').sentenceCount).toBe(0);
+        });
+
         it('counts sentences ending with periods, exclamation marks, and question marks', () => {
             const text = 'First sentence. Second sentence! Third sentence?';
             expect(analyzeText(text).sentenceCount).toBe(3);
@@ -139,7 +144,16 @@ describe('TextAnalyzer', () => {
 
         it('does not split on other titles and honorifics', () => {
             expect(analyzeText('Prof. Lee arrived early. Class began.').sentenceCount).toBe(2);
-            expect(analyzeText('Mrs. Chen and Ms. Patel met Sr. Ortega.').sentenceCount).toBe(1);
+            expect(analyzeText('Mrs. Chen and Ms. Patel met Dr. Ortega.').sentenceCount).toBe(1);
+        });
+
+        it('ends sentences at name-suffix abbreviations followed by a capitalized word', () => {
+            expect(analyzeText('His son is Martin King Jr. He lives elsewhere.').sentenceCount).toBe(2);
+            expect(analyzeText('Ortega Sr. He gave the keynote.').sentenceCount).toBe(2);
+        });
+
+        it('keeps name-suffix abbreviations mid-sentence when lowercase follows', () => {
+            expect(analyzeText('Martin Luther King Jr. gave a speech.').sentenceCount).toBe(1);
         });
 
         it('does not split on lowercase Latin abbreviations mid-sentence', () => {
