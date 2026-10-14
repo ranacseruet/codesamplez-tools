@@ -273,12 +273,10 @@ function isExactNumberLiteral(literal: string, parsed: number): boolean {
     return false;
   }
 
-  const match = literal.match(/^-?(\d+)(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/);
-  if (!match) {
-    return false;
-  }
-
-  const [, intDigits, fracDigits = '', expToken] = match;
+  // JSON's number grammar is a subset of this regex, so every value that
+  // JSON.parse returned as a number is guaranteed to match.
+  const [, intDigits, fracDigits = '', expToken] =
+    literal.match(/^-?(\d+)(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/) as RegExpMatchArray;
   const exponent = expToken ? parseInt(expToken, 10) : 0;
   let digits = intDigits + fracDigits;
   let scale = exponent - fracDigits.length; // exact value = digits × 10^scale

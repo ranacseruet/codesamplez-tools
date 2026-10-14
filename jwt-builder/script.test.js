@@ -389,6 +389,29 @@ describe('JWT Builder UI Tests', () => {
       );
     });
 
+    test('parses fractional custom claim values as numbers', async () => {
+      scriptModule.addClaim();
+      const claimRow = document.querySelector('.custom-claim-row');
+      claimRow.querySelector('input[name="claimName"]').value = 'ratio';
+      claimRow.querySelector('input[name="claimValue"]').value = '0.1';
+
+      scriptModule.addClaim();
+      const claimRow2 = document.querySelectorAll('.custom-claim-row')[1];
+      claimRow2.querySelector('input[name="claimName"]').value = 'weight';
+      claimRow2.querySelector('input[name="claimValue"]').value = '5e-1';
+
+      await scriptModule.buildJWT();
+
+      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ratio: 0.1,
+          weight: 0.5
+        }),
+        expect.any(String),
+        'HS256'
+      );
+    });
+
     test('keeps out-of-range numeric literals as strings instead of Infinity', async () => {
       scriptModule.addClaim();
       const claimRow = document.querySelector('.custom-claim-row');

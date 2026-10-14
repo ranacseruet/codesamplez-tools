@@ -397,6 +397,26 @@ describe('JWTBuilder', () => {
       ).rejects.toThrow('Invalid RSA private key');
     });
 
+    test('wraps sub-128-byte PKCS#1 DER with short-form DER lengths', async () => {
+      // SEQUENCE { INTEGER 0 } — 5 bytes of well-formed DER, far too small to
+      // be an RSA key, but enough to exercise the sub-128-byte branch of the
+      // PKCS#8 envelope encoder.
+      await jwtBuilder.generateSignature(
+        'header.payload',
+        '-----BEGIN RSA PRIVATE KEY-----\nMAMCAQA=\n-----END RSA PRIVATE KEY-----',
+        'RS256'
+      );
+
+      const pkcs8Call = mockCrypto.subtle.importKey.mock.calls.find((call) => call[0] === 'pkcs8');
+      const importedKeyData = pkcs8Call?.[1] as Uint8Array | undefined;
+
+      expect(Array.from(importedKeyData ?? [])).toEqual([
+        0x30, 0x19, 0x02, 0x01, 0x00, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48,
+        0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00, 0x04, 0x05, 0x30, 0x03,
+        0x02, 0x01, 0x00
+      ]);
+    });
+
     test('rejects encrypted RSA private keys for RS256 signing', async () => {
       await expect(
         jwtBuilder.generateSignature(
