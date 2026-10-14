@@ -1,18 +1,27 @@
 // Import the script to execute it and attach listeners in the JSDOM environment
 import { JWTDecoderUI } from './script';
 
+// Mutable state the JWTDecoder mock factory consults, so tests can simulate
+// non-HS256 tokens and exp/nbf/iat claims without re-implementing the mock.
+const decoderMockState = { algorithm: 'HS256', supported: true, validity: null };
+
 // Mock the JWTDecoder class methods used by the script
 jest.mock('./JWTDecoder', () => ({
+  __setDecoderMockState: (patch) => Object.assign(decoderMockState, patch),
+  __resetDecoderMockState: () => Object.assign(decoderMockState, { algorithm: 'HS256', supported: true, validity: null }),
   JWTDecoder: jest.fn().mockImplementation((token) => {
     // Basic mock for valid/invalid format based on token content
     const isValid = token && token.split('.').length === 3;
-    const mockHeader = { alg: 'HS256', typ: 'JWT' };
+    const mockHeader = { alg: decoderMockState.algorithm, typ: 'JWT' };
     const mockPayload = { sub: '123', name: 'Test' };
     return {
       isValidFormat: isValid,
       getHeader: jest.fn(() => (isValid ? mockHeader : null)),
       getPayload: jest.fn(() => (isValid ? mockPayload : null)),
       getParsingError: jest.fn(() => (isValid ? null : 'Invalid mock format')),
+      getAlgorithm: jest.fn(() => decoderMockState.algorithm),
+      isSignatureVerificationSupported: jest.fn(() => decoderMockState.supported),
+      getTokenValidity: jest.fn(() => decoderMockState.validity ?? { expired: false, notYetValid: false, exp: null, nbf: null, iat: null }),
       // Updated mock: verifySignature now checks the secret argument
       verifySignature: jest.fn().mockImplementation(async (secret) => {
         // Mock verification: returns true only if token is 'valid.token.sig' AND secret is 'secret'
@@ -52,6 +61,7 @@ beforeEach(() => {
   // Reset mocks and timers before each test
   jest.clearAllMocks();
   jest.useFakeTimers();
+  require('./JWTDecoder').__resetDecoderMockState();
 
   // Set up mock DOM
   document.body.innerHTML = `
@@ -62,6 +72,7 @@ beforeEach(() => {
     <div id="payloadJson" class="jwt-decoder-json-viewer"></div>
     <div id="rawJsonViewer" class="jwt-decoder-json-viewer"></div>
     <div id="jwtSignatureStatus" class="jwt-decoder-status"></div>
+    <div id="jwtTokenValidityStatus" class="jwt-decoder-status"></div>
     <button id="jwt-decoder-copy-btn"></button>
     <button id="jwt-decoder-decode-btn"></button>
     <button id="jwt-decoder-validate-btn"></button>
@@ -360,6 +371,156 @@ describe('JWT Decoder UI Interactions', () => {
     expect(statusOutput.classList.contains('status-warning')).toBe(true);
     expect(require('../common/notification-manager').NotificationManager.show)
         .toHaveBeenCalledWith('Decoded successfully. Secret key required for signature validation.', 2000, expect.objectContaining({ type: 'warning' }));
+  });
+
+  describe('non-HS256 signature verification (issue #39)', () => {
+    const { JWTDecoder, __setDecoderMockState } = require('./JWTDecoder');
+
+    const lastDecoderInstance = () => JWTDecoder.mock.results[JWTDecoder.mock.results.length - 1].value;
+
+    it('warns that verification is unsupported instead of claiming the signature is invalid', async () => {
+      __setDecoderMockState({ algorithm: 'RS256', supported: false });
+      const jwtInput = document.getElementById('jwtInputToken');
+      const secretInput = document.getElementById('jwtSecretKey');
+      const validateBtn = document.getElementById('jwt-decoder-validate-btn');
+      const statusOutput = document.getElementById('jwtSignatureStatus');
+
+      jwtInput.value = 'valid.token.sig'; // Mock valid token
+      secretInput.value = 'secret';
+      validateBtn.click();
+      await jest.runAllTimersAsync();
+
+      expect(statusOutput.textContent).toBe('⚠️ Decoded successfully. Signature verification is only supported for HS256 (token uses RS256).');
+      expect(statusOutput.classList.contains('status-warning')).toBe(true);
+      // The UI must never run (or report) HMAC verification for an RS256 token.
+      expect(lastDecoderInstance().verifySignature).not.toHaveBeenCalled();
+    });
+
+    it('names the missing algorithm when the header declares no alg', async () => {
+      __setDecoderMockState({ algorithm: null, supported: false });
+      const jwtInput = document.getElementById('jwtInputToken');
+      const secretInput = document.getElementById('jwtSecretKey');
+      const validateBtn = document.getElementById('jwt-decoder-validate-btn');
+      const statusOutput = document.getElementById('jwtSignatureStatus');
+
+      jwtInput.value = 'valid.token.sig';
+      secretInput.value = 'secret';
+      validateBtn.click();
+      await jest.runAllTimersAsync();
+
+      expect(statusOutput.textContent).toBe('⚠️ Decoded successfully. Signature verification is only supported for HS256 (token does not declare an algorithm).');
+      expect(statusOutput.classList.contains('status-warning')).toBe(true);
+    });
+  });
+
+  describe('token validity display (issue #39)', () => {
+    const { __setDecoderMockState } = require('./JWTDecoder');
+
+    const decodeWithValidity = async (validity) => {
+      __setDecoderMockState({ validity });
+      const jwtInput = document.getElementById('jwtInputToken');
+      jwtInput.value = 'valid.token.sig';
+      jwtInput.dispatchEvent(new Event('input'));
+      await jest.runAllTimersAsync();
+    };
+
+    it('shows an expired token with its expiry and issue dates', async () => {
+      await decodeWithValidity({
+        expired: true,
+        notYetValid: false,
+        exp: { claim: 'exp', value: 1600000000, date: new Date(1600000000 * 1000) },
+        nbf: null,
+        iat: { claim: 'iat', value: 1500000000, date: new Date(1500000000 * 1000) }
+      });
+      const validityOutput = document.getElementById('jwtTokenValidityStatus');
+
+      expect(validityOutput.textContent).toBe(`✗ Expired at ${new Date(1600000000 * 1000).toUTCString()} · Issued at ${new Date(1500000000 * 1000).toUTCString()}`);
+      expect(validityOutput.classList.contains('status-error')).toBe(true);
+    });
+
+    it('shows a token that is not expired with its expiry date', async () => {
+      await decodeWithValidity({
+        expired: false,
+        notYetValid: false,
+        exp: { claim: 'exp', value: 4000000000, date: new Date(4000000000 * 1000) },
+        nbf: null,
+        iat: null
+      });
+      const validityOutput = document.getElementById('jwtTokenValidityStatus');
+
+      expect(validityOutput.textContent).toBe(`✓ Not expired (expires at ${new Date(4000000000 * 1000).toUTCString()})`);
+      expect(validityOutput.classList.contains('status-success')).toBe(true);
+    });
+
+    it('shows expiry classification without a timestamp when the date is out of range', async () => {
+      await decodeWithValidity({
+        expired: true,
+        notYetValid: false,
+        exp: { claim: 'exp', value: -1e20, date: null },
+        nbf: null,
+        iat: { claim: 'iat', value: 1500000000, date: new Date(1500000000 * 1000) }
+      });
+      const validityOutput = document.getElementById('jwtTokenValidityStatus');
+
+      expect(validityOutput.textContent).toBe(`✗ Expired · Issued at ${new Date(1500000000 * 1000).toUTCString()}`);
+      expect(validityOutput.classList.contains('status-error')).toBe(true);
+    });
+
+    it('shows a not-expired token without a timestamp when its expiry date is out of range', async () => {
+      await decodeWithValidity({
+        expired: false,
+        notYetValid: false,
+        exp: { claim: 'exp', value: 1e20, date: null },
+        nbf: null,
+        iat: null
+      });
+      const validityOutput = document.getElementById('jwtTokenValidityStatus');
+
+      expect(validityOutput.textContent).toBe('✓ Not expired');
+      expect(validityOutput.classList.contains('status-success')).toBe(true);
+    });
+
+    it('shows a token that is not valid yet', async () => {
+      await decodeWithValidity({
+        expired: false,
+        notYetValid: true,
+        exp: { claim: 'exp', value: 4000000000, date: new Date(4000000000 * 1000) },
+        nbf: { claim: 'nbf', value: 3000000000, date: new Date(3000000000 * 1000) },
+        iat: null
+      });
+      const validityOutput = document.getElementById('jwtTokenValidityStatus');
+
+      expect(validityOutput.textContent).toBe(`⚠️ Not valid until ${new Date(3000000000 * 1000).toUTCString()} · Expires at ${new Date(4000000000 * 1000).toUTCString()}`);
+      expect(validityOutput.classList.contains('status-warning')).toBe(true);
+    });
+
+    it('shows a neutral note when the token has no exp/nbf/iat claims', async () => {
+      await decodeWithValidity({ expired: false, notYetValid: false, exp: null, nbf: null, iat: null });
+      const validityOutput = document.getElementById('jwtTokenValidityStatus');
+
+      expect(validityOutput.textContent).toBe('No exp/nbf/iat claims');
+      expect(validityOutput.classList.contains('status-default')).toBe(true);
+    });
+
+    it('resets the validity banner when the token is cleared', async () => {
+      await decodeWithValidity({
+        expired: true,
+        notYetValid: false,
+        exp: { claim: 'exp', value: 1600000000, date: new Date(1600000000 * 1000) },
+        nbf: null,
+        iat: null
+      });
+      const validityOutput = document.getElementById('jwtTokenValidityStatus');
+      expect(validityOutput.classList.contains('status-error')).toBe(true);
+
+      const jwtInput = document.getElementById('jwtInputToken');
+      jwtInput.value = '';
+      jwtInput.dispatchEvent(new Event('input'));
+      await jest.runAllTimersAsync();
+
+      expect(validityOutput.textContent).toBe('No token decoded');
+      expect(validityOutput.classList.contains('status-default')).toBe(true);
+    });
   });
 
   it('should initialize tooltips on buttons', async () => {

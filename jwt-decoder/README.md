@@ -23,6 +23,8 @@ A powerful, browser-based tool for decoding and validating JSON Web Tokens (JWT)
     - The "Verify Signature" button also updates its text and appearance ("✓ Valid", "✗ Invalid", "Secret Missing", "Token Invalid", "Verify Signature") based on the last verification attempt. It is enabled only when a token has been successfully decoded.
 - **Real-time Verification**: Signature verification status updates automatically (debounced) as you type in the secret key field, provided a valid token is present.
 - **Signature Verification**: Validate JWT signatures using HMAC-SHA256
+  - Only HS256 tokens can be verified with a shared secret; for other algorithms (RS256, ES256, ...) the tool shows an explanatory warning instead of claiming the signature is invalid
+- **Token Validity Check**: The Validation Result panel shows whether the token is expired, not yet valid, or currently valid based on its `exp`/`nbf` claims, alongside the `iat` issue date
 - **Base64 Support**: Automatic handling of both standard and URL-safe Base64 encoding
 - **Secure Processing**: All operations performed client-side for maximum security
 - **Copy Functionality**: 
@@ -43,6 +45,7 @@ A powerful, browser-based tool for decoding and validating JSON Web Tokens (JWT)
    - View the validation result in the "Validation Result" section
    - ✓ Green checkmark indicates a valid signature
    - ✗ Red X indicates an invalid signature
+   - ⚠️ Warning indicates signature verification is unsupported for the token's algorithm (only HS256 can be verified with a secret)
 
 3. **Copy Results**:
    - Click the "Copy Decoded" button to copy the decoded token information to your clipboard

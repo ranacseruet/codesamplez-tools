@@ -1,4 +1,4 @@
-import { JWTDecoder } from './JWTDecoder';
+import { JWTDecoder, type TokenValidityStatus } from './JWTDecoder';
 import { JsonTreeViewRenderer } from './JsonTreeViewRenderer';
 import { NotificationManager } from '../common/notification-manager';
 import { copyTextToClipboard } from '../common/clipboard';
@@ -20,6 +20,7 @@ interface JWTDecoderUIElements {
     validateBtn: HTMLButtonElement;
     decodedOutput: HTMLTextAreaElement;
     statusOutput: HTMLElement;
+    tokenValidityStatus: HTMLElement;
     headerJsonContainer: HTMLElement;
     payloadJsonContainer: HTMLElement;
     rawJsonViewerContainer: HTMLElement;
@@ -73,6 +74,7 @@ export class JWTDecoderUI {
             validateBtn: getRequiredElement('jwt-decoder-validate-btn', HTMLButtonElement, 'HTMLButtonElement'),
             decodedOutput: getRequiredElement('jwtDecodedOutput', HTMLTextAreaElement, 'HTMLTextAreaElement'),
             statusOutput: getRequiredElement('jwtSignatureStatus', HTMLElement, 'HTMLElement'),
+            tokenValidityStatus: getRequiredElement('jwtTokenValidityStatus', HTMLElement, 'HTMLElement'),
             headerJsonContainer: getRequiredElement('headerJson', HTMLElement, 'HTMLElement'),
             payloadJsonContainer: getRequiredElement('payloadJson', HTMLElement, 'HTMLElement'),
             rawJsonViewerContainer: getRequiredElement('rawJsonViewer', HTMLElement, 'HTMLElement')
@@ -234,9 +236,24 @@ export class JWTDecoderUI {
 
                 this.switchToRawTab();
 
+                // Show token validity (exp/nbf/iat) regardless of whether a
+                // signature check was requested.
+                this.updateTokenValidityOutput(decoder.getTokenValidity());
+
                 // Determine Verify Status and Update Status Output based on action
                 if (verifySignature) {
-                    if (!secret) {
+                    if (!decoder.isSignatureVerificationSupported()) {
+                        // Unsupported is not the same as invalid: an RS256
+                        // token may be perfectly valid, this tool just cannot
+                        // verify asymmetric signatures.
+                        const alg = decoder.getAlgorithm();
+                        const algNote = alg ? `token uses ${alg}` : 'token does not declare an algorithm';
+                        this.updateStatusOutput(
+                            `⚠️ Decoded successfully. Signature verification is only supported for HS256 (${algNote}).`,
+                            'warning',
+                            suppressNotification
+                        );
+                    } else if (!secret) {
                         if (isAuto) {
                             this.updateStatusOutput('Decoded successfully. Secret key required for verification.', 'warning', suppressNotification);
                         } else {
@@ -336,8 +353,56 @@ export class JWTDecoderUI {
 
     clearOutputs(): void {
         this.elements.decodedOutput.value = '';
+        this.clearTokenValidityOutput();
         this.showViewerEmptyStates();
         // Status is updated in decodeAndRender or clearAll
+    }
+
+    // Renders the exp/nbf/iat evaluation as a second banner in the Validation
+    // Result panel. Updates silently — notifications remain reserved for the
+    // signature status.
+    updateTokenValidityOutput(validity: TokenValidityStatus): void {
+        const output = this.elements.tokenValidityStatus;
+        const parts: string[] = [];
+        let type: StatusType = 'default';
+
+        if (validity.notYetValid) {
+            parts.push(validity.nbf.date === null
+                ? '⚠️ Not valid yet'
+                : `⚠️ Not valid until ${validity.nbf.date.toUTCString()}`);
+            type = 'warning';
+        }
+        if (validity.expired) {
+            parts.push(validity.exp.date === null
+                ? '✗ Expired'
+                : `✗ Expired at ${validity.exp.date.toUTCString()}`);
+            type = 'error';
+        } else if (validity.exp) {
+            // Skip the ✓ while the token is not yet valid — it would contradict
+            // the warning above. Say "Not expired", not "Valid": temporal
+            // eligibility alone says nothing about the signature.
+            if (!validity.notYetValid) {
+                parts.push(validity.exp.date === null
+                    ? '✓ Not expired'
+                    : `✓ Not expired (expires at ${validity.exp.date.toUTCString()})`);
+                if (type === 'default') {
+                    type = 'success';
+                }
+            } else if (validity.exp.date !== null) {
+                parts.push(`Expires at ${validity.exp.date.toUTCString()}`);
+            }
+        }
+        if (validity.iat && validity.iat.date !== null) {
+            parts.push(`Issued at ${validity.iat.date.toUTCString()}`);
+        }
+
+        output.textContent = parts.length > 0 ? parts.join(' · ') : 'No exp/nbf/iat claims';
+        output.className = `jwt-decoder-status c-status-banner status-${type}`;
+    }
+
+    clearTokenValidityOutput(): void {
+        this.elements.tokenValidityStatus.textContent = 'No token decoded';
+        this.elements.tokenValidityStatus.className = 'jwt-decoder-status c-status-banner status-default';
     }
 
     switchToRawTab(): void {
@@ -348,6 +413,7 @@ export class JWTDecoderUI {
     handleProcessingError(error: unknown): void {
         const message = error instanceof Error ? error.message : String(error);
         this.elements.decodedOutput.value = `Error: ${message}`;
+        this.clearTokenValidityOutput();
         this.showViewerEmptyStates('Unable to decode token', 'Fix the token and try again.');
         this.updateStatusOutput(`Error: ${message}`, 'error');
         console.error('JWT Processing Error:', error);
@@ -546,6 +612,7 @@ export function JwtDecoderApp() {
                 <h3>Validation Result</h3>
                 <div className="jwt-decoder-status-container">
                     <div id="jwtSignatureStatus" className="jwt-decoder-status c-status-banner">Not verified</div>
+                    <div id="jwtTokenValidityStatus" className="jwt-decoder-status c-status-banner status-default">No token decoded</div>
                 </div>
             </div>
 

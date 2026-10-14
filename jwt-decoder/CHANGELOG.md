@@ -2,6 +2,13 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.6] - 2026-10-14
+
+### JWT Decoder & Validator
+
+- Fixed a false "Signature is invalid" report for RS256 and other non-HS256 tokens: the tool cannot verify asymmetric signatures, so it now shows an explanatory warning ("Signature verification is only supported for HS256 (token uses …)") instead of claiming the signature is invalid.
+- Added token validity evaluation for the standard `exp`, `nbf`, and `iat` claims: the Validation Result panel now shows whether a token is expired, not yet valid, or currently valid (with human-readable UTC dates) instead of leaving the raw epoch timestamps uninterpreted.
+
 ## [1.0.5] - 2026-09-26
 
 ### JWT Decoder & Validator

@@ -3,6 +3,24 @@ import Base64Codec from '../common/Base64Codec';
 type JwtObject = Record<string, unknown>;
 type HmacFunction = (message: string, key: string) => Promise<Uint8Array>;
 
+export type TimestampClaim = {
+    claim: 'exp' | 'nbf' | 'iat';
+    /** Raw NumericDate: seconds since the Unix epoch. */
+    value: number;
+    /** The claim's timestamp as a Date, or null when the value lies outside the renderable Date range. */
+    date: Date | null;
+};
+
+export type TokenValidityStatus = {
+    /** True when the token carries an exp claim that has already passed. */
+    expired: boolean;
+    /** True when the token carries an nbf claim that is still in the future. */
+    notYetValid: boolean;
+    exp: TimestampClaim | null;
+    nbf: TimestampClaim | null;
+    iat: TimestampClaim | null;
+};
+
 function getErrorMessage(error: unknown): string {
     if (error instanceof Error) {
         return error.message;
@@ -136,6 +154,53 @@ export class JWTDecoder {
         return typeof this.#header?.alg === 'string' ? this.#header.alg : null;
     }
 
+    /**
+     * Whether verifySignature() can actually verify this token's signature.
+     * Only HS256 carries a shared-secret HMAC signature this tool can check;
+     * for every other algorithm verifySignature() always returns false,
+     * meaning "unsupported" — not necessarily "invalid". Callers (the UI)
+     * should check this first so unsupported algorithms are not reported as
+     * invalid signatures.
+     */
+    isSignatureVerificationSupported(): boolean {
+        return this.getAlgorithm() === 'HS256';
+    }
+
+    /**
+     * Evaluates the standard RFC 7519 timestamp claims (exp, nbf, iat) from
+     * the payload. Claims that are missing or not numeric epoch-seconds are
+     * reported as null. `now` is injectable so tests can be deterministic.
+     */
+    getTokenValidity(now: Date = new Date()): TokenValidityStatus {
+        const readClaim = (claim: 'exp' | 'nbf' | 'iat'): TimestampClaim | null => {
+            const value = this.#payload === null ? undefined : this.#payload[claim];
+            if (typeof value !== 'number' || !Number.isFinite(value)) {
+                return null;
+            }
+            const date = new Date(value * 1000);
+            // A finite NumericDate can still overflow the JS Date range
+            // (±8.64e15 ms, e.g. -1e20): keep the raw value for comparisons
+            // and report the date as unrenderable instead of an Invalid Date.
+            return { claim, value, date: Number.isNaN(date.getTime()) ? null : date };
+        };
+
+        const exp = readClaim('exp');
+        const nbf = readClaim('nbf');
+        const iat = readClaim('iat');
+        const nowMs = now.getTime();
+
+        // RFC 7519 §4.1.4: a token MUST NOT be accepted on or after exp;
+        // §4.1.5: only on or after nbf. Compared against the raw seconds so
+        // out-of-range values still classify correctly.
+        return {
+            expired: exp !== null && nowMs >= exp.value * 1000,
+            notYetValid: nbf !== null && nowMs < nbf.value * 1000,
+            exp,
+            nbf,
+            iat,
+        };
+    }
+
     async verifySignature(secret: string | null | undefined, hmacFunc: HmacFunction = hmacSha256): Promise<boolean> {
         // Cannot verify if basic format is wrong, signature is missing, secret is missing,
         // or if header/payload failed to parse.
@@ -144,6 +209,10 @@ export class JWTDecoder {
         }
 
         if (this.getAlgorithm() !== 'HS256') {
+            // Unsupported, not "invalid": only HMAC-SHA256 can be verified
+            // with a shared secret. Callers should check
+            // isSignatureVerificationSupported() first so this case is not
+            // misreported as an invalid signature.
             return false;
         }
 
