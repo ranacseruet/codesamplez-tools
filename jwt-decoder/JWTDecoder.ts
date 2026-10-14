@@ -7,8 +7,8 @@ export type TimestampClaim = {
     claim: 'exp' | 'nbf' | 'iat';
     /** Raw NumericDate: seconds since the Unix epoch. */
     value: number;
-    /** The claim's timestamp as a Date. */
-    date: Date;
+    /** The claim's timestamp as a Date, or null when the value lies outside the renderable Date range. */
+    date: Date | null;
 };
 
 export type TokenValidityStatus = {
@@ -177,7 +177,11 @@ export class JWTDecoder {
             if (typeof value !== 'number' || !Number.isFinite(value)) {
                 return null;
             }
-            return { claim, value, date: new Date(value * 1000) };
+            const date = new Date(value * 1000);
+            // A finite NumericDate can still overflow the JS Date range
+            // (±8.64e15 ms, e.g. -1e20): keep the raw value for comparisons
+            // and report the date as unrenderable instead of an Invalid Date.
+            return { claim, value, date: Number.isNaN(date.getTime()) ? null : date };
         };
 
         const exp = readClaim('exp');
@@ -186,10 +190,11 @@ export class JWTDecoder {
         const nowMs = now.getTime();
 
         // RFC 7519 §4.1.4: a token MUST NOT be accepted on or after exp;
-        // §4.1.5: only on or after nbf.
+        // §4.1.5: only on or after nbf. Compared against the raw seconds so
+        // out-of-range values still classify correctly.
         return {
-            expired: exp !== null && nowMs >= exp.date.getTime(),
-            notYetValid: nbf !== null && nowMs < nbf.date.getTime(),
+            expired: exp !== null && nowMs >= exp.value * 1000,
+            notYetValid: nbf !== null && nowMs < nbf.value * 1000,
             exp,
             nbf,
             iat,

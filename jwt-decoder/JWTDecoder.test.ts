@@ -338,6 +338,41 @@ describe('JWTDecoder Class', () => {
             expect(validity.iat).toBeNull();
         });
 
+        it('classifies an exp far outside the Date range as expired with an unrenderable date', () => {
+            const decoder = new JWTDecoder(buildToken({ exp: -1e20 }));
+            const validity = decoder.getTokenValidity(new Date(0));
+
+            expect(validity.expired).toBe(true);
+            expect(validity.notYetValid).toBe(false);
+            expect(validity.exp).toEqual({ claim: 'exp', value: -1e20, date: null });
+        });
+
+        it('classifies a far-future exp outside the Date range as not expired with an unrenderable date', () => {
+            const decoder = new JWTDecoder(buildToken({ exp: 1e20 }));
+            const validity = decoder.getTokenValidity(new Date(0));
+
+            expect(validity.expired).toBe(false);
+            expect(validity.exp).toEqual({ claim: 'exp', value: 1e20, date: null });
+        });
+
+        it('reports an nbf outside the Date range as not yet valid without a date', () => {
+            const decoder = new JWTDecoder(buildToken({ nbf: 1e20 }));
+            const validity = decoder.getTokenValidity(new Date(0));
+
+            expect(validity.notYetValid).toBe(true);
+            expect(validity.nbf).toEqual({ claim: 'nbf', value: 1e20, date: null });
+        });
+
+        it('keeps the claim renderable at the last representable instant and null beyond it', () => {
+            // 8.64e12 seconds = 8.64e15 ms, the largest instant Date can represent.
+            const edge = new JWTDecoder(buildToken({ exp: 8.64e12 }));
+            expect(edge.getTokenValidity(new Date(0)).exp?.date?.getTime()).toBe(8.64e15);
+
+            const beyond = new JWTDecoder(buildToken({ exp: 8.65e12 }));
+            expect(beyond.getTokenValidity(new Date(0)).expired).toBe(false);
+            expect(beyond.getTokenValidity(new Date(0)).exp?.date).toBeNull();
+        });
+
         it('returns defaults when the payload did not parse', () => {
             const decoder = new JWTDecoder('not-a-jwt');
             const validity = decoder.getTokenValidity(new Date(0));

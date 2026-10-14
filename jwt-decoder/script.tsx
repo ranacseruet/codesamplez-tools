@@ -367,23 +367,32 @@ export class JWTDecoderUI {
         let type: StatusType = 'default';
 
         if (validity.notYetValid) {
-            parts.push(`⚠️ Not valid until ${validity.nbf.date.toUTCString()}`);
+            parts.push(validity.nbf.date === null
+                ? '⚠️ Not valid yet'
+                : `⚠️ Not valid until ${validity.nbf.date.toUTCString()}`);
             type = 'warning';
         }
         if (validity.expired) {
-            parts.push(`✗ Expired at ${validity.exp.date.toUTCString()}`);
+            parts.push(validity.exp.date === null
+                ? '✗ Expired'
+                : `✗ Expired at ${validity.exp.date.toUTCString()}`);
             type = 'error';
         } else if (validity.exp) {
             // Skip the ✓ while the token is not yet valid — it would contradict
-            // the warning above.
-            parts.push(validity.notYetValid
-                ? `Expires at ${validity.exp.date.toUTCString()}`
-                : `✓ Valid (expires at ${validity.exp.date.toUTCString()})`);
-            if (type === 'default') {
-                type = 'success';
+            // the warning above. Say "Not expired", not "Valid": temporal
+            // eligibility alone says nothing about the signature.
+            if (!validity.notYetValid) {
+                parts.push(validity.exp.date === null
+                    ? '✓ Not expired'
+                    : `✓ Not expired (expires at ${validity.exp.date.toUTCString()})`);
+                if (type === 'default') {
+                    type = 'success';
+                }
+            } else if (validity.exp.date !== null) {
+                parts.push(`Expires at ${validity.exp.date.toUTCString()}`);
             }
         }
-        if (validity.iat) {
+        if (validity.iat && validity.iat.date !== null) {
             parts.push(`Issued at ${validity.iat.date.toUTCString()}`);
         }
 

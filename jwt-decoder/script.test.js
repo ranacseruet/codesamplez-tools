@@ -438,7 +438,7 @@ describe('JWT Decoder UI Interactions', () => {
       expect(validityOutput.classList.contains('status-error')).toBe(true);
     });
 
-    it('shows a currently valid token with its expiry date', async () => {
+    it('shows a token that is not expired with its expiry date', async () => {
       await decodeWithValidity({
         expired: false,
         notYetValid: false,
@@ -448,7 +448,35 @@ describe('JWT Decoder UI Interactions', () => {
       });
       const validityOutput = document.getElementById('jwtTokenValidityStatus');
 
-      expect(validityOutput.textContent).toBe(`✓ Valid (expires at ${new Date(4000000000 * 1000).toUTCString()})`);
+      expect(validityOutput.textContent).toBe(`✓ Not expired (expires at ${new Date(4000000000 * 1000).toUTCString()})`);
+      expect(validityOutput.classList.contains('status-success')).toBe(true);
+    });
+
+    it('shows expiry classification without a timestamp when the date is out of range', async () => {
+      await decodeWithValidity({
+        expired: true,
+        notYetValid: false,
+        exp: { claim: 'exp', value: -1e20, date: null },
+        nbf: null,
+        iat: { claim: 'iat', value: 1500000000, date: new Date(1500000000 * 1000) }
+      });
+      const validityOutput = document.getElementById('jwtTokenValidityStatus');
+
+      expect(validityOutput.textContent).toBe(`✗ Expired · Issued at ${new Date(1500000000 * 1000).toUTCString()}`);
+      expect(validityOutput.classList.contains('status-error')).toBe(true);
+    });
+
+    it('shows a not-expired token without a timestamp when its expiry date is out of range', async () => {
+      await decodeWithValidity({
+        expired: false,
+        notYetValid: false,
+        exp: { claim: 'exp', value: 1e20, date: null },
+        nbf: null,
+        iat: null
+      });
+      const validityOutput = document.getElementById('jwtTokenValidityStatus');
+
+      expect(validityOutput.textContent).toBe('✓ Not expired');
       expect(validityOutput.classList.contains('status-success')).toBe(true);
     });
 
