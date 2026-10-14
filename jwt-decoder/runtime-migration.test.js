@@ -9,6 +9,9 @@ jest.mock('./JWTDecoder', () => ({
     getHeader: jest.fn(() => ({ alg: 'HS256', typ: 'JWT' })),
     getPayload: jest.fn(() => ({ sub: '123', name: 'Test User' })),
     getParsingError: jest.fn(() => 'Invalid mock format'),
+    getAlgorithm: jest.fn(() => 'HS256'),
+    isSignatureVerificationSupported: jest.fn(() => true),
+    getTokenValidity: jest.fn(() => ({ expired: false, notYetValid: false, exp: null, nbf: null, iat: null })),
     verifySignature: jest.fn(async (secret) => token === 'valid.token.sig' && secret === 'secret')
   }))
 }));

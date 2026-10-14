@@ -262,6 +262,91 @@ describe('JWTDecoder Class', () => {
         });
     });
 
+    describe('isSignatureVerificationSupported', () => {
+        it('returns true only for HS256 tokens', () => {
+            expect(new JWTDecoder(validToken).isSignatureVerificationSupported()).toBe(true);
+        });
+
+        it('returns false for non-HS256 algorithms', () => {
+            expect(new JWTDecoder(unsupportedAlgToken).isSignatureVerificationSupported()).toBe(false);
+        });
+
+        it('returns false when the header declares no alg', () => {
+            const noAlgToken = [
+                codec.encodeBase64Url(JSON.stringify({ typ: 'JWT' })),
+                codec.encodeBase64Url(JSON.stringify({ sub: '123' })),
+                'sig'
+            ].join('.');
+
+            expect(new JWTDecoder(noAlgToken).isSignatureVerificationSupported()).toBe(false);
+        });
+    });
+
+    describe('getTokenValidity', () => {
+        const buildToken = (payload: Record<string, unknown>): string => [
+            codec.encodeBase64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' })),
+            codec.encodeBase64Url(JSON.stringify(payload)),
+            'sig'
+        ].join('.');
+
+        it('reports an exp claim in the past as expired', () => {
+            const decoder = new JWTDecoder(buildToken({ exp: 1000, iat: 500 }));
+            const validity = decoder.getTokenValidity(new Date(2000 * 1000));
+
+            expect(validity.expired).toBe(true);
+            expect(validity.notYetValid).toBe(false);
+            expect(validity.exp).toEqual({ claim: 'exp', value: 1000, date: new Date(1000 * 1000) });
+            expect(validity.iat).toEqual({ claim: 'iat', value: 500, date: new Date(500 * 1000) });
+        });
+
+        it('reports a future exp as not expired', () => {
+            const decoder = new JWTDecoder(buildToken({ exp: 5000 }));
+
+            expect(decoder.getTokenValidity(new Date(1000 * 1000)).expired).toBe(false);
+        });
+
+        it('treats the exp instant itself as expired (RFC 7519: not accepted on or after exp)', () => {
+            const decoder = new JWTDecoder(buildToken({ exp: 5000 }));
+
+            expect(decoder.getTokenValidity(new Date(5000 * 1000)).expired).toBe(true);
+        });
+
+        it('reports a future nbf as not yet valid', () => {
+            const decoder = new JWTDecoder(buildToken({ nbf: 5000 }));
+            const validity = decoder.getTokenValidity(new Date(1000 * 1000));
+
+            expect(validity.notYetValid).toBe(true);
+            expect(validity.nbf).toEqual({ claim: 'nbf', value: 5000, date: new Date(5000 * 1000) });
+        });
+
+        it('accepts a token once nbf has passed', () => {
+            const decoder = new JWTDecoder(buildToken({ nbf: 5000, exp: 9000 }));
+            const validity = decoder.getTokenValidity(new Date(6000 * 1000));
+
+            expect(validity.notYetValid).toBe(false);
+            expect(validity.expired).toBe(false);
+        });
+
+        it('reports missing or non-numeric claims as null', () => {
+            const decoder = new JWTDecoder(buildToken({ sub: 'abc', exp: 'not-a-number', nbf: null }));
+            const validity = decoder.getTokenValidity(new Date(0));
+
+            expect(validity.expired).toBe(false);
+            expect(validity.notYetValid).toBe(false);
+            expect(validity.exp).toBeNull();
+            expect(validity.nbf).toBeNull();
+            expect(validity.iat).toBeNull();
+        });
+
+        it('returns defaults when the payload did not parse', () => {
+            const decoder = new JWTDecoder('not-a-jwt');
+            const validity = decoder.getTokenValidity(new Date(0));
+
+            expect(decoder.isValidFormat).toBe(false);
+            expect(validity).toEqual({ expired: false, notYetValid: false, exp: null, nbf: null, iat: null });
+        });
+    });
+
     describe('hmacSha256 mock helper', () => {
         it('mockHmacSha256 should return correct mock signature for the known secret', async () => {
             const expectedSig = base64UrlToUint8Array('SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c');

@@ -13,6 +13,9 @@ jest.mock('./JWTDecoder', () => ({
       getHeader: jest.fn(() => (isValid ? mockHeader : null)),
       getPayload: jest.fn(() => (isValid ? mockPayload : null)),
       getParsingError: jest.fn(() => (isValid ? null : 'Invalid mock format')),
+      getAlgorithm: jest.fn(() => 'HS256'),
+      isSignatureVerificationSupported: jest.fn(() => true),
+      getTokenValidity: jest.fn(() => ({ expired: false, notYetValid: false, exp: null, nbf: null, iat: null })),
       verifySignature: jest.fn().mockImplementation(async (secret) => {
         return Promise.resolve(token === 'valid.token.sig' && secret === 'secret');
       }),
@@ -63,6 +66,7 @@ beforeEach(() => {
     <div id="payloadJson"></div>
     <div id="rawJsonViewer"></div>
     <div id="jwtSignatureStatus"></div>
+    <div id="jwtTokenValidityStatus"></div>
     <button id="jwt-decoder-copy-btn"></button>
     <button id="jwt-decoder-decode-btn"></button>
     <button id="jwt-decoder-validate-btn"></button>

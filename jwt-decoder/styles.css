@@ -245,6 +245,8 @@
 }
 
 .jwt-decoder-tool .jwt-decoder-status-container {
+  display: grid;
+  gap: 0.5rem;
   margin-top: var(--spacing-sm, var(--default-spacing-sm));
 }
 
