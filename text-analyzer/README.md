@@ -17,8 +17,8 @@ A fast, privacy-preserving browser text analysis utility built with Preact and T
 ## Features
 
 - **Character Count**: Total characters including whitespace and punctuation.
-- **Word Count**: Words detected by splitting whitespace with Unicode compatibility.
-- **Sentence Count**: Accurate sentence boundary detection using punctuation patterns (`.`, `!`, `?`).
+- **Word Count**: Words detected by splitting whitespace with Unicode compatibility; space-less scripts (Chinese, Japanese, Thai) are segmented with `Intl.Segmenter` when available. Text without those scripts keeps conventional word counting (hyphenated compounds stay one word); mixed-script text is segmented as a whole.
+- **Sentence Count**: Accurate sentence boundary detection using punctuation patterns (`.`, `!`, `?`) that ignores periods in common abbreviations (`Dr.`, `e.g.`, `U.S.`, `p.m.`).
 - **Line & Paragraph Counts**: Distinguishes between physical lines and empty-line delimited paragraphs.
 - **Average Word & Sentence Lengths**: Dynamic averages computed in real-time.
 - **Reading Time**: Estimated reading duration based on standard 200 words-per-minute speed.
