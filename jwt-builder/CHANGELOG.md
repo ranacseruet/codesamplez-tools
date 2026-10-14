@@ -2,6 +2,14 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.6] - 2026-10-14
+
+### JWT Builder
+
+- Custom claim values are now parsed as JSON on every entry, so booleans (`true`/`false`), numbers, arrays, and objects keep their native types instead of being coerced to strings. Integer literals beyond JavaScript's exact number range (e.g. 19-digit snowflake IDs) keep their exact string form to avoid silent precision loss.
+- `iss` and `exp` are no longer mandatory, per RFC 7519 §4.1: every registered claim is optional. Empty claims are omitted from the payload, and leaving `exp` empty builds a non-expiring token.
+- RS256 signing now accepts PKCS#1 RSA private keys (`-----BEGIN RSA PRIVATE KEY-----`, the default `openssl genrsa` output) by converting them to PKCS#8 in the browser; PKCS#8 keys remain supported as before.
+
 ## [1.0.5] - 2026-09-26
 
 ### JWT Builder

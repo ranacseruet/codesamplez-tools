@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import { webcrypto as nodeWebCrypto } from 'node:crypto';
 import { TextEncoder, TextDecoder } from 'node:util';
-import { privateKey as testPrivateKey, publicKey as testPublicKey } from './test-fixtures/rs256-test-keypair.js';
+import { privateKey as testPrivateKey, privateKeyPkcs1 as testPrivateKeyPkcs1, publicKey as testPublicKey } from './test-fixtures/rs256-test-keypair.js';
 import { JWTBuilder, type JWTAlgorithm } from './JWTBuilder';
 
 (globalThis as unknown as { TextEncoder: typeof TextEncoder }).TextEncoder = TextEncoder;
@@ -366,14 +366,25 @@ describe('JWTBuilder', () => {
       ).rejects.toThrow('public keys cannot be used');
     });
 
-    test('rejects PKCS#1 RSA private keys for RS256 signing', async () => {
+    test('accepts PKCS#1 RSA private keys for RS256 signing', async () => {
+      await withRealWebCrypto(async () => {
+        const pkcs8Signature = await jwtBuilder.generateSignature('header.payload', testPrivateKey, 'RS256');
+        const pkcs1Signature = await jwtBuilder.generateSignature('header.payload', testPrivateKeyPkcs1, 'RS256');
+
+        expect(pkcs1Signature).toMatch(/^[A-Za-z0-9_-]+$/);
+        // Same key material in both encodings must produce the same signature.
+        expect(pkcs1Signature).toBe(pkcs8Signature);
+      });
+    });
+
+    test('rejects malformed PKCS#1 RSA private keys for RS256 signing', async () => {
       await expect(
         jwtBuilder.generateSignature(
           'header.payload',
-          '-----BEGIN RSA PRIVATE KEY-----\nZm9v\n-----END RSA PRIVATE KEY-----',
+          '-----BEGIN RSA PRIVATE KEY-----\nnot-base64\n-----END RSA PRIVATE KEY-----',
           'RS256'
         )
-      ).rejects.toThrow('PKCS#1 RSA private keys are not supported');
+      ).rejects.toThrow('Invalid RSA private key');
     });
 
     test('rejects encrypted RSA private keys for RS256 signing', async () => {

@@ -303,6 +303,46 @@ describe('JWT Builder UI Tests', () => {
       expect(jwt).toBe('mocked.jwt.token');
     });
 
+    test('parses boolean and numeric custom claim values as JSON primitives', async () => {
+      scriptModule.addClaim();
+      const claimRow = document.querySelector('.custom-claim-row');
+      claimRow.querySelector('input[name="claimName"]').value = 'admin';
+      claimRow.querySelector('input[name="claimValue"]').value = 'true';
+
+      scriptModule.addClaim();
+      const claimRow2 = document.querySelectorAll('.custom-claim-row')[1];
+      claimRow2.querySelector('input[name="claimName"]').value = 'priority';
+      claimRow2.querySelector('input[name="claimValue"]').value = '1001';
+
+      await scriptModule.buildJWT();
+
+      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
+        expect.objectContaining({
+          admin: true,
+          priority: 1001
+        }),
+        expect.any(String),
+        'HS256'
+      );
+    });
+
+    test('keeps integer literals beyond safe number range as exact strings', async () => {
+      scriptModule.addClaim();
+      const claimRow = document.querySelector('.custom-claim-row');
+      claimRow.querySelector('input[name="claimName"]').value = 'userId';
+      claimRow.querySelector('input[name="claimValue"]').value = '9007199254740993';
+
+      await scriptModule.buildJWT();
+
+      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: '9007199254740993'
+        }),
+        expect.any(String),
+        'HS256'
+      );
+    });
+
     test('falls back to string when custom claim JSON parsing fails', async () => {
       scriptModule.addClaim();
       const claimRow = document.querySelector('.custom-claim-row');
@@ -422,22 +462,30 @@ describe('JWT Builder UI Tests', () => {
       expect(document.getElementById('key').hasAttribute('aria-invalid')).toBe(false);
     });
 
-    test('shows error notification when no issuer (iss) provided', async () => {
+    test('omits the issuer claim when iss is empty', async () => {
       document.getElementById('iss').value = '';
       const jwt = await scriptModule.buildJWT();
-      expect(document.getElementById('result').textContent).toBe('');
-      const errorStatus = document.getElementById('jwt-builder-error-status');
-      expect(errorStatus.textContent).toBe('Error: Issuer (iss) is required for JWT');
-      expect(jwt).toBeNull();
+
+      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
+        expect.not.objectContaining({ iss: expect.anything() }),
+        expect.any(String),
+        'HS256'
+      );
+      expect(document.getElementById('jwt-builder-error-status').textContent).toBe('');
+      expect(jwt).toBe('mocked.jwt.token');
     });
 
-    test('shows error notification when no expiration time (exp) provided', async () => {
+    test('omits the expiration claim when exp is empty', async () => {
       document.getElementById('exp').value = '';
       const jwt = await scriptModule.buildJWT();
-      expect(document.getElementById('result').textContent).toBe('');
-      const errorStatus = document.getElementById('jwt-builder-error-status');
-      expect(errorStatus.textContent).toBe('Error: Expiration Time (exp) is required for JWT');
-      expect(jwt).toBeNull();
+
+      expect(mockBuilder.buildJWT).toHaveBeenCalledWith(
+        expect.not.objectContaining({ exp: expect.anything() }),
+        expect.any(String),
+        'HS256'
+      );
+      expect(document.getElementById('jwt-builder-error-status').textContent).toBe('');
+      expect(jwt).toBe('mocked.jwt.token');
     });
 
     test('returns null when result output element is missing', async () => {

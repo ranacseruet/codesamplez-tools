@@ -4,15 +4,15 @@ A browser-based tool for creating signed JSON Web Tokens (JWTs) with standard an
 
 ## Summary
 
-JWT Builder creates HS256 and RS256 tokens entirely in the browser. Choose an algorithm, enter a shared secret or an unencrypted PKCS#8 RSA private key, configure the claims, and build a signed token without sending the payload or signing key to a server.
+JWT Builder creates HS256 and RS256 tokens entirely in the browser. Choose an algorithm, enter a shared secret or an unencrypted PKCS#8 or PKCS#1 RSA private key, configure the claims, and build a signed token without sending the payload or signing key to a server.
 
 ## Features
 
 - HS256 signing with a shared secret using HMAC SHA-256
-- RS256 signing with an unencrypted PKCS#8 RSA private key (2048 bits or stronger) using RSASSA-PKCS1-v1_5 and SHA-256
+- RS256 signing with an unencrypted PKCS#8 or PKCS#1 RSA private key (2048 bits or stronger) using RSASSA-PKCS1-v1_5 and SHA-256
 - An algorithm selector with signing-key guidance that adapts to HS256 or RS256
-- Standard JWT claims: `iss`, `sub`, `aud`, `exp`, `nbf`, `iat`, and `jti`
-- Dynamic custom claims with string, object, and array values
+- Standard JWT claims: `iss`, `sub`, `aud`, `exp`, `nbf`, `iat`, and `jti` — all optional per RFC 7519; omit `exp` to build a non-expiring token
+- Dynamic custom claims with string, boolean, number, object, and array values (integer literals beyond JavaScript's exact number range keep their string form)
 - ISO 8601 and UNIX timestamp input for time-based claims
 - Cryptographically random 32-character Base64URL shared-secret generation for HS256 testing
 - Copy-ready token output and shared-secret control
@@ -20,10 +20,10 @@ JWT Builder creates HS256 and RS256 tokens entirely in the browser. Choose an al
 
 ## Usage
 
-1. Fill in the required issuer and expiration time plus any optional standard or custom claims.
+1. Fill in any of the standard claims (all optional) plus custom claims as needed.
 2. Choose a signing algorithm:
    - **HS256:** enter a shared secret or generate a random test secret.
-   - **RS256:** paste an unencrypted PKCS#8 RSA private key (2048 bits or stronger) whose PEM block begins with `-----BEGIN PRIVATE KEY-----`.
+   - **RS256:** paste an unencrypted PKCS#8 or PKCS#1 RSA private key (2048 bits or stronger) whose PEM block begins with `-----BEGIN PRIVATE KEY-----` or `-----BEGIN RSA PRIVATE KEY-----`.
 3. Select **Build JWT**.
 4. Copy the generated token from the result panel.
 
@@ -51,9 +51,9 @@ The Jest and browser suites cover:
 
 - HS256 and RS256 header and signature generation
 - RS256 verification against the matching known public key
-- PKCS#8 PEM parsing and public/malformed-key errors
+- PKCS#8 and PKCS#1 PEM parsing and public/malformed-key errors
 - Algorithm-specific UI state and signing-key routing
-- Required-field and datetime validation
+- Required-key and datetime validation
 - Standard, custom, nested, Unicode, and special-character payloads
 - Desktop/mobile accessibility and cross-browser Web Crypto behavior
 

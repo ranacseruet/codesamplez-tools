@@ -28,6 +28,36 @@ o6DDOtdjKWyWQoqzzMRYePu+TUZ3VtoMajWRbPIW9urIQgYYETGOoydaPyPACkIX
 GnQcGNBVw7G4DInLnf7rJ++F
 -----END PRIVATE KEY-----`;
 
+// The same key as `privateKey`, in PKCS#1 RSAPrivateKey format (the default
+// `openssl genrsa` output). Byte-for-byte equivalent key material.
+export const privateKeyPkcs1 = `-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEArKDFAWDtk0Ejukztobmci2y6c91XMcnUv0163k+I/z5Aqljc
+li1YDfNefMcLz1VPGISzgaibMRg4iQtKrOrwdfkymidrAzmRVF1ypt3+i0b7IJH0
+Mgc7MJ3bhWm922jDXGAYAydvv+C9MljmqdRnZX7KfRcxgBxKjUoBydoTWE7wZJKz
+nffHdpKaNhoyOpC6sZmezZ8z+zuzgZOyGoF4tPIObO0vcE0xMvxARcH1+/yQlWPG
+kQnH0JGH/703V/yZI3XeUD1aluNc7ER3/fWb3UdKaoy9xUre0CWrCFfk6RN976of
+9nJ0ISQfOd2SXKtT2UikKwUyXCmd9OTX/E2x3QIDAQABAoIBAAVJWx8ir8Pdr9Fp
+v7E/NOsUJlWcBqqQqsI9BjE+sExYxLQyynaS5upudItPsS3lR+nRTon+9tm3Cywv
+O1c2TqzeN81+vYk4vxmdTwCLNdtgDhq+PYM2s3pWqz1XsqfAepMeoj2efI6cvE6J
+aG71AUGbc2oHRs3Mj//pr0pWMld27nD5hLFum4Ry4VvD8vnCw8JBH+yyw/Sa4jMv
+NmYHADpFOSFb+MWzvHImjgBbCY2mIMyOIf9D3aj0imKSJ0VkJHfuy6NKtix6bB9q
+pNriyG80CSvRBSDSeoFiFZwaApFEt8tcZ3nL3mGRBb5AEq8sPAFtSN1cl1BrwR9H
+ulP2PMUCgYEA7Ej7CYQOJke6u95l7IyBum/LhrTgf8JzGNmSwUlmD26iU4lh+xeh
+haSPsMy7eQFXUt0tCTxH5BMZTUySMASxhNnsxIBFjClVK8IQq13nKZojugAKiBuC
+Qc80Agy0bteHKYpHMUfR5IDJtXL5Y0Af232Nnqgx1Gu4X34IAHJGsccCgYEAuwgU
+9uURLXwXCDmwmy2EigMw7ODqf8ACyx4xdthToTxurKf2lnoGV4NTqwkn6zmyk7so
+AB5POn/V8BEbO2zg+PsvGk+7agTirvQFlxzZmSr4qIriAmgkyvDMCF6KgL9eBQwz
+gNU7Y2/1epRGqeoLQY2xzOwgc13f5Cbn3I2nfzsCgYEA5dPu6kiagr2OcqJWPYpF
+vRR0wSg6ncqDrY4j4wID1crk9aBRv6wyng18/pmFWKPnTmB4J92Mh9nT6I4sO6y1
+BuX6GQAzpaumfpObJzSFXr/hNFBJ7i3juyNSERROhOn7PHqV2Odkz4A9stKMpO+A
+jTxIfiRXo6jLg4bRPa3p+Y0CgYBDrEPxpaaWf5zR1BXrwAeB7G+qdiNDQBWCqxUY
+vGNeJsCg5lFZ1yMuTQ1cCH8SJJlRzNlHWbAvKYweRgJFeTrZvAEqEwlr7gKbbR4M
+tFqjiiHY0g++8THG4GPi71pMBXIef3CvP/gyHZOD29zJpC6YdI2N6S5AsAnPwqgI
+bJTbewKBgQDsIV4FXRWJ4Uc2PmODl3a/MUx+w7UDwCovUXA779eZ3LSfoCtpjVMP
+TZfRspHbLx5SurpoObC/MmKy0Mw5Q6OgwzrXYylslkKKs8zEWHj7vk1Gd1baDGo1
+kWzyFvbqyEIGGBExjqMnWj8jwApCFxp0HBjQVcOxuAyJy53+6yfvhQ==
+-----END RSA PRIVATE KEY-----`;
+
 export const publicKey = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArKDFAWDtk0Ejukztobmc
 i2y6c91XMcnUv0163k+I/z5Aqljcli1YDfNefMcLz1VPGISzgaibMRg4iQtKrOrw

@@ -3,7 +3,7 @@ import Base64Codec from '../common/Base64Codec';
 type JWTPayload = Record<string, unknown>;
 export type JWTAlgorithm = 'HS256' | 'RS256';
 
-const RSA_PRIVATE_KEY_ERROR = 'Invalid RSA private key. Expected an unencrypted PKCS#8 PEM key.';
+const RSA_PRIVATE_KEY_ERROR = 'Invalid RSA private key. Expected an unencrypted PKCS#8 or PKCS#1 PEM key.';
 const RSA_WEAK_KEY_ERROR = 'RSA private key must be at least 2048 bits.';
 const RSA_WEB_CRYPTO_ERROR = 'RS256 signing requires Web Crypto support in a secure browser context.';
 
@@ -67,7 +67,7 @@ export class JWTBuilder {
       /-----BEGIN ENCRYPTED PRIVATE KEY-----/i.test(normalizedKey) ||
       /(?:^|\r?\n)(?:Proc-Type:\s*4,ENCRYPTED|DEK-Info:)/i.test(normalizedKey)
     ) {
-      throw new Error('Encrypted RSA private keys are not supported. Provide an unencrypted PKCS#8 key.');
+      throw new Error('Encrypted RSA private keys are not supported. Provide an unencrypted PKCS#8 or PKCS#1 key.');
     }
 
     if (/-----BEGIN (?:RSA )?PUBLIC KEY-----/i.test(normalizedKey)) {
@@ -75,12 +75,23 @@ export class JWTBuilder {
     }
 
     if (/-----BEGIN RSA PRIVATE KEY-----/i.test(normalizedKey)) {
-      throw new Error('PKCS#1 RSA private keys are not supported. Convert the key to unencrypted PKCS#8 format.');
+      // PKCS#1 (the `openssl genrsa` output format): rewrap the DER into a
+      // PKCS#8 PrivateKeyInfo so crypto.subtle.importKey can consume it.
+      const pkcs1 = this.decodePemBody(
+        normalizedKey,
+        /-----BEGIN RSA PRIVATE KEY-----\s*([\s\S]*?)\s*-----END RSA PRIVATE KEY-----/i
+      );
+      return this.convertPkcs1ToPkcs8(pkcs1);
     }
 
-    const pemMatch = normalizedKey.match(
+    return this.decodePemBody(
+      normalizedKey,
       /^-----BEGIN PRIVATE KEY-----\s*([\s\S]*?)\s*-----END PRIVATE KEY-----$/i
     );
+  }
+
+  private decodePemBody(key: string, markerRegex: RegExp): Uint8Array {
+    const pemMatch = key.match(markerRegex);
     if (!pemMatch) {
       throw new Error(RSA_PRIVATE_KEY_ERROR);
     }
@@ -100,6 +111,36 @@ export class JWTBuilder {
     } catch (_error) {
       throw new Error(RSA_PRIVATE_KEY_ERROR);
     }
+  }
+
+  private convertPkcs1ToPkcs8(pkcs1: Uint8Array): Uint8Array {
+    // A PKCS#8 PrivateKeyInfo is a fixed envelope around the PKCS#1
+    // RSAPrivateKey DER: SEQUENCE { version 0, rsaEncryption AlgId,
+    // OCTET STRING { pkcs1 } }, so the conversion is pure byte wrapping.
+    if (pkcs1.length === 0 || pkcs1[0] !== 0x30) {
+      throw new Error(RSA_PRIVATE_KEY_ERROR);
+    }
+
+    const derLength = (length: number): number[] => {
+      if (length < 128) {
+        return [length];
+      }
+      const lengthBytes: number[] = [];
+      let remaining = length;
+      while (remaining > 0) {
+        lengthBytes.unshift(remaining & 0xff);
+        remaining >>= 8;
+      }
+      return [0x80 | lengthBytes.length, ...lengthBytes];
+    };
+
+    const version = [0x02, 0x01, 0x00]; // INTEGER 0
+    const algorithmIdentifier = [
+      0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00
+    ]; // SEQUENCE { OID rsaEncryption (1.2.840.113549.1.1.1), NULL }
+    const octetString = [0x04, ...derLength(pkcs1.length), ...pkcs1];
+    const privateKeyInfo = [...version, ...algorithmIdentifier, ...octetString];
+    return new Uint8Array([0x30, ...derLength(privateKeyInfo.length), ...privateKeyInfo]);
   }
 
   private async importRS256PrivateKey(key: string): Promise<CryptoKey> {

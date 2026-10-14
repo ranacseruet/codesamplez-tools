@@ -20,7 +20,7 @@ type JwtBuilderWindow = Window & {
 const DEFAULT_ALGORITHM: JWTAlgorithm = 'HS256';
 const ALGORITHM_HELP: Record<JWTAlgorithm, string> = {
   HS256: 'HS256 signs with a shared secret using HMAC SHA-256.',
-  RS256: 'RS256 signs with an unencrypted PKCS#8 RSA private key (2048 bits or stronger) using RSA SHA-256.'
+  RS256: 'RS256 signs with an unencrypted PKCS#8 or PKCS#1 RSA private key (2048 bits or stronger) using RSA SHA-256.'
 };
 
 const DATE_CLAIM_LABELS = {
@@ -295,11 +295,14 @@ export async function buildJWT() {
     const value = (claimRow.querySelector('input[name="claimValue"]') as HTMLInputElement | null)?.value;
     if (name?.trim() && value?.trim()) {
       try {
-        if (value.startsWith('[') || value.startsWith('{')) {
-          payload[name] = JSON.parse(value);
-        } else {
-          payload[name] = value;
-        }
+        const parsed = JSON.parse(value);
+        // Integer literals beyond Number's exact range (e.g. 19-digit
+        // snowflake IDs) would be silently corrupted by JSON.parse — keep
+        // their exact string form instead.
+        const trimmed = value.trim();
+        payload[name] = (typeof parsed === 'number' && !Number.isSafeInteger(parsed) && /^-?\d+$/.test(trimmed))
+          ? trimmed
+          : parsed;
       } catch {
         payload[name] = value;
       }
@@ -309,8 +312,6 @@ export async function buildJWT() {
   const algorithm = getSelectedAlgorithm();
   const keyFieldId = algorithm === 'RS256' ? 'rsa-private-key' : 'key';
   const key = getInputValue(keyFieldId);
-  const iss = getInputValue('iss');
-  const exp = getInputValue('exp');
   const resultDiv = document.getElementById('result');
   if (!resultDiv) {
     return null;
@@ -320,18 +321,6 @@ export async function buildJWT() {
     if (!key.trim()) {
       const keyLabel = algorithm === 'RS256' ? 'Private key' : 'Shared secret';
       setInlineError(`Error: ${keyLabel} is required for ${algorithm} signing`, keyFieldId);
-      resultDiv.textContent = '';
-      toggleEmptyState(true);
-      return null;
-    }
-    if (!iss.trim()) {
-      setInlineError('Error: Issuer (iss) is required for JWT', 'iss');
-      resultDiv.textContent = '';
-      toggleEmptyState(true);
-      return null;
-    }
-    if (!exp.trim()) {
-      setInlineError('Error: Expiration Time (exp) is required for JWT', 'exp');
       resultDiv.textContent = '';
       toggleEmptyState(true);
       return null;
@@ -412,10 +401,10 @@ export function JwtBuilderApp() {
           <div className="c-form-group jwt-builder-section jwt-builder-section--identity">
             <h3 className="c-form-group-header">Identity Claims</h3>
             <div className="c-form-row">
-              <label htmlFor="iss" className="required">
+              <label htmlFor="iss">
                 <span className="c-tooltip-container" title="Who issued the token">
                   Issuer (iss):
-                  <span className="c-tooltip">Required - Identifies the principal that issued the JWT</span>
+                  <span className="c-tooltip">Optional - Identifies the principal that issued the JWT</span>
                 </span>
               </label>
               <input type="text" id="iss" className="c-input" placeholder="e.g., my-app" />
@@ -443,10 +432,10 @@ export function JwtBuilderApp() {
           <div className="c-form-group jwt-builder-section jwt-builder-section--timing">
             <h3 className="c-form-group-header">Timing Claims</h3>
             <div className="c-form-row">
-              <label htmlFor="exp" className="required">
+              <label htmlFor="exp">
                 <span className="c-tooltip-container" title="When the token expires">
                   Expiration Time (exp):
-                  <span className="c-tooltip">Required - Identifies the expiration time on or after which the JWT must not be accepted</span>
+                  <span className="c-tooltip">Optional - Identifies the expiration time on or after which the JWT must not be accepted. Leave empty for a non-expiring token.</span>
                 </span>
               </label>
               <div className="u-flex u-flex-column u-gap-xs jwt-builder-inline-actions" style={{ flex: 1 }}>
@@ -561,12 +550,12 @@ export function JwtBuilderApp() {
             </div>
 
             <div id="jwt-builder-rs256-key-panel" className="c-form-row jwt-builder-signature-row" hidden>
-              <label htmlFor="rsa-private-key" className="required">Private Key (PKCS#8 PEM):</label>
+              <label htmlFor="rsa-private-key" className="required">Private Key (PEM):</label>
               <div className="jwt-builder-field-control">
                 <textarea
                   id="rsa-private-key"
                   className="c-input c-input--textarea jwt-builder-private-key"
-                  placeholder={'-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----'}
+                  placeholder={'-----BEGIN PRIVATE KEY----- or -----BEGIN RSA PRIVATE KEY-----'}
                   required
                   autoComplete="off"
                   spellcheck={false}
@@ -574,7 +563,7 @@ export function JwtBuilderApp() {
                   disabled
                 />
                 <p id="jwt-builder-rs256-key-help" className="jwt-builder-field-help">
-                  Paste an unencrypted PKCS#8 RSA private key (2048 bits or stronger). It stays in this browser and is never uploaded.
+                  Paste an unencrypted PKCS#8 or PKCS#1 RSA private key (2048 bits or stronger). It stays in this browser and is never uploaded.
                 </p>
               </div>
             </div>

@@ -17,7 +17,7 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     ),
     createPlainTextFaqItem(
         'Which algorithms does the JWT Generator support?',
-        'The tool supports HS256 with a shared secret and RS256 with an unencrypted PKCS#8 RSA private key that is 2048 bits or stronger.'
+        'The tool supports HS256 with a shared secret and RS256 with an unencrypted PKCS#8 or PKCS#1 RSA private key that is 2048 bits or stronger.'
     ),
     createPlainTextFaqItem(
         'Can I verify or decode a JWT here?',
@@ -72,7 +72,7 @@ export function JwtBuilderArticle(): JSX.Element {
                         <li><strong>Custom claim support:</strong> add claim rows dynamically and include string or JSON values.</li>
                         <li><strong>Flexible datetime parsing:</strong> use ISO 8601 values or UNIX timestamps for time-based claims.</li>
                         <li><strong>Automatic timestamp conversion:</strong> the tool converts supported datetime input into JWT-friendly numeric values.</li>
-                        <li><strong>HS256 and RS256 signing:</strong> use a shared secret for HMAC SHA-256 or an unencrypted PKCS#8 RSA private key (2048 bits or stronger) for RSA SHA-256.</li>
+                        <li><strong>HS256 and RS256 signing:</strong> use a shared secret for HMAC SHA-256 or an unencrypted PKCS#8 or PKCS#1 RSA private key (2048 bits or stronger) for RSA SHA-256.</li>
                         <li><strong>Adaptive signing-key input:</strong> the key control and guidance update with the selected algorithm.</li>
                         <li><strong>Random secret generation:</strong> generate a cryptographically random 32-character Base64URL secret for HS256 testing.</li>
                         <li><strong>Copy-ready output and validation feedback:</strong> build the token and copy it from the result panel.</li>
@@ -90,7 +90,7 @@ export function JwtBuilderArticle(): JSX.Element {
                         <li><strong>Fill in the standard claims</strong> such as issuer, subject, audience, and expiration time.</li>
                         <li><strong>Add custom claims if needed</strong> by clicking <em>Add Claim</em> and entering the claim name and value.</li>
                         <li><strong>Choose HS256 or RS256</strong> as the signing algorithm.</li>
-                        <li><strong>Enter the matching signature key:</strong> use a shared secret for HS256 or an unencrypted PKCS#8 RSA private key (2048 bits or stronger) for RS256.</li>
+                        <li><strong>Enter the matching signature key:</strong> use a shared secret for HS256 or an unencrypted PKCS#8 or PKCS#1 RSA private key (2048 bits or stronger) for RS256.</li>
                         <li><strong>Click Build JWT</strong> to create the signed token.</li>
                         <li><strong>Copy the generated token</strong> from the output panel and use it in your app or test flow.</li>
                     </ol>
@@ -111,9 +111,9 @@ export function JwtBuilderArticle(): JSX.Element {
 
                 <ToolArticleSection id="jwt-builder-error-handling" title="Error Handling & Validation">
                     <ul>
-                        <li>Checks for missing required fields such as the algorithm-specific signing key, issuer, and expiration time.</li>
+                        <li>Checks for missing required fields such as the algorithm-specific signing key. Issuer and expiration are optional per RFC 7519.</li>
                         <li>Validates supported datetime formats before token generation.</li>
-                        <li>Parses JSON-style custom claim values when possible and falls back safely to strings.</li>
+                        <li>Parses JSON-style custom claim values when possible — including booleans, numbers, arrays, and objects — and falls back safely to strings. Integer literals too large for exact JavaScript number representation keep their string form.</li>
                         <li>Explains malformed, unsupported, or public RSA keys without exposing sensitive values.</li>
                         <li>Reports when Web Crypto is unavailable separately from RSA key-format errors.</li>
                         <li>Keeps the result area clear when generation fails so invalid output is not reused accidentally.</li>
