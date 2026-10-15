@@ -167,16 +167,48 @@ export interface JsonFormatResult {
     formattedString: string;
 }
 
-/** Apply the lenient fix-ups to text outside an existing double-quoted string. */
+/** Convert single-quoted string content to valid double-quoted JSON string content. */
+function convertSingleQuotedContent(content: string): string {
+    let result = '';
+    for (let i = 0; i < content.length; i++) {
+        const ch = content[i];
+        if (ch === '\\') {
+            const next = content[i + 1];
+            if (next === '\'') {
+                // In single-quoted string, \' was escaped. In double-quoted JSON,
+                // ' does not need escaping and \' is an invalid escape sequence.
+                result += '\'';
+                i++;
+            } else if (next === '"') {
+                // Already-escaped \" inside single quotes remains \".
+                result += '\\"';
+                i++;
+            } else if (next === '\\') {
+                // Escaped backslash \\ remains \\.
+                result += '\\\\';
+                i++;
+            } else {
+                // Other valid escapes (\n, \r, \t, etc.) preserved.
+                result += '\\' + next;
+                i++;
+            }
+        } else if (ch === '"') {
+            // Unescaped double quote inside single-quoted string must be escaped in double-quoted JSON.
+            result += '\\"';
+        } else {
+            result += ch;
+        }
+    }
+    return `"${result}"`;
+}
+
+/** Apply lenient fix-ups to text outside string literals: trailing commas and unquoted keys. */
 function autoFixJsonSegment(segment: string): string {
     // Remove trailing commas
     let fixedJson = segment.replace(/,\s*([}\]])/g, '$1');
 
-    // Convert single-quoted strings to double-quoted (handles escaped quotes)
-    fixedJson = fixedJson.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"');
-
-    // Add quotes to unquoted keys
-    fixedJson = fixedJson.replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":');
+    // Add quotes to unquoted keys (supports letters, digits, underscores, dollar signs, and hyphens)
+    fixedJson = fixedJson.replace(/([{,]\s*)([\w$-]+)\s*:/g, '$1"$2":');
 
     return fixedJson;
 }
@@ -188,27 +220,46 @@ export function autoFixJSON(jsonString: string): string {
     let index = 0;
 
     while (index < jsonString.length) {
-        if (jsonString[index] !== '"') {
+        const ch = jsonString[index];
+        if (ch !== '"' && ch !== '\'') {
+            index += 1;
+            continue;
+        }
+
+        // An apostrophe preceded by a word character (e.g. "it's", "don't")
+        // is part of an unquoted word/identifier, not the opening of a string literal.
+        if (ch === '\'' && index > 0 && /\w/.test(jsonString[index - 1])) {
             index += 1;
             continue;
         }
 
         fixedSegments.push(autoFixJsonSegment(jsonString.slice(segmentStart, index)));
+        const quoteChar = ch;
         const stringStart = index;
         index += 1;
+        let closed = false;
 
         while (index < jsonString.length) {
             if (jsonString[index] === '\\') {
                 index += Math.min(2, jsonString.length - index);
-            } else if (jsonString[index] === '"') {
+            } else if (jsonString[index] === quoteChar) {
                 index += 1;
+                closed = true;
                 break;
             } else {
                 index += 1;
             }
         }
 
-        fixedSegments.push(jsonString.slice(stringStart, index));
+        if (quoteChar === '"') {
+            fixedSegments.push(jsonString.slice(stringStart, index));
+        } else if (closed) {
+            fixedSegments.push(convertSingleQuotedContent(jsonString.slice(stringStart + 1, index - 1)));
+        } else {
+            // Unclosed single quote / stray apostrophe: pass through autoFixJsonSegment
+            // so subsequent unquoted keys and trailing commas in the tail are still fixed.
+            fixedSegments.push(autoFixJsonSegment(jsonString.slice(stringStart, index)));
+        }
         segmentStart = index;
     }
 

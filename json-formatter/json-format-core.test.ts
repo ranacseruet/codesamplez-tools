@@ -25,6 +25,59 @@ describe('autoFixJSON', () => {
         expect(autoFixJSON('{a:1}')).toBe('{"a":1}');
     });
 
+    it('quotes unquoted keys containing hyphens', () => {
+        expect(autoFixJSON('{ content-type: "text/html" }')).toBe('{ "content-type": "text/html" }');
+        expect(autoFixJSON('{ a: 1, x-custom-header: "foo", data-id: 123 }')).toBe(
+            '{ "a": 1, "x-custom-header": "foo", "data-id": 123 }'
+        );
+        expect(JSON.parse(autoFixJSON('{ content-type: "text/html" }'))).toEqual({
+            'content-type': 'text/html'
+        });
+    });
+
+    it('escapes unescaped double quotes when converting single-quoted strings', () => {
+        const fixed = autoFixJSON(`{'text': 'He said "hi"'}`);
+        expect(fixed).toBe('{"text": "He said \\"hi\\""}');
+        expect(JSON.parse(fixed)).toEqual({ text: 'He said "hi"' });
+    });
+
+    it('converts escaped single quotes inside single-quoted strings to valid unescaped JSON characters', () => {
+        const fixed = autoFixJSON(`{'text': 'Don\\'t go'}`);
+        expect(fixed).toBe('{"text": "Don\'t go"}');
+        expect(JSON.parse(fixed)).toEqual({ text: "Don't go" });
+    });
+
+    it('preserves already-escaped double quotes, backslashes, and control escapes in single-quoted strings', () => {
+        const withQuotes = autoFixJSON(`{'quote': 'He said \\"hello\\"'}`);
+        expect(withQuotes).toBe('{"quote": "He said \\"hello\\""}');
+        expect(JSON.parse(withQuotes)).toEqual({ quote: 'He said "hello"' });
+
+        const withBackslash = autoFixJSON(`{'path': 'C:\\\\Program Files\\\\App'}`);
+        expect(withBackslash).toBe('{"path": "C:\\\\Program Files\\\\App"}');
+        expect(JSON.parse(withBackslash)).toEqual({ path: 'C:\\Program Files\\App' });
+
+        const withEscapes = autoFixJSON(`{'text': 'line1\\nline2\\ttab'}`);
+        expect(withEscapes).toBe('{"text": "line1\\nline2\\ttab"}');
+        expect(JSON.parse(withEscapes)).toEqual({ text: "line1\nline2\ttab" });
+    });
+
+    it('preserves key-like and trailing-comma-like content inside single-quoted strings', () => {
+        const fixed = autoFixJSON(`{'msg': 'Error in { file-name: test.txt }, trailing,'}`);
+        expect(fixed).toBe('{"msg": "Error in { file-name: test.txt }, trailing,"}');
+        expect(JSON.parse(fixed)).toEqual({ msg: 'Error in { file-name: test.txt }, trailing,' });
+    });
+
+    it('does not allow stray apostrophes in words to disable subsequent fix-ups', () => {
+        expect(autoFixJSON("{a: 1, b: it's here, c: 2,}")).toBe('{"a": 1, "b": it\'s here, "c": 2}');
+        expect(autoFixJSON("{\n  a: 1,\n  b: it's here,\n  c: that's cool,\n  d: 2,\n}")).toBe(
+            "{\n  \"a\": 1,\n  \"b\": it's here,\n  \"c\": that's cool,\n  \"d\": 2}"
+        );
+    });
+
+    it('still applies subsequent fix-ups when an unclosed single quote is encountered', () => {
+        expect(autoFixJSON("{a: 1, b: 'unclosed, c: 2,}")).toBe('{"a": 1, "b": \'unclosed, "c": 2}');
+    });
+
     it('preserves valid double-quoted strings containing fix-up-like text', () => {
         const input = JSON.stringify({
             a: "escaped \" quote don't,}",

@@ -763,7 +763,6 @@ export class JSONFormatter {
 
     const container = document.createElement('div');
     container.className = 'json-node';
-    container.style.marginLeft = `${depth * 15}px`;
 
     const isArray = Array.isArray(data);
     const arrayData = isArray ? (data as unknown[]) : null;
