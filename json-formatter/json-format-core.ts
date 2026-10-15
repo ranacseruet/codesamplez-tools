@@ -226,6 +226,13 @@ export function autoFixJSON(jsonString: string): string {
             continue;
         }
 
+        // An apostrophe preceded by a word character (e.g. "it's", "don't")
+        // is part of an unquoted word/identifier, not the opening of a string literal.
+        if (ch === '\'' && index > 0 && /\w/.test(jsonString[index - 1])) {
+            index += 1;
+            continue;
+        }
+
         fixedSegments.push(autoFixJsonSegment(jsonString.slice(segmentStart, index)));
         const quoteChar = ch;
         const stringStart = index;
@@ -249,7 +256,9 @@ export function autoFixJSON(jsonString: string): string {
         } else if (closed) {
             fixedSegments.push(convertSingleQuotedContent(jsonString.slice(stringStart + 1, index - 1)));
         } else {
-            fixedSegments.push(jsonString.slice(stringStart, index));
+            // Unclosed single quote / stray apostrophe: pass through autoFixJsonSegment
+            // so subsequent unquoted keys and trailing commas in the tail are still fixed.
+            fixedSegments.push(autoFixJsonSegment(jsonString.slice(stringStart, index)));
         }
         segmentStart = index;
     }

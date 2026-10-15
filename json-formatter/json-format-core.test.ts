@@ -53,6 +53,17 @@ describe('autoFixJSON', () => {
         expect(JSON.parse(fixed)).toEqual({ msg: 'Error in { file-name: test.txt }, trailing,' });
     });
 
+    it('does not allow stray apostrophes in words to disable subsequent fix-ups', () => {
+        expect(autoFixJSON("{a: 1, b: it's here, c: 2,}")).toBe('{"a": 1, "b": it\'s here, "c": 2}');
+        expect(autoFixJSON("{\n  a: 1,\n  b: it's here,\n  c: that's cool,\n  d: 2,\n}")).toBe(
+            "{\n  \"a\": 1,\n  \"b\": it's here,\n  \"c\": that's cool,\n  \"d\": 2}"
+        );
+    });
+
+    it('still applies subsequent fix-ups when an unclosed single quote is encountered', () => {
+        expect(autoFixJSON("{a: 1, b: 'unclosed, c: 2,}")).toBe('{"a": 1, "b": \'unclosed, "c": 2}');
+    });
+
     it('preserves valid double-quoted strings containing fix-up-like text', () => {
         const input = JSON.stringify({
             a: "escaped \" quote don't,}",
