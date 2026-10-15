@@ -84,6 +84,7 @@ const user={a:"John",b:"Doe"};console.log(user.a+" "+user.b);
   - Can conflict with external dependencies
 - Property mangling only shortens static keys on local object literals that do not escape, use dynamic access, act as method receivers, or are visible to dynamic `eval`/`Function` code or `with` scopes; API/config objects, `this`-dependent objects, and class members stay unchanged
 - Bindings visible to direct or script-level indirect `eval`, referenced by a `Function` constructor, or referenced inside `with` blocks are left unchanged when shortening variable names
+- Top-level `var`, `let`, and `const` declarations are preserved by default when shortening variables to ensure external scripts, `<script>` tags, and global references remain intact; whole-program top-level variable mangling can be enabled via the `toplevel: true` engine option
 
 ### JavaScript and Module Syntax
 - Parses and minifies modern JavaScript syntax, including ES module imports and exports, dynamic imports, and top-level `await`.
@@ -101,7 +102,7 @@ The minifier includes several safety features:
   transient toast
 - Preserves necessary whitespace to prevent syntax errors
 - Skips shortening of reserved JavaScript keywords and built-ins
-- Maintains function and method names that could affect program behavior
+- Maintains top-level variable declarations, function names, and class names that could affect external program behavior
 
 ## Security Considerations
 
