@@ -348,8 +348,12 @@ describe('JSON Editor runtime', () => {
 
     expect(copyButton.disabled).toBe(false);
     expect(downloadButton.disabled).toBe(false);
+    expect(copyButton.getAttribute('aria-describedby')).toBeNull();
+    expect(downloadButton.getAttribute('aria-describedby')).toBeNull();
     expect(previewTextarea.getAttribute('aria-invalid')).toBeNull();
+    expect(previewTextarea.getAttribute('aria-describedby')).toBeNull();
     expect(previewTextarea.classList.contains('c-input--error')).toBe(false);
+    expect(document.getElementById('json-editor-serialization-error')).toBeNull();
 
     const serializer = jest.spyOn(jsonEditorCore, 'serializeJsonEditorNode').mockImplementation(() => {
       throw new Error('Serializer failed.');
@@ -361,9 +365,19 @@ describe('JSON Editor runtime', () => {
 
       expect(preview()).toContain('Unable to serialize JSON: Serializer failed.');
       expect(previewTextarea.getAttribute('aria-invalid')).toBe('true');
+      expect(previewTextarea.getAttribute('aria-describedby')).toBe('json-editor-serialization-error');
       expect(previewTextarea.classList.contains('c-input--error')).toBe(true);
       expect(copyButton.disabled).toBe(true);
+      expect(copyButton.getAttribute('aria-describedby')).toBe('json-editor-serialization-error');
+      expect(copyButton.getAttribute('title')).toBe('Unable to serialize JSON: Serializer failed.');
       expect(downloadButton.disabled).toBe(true);
+      expect(downloadButton.getAttribute('aria-describedby')).toBe('json-editor-serialization-error');
+      expect(downloadButton.getAttribute('title')).toBe('Unable to serialize JSON: Serializer failed.');
+
+      const errorAlert = document.getElementById('json-editor-serialization-error')!;
+      expect(errorAlert).not.toBeNull();
+      expect(errorAlert.getAttribute('role')).toBe('alert');
+      expect(errorAlert.textContent).toContain('Serializer failed.');
 
       (NotificationManager.show as jest.Mock).mockClear();
       fireEvent.click(copyButton);
@@ -405,6 +419,7 @@ describe('JSON Editor runtime', () => {
       fireEvent.change(screen.getByLabelText('Output indentation'), { target: { value: '2' } });
       await flushRender();
       expect(preview()).toBe('Unable to serialize JSON.');
+      expect(document.getElementById('json-editor-serialization-error')!.textContent).toContain('Unable to serialize JSON.');
       (NotificationManager.show as jest.Mock).mockClear();
       fireEvent.click(copyButton);
       expect(NotificationManager.show).toHaveBeenCalledWith(
@@ -429,8 +444,12 @@ describe('JSON Editor runtime', () => {
 
     expect(copyButton.disabled).toBe(false);
     expect(downloadButton.disabled).toBe(false);
+    expect(copyButton.getAttribute('aria-describedby')).toBeNull();
+    expect(downloadButton.getAttribute('aria-describedby')).toBeNull();
     expect(previewTextarea.getAttribute('aria-invalid')).toBeNull();
+    expect(previewTextarea.getAttribute('aria-describedby')).toBeNull();
     expect(previewTextarea.classList.contains('c-input--error')).toBe(false);
+    expect(document.getElementById('json-editor-serialization-error')).toBeNull();
 
     (NotificationManager.show as jest.Mock).mockClear();
     fireEvent.click(copyButton);

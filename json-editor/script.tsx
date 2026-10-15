@@ -923,6 +923,8 @@ export function JsonEditorApp(): JSX.Element {
                                 type="button"
                                 onClick={() => void handleCopy()}
                                 disabled={Boolean(serializationError)}
+                                aria-describedby={serializationError ? 'json-editor-serialization-error' : undefined}
+                                title={serializationError ? serializationError : undefined}
                             >
                                 {copied ? 'Copied!' : 'Copy'}
                             </button>
@@ -931,11 +933,18 @@ export function JsonEditorApp(): JSX.Element {
                                 type="button"
                                 onClick={handleDownload}
                                 disabled={Boolean(serializationError)}
+                                aria-describedby={serializationError ? 'json-editor-serialization-error' : undefined}
+                                title={serializationError ? serializationError : undefined}
                             >
                                 Download
                             </button>
                         </div>
                     </div>
+                    {serializationError ? (
+                        <div id="json-editor-serialization-error" className="c-input-status error jsone-serialization-error" role="alert">
+                            <strong>Export unavailable:</strong> {serializationError}
+                        </div>
+                    ) : null}
                     <textarea
                         id="json-editor-preview"
                         className={`c-input c-input--textarea jsone-preview-textarea${serializationError ? ' c-input--error' : ''}`}
@@ -943,6 +952,7 @@ export function JsonEditorApp(): JSX.Element {
                         value={preview}
                         aria-label="Generated JSON preview"
                         aria-invalid={serializationError ? 'true' : undefined}
+                        aria-describedby={serializationError ? 'json-editor-serialization-error' : undefined}
                         spellcheck={false}
                     />
                     <p className="jsone-preview-note">Downloads use <code>edited.json</code> with the <code>application/json</code> MIME type. Everything stays in this browser tab.</p>
