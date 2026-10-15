@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.5] - 2026-10-15
+
+### JSON Editor
+
+- Prevent copying or downloading serialization error text as JSON when tree serialization fails.
+
 ## [1.0.4] - 2026-09-24
 
 ### JSON Editor

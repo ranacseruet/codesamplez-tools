@@ -593,11 +593,18 @@ export function JsonEditorApp(): JSX.Element {
         return () => document.removeEventListener('keydown', onKeyDown);
     }, []);
 
-    const preview = useMemo(() => {
+    const { preview, serializationError } = useMemo(() => {
         try {
-            return serializeJsonEditorNode(history.present, indent);
+            return {
+                preview: serializeJsonEditorNode(history.present, indent),
+                serializationError: null
+            };
         } catch (error) {
-            return error instanceof Error ? `Unable to serialize JSON: ${error.message}` : 'Unable to serialize JSON.';
+            const message = error instanceof Error ? `Unable to serialize JSON: ${error.message}` : 'Unable to serialize JSON.';
+            return {
+                preview: message,
+                serializationError: message
+            };
         }
     }, [history.present, indent]);
 
@@ -755,6 +762,10 @@ export function JsonEditorApp(): JSX.Element {
     }, [commitDocument, idFactory]);
 
     const handleCopy = useCallback(async () => {
+        if (serializationError) {
+            NotificationManager.show(`Could not copy JSON. ${serializationError}`, 3500, { type: 'error' });
+            return;
+        }
         try {
             await copyTextToClipboard(preview);
             NotificationManager.show('JSON copied to clipboard.', 2200, { type: 'success' });
@@ -764,13 +775,21 @@ export function JsonEditorApp(): JSX.Element {
         } catch (error) {
             NotificationManager.show(`Could not copy JSON. ${error instanceof Error ? error.message : String(error)}`, 3500, { type: 'error' });
         }
-    }, [preview]);
+    }, [preview, serializationError]);
 
     const handleDownload = useCallback(() => {
-        if (!downloadManagerRef.current) downloadManagerRef.current = new DownloadManager();
-        downloadManagerRef.current.downloadFile(preview, 'edited.json', 'application/json');
-        NotificationManager.show('Downloaded edited.json.', 2200, { type: 'success' });
-    }, [preview]);
+        if (serializationError) {
+            NotificationManager.show(`Could not download JSON. ${serializationError}`, 3500, { type: 'error' });
+            return;
+        }
+        try {
+            if (!downloadManagerRef.current) downloadManagerRef.current = new DownloadManager();
+            downloadManagerRef.current.downloadFile(preview, 'edited.json', 'application/json');
+            NotificationManager.show('Downloaded edited.json.', 2200, { type: 'success' });
+        } catch (error) {
+            NotificationManager.show(`Could not download JSON. ${error instanceof Error ? error.message : String(error)}`, 3500, { type: 'error' });
+        }
+    }, [preview, serializationError]);
 
     useLayoutEffect(() => {
         importOpenRef.current = importOpen;
@@ -899,11 +918,33 @@ export function JsonEditorApp(): JSX.Element {
                             <p>Read-only output from the current tree.</p>
                         </div>
                         <div className="jsone-preview-actions" role="group" aria-label="JSON export actions">
-                            <button className="c-button c-button--secondary c-button--small" type="button" onClick={() => void handleCopy()}>{copied ? 'Copied!' : 'Copy'}</button>
-                            <button className="c-button c-button--secondary c-button--small c-button--icon-download" type="button" onClick={handleDownload}>Download</button>
+                            <button
+                                className="c-button c-button--secondary c-button--small"
+                                type="button"
+                                onClick={() => void handleCopy()}
+                                disabled={Boolean(serializationError)}
+                            >
+                                {copied ? 'Copied!' : 'Copy'}
+                            </button>
+                            <button
+                                className="c-button c-button--secondary c-button--small c-button--icon-download"
+                                type="button"
+                                onClick={handleDownload}
+                                disabled={Boolean(serializationError)}
+                            >
+                                Download
+                            </button>
                         </div>
                     </div>
-                    <textarea id="json-editor-preview" className="c-input c-input--textarea jsone-preview-textarea" readOnly value={preview} aria-label="Generated JSON preview" spellcheck={false} />
+                    <textarea
+                        id="json-editor-preview"
+                        className={`c-input c-input--textarea jsone-preview-textarea${serializationError ? ' c-input--error' : ''}`}
+                        readOnly
+                        value={preview}
+                        aria-label="Generated JSON preview"
+                        aria-invalid={serializationError ? 'true' : undefined}
+                        spellcheck={false}
+                    />
                     <p className="jsone-preview-note">Downloads use <code>edited.json</code> with the <code>application/json</code> MIME type. Everything stays in this browser tab.</p>
                 </section>
             </div>

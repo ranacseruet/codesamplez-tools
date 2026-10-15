@@ -341,6 +341,120 @@ describe('JSON Editor runtime', () => {
     }
   });
 
+  test('disables copy and download and reports error notifications when serialization fails', async () => {
+    const copyButton = screen.getByRole('button', { name: 'Copy' }) as HTMLButtonElement;
+    const downloadButton = screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement;
+    const previewTextarea = document.getElementById('json-editor-preview') as HTMLTextAreaElement;
+
+    expect(copyButton.disabled).toBe(false);
+    expect(downloadButton.disabled).toBe(false);
+    expect(previewTextarea.getAttribute('aria-invalid')).toBeNull();
+    expect(previewTextarea.classList.contains('c-input--error')).toBe(false);
+
+    const serializer = jest.spyOn(jsonEditorCore, 'serializeJsonEditorNode').mockImplementation(() => {
+      throw new Error('Serializer failed.');
+    });
+
+    try {
+      fireEvent.change(screen.getByLabelText('Output indentation'), { target: { value: '4' } });
+      await flushRender();
+
+      expect(preview()).toContain('Unable to serialize JSON: Serializer failed.');
+      expect(previewTextarea.getAttribute('aria-invalid')).toBe('true');
+      expect(previewTextarea.classList.contains('c-input--error')).toBe(true);
+      expect(copyButton.disabled).toBe(true);
+      expect(downloadButton.disabled).toBe(true);
+
+      (NotificationManager.show as jest.Mock).mockClear();
+      fireEvent.click(copyButton);
+      await flushRender();
+      expect(copyTextToClipboard).not.toHaveBeenCalled();
+      expect(NotificationManager.show).toHaveBeenCalledWith(
+        'Could not copy JSON. Unable to serialize JSON: Serializer failed.',
+        3500,
+        { type: 'error' }
+      );
+
+      (NotificationManager.show as jest.Mock).mockClear();
+      fireEvent.click(downloadButton);
+      await flushRender();
+      expect(mockDownloadFile).not.toHaveBeenCalled();
+      expect(NotificationManager.show).toHaveBeenCalledWith(
+        'Could not download JSON. Unable to serialize JSON: Serializer failed.',
+        3500,
+        { type: 'error' }
+      );
+
+      // Primary action shortcut (Cmd/Ctrl+Enter) with closed import disclosure
+      const registeredCallbacks = (registerPrimaryActionShortcut as unknown as jest.Mock).mock.calls;
+      const latestCallback = registeredCallbacks[registeredCallbacks.length - 1][0];
+      (NotificationManager.show as jest.Mock).mockClear();
+      latestCallback();
+      await flushRender();
+      expect(copyTextToClipboard).not.toHaveBeenCalled();
+      expect(NotificationManager.show).toHaveBeenCalledWith(
+        'Could not copy JSON. Unable to serialize JSON: Serializer failed.',
+        3500,
+        { type: 'error' }
+      );
+
+      // Non-Error exception fallback
+      serializer.mockImplementation(() => {
+        throw 'String failure';
+      });
+      fireEvent.change(screen.getByLabelText('Output indentation'), { target: { value: '2' } });
+      await flushRender();
+      expect(preview()).toBe('Unable to serialize JSON.');
+      (NotificationManager.show as jest.Mock).mockClear();
+      fireEvent.click(copyButton);
+      expect(NotificationManager.show).toHaveBeenCalledWith(
+        'Could not copy JSON. Unable to serialize JSON.',
+        3500,
+        { type: 'error' }
+      );
+      (NotificationManager.show as jest.Mock).mockClear();
+      fireEvent.click(downloadButton);
+      expect(NotificationManager.show).toHaveBeenCalledWith(
+        'Could not download JSON. Unable to serialize JSON.',
+        3500,
+        { type: 'error' }
+      );
+    } finally {
+      serializer.mockRestore();
+    }
+
+    // Recovers when serialization succeeds again
+    fireEvent.change(screen.getByLabelText('Output indentation'), { target: { value: 'tab' } });
+    await flushRender();
+
+    expect(copyButton.disabled).toBe(false);
+    expect(downloadButton.disabled).toBe(false);
+    expect(previewTextarea.getAttribute('aria-invalid')).toBeNull();
+    expect(previewTextarea.classList.contains('c-input--error')).toBe(false);
+
+    (NotificationManager.show as jest.Mock).mockClear();
+    fireEvent.click(copyButton);
+    expect(copyTextToClipboard).toHaveBeenCalledWith(preview());
+
+    (NotificationManager.show as jest.Mock).mockClear();
+    fireEvent.click(downloadButton);
+    expect(mockDownloadFile).toHaveBeenCalledWith(preview(), 'edited.json', 'application/json');
+    expect(NotificationManager.show).toHaveBeenCalledWith('Downloaded edited.json.', 2200, { type: 'success' });
+  });
+
+  test('reports download failures if downloadManager throws', async () => {
+    mockDownloadFile.mockImplementationOnce(() => {
+      throw new Error('Filesystem error');
+    });
+    (NotificationManager.show as jest.Mock).mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'Download' }));
+    expect(NotificationManager.show).toHaveBeenCalledWith(
+      'Could not download JSON. Filesystem error',
+      3500,
+      { type: 'error' }
+    );
+  });
+
   test('reports defensive mutation failures without changing the document', async () => {
     await importJson('{"a":1}');
     const rename = jest.spyOn(jsonEditorCore, 'renameJsonObjectProperty').mockImplementation(() => {
