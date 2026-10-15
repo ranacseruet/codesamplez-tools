@@ -129,7 +129,8 @@
   align-self: center;
 }
 
-.jsone-import-error {
+.jsone-import-error,
+.jsone-serialization-error {
   margin-top: 0.2rem;
   color: var(--color-danger, var(--default-color-danger, #b42318));
   line-height: 1.45;
