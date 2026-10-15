@@ -11,6 +11,7 @@ interface JSMinifierOptions {
   removeWhitespace: boolean;
   shortenVariables: boolean;
   mangleProperties: boolean;
+  toplevel: boolean;
 }
 
 function parseJavaScript(code: string): MinifierAst {
@@ -165,7 +166,8 @@ export class JSMinifier {
       removeComments: options.removeComments !== undefined ? options.removeComments : true,
       removeWhitespace: options.removeWhitespace !== undefined ? options.removeWhitespace : true,
       shortenVariables: options.shortenVariables !== undefined ? options.shortenVariables : false,
-      mangleProperties: options.mangleProperties !== undefined ? options.mangleProperties : false
+      mangleProperties: options.mangleProperties !== undefined ? options.mangleProperties : false,
+      toplevel: options.toplevel !== undefined ? options.toplevel : false
     };
   }
 
@@ -307,18 +309,23 @@ export class JSMinifier {
     const bindingsToRename: any[] = [];
     const namesInUse = new Set<string>();
 
-    // Preserve function names and other critical identifiers
+    // Preserve top-level bindings, function/class declarations, and dynamic identifiers
     for (const binding of allBindings) {
+      const isTopLevel = Boolean(
+        binding.scope?.path?.isProgram?.() || binding.scope?.path?.node?.type === 'Program'
+      );
       const isObservedDynamically = evalScopes.direct.some((scope) =>
         scope.getBinding(binding.identifier.name) === binding
-      ) || (evalScopes.hasIndirect && binding.scope.path.node.type === 'Program') ||
+      ) || (evalScopes.hasIndirect && isTopLevel) ||
         binding.referencePaths.some(isInsideWithStatement);
 
-      if (
+      const shouldPreserve =
+        (!this.options.toplevel && isTopLevel) ||
         binding.path.isFunctionDeclaration() ||
         binding.path.isClassDeclaration() ||
-        isObservedDynamically
-      ) {
+        isObservedDynamically;
+
+      if (shouldPreserve) {
         namesInUse.add(binding.identifier.name);
       } else {
         bindingsToRename.push(binding);

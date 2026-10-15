@@ -10,7 +10,8 @@ describe('JS Minifier', () => {
         removeComments: true,
         removeWhitespace: true,
         shortenVariables: false,
-        mangleProperties: false
+        mangleProperties: false,
+        toplevel: false
       });
     });
 
@@ -118,7 +119,15 @@ describe('JS Minifier', () => {
     test('shortens bindings through the syntax-aware helper', () => {
       const minifier = new JSMinifier({ shortenVariables: true });
 
-      expect(minifier.shortenVariableNames('const longName = 1;')).toBe('const a=1;');
+      // Scoped variables inside functions are shortened
+      expect(minifier.shortenVariableNames('function test() { const longName = 1; return longName; }')).toBe('function test(){const a=1;return a}');
+
+      // Top-level variables are preserved by default
+      expect(minifier.shortenVariableNames('const longName = 1;')).toBe('const longName=1;');
+
+      // Top-level variables are shortened when toplevel is enabled
+      const toplevelMinifier = new JSMinifier({ shortenVariables: true, toplevel: true });
+      expect(toplevelMinifier.shortenVariableNames('const longName = 1;')).toBe('const a=1;');
     });
 
     test('returns original code when mangleObjectProperties is called with mangleProperties=false', () => {
@@ -318,19 +327,89 @@ describe('JS Minifier', () => {
 
     test('should NOT replace variable names inside strings', () => {
       const minifier = new JSMinifier({ shortenVariables: true });
-      const input = `const myVar = 1; return "myVar";`;
+      const input = `function test() { const myVar = 1; return "myVar"; }`;
       const output = minifier.minify(input);
       expect(output).toContain('"myVar"');
       expect(output).not.toContain('const myVar=');
+
+      // Top-level variables remain intact by default
+      const topInput = `const myVar = 1; return "myVar";`;
+      expect(minifier.minify(topInput)).toContain('const myVar=1;');
+
+      // When toplevel: true, top-level variable is renamed without affecting string contents
+      const toplevelMinifier = new JSMinifier({ shortenVariables: true, toplevel: true });
+      const toplevelOutput = toplevelMinifier.minify(topInput);
+      expect(toplevelOutput).toContain('"myVar"');
+      expect(toplevelOutput).not.toContain('const myVar=');
     });
 
     test('should NOT replace object property keys that match variable names', () => {
       const minifier = new JSMinifier({ shortenVariables: true });
-      const input = `const key = 1; const obj = { key: 2 }; return obj.key;`;
+      const input = `function test() { const key = 1; const obj = { key: 2 }; return obj.key; }`;
       const output = minifier.minify(input);
       expect(output).toMatch(/key:2/);
       expect(output).toMatch(/\.key/);
       expect(output).not.toContain('const key=');
+    });
+
+    test('preserves top-level var, let, and const declarations by default', () => {
+      const minifier = new JSMinifier({ shortenVariables: true });
+      const input = `var APP_CONFIG = { apiUrl: 'https://example.com' };\nvar currentUser = null;\nlet siteTitle = 'My Site';\nconst API_VERSION = 1;`;
+      const output = minifier.minify(input);
+
+      expect(output).toBe('var APP_CONFIG={apiUrl:"https://example.com"};var currentUser=null;let siteTitle="My Site";const API_VERSION=1;');
+    });
+
+    test('shortens local variables inside functions without altering top-level declarations', () => {
+      const minifier = new JSMinifier({ shortenVariables: true });
+      const input = `var APP_CONFIG = { apiUrl: 'https://example.com' };\nfunction init() {\n  const localSecret = 'secret';\n  return APP_CONFIG.apiUrl + localSecret;\n}`;
+      const output = minifier.minify(input);
+
+      expect(output).toContain('var APP_CONFIG={apiUrl:"https://example.com"};');
+      expect(output).toContain('function init()');
+      expect(output).toMatch(/const [a-zA-Z$_][a-zA-Z0-9$_]*="secret"/);
+      expect(output).not.toContain('localSecret');
+      expect(new Function(`${output}; return init();`)()).toBe('https://example.comsecret');
+    });
+
+    test('avoids collisions when a top-level variable already uses a candidate short name', () => {
+      const minifier = new JSMinifier({ shortenVariables: true });
+      const input = `var a = 100;\nfunction compute() {\n  const number = 20;\n  return a + number;\n}`;
+      const output = minifier.minify(input);
+
+      // Top-level 'a' must be preserved, local 'number' must not collide with 'a' (gets 'b')
+      expect(output).toContain('var a=100;');
+      expect(output).toContain('const b=20;');
+      expect(new Function(`${output}; return compute();`)()).toBe(120);
+    });
+
+    test('preserves top-level exported variables', () => {
+      const minifier = new JSMinifier({ shortenVariables: true });
+      const input = `export const API_URL = 'https://example.com';\nexport let session = null;\nexport var count = 0;`;
+      const output = minifier.minify(input);
+
+      expect(output).toContain('export const API_URL="https://example.com";');
+      expect(output).toContain('export let session=null;');
+      expect(output).toContain('export var count=0;');
+    });
+
+    test('preserves top-level block-nested var declarations while shortening block-scoped let/const', () => {
+      const minifier = new JSMinifier({ shortenVariables: true });
+      const input = `{ var hoistedGlobal = 10; let blockScoped = 20; }`;
+      const output = minifier.minify(input);
+
+      expect(output).toContain('var hoistedGlobal=10;');
+      expect(output).not.toContain('blockScoped');
+    });
+
+    test('shortens top-level variables when toplevel option is explicitly true', () => {
+      const minifier = new JSMinifier({ shortenVariables: true, toplevel: true });
+      const input = `var APP_CONFIG = { apiUrl: 'https://example.com' };\nvar currentUser = null;`;
+      const output = minifier.minify(input);
+
+      expect(output).not.toContain('APP_CONFIG');
+      expect(output).not.toContain('currentUser');
+      expect(output).toMatch(/^var [a-zA-Z$_][a-zA-Z0-9$_]*=\{apiUrl:"https:\/\/example\.com"\};var [a-zA-Z$_][a-zA-Z0-9$_]*=null;?$/);
     });
   });
 
