@@ -189,7 +189,7 @@ function convertSingleQuotedContent(content: string): string {
                 i++;
             } else {
                 // Other valid escapes (\n, \r, \t, etc.) preserved.
-                result += '\\' + (next !== undefined ? next : '');
+                result += '\\' + next;
                 i++;
             }
         } else if (ch === '"') {

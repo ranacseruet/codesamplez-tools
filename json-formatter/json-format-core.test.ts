@@ -47,6 +47,20 @@ describe('autoFixJSON', () => {
         expect(JSON.parse(fixed)).toEqual({ text: "Don't go" });
     });
 
+    it('preserves already-escaped double quotes, backslashes, and control escapes in single-quoted strings', () => {
+        const withQuotes = autoFixJSON(`{'quote': 'He said \\"hello\\"'}`);
+        expect(withQuotes).toBe('{"quote": "He said \\"hello\\""}');
+        expect(JSON.parse(withQuotes)).toEqual({ quote: 'He said "hello"' });
+
+        const withBackslash = autoFixJSON(`{'path': 'C:\\\\Program Files\\\\App'}`);
+        expect(withBackslash).toBe('{"path": "C:\\\\Program Files\\\\App"}');
+        expect(JSON.parse(withBackslash)).toEqual({ path: 'C:\\Program Files\\App' });
+
+        const withEscapes = autoFixJSON(`{'text': 'line1\\nline2\\ttab'}`);
+        expect(withEscapes).toBe('{"text": "line1\\nline2\\ttab"}');
+        expect(JSON.parse(withEscapes)).toEqual({ text: "line1\nline2\ttab" });
+    });
+
     it('preserves key-like and trailing-comma-like content inside single-quoted strings', () => {
         const fixed = autoFixJSON(`{'msg': 'Error in { file-name: test.txt }, trailing,'}`);
         expect(fixed).toBe('{"msg": "Error in { file-name: test.txt }, trailing,"}');
