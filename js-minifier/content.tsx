@@ -131,7 +131,7 @@ const result = calculateSum(myNumbers);
 console.log("The sum is: " + result);`}</code></pre>
 
                     <p><strong>Minified Code:</strong></p>
-                    <pre><code>{`function a(numbers){let b=0;for(let c=0;c<numbers.length;c++){b=b+numbers[c]}return b}const d=[1,2,3,4,5],e=a(d);console.log("The sum is: "+e)`}</code></pre>
+                    <pre><code>{`function calculateSum(a){let b=0;for(let c=0;c<a.length;c++){b=b+a[c]}return b}const myNumbers=[1,2,3,4,5];const result=calculateSum(myNumbers);console.log("The sum is: "+result);`}</code></pre>
                 </ToolArticleSection>
 
                 <ToolArticleSection id="js-minifier-advanced-options" title="Advanced Options">

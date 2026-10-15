@@ -66,4 +66,21 @@ describe('js-minifier content', () => {
         const renderedFaqQuestions = root!.querySelectorAll('.c-tool-faq__item');
         expect(renderedFaqQuestions.length).toBe(FAQ_ITEMS.length);
     });
+
+    it('renders accurate minified code in the example section preserving top-level variables', () => {
+        document.body.innerHTML = '<div id="test-article-example"></div>';
+        const root = document.getElementById('test-article-example');
+
+        render(<JSMinifierArticle />, root!);
+
+        const section = root!.querySelector('section[aria-labelledby="js-minifier-example"]');
+        expect(section).not.toBeNull();
+        const codeBlocks = section!.querySelectorAll('pre code');
+        expect(codeBlocks.length).toBe(2);
+
+        const minifiedCode = codeBlocks[1].textContent;
+        expect(minifiedCode).toContain('calculateSum');
+        expect(minifiedCode).toContain('myNumbers');
+        expect(minifiedCode).toContain('result');
+    });
 });

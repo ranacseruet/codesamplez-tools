@@ -6,7 +6,7 @@ All notable changes to this tool are documented in this file.
 
 ### JavaScript Minifier
 
-- Preserved top-level `var`, `let`, and `const` declarations by default when shortening variable names, preventing window globals and script variables from being mangled into single-letter identifiers. Added `toplevel` minifier option (defaulting to `false`) for configurable whole-program variable mangling.
+- Preserved top-level `var`, `let`, and `const` declarations by default when shortening variable names, preventing window globals and script variables from being mangled into single-letter identifiers. Added programmatic `toplevel` minifier engine option (defaulting to `false`) for configurable whole-program variable mangling via the API.
 
 ## [1.0.5] - 2026-09-24
 
