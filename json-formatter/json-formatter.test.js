@@ -1427,12 +1427,19 @@ describe('JSONFormatter', () => {
       expect(brackets[1].textContent).toBe('}');
     });
 
-    test('should apply correct indentation based on depth', async () => {
+    test('should not apply quadratic compounding inline margins on nested nodes', async () => {
       formatter.output = document.createElement('div');
-      await formatter.renderJSONAsync({ key: 'value' }, formatter.output, 2);
+      await formatter.renderJSONAsync({ a: { b: { c: 'value' } } }, formatter.output);
 
-      const container = formatter.output.querySelector('.json-node');
-      expect(container.style.marginLeft).toBe('30px');
+      const containers = formatter.output.querySelectorAll('.json-node');
+      expect(containers.length).toBeGreaterThan(0);
+      containers.forEach((container) => {
+        expect(container.style.marginLeft).toBe('');
+      });
+
+      // Linear indentation is provided by nesting .json-children elements
+      const childrenContainers = formatter.output.querySelectorAll('.json-children');
+      expect(childrenContainers.length).toBe(3);
     });
   });
 
@@ -1804,8 +1811,25 @@ describe('JSONFormatter', () => {
     test('should handle escaped quotes within single-quoted strings', () => {
       const input = "{'key': 'value with \\'escaped\\' quotes'}";
       const result = JSONFormatter.autoFixJSON(input);
-      // The regex handles escaped quotes
-      expect(result).toContain('"key"');
+      expect(result).toBe('{"key": "value with \'escaped\' quotes"}');
+      expect(() => JSON.parse(result)).not.toThrow();
+    });
+
+    test('should escape unescaped double quotes when converting single-quoted strings', () => {
+      const input = "{'text': 'He said \"hi\"'}";
+      const result = JSONFormatter.autoFixJSON(input);
+      expect(result).toBe('{"text": "He said \\"hi\\""}');
+      expect(JSON.parse(result)).toEqual({ text: 'He said "hi"' });
+    });
+
+    test('should auto-fix unquoted keys with hyphens', () => {
+      const input = '{ content-type: "text/html", accept-encoding: "gzip" }';
+      const result = JSONFormatter.autoFixJSON(input);
+      expect(result).toBe('{ "content-type": "text/html", "accept-encoding": "gzip" }');
+      expect(JSON.parse(result)).toEqual({
+        'content-type': 'text/html',
+        'accept-encoding': 'gzip'
+      });
     });
   });
 

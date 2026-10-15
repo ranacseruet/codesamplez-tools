@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.8] - 2026-10-15
+
+### JSON Formatter
+
+- Fix quadratic tree view indentation and auto-fix handling of quotes and hyphenated keys
+
 ## [1.0.7] - 2026-10-05
 
 ### JSON Formatter
