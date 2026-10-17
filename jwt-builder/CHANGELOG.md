@@ -2,13 +2,18 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.8] - 2026-10-17
+
+### JWT Builder
+
+- Footer tagline now says tool input is processed locally and is not uploaded.
+- Intro now says tool input is processed locally and is not uploaded.
+
 ## [1.0.7] - 2026-10-17
 
 ### JWT Builder
 
 - Shortened the browser title so it stays within 60 characters.
-- Footer tagline now says tool input is processed locally and is not uploaded.
-- Intro now says tool input is processed locally and is not uploaded.
 
 ## [1.0.6] - 2026-10-14
 

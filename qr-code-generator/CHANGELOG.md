@@ -2,13 +2,18 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.8] - 2026-10-17
+
+### QR Code Generator
+
+- Footer tagline now says tool input is processed locally and is not uploaded.
+- Technology section and README now say tool input is processed locally and is not uploaded.
+
 ## [1.0.7] - 2026-10-17
 
 ### QR Code Generator
 
 - Shortened the browser title so it stays within 60 characters.
-- Footer tagline now says tool input is processed locally and is not uploaded.
-- Technology section and README now say tool input is processed locally and is not uploaded.
 
 ## [1.0.6] - 2026-09-25
 
