@@ -115,15 +115,14 @@ const DEFAULT_FAIL_PERCENT = 10;
 // decode-path caption (type, decoded size, dimensions). SVG stays
 // download-only by policy, so it adds no preview weight.
 //
-// `diff-checker-tool` (87,207 -> 95,956), `css-minifier-tool` (66,115 ->
-// 69,713), `jwt-builder-tool` (70,073 -> 76,771), and `text-analyzer-tool`
-// (46,389 -> 50,891) were refreshed for the privacy footer link (issue #97).
-// The shared shell change (a Privacy anchor plus the site-href helper) lands
-// in every main bundle and, on these four, broke scope hoisting enough to
-// cross warn or fail. Growth is uneven (about 1–9 KB), the same shared-shell
-// effect noted for the ShareBar rail and the Preact overlay above. The other
-// eight tools absorbed it inside their warn line and are left un-refreshed so
-// the next regression still has a signal.
+// `diff-checker-tool` (87,207 -> 95,956) was refreshed for the privacy footer
+// link (issue #97). Main was already about 95,797 bytes, so the footer only
+// added roughly 160 bytes; that was enough to cross the fail line. The
+// measured baseline stays 95,956.
+// `css-minifier-tool` (66,115 -> 69,713), `jwt-builder-tool` (70,073 ->
+// 76,771), and `text-analyzer-tool` (46,389 -> 50,891) were refreshed to the
+// measured size in the same change because they were over the warn line. The
+// other eight tools stayed inside the warn line and are left un-refreshed.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 49773,

@@ -14,12 +14,14 @@ const OG_IMAGE_HEIGHT = '630';
 const PRIVACY_PUBLIC_PATH = '/privacy/';
 const PRIVACY_PAGE_TITLE = 'Privacy Policy';
 const PRIVACY_PAGE_DESCRIPTION = 'How CodeSamplez Tools handles input you enter in the browser, and how Google Analytics and Google AdSense use cookies on the published site.';
-// Visible content date. Change this only when the policy text changes — do not
-// derive it from the build clock, or every rebuild would claim a new update.
-const PRIVACY_LAST_UPDATED_LABEL = '17 October 2026';
+const PRIVACY_LAST_UPDATED_MONTHS = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+];
 
 const CONTACT_PAGE_URL = 'https://codesamplez.com/contact';
 const GOOGLE_PARTNER_DATA_URL = 'https://policies.google.com/technologies/partner-sites';
+const GOOGLE_AD_SETTINGS_URL = 'https://www.google.com/settings/ads';
 const GOOGLE_ADS_SETTINGS_URL = 'https://adssettings.google.com/';
 const GOOGLE_ANALYTICS_OPTOUT_URL = 'https://tools.google.com/dlpage/gaoptout';
 
@@ -29,6 +31,34 @@ const GOOGLE_ANALYTICS_OPTOUT_URL = 'https://tools.google.com/dlpage/gaoptout';
  */
 function getPrivacyPageAbsoluteUrl(siteBaseUrl) {
     return buildAbsoluteUrl(siteBaseUrl, PRIVACY_PUBLIC_PATH);
+}
+
+/**
+ * Visible "Last updated" date. Uses the privacy page's sitemap lastmod (git
+ * commit time of the same inputs), not the build clock and not a fixed
+ * authoring date. UTC so the calendar day matches the sitemap timestamp.
+ * @param {string | null | undefined} lastmodIso
+ * @returns {string | null}
+ */
+function formatPrivacyLastUpdatedLabel(lastmodIso) {
+    const date = new Date(lastmodIso || '');
+
+    if (Number.isNaN(date.getTime())) {
+        return null;
+    }
+
+    return `${date.getUTCDate()} ${PRIVACY_LAST_UPDATED_MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+}
+
+/**
+ * @returns {string | null}
+ */
+function getPrivacyLastUpdatedLabel() {
+    // Lazy require: generated-site-assets loads this module for the sitemap entry.
+    const { getPrivacyPageLastmodPaths, resolveGitLastmodForPaths } = require('./generated-site-assets');
+    const lastmod = resolveGitLastmodForPaths(getPrivacyPageLastmodPaths());
+
+    return formatPrivacyLastUpdatedLabel(lastmod);
 }
 
 /**
@@ -85,9 +115,10 @@ function renderLink(href, label) {
  * retention, a controller address, and a DPO are not stated here.
  * @param {import('./tool-manifest').ToolManifest} manifest
  * @param {string} pageUrl
+ * @param {string | null} lastUpdatedLabel
  * @returns {string}
  */
-function renderPrivacyMain(manifest, pageUrl) {
+function renderPrivacyMain(manifest, pageUrl, lastUpdatedLabel) {
     const homeUrl = manifest.rootPage.absoluteUrl;
     const siteLink = renderLink(homeUrl, 'CodeSamplez Tools');
 
@@ -104,7 +135,7 @@ function renderPrivacyMain(manifest, pageUrl) {
       </ol>
     </nav>
     <h1 id="privacy-policy-title" class="main-title">${escapeHtml(PRIVACY_PAGE_TITLE)}</h1>
-    <p class="section-body">Last updated: ${escapeHtml(PRIVACY_LAST_UPDATED_LABEL)}.</p>
+    ${lastUpdatedLabel ? `<p class="section-body">Last updated: ${escapeHtml(lastUpdatedLabel)}.</p>` : ''}
     <p class="section-body">This page describes the ${siteLink} website at ${renderLink(pageUrl, pageUrl)}. The tools process what you enter in your browser.</p>
 
     <section aria-labelledby="privacy-tool-input">
@@ -122,7 +153,7 @@ function renderPrivacyMain(manifest, pageUrl) {
     <section aria-labelledby="privacy-ads">
       <h2 class="section-title" id="privacy-ads">Google AdSense</h2>
       <p class="section-body">The published site loads Google AdSense. Pages request Google's advertising script, which uses cookies and can show ads, including ads personalized by Google. The pages do not send a setting that limits those ads to non-personalized ads.</p>
-      <p class="section-body">Google describes this in ${renderLink(GOOGLE_PARTNER_DATA_URL, 'How Google uses information from sites or apps that use our services')}.</p>
+      <p class="section-body">Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to this site and other websites. See ${renderLink(GOOGLE_AD_SETTINGS_URL, 'Ads Settings')} and ${renderLink(GOOGLE_PARTNER_DATA_URL, 'How Google uses information from sites or apps that use our services')}.</p>
       <p class="section-body">You can review ad personalization in ${renderLink(GOOGLE_ADS_SETTINGS_URL, 'Google Ads Settings')}.</p>
     </section>
 
@@ -152,6 +183,7 @@ function renderPrivacyMain(manifest, pageUrl) {
 function generatePrivacyDocument() {
     const manifest = loadManifest();
     const pageUrl = getPrivacyPageAbsoluteUrl(manifest.siteBaseUrl);
+    const lastUpdatedLabel = getPrivacyLastUpdatedLabel();
     const structuredDataScript = renderStructuredDataScript(buildPrivacyStructuredDataGraph(manifest, {
         url: pageUrl,
         name: PRIVACY_PAGE_TITLE,
@@ -205,7 +237,7 @@ function generatePrivacyDocument() {
 <body class="landing-page">
   <div id="app-shell-header"></div>
 
-${renderPrivacyMain(manifest, pageUrl)}
+${renderPrivacyMain(manifest, pageUrl, lastUpdatedLabel)}
 
   <div id="app-shell-footer">${shellFooterMarkup}</div>
   <script src="${escapedRootShellBundleUrl}" defer></script>
@@ -215,7 +247,7 @@ ${renderPrivacyMain(manifest, pageUrl)}
 }
 
 module.exports = {
-    PRIVACY_LAST_UPDATED_LABEL,
+    formatPrivacyLastUpdatedLabel,
     PRIVACY_PAGE_DESCRIPTION,
     PRIVACY_PAGE_TITLE,
     PRIVACY_PUBLIC_PATH,
