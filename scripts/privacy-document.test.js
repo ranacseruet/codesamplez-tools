@@ -83,6 +83,8 @@ describe('privacy document generation', () => {
         expect(html).toContain('processed in your browser');
         expect(html).toContain('do not upload that input to a server');
         expect(html).toContain('Google Analytics 4');
+        expect(html).toContain('The pages also send a tool_used event for diff-checker, json-formatter, and base64 with the params tool_id, action, trigger (user, sample, or share), and outcome (success or error), plus an optional input_size_bucket; unknown trigger or outcome values are dropped, and the event contains no tool input content.');
+        expect(html).not.toContain('do not add analytics events beyond that default configuration');
         expect(html).toContain('uses cookies');
         expect(html).toContain('Google AdSense');
         expect(html).toContain("Google, as a third-party vendor, and its partners use cookies to serve ads based on a user's prior visits to this website and other websites.");

@@ -117,8 +117,11 @@ const DEFAULT_FAIL_PERCENT = 10;
 //
 // `diff-checker-tool` (87,207 -> 95,956) was refreshed for the privacy footer
 // link (issue #97). Main was already about 95,797 bytes, so the footer only
-// added roughly 160 bytes; that was enough to cross the fail line. The
-// measured baseline stays 95,956.
+// added roughly 160 bytes; that was enough to cross the fail line.
+//
+// Measured again after tool_used landed on that privacy-page main, so these
+// pins are not the pre-privacy sizes. diff-checker-tool is 97,619,
+// json-formatter-tool is 75,638, and base64-converter-tool is 87,888.
 // `css-minifier-tool` (66,115 -> 69,713), `jwt-builder-tool` (70,073 ->
 // 76,771), and `text-analyzer-tool` (46,389 -> 50,891) were refreshed to the
 // measured size in the same change because they were over the warn line. The
@@ -127,11 +130,11 @@ const DEFAULT_FAIL_PERCENT = 10;
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 49773,
     'data-format-converter': 190839,
-    'diff-checker-tool': 95956,
+    'diff-checker-tool': 97619,
     'jwt-builder-tool': 76771,
     'jwt-decoder-tool': 70827,
-    'base64-converter-tool': 84607,
-    'json-formatter-tool': 71306,
+    'base64-converter-tool': 87888,
+    'json-formatter-tool': 75638,
     'json-editor-tool': 63226,
     'css-minifier-tool': 69713,
     'text-analyzer-tool': 50891,
