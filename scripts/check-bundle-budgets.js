@@ -118,7 +118,11 @@ const DEFAULT_FAIL_PERCENT = 10;
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 49773,
     'data-format-converter': 190839,
-    'diff-checker-tool': 87207,
+    // Refreshed for the tool_used helper. On the host-gate branch the main
+    // bundle was already 95,797, 131 bytes under the old fail line (95,928).
+    // The helper adds about 1.3 KB and crosses that line. Pinned to the
+    // measured production bundle so the next regression is still visible.
+    'diff-checker-tool': 97061,
     'jwt-builder-tool': 70073,
     'jwt-decoder-tool': 70827,
     'base64-converter-tool': 84607,
