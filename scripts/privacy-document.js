@@ -189,8 +189,8 @@ function generatePrivacyDocument() {
         name: PRIVACY_PAGE_TITLE,
         description: PRIVACY_PAGE_DESCRIPTION
     }));
-    const analyticsHeadMarkup = renderAnalyticsHeadMarkup(manifest.analytics);
-    const analyticsResourceHints = renderAnalyticsResourceHints(manifest.analytics);
+    const analyticsHeadMarkup = renderAnalyticsHeadMarkup(manifest.analytics, manifest.siteBaseUrl);
+    const analyticsResourceHints = renderAnalyticsResourceHints(manifest.analytics, manifest.siteBaseUrl);
     const documentTitle = formatRootDocumentTitle(PRIVACY_PAGE_TITLE, manifest.organization.name);
     const escapedDescription = escapeAttribute(PRIVACY_PAGE_DESCRIPTION);
     const escapedTitle = escapeAttribute(PRIVACY_PAGE_TITLE);

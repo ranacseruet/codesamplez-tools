@@ -124,7 +124,7 @@ describe('privacy document generation', () => {
         expect(html).toContain('<a href="http://localhost:8081/privacy/" class="cst-shell__footer-link">Privacy</a>');
     });
 
-    it('injects analytics on the published page and omits it in development', () => {
+    it('builds with analytics ids configured and does not throw', () => {
         const productionHtml = withEnv({
             NODE_ENV: 'production',
             CST_GA_MEASUREMENT_ID: 'G-PRIVACYPAGE',
@@ -138,6 +138,7 @@ describe('privacy document generation', () => {
 
         expect(productionHtml).toContain('https://www.googletagmanager.com/gtag/js?id=G-PRIVACYPAGE');
         expect(productionHtml).toContain('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456');
+        expect(productionHtml).toContain('location.hostname!=="tools.codesamplez.com"');
         expect(developmentHtml).not.toContain('googletagmanager.com');
         expect(developmentHtml).not.toContain('googlesyndication.com');
     });
