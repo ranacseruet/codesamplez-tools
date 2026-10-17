@@ -13,6 +13,7 @@ const {
     buildSitemapXml,
     getRootPageLastmodPaths,
     getToolPageLastmodPaths,
+    listNonTestSourceFilesInDirectory,
     resolveGitLastmodForPaths,
     toSitemapUrlItem,
     writeGeneratedSiteAssets
@@ -175,6 +176,10 @@ describe('generated site assets', () => {
         const lastmodPaths = getToolPageLastmodPaths(getToolDefinitions()[0]);
 
         expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-changelog.js'));
+    });
+
+    it('returns no paths when a lastmod input directory is missing', () => {
+        expect(listNonTestSourceFilesInDirectory('definitely-not-a-real-directory-for-lastmod')).toEqual([]);
     });
 
     it('includes every tool meta file and root-page content in root lastmod inputs', () => {
