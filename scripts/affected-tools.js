@@ -26,6 +26,9 @@ const ALL_TOOL_TRIGGER_FILES = new Set([
     // related-tools cards. Editing a path changes the emitted SVG on every page.
     'scripts/lucide-icons.js',
     'scripts/prerender-tool.js',
+    // Prerenders the shared footer, including the privacy link, into every
+    // tool document. A markup change here must rebuild those pages.
+    'scripts/shell-footer.js',
     // Configures the Babel register hook the generators use to require TSX at
     // prerender time, so a change here can alter the emitted markup. Pre-existing
     // gap, surfaced by the generator-input guard test in affected-tools.test.js.
@@ -68,6 +71,9 @@ const ROOT_ONLY_TRIGGER_FILES = new Set([
     // reaches a tool document, but a wording edit still has to redeploy the
     // root page. Pre-existing gap, surfaced by the generator-input guard test.
     'scripts/root-page-content.js',
+    // The privacy policy document. Root-only: it is emitted with the root HTML
+    // assets and is not part of a tool bundle.
+    'scripts/privacy-document.js',
     ...getRootAssets()
 ]);
 

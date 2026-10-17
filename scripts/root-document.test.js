@@ -116,6 +116,8 @@ describe('root document generation', () => {
     expect(html).toContain('<summary class="faq-item__question">Are these online developer tools free to use?</summary>');
     expect(html).toContain(`href="${buildSiteHref('/jwt-decoder/')}"`);
     expect(html).toContain(`<script src="${buildSiteAssetUri('/root-shell/bundle.main.js')}" defer></script>`);
+    expect(html).toContain(`<div id="app-shell-footer"><footer class="cst-shell__footer">`);
+    expect(html).toContain(`<a href="${buildSiteHref('/privacy/')}" class="cst-shell__footer-link">Privacy</a>`);
 
     const introIndex = html.indexOf('Whether you need to minify JavaScript or decode a secret message, these tools help you get it done fast, no installation required.');
     // Anchor on the first tool-group section (group labels also appear earlier,

@@ -57,7 +57,7 @@ describe('tool metadata discovery', () => {
         sourceRoot: 'jwt-decoder',
         outputDir: 'jwt-decoder',
         outputPath: 'build/jwt-decoder',
-        version: '1.0.6'
+        version: '1.0.7'
       })
     ]));
   });
@@ -106,8 +106,8 @@ describe('detectAffectedTargets', () => {
         includeRootAssets: true,
         shouldBuild: true,
         shouldDeploy: true,
-        deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'base64-converter', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'jwt-builder', 'jwt-decoder', 'llms.txt', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css', 'versions.json'],
-        invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/base64-converter/', '/base64-converter/*', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/llms.txt', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css', '/versions.json']
+        deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'base64-converter', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'jwt-builder', 'jwt-decoder', 'llms.txt', 'og-home.png', 'privacy/index.html', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css', 'versions.json'],
+        invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/base64-converter/', '/base64-converter/*', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/llms.txt', '/og-home.png', '/privacy/index.html', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css', '/versions.json']
       });
     });
   });
@@ -146,8 +146,8 @@ describe('detectAffectedTargets', () => {
         includeRootAssets: true,
         shouldBuild: true,
         shouldDeploy: true,
-        deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'llms.txt', 'og-home.png', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css', 'versions.json'],
-        invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/llms.txt', '/og-home.png', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css', '/versions.json']
+        deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'llms.txt', 'og-home.png', 'privacy/index.html', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css', 'versions.json'],
+        invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/llms.txt', '/og-home.png', '/privacy/index.html', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css', '/versions.json']
       });
     });
   });
@@ -236,7 +236,11 @@ describe('detectAffectedTargets', () => {
     };
 
     const toolInputs = new Set([...localRequires('./prerender-tool.js'), ...localRequires('./tool-document.js')]);
-    const rootInputs = new Set(localRequires('./root-document.js'));
+    const rootInputs = new Set([
+      ...localRequires('./root-document.js'),
+      ...localRequires('./error-document.js'),
+      ...localRequires('./privacy-document.js')
+    ]);
 
     toolInputs.forEach((filePath) => {
       expect({ filePath, triggersAllTools: isAllToolsTrigger(filePath) })
