@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL } from '../common/siteBaseUrl';
+import { SITE_BASE_URL, buildSiteHref } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
@@ -63,7 +63,10 @@ export function TextAnalyzerArticle(): JSX.Element {
                         about it. It can count elements like words, characters, sentences, paragraphs and more,
                         helping users understand the structure and length of their content. In essence, it breaks down
                         your text and delivers instant metrics, which is useful for editing, compliance with length
-                        guidelines, or improving writing clarity.
+                        guidelines, or improving writing clarity. Compare a revision with the{' '}
+                        <a href={buildSiteHref('/diff-checker/')}>Diff Checker</a>, format embedded{' '}
+                        <a href={buildSiteHref('/json-formatter/')}>JSON snippets</a> before counting them, or turn a
+                        short string into a <a href={buildSiteHref('/qr-code-generator/')}>QR code</a>.
                     </p>
                 </ToolArticleSection>
 

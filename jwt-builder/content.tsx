@@ -68,13 +68,21 @@ export function JwtBuilderArticle(): JSX.Element {
 
                 <ToolArticleSection id="jwt-builder-supported-features" title="Supported Features:">
                     <ul>
-                        <li><strong>Support for standard JWT claims:</strong> `iss`, `sub`, `aud`, `exp`, `nbf`, `iat`, and `jti`.</li>
+                        <li>
+                            <strong>Support for standard JWT claims:</strong> `iss`, `sub`, `aud`, `exp`, `nbf`, `iat`,
+                            and `jti`. Format claim JSON with the{' '}
+                            <a href={buildSiteHref('/json-formatter/')}>JSON Formatter</a> before you sign.
+                        </li>
                         <li><strong>Custom claim support:</strong> add claim rows dynamically and include string or JSON values.</li>
                         <li><strong>Flexible datetime parsing:</strong> use ISO 8601 values or UNIX timestamps for time-based claims.</li>
                         <li><strong>Automatic timestamp conversion:</strong> the tool converts supported datetime input into JWT-friendly numeric values.</li>
                         <li><strong>HS256 and RS256 signing:</strong> use a shared secret for HMAC SHA-256 or an unencrypted PKCS#8 or PKCS#1 RSA private key (2048 bits or stronger) for RSA SHA-256.</li>
                         <li><strong>Adaptive signing-key input:</strong> the key control and guidance update with the selected algorithm.</li>
-                        <li><strong>Random secret generation:</strong> generate a cryptographically random 32-character Base64URL secret for HS256 testing.</li>
+                        <li>
+                            <strong>Random secret generation:</strong> generate a cryptographically random 32-character
+                            Base64URL secret for HS256 testing, or decode segments with the{' '}
+                            <a href={buildSiteHref('/base64-converter/')}>Base64 Converter</a>.
+                        </li>
                         <li><strong>Copy-ready output and validation feedback:</strong> build the token and copy it from the result panel.</li>
                     </ul>
 

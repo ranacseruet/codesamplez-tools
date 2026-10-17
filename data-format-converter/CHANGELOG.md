@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.11] - 2026-10-17
+
+### Data Format Converter
+
+- Add contextual cross-links in the article and a compact Related tools row under the workspace.
+
 ## [1.0.10] - 2026-10-17
 
 ### Data Format Converter

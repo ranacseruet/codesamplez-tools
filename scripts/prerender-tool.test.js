@@ -5,6 +5,7 @@ const {
     resolveContentExport,
     getPrerenderConfig,
     getPrerenderToolNames,
+    renderRelatedToolsCompactPrerenderMarkup,
     renderRelatedToolsPrerenderMarkup,
     renderToolAfterAppPrerenderMarkup,
     renderToolBeforeAppPrerenderMarkup,
@@ -311,6 +312,18 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('Encode the edited image as Base64');
         expect(markup).toContain(`href="${buildSiteHref('/base64-converter/')}"`);
         expect(markup).toContain(`href="${buildSiteHref('/qr-code-generator/')}"`);
+    });
+
+    it('renders compact related-tools row markup for a representative tool', () => {
+        const markup = renderRelatedToolsCompactPrerenderMarkup('jwt-decoder-tool');
+
+        expect(markup).toContain('id="related-tools-compact-heading"');
+        expect(markup).toContain('Related tools');
+        expect(markup).toContain('JWT Builder');
+        expect(markup).toContain('Base64 Converter');
+        expect(markup).toContain(`href="${buildSiteHref('/jwt-builder/')}"`);
+        expect(markup).toContain(`href="${buildSiteHref('/base64-converter/')}"`);
+        expect(markup.match(/<a /g)).toHaveLength(3);
     });
 
     it('renders related-tools markup for a representative tool', () => {

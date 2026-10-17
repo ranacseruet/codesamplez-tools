@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL } from '../common/siteBaseUrl';
+import { SITE_BASE_URL, buildSiteHref } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
@@ -45,7 +45,10 @@ export function DataFormatConverterIntro(): JSX.Element {
                     The Online Data Format Converter Tool is a web-based utility that converts between JSON, XML,
                     Properties and YAML data formats. It provides a simple interface for users to paste data in one
                     format and convert it to another, with validation and error handling. The tool performs all
-                    processing client-side, ensuring data privacy and security.
+                    processing client-side, ensuring data privacy and security. After converting JSON, use the{' '}
+                    <a href={buildSiteHref('/json-formatter/')}>JSON Formatter</a> to pretty-print and validate it, or
+                    the <a href={buildSiteHref('/diff-checker/')}>Diff Checker</a> to see exactly what changed between
+                    formats.
                 </p>
             </div>
         </section>
@@ -89,6 +92,10 @@ export function DataFormatConverterArticle(): JSX.Element {
                                 <li>Pretty-prints output with proper indentation</li>
                                 <li>Ensures valid output format according to specifications</li>
                                 <li>Supports downloading converted data</li>
+                                <li>
+                                    Encode converted output for transport with the{' '}
+                                    <a href={buildSiteHref('/base64-converter/')}>Base64 Converter</a>
+                                </li>
                             </ul>
                         </li>
                         <li>

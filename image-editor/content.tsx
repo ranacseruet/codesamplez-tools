@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL } from '../common/siteBaseUrl';
+import { SITE_BASE_URL, buildSiteHref } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
@@ -143,6 +143,11 @@ export function ImageEditorArticle(): JSX.Element {
                         <li><strong>For print or archives:</strong> keep PNG (lossless) and avoid repeated JPEG re-exports, which accumulate compression artifacts.</li>
                         <li><strong>For social posts:</strong> crop to Square 1:1 or Widescreen 16:9 before exporting so platforms do not auto-crop your subject.</li>
                         <li><strong>For screenshots with text:</strong> prefer PNG and skip blur, since lossy compression softens small lettering.</li>
+                        <li>
+                            <strong>For embedding:</strong> encode the exported image with the{' '}
+                            <a href={buildSiteHref('/base64-converter/')}>Base64 Converter</a>, or turn a short URL into
+                            a <a href={buildSiteHref('/qr-code-generator/')}>QR code</a> for print or signage.
+                        </li>
                     </ul>
                 </ToolArticleSection>
 

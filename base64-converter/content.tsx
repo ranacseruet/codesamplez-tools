@@ -54,7 +54,10 @@ export function Base64ConverterArticle(): JSX.Element {
                         Base64 encoding is a way to represent binary data like images or files in text form using only
                         64 ASCII characters. It is commonly used to embed images in HTML or CSS, include attachments in
                         emails, or store binary data in JSON. Developers use Base64 to ensure data remains intact when
-                        transmitted over text-only systems.
+                        transmitted over text-only systems. JWT header and payload segments are Base64URL-encoded — use
+                        the <a href={buildSiteHref('/jwt-decoder/')}>JWT Decoder</a> to read them as JSON, or the{' '}
+                        <a href={buildSiteHref('/jwt-builder/')}>JWT Builder</a> when you need a signed token instead
+                        of raw encoding.
                     </p>
                     <p>
                         Please refer to our more comprehensive{' '}
@@ -80,6 +83,10 @@ export function Base64ConverterArticle(): JSX.Element {
                         <li><strong>Swap conversion:</strong> exchanges the Input and Output panels and toggles the conversion direction, including the last successful direction in Auto Detect mode.</li>
                         <li><strong>Binary content support:</strong> can encode and decode binary files or content.</li>
                         <li><strong>URL parameter support:</strong> supports preloading data directly from links through the <code>data</code> parameter.</li>
+                        <li>
+                            <strong>Structured data handoff:</strong> Convert decoded JSON to YAML or XML with the{' '}
+                            <a href={buildSiteHref('/data-format-converter/')}>Data Format Converter</a>.
+                        </li>
                     </ul>
                 </ToolArticleSection>
 

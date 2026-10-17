@@ -69,7 +69,11 @@ export function JwtDecoderArticle(): JSX.Element {
                     <ul>
                         <li><strong>Real-time Decoding:</strong> Instantly decode and validate the given JWT token as you type or paste.</li>
                         <li><strong>Signature Verification:</strong> Validate JWT signatures using HMAC-SHA256 algorithm.</li>
-                        <li><strong>Base64 Support:</strong> Automatically detects and handles both standard and URL-safe Base64 encoding.</li>
+                        <li>
+                            <strong>Base64 Support:</strong> Automatically detects and handles both standard and URL-safe
+                            Base64 encoding — or open the segments in the{' '}
+                            <a href={buildSiteHref('/base64-converter/')}>Base64 Converter</a> for a closer look.
+                        </li>
                         <li><strong>Secure Processing:</strong> All operations are performed client-side for maximum security. Tokens aren’t transmitted over the network.</li>
                         <li><strong>Copy Functionality:</strong> Single-click copy-to-clipboard functionality for the decoded token.</li>
                     </ul>
@@ -108,7 +112,11 @@ export function JwtDecoderArticle(): JSX.Element {
                 <ToolArticleSection id="jwt-decoder-technical-details" title="JWT Decoder Technical Details">
                     <h3>Token Processing</h3>
                     <ul>
-                        <li>Supports standard JWT structure format: <code>{'{header}.{payload}.{signature}'}</code>.</li>
+                        <li>
+                            Supports standard JWT structure format: <code>{'{header}.{payload}.{signature}'}</code>.
+                            Pretty-print the decoded payload JSON with the{' '}
+                            <a href={buildSiteHref('/json-formatter/')}>JSON Formatter</a>.
+                        </li>
                         <li>Handles URL-safe Base64 encoding by replacing <code>-</code> and <code>_</code> with <code>+</code> and <code>/</code>.</li>
                         <li>Automatically manages Base64 padding.</li>
                     </ul>

@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL, buildSiteAssetUri } from '../common/siteBaseUrl';
+import { SITE_BASE_URL, buildSiteAssetUri, buildSiteHref } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
@@ -81,7 +81,12 @@ export function DiffCheckerArticle(): JSX.Element {
                         A diff checker is an online tool that compares two blocks of text or code to highlight their
                         differences. It shows added content in green, removed content in red, and unchanged content in
                         neutral formatting. Developers use diff checkers to compare code versions, track changes in
-                        configuration files, and identify modifications between file versions.
+                        configuration files, and identify modifications between file versions. For JSON documents, format
+                        both sides with the <a href={buildSiteHref('/json-formatter/')}>JSON Formatter</a> first so the
+                        diff stays readable; use the <a href={buildSiteHref('/text-analyzer/')}>Text Analyzer</a> to
+                        compare word counts on either side, or the{' '}
+                        <a href={buildSiteHref('/js-minifier/')}>JavaScript Minifier</a> when you are diffing bundled
+                        scripts.
                     </p>
                 </ToolArticleSection>
 
@@ -102,8 +107,10 @@ export function DiffCheckerArticle(): JSX.Element {
                     </p>
                     <p>
                         Supported languages for automatic syntax highlighting include JavaScript, JSON, HTML, and CSS
-                        (detection runs on your pasted or uploaded text). You can still diff Python, Java, C++, XML, and
-                        other plain-text code; those comparisons stay accurate even when highlighting stays minimal.
+                        (detection runs on your pasted or uploaded text). For JSON,{' '}
+                        <a href={buildSiteHref('/json-formatter/')}>format both sides first</a> if minified output makes
+                        the diff hard to read. You can still diff Python, Java, C++, XML, and other plain-text code;
+                        those comparisons stay accurate even when highlighting stays minimal.
                     </p>
                     <p>
                         Files you drop into the editors are read on your device only. As with the rest of this tool,
