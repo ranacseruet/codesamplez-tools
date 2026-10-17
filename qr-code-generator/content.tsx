@@ -113,8 +113,7 @@ export function QRCodeGeneratorArticle(): JSX.Element {
                 <ToolArticleSection id="qr-code-generator-technology" title="Technology">
                     <p>
                         This tool uses JavaScript to generate QR code matrices and the browser canvas API to render the
-                        final image. Everything happens locally in the page, which keeps generation fast and avoids
-                        sending your data to a server.
+                        final image. Everything happens locally in the page. Tool input is processed locally and is not uploaded.
                     </p>
                 </ToolArticleSection>
 

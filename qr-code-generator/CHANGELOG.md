@@ -7,6 +7,7 @@ All notable changes to this tool are documented in this file.
 ### QR Code Generator
 
 - Footer tagline now says tool input is processed locally and is not uploaded.
+- Technology section and README now say tool input is processed locally and is not uploaded.
 
 ## [1.0.6] - 2026-09-25
 

@@ -7,6 +7,7 @@ All notable changes to this tool are documented in this file.
 ### JSON Formatter
 
 - Footer tagline now says tool input is processed locally and is not uploaded.
+- Safety FAQ and feature list now say JSON input is processed locally and is not uploaded.
 
 ## [1.0.8] - 2026-10-15
 

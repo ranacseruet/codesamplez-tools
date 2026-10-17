@@ -43,6 +43,8 @@ describe('qr-code-generator content', () => {
         expect(root!.querySelector('#how-to-generate-qr-code')).not.toBeNull();
         expect(root!.querySelector('#qr-code-generator-features')).not.toBeNull();
         expect(root!.querySelector('#qr-code-generator-privacy')).not.toBeNull();
+        expect(root!.querySelector('#qr-code-generator-technology')!.closest('section')!.textContent)
+            .toContain('Tool input is processed locally and is not uploaded.');
         expect(root!.querySelector('#qr-code-generator-faqs')).not.toBeNull();
 
         const renderedFaqQuestions = root!.querySelectorAll('.c-tool-faq__item');

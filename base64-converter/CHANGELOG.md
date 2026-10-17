@@ -7,6 +7,7 @@ All notable changes to this tool are documented in this file.
 ### Base64 Converter
 
 - Footer tagline now says tool input is processed locally and is not uploaded.
+- README privacy note now says tool input is processed locally and is not uploaded.
 
 ## [1.0.5] - 2026-09-26
 
