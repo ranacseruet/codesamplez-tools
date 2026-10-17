@@ -20,6 +20,7 @@ import {
 } from '../common/drop-zone';
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
+import { trackToolUsed, utf8ByteLength } from '../common/analytics-events';
 import DownloadManager from '../common/DownloadManager';
 import type { DiffSharePayload } from './share-url';
 import { trackOptionsHeight } from './sticky-offset';
@@ -720,6 +721,12 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
         setInlineError('Please enter text in at least one of the fields');
         return;
       }
+
+      trackToolUsed({
+        toolId: 'diff-checker',
+        action: 'compare',
+        inputBytes: utf8ByteLength(originalText) + utf8ByteLength(modifiedText)
+      });
       setInlineError('');
 
       const comparisonSnapshot: ComparisonSnapshot = {

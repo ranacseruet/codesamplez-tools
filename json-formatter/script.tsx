@@ -7,6 +7,7 @@ import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { describeLoadedFile, registerDropZone, registerFileInput, type LoadedFileDetail } from '../common/drop-zone';
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
+import { trackToolUsed, utf8ByteLength } from '../common/analytics-events';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
 import { JSON_FORMATTER_WORKER_CHAR_THRESHOLD as JSON_WORKER_CHAR_THRESHOLD } from '../common/worker-thresholds.mjs';
 import {
@@ -612,6 +613,19 @@ export class JSONFormatter {
     // position, schema data) must describe the text it actually formatted,
     // not whatever the textarea holds by the time an await resolves.
     const rawInput = this.input.value;
+
+    if (rawInput.trim()) {
+      const action = this.hasSchema()
+        ? 'validate'
+        : this.getIndentOption() === 'minify'
+          ? 'minify'
+          : 'format';
+      trackToolUsed({
+        toolId: 'json-formatter',
+        action,
+        inputBytes: utf8ByteLength(rawInput)
+      });
+    }
 
     try {
       let inputValue = rawInput.trim();

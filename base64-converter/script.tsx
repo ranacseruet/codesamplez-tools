@@ -6,6 +6,7 @@ import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { buildShareUrl, readHashOrQueryParam, SHARE_URL_MAX_LENGTH } from '../common/share-url';
 import { copyTextToClipboard } from '../common/clipboard';
+import { trackToolUsed, utf8ByteLength } from '../common/analytics-events';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { describeLoadedFile, registerDropZone, registerFileInput, type LoadedFileDetail } from '../common/drop-zone';
 import { formatBytes } from '../common/format-utils';
@@ -462,6 +463,18 @@ const createConverter = (): Base64ConverterInstance => {
 
         processInput() {
             const rawInput = this.elements.input.value.trim();
+            let reportedUse = false;
+            const reportUse = (action: 'encode' | 'decode') => {
+                if (reportedUse) {
+                    return;
+                }
+                reportedUse = true;
+                trackToolUsed({
+                    toolId: 'base64-converter',
+                    action,
+                    inputBytes: utf8ByteLength(rawInput)
+                });
+            };
 
             // If the input is the file upload placeholder, do not process it as text for encoding/decoding.
             // The result and status should already be set by handleFileUpload.
@@ -498,6 +511,8 @@ const createConverter = (): Base64ConverterInstance => {
                     this.currentMimeType = detectedMimeType; // Persist for download
                 } else {
                     // v4 contract: errors surface inline in the status chip.
+                    const mode = this.elements.mode.value;
+                    reportUse(mode === 'encode' ? 'encode' : 'decode');
                     this.elements.status.textContent = 'Invalid Data URI format';
                     return;
                 }
@@ -638,6 +653,7 @@ const createConverter = (): Base64ConverterInstance => {
 
                 this.outputKind = outputKind;
                 this.lastConversionDirection = statusActionMessage === 'Encoded' ? 'encode' : 'decode';
+                reportUse(this.lastConversionDirection);
                 if (outputKind === 'image') {
                     const previewMimeType = inferredMimeType || detectedMimeType;
                     if (inferredMimeType) {
@@ -670,6 +686,13 @@ const createConverter = (): Base64ConverterInstance => {
 
             } catch (error: unknown) {
                 console.error('Processing error:', error);
+                const mode = this.elements.mode.value;
+                const action = mode === 'encode'
+                    ? 'encode'
+                    : mode === 'decode'
+                        ? 'decode'
+                        : (codec.isBase64(base64Payload) ? 'decode' : 'encode');
+                reportUse(action);
                 resetOutputState(this);
                 let errorMessage = '';
                 const message = error instanceof Error ? error.message : String(error);
@@ -890,6 +913,11 @@ const createConverter = (): Base64ConverterInstance => {
                     this.copyButtonInstance.forceUpdateVisibility();
                     updateSwapButton(this);
                     this.elements.downloadDecodedButton.disabled = false;
+                    trackToolUsed({
+                        toolId: 'base64-converter',
+                        action: 'encode',
+                        inputBytes: file.size
+                    });
 
                 } catch (error: unknown) {
                     console.error('File processing error after read:', error);

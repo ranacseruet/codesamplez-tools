@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.11] - 2026-10-17
+
+### Base64 Converter
+
+- Records a tool_used analytics event for Encode and Decode. The input text is not sent.
+
 ## [1.0.10] - 2026-10-17
 
 ### Base64 Converter
