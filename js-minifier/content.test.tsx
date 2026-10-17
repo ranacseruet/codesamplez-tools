@@ -53,7 +53,7 @@ describe('js-minifier content', () => {
         expect(root!.querySelector('#js-minifier-faqs')).not.toBeNull();
 
         // CTA link points to site root / developer tools
-        const ctaLink = root!.querySelector('section[aria-labelledby="js-minifier-why"] a');
+        const ctaLink = root!.querySelector('section[aria-labelledby="js-minifier-why"] .c-tool-article__cta-row a');
         expect(ctaLink).not.toBeNull();
         expect(ctaLink!.getAttribute('href')).toBe(SITE_BASE_URL);
 
