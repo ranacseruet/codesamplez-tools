@@ -1,8 +1,8 @@
 {
   "id": "css-minifier-tool",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "title": "CSS Minifier",
-  "seoTitle": "CSS Minifier - Validate and Optimize style definitions",
+  "seoTitle": "CSS Minifier – Minify CSS Online",
   "description": "Free Online CSS Minifier Tool helps validate and optimize your CSS styles by removing unnecessary characters without changing functionality.",
   "catalogGroupId": "code-formatters",
   "catalogOrder": 3,

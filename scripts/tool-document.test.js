@@ -1,7 +1,10 @@
 /** @jest-environment node */
 
 const { generateToolDocument, joinUrl, renderToolDocument } = require('./tool-document.js');
+const { generateRootDocument } = require('./root-document');
+const { generateNotFoundDocument } = require('./error-document');
 const { getToolById, getToolDefinitions } = require('./tool-manifest');
+const { DOCUMENT_TITLE_MAX_LENGTH, formatToolDocumentTitle } = require('./document-helpers');
 const { SITE_BASE_URL, SITE_STATIC_ROOT_URI, buildSiteAssetUri, buildSiteHref } = require('../common/siteBaseUrl');
 
 function getHeadingMatches(html, level) {
@@ -59,7 +62,7 @@ describe('tool document generation', () => {
             '<section>After payload</section>'
         );
 
-        expect(html).toContain('<title>Diff Checker - Compare Text &amp; Code Instantly | Free Online Dev Tools by CodeSamplez</title>');
+        expect(html).toContain('<title>Diff Checker – Compare Text &amp; Code Online | CodeSamplez</title>');
         expect(html).toContain('<meta name="description" content="Free online diff checker to quickly compare code or text differences. Perfect for developers, writers, and editors seeking instant results.">');
         expect(html).toContain(`<meta name="tool-version" content="${tool.version}">`);
         expect(html).toContain('<meta name="theme-color" content="#0b0b11">');
@@ -128,6 +131,75 @@ describe('tool document generation', () => {
         expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--after"><section class="c-related-tools">Related</section><section>After payload</section></div>');
         expect(html).toContain(`<link rel="image_src" href="${buildSiteAssetUri('/diff-checker/images/featured.png')}">`);
         expect(html).toContain(`<script src="${buildSiteAssetUri('/diff-checker/bundle.main.js')}" type="module"></script>`);
+    });
+
+    it('keeps every rendered tool and root title within 60 characters', () => {
+        const { JSDOM } = require('jsdom');
+        const brandSuffix = ' | CodeSamplez';
+        // Keyword phrase budget once the short brand suffix is appended.
+        const seoTitleBudget = DOCUMENT_TITLE_MAX_LENGTH - brandSuffix.length;
+
+        getToolDefinitions().forEach((tool) => {
+            const html = generateToolDocument(tool.id);
+            const document = new JSDOM(html).window.document;
+            const title = document.title;
+            const jsonLdNames = [];
+
+            document.querySelectorAll('script[type="application/ld+json"]').forEach((script) => {
+                const graph = JSON.parse(script.textContent)['@graph'] || [];
+
+                graph.forEach((node) => {
+                    const types = [].concat(node['@type'] || []);
+
+                    if (types.includes('WebPage') || types.includes('WebApplication')) {
+                        jsonLdNames.push(node.name);
+                    }
+
+                    if (types.includes('BreadcrumbList')) {
+                        const current = (node.itemListElement || []).find((item) => item.position === 2);
+
+                        if (current) {
+                            jsonLdNames.push(current.name);
+                        }
+                    }
+                });
+            });
+
+            expect({ tool: tool.id, title, length: title.length }).toEqual({
+                tool: tool.id,
+                title: formatToolDocumentTitle(tool.seoTitle, 'CodeSamplez'),
+                length: title.length
+            });
+            expect(title.length).toBeLessThanOrEqual(DOCUMENT_TITLE_MAX_LENGTH);
+            expect(tool.seoTitle.length).toBeLessThanOrEqual(seoTitleBudget);
+            expect(title.startsWith(tool.seoTitle)).toBe(true);
+            expect(title.endsWith(brandSuffix)).toBe(true);
+            expect(document.querySelector('h1').textContent).toBe(tool.title);
+            expect(document.querySelector('meta[property="og:title"]').getAttribute('content')).toBe(tool.title);
+            expect(document.querySelector('meta[name="twitter:title"]').getAttribute('content')).toBe(tool.title);
+            expect(document.querySelector('link[rel="canonical"]').getAttribute('href')).toBe(buildSiteHref(tool.publicPath));
+            expect(jsonLdNames.length).toBeGreaterThan(0);
+            jsonLdNames.forEach((name) => {
+                expect(name).toBe(tool.title);
+            });
+        });
+
+        const rootTitle = new JSDOM(generateRootDocument()).window.document.title;
+        const notFoundTitle = new JSDOM(generateNotFoundDocument()).window.document.title;
+
+        expect(rootTitle).toBe('Online Developer Tools | CodeSamplez');
+        expect(rootTitle.length).toBeLessThanOrEqual(DOCUMENT_TITLE_MAX_LENGTH);
+        expect(notFoundTitle).toBe('Page Not Found | CodeSamplez');
+        expect(notFoundTitle.length).toBeLessThanOrEqual(DOCUMENT_TITLE_MAX_LENGTH);
+    });
+
+    it('drops the brand suffix only when the keyword title already fills the budget', () => {
+        const fittingTitle = 'x'.repeat(DOCUMENT_TITLE_MAX_LENGTH - ' | CodeSamplez'.length);
+        const overflowingTitle = `${fittingTitle}y`;
+
+        expect(formatToolDocumentTitle(fittingTitle, 'CodeSamplez')).toBe(`${fittingTitle} | CodeSamplez`);
+        expect(formatToolDocumentTitle(fittingTitle, 'CodeSamplez').length).toBe(DOCUMENT_TITLE_MAX_LENGTH);
+        expect(formatToolDocumentTitle(overflowingTitle, 'CodeSamplez')).toBe(overflowingTitle);
     });
 
     it('renders exactly one visible h1 for every generated tool document', () => {
@@ -227,7 +299,7 @@ describe('tool document generation', () => {
     it('renders a classic-script document for qr-code-generator', () => {
         const html = generateToolDocument('qr-code-generator');
 
-        expect(html).toContain('<title>QR Code Generator | Free Online Dev Tools by CodeSamplez</title>');
+        expect(html).toContain('<title>QR Code Generator | CodeSamplez</title>');
         expect(html).toContain('<div id="qr-code-generator-app">');
         expect(html).toContain(`<script src="${buildSiteAssetUri('/qr-code-generator/bundle.main.js')}"></script>`);
         expect(html).not.toContain(`<script src="${buildSiteAssetUri('/qr-code-generator/bundle.main.js')}" type="module"></script>`);
@@ -305,7 +377,7 @@ describe('tool document generation', () => {
     it('renders visible SEO content and current structured data for json-editor', () => {
         const html = generateToolDocument('json-editor-tool');
 
-        expect(html).toContain('<title>JSON Editor — Build JSON Online | Free Online Dev Tools by CodeSamplez</title>');
+        expect(html).toContain('<title>JSON Editor Online | CodeSamplez</title>');
         expect(html).toContain('<meta name="description" content="Free online JSON editor to build and edit JSON visually. Import existing JSON, then copy or download the result locally.">');
         expect(html).toContain(`<link rel="canonical" href="${buildSiteHref('/json-editor/')}">`);
         expect(html).toContain('Use this free online JSON editor to build and edit JSON objects and arrays.');
