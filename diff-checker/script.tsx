@@ -20,6 +20,7 @@ import {
 } from '../common/drop-zone';
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
+import { trackToolUsed, utf8ByteLength, type ToolUsedOutcome, type ToolUsedTrigger } from '../common/analytics-events';
 import DownloadManager from '../common/DownloadManager';
 import type { DiffSharePayload } from './share-url';
 import { trackOptionsHeight } from './sticky-offset';
@@ -658,12 +659,15 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
 
   // Two-pane sample: fills both inputs so a first-time visitor sees a real diff.
   const loadSampleButton = document.getElementById('load-sample') as HTMLButtonElement | null;
+  let compareTrigger: ToolUsedTrigger = 'user';
+
   if (loadSampleButton && text1 && text2 && compareButton) {
     loadSampleButton.addEventListener('click', () => {
       rememberPaneText(text1, SAMPLE_ORIGINAL);
       rememberPaneText(text2, SAMPLE_MODIFIED);
       clearButton1?.updateVisibility();
       clearButton2?.updateVisibility();
+      compareTrigger = 'sample';
       compareButton.click();
     });
   }
@@ -712,6 +716,8 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     registerPrimaryActionShortcut(compareButton);
     compareButton.addEventListener('click', async function () {
       const runId = ++compareRunId;
+      const trigger = compareTrigger;
+      compareTrigger = 'user';
       const originalText = getPaneText(text1);
       const modifiedText = getPaneText(text2);
       const ignoreWhitespace = ignoreWhitespaceToggle?.checked ?? true;
@@ -720,6 +726,21 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
         setInlineError('Please enter text in at least one of the fields');
         return;
       }
+
+      let reportedCompare = false;
+      const reportCompare = (outcome: ToolUsedOutcome) => {
+        if (reportedCompare) {
+          return;
+        }
+        reportedCompare = true;
+        trackToolUsed({
+          toolId: 'diff-checker',
+          action: 'compare',
+          inputBytes: utf8ByteLength(originalText) + utf8ByteLength(modifiedText),
+          trigger,
+          outcome
+        });
+      };
       setInlineError('');
 
       const comparisonSnapshot: ComparisonSnapshot = {
@@ -765,6 +786,8 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
         // error path below) instead of rendering stale or undefined output.
         if (runId !== compareRunId) return;
 
+        reportCompare('success');
+
         if (diffEmptyState) {
           diffEmptyState.style.display = 'none';
         }
@@ -785,6 +808,7 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
         // A superseded run must never paint its failure over a newer run's
         // rendered diff.
         if (runId !== compareRunId) return;
+        reportCompare('error');
         const errorMessage = error instanceof Error ? error.message : String(error);
         setInlineError('Error computing diff: ' + errorMessage);
         console.error(error);
@@ -899,6 +923,7 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
       ignoreWhitespaceToggle.checked = payload.ignoreWhitespace;
     }
     setInlineError('');
+    compareTrigger = 'share';
     compareButton?.click();
     NotificationManager.show('Loaded texts from shared link.', 2000, { type: 'success' });
 
