@@ -37,7 +37,7 @@ function renderFaviconLinks(staticRootUri) {
  */
 function generateNotFoundDocument() {
     const manifest = loadManifest();
-    const analyticsHeadMarkup = renderAnalyticsHeadMarkup(manifest.analytics);
+    const analyticsHeadMarkup = renderAnalyticsHeadMarkup(manifest.analytics, manifest.siteBaseUrl);
     const documentTitle = formatRootDocumentTitle(NOT_FOUND_TITLE, manifest.organization.name);
     const escapedHomeUrl = escapeAttribute(manifest.rootPage.absoluteUrl);
     const escapedDescription = escapeAttribute(NOT_FOUND_DESCRIPTION);
