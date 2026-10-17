@@ -341,6 +341,57 @@ function buildRootStructuredDataGraph(manifest) {
 }
 
 /**
+ * WebPage graph for the privacy policy. The visible breadcrumb is Home →
+ * Privacy Policy, and the names here must match that trail.
+ * @param {ToolManifest} manifest
+ * @param {{ url: string, name: string, description: string }} page
+ * @returns {Record<string, unknown>[]}
+ */
+function buildPrivacyStructuredDataGraph(manifest, page) {
+    const pageId = `${page.url}#webpage`;
+    const breadcrumbId = `${page.url}#breadcrumb`;
+
+    return [
+        createOrganizationNode(manifest),
+        createWebsiteNode(manifest),
+        {
+            '@type': 'WebPage',
+            '@id': pageId,
+            url: page.url,
+            name: page.name,
+            description: page.description,
+            isPartOf: {
+                '@id': getWebsiteId(manifest)
+            },
+            publisher: {
+                '@id': getOrganizationId(manifest)
+            },
+            breadcrumb: {
+                '@id': breadcrumbId
+            }
+        },
+        {
+            '@type': 'BreadcrumbList',
+            '@id': breadcrumbId,
+            itemListElement: [
+                {
+                    '@type': 'ListItem',
+                    position: 1,
+                    name: BREADCRUMB_HOME_LABEL,
+                    item: manifest.rootPage.absoluteUrl
+                },
+                {
+                    '@type': 'ListItem',
+                    position: 2,
+                    name: page.name,
+                    item: page.url
+                }
+            ]
+        }
+    ];
+}
+
+/**
  * @param {Record<string, unknown>[]} graphNodes
  * @returns {string}
  */
@@ -354,6 +405,7 @@ function renderStructuredDataScript(graphNodes) {
 }
 
 module.exports = {
+    buildPrivacyStructuredDataGraph,
     buildRootStructuredDataGraph,
     buildToolStructuredDataGraph,
     renderStructuredDataScript

@@ -18,6 +18,7 @@ const {
     getToolDefinitions
 } = require('./tool-manifest');
 const { buildAdsTxt } = require('./analytics');
+const { getPrivacyPageDefinition } = require('./privacy-document');
 
 const SITEMAP_FILENAME = 'sitemap.xml';
 const ROBOTS_FILENAME = 'robots.txt';
@@ -34,7 +35,19 @@ const SHARED_TOOL_LASTMOD_INPUTS = [
     // parsing/markup changes alter the deployed HTML and must bump every
     // tool's sitemap lastmod.
     path.resolve(REPO_ROOT, 'scripts/tool-changelog.js'),
-    path.resolve(REPO_ROOT, 'scripts/tool-document.js')
+    path.resolve(REPO_ROOT, 'scripts/tool-document.js'),
+    path.resolve(REPO_ROOT, 'scripts/shell-footer.js')
+];
+const PRIVACY_PAGE_LASTMOD_INPUTS = [
+    ROOT_CONFIG_PATH,
+    path.resolve(REPO_ROOT, 'scripts/privacy-document.js'),
+    path.resolve(REPO_ROOT, 'scripts/shell-footer.js'),
+    path.resolve(REPO_ROOT, 'scripts/structured-data.js'),
+    path.resolve(REPO_ROOT, 'scripts/analytics.js'),
+    path.resolve(REPO_ROOT, 'scripts/document-helpers.js'),
+    path.resolve(REPO_ROOT, 'common/app-shell/AppShell.tsx'),
+    path.resolve(REPO_ROOT, 'common/app-shell/app-shell.css'),
+    path.resolve(REPO_ROOT, 'styles.css')
 ];
 const ROOT_PAGE_LASTMOD_INPUTS = [
     ROOT_CONFIG_PATH,
@@ -44,6 +57,7 @@ const ROOT_PAGE_LASTMOD_INPUTS = [
     path.resolve(REPO_ROOT, 'scripts/analytics.js'),
     path.resolve(REPO_ROOT, 'scripts/document-helpers.js'),
     path.resolve(REPO_ROOT, 'scripts/root-document.js'),
+    path.resolve(REPO_ROOT, 'scripts/shell-footer.js'),
     path.resolve(REPO_ROOT, 'scripts/structured-data.js')
 ];
 
@@ -70,6 +84,13 @@ function toAbsolutePath(filePath) {
  */
 function getRootPageLastmodPaths() {
     return ROOT_PAGE_LASTMOD_INPUTS.slice();
+}
+
+/**
+ * @returns {string[]}
+ */
+function getPrivacyPageLastmodPaths() {
+    return PRIVACY_PAGE_LASTMOD_INPUTS.slice();
 }
 
 /**
@@ -134,14 +155,21 @@ function resolveGitLastmodForPaths(paths, options = {}) {
 function buildSitemapEntries(options = {}) {
     const resolveLastmod = options.resolveLastmod || resolveGitLastmodForPaths;
     const rootPage = getRootPageDefinition();
+    const privacyPage = getPrivacyPageDefinition();
     const tools = getToolDefinitions();
     const rootLastmod = resolveLastmod(getRootPageLastmodPaths(), { type: 'root-page' });
+    const privacyLastmod = resolveLastmod(getPrivacyPageLastmodPaths(), { type: 'privacy-page' });
 
     return [
         {
             absoluteUrl: rootPage.absoluteUrl,
             ...(rootLastmod ? { lastmod: rootLastmod } : {}),
             images: [{ url: rootPage.imageUrl, title: rootPage.title, caption: rootPage.description }]
+        },
+        {
+            absoluteUrl: privacyPage.absoluteUrl,
+            ...(privacyLastmod ? { lastmod: privacyLastmod } : {}),
+            images: [{ url: privacyPage.imageUrl, title: privacyPage.title, caption: privacyPage.description }]
         },
         ...tools.map((tool) => {
             const lastmod = resolveLastmod(getToolPageLastmodPaths(tool), {
@@ -243,6 +271,8 @@ function buildLlmsTxt() {
             ...group.tools.map((tool) => `- [${tool.title}](${tool.absolutePageUrl}): ${tool.indexDescription}`)
         ].join('\n'));
 
+    const privacyPage = getPrivacyPageDefinition();
+
     return [
         `# ${rootPage.title}`,
         '',
@@ -252,9 +282,15 @@ function buildLlmsTxt() {
         '',
         groupSections.join('\n\n'),
         '',
+        '## Site',
+        '',
+        // Included (not excluded): the policy is a public page and belongs in the
+        // same manifest as the tools. The sentence above is existing catalog copy.
+        `- [${privacyPage.title}](${privacyPage.absoluteUrl}): ${privacyPage.description}`,
+        '',
         '## Metadata',
         '',
-        `- [Sitemap](${buildSitemapUrl()}): XML sitemap listing every tool page`
+        `- [Sitemap](${buildSitemapUrl()}): XML sitemap of the public pages`
     ].join('\n');
 }
 
@@ -308,6 +344,7 @@ module.exports = {
     buildRobotsTxt,
     buildSitemapEntries,
     buildSitemapXml,
+    getPrivacyPageLastmodPaths,
     getRootPageLastmodPaths,
     getToolPageLastmodPaths,
     resolveGitLastmodForPaths,

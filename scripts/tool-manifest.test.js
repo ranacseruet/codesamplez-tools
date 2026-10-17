@@ -234,7 +234,7 @@ describe('tool-manifest', () => {
         id: 'root-shell',
         outputPath: 'build/root-shell'
       },
-      rootAssets: ['index.html', '404.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'llms.txt', 'versions.json', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2']
+      rootAssets: ['index.html', '404.html', 'privacy/index.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'llms.txt', 'versions.json', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2']
     });
   });
 
@@ -474,7 +474,7 @@ describe('tool-manifest', () => {
         sourceRoot: 'jwt-decoder',
         outputDir: 'jwt-decoder',
         outputPath: 'build/jwt-decoder',
-        version: '1.0.6',
+        version: '1.0.7',
         title: 'JWT Decoder & Validator',
         description: 'Free online JWT decoder – instantly reveal a token’s header, payload, and verify its signature. Paste your JWT to decode it now.',
         indexDescription: 'Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.',
@@ -535,7 +535,7 @@ describe('tool-manifest', () => {
         id: 'root-shell',
         outputPath: 'build/root-shell'
       },
-      rootAssets: ['index.html', '404.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'llms.txt', 'versions.json', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2']
+      rootAssets: ['index.html', '404.html', 'privacy/index.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'llms.txt', 'versions.json', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2']
     });
   });
 
@@ -718,7 +718,7 @@ describe('tool-manifest', () => {
     // ads.txt is appended dynamically only when AdSense is configured. The repo
     // config ships no ids, so it is the deploy-time env that turns it on — under
     // production env, which is the only gate that injects trackers.
-    const baseRootAssets = ['index.html', '404.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'llms.txt', 'versions.json', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2'];
+    const baseRootAssets = ['index.html', '404.html', 'privacy/index.html', 'styles.css', 'og-home.png', 'robots.txt', 'sitemap.xml', 'llms.txt', 'versions.json', 'BingSiteAuth.xml', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2'];
     expect(withEnv({
       NODE_ENV: 'production',
       CST_ADSENSE_CLIENT_ID: undefined

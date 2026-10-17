@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.6] - 2026-10-17
+
+### Image Editor
+
+- Site footer links to the privacy policy. This tool's behavior is unchanged.
+
 ## [1.0.5] - 2026-10-10
 
 ### Image Editor

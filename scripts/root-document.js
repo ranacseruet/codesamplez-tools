@@ -9,6 +9,7 @@ const { renderAnalyticsHeadMarkup, renderAnalyticsResourceHints } = require('./a
 const { renderInlineIcon } = require('./lucide-icons');
 const { getGroupCategorySlug } = require('./tool-categories');
 const { getBuildCommitAttributeMarkup } = require('./provenance-manifest');
+const { renderShellFooterMarkup } = require('./shell-footer');
 
 const THEME_COLOR = '#0b0b11';
 
@@ -148,6 +149,7 @@ function generateRootDocument() {
     const escapedRootShellStylesUrl = escapeAttribute(buildAbsoluteUrl(manifest.siteStaticRootUri, '/root-shell/styles.main.css'));
     const escapedRootStylesUrl = escapeAttribute(buildAbsoluteUrl(manifest.siteStaticRootUri, '/styles.css'));
     const escapedRootShellBundleUrl = escapeAttribute(buildAbsoluteUrl(manifest.siteStaticRootUri, '/root-shell/bundle.main.js'));
+    const shellFooterMarkup = renderShellFooterMarkup(manifest.siteBaseUrl);
 
     return `<!DOCTYPE html>
 <html lang="en" data-theme="dark"${getBuildCommitAttributeMarkup()}>
@@ -204,7 +206,7 @@ ${renderRootPagePostIndexSections()}
 
   </main>
 
-  <div id="app-shell-footer"></div>
+  <div id="app-shell-footer">${shellFooterMarkup}</div>
   <script src="${escapedRootShellBundleUrl}" defer></script>
 </body>
 </html>

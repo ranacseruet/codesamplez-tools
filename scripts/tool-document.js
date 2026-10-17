@@ -16,6 +16,7 @@ const { getToolFeatureList } = require('./tool-feature-metadata');
 const { getBuildCommitAttributeMarkup } = require('./provenance-manifest');
 const { renderToolChangelogMarkup } = require('./tool-changelog');
 const { ensureBabelRegister } = require('./register-node-transforms');
+const { renderShellFooterMarkup } = require('./shell-footer');
 
 const THEME_COLOR = '#0b0b11';
 
@@ -201,17 +202,7 @@ function renderToolShellShareMarkup(tool, shareUrl) {
  * @returns {string}
  */
 function renderToolShellFooterMarkup(tool) {
-    ensureBabelRegister();
-
-    const { h } = require('preact');
-    const renderToString = /** @type {(node: import('preact').VNode) => string} */ (
-        /** @type {unknown} */ (require('preact-render-to-string'))
-    );
-    const { ToolShellFooter } = require('../common/app-shell/AppShell');
-
-    return renderToString(h(ToolShellFooter, {
-        homeHref: tool.siteBaseUrl
-    }));
+    return renderShellFooterMarkup(tool.siteBaseUrl);
 }
 
 /**

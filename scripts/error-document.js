@@ -5,6 +5,7 @@ const { THEME_INIT_SCRIPT, escapeAttribute, escapeHtml, formatRootDocumentTitle 
 const { renderAnalyticsHeadMarkup } = require('./analytics');
 const { renderInlineIcon } = require('./lucide-icons');
 const { getBuildCommitAttributeMarkup } = require('./provenance-manifest');
+const { renderShellFooterMarkup } = require('./shell-footer');
 
 const THEME_COLOR = '#0b0b11';
 
@@ -44,6 +45,7 @@ function generateNotFoundDocument() {
     const escapedRootShellStylesUrl = escapeAttribute(buildAbsoluteUrl(manifest.siteStaticRootUri, '/root-shell/styles.main.css'));
     const escapedRootStylesUrl = escapeAttribute(buildAbsoluteUrl(manifest.siteStaticRootUri, '/styles.css'));
     const escapedRootShellBundleUrl = escapeAttribute(buildAbsoluteUrl(manifest.siteStaticRootUri, '/root-shell/bundle.main.js'));
+    const shellFooterMarkup = renderShellFooterMarkup(manifest.siteBaseUrl);
 
     return `<!DOCTYPE html>
 <html lang="en" data-theme="dark"${getBuildCommitAttributeMarkup()}>
@@ -69,7 +71,7 @@ function generateNotFoundDocument() {
     <p><a href="${escapedHomeUrl}" class="cta-button">Browse all tools${renderInlineIcon('arrow-right')}</a></p>
   </main>
 
-  <div id="app-shell-footer"></div>
+  <div id="app-shell-footer">${shellFooterMarkup}</div>
   <script src="${escapedRootShellBundleUrl}" defer></script>
 </body>
 </html>
