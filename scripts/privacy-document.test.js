@@ -1,9 +1,10 @@
 /** @jest-environment node */
 
 const { generateNotFoundDocument } = require('./error-document');
-const { generatePrivacyDocument, PRIVACY_LAST_UPDATED_LABEL, PRIVACY_PAGE_DESCRIPTION } = require('./privacy-document');
+const { formatPrivacyLastUpdatedLabel, generatePrivacyDocument, PRIVACY_PAGE_DESCRIPTION } = require('./privacy-document');
 const { generateRootDocument } = require('./root-document');
 const { generateToolDocument } = require('./tool-document');
+const { buildSitemapEntries, getPrivacyPageLastmodPaths, resolveGitLastmodForPaths } = require('./generated-site-assets');
 const { SITE_BASE_URL, buildSiteAssetUri, buildSiteHref } = require('../common/siteBaseUrl');
 
 function withEnv(overrides, run) {
@@ -55,7 +56,25 @@ describe('privacy document generation', () => {
         expect(html).toContain(`<link rel="stylesheet" href="${buildSiteAssetUri('/styles.css')}">`);
         expect(html).toContain(`<script src="${buildSiteAssetUri('/root-shell/bundle.main.js')}" defer></script>`);
         expect(html).not.toContain('noindex');
-        expect(html).toContain(`Last updated: ${PRIVACY_LAST_UPDATED_LABEL}.`);
+    });
+
+    it('formats the sitemap lastmod as a UTC calendar date', () => {
+        expect(formatPrivacyLastUpdatedLabel('2026-10-17T23:30:00.000Z')).toBe('17 October 2026');
+        expect(formatPrivacyLastUpdatedLabel('2026-01-05T00:30:00.000Z')).toBe('5 January 2026');
+        expect(formatPrivacyLastUpdatedLabel('not-a-date')).toBeNull();
+        expect(formatPrivacyLastUpdatedLabel(null)).toBeNull();
+    });
+
+    it('shows the privacy sitemap lastmod as the visible last-updated date', () => {
+        const lastmod = resolveGitLastmodForPaths(getPrivacyPageLastmodPaths());
+        const label = formatPrivacyLastUpdatedLabel(lastmod);
+        const html = generatePrivacyDocument();
+        const privacyEntry = buildSitemapEntries().find((entry) => entry.absoluteUrl === privacyUrl);
+
+        expect(lastmod).toEqual(expect.any(String));
+        expect(label).toMatch(/^\d{1,2} [A-Z][a-z]+ \d{4}$/);
+        expect(html).toContain(`Last updated: ${label}.`);
+        expect(privacyEntry.lastmod).toBe(lastmod);
     });
 
     it('states local processing, Google Analytics, and Google AdSense cookies without extra legal claims', () => {
@@ -67,6 +86,8 @@ describe('privacy document generation', () => {
         expect(html).toContain('uses cookies');
         expect(html).toContain('Google AdSense');
         expect(html).toContain('ads personalized by Google');
+        expect(html).toContain("Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to this site and other websites.");
+        expect(html).toContain('href="https://www.google.com/settings/ads"');
         expect(html).toContain('href="https://policies.google.com/technologies/partner-sites"');
         expect(html).toContain('href="https://adssettings.google.com/"');
         expect(html).toContain('href="https://tools.google.com/dlpage/gaoptout"');
