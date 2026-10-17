@@ -27,6 +27,10 @@ describe('generated html plugin', () => {
         source: expect.stringContaining('<title>Page Not Found | CodeSamplez</title>')
       }),
       expect.objectContaining({
+        filename: '../privacy/index.html',
+        source: expect.stringContaining('<link rel="canonical" href="https://tools.codesamplez.com/privacy/">')
+      }),
+      expect.objectContaining({
         filename: 'index.html',
         source: expect.stringContaining('JWT Decoder &amp; Validator')
       }),
@@ -82,7 +86,7 @@ describe('generated html plugin', () => {
     // the absence explicitly as well so the failure names the regression.
     const assets = buildGeneratedHtmlAssets({ includeRootAssets: true, rootHtmlAsset: 'index.html' });
 
-    expect(assets.map(({ filename }) => filename)).toEqual(['index.html', '404.html']);
+    expect(assets.map(({ filename }) => filename)).toEqual(['index.html', '404.html', 'privacy/index.html']);
     assets.forEach(({ source }) => {
       expect(source).not.toContain('googletagmanager.com');
       expect(source).not.toContain('googlesyndication.com');
@@ -125,13 +129,15 @@ describe('generated html plugin', () => {
     expect(processAssetsTaps).toHaveLength(1);
     processAssetsTaps[0].handler();
 
-    expect(compilation.emitAsset).toHaveBeenCalledTimes(3);
+    expect(compilation.emitAsset).toHaveBeenCalledTimes(4);
     expect(compilation.emitAsset.mock.calls[0][0]).toBe('../index.html');
     expect(String(compilation.emitAsset.mock.calls[0][1].source())).toContain('<title>Online Developer Tools | CodeSamplez</title>');
     expect(compilation.emitAsset.mock.calls[1][0]).toBe('../404.html');
     expect(String(compilation.emitAsset.mock.calls[1][1].source())).toContain('404 — Page Not Found');
-    expect(compilation.emitAsset.mock.calls[2][0]).toBe('index.html');
-    expect(String(compilation.emitAsset.mock.calls[2][1].source())).toContain('JWT Decoder &amp; Validator');
+    expect(compilation.emitAsset.mock.calls[2][0]).toBe('../privacy/index.html');
+    expect(String(compilation.emitAsset.mock.calls[2][1].source())).toContain('<link rel="canonical" href="https://tools.codesamplez.com/privacy/">');
+    expect(compilation.emitAsset.mock.calls[3][0]).toBe('index.html');
+    expect(String(compilation.emitAsset.mock.calls[3][1].source())).toContain('JWT Decoder &amp; Validator');
     expect(compilation.fileDependencies.has(ROOT_CONFIG_PATH)).toBe(true);
     expect(compilation.contextDependencies.has(REPO_ROOT)).toBe(true);
   });

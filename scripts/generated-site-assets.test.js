@@ -5,6 +5,7 @@ const os = require('os');
 const path = require('path');
 const { XMLParser } = require('fast-xml-parser');
 const { getGroupedToolDefinitions, getRootPageDefinition, getToolById, getToolDefinitions } = require('./tool-manifest');
+const { getPrivacyPageDefinition } = require('./privacy-document');
 const {
     buildLlmsTxt,
     buildRobotsTxt,
@@ -78,6 +79,7 @@ describe('generated site assets', () => {
         const locations = urls.map((entry) => entry.loc);
         const expectedLocations = [
             getRootPageDefinition().absoluteUrl,
+            getPrivacyPageDefinition().absoluteUrl,
             ...getToolDefinitions().map((tool) => tool.absolutePageUrl)
         ];
 
@@ -188,7 +190,9 @@ describe('generated site assets', () => {
             }
         });
 
-        expect(entries.slice(1).every((entry) => entry.lastmod === sharedTimestamp)).toBe(true);
+        const toolEntries = entries.filter((entry) => getToolDefinitions().some((tool) => tool.absolutePageUrl === entry.absoluteUrl));
+        expect(toolEntries).toHaveLength(getToolDefinitions().length);
+        expect(toolEntries.every((entry) => entry.lastmod === sharedTimestamp)).toBe(true);
     });
 
     it('builds an indexable robots file that points to the absolute static-root sitemap URL', () => {
@@ -268,7 +272,7 @@ describe('generated site assets', () => {
         const entries = buildSitemapEntries();
 
         expect(entries[0].absoluteUrl).toBe(getRootPageDefinition().absoluteUrl);
-        expect(entries).toHaveLength(getToolDefinitions().length + 1);
+        expect(entries).toHaveLength(getToolDefinitions().length + 2);
     });
 
     it('can build sitemap xml without an injected lastmod resolver', async () => {
@@ -276,7 +280,7 @@ describe('generated site assets', () => {
         const urls = parseSitemap(xml);
 
         expect(urls[0].loc).toBe(getRootPageDefinition().absoluteUrl);
-        expect(urls).toHaveLength(getToolDefinitions().length + 1);
+        expect(urls).toHaveLength(getToolDefinitions().length + 2);
     });
 
     it('builds an llms.txt manifest with the site summary and every tool page exactly once', () => {
@@ -287,7 +291,11 @@ describe('generated site assets', () => {
         expect(llmsTxt.startsWith(`# ${rootPage.title}\n\n> ${rootPage.description}`)).toBe(true);
         expect(llmsTxt).toContain('Tools process input locally in the browser, and no registration is required. Pages load Google Analytics and Google AdSense, which use cookies and send usage data.');
         expect(llmsTxt).toContain(rootPage.absoluteUrl);
-        expect(llmsTxt).toContain('- [Sitemap](https://tools.codesamplez.com/sitemap.xml)');
+        expect(llmsTxt).toContain('- [Sitemap](https://tools.codesamplez.com/sitemap.xml): XML sitemap of the public pages');
+        const privacyPage = getPrivacyPageDefinition();
+        const privacyLink = `- [${privacyPage.title}](${privacyPage.absoluteUrl}): ${privacyPage.description}`;
+        expect(llmsTxt).toContain(privacyLink);
+        expect(llmsTxt.indexOf(privacyLink)).toBe(llmsTxt.lastIndexOf(privacyLink));
 
         tools.forEach((tool) => {
             const link = `- [${tool.title}](${tool.absolutePageUrl}): ${tool.indexDescription}`;
