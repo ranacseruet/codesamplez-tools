@@ -85,10 +85,14 @@ describe('privacy document generation', () => {
         expect(html).toContain('Google Analytics 4');
         expect(html).toContain('uses cookies');
         expect(html).toContain('Google AdSense');
-        expect(html).toContain('ads personalized by Google');
-        expect(html).toContain("Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to this site and other websites.");
-        expect(html).toContain('href="https://www.google.com/settings/ads"');
-        expect(html).toContain('href="https://policies.google.com/technologies/partner-sites"');
+        expect(html).toContain("Google, as a third-party vendor, and its partners use cookies to serve ads based on a user's prior visits to this website and other websites.");
+        expect(html).toContain("Google's use of advertising cookies enables it and its partners to serve personalized ads.");
+        expect(html).toContain('You can opt out of personalized advertising via');
+        expect(html).toContain('opt out of some third-party vendors\' cookies via');
+        expect(html).toContain('Other third-party vendors and ad networks may also serve ads on the site and use cookies.');
+        expect(html).toContain('href="https://adssettings.google.com"');
+        expect(html).toContain('href="https://www.aboutads.info/choices/"');
+        expect(html).not.toContain('https://www.google.com/settings/ads');
         expect(html).toContain('href="https://adssettings.google.com/"');
         expect(html).toContain('href="https://tools.google.com/dlpage/gaoptout"');
         expect(html).toContain('href="https://codesamplez.com/contact"');

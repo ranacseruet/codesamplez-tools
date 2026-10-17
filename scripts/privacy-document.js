@@ -20,9 +20,9 @@ const PRIVACY_LAST_UPDATED_MONTHS = [
 ];
 
 const CONTACT_PAGE_URL = 'https://codesamplez.com/contact';
-const GOOGLE_PARTNER_DATA_URL = 'https://policies.google.com/technologies/partner-sites';
-const GOOGLE_AD_SETTINGS_URL = 'https://www.google.com/settings/ads';
 const GOOGLE_ADS_SETTINGS_URL = 'https://adssettings.google.com/';
+const GOOGLE_ADS_SETTINGS_OPTOUT_URL = 'https://adssettings.google.com';
+const ABOUT_ADS_CHOICES_URL = 'https://www.aboutads.info/choices/';
 const GOOGLE_ANALYTICS_OPTOUT_URL = 'https://tools.google.com/dlpage/gaoptout';
 
 /**
@@ -152,9 +152,10 @@ function renderPrivacyMain(manifest, pageUrl, lastUpdatedLabel) {
 
     <section aria-labelledby="privacy-ads">
       <h2 class="section-title" id="privacy-ads">Google AdSense</h2>
-      <p class="section-body">The published site loads Google AdSense. Pages request Google's advertising script, which uses cookies and can show ads, including ads personalized by Google. The pages do not send a setting that limits those ads to non-personalized ads.</p>
-      <p class="section-body">Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to this site and other websites. See ${renderLink(GOOGLE_AD_SETTINGS_URL, 'Ads Settings')} and ${renderLink(GOOGLE_PARTNER_DATA_URL, 'How Google uses information from sites or apps that use our services')}.</p>
-      <p class="section-body">You can review ad personalization in ${renderLink(GOOGLE_ADS_SETTINGS_URL, 'Google Ads Settings')}.</p>
+      <p class="section-body">The published site loads Google AdSense. Google, as a third-party vendor, and its partners use cookies to serve ads based on a user's prior visits to this website and other websites.</p>
+      <p class="section-body">Google's use of advertising cookies enables it and its partners to serve personalized ads.</p>
+      <p class="section-body">You can opt out of personalized advertising via ${renderLink(GOOGLE_ADS_SETTINGS_OPTOUT_URL, 'Google Ads Settings')} and opt out of some third-party vendors' cookies via ${renderLink(ABOUT_ADS_CHOICES_URL, 'aboutads.info')}.</p>
+      <p class="section-body">Other third-party vendors and ad networks may also serve ads on the site and use cookies.</p>
     </section>
 
     <section aria-labelledby="privacy-opt-out">
