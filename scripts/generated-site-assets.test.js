@@ -11,6 +11,7 @@ const {
     buildRobotsTxt,
     buildSitemapEntries,
     buildSitemapXml,
+    getRootPageLastmodPaths,
     getToolPageLastmodPaths,
     resolveGitLastmodForPaths,
     toSitemapUrlItem,
@@ -158,6 +159,13 @@ describe('generated site assets', () => {
 
         expect(urls[0].lastmod).toBe(rootTimestamp);
         expect(urls.slice(1).every((entry) => entry.lastmod === toolTimestamp)).toBe(true);
+    });
+
+    it('counts AppShell as a homepage lastmod input because the footer is prerendered from it', () => {
+        const lastmodPaths = getRootPageLastmodPaths();
+
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'common/app-shell/AppShell.tsx'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/shell-footer.js'));
     });
 
     it('counts the on-page changelog renderer as a lastmod input for every tool page', () => {
