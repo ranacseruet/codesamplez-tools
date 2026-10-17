@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.7] - 2026-10-17
+
+### JavaScript Minifier
+
+- Shortened the browser title so it stays within 60 characters.
+
 ## [1.0.6] - 2026-10-15
 
 ### JavaScript Minifier
