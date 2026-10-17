@@ -80,8 +80,8 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
         howToSteps: structuredDataOptions.includeHowTo ? getToolHowToSteps(tool.id) : [],
         featureList: getToolFeatureList(tool.id)
     }));
-    const analyticsHeadMarkup = renderAnalyticsHeadMarkup(manifest.analytics);
-    const analyticsResourceHints = renderAnalyticsResourceHints(manifest.analytics);
+    const analyticsHeadMarkup = renderAnalyticsHeadMarkup(manifest.analytics, manifest.siteBaseUrl);
+    const analyticsResourceHints = renderAnalyticsResourceHints(manifest.analytics, manifest.siteBaseUrl);
     const scriptTypeAttribute = tool.scriptType === 'module' ? ' type="module"' : '';
     const shellHeaderMarkup = renderToolShellHeaderMarkup(tool);
     const shellShareMarkup = renderToolShellShareMarkup(tool, absolutePageUrl);

@@ -11,7 +11,8 @@ A suite of fast, privacy-preserving browser utilities built for developers. Ever
 Live at [tools.codesamplez.com](https://tools.codesamplez.com).
 
 Tracking is off by default: the repository ships no analytics or ad IDs, and only
-a production deployment that explicitly supplies them loads GA4/AdSense. See
+a production deployment that explicitly supplies them loads GA4/AdSense, and only
+when the page is served on the host from `siteBaseUrl`. See
 [Analytics & Ads](./CONTRIBUTING.md#analytics--ads-deploy-time-configuration).
 
 ---

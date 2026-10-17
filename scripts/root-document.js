@@ -136,8 +136,8 @@ function generateRootDocument() {
     const manifest = loadManifest();
     const groupedTools = getGroupedToolDefinitions();
     const structuredDataScript = renderStructuredDataScript(buildRootStructuredDataGraph(manifest));
-    const analyticsHeadMarkup = renderAnalyticsHeadMarkup(manifest.analytics);
-    const analyticsResourceHints = renderAnalyticsResourceHints(manifest.analytics);
+    const analyticsHeadMarkup = renderAnalyticsHeadMarkup(manifest.analytics, manifest.siteBaseUrl);
+    const analyticsResourceHints = renderAnalyticsResourceHints(manifest.analytics, manifest.siteBaseUrl);
     const escapedTitle = escapeAttribute(manifest.rootPage.title);
     const documentTitle = formatRootDocumentTitle(manifest.rootPage.title, manifest.organization.name);
     const escapedDescription = escapeAttribute(manifest.rootPage.description);

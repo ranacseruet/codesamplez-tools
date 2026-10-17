@@ -13,14 +13,55 @@ const ADS_TXT_CERTIFICATION_ID = 'f08c47fec0942fa0';
  */
 
 /**
- * GA4 gtag.js loader + inline bootstrap. Async so it never blocks paint.
- * @param {string} googleAnalyticsId
+ * Hostname of the configured site origin. The inline loaders embed this value
+ * so the allow-list comes from root `siteBaseUrl`, not a literal host.
+ * @param {string | undefined} siteBaseUrl
  * @returns {string}
  */
-function renderGoogleAnalyticsMarkup(googleAnalyticsId) {
-    const escapedId = escapeAttribute(googleAnalyticsId);
-    return `<script async src="https://www.googletagmanager.com/gtag/js?id=${escapedId}"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${escapedId}');</script>`;
+function resolveAllowedAnalyticsHostname(siteBaseUrl) {
+    if (typeof siteBaseUrl !== 'string' || siteBaseUrl.trim().length === 0) {
+        throw new Error('Analytics markup requires siteBaseUrl so the allowed host is derived from root config');
+    }
+
+    /** @type {string} */
+    let hostname;
+    try {
+        hostname = new URL(siteBaseUrl).hostname;
+    } catch (error) {
+        throw new Error(`Analytics siteBaseUrl must be a valid absolute URL: ${siteBaseUrl}`);
+    }
+
+    if (!hostname) {
+        throw new Error(`Analytics siteBaseUrl must include a hostname: ${siteBaseUrl}`);
+    }
+
+    return hostname;
+}
+
+/**
+ * Return from a loader IIFE unless the page is served on the configured host.
+ * The check is runtime so a production build opened on localhost, 127.0.0.1,
+ * or a CloudFront hostname never requests Google.
+ * @param {string | undefined} siteBaseUrl
+ * @returns {string}
+ */
+function renderAnalyticsHostGate(siteBaseUrl) {
+    const allowedHost = escapeJsonForHtml(JSON.stringify(resolveAllowedAnalyticsHostname(siteBaseUrl)));
+    return `if(location.hostname!==${allowedHost}){return;}`;
+}
+
+/**
+ * GA4 gtag.js loader + inline bootstrap. Async so it never blocks paint.
+ * gtag.js is injected only when `location.hostname` matches the siteBaseUrl host,
+ * and `window.gtag` stays unset otherwise.
+ * @param {string} googleAnalyticsId
+ * @param {string | undefined} siteBaseUrl
+ * @returns {string}
+ */
+function renderGoogleAnalyticsMarkup(googleAnalyticsId, siteBaseUrl) {
+    const escapedId = escapeAttribute(googleAnalyticsId).replace(/'/g, '\\u0027');
+    const hostGate = renderAnalyticsHostGate(siteBaseUrl);
+    return `<script>(function(){${hostGate}window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=gtag;gtag('js',new Date());gtag('config','${escapedId}');var s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id=${escapedId}';(document.head||document.documentElement).appendChild(s);})();</script>`;
 }
 
 // Idle delay (ms) after which the AdSense loader is injected even if the visitor
@@ -35,25 +76,31 @@ const ADSENSE_IDLE_DELAY_MS = 3500;
  * request until the first user interaction (scroll/pointer/key/touch) or a short
  * idle fallback — whichever comes first. This unblocks the `load` event and keeps
  * the ad iframe out of the initial render path without losing ad coverage.
+ * The same host gate as GA4 wraps the loader, so ads are not requested on
+ * localhost, 127.0.0.1, or a raw CloudFront domain.
  * @param {string} adsenseClientId
+ * @param {string | undefined} siteBaseUrl
  * @returns {string}
  */
-function renderAdsenseMarkup(adsenseClientId) {
+function renderAdsenseMarkup(adsenseClientId, siteBaseUrl) {
     const loaderSrc = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`;
     const jsSafeSrc = escapeJsonForHtml(JSON.stringify(loaderSrc));
-    return `<script>(function(){var d=document,loaded=false,events=['scroll','mousemove','keydown','touchstart','pointerdown'];function load(){if(loaded){return;}loaded=true;events.forEach(function(e){window.removeEventListener(e,load);});var s=d.createElement('script');s.async=true;s.crossOrigin='anonymous';s.src=${jsSafeSrc};(d.head||d.documentElement).appendChild(s);}events.forEach(function(e){window.addEventListener(e,load,{passive:true,once:true});});setTimeout(load,${ADSENSE_IDLE_DELAY_MS});})();</script>`;
+    const hostGate = renderAnalyticsHostGate(siteBaseUrl);
+    return `<script>(function(){${hostGate}var d=document,loaded=false,events=['scroll','mousemove','keydown','touchstart','pointerdown'];function load(){if(loaded){return;}loaded=true;events.forEach(function(e){window.removeEventListener(e,load);});var s=d.createElement('script');s.async=true;s.crossOrigin='anonymous';s.src=${jsSafeSrc};(d.head||d.documentElement).appendChild(s);}events.forEach(function(e){window.addEventListener(e,load,{passive:true,once:true});});setTimeout(load,${ADSENSE_IDLE_DELAY_MS});})();</script>`;
 }
 
 /**
  * Early connection warm-up for the analytics/ads third-party origins. Emitted in
  * the document head so the TCP+TLS (and QUIC) handshakes to Google's ad/analytics
  * hosts start before the lazily-injected loaders actually request from them,
- * shaving the connection time off the ad iframe's first byte. Returns an empty
- * string when neither channel is configured.
+ * shaving the connection time off the ad iframe's first byte. The link tags
+ * are inserted only on the configured host, so other hosts open no connection.
+ * Returns an empty string when neither channel is configured.
  * @param {AnalyticsConfig} [analytics]
+ * @param {string | undefined} [siteBaseUrl] Required when an id is configured.
  * @returns {string}
  */
-function renderAnalyticsResourceHints(analytics = { googleAnalyticsId: null, adsenseClientId: null }) {
+function renderAnalyticsResourceHints(analytics = { googleAnalyticsId: null, adsenseClientId: null }, siteBaseUrl) {
     const hints = [];
 
     if (analytics.adsenseClientId) {
@@ -65,25 +112,39 @@ function renderAnalyticsResourceHints(analytics = { googleAnalyticsId: null, ads
         hints.push('<link rel="preconnect" href="https://www.googletagmanager.com">');
     }
 
-    return hints.join('\n  ');
+    if (hints.length === 0) {
+        return '';
+    }
+
+    const hostGate = renderAnalyticsHostGate(siteBaseUrl);
+    const hintHtml = hints.join('\n  ')
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, '\\\'')
+        .replace(/\r/g, '\\r')
+        .replace(/\n/g, '\\n')
+        .replace(/\u2028/g, '\\u2028')
+        .replace(/\u2029/g, '\\u2029');
+    return `<script>(function(){${hostGate}(document.head||document.documentElement).insertAdjacentHTML('beforeend','${hintHtml}');})();</script>`;
 }
 
 /**
  * Build the analytics/ads `<head>` markup for a single page. Each id is optional,
  * so partial configuration (GA only, AdSense only, or neither) is supported.
- * Returns an empty string when nothing is configured.
+ * Returns an empty string when nothing is configured. Loaders no-op unless the
+ * page hostname matches `siteBaseUrl`.
  * @param {AnalyticsConfig} [analytics]
+ * @param {string | undefined} [siteBaseUrl] Required when an id is configured.
  * @returns {string}
  */
-function renderAnalyticsHeadMarkup(analytics = { googleAnalyticsId: null, adsenseClientId: null }) {
+function renderAnalyticsHeadMarkup(analytics = { googleAnalyticsId: null, adsenseClientId: null }, siteBaseUrl) {
     const parts = [];
 
     if (analytics.googleAnalyticsId) {
-        parts.push(renderGoogleAnalyticsMarkup(analytics.googleAnalyticsId));
+        parts.push(renderGoogleAnalyticsMarkup(analytics.googleAnalyticsId, siteBaseUrl));
     }
 
     if (analytics.adsenseClientId) {
-        parts.push(renderAdsenseMarkup(analytics.adsenseClientId));
+        parts.push(renderAdsenseMarkup(analytics.adsenseClientId, siteBaseUrl));
     }
 
     return parts.join('\n  ');

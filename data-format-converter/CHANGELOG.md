@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.7] - 2026-10-17
+
+### Data Format Converter
+
+- Analytics and ads on this page load only when it is served on the configured site host.
+
 ## [1.0.6] - 2026-09-26
 
 ### Data Format Converter
