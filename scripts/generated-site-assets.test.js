@@ -17,7 +17,7 @@ const {
     toSitemapUrlItem,
     writeGeneratedSiteAssets
 } = require('./generated-site-assets');
-const { REPO_ROOT } = require('./tool-manifest');
+const { getToolMetadataPath, REPO_ROOT } = require('./tool-manifest');
 
 function withEnv(overrides, run) {
     const originalEnv = { ...process.env };
@@ -175,6 +175,61 @@ describe('generated site assets', () => {
         const lastmodPaths = getToolPageLastmodPaths(getToolDefinitions()[0]);
 
         expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-changelog.js'));
+    });
+
+    it('includes every tool meta file and root-page content in root lastmod inputs', () => {
+        const lastmodPaths = getRootPageLastmodPaths();
+
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/root-page-content.js'));
+        getToolDefinitions().forEach((tool) => {
+            expect(lastmodPaths).toContain(getToolMetadataPath(tool.id));
+        });
+    });
+
+    it('includes app-shell, related-tools, article, and metadata sidecars in tool lastmod inputs', () => {
+        const lastmodPaths = getToolPageLastmodPaths(getToolDefinitions()[0]);
+
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'common/app-shell/toolCatalog.ts'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'common/related-tools/RelatedTools.tsx'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'common/tool-article/ToolArticle.tsx'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/related-tools-metadata.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-faq-metadata.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-howto-metadata.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-feature-metadata.js'));
+    });
+
+    it('derives homepage lastmod from the expanded root input set via git', () => {
+        const lastmodPaths = getRootPageLastmodPaths();
+        const entries = buildSitemapEntries();
+        const rootLastmod = resolveGitLastmodForPaths(lastmodPaths);
+        const spawnSyncImpl = jest.fn(() => ({
+            status: 0,
+            stdout: '2026-10-15T16:08:58.000Z\n'
+        }));
+
+        expect(rootLastmod === null || typeof rootLastmod === 'string').toBe(true);
+        expect(resolveGitLastmodForPaths(lastmodPaths, { spawnSyncImpl })).toBe('2026-10-15T16:08:58.000Z');
+        expect(spawnSyncImpl).toHaveBeenCalledWith(
+            'git',
+            expect.arrayContaining(['log', '-1', '--format=%cI', '--']),
+            expect.objectContaining({ cwd: REPO_ROOT })
+        );
+
+        const pathsPassedToGit = spawnSyncImpl.mock.calls[0][1].slice(4);
+        expect(pathsPassedToGit).toEqual(
+            expect.arrayContaining([
+                'scripts/root-page-content.js',
+                ...getToolDefinitions().map((tool) => path.relative(REPO_ROOT, getToolMetadataPath(tool.id)))
+            ])
+        );
+
+        const entriesWithResolvedRoot = buildSitemapEntries({
+            resolveLastmod: (paths, context) => (
+                context.type === 'root-page' ? resolveGitLastmodForPaths(paths, { spawnSyncImpl }) : null
+            )
+        });
+        expect(entriesWithResolvedRoot[0].lastmod).toBe('2026-10-15T16:08:58.000Z');
+        expect(entries[0].lastmod === undefined || typeof entries[0].lastmod === 'string').toBe(true);
     });
 
     it('omits lastmod when the resolver cannot determine a timestamp', async () => {
