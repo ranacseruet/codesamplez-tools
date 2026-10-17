@@ -176,6 +176,10 @@ self-hosters never inherit the upstream Google Analytics or AdSense properties.
   - `CST_ADSENSE_CLIENT_ID` — AdSense client id (`ca-pub-XXXXXXXXXXXXXXXX`).
 - Injection is **fail-closed**: only `NODE_ENV=production` builds emit trackers.
   Development, test, CI, staging, and an unset `NODE_ENV` all resolve empty ids.
+- Emitted loaders still check `location.hostname` against the host of
+  `siteBaseUrl` before requesting gtag.js, adsbygoogle.js, or preconnects.
+  A production build opened on localhost, `127.0.0.1`, or a raw CloudFront
+  domain does not send hits or load ads.
 - `CST_DISABLE_ANALYTICS` (`1`/`true`/`yes`) is a kill-switch that forces tracking
   off even for production builds. The visual-diff, baseline, and health-monitoring
   workflows set it so screenshots stay ad-free and deterministic.

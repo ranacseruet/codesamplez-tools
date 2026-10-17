@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- GA4 and AdSense load only when the page hostname matches the host of
+  `siteBaseUrl`. A production build served on localhost, `127.0.0.1`, or a
+  CloudFront domain does not request analytics or ads.
 - Google Analytics and AdSense IDs are no longer committed to
   `config/tooling-root.json`. Deployments inject them via the
   `CST_GA_MEASUREMENT_ID` and `CST_ADSENSE_CLIENT_ID` environment variables, so
