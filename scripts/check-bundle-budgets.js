@@ -114,18 +114,28 @@ const DEFAULT_FAIL_PERCENT = 10;
 // a Data URI prefix, the upload thumbnail with its blob-URL lifecycle, and the
 // decode-path caption (type, decoded size, dimensions). SVG stays
 // download-only by policy, so it adds no preview weight.
+//
+// `diff-checker-tool` (87,207 -> 95,956), `css-minifier-tool` (66,115 ->
+// 69,713), `jwt-builder-tool` (70,073 -> 76,771), and `text-analyzer-tool`
+// (46,389 -> 50,891) were refreshed for the privacy footer link (issue #97).
+// The shared shell change (a Privacy anchor plus the site-href helper) lands
+// in every main bundle and, on these four, broke scope hoisting enough to
+// cross warn or fail. Growth is uneven (about 1–9 KB), the same shared-shell
+// effect noted for the ShareBar rail and the Preact overlay above. The other
+// eight tools absorbed it inside their warn line and are left un-refreshed so
+// the next regression still has a signal.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 49773,
     'data-format-converter': 190839,
-    'diff-checker-tool': 87207,
-    'jwt-builder-tool': 70073,
+    'diff-checker-tool': 95956,
+    'jwt-builder-tool': 76771,
     'jwt-decoder-tool': 70827,
     'base64-converter-tool': 84607,
     'json-formatter-tool': 71306,
     'json-editor-tool': 63226,
-    'css-minifier-tool': 66115,
-    'text-analyzer-tool': 46389,
+    'css-minifier-tool': 69713,
+    'text-analyzer-tool': 50891,
     'qr-code-generator': 65847,
     'image-editor': 66107
 });
