@@ -44,7 +44,11 @@ describe('text-analyzer content', () => {
         expect(root!.querySelector('#text-analyzer-features')).not.toBeNull();
         expect(root!.querySelector('#how-to-use-text-analyzer')).not.toBeNull();
         expect(root!.querySelector('#text-analyzer-limitations')).not.toBeNull();
-        expect(root!.querySelector('#text-analyzer-privacy')).not.toBeNull();
+        const privacy = root!.querySelector('#text-analyzer-privacy');
+        expect(privacy).not.toBeNull();
+        expect(privacy!.closest('section')!.textContent).toContain(
+            'Your input is processed in this browser and is not uploaded by the tool. This site uses Google Analytics and Google AdSense cookies to measure usage and show ads.'
+        );
         expect(root!.querySelector('#text-analyzer-faqs')).not.toBeNull();
 
         const renderedFaqQuestions = root!.querySelectorAll('.c-tool-faq__item');

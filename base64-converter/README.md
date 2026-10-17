@@ -5,7 +5,7 @@ A powerful and user-friendly web tool for encoding and decoding Base64 strings w
 ## Privacy & Security
 
 - 🔒 100% client-side processing - all conversions happen in your browser
-- 🚫 No data storage - your data is never saved or transmitted anywhere
+- 🚫 No data storage - tool input is processed locally and is not uploaded
 - 💻 Works offline - can be used without an internet connection
 
 ## Features

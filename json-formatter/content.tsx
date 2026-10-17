@@ -21,7 +21,7 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     ),
     createPlainTextFaqItem(
         'Is an online JSON formatter safe to use?',
-        'Yes - as long as the formatter runs in your browser (client-side), your JSON data is not sent anywhere, making it safe. The CodeSamplez JSON Formatter Tool processes JSON locally, so your sensitive data never leaves your computer.'
+        'Yes. JSON you paste into this formatter is processed locally in the browser and is not uploaded.'
     ),
     createPlainTextFaqItem(
         'Can a JSON Formatter also validate JSON?',
@@ -138,7 +138,7 @@ export function JsonFormatterArticle(): JSX.Element {
                         <li>Human-readability: indentation and line breaks make JSON easier to understand.</li>
                         <li>Easier debugging: errors stand out when JSON is properly formatted.</li>
                         <li>Save time instead of trying to format with manually written code.</li>
-                        <li>Secure and can work offline once loaded. Runs in your browser, so your data is not sent to a server.</li>
+                        <li>Can work offline once loaded. Tool input is processed locally and is not uploaded.</li>
                     </ul>
 
                     <div className="c-tool-article__cta-row">

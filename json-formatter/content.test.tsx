@@ -8,6 +8,11 @@ describe('json-formatter content', () => {
     });
 
     it('keeps every FAQ answer self-contained and in parity with its structured-data answer', () => {
+        const safetyAnswer = FAQ_ITEMS.find((item) => item.question === 'Is an online JSON formatter safe to use?');
+        expect(safetyAnswer?.answer).toBe(
+            'Yes. JSON you paste into this formatter is processed locally in the browser and is not uploaded.'
+        );
+
         FAQ_ITEMS.forEach((item) => {
             expect(typeof item.question).toBe('string');
             expect(item.question.length).toBeGreaterThan(0);

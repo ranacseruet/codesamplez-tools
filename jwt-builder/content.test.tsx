@@ -33,6 +33,7 @@ describe('jwt-builder content', () => {
         const lead = root!.querySelector('.c-tool-article__lead');
         expect(lead).not.toBeNull();
         expect(lead!.textContent).toContain('JWT Generator is a free browser-based tool');
+        expect(lead!.textContent).toContain('Tool input is processed locally and is not uploaded.');
     });
 
     it('renders the article with structured guide sections, links, claims, and FAQs', () => {
