@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.7] - 2026-10-17
+
+### Base64 Converter
+
+- Reworded the browser title to "Base64 Converter – Encode & Decode Online | CodeSamplez" so the primary keyword stays first, still within 60 characters.
+
 ## [1.0.6] - 2026-10-17
 
 ### Base64 Converter

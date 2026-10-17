@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.10] - 2026-10-17
+
+### JSON Formatter
+
+- Reworded the browser title to "JSON Formatter & Beautifier Online | CodeSamplez" so the primary keyword stays first, still within 60 characters.
+
 ## [1.0.9] - 2026-10-17
 
 ### JSON Formatter
