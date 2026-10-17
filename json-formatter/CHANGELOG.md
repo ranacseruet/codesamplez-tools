@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.12] - 2026-10-17
+
+### JSON Formatter
+
+- Analytics and ads on this page load only when it is served on the configured site host.
+
 ## [1.0.11] - 2026-10-17
 
 ### JSON Formatter
