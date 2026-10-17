@@ -19,12 +19,22 @@ export const INPUT_SIZE_BUCKETS = ['<1KB', '1–10KB', '10–100KB', '>100KB'] a
 
 export type InputSizeBucket = (typeof INPUT_SIZE_BUCKETS)[number];
 
+/** Who started the run. Sample and share runs are tagged, not dropped. */
+export const TOOL_USED_TRIGGERS = ['user', 'sample', 'share'] as const;
+
+export type ToolUsedTrigger = (typeof TOOL_USED_TRIGGERS)[number];
+
+/** Whether the run parsed or completed. Errors are tagged, not dropped. */
+export const TOOL_USED_OUTCOMES = ['success', 'error'] as const;
+
+export type ToolUsedOutcome = (typeof TOOL_USED_OUTCOMES)[number];
+
 /** GA4 event-parameter values are limited to 100 characters. */
 export const MAX_EVENT_PARAM_LENGTH = 100;
 
 const TOOL_USED_DEDUPE_MS = 2000;
 
-const KNOWN_PARAM_KEYS = new Set(['tool_id', 'action', 'input_size_bucket']);
+const KNOWN_PARAM_KEYS = new Set(['tool_id', 'action', 'input_size_bucket', 'trigger', 'outcome']);
 
 const IDENTIFIER_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -82,6 +92,14 @@ export function inputSizeBucket(byteLength: number): InputSizeBucket | undefined
     return '>100KB';
 }
 
+function isToolUsedTrigger(value: string): value is ToolUsedTrigger {
+    return value === 'user' || value === 'sample' || value === 'share';
+}
+
+function isToolUsedOutcome(value: string): value is ToolUsedOutcome {
+    return value === 'success' || value === 'error';
+}
+
 function sanitizeParams(params: unknown): Record<string, string> {
     if (!params || typeof params !== 'object') {
         return {};
@@ -103,6 +121,20 @@ function sanitizeParams(params: unknown): Record<string, string> {
             // a core-js polyfill, which breaks scope hoisting in bundles that
             // did not already use it.
             if (value === '<1KB' || value === '1–10KB' || value === '10–100KB' || value === '>100KB') {
+                safe[key] = value;
+            }
+            continue;
+        }
+
+        if (key === 'trigger') {
+            if (isToolUsedTrigger(value)) {
+                safe[key] = value;
+            }
+            continue;
+        }
+
+        if (key === 'outcome') {
+            if (isToolUsedOutcome(value)) {
                 safe[key] = value;
             }
             continue;
@@ -169,11 +201,21 @@ export function trackToolUsed(options: {
     toolId: string;
     action: string;
     inputBytes?: number;
+    trigger?: ToolUsedTrigger;
+    outcome?: ToolUsedOutcome;
 }): void {
     const params: Record<string, string> = {
         tool_id: options.toolId,
         action: options.action
     };
+
+    if (options.trigger) {
+        params.trigger = options.trigger;
+    }
+
+    if (options.outcome) {
+        params.outcome = options.outcome;
+    }
 
     if (typeof options.inputBytes === 'number') {
         const bucket = inputSizeBucket(options.inputBytes);

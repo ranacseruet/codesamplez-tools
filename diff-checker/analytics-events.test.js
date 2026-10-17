@@ -60,6 +60,8 @@ describe('Diff Checker tool_used', () => {
     expect(calls[0][2]).toEqual({
       tool_id: 'diff-checker',
       action: 'compare',
+      trigger: 'user',
+      outcome: 'success',
       input_size_bucket: '<1KB'
     });
     expect(JSON.stringify(calls)).not.toContain(SECRET);
@@ -88,5 +90,20 @@ describe('Diff Checker tool_used', () => {
     expect(window.gtag).toBeUndefined();
     expect(error).not.toHaveBeenCalled();
     error.mockRestore();
+  });
+
+  it('tags Load Sample as sample and still sends the compare event', async () => {
+    const gtag = installGtag();
+    new DiffCheckerToolUI();
+
+    fireEvent.click(document.getElementById('load-sample'));
+    await flush();
+
+    const calls = toolUsedCalls(gtag);
+    expect(calls).toHaveLength(1);
+    expect(calls[0][2].trigger).toBe('sample');
+    expect(calls[0][2].outcome).toBe('success');
+    expect(calls[0][2].action).toBe('compare');
+    expect(calls[0][2].tool_id).toBe('diff-checker');
   });
 });

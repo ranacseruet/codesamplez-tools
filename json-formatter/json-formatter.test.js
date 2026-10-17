@@ -766,7 +766,7 @@ describe('JSONFormatter', () => {
       expect(formatter.sortCheckbox.checked).toBe(false);
       expect(formatter.autoFixCheckbox.checked).toBe(true);
       expect(formatter.indentSelect.value).toBe('4');
-      expect(formatter.formatJSON).toHaveBeenCalled();
+      expect(formatter.formatJSON).toHaveBeenCalledWith('share');
       expect(mockNotificationManager.show).toHaveBeenCalledWith('Loaded JSON from shared link.', 2000, { type: 'success' });
       // formatJSON must resolve before the "loaded" toast fires, so it isn't
       // immediately overwritten by formatJSON's own success/error notification.
@@ -842,7 +842,7 @@ describe('JSONFormatter', () => {
       formatter.loadSampleData();
 
       expect(formatter.input.value).toBeTruthy();
-      expect(formatter.formatJSON).toHaveBeenCalled();
+      expect(formatter.formatJSON).toHaveBeenCalledWith('sample');
     });
   });
 

@@ -6,7 +6,7 @@ All notable changes to this tool are documented in this file.
 
 ### Base64 Converter
 
-- Records a tool_used analytics event for Encode and Decode. The input text is not sent.
+- Records a tool_used analytics event for Encode and Decode, tagged with trigger and outcome. The input text is not sent.
 
 ## [1.0.6] - 2026-10-17
 
