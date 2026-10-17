@@ -248,7 +248,7 @@ function buildLlmsTxt() {
         '',
         `> ${rootPage.description}`,
         '',
-        `All tools run entirely client-side in the browser: no registration, and no user data is sent to any server. Site root: ${rootPage.absoluteUrl}`,
+        `Tools process input locally in the browser, and no registration is required. Pages load Google Analytics and Google AdSense, which use cookies and send usage data. Site root: ${rootPage.absoluteUrl}`,
         '',
         groupSections.join('\n\n'),
         '',

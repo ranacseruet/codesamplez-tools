@@ -149,7 +149,7 @@ export function TextAnalyzerArticle(): JSX.Element {
                         <li>100% Client-Side Processing: All text analysis happens locally in your browser.</li>
                         <li>No Data Storage: Your text is never saved or transmitted to any server.</li>
                         <li>Offline Support: Works without an internet connection after the initial page load.</li>
-                        <li>Zero Data Collection: No cookies, tracking, or data persistence.</li>
+                        <li>Site cookies: Your input is processed in this browser and is not uploaded by the tool. This site uses Google Analytics and Google AdSense cookies to measure usage and show ads.</li>
                         <li>Session Privacy: All text is cleared when you close the browser tab.</li>
                     </ul>
                 </ToolArticleSection>

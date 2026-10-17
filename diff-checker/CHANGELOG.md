@@ -2,6 +2,13 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.8] - 2026-10-17
+
+### Diff Checker
+
+- Privacy section now says tool input is processed in the browser and is not uploaded, and that the site uses Google Analytics and Google AdSense cookies.
+- Footer tagline now says tool input is processed locally and is not uploaded.
+
 ## [1.0.7] - 2026-10-17
 
 ### Diff Checker

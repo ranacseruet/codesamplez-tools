@@ -5,7 +5,7 @@ The QR Code Generator Tool allows users to create QR codes from text or URLs. Th
 
 ## Privacy & Security
 - 🔒 100% client-side processing - all QR code generation happens in your browser
-- 🚫 No data storage - your input is never saved or transmitted anywhere
+- 🚫 No data storage - tool input is processed locally and is not uploaded
 - 💻 Works offline - can be used without an internet connection
 - 🔐 No external dependencies - uses pure JavaScript implementation
 

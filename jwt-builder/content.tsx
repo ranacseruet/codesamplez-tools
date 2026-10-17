@@ -41,7 +41,7 @@ export function JwtBuilderIntro(): JSX.Element {
                 <p className="c-tool-article__lead">
                     JWT Generator is a free browser-based tool to quickly create signed JSON Web Tokens. Enter your
                     standard claims, add custom claims, choose HS256 or RS256, provide the matching signing key, and generate a JWT without
-                    writing code. Everything runs locally in the browser so your data stays on your device.
+                    writing code. Tool input is processed locally and is not uploaded.
                 </p>
             </div>
         </section>

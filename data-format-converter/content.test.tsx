@@ -6,6 +6,11 @@ describe('data-format-converter content', () => {
     it('keeps every FAQ answer self-contained and in parity with its structured-data answer', () => {
         expect(FAQ_ITEMS.length).toBeGreaterThanOrEqual(5);
 
+        const securityAnswer = FAQ_ITEMS.find((item) => item.question === 'How secure is the online converter?');
+        expect(securityAnswer?.answer).toBe(
+            'The input you paste or drop is processed in this browser and is not uploaded by the converter. This site uses Google Analytics and Google AdSense, which use cookies and send usage data.'
+        );
+
         FAQ_ITEMS.forEach((item) => {
             expect(typeof item.question).toBe('string');
             expect(item.question.trim().length).toBeGreaterThan(0);
@@ -46,7 +51,11 @@ describe('data-format-converter content', () => {
         expect(root!.querySelector('#data-format-converter-technology')).not.toBeNull();
         expect(root!.querySelector('#data-format-converter-limitations')).not.toBeNull();
         expect(root!.querySelector('#data-format-converter-future')).not.toBeNull();
-        expect(root!.querySelector('#data-format-converter-privacy')).not.toBeNull();
+        const privacy = root!.querySelector('#data-format-converter-privacy');
+        expect(privacy).not.toBeNull();
+        expect(privacy!.closest('section')!.textContent).toContain(
+            'Your input is processed in this browser and is not uploaded by the tool. This site uses Google Analytics and Google AdSense cookies to measure usage and show ads.'
+        );
         expect(root!.querySelector('#data-format-converter-troubleshooting')).not.toBeNull();
         expect(root!.querySelector('#data-format-converter-feedback')).not.toBeNull();
         expect(root!.querySelector('#data-format-converter-faqs')).not.toBeNull();
