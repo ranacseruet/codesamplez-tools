@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.10] - 2026-10-17
+
+### Image Editor
+
+- Shortened the meta description so it stays within search-result snippet limits while keeping the local, private processing message.
+
 ## [1.0.9] - 2026-10-17
 
 ### Image Editor
