@@ -186,6 +186,8 @@ describe('generated site assets', () => {
         const lastmodPaths = getRootPageLastmodPaths();
 
         expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/root-page-content.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/lucide-icons.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-categories.js'));
         getToolDefinitions().forEach((tool) => {
             expect(lastmodPaths).toContain(getToolMetadataPath(tool.id));
         });
@@ -201,6 +203,9 @@ describe('generated site assets', () => {
         expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-faq-metadata.js'));
         expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-howto-metadata.js'));
         expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-feature-metadata.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/prerender-tool.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/lucide-icons.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-categories.js'));
     });
 
     it('derives homepage lastmod from the expanded root input set via git', () => {

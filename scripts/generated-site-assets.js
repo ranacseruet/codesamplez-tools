@@ -66,6 +66,9 @@ const SHARED_TOOL_LASTMOD_INPUTS = [
     // tool's sitemap lastmod.
     path.resolve(REPO_ROOT, 'scripts/tool-changelog.js'),
     path.resolve(REPO_ROOT, 'scripts/tool-document.js'),
+    path.resolve(REPO_ROOT, 'scripts/prerender-tool.js'),
+    path.resolve(REPO_ROOT, 'scripts/lucide-icons.js'),
+    path.resolve(REPO_ROOT, 'scripts/tool-categories.js'),
     path.resolve(REPO_ROOT, 'scripts/shell-footer.js'),
     ...SHARED_TOOL_METADATA_SIDECAR_PATHS,
     ...listNonTestSourceFilesInDirectory('common/app-shell'),
@@ -94,6 +97,8 @@ const ROOT_PAGE_LASTMOD_INPUTS = [
     path.resolve(REPO_ROOT, 'scripts/shell-footer.js'),
     path.resolve(REPO_ROOT, 'scripts/structured-data.js'),
     path.resolve(REPO_ROOT, 'scripts/root-page-content.js'),
+    path.resolve(REPO_ROOT, 'scripts/lucide-icons.js'),
+    path.resolve(REPO_ROOT, 'scripts/tool-categories.js'),
     ...listNonTestSourceFilesInDirectory('common/app-shell'),
     ...getToolDefinitions().map((tool) => getToolMetadataPath(tool.id))
 ];
