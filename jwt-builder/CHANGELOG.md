@@ -7,6 +7,7 @@ All notable changes to this tool are documented in this file.
 ### JWT Builder
 
 - Shortened the browser title so it stays within 60 characters.
+- Footer tagline now says tool input is processed locally and is not uploaded.
 
 ## [1.0.6] - 2026-10-14
 

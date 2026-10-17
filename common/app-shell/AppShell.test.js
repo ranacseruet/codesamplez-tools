@@ -181,6 +181,7 @@ describe('AppShell components', () => {
 
         const footer = root.querySelector('footer.cst-shell__footer');
         expect(footer).not.toBeNull();
+        expect(footer.textContent).toContain('tool input is processed locally and is not uploaded');
         // Brand column links home.
         const brandLink = root.querySelector('a.cst-shell__footer-brand-link');
         expect(brandLink?.getAttribute('href')).toBe(SITE_BASE_URL);

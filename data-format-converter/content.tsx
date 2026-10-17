@@ -17,7 +17,7 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     ),
     createPlainTextFaqItem(
         'How secure is the online converter?',
-        'Your data’s safety is our priority with this secure online converter. We don’t store or share any uploaded data, ensuring complete privacy during every JSON to YAML or XML conversion process. Due to 100% client-side processing, your data doesn’t leave your browser.'
+        'The input you paste or drop is processed in this browser and is not uploaded by the converter. This site uses Google Analytics and Google AdSense, which use cookies and send usage data.'
     ),
     createPlainTextFaqItem(
         'What file formats can your tool convert between?',

@@ -6,6 +6,11 @@ describe('data-format-converter content', () => {
     it('keeps every FAQ answer self-contained and in parity with its structured-data answer', () => {
         expect(FAQ_ITEMS.length).toBeGreaterThanOrEqual(5);
 
+        const securityAnswer = FAQ_ITEMS.find((item) => item.question === 'How secure is the online converter?');
+        expect(securityAnswer?.answer).toBe(
+            'The input you paste or drop is processed in this browser and is not uploaded by the converter. This site uses Google Analytics and Google AdSense, which use cookies and send usage data.'
+        );
+
         FAQ_ITEMS.forEach((item) => {
             expect(typeof item.question).toBe('string');
             expect(item.question.trim().length).toBeGreaterThan(0);

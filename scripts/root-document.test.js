@@ -88,7 +88,7 @@ describe('root document generation', () => {
     expect(html).not.toContain('tool-status--live');
     // v4 hero: eyebrow stats, tagline, CTA pair, search island shell.
     expect(html).toContain('<p class="hero-eyebrow">// 12 tools · 100% client-side · 0 uploads</p>');
-    expect(html).toContain('your data never leaves the tab');
+    expect(html).toContain('tool input is processed locally and is not uploaded');
     expect(html).toContain('<a class="cta-button" href="#tools">Browse tools');
     expect(html).toContain('<a class="cta-button cta-button--ghost" href="#what-are-online-developer-tools">Why client-side?</a>');
     expect(html).toContain('id="tool-search-root"');
