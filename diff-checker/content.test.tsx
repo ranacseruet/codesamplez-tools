@@ -45,7 +45,11 @@ describe('diff-checker content', () => {
         expect(root!.querySelector('#diff-checker-features')).not.toBeNull();
         expect(root!.querySelector('#diff-checker-usage')).not.toBeNull();
         expect(root!.querySelector('#diff-checker-limitations')).not.toBeNull();
-        expect(root!.querySelector('#diff-checker-privacy')).not.toBeNull();
+        const privacy = root!.querySelector('#diff-checker-privacy');
+        expect(privacy).not.toBeNull();
+        expect(privacy!.closest('section')!.textContent).toContain(
+            'Your input is processed in this browser and is not uploaded by the tool. This site uses Google Analytics and Google AdSense cookies to measure usage and show ads.'
+        );
         expect(root!.querySelector('#diff-checker-feedback')).not.toBeNull();
         expect(root!.querySelector('#diff-checker-faqs')).not.toBeNull();
 

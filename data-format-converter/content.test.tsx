@@ -46,7 +46,11 @@ describe('data-format-converter content', () => {
         expect(root!.querySelector('#data-format-converter-technology')).not.toBeNull();
         expect(root!.querySelector('#data-format-converter-limitations')).not.toBeNull();
         expect(root!.querySelector('#data-format-converter-future')).not.toBeNull();
-        expect(root!.querySelector('#data-format-converter-privacy')).not.toBeNull();
+        const privacy = root!.querySelector('#data-format-converter-privacy');
+        expect(privacy).not.toBeNull();
+        expect(privacy!.closest('section')!.textContent).toContain(
+            'Your input is processed in this browser and is not uploaded by the tool. This site uses Google Analytics and Google AdSense cookies to measure usage and show ads.'
+        );
         expect(root!.querySelector('#data-format-converter-troubleshooting')).not.toBeNull();
         expect(root!.querySelector('#data-format-converter-feedback')).not.toBeNull();
         expect(root!.querySelector('#data-format-converter-faqs')).not.toBeNull();

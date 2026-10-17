@@ -189,7 +189,7 @@ export function DiffCheckerArticle(): JSX.Element {
                         <li>100% Client-Side Processing: All text comparisons are performed locally in your browser.</li>
                         <li>No Data Storage: Your text content is never saved or transmitted to any server.</li>
                         <li>Offline Capability: Works without an internet connection once loaded.</li>
-                        <li>Data Privacy: No cookies, tracking, or data collection of any kind.</li>
+                        <li>Site cookies: Your input is processed in this browser and is not uploaded by the tool. This site uses Google Analytics and Google AdSense cookies to measure usage and show ads.</li>
                     </ul>
                 </ToolArticleSection>
 

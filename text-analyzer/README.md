@@ -9,7 +9,7 @@ A fast, privacy-preserving browser text analysis utility built with Preact and T
 - 🔒 **100% Client-Side Processing**: All text analysis happens locally in your browser.
 - 🚫 **No Data Storage**: Your text is never saved or transmitted to any server.
 - 💻 **Offline Support**: Works completely offline once loaded.
-- 🔐 **Zero Data Collection**: No cookies, tracking, or persistent data capture.
+- **Site cookies**: Your input is processed in this browser and is not uploaded by the tool. This site uses Google Analytics and Google AdSense cookies to measure usage and show ads.
 - 📁 **Safe File Loading**: Upload or drop files locally via the browser's `FileReader` API (5 MB limit, binary files rejected).
 
 ---
