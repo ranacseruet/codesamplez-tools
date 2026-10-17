@@ -194,6 +194,21 @@ describe('analytics host gate', () => {
         adsenseClientId: 'ca-pub-1234567890123456'
     }, PRODUCTION_SITE_BASE_URL);
 
+    it('rejects a siteBaseUrl that cannot supply a hostname', () => {
+        expect(() => renderGoogleAnalyticsMarkup('G-ABC123XYZ', undefined))
+            .toThrow('Analytics markup requires siteBaseUrl so the allowed host is derived from root config');
+        expect(() => renderAdsenseMarkup('ca-pub-1234567890123456', '   '))
+            .toThrow('Analytics markup requires siteBaseUrl so the allowed host is derived from root config');
+        expect(() => renderAnalyticsHeadMarkup({
+            googleAnalyticsId: 'G-ABC123XYZ',
+            adsenseClientId: null
+        }, 'not a url')).toThrow('Analytics siteBaseUrl must be a valid absolute URL: not a url');
+        expect(() => renderAnalyticsResourceHints({
+            googleAnalyticsId: 'G-ABC123XYZ',
+            adsenseClientId: null
+        }, 'file:///tmp/page')).toThrow('Analytics siteBaseUrl must include a hostname: file:///tmp/page');
+    });
+
     it('derives the allowed host from siteBaseUrl instead of a hard-coded string', () => {
         const source = fs.readFileSync(require.resolve('./analytics.js'), 'utf8');
         expect(source).not.toContain('tools.codesamplez.com');
