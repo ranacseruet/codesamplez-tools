@@ -99,8 +99,10 @@ export function QRCodeGeneratorArticle(): JSX.Element {
                         <li><strong>Customize size</strong> for compact embeds or large printable outputs.</li>
                         <li><strong>Adjust quiet-zone margin</strong> to improve scan reliability across different layouts.</li>
                         <li>
-                            <strong>Encode binary payloads:</strong> turn files or images into Base64 with the{' '}
-                            <a href={buildSiteHref('/base64-converter/')}>Base64 Converter</a> before generating a code.
+                            <strong>Very small binary snippets only:</strong> ordinary images and files grow too large
+                            once Base64-encoded for a scannable QR code, but for tiny payloads you can use the{' '}
+                            <a href={buildSiteHref('/base64-converter/')}>Base64 Converter</a> and paste the resulting
+                            string here when it still fits the generator&apos;s length limit.
                         </li>
                         <li>
                             <strong>Structured payloads:</strong> convert JSON to YAML or XML with the{' '}
