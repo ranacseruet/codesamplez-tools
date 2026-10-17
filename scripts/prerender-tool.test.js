@@ -211,6 +211,7 @@ describe('generic tool prerender helpers', () => {
         expect(beforeMarkup).toBe('');
         const introCopy = 'The Diff Checker Tool is a lightweight, web-based utility designed to compare two blocks of text';
         expect(afterMarkup).toContain(introCopy);
+        expect(afterMarkup).toContain('Compare Code Online: How to Find Differences Between Two Files');
         expect(afterMarkup).toContain('Diff Checker Tool Features:');
         expect(afterMarkup).toContain('Unified patch export');
         expect(afterMarkup.indexOf(introCopy)).toBeLessThan(afterMarkup.indexOf('Diff Checker Tool Features:'));

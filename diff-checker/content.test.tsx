@@ -42,6 +42,10 @@ describe('diff-checker content', () => {
         render(<DiffCheckerArticle />, root!);
 
         expect(root!.querySelector('#diff-checker-what-is')).not.toBeNull();
+        expect(root!.querySelector('#diff-checker-compare-code-online')).not.toBeNull();
+        expect(
+            root!.querySelector('#diff-checker-compare-code-online')!.closest('section')!.textContent
+        ).toContain('Compare Code Online: How to Find Differences Between Two Files');
         expect(root!.querySelector('#diff-checker-features')).not.toBeNull();
         expect(root!.querySelector('#diff-checker-usage')).not.toBeNull();
         expect(root!.querySelector('#diff-checker-limitations')).not.toBeNull();

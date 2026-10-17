@@ -2,6 +2,7 @@
 
 const { buildToolStructuredDataGraph, renderStructuredDataScript } = require('./structured-data');
 const { loadManifest, getToolById } = require('./tool-manifest');
+const { getToolFaqItems } = require('./tool-faq-metadata');
 const { buildSiteHref } = require('../common/siteBaseUrl');
 
 describe('structured data rendering', () => {
@@ -20,6 +21,15 @@ describe('structured data rendering', () => {
     expect(script).toContain('"@graph":[{"@type":"Thing","name":"Fixture Node"}]');
     expect(script).not.toContain('"sameAs"');
     expect(script).not.toContain('"image"');
+  });
+
+  it('loads diff-checker FAQ items from the tool FAQ registry in sync with content', () => {
+    const items = getToolFaqItems('diff-checker-tool');
+    const questions = items.map((item) => item.question);
+
+    expect(questions).toContain('How do I compare two code files online?');
+    expect(questions).toContain('What is the difference between a diff checker and a difference checker?');
+    expect(questions).toContain('Can I compare code online without installing software?');
   });
 
   it('emits FAQPage JSON-LD when faq items are provided', () => {
