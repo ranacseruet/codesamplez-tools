@@ -58,6 +58,9 @@ const ROOT_PAGE_LASTMOD_INPUTS = [
     path.resolve(REPO_ROOT, 'scripts/document-helpers.js'),
     path.resolve(REPO_ROOT, 'scripts/root-document.js'),
     path.resolve(REPO_ROOT, 'scripts/shell-footer.js'),
+    // The homepage footer is prerendered from ToolShellFooter. shell-footer.js
+    // is only the wrapper, so an AppShell-only edit must still bump lastmod.
+    path.resolve(REPO_ROOT, 'common/app-shell/AppShell.tsx'),
     path.resolve(REPO_ROOT, 'scripts/structured-data.js')
 ];
 
