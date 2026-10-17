@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.9] - 2026-10-17
+
+### Text Analyzer
+
+- Site footer links to the privacy policy. This tool's behavior is unchanged.
+
 ## [1.0.8] - 2026-10-17
 
 ### Text Analyzer

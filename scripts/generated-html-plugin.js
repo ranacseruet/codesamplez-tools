@@ -7,6 +7,7 @@ const { REPO_ROOT, ROOT_CONFIG_PATH, getToolById, getToolDefinitions, getToolMet
 const { resetBuildCommit } = require('./provenance-manifest');
 const { generateRootDocument } = require('./root-document');
 const { generateNotFoundDocument } = require('./error-document');
+const { generatePrivacyDocument } = require('./privacy-document');
 const { generateToolDocument } = require('./tool-document');
 
 // The 404 page ships beside the root index.html, so its emit path mirrors the
@@ -14,6 +15,12 @@ const { generateToolDocument } = require('./tool-document');
 // and 'index.html' from the combined build).
 function resolveNotFoundFilename(rootHtmlAsset) {
     return rootHtmlAsset.replace(/index\.html$/, '404.html');
+}
+
+// `/privacy/` is rewritten to `/privacy/index.html` by the CloudFront function,
+// same as every other directory URL. The emit path stays beside the root index.
+function resolvePrivacyFilename(rootHtmlAsset) {
+    return rootHtmlAsset.replace(/index\.html$/, 'privacy/index.html');
 }
 
 /**
@@ -80,6 +87,11 @@ function renderGeneratedHtmlAssets(options) {
         assets.push({
             filename: resolveNotFoundFilename(options.rootHtmlAsset),
             source: generateNotFoundDocument()
+        });
+
+        assets.push({
+            filename: resolvePrivacyFilename(options.rootHtmlAsset),
+            source: generatePrivacyDocument()
         });
     }
 

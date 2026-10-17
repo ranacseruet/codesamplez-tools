@@ -232,7 +232,8 @@ body {
 }
 
 .main-container .section-intro a,
-.main-container .section-body a {
+.main-container .section-body a,
+.main-container .section-list a {
   color: var(--color-accent);
   text-decoration: underline;
   text-decoration-color: var(--landing-link-underline);
@@ -240,8 +241,24 @@ body {
 }
 
 .main-container .section-intro a:hover,
-.main-container .section-body a:hover {
+.main-container .section-body a:hover,
+.main-container .section-list a:hover {
   text-decoration-color: currentColor;
+}
+
+.main-container .section-list {
+  margin: 0 0 var(--spacing-md) 0;
+  padding-left: 1.25rem;
+  color: var(--color-text-secondary);
+  max-width: 72ch;
+}
+
+.main-container .section-list li + li {
+  margin-top: 0.4rem;
+}
+
+.main-container .cst-shell__breadcrumb {
+  margin-bottom: var(--spacing-md);
 }
 
 .main-container .section-title {

@@ -114,7 +114,11 @@ function assertNonProductionBuildHasNoTrackers(mode, selection) {
         .map((tool) => path.join(process.cwd(), tool.outputPath, 'index.html'));
 
     if (rootHtmlRegenerated) {
-        htmlFilePaths.push(path.join(buildDir, 'index.html'), path.join(buildDir, '404.html'));
+        htmlFilePaths.push(
+            path.join(buildDir, 'index.html'),
+            path.join(buildDir, '404.html'),
+            path.join(buildDir, 'privacy', 'index.html')
+        );
     }
 
     assertNoAnalyticsInHtml(htmlFilePaths);
