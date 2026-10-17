@@ -103,6 +103,34 @@ export function resolveToolIdFromPath(pathName: string): string | null {
     return null;
 }
 
+/**
+ * Analytics `tool_id` slug for a catalog entry's public path, for example
+ * `/json-formatter/` → `json-formatter`. Matches the slugs used by `tool_used`.
+ */
+export function analyticsToolIdFromPublicPath(publicPath: string): string {
+    return getToolPathSlug(publicPath);
+}
+
+/**
+ * Resolves a location pathname to an analytics `tool_id` slug, or `null` when
+ * the path is not a tool page.
+ */
+export function resolveAnalyticsToolIdFromPath(pathName: string): string | null {
+    const catalogId = resolveToolIdFromPath(pathName);
+    if (!catalogId) {
+        return null;
+    }
+
+    for (let index = 0; index < TOOL_CATALOG_ENTRIES.length; index += 1) {
+        const entry = TOOL_CATALOG_ENTRIES[index];
+        if (entry.id === catalogId) {
+            return analyticsToolIdFromPublicPath(entry.publicPath);
+        }
+    }
+
+    return null;
+}
+
 export function normalizeToolCatalog(
     rawRootConfig: AppShellRootConfig,
     toolMetadata: AppShellToolMetadata[]

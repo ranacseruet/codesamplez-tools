@@ -14,7 +14,7 @@ export interface FileUploadButtonProps {
 /**
  * Shared visible file-picker control. File handling is registered by the
  * owning tool through `registerFileInput` so picker and drop-zone callbacks
- * remain on the same path.
+ * remain on the same path (including the shared `file_loaded` analytics event).
  */
 export function FileUploadButton({
     id,

@@ -1,3 +1,5 @@
+import { trackDownloadOutput } from './analytics-events';
+
 /**
  * DownloadManager class provides functionality for managing file downloads in the browser.
  * It handles creating downloadable blobs and triggering downloads.
@@ -12,6 +14,7 @@ class DownloadManager {
    * @param {string} [mimeType='text/plain'] - The MIME type of the file.
    */
   downloadFile(content: DownloadContent, filename: string, mimeType = 'text/plain'): void {
+    trackDownloadOutput(filename);
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     

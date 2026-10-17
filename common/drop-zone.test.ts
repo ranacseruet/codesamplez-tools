@@ -1,4 +1,5 @@
 import { waitFor } from '@testing-library/dom';
+import { clearMountedToolAnalyticsId, setMountedToolAnalyticsId } from './analytics-tool-context';
 import {
     DROP_ZONE_ACTIVE_CLASS,
     DROP_ZONE_TARGET_ATTRIBUTE,
@@ -68,6 +69,28 @@ describe('registerDropZone', () => {
         fire(target, 'drop', fileDrag([file]));
 
         await waitFor(() => expect(onText).toHaveBeenCalledWith('{"a":1}', file, { ignoredFileCount: 0 }));
+    });
+
+    it('emits file_loaded with method drop and file_type only', async () => {
+        const gtag = jest.fn();
+        (window as unknown as { gtag?: jest.Mock }).gtag = gtag;
+        setMountedToolAnalyticsId('json-formatter');
+        const onText = jest.fn();
+        cleanup = registerDropZone(target, { onText });
+        const file = new File(['{"a":1}'], 'data.json', { type: 'application/json' });
+
+        fire(target, 'drop', fileDrag([file]));
+
+        await waitFor(() => {
+            expect(gtag).toHaveBeenCalledWith('event', 'file_loaded', {
+                tool_id: 'json-formatter',
+                method: 'drop',
+                file_type: 'json'
+            });
+        });
+        expect(JSON.stringify(gtag.mock.calls)).not.toContain('data.json');
+        delete (window as unknown as { gtag?: jest.Mock }).gtag;
+        clearMountedToolAnalyticsId();
     });
 
     it('marks the element as a drop target for as long as it is registered', () => {
@@ -474,6 +497,27 @@ describe('registerFileInput', () => {
         target.dispatchEvent(new Event('change', { bubbles: true }));
 
         expect(onText).not.toHaveBeenCalled();
+    });
+
+    it('emits file_loaded with method picker', async () => {
+        const gtag = jest.fn();
+        (window as unknown as { gtag?: jest.Mock }).gtag = gtag;
+        setMountedToolAnalyticsId('diff-checker');
+        const onText = jest.fn();
+        cleanup = registerFileInput(target, { onText });
+        const file = new File(['a'], 'left.txt');
+
+        select(file);
+
+        await waitFor(() => {
+            expect(gtag).toHaveBeenCalledWith('event', 'file_loaded', {
+                tool_id: 'diff-checker',
+                method: 'picker',
+                file_type: 'txt'
+            });
+        });
+        delete (window as unknown as { gtag?: jest.Mock }).gtag;
+        clearMountedToolAnalyticsId();
     });
 
     it('hands a selected raw file to onFile without decoding it', () => {

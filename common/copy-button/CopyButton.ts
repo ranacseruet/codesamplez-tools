@@ -1,3 +1,4 @@
+import { trackCopyOutput } from '../analytics-events';
 import { copyTextToClipboard } from '../clipboard';
 
 type CopyTargetElement = HTMLTextAreaElement | HTMLInputElement | HTMLPreElement;
@@ -120,6 +121,7 @@ class CopyButton {
         // common/clipboard.ts; this component owns only the feedback.
         try {
             await copyTextToClipboard(content);
+            trackCopyOutput();
             this.showSuccessAnimation();
             this.dispatchCopyEvent(content);
         } catch (error) {

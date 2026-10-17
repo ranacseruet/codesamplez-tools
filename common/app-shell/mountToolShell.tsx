@@ -1,7 +1,9 @@
 import { render } from 'preact';
 import { ToolShellFooter, ToolShellHeader, createToolBreadcrumbItems } from './AppShell';
 import { ShareBar } from './ShareBar';
-import { resolveToolIdFromPath } from './toolCatalog';
+import { clearMountedToolAnalyticsId, setMountedToolAnalyticsId } from '../analytics-tool-context';
+import { registerRelatedToolClickAnalytics } from '../related-tools/related-tool-click-analytics';
+import { resolveAnalyticsToolIdFromPath, resolveToolIdFromPath } from './toolCatalog';
 import { recordToolVisit } from '../recent-tools';
 import { openShortcutHelp, registerShortcutHelp } from '../shortcut-utils';
 import { SITE_BASE_URL } from '../siteBaseUrl';
@@ -104,6 +106,9 @@ export function mountToolShell({
     // cannot drift apart. The tools index mounts the same shell, and resolves
     // to no tool id, so browsing the index never counts as a visit.
     if (isStandaloneMode) {
+        setMountedToolAnalyticsId(resolveAnalyticsToolIdFromPath(window.location.pathname));
+        registerRelatedToolClickAnalytics();
+
         const visitedToolId = resolveToolIdFromPath(window.location.pathname);
         if (visitedToolId) {
             recordToolVisit(visitedToolId);
@@ -124,6 +129,8 @@ export function mountToolShell({
                 window.removeEventListener('pageshow', onPageShow);
             };
         }
+    } else {
+        clearMountedToolAnalyticsId();
     }
 
     // Dark is the product default: it applies when the toggle is disabled (no

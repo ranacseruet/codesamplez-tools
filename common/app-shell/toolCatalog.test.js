@@ -135,6 +135,16 @@ describe('tool catalog runtime data', () => {
     });
 });
 
+describe('resolveAnalyticsToolIdFromPath', () => {
+    const { resolveAnalyticsToolIdFromPath } = require('./toolCatalog');
+
+    it('returns the public-path slug used by analytics events', () => {
+        expect(resolveAnalyticsToolIdFromPath('/diff-checker/')).toBe('diff-checker');
+        expect(resolveAnalyticsToolIdFromPath('/tools/json-formatter/')).toBe('json-formatter');
+        expect(resolveAnalyticsToolIdFromPath('/')).toBeNull();
+    });
+});
+
 describe('resolveToolIdFromPath', () => {
     const { resolveToolIdFromPath } = require('./toolCatalog');
 

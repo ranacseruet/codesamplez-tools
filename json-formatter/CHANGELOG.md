@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.17] - 2026-10-17
+
+### JSON Formatter
+
+- Emit shared analytics events for copy, download, share link, file load, and related-tool clicks. No file names or URLs are sent.
+
 ## [1.0.16] - 2026-10-17
 
 ### JSON Formatter
