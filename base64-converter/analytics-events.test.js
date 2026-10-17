@@ -147,6 +147,41 @@ describe('Base64 Converter tool_used', () => {
     expect(JSON.stringify(calls)).not.toContain(invalid);
   });
 
+  it('emits tool_used when a file read fails and omits the file contents', () => {
+    const gtag = installGtag();
+    const converter = window.base64ConverterInstance;
+    const fileName = 'secret-file-name-UNIQUE-93.txt';
+    const file = new File([SECRET], fileName, { type: 'text/plain' });
+    const reader = {
+      readAsDataURL: jest.fn(),
+      onload: null,
+      onerror: null,
+      result: null,
+      error: new Error('Read error ' + SECRET)
+    };
+    const RealFileReader = global.FileReader;
+    global.FileReader = jest.fn(() => reader);
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    converter.handleFileUpload({ target: { files: [file], value: 'stale' } });
+    reader.onerror();
+
+    const calls = toolUsedCalls(gtag);
+    expect(calls).toHaveLength(1);
+    expect(calls[0][2]).toEqual({
+      tool_id: 'base64-converter',
+      action: 'encode',
+      trigger: 'user',
+      outcome: 'error',
+      input_size_bucket: '<1KB'
+    });
+    expect(JSON.stringify(calls)).not.toContain(SECRET);
+    expect(JSON.stringify(calls)).not.toContain(fileName);
+
+    consoleError.mockRestore();
+    global.FileReader = RealFileReader;
+  });
+
   it('tags Load Sample as sample and still sends the encode event', () => {
     const gtag = installGtag();
 

@@ -942,6 +942,13 @@ const createConverter = (): Base64ConverterInstance => {
             };
 
             reader.onerror = () => {
+                trackToolUsed({
+                    toolId: 'base64-converter',
+                    action: 'encode',
+                    inputBytes: file.size,
+                    trigger: 'user',
+                    outcome: 'error'
+                });
                 console.error('File reading error:', reader.error);
                 resetOutputState(this);
                 this.elements.input.value = '';
