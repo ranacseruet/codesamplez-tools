@@ -147,7 +147,7 @@ function renderPrivacyMain(manifest, pageUrl, lastUpdatedLabel) {
     <section aria-labelledby="privacy-analytics">
       <h2 class="section-title" id="privacy-analytics">Google Analytics</h2>
       <p class="section-body">The published site loads Google Analytics 4. Pages include Google's gtag.js script and a configuration call for this site's measurement ID. That script uses cookies and sends usage information, including the page address, to Google.</p>
-      <p class="section-body">The pages do not add analytics events beyond that default configuration. Local development builds do not include the script.</p>
+      <p class="section-body">The pages also send a tool_used event for diff-checker, json-formatter, and base64 with the params tool_id, action, trigger (user, sample, or share), and outcome (success or error), plus an optional input_size_bucket; unknown trigger or outcome values are dropped, and the event contains no tool input content. Local development builds do not include the script.</p>
     </section>
 
     <section aria-labelledby="privacy-ads">

@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.14] - 2026-10-17
+
+### JSON Formatter
+
+- Records a tool_used analytics event for Format, Minify, and Validate after the JSON is parsed, tagged with trigger and outcome. The JSON and schema text are not sent.
+
 ## [1.0.13] - 2026-10-17
 
 ### JSON Formatter
