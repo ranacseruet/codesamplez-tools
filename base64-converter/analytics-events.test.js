@@ -47,6 +47,7 @@ const DOM = `
   <img id="base64converter-image-preview" alt="Decoded image preview" hidden />
   <span id="base64converter-status"></span>
   <button id="base64converter-convert"></button>
+  <button id="base64converter-load-sample"></button>
   <button id="base64converter-swap" disabled></button>
   <button id="base64converter-download-decoded" disabled></button>
 `;
@@ -87,6 +88,8 @@ describe('Base64 Converter tool_used', () => {
     expect(calls[0][2]).toEqual({
       tool_id: 'base64-converter',
       action: 'encode',
+      trigger: 'user',
+      outcome: 'success',
       input_size_bucket: '<1KB'
     });
     expect(JSON.stringify(calls)).not.toContain(SECRET);
@@ -106,6 +109,8 @@ describe('Base64 Converter tool_used', () => {
     expect(calls[0][2]).toEqual({
       tool_id: 'base64-converter',
       action: 'decode',
+      trigger: 'user',
+      outcome: 'success',
       input_size_bucket: '<1KB'
     });
     expect(JSON.stringify(calls)).not.toContain(SECRET);
@@ -123,5 +128,35 @@ describe('Base64 Converter tool_used', () => {
     expect(window.gtag).toBeUndefined();
     expect(error).not.toHaveBeenCalled();
     error.mockRestore();
+  });
+
+  it('tags a failed decode as error and still sends the event', () => {
+    const gtag = installGtag();
+    const converter = window.base64ConverterInstance;
+    const invalid = '!!!not-base64-UNIQUE-93!!!';
+
+    converter.elements.mode.value = 'decode';
+    converter.elements.input.value = invalid;
+    converter.elements.convertButton.click();
+
+    const calls = toolUsedCalls(gtag);
+    expect(calls).toHaveLength(1);
+    expect(calls[0][2].action).toBe('decode');
+    expect(calls[0][2].trigger).toBe('user');
+    expect(calls[0][2].outcome).toBe('error');
+    expect(JSON.stringify(calls)).not.toContain(invalid);
+  });
+
+  it('tags Load Sample as sample and still sends the encode event', () => {
+    const gtag = installGtag();
+
+    document.getElementById('base64converter-load-sample').click();
+
+    const calls = toolUsedCalls(gtag);
+    expect(calls).toHaveLength(1);
+    expect(calls[0][2].trigger).toBe('sample');
+    expect(calls[0][2].outcome).toBe('success');
+    expect(calls[0][2].action).toBe('encode');
+    expect(calls[0][2].tool_id).toBe('base64-converter');
   });
 });

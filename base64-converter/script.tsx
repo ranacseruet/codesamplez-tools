@@ -6,7 +6,7 @@ import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { buildShareUrl, readHashOrQueryParam, SHARE_URL_MAX_LENGTH } from '../common/share-url';
 import { copyTextToClipboard } from '../common/clipboard';
-import { trackToolUsed, utf8ByteLength } from '../common/analytics-events';
+import { trackToolUsed, utf8ByteLength, type ToolUsedOutcome, type ToolUsedTrigger } from '../common/analytics-events';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { describeLoadedFile, registerDropZone, registerFileInput, type LoadedFileDetail } from '../common/drop-zone';
 import { formatBytes } from '../common/format-utils';
@@ -72,7 +72,7 @@ interface Base64ConverterInstance {
     downloadManager: DownloadManager;
     clearButtonInstance: ClearButton | null;
     copyButtonInstance: CopyButton;
-    processInput(): void;
+    processInput(trigger?: ToolUsedTrigger): void;
     // Sniffs raster magic bytes. Returns the MIME type for previewable raster
     // images, or null for anything else (including SVG, which stays
     // download-only — see PREVIEWABLE_RASTER_MIME_TYPES).
@@ -461,10 +461,10 @@ const createConverter = (): Base64ConverterInstance => {
         clearButtonInstance: null,
         copyButtonInstance: null as unknown as CopyButton,
 
-        processInput() {
+        processInput(trigger: ToolUsedTrigger = 'user') {
             const rawInput = this.elements.input.value.trim();
             let reportedUse = false;
-            const reportUse = (action: 'encode' | 'decode') => {
+            const reportUse = (action: 'encode' | 'decode', outcome: ToolUsedOutcome) => {
                 if (reportedUse) {
                     return;
                 }
@@ -472,7 +472,9 @@ const createConverter = (): Base64ConverterInstance => {
                 trackToolUsed({
                     toolId: 'base64-converter',
                     action,
-                    inputBytes: utf8ByteLength(rawInput)
+                    inputBytes: utf8ByteLength(rawInput),
+                    trigger,
+                    outcome
                 });
             };
 
@@ -512,7 +514,7 @@ const createConverter = (): Base64ConverterInstance => {
                 } else {
                     // v4 contract: errors surface inline in the status chip.
                     const mode = this.elements.mode.value;
-                    reportUse(mode === 'encode' ? 'encode' : 'decode');
+                    reportUse(mode === 'encode' ? 'encode' : 'decode', 'error');
                     this.elements.status.textContent = 'Invalid Data URI format';
                     return;
                 }
@@ -653,7 +655,7 @@ const createConverter = (): Base64ConverterInstance => {
 
                 this.outputKind = outputKind;
                 this.lastConversionDirection = statusActionMessage === 'Encoded' ? 'encode' : 'decode';
-                reportUse(this.lastConversionDirection);
+                reportUse(this.lastConversionDirection, 'success');
                 if (outputKind === 'image') {
                     const previewMimeType = inferredMimeType || detectedMimeType;
                     if (inferredMimeType) {
@@ -692,7 +694,7 @@ const createConverter = (): Base64ConverterInstance => {
                     : mode === 'decode'
                         ? 'decode'
                         : (codec.isBase64(base64Payload) ? 'decode' : 'encode');
-                reportUse(action);
+                reportUse(action, 'error');
                 resetOutputState(this);
                 let errorMessage = '';
                 const message = error instanceof Error ? error.message : String(error);
@@ -916,10 +918,19 @@ const createConverter = (): Base64ConverterInstance => {
                     trackToolUsed({
                         toolId: 'base64-converter',
                         action: 'encode',
-                        inputBytes: file.size
+                        inputBytes: file.size,
+                        trigger: 'user',
+                        outcome: 'success'
                     });
 
                 } catch (error: unknown) {
+                    trackToolUsed({
+                        toolId: 'base64-converter',
+                        action: 'encode',
+                        inputBytes: file.size,
+                        trigger: 'user',
+                        outcome: 'error'
+                    });
                     console.error('File processing error after read:', error);
                     resetOutputState(this);
                     this.elements.input.value = '';
@@ -1217,7 +1228,7 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
         // Auto so a plain-text sample isn't fed to Decode (which would error).
         converter.elements.mode.value = 'auto';
         converter.elements.input.value = 'Hello from CodeSamplez Tools!';
-        converter.processInput();
+        converter.processInput('sample');
     };
     const sampleButton = document.getElementById('base64converter-load-sample');
     if (sampleButton) {
@@ -1296,7 +1307,7 @@ function initializeBase64ConverterDom(): Base64ConverterInstance | null {
 
     if (shouldAutoConvert && dataFromUrl && typeof converter.processInput === 'function') {
         setTimeout(() => {
-            converter.processInput();
+            converter.processInput('share');
         }, 100);
     }
 

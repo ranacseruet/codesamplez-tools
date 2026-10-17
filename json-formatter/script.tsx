@@ -7,7 +7,7 @@ import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { describeLoadedFile, registerDropZone, registerFileInput, type LoadedFileDetail } from '../common/drop-zone';
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
-import { trackToolUsed, utf8ByteLength } from '../common/analytics-events';
+import { trackToolUsed, utf8ByteLength, type ToolUsedOutcome, type ToolUsedTrigger } from '../common/analytics-events';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
 import { JSON_FORMATTER_WORKER_CHAR_THRESHOLD as JSON_WORKER_CHAR_THRESHOLD } from '../common/worker-thresholds.mjs';
 import {
@@ -603,7 +603,7 @@ export class JSONFormatter {
   }
 
 
-  async formatJSON(): Promise<void> {
+  async formatJSON(trigger: ToolUsedTrigger = 'user'): Promise<void> {
     // Capture current run ID to prevent stale results
     const runId = ++this.currentRunId;
     const validationRunId = ++this.schemaValidationRunId;
@@ -613,19 +613,25 @@ export class JSONFormatter {
     // position, schema data) must describe the text it actually formatted,
     // not whatever the textarea holds by the time an await resolves.
     const rawInput = this.input.value;
-
-    if (rawInput.trim()) {
-      const action = this.hasSchema()
-        ? 'validate'
-        : this.getIndentOption() === 'minify'
-          ? 'minify'
-          : 'format';
+    const action = hasSchema
+      ? 'validate'
+      : this.getIndentOption() === 'minify'
+        ? 'minify'
+        : 'format';
+    // Record the run only after formatJson returns or throws. A parse error
+    // is still an activation: tag it outcome=error instead of dropping it.
+    const reportParsed = (outcome: ToolUsedOutcome) => {
+      if (!rawInput.trim()) {
+        return;
+      }
       trackToolUsed({
         toolId: 'json-formatter',
         action,
-        inputBytes: utf8ByteLength(rawInput)
+        inputBytes: utf8ByteLength(rawInput),
+        trigger,
+        outcome
       });
-    }
+    };
 
     try {
       let inputValue = rawInput.trim();
@@ -660,6 +666,7 @@ export class JSONFormatter {
       // was loading resolves to a sentinel the caller must drop, never use.
       if (runId !== this.currentRunId) return;
       const { formatted, formattedString } = result;
+      reportParsed('success');
 
       // Clear previous output
       this.output.replaceChildren();
@@ -708,6 +715,7 @@ export class JSONFormatter {
       // output: skip error reporting (and the schema call below) entirely.
       // The finally block's own runId check restores button state correctly.
       if (runId !== this.currentRunId) return;
+      reportParsed('error');
       const fallbackMessage = error instanceof Error ? error.message : String(error);
       this.reportJsonError(rawInput, this.autoFixCheckbox.checked, fallbackMessage);
       this.copyBtn.disabled = true;
@@ -1095,7 +1103,7 @@ export class JSONFormatter {
     this.clearValidationStatus();
     this.updatePrimaryActionLabel();
     this.clearButtonInstance.updateVisibility(); // Explicitly update ClearButton visibility
-    this.formatJSON();
+    this.formatJSON('sample');
     NotificationManager.show('Sample data loaded successfully!', 2000, { type: 'success' });
   }
 
@@ -1171,7 +1179,7 @@ export class JSONFormatter {
     this.autoFixCheckbox.checked = payload.autoFix;
     this.indentSelect.value = String(payload.indent);
     this.clearButtonInstance.updateVisibility();
-    await this.formatJSON();
+    await this.formatJSON('share');
     NotificationManager.show('Loaded JSON from shared link.', 2000, { type: 'success' });
 
     if (source === 'query') {

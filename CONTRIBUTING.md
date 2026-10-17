@@ -214,21 +214,24 @@ one `tool_used` event in the week.
 | --- | --- | --- |
 | `tool_id` | yes | Tool slug, for example `diff-checker`, `json-formatter`, `base64-converter` |
 | `action` | yes | `compare`, `format`, `minify`, `validate`, `encode`, `decode`, `generate`, `analyze` |
+| `trigger` | yes | `user` (click, shortcut, or file drop), `sample` (Load Sample), `share` (a shared link that runs the tool) |
+| `outcome` | yes | `success` or `error` |
 | `input_size_bucket` | no | `<1KB`, `1–10KB`, `10–100KB`, `>100KB` |
 
 Rules:
 
 - Do not send document text, file names, secrets, or any other user input. Params are an allowlist. Unknown keys and strings longer than 100 characters are dropped, not truncated.
+- Tag every run. A Load Sample run is `trigger=sample`, a shared-link run is `trigger=share`, and a failed parse or conversion is `outcome=error`. Do not drop those events to keep the count “clean”.
 - Send at most one `tool_used` per 2 seconds for the same `tool_id` and `action`, so a live or auto-run tool does not emit one event per keystroke.
 - Diff Checker Compare, JSON Formatter Format / Minify / Validate, and Base64 Encode / Decode are wired. The other tools follow in a separate issue.
-- JSON Formatter sends one action per run: `validate` when a schema is present, otherwise `minify` when indentation is Minified, otherwise `format`.
+- JSON Formatter sends one action per run: `validate` when a schema is present, otherwise `minify` when indentation is Minified, otherwise `format`. The event is sent after the JSON has been parsed (or the parse has thrown), not before.
 
 ### Marking the key event in GA4
 
 The owner does this in the GA4 property. It is not part of the build.
 
 1. Admin → Events → mark `tool_used` as a key event.
-2. Admin → Custom definitions → create event-scoped custom dimensions for `tool_id` and `action`, so both show up in reports.
+2. Admin → Custom definitions → create event-scoped custom dimensions for `tool_id`, `action`, `trigger`, and `outcome`, so each shows up in reports.
 
 ## Documentation Standards
 

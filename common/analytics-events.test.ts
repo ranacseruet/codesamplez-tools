@@ -159,12 +159,43 @@ describe('trackToolUsed', () => {
     it('sends tool_used with a coarse size bucket and no raw byte count', () => {
         const gtag = installGtag();
 
-        trackToolUsed({ toolId: 'base64-converter', action: 'encode', inputBytes: 2048 });
+        trackToolUsed({
+            toolId: 'base64-converter',
+            action: 'encode',
+            inputBytes: 2048,
+            trigger: 'user',
+            outcome: 'success'
+        });
 
         expect(gtag).toHaveBeenCalledWith('event', 'tool_used', {
             tool_id: 'base64-converter',
             action: 'encode',
+            trigger: 'user',
+            outcome: 'success',
             input_size_bucket: '1–10KB'
+        });
+    });
+
+    it('keeps sample and share triggers and drops an unknown trigger or outcome', () => {
+        const gtag = installGtag();
+
+        trackToolUsed({ toolId: 'diff-checker', action: 'compare', trigger: 'sample', outcome: 'error' });
+        trackEvent('tool_used', {
+            tool_id: 'json-formatter',
+            action: 'format',
+            trigger: 'paste',
+            outcome: 'failed'
+        });
+
+        expect(gtag).toHaveBeenNthCalledWith(1, 'event', 'tool_used', {
+            tool_id: 'diff-checker',
+            action: 'compare',
+            trigger: 'sample',
+            outcome: 'error'
+        });
+        expect(gtag).toHaveBeenNthCalledWith(2, 'event', 'tool_used', {
+            tool_id: 'json-formatter',
+            action: 'format'
         });
     });
 });
