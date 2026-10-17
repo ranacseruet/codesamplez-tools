@@ -8,6 +8,7 @@ import FileUploadButton from '../common/file-upload';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { NotificationManager } from '../common/notification-manager';
 import { isEditableTarget, registerPrimaryActionShortcut } from '../common/shortcut-utils';
+import { trackToolUsed, utf8ByteLength, type ToolUsedOutcome, type ToolUsedTrigger } from '../common/analytics-events';
 import {
     addJsonArrayItem,
     addJsonObjectProperty,
@@ -503,9 +504,25 @@ export function JsonEditorApp(): JSX.Element {
         setFieldErrors({});
     }, []);
 
+    const reportJsonEditor = (
+        action: 'import' | 'edit' | 'export',
+        outcome: ToolUsedOutcome,
+        trigger: ToolUsedTrigger = 'user',
+        inputBytes?: number
+    ) => {
+        trackToolUsed({
+            toolId: 'json-editor',
+            action,
+            trigger,
+            outcome,
+            inputBytes
+        });
+    };
+
     const handleImport = useCallback((input: string, sourceName = '') => {
         setImportText(input);
         setImportError(null);
+        const trigger: ToolUsedTrigger = sourceName === 'sample' ? 'sample' : 'user';
 
         try {
             const next = parseJsonEditorInput(input, idFactory);
@@ -516,11 +533,13 @@ export function JsonEditorApp(): JSX.Element {
                 2200,
                 { type: 'success' }
             );
+            reportJsonEditor('import', 'success', trigger, utf8ByteLength(input));
         } catch (error) {
             const diagnostics = error instanceof Error && 'diagnostics' in error
                 ? (error as Error & { diagnostics: JsonEditorParseDiagnostics }).diagnostics
                 : getFallbackDiagnostics(error instanceof Error ? error.message : String(error));
             setImportError(diagnostics);
+            reportJsonEditor('import', 'error', trigger, utf8ByteLength(input));
         }
     }, [commitDocument, idFactory]);
 
@@ -562,14 +581,21 @@ export function JsonEditorApp(): JSX.Element {
             if (event.key.toLowerCase() === 'z') {
                 event.preventDefault();
                 if (event.shiftKey) {
+                    let changed = false;
                     setHistory((current) => {
                         if (current.future.length === 0) return current;
+                        changed = true;
                         const [next, ...remainingFuture] = current.future;
                         return { past: [...current.past, current.present], present: next, future: remainingFuture };
                     });
+                    if (changed) {
+                        trackToolUsed({ toolId: 'json-editor', action: 'edit', trigger: 'user', outcome: 'success' });
+                    }
                 } else {
+                    let changed = false;
                     setHistory((current) => {
                         if (current.past.length === 0) return current;
+                        changed = true;
                         const previous = current.past[current.past.length - 1];
                         return {
                             past: current.past.slice(0, -1),
@@ -577,15 +603,23 @@ export function JsonEditorApp(): JSX.Element {
                             future: [current.present, ...current.future].slice(0, HISTORY_LIMIT)
                         };
                     });
+                    if (changed) {
+                        trackToolUsed({ toolId: 'json-editor', action: 'edit', trigger: 'user', outcome: 'success' });
+                    }
                 }
                 setFieldErrors({});
             } else if (event.key.toLowerCase() === 'y') {
                 event.preventDefault();
+                let changed = false;
                 setHistory((current) => {
                     if (current.future.length === 0) return current;
+                    changed = true;
                     const [next, ...remainingFuture] = current.future;
                     return { past: [...current.past, current.present], present: next, future: remainingFuture };
                 });
+                if (changed) {
+                    trackToolUsed({ toolId: 'json-editor', action: 'edit', trigger: 'user', outcome: 'success' });
+                }
                 setFieldErrors({});
             }
         };
@@ -621,18 +655,22 @@ export function JsonEditorApp(): JSX.Element {
             const numberValue = Number(trimmed);
             if (!isValidJsonEditorNumber(trimmed) || !Number.isFinite(numberValue)) {
                 setFieldError(nodeId, 'Enter a valid JSON number.');
+                reportJsonEditor('edit', 'error', 'user', utf8ByteLength(rawValue));
                 return false;
             }
             commitDocument(updateJsonEditorValue(history.present, nodeId, numberValue));
+            reportJsonEditor('edit', 'success', 'user', utf8ByteLength(rawValue));
             return true;
         }
 
         if (current.type === 'boolean') {
             commitDocument(updateJsonEditorValue(history.present, nodeId, rawValue === 'true'));
+            reportJsonEditor('edit', 'success', 'user', utf8ByteLength(rawValue));
             return true;
         }
 
         commitDocument(updateJsonEditorValue(history.present, nodeId, rawValue));
+        reportJsonEditor('edit', 'success', 'user', utf8ByteLength(rawValue));
         return true;
     }, [commitDocument, history.present, setFieldError]);
 
@@ -640,14 +678,17 @@ export function JsonEditorApp(): JSX.Element {
         const parent = findJsonObjectPropertyParent(history.present, propertyId);
         if (!parent || hasDuplicateJsonObjectKey(parent, key, propertyId)) {
             setFieldError(propertyId, `Duplicate object key "${key}".`);
+            reportJsonEditor('edit', 'error');
             return false;
         }
 
         try {
             commitDocument(renameJsonObjectProperty(history.present, propertyId, key));
+            reportJsonEditor('edit', 'success');
             return true;
         } catch (error) {
             setFieldError(propertyId, error instanceof Error ? error.message : 'That key cannot be used.');
+            reportJsonEditor('edit', 'error');
             return false;
         }
     }, [commitDocument, history.present, setFieldError]);
@@ -661,9 +702,11 @@ export function JsonEditorApp(): JSX.Element {
         }
         try {
             commitDocument(changeJsonEditorNodeType(history.present, nodeId, nextType, idFactory));
+            reportJsonEditor('edit', 'success');
             return true;
         } catch (error) {
             showMutationError(error);
+            reportJsonEditor('edit', 'error');
             return false;
         }
     }, [commitDocument, history.present, idFactory]);
@@ -682,8 +725,10 @@ export function JsonEditorApp(): JSX.Element {
                 return nextSet;
             });
             commitDocument(next);
+            reportJsonEditor('edit', 'success');
         } catch (error) {
             showMutationError(error);
+            reportJsonEditor('edit', 'error');
         }
     }, [commitDocument, history.present, idFactory]);
 
@@ -701,8 +746,10 @@ export function JsonEditorApp(): JSX.Element {
                 return nextSet;
             });
             commitDocument(next);
+            reportJsonEditor('edit', 'success');
         } catch (error) {
             showMutationError(error);
+            reportJsonEditor('edit', 'error');
         }
     }, [commitDocument, history.present, idFactory]);
 
@@ -718,22 +765,28 @@ export function JsonEditorApp(): JSX.Element {
     const handleDuplicate = useCallback((nodeId: string) => {
         try {
             commitDocument(duplicateJsonEditorNode(history.present, nodeId, idFactory));
+            reportJsonEditor('edit', 'success');
         } catch (error) {
             showMutationError(error);
+            reportJsonEditor('edit', 'error');
         }
     }, [commitDocument, history.present, idFactory]);
 
     const handleDelete = useCallback((nodeId: string) => {
         commitDocument(deleteJsonEditorNode(history.present, nodeId));
+        reportJsonEditor('edit', 'success');
     }, [commitDocument, history.present]);
 
     const handleMove = useCallback((nodeId: string, direction: 'up' | 'down') => {
         commitDocument(moveJsonEditorNode(history.present, nodeId, direction));
+        reportJsonEditor('edit', 'success');
     }, [commitDocument, history.present]);
 
     const handleUndo = useCallback(() => {
+        let changed = false;
         setHistory((current) => {
             if (current.past.length === 0) return current;
+            changed = true;
             const previous = current.past[current.past.length - 1];
             return {
                 past: current.past.slice(0, -1),
@@ -742,15 +795,23 @@ export function JsonEditorApp(): JSX.Element {
             };
         });
         setFieldErrors({});
+        if (changed) {
+            reportJsonEditor('edit', 'success');
+        }
     }, []);
 
     const handleRedo = useCallback(() => {
+        let changed = false;
         setHistory((current) => {
             if (current.future.length === 0) return current;
+            changed = true;
             const [next, ...remainingFuture] = current.future;
             return { past: [...current.past, current.present], present: next, future: remainingFuture };
         });
         setFieldErrors({});
+        if (changed) {
+            reportJsonEditor('edit', 'success');
+        }
     }, []);
 
     const handleClear = useCallback(() => {
@@ -780,14 +841,17 @@ export function JsonEditorApp(): JSX.Element {
     const handleDownload = useCallback(() => {
         if (serializationError) {
             NotificationManager.show(`Could not download JSON. ${serializationError}`, 3500, { type: 'error' });
+            reportJsonEditor('export', 'error');
             return;
         }
         try {
             if (!downloadManagerRef.current) downloadManagerRef.current = new DownloadManager();
             downloadManagerRef.current.downloadFile(preview, 'edited.json', 'application/json');
             NotificationManager.show('Downloaded edited.json.', 2200, { type: 'success' });
+            reportJsonEditor('export', 'success', 'user', utf8ByteLength(preview));
         } catch (error) {
             NotificationManager.show(`Could not download JSON. ${error instanceof Error ? error.message : String(error)}`, 3500, { type: 'error' });
+            reportJsonEditor('export', 'error');
         }
     }, [preview, serializationError]);
 

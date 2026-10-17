@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.15] - 2026-10-19
+
+### Base64 Converter
+
+- Accept converter format, JWT algorithm, and image export format names on shared tool_used events. This tool's actions are unchanged.
+
 ## [1.0.14] - 2026-10-19
 
 ### Base64 Converter

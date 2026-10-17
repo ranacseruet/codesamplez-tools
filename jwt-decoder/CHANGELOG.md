@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.13] - 2026-10-17
+
+### JWT Decoder & Validator
+
+- Record tool_used analytics events for decode and verify. Tokens and secrets are not sent.
+
 ## [1.0.12] - 2026-10-17
 
 ### JWT Decoder

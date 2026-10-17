@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.14] - 2026-10-19
+
+### QR Code Generator
+
+- Record a tool_used analytics event when a QR code is generated. The encoded text is not sent.
+
 ## [1.0.13] - 2026-10-17
 
 ### QR Code Generator

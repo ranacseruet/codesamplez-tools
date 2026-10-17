@@ -5,6 +5,7 @@ import { NotificationManager } from '../common/notification-manager';
 import { hydrate, render } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { trackToolUsed, utf8ByteLength, type ToolUsedOutcome, type ToolUsedTrigger } from '../common/analytics-events';
 import toolMetadata from './tool.meta.json';
 
 const QR_EMPTY_INPUT_MESSAGE = 'Please enter text or a URL to generate a QR code.';
@@ -57,6 +58,9 @@ export function QRCodeGeneratorApp() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clearButtonRef = useRef<ClearButton | null>(null);
+  // Null until the user edits or loads a sample, so the first automatic
+  // render of the default URL is not an activation.
+  const triggerRef = useRef<ToolUsedTrigger | null>(null);
 
   useEffect(() => {
     if (!(textAreaRef.current instanceof HTMLTextAreaElement)) {
@@ -82,6 +86,21 @@ export function QRCodeGeneratorApp() {
   }, [text]);
 
   useEffect(() => {
+    const trigger = triggerRef.current;
+    let active = true;
+    const reportGenerate = (outcome: ToolUsedOutcome) => {
+      if (!active || !trigger || !text.trim()) {
+        return;
+      }
+      trackToolUsed({
+        toolId: 'qr-code-generator',
+        action: 'generate',
+        inputBytes: utf8ByteLength(text),
+        trigger,
+        outcome
+      });
+    };
+
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       const canvas = canvasRef.current;
@@ -100,20 +119,26 @@ export function QRCodeGeneratorApp() {
 
       const options = createQrCanvasOptions({ size, margin, errorCorrection });
       QRCode.toCanvas(canvas, text, options, (error) => {
+        if (!active) {
+          return;
+        }
         if (error) {
           console.error(error);
           setCanvasVisible(false);
           setErrorMessage(QR_TOO_LONG_ERROR_MESSAGE);
+          reportGenerate('error');
           return;
         }
 
         setCanvasVisible(true);
         setErrorMessage('');
         setCanvasAriaLabel(getQrCanvasAriaLabel(text));
+        reportGenerate('success');
       });
     }, 250);
 
     return () => {
+      active = false;
       clearTimeout(debounceRef.current);
     };
   }, [text, size, margin, errorCorrection]);
@@ -137,16 +162,30 @@ export function QRCodeGeneratorApp() {
   };
 
   const handleLoadSample = () => {
+    triggerRef.current = 'sample';
+    // Loading the sample when that URL is already showing does not change
+    // state, so the effect will not run again. Count the click itself.
+    if (text === DEFAULT_QR_STATE.text) {
+      trackToolUsed({
+        toolId: 'qr-code-generator',
+        action: 'generate',
+        inputBytes: utf8ByteLength(DEFAULT_QR_STATE.text),
+        trigger: 'sample',
+        outcome: 'success'
+      });
+    }
     setText(DEFAULT_QR_STATE.text);
     NotificationManager.show('Sample URL loaded', 2000, { type: 'success' });
   };
 
   const handleTextInput = (event) => {
+    triggerRef.current = 'user';
     const target = event.target;
     setText(target instanceof HTMLTextAreaElement ? target.value : '');
   };
 
   const handleSizeInput = (event) => {
+    triggerRef.current = 'user';
     const target = event.target;
     if (target instanceof HTMLInputElement) {
       setSize(Number(target.value));
@@ -154,6 +193,7 @@ export function QRCodeGeneratorApp() {
   };
 
   const handleMarginInput = (event) => {
+    triggerRef.current = 'user';
     const target = event.target;
     if (target instanceof HTMLInputElement) {
       setMargin(Number(target.value));
@@ -161,6 +201,7 @@ export function QRCodeGeneratorApp() {
   };
 
   const handleErrorCorrectionChange = (event) => {
+    triggerRef.current = 'user';
     const target = event.target;
     if (target instanceof HTMLSelectElement) {
       setErrorCorrection(target.value);

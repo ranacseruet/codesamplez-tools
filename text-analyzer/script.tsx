@@ -6,6 +6,7 @@ import { describeLoadedFile, registerDropZone, registerFileInput } from '../comm
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { trackToolUsed, utf8ByteLength, type ToolUsedTrigger } from '../common/analytics-events';
 import { analyzeText, type TextAnalysisResult } from './TextAnalyzer';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
 import { TEXT_ANALYZER_WORKER_CHAR_THRESHOLD as WORKER_CHAR_THRESHOLD } from '../common/worker-thresholds.mjs';
@@ -79,6 +80,7 @@ export function TextAnalyzerApp() {
     const fileInputRef = useRef(null);
     const clearButtonRef = useRef(null);
     const runnerRef = useRef<LazyRunner<string, TextAnalysisResult> | null>(null);
+    const triggerRef = useRef<ToolUsedTrigger>('user');
 
     // Small inputs (and the initial paint) are analyzed synchronously: it is
     // sub-millisecond work, keeps hydration deterministic, and avoids worker
@@ -119,6 +121,13 @@ export function TextAnalyzerApp() {
             if (active) {
                 setAsyncResult(analysis);
                 setIsAnalyzing(false);
+                trackToolUsed({
+                    toolId: 'text-analyzer',
+                    action: 'analyze',
+                    inputBytes: utf8ByteLength(text),
+                    trigger: triggerRef.current,
+                    outcome: 'success'
+                });
             }
         });
         return () => {
@@ -131,6 +140,21 @@ export function TextAnalyzerApp() {
     // Prefer the fresh synchronous result; for large inputs fall through to the
     // most recent worker result until the next one arrives.
     const result = syncResult ?? asyncResult ?? analyzeText('');
+
+    // Small inputs are analyzed during render. Record that run once per text
+    // change. Keystrokes inside the shared 2s window collapse to one event.
+    useEffect(() => {
+        if (!text || text.length > WORKER_CHAR_THRESHOLD) {
+            return;
+        }
+        trackToolUsed({
+            toolId: 'text-analyzer',
+            action: 'analyze',
+            inputBytes: utf8ByteLength(text),
+            trigger: triggerRef.current,
+            outcome: 'success'
+        });
+    }, [text]);
 
     useEffect(() => {
         if (!(textAreaRef.current instanceof HTMLTextAreaElement)) {
@@ -166,6 +190,7 @@ export function TextAnalyzerApp() {
 
         const fileOptions = {
             onText: (droppedText, file, detail) => {
+                triggerRef.current = 'user';
                 setText(droppedText);
                 NotificationManager.show(describeLoadedFile(file.name, detail), 2000, { type: 'success' });
             },
@@ -184,6 +209,7 @@ export function TextAnalyzerApp() {
     }, []);
 
     const handleLoadSample = () => {
+        triggerRef.current = 'sample';
         setText(SAMPLE_TEXT);
         NotificationManager.show('Sample text loaded', 3000, { type: 'success' });
     };
@@ -209,6 +235,7 @@ export function TextAnalyzerApp() {
     };
 
     const handleTextInput = (event) => {
+        triggerRef.current = 'user';
         const input = event.target;
         setText(input instanceof HTMLTextAreaElement ? input.value : '');
     };

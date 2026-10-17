@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.14] - 2026-10-19
+
+### Data Format Converter
+
+- Record a tool_used analytics event when a conversion runs, with from and to format names only. Document text is not sent.
+
 ## [1.0.13] - 2026-10-19
 
 ### Data Format Converter

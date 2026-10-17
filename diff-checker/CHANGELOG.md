@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.16] - 2026-10-19
+
+### Diff Checker
+
+- Accept converter format, JWT algorithm, and image export format names on shared tool_used events. This tool's actions are unchanged.
+
 ## [1.0.15] - 2026-10-19
 
 ### Diff Checker

@@ -209,6 +209,82 @@ describe('trackToolUsed', () => {
             action: 'format'
         });
     });
+
+    it('keeps converter, algorithm, and image format enums and drops user content', () => {
+        const gtag = installGtag();
+        const claim = '{"sub":"user-secret-claim-UNIQUE"}';
+        const token = 'eyJhbGciOiJIUzI1NiJ9.user-secret-token-UNIQUE.sig';
+        const key = 'super-secret-hmac-key-UNIQUE';
+
+        trackToolUsed({
+            toolId: 'data-format-converter',
+            action: 'convert',
+            trigger: 'user',
+            outcome: 'success',
+            from: 'json',
+            to: 'yaml'
+        });
+        trackToolUsed({
+            toolId: 'jwt-builder',
+            action: 'generate',
+            trigger: 'user',
+            outcome: 'success',
+            alg: 'RS256'
+        });
+        trackToolUsed({
+            toolId: 'image-editor',
+            action: 'export',
+            trigger: 'user',
+            outcome: 'success',
+            format: 'webp'
+        });
+        clearToolUsedDedupe();
+        trackEvent('tool_used', {
+            tool_id: 'jwt-builder',
+            action: 'generate',
+            trigger: 'user',
+            outcome: 'success',
+            alg: 'none',
+            from: claim,
+            to: token,
+            format: 'user-photo.png',
+            key,
+            claims: claim
+        });
+
+        expect(gtag).toHaveBeenNthCalledWith(1, 'event', 'tool_used', {
+            tool_id: 'data-format-converter',
+            action: 'convert',
+            trigger: 'user',
+            outcome: 'success',
+            from: 'json',
+            to: 'yaml'
+        });
+        expect(gtag).toHaveBeenNthCalledWith(2, 'event', 'tool_used', {
+            tool_id: 'jwt-builder',
+            action: 'generate',
+            trigger: 'user',
+            outcome: 'success',
+            alg: 'RS256'
+        });
+        expect(gtag).toHaveBeenNthCalledWith(3, 'event', 'tool_used', {
+            tool_id: 'image-editor',
+            action: 'export',
+            trigger: 'user',
+            outcome: 'success',
+            format: 'webp'
+        });
+        expect(gtag).toHaveBeenNthCalledWith(4, 'event', 'tool_used', {
+            tool_id: 'jwt-builder',
+            action: 'generate',
+            trigger: 'user',
+            outcome: 'success'
+        });
+        expect(JSON.stringify(gtag.mock.calls)).not.toContain(claim);
+        expect(JSON.stringify(gtag.mock.calls)).not.toContain(token);
+        expect(JSON.stringify(gtag.mock.calls)).not.toContain(key);
+        expect(JSON.stringify(gtag.mock.calls)).not.toContain('user-photo');
+    });
 });
 
 describe('inputSizeBucket', () => {

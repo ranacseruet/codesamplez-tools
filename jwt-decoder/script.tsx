@@ -6,6 +6,7 @@ import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import ClearButton from '../common/clear-button/ClearButton';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { trackToolUsed, utf8ByteLength, type ToolUsedOutcome, type ToolUsedTrigger } from '../common/analytics-events';
 import toolMetadata from './tool.meta.json';
 
 type StatusType = 'default' | 'success' | 'error' | 'warning';
@@ -95,7 +96,9 @@ export class JWTDecoderUI {
         this.setupTabs();
         this.setupEventListeners();
         this.preloadData();
-        this.decodeAndRender(false, true); // Initial decode only, no signature validation, suppress notification
+        // The preloaded sample is not a user action. Skip tool_used so a page
+        // view alone does not count as activation.
+        void this.decodeAndRenderWithAutoVerify(false, false, true, null);
         this.initializeTooltips();
     }
 
@@ -180,7 +183,7 @@ export class JWTDecoderUI {
         if (sampleBtn) {
             sampleBtn.addEventListener('click', () => {
                 this.preloadData();
-                void this.decodeAndRender(false, true);
+                void this.decodeAndRender(false, true, 'sample');
                 NotificationManager.show('Sample token loaded', 2000, { type: 'success' });
             });
         }
@@ -204,13 +207,36 @@ export class JWTDecoderUI {
     }
 
     // --- Core Logic & Rendering ---
-    async decodeAndRender(verifySignature = false, suppressNotification = false): Promise<void> {
-        return this.decodeAndRenderWithAutoVerify(verifySignature, false, suppressNotification);
+    async decodeAndRender(
+        verifySignature = false,
+        suppressNotification = false,
+        trigger: ToolUsedTrigger | null = 'user'
+    ): Promise<void> {
+        return this.decodeAndRenderWithAutoVerify(verifySignature, false, suppressNotification, trigger);
     }
 
-    async decodeAndRenderWithAutoVerify(verifySignature = false, isAuto = false, suppressNotification = false): Promise<void> {
+    private reportDecode(action: 'decode' | 'verify', outcome: ToolUsedOutcome, trigger: ToolUsedTrigger | null, token: string): void {
+        if (!trigger || !token) {
+            return;
+        }
+        trackToolUsed({
+            toolId: 'jwt-decoder',
+            action,
+            inputBytes: utf8ByteLength(token),
+            trigger,
+            outcome
+        });
+    }
+
+    async decodeAndRenderWithAutoVerify(
+        verifySignature = false,
+        isAuto = false,
+        suppressNotification = false,
+        trigger: ToolUsedTrigger | null = 'user'
+    ): Promise<void> {
         const jwt = this.elements.jwtInput.value.trim();
         const secret = this.elements.secretInput.value.trim();
+        const action = verifySignature ? 'verify' : 'decode';
 
         if (!jwt) {
             this.clearOutputs();
@@ -253,12 +279,14 @@ export class JWTDecoderUI {
                             'warning',
                             suppressNotification
                         );
+                        this.reportDecode(action, 'error', trigger, jwt);
                     } else if (!secret) {
                         if (isAuto) {
                             this.updateStatusOutput('Decoded successfully. Secret key required for verification.', 'warning', suppressNotification);
                         } else {
                             this.updateStatusOutput('Decoded successfully. Secret key required for signature validation.', 'warning', suppressNotification);
                         }
+                        this.reportDecode(action, 'error', trigger, jwt);
                     } else {
                         const isValid = await decoder.verifySignature(secret);
                         this.updateStatusOutput(
@@ -266,6 +294,7 @@ export class JWTDecoderUI {
                             isValid ? 'success' : 'error',
                             suppressNotification
                         );
+                        this.reportDecode(action, isValid ? 'success' : 'error', trigger, jwt);
                     }
                 } else {
                     // Only show decoding status when not verifying signature, unless it's an auto action
@@ -274,10 +303,12 @@ export class JWTDecoderUI {
                     } else {
                         this.updateStatusOutput('Decoded successfully.', 'success', suppressNotification);
                     }
+                    this.reportDecode(action, 'success', trigger, jwt);
                 }
 
             } catch (error: unknown) {
                 this.handleProcessingError(error);
+                this.reportDecode(action, 'error', trigger, jwt);
             }
         }
     }
