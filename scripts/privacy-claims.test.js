@@ -12,7 +12,9 @@ const TEXT_EXTENSIONS = new Set(['.html', '.js', '.json', '.md', '.mjs', '.ts', 
 const FORBIDDEN_CLAIMS = [
     ['No ', 'cookies'].join(''),
     ['no ', 'tracking'].join(''),
-    ['Zero Data ', 'Collection'].join('')
+    ['Zero Data ', 'Collection'].join(''),
+    ['no user data is ', 'sent'].join(''),
+    ['complete ', 'privacy'].join('')
 ].map((claim) => claim.toLowerCase());
 
 /**

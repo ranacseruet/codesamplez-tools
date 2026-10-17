@@ -285,6 +285,7 @@ describe('generated site assets', () => {
         const tools = getToolDefinitions();
 
         expect(llmsTxt.startsWith(`# ${rootPage.title}\n\n> ${rootPage.description}`)).toBe(true);
+        expect(llmsTxt).toContain('Tools process input locally in the browser, and no registration is required. Pages load Google Analytics and Google AdSense, which use cookies and send usage data.');
         expect(llmsTxt).toContain(rootPage.absoluteUrl);
         expect(llmsTxt).toContain('- [Sitemap](https://tools.codesamplez.com/sitemap.xml)');
 

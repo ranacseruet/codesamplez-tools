@@ -7,6 +7,7 @@ All notable changes to this tool are documented in this file.
 ### Text Analyzer
 
 - Privacy section now says tool input is processed in the browser and is not uploaded, and that the site uses Google Analytics and Google AdSense cookies.
+- Footer tagline now says tool input is processed locally and is not uploaded.
 
 ## [1.0.5] - 2026-10-14
 

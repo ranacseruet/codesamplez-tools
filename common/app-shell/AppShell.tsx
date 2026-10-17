@@ -261,7 +261,7 @@ export function ToolShellFooter({ homeHref = SITE_BASE_URL }: ToolShellFooterPro
                             CodeSamplez Tools
                         </a>
                         <p className="cst-shell__footer-tagline">
-                            Free, fast, client-side developer tools — your data never leaves the browser.
+                            Free, fast, client-side developer tools — tool input is processed locally and is not uploaded.
                         </p>
                     </div>
                     {TOOL_NAVIGATION_GROUPS.map((group) => (

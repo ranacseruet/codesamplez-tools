@@ -119,7 +119,7 @@ function renderHero(title, toolCount, catalogGroups) {
     return `    <section class="hero" aria-label="Introduction">
       <p class="hero-eyebrow">// ${toolCount} tools · 100% client-side · 0 uploads</p>
       <h1 class="main-title">${escapeHtml(title)}</h1>
-      <p class="hero-tagline">Fast, free utilities that run entirely in your browser — your data never leaves the tab.</p>
+      <p class="hero-tagline">Fast, free utilities that run entirely in your browser — tool input is processed locally and is not uploaded.</p>
       <div class="hero-actions">
         <a class="cta-button" href="#tools">Browse tools${renderInlineIcon('arrow-right')}</a>
         <a class="cta-button cta-button--ghost" href="#what-are-online-developer-tools">Why client-side?</a>
