@@ -5,17 +5,20 @@ const os = require('os');
 const path = require('path');
 const { XMLParser } = require('fast-xml-parser');
 const { getGroupedToolDefinitions, getRootPageDefinition, getToolById, getToolDefinitions } = require('./tool-manifest');
+const { getPrivacyPageDefinition } = require('./privacy-document');
 const {
     buildLlmsTxt,
     buildRobotsTxt,
     buildSitemapEntries,
     buildSitemapXml,
+    getRootPageLastmodPaths,
     getToolPageLastmodPaths,
+    listNonTestSourceFilesInDirectory,
     resolveGitLastmodForPaths,
     toSitemapUrlItem,
     writeGeneratedSiteAssets
 } = require('./generated-site-assets');
-const { REPO_ROOT } = require('./tool-manifest');
+const { getToolMetadataPath, REPO_ROOT } = require('./tool-manifest');
 
 function withEnv(overrides, run) {
     const originalEnv = { ...process.env };
@@ -78,6 +81,7 @@ describe('generated site assets', () => {
         const locations = urls.map((entry) => entry.loc);
         const expectedLocations = [
             getRootPageDefinition().absoluteUrl,
+            getPrivacyPageDefinition().absoluteUrl,
             ...getToolDefinitions().map((tool) => tool.absolutePageUrl)
         ];
 
@@ -158,6 +162,13 @@ describe('generated site assets', () => {
         expect(urls.slice(1).every((entry) => entry.lastmod === toolTimestamp)).toBe(true);
     });
 
+    it('counts AppShell as a homepage lastmod input because the footer is prerendered from it', () => {
+        const lastmodPaths = getRootPageLastmodPaths();
+
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'common/app-shell/AppShell.tsx'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/shell-footer.js'));
+    });
+
     it('counts the on-page changelog renderer as a lastmod input for every tool page', () => {
         // Derived guard: tool-changelog.js alters every tool page's HTML, so a
         // change to it must bump every tool's sitemap lastmod — exactly the
@@ -165,6 +176,70 @@ describe('generated site assets', () => {
         const lastmodPaths = getToolPageLastmodPaths(getToolDefinitions()[0]);
 
         expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-changelog.js'));
+    });
+
+    it('returns no paths when a lastmod input directory is missing', () => {
+        expect(listNonTestSourceFilesInDirectory('definitely-not-a-real-directory-for-lastmod')).toEqual([]);
+    });
+
+    it('includes every tool meta file and root-page content in root lastmod inputs', () => {
+        const lastmodPaths = getRootPageLastmodPaths();
+
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/root-page-content.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/lucide-icons.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-categories.js'));
+        getToolDefinitions().forEach((tool) => {
+            expect(lastmodPaths).toContain(getToolMetadataPath(tool.id));
+        });
+    });
+
+    it('includes app-shell, related-tools, article, and metadata sidecars in tool lastmod inputs', () => {
+        const lastmodPaths = getToolPageLastmodPaths(getToolDefinitions()[0]);
+
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'common/app-shell/toolCatalog.ts'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'common/related-tools/RelatedTools.tsx'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'common/tool-article/ToolArticle.tsx'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/related-tools-metadata.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-faq-metadata.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-howto-metadata.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-feature-metadata.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/prerender-tool.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/lucide-icons.js'));
+        expect(lastmodPaths).toContain(path.resolve(REPO_ROOT, 'scripts/tool-categories.js'));
+    });
+
+    it('derives homepage lastmod from the expanded root input set via git', () => {
+        const lastmodPaths = getRootPageLastmodPaths();
+        const entries = buildSitemapEntries();
+        const rootLastmod = resolveGitLastmodForPaths(lastmodPaths);
+        const spawnSyncImpl = jest.fn(() => ({
+            status: 0,
+            stdout: '2026-10-15T16:08:58.000Z\n'
+        }));
+
+        expect(rootLastmod === null || typeof rootLastmod === 'string').toBe(true);
+        expect(resolveGitLastmodForPaths(lastmodPaths, { spawnSyncImpl })).toBe('2026-10-15T16:08:58.000Z');
+        expect(spawnSyncImpl).toHaveBeenCalledWith(
+            'git',
+            expect.arrayContaining(['log', '-1', '--format=%cI', '--']),
+            expect.objectContaining({ cwd: REPO_ROOT })
+        );
+
+        const pathsPassedToGit = spawnSyncImpl.mock.calls[0][1].slice(4);
+        expect(pathsPassedToGit).toEqual(
+            expect.arrayContaining([
+                'scripts/root-page-content.js',
+                ...getToolDefinitions().map((tool) => path.relative(REPO_ROOT, getToolMetadataPath(tool.id)))
+            ])
+        );
+
+        const entriesWithResolvedRoot = buildSitemapEntries({
+            resolveLastmod: (paths, context) => (
+                context.type === 'root-page' ? resolveGitLastmodForPaths(paths, { spawnSyncImpl }) : null
+            )
+        });
+        expect(entriesWithResolvedRoot[0].lastmod).toBe('2026-10-15T16:08:58.000Z');
+        expect(entries[0].lastmod === undefined || typeof entries[0].lastmod === 'string').toBe(true);
     });
 
     it('omits lastmod when the resolver cannot determine a timestamp', async () => {
@@ -188,7 +263,9 @@ describe('generated site assets', () => {
             }
         });
 
-        expect(entries.slice(1).every((entry) => entry.lastmod === sharedTimestamp)).toBe(true);
+        const toolEntries = entries.filter((entry) => getToolDefinitions().some((tool) => tool.absolutePageUrl === entry.absoluteUrl));
+        expect(toolEntries).toHaveLength(getToolDefinitions().length);
+        expect(toolEntries.every((entry) => entry.lastmod === sharedTimestamp)).toBe(true);
     });
 
     it('builds an indexable robots file that points to the absolute static-root sitemap URL', () => {
@@ -268,7 +345,7 @@ describe('generated site assets', () => {
         const entries = buildSitemapEntries();
 
         expect(entries[0].absoluteUrl).toBe(getRootPageDefinition().absoluteUrl);
-        expect(entries).toHaveLength(getToolDefinitions().length + 1);
+        expect(entries).toHaveLength(getToolDefinitions().length + 2);
     });
 
     it('can build sitemap xml without an injected lastmod resolver', async () => {
@@ -276,7 +353,7 @@ describe('generated site assets', () => {
         const urls = parseSitemap(xml);
 
         expect(urls[0].loc).toBe(getRootPageDefinition().absoluteUrl);
-        expect(urls).toHaveLength(getToolDefinitions().length + 1);
+        expect(urls).toHaveLength(getToolDefinitions().length + 2);
     });
 
     it('builds an llms.txt manifest with the site summary and every tool page exactly once', () => {
@@ -287,7 +364,11 @@ describe('generated site assets', () => {
         expect(llmsTxt.startsWith(`# ${rootPage.title}\n\n> ${rootPage.description}`)).toBe(true);
         expect(llmsTxt).toContain('Tools process input locally in the browser, and no registration is required. Pages load Google Analytics and Google AdSense, which use cookies and send usage data.');
         expect(llmsTxt).toContain(rootPage.absoluteUrl);
-        expect(llmsTxt).toContain('- [Sitemap](https://tools.codesamplez.com/sitemap.xml)');
+        expect(llmsTxt).toContain('- [Sitemap](https://tools.codesamplez.com/sitemap.xml): XML sitemap of the public pages');
+        const privacyPage = getPrivacyPageDefinition();
+        const privacyLink = `- [${privacyPage.title}](${privacyPage.absoluteUrl}): ${privacyPage.description}`;
+        expect(llmsTxt).toContain(privacyLink);
+        expect(llmsTxt.indexOf(privacyLink)).toBe(llmsTxt.lastIndexOf(privacyLink));
 
         tools.forEach((tool) => {
             const link = `- [${tool.title}](${tool.absolutePageUrl}): ${tool.indexDescription}`;

@@ -108,6 +108,7 @@ describe('tool document generation', () => {
         expect(html).toContain('<button type="button" class="cst-share__btn cst-share__btn--copy" aria-label="Copy link"');
         expect(html).toContain('<div id="app-shell-footer"><footer class="cst-shell__footer">');
         expect(html).toContain('<a href="https://codesamplez.com" class="cst-shell__footer-link">CodeSamplez.com</a>');
+        expect(html).toContain(`<a href="${buildSiteHref('/privacy/')}" class="cst-shell__footer-link">Privacy</a>`);
         // Footer badge: the tool's released version, from tool.meta.json.
         // Version caption sits directly under the app root, before the changelog
         // section and the after-app shell, outside Preact's hydration container.

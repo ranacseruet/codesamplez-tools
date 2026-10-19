@@ -194,7 +194,7 @@ describe('AppShell components', () => {
             'Image Tools'
         ]);
         expect(root.querySelectorAll('.cst-shell__footer-list a.cst-shell__footer-link')).toHaveLength(12);
-        // Bottom row keeps the outbound links + privacy line.
+        // Bottom row keeps the outbound links and the privacy-policy link.
         const bottom = root.querySelector('.cst-shell__footer-bottom');
         expect(bottom?.textContent).toContain('Client-side by design');
         const bottomLinks = [...(bottom?.querySelectorAll('a.cst-shell__footer-link') ?? [])];
@@ -202,6 +202,8 @@ describe('AppShell components', () => {
         expect(mainSiteLink?.getAttribute('href')).toBe('https://codesamplez.com');
         const repoLink = bottomLinks.find((link) => link.textContent === 'GitHub');
         expect(repoLink?.getAttribute('href')).toBe('https://github.com/ranacseruet/codesamplez-tools');
+        const privacyLink = bottomLinks.find((link) => link.textContent === 'Privacy');
+        expect(privacyLink?.getAttribute('href')).toBe(buildSiteHref('/privacy/'));
     });
 
     it('closes the Browse Tools menu on outside click and Escape', () => {

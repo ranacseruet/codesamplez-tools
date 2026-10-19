@@ -2,6 +2,18 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.11] - 2026-10-17
+
+### Diff Checker
+
+- Records a tool_used analytics event when Compare runs, tagged with trigger and outcome. The compared text is not sent.
+
+## [1.0.10] - 2026-10-17
+
+### Diff Checker
+
+- Site footer links to the privacy policy. This tool's behavior is unchanged.
+
 ## [1.0.9] - 2026-10-17
 
 ### Diff Checker
