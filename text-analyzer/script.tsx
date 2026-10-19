@@ -210,6 +210,17 @@ export function TextAnalyzerApp() {
 
     const handleLoadSample = () => {
         triggerRef.current = 'sample';
+        // Loading the sample when that text is already showing does not change
+        // state, so the analyze effect will not run again. Count the click itself.
+        if (text === SAMPLE_TEXT) {
+            trackToolUsed({
+                toolId: 'text-analyzer',
+                action: 'analyze',
+                inputBytes: utf8ByteLength(SAMPLE_TEXT),
+                trigger: 'sample',
+                outcome: 'success'
+            });
+        }
         setText(SAMPLE_TEXT);
         NotificationManager.show('Sample text loaded', 3000, { type: 'success' });
     };

@@ -105,4 +105,20 @@ describe('Text Analyzer tool_used', () => {
     expect(calls[0][2].outcome).toBe('success');
     expect(JSON.stringify(calls)).not.toContain('sample text for analysis');
   });
+
+  it('records Load Sample again when that sample is already loaded', async () => {
+    fireEvent.click(document.getElementById('load-sample'));
+    await waitFor(() => expect(toolUsedCalls(gtag)).toHaveLength(1));
+    clearToolUsedDedupe();
+
+    fireEvent.click(document.getElementById('load-sample'));
+    await waitFor(() => expect(toolUsedCalls(gtag)).toHaveLength(2));
+
+    const calls = toolUsedCalls(gtag);
+    expect(calls[1][2].trigger).toBe('sample');
+    expect(calls[1][2].action).toBe('analyze');
+    expect(calls[1][2].outcome).toBe('success');
+    expect(calls[1][2].input_size_bucket).toBe('<1KB');
+    expect(JSON.stringify(calls)).not.toContain('sample text for analysis');
+  });
 });

@@ -142,5 +142,20 @@ describe('Image Editor tool_used', () => {
     expect(toolUsedCalls(gtag)[0][2].action).toBe('export');
     expect(toolUsedCalls(gtag)[0][2].outcome).toBe('error');
     expect(toolUsedCalls(gtag)[0][2].format).toBe('png');
+    expect(toolUsedCalls(gtag)[0][2].input_size_bucket).toBe('<1KB');
+  });
+
+  it('buckets the loaded image size, not the encoded export', async () => {
+    const gtag = installGtag();
+    await loadSample();
+    (HTMLCanvasElement.prototype.toBlob as jest.Mock).mockImplementation((callback: (blob: Blob | null) => void) => {
+      callback(new Blob([new Uint8Array(200 * 1024)], { type: 'image/png' }));
+    });
+    fireEvent.click(document.getElementById('image-editor-export')!);
+
+    await waitFor(() => expect(toolUsedCalls(gtag)).toHaveLength(1));
+    expect(toolUsedCalls(gtag)[0][2].input_size_bucket).toBe('<1KB');
+    expect(toolUsedCalls(gtag)[0][2].action).toBe('export');
+    expect(JSON.stringify(toolUsedCalls(gtag))).not.toContain('sample-image');
   });
 });

@@ -644,10 +644,12 @@ export function ImageEditorApp() {
 
             new DownloadManager().downloadFile(blob, exportFilename(format), mime);
             notifySuccess(`Exported ${formatBytes(blob.size)} ${exportFilename(format).split('.').pop()?.toUpperCase()}`);
-            reportExport('success', blob.size);
+            // Bucket the loaded image, not the encoded blob: format and quality
+            // change the file size without changing what the user brought in.
+            reportExport('success', current.bytes);
         } catch {
             notifyError('Export failed in this browser. Try a different format.');
-            reportExport('error');
+            reportExport('error', current.bytes);
         } finally {
             endBusy();
         }
