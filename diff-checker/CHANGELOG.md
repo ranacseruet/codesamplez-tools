@@ -2,6 +2,18 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.15] - 2026-10-19
+
+### Diff Checker
+
+- Shared CopyButton update (no user-visible change for this tool).
+
+## [1.0.14] - 2026-10-17
+
+### Diff Checker
+
+- Emit shared analytics events for copy, download, share link, file load, and related-tool clicks. No file names or URLs are sent.
+
 ## [1.0.13] - 2026-10-17
 
 ### Diff Checker

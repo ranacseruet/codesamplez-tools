@@ -1,9 +1,20 @@
+import { clearMountedToolAnalyticsId, setMountedToolAnalyticsId } from './analytics-tool-context';
 import {
+    COPY_OUTPUT_EVENT,
+    DOWNLOAD_OUTPUT_EVENT,
+    FILE_LOADED_EVENT,
     INPUT_SIZE_BUCKETS,
     MAX_EVENT_PARAM_LENGTH,
+    RELATED_TOOL_CLICK_EVENT,
+    SHARE_LINK_CREATED_EVENT,
     clearToolUsedDedupe,
     inputSizeBucket,
+    trackCopyOutput,
+    trackDownloadOutput,
     trackEvent,
+    trackFileLoaded,
+    trackRelatedToolClick,
+    trackShareLinkCreated,
     trackToolUsed,
     utf8ByteLength
 } from './analytics-events';
@@ -212,6 +223,73 @@ describe('inputSizeBucket', () => {
         expect(inputSizeBucket(-1)).toBeUndefined();
         expect(inputSizeBucket(Number.NaN)).toBeUndefined();
         expect(INPUT_SIZE_BUCKETS).toEqual(['<1KB', '1–10KB', '10–100KB', '>100KB']);
+    });
+});
+
+describe('shared output events', () => {
+    beforeEach(() => {
+        clearMountedToolAnalyticsId();
+        removeGtag();
+    });
+
+    afterEach(() => {
+        clearMountedToolAnalyticsId();
+        removeGtag();
+    });
+
+    it('no-ops when no tool shell id is mounted', () => {
+        const gtag = installGtag();
+        trackCopyOutput();
+        trackDownloadOutput('output.json');
+        trackShareLinkCreated();
+        trackFileLoaded(new File(['a'], 'a.txt'), 'drop');
+        trackRelatedToolClick('json-formatter');
+        expect(gtag).not.toHaveBeenCalled();
+    });
+
+    it('sends documented payloads once per helper call', () => {
+        const gtag = installGtag();
+        setMountedToolAnalyticsId('diff-checker');
+
+        trackCopyOutput();
+        trackDownloadOutput('patch.diff');
+        trackShareLinkCreated();
+        trackFileLoaded(new File(['{}'], 'data.json', { type: 'application/json' }), 'picker');
+        trackRelatedToolClick('json-formatter');
+
+        expect(gtag).toHaveBeenNthCalledWith(1, 'event', COPY_OUTPUT_EVENT, { tool_id: 'diff-checker' });
+        expect(gtag).toHaveBeenNthCalledWith(2, 'event', DOWNLOAD_OUTPUT_EVENT, {
+            tool_id: 'diff-checker',
+            file_type: 'diff'
+        });
+        expect(gtag).toHaveBeenNthCalledWith(3, 'event', SHARE_LINK_CREATED_EVENT, { tool_id: 'diff-checker' });
+        expect(gtag).toHaveBeenNthCalledWith(4, 'event', FILE_LOADED_EVENT, {
+            tool_id: 'diff-checker',
+            method: 'picker',
+            file_type: 'json'
+        });
+        expect(gtag).toHaveBeenNthCalledWith(5, 'event', RELATED_TOOL_CLICK_EVENT, {
+            tool_id: 'diff-checker',
+            target_tool_id: 'json-formatter'
+        });
+        expect(JSON.stringify(gtag.mock.calls)).not.toContain('patch.diff');
+        expect(JSON.stringify(gtag.mock.calls)).not.toContain('data.json');
+    });
+
+    it('drops an invalid file_loaded method', () => {
+        const gtag = installGtag();
+        setMountedToolAnalyticsId('diff-checker');
+
+        trackEvent(FILE_LOADED_EVENT, {
+            tool_id: 'diff-checker',
+            method: 'upload',
+            file_type: 'json'
+        });
+
+        expect(gtag).toHaveBeenCalledWith('event', FILE_LOADED_EVENT, {
+            tool_id: 'diff-checker',
+            file_type: 'json'
+        });
     });
 });
 

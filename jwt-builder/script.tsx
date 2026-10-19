@@ -192,7 +192,7 @@ function initializeCopyButtons() {
 
   const keyInput = getInputElement('key');
   if (keyInput) {
-    keyCopyButton = new CopyButton(keyInput);
+    keyCopyButton = new CopyButton(keyInput, { trackOutputCopy: false });
   }
 }
 

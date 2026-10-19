@@ -1,5 +1,7 @@
 import type { JSX } from 'preact';
+import { analyticsToolIdFromPublicPath } from '../app-shell/toolCatalog';
 import { buildSiteHref } from '../siteBaseUrl';
+import { RELATED_TOOL_TARGET_ATTR } from './related-tool-click-analytics';
 import type { RelatedToolSummary } from './RelatedTools';
 
 interface RelatedToolsCompactRowProps {
@@ -25,7 +27,11 @@ export function RelatedToolsCompactRow({ tools }: RelatedToolsCompactRowProps): 
             <ul className="c-related-tools-compact__list">
                 {tools.map((tool) => (
                     <li className="c-related-tools-compact__item" key={tool.id}>
-                        <a className="c-related-tools-compact__link" href={buildSiteHref(tool.publicPath)}>
+                        <a
+                            className="c-related-tools-compact__link"
+                            href={buildSiteHref(tool.publicPath)}
+                            {...{ [RELATED_TOOL_TARGET_ATTR]: analyticsToolIdFromPublicPath(tool.publicPath) }}
+                        >
                             {tool.title}
                         </a>
                     </li>

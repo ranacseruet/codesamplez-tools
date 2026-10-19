@@ -233,6 +233,24 @@ The owner does this in the GA4 property. It is not part of the build.
 1. Admin → Events → mark `tool_used` as a key event.
 2. Admin → Custom definitions → create event-scoped custom dimensions for `tool_id`, `action`, `trigger`, and `outcome`, so each shows up in reports.
 
+### Shared output and navigation events
+
+These fire from shared components (`CopyButton`, `DownloadManager`, `ShareBar`,
+`drop-zone` / `registerFileInput`, and related-tool links). The active
+`tool_id` is resolved once when `mountToolShell` runs on a standalone tool page;
+call sites do not pass it.
+
+| Event | When | Params |
+| --- | --- | --- |
+| `copy_output` | User successfully copies tool output via the shared copy button | `tool_id` |
+| `download_output` | User downloads output via the shared download helper | `tool_id`, `file_type` (extension or MIME subtype only) |
+| `share_link_created` | User copies the canonical share link from the share rail | `tool_id` |
+| `file_loaded` | A file is accepted from drag-and-drop or the shared file picker | `tool_id`, `method` (`drop` or `picker`), `file_type` |
+| `related_tool_click` | User clicks a related-tool card or compact-row link | `tool_id`, `target_tool_id` (destination tool slug) |
+
+Rules match `tool_used`: no file names, document text, secrets, or URLs; one
+event per user action; unknown params are dropped.
+
 ## Documentation Standards
 
 - Keep tool-level `README.md` files current whenever updating tool behavior or adding options.

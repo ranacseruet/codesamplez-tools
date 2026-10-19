@@ -1,6 +1,15 @@
+import { trackCopyOutput } from '../analytics-events';
 import { copyTextToClipboard } from '../clipboard';
 
 type CopyTargetElement = HTMLTextAreaElement | HTMLInputElement | HTMLPreElement;
+
+export interface CopyButtonOptions {
+    /**
+     * When false, a successful copy does not emit `copy_output`. Use for input
+     * affordances (for example a signing-key field), not for tool output.
+     */
+    trackOutputCopy?: boolean;
+}
 
 class CopyButton {
     targetElement: CopyTargetElement;
@@ -10,8 +19,9 @@ class CopyButton {
     boundCopyContent: (() => void) | null;
     boundUpdateVisibility: (() => void) | null;
     mutationObserver?: MutationObserver | null;
+    trackOutputCopy: boolean;
 
-    constructor(targetElement: CopyTargetElement) {
+    constructor(targetElement: CopyTargetElement, options: CopyButtonOptions = {}) {
         if (!(targetElement instanceof HTMLTextAreaElement) &&
             !(targetElement instanceof HTMLInputElement) &&
             !(targetElement instanceof HTMLPreElement)) {
@@ -19,6 +29,7 @@ class CopyButton {
         }
 
         this.targetElement = targetElement;
+        this.trackOutputCopy = options.trackOutputCopy !== false;
         this.isPreElement = targetElement instanceof HTMLPreElement;
         this.copyButton = this.createCopyButton();
         this.wrapper = document.createElement('div');
@@ -120,6 +131,9 @@ class CopyButton {
         // common/clipboard.ts; this component owns only the feedback.
         try {
             await copyTextToClipboard(content);
+            if (this.trackOutputCopy) {
+                trackCopyOutput();
+            }
             this.showSuccessAnimation();
             this.dispatchCopyEvent(content);
         } catch (error) {

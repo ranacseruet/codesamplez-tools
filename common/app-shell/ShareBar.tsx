@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
+import { trackShareLinkCreated } from '../analytics-events';
 import { copyTextToClipboard } from '../clipboard';
 
 // Floating share rail shown on individual tool pages (mirrors the main site's
@@ -133,6 +134,7 @@ export function ShareBar({ shareUrl, shareTitle }: ShareBarProps): JSX.Element {
         // fallback exists for.
         void copyTextToClipboard(shareUrl)
             .then(() => {
+                trackShareLinkCreated();
                 setCopied(true);
                 window.setTimeout(() => setCopied(false), COPIED_RESET_MS);
             })

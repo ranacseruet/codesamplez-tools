@@ -1,3 +1,4 @@
+import { clearMountedToolAnalyticsId, setMountedToolAnalyticsId } from '../analytics-tool-context';
 import CopyButton from './CopyButton';
 
 // Mock the Clipboard API
@@ -21,6 +22,8 @@ describe('CopyButton', () => {
     let copyButtonInstance;
 
     beforeEach(() => {
+        clearMountedToolAnalyticsId();
+        delete window.gtag;
         document.body.innerHTML = `
             <div id="container">
                 <textarea id="test-textarea">Sample content</textarea>
@@ -38,6 +41,8 @@ describe('CopyButton', () => {
     afterEach(() => {
         copyButtonInstance.disconnect();
         document.body.innerHTML = '';
+        clearMountedToolAnalyticsId();
+        delete window.gtag;
     });
 
     describe('Initialization', () => {
@@ -255,6 +260,34 @@ describe('CopyButton', () => {
             await copyButtonInstance.copyContent();
             
             expect(copyButtonInstance.copyButton.classList.contains('copy-success')).toBe(true);
+        });
+
+        test('emits copy_output when a tool id is mounted', async () => {
+            const gtag = jest.fn();
+            window.gtag = gtag;
+            setMountedToolAnalyticsId('diff-checker');
+            textArea.value = 'success test';
+
+            await copyButtonInstance.copyContent();
+
+            expect(gtag).toHaveBeenCalledWith('event', 'copy_output', { tool_id: 'diff-checker' });
+        });
+
+        test('does not emit copy_output when trackOutputCopy is false', async () => {
+            const gtag = jest.fn();
+            window.gtag = gtag;
+            setMountedToolAnalyticsId('jwt-builder');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = 'signing-secret';
+            document.body.appendChild(input);
+            const inputCopyButton = new CopyButton(input, { trackOutputCopy: false });
+
+            await inputCopyButton.copyContent();
+
+            expect(gtag).not.toHaveBeenCalled();
+            inputCopyButton.disconnect();
+            input.remove();
         });
 
         test('should remove success animation after timeout', async () => {

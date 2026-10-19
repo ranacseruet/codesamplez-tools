@@ -1,5 +1,7 @@
 import type { JSX } from 'preact';
+import { analyticsToolIdFromPublicPath } from '../app-shell/toolCatalog';
 import { buildSiteHref } from '../siteBaseUrl';
+import { RELATED_TOOL_TARGET_ATTR } from './related-tool-click-analytics';
 
 export interface RelatedToolSummary {
     id: string;
@@ -59,7 +61,11 @@ export function RelatedToolsSection({ tools, sourceToolTitle }: RelatedToolsSect
                             three identical "Open tool" links this replaces failed
                             WCAG 2.4.4 and wasted the internal anchor text. */}
                         <h3 className="c-related-tools__card-title">
-                            <a className="c-related-tools__link" href={buildSiteHref(tool.publicPath)}>
+                            <a
+                                className="c-related-tools__link"
+                                href={buildSiteHref(tool.publicPath)}
+                                {...{ [RELATED_TOOL_TARGET_ATTR]: analyticsToolIdFromPublicPath(tool.publicPath) }}
+                            >
                                 {tool.title}
                             </a>
                         </h3>

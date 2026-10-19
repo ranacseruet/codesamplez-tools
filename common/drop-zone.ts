@@ -19,6 +19,7 @@
  *   long as at least one drop zone is registered.
  */
 
+import { trackFileLoaded } from './analytics-events';
 import { formatBytes } from './format-utils';
 
 export type DropZoneCleanup = () => void;
@@ -147,7 +148,8 @@ function processFile(
     file: File,
     detail: LoadedFileDetail,
     options: DropZoneOptions,
-    beginRead: () => () => boolean
+    beginRead: () => () => boolean,
+    loadMethod: 'drop' | 'picker'
 ): void {
     const maxBytes = options.maxBytes ?? DROP_ZONE_MAX_BYTES;
 
@@ -160,6 +162,7 @@ function processFile(
 
     if (options.onFile) {
         if (!isStale()) {
+            trackFileLoaded(file, loadMethod);
             options.onFile(file, detail);
         }
         return;
@@ -176,6 +179,7 @@ function processFile(
                 options.onError?.(`"${file.name}" looks like a binary file. Use a text file instead.`);
                 return;
             }
+            trackFileLoaded(file, loadMethod);
             onText(text, file, detail);
         })
         .catch(() => {
@@ -276,7 +280,7 @@ export function registerDropZone(target: HTMLElement, options: DropZoneOptions):
         processFile(file, { ignoredFileCount: files.length - 1 }, { ...options, maxBytes }, () => {
             const readId = (latestReadId += 1);
             return () => disposed || readId !== latestReadId;
-        });
+        }, 'drop');
     };
 
     target.addEventListener('dragenter', handleDragEnter);
@@ -324,7 +328,7 @@ export function registerFileInput(target: HTMLInputElement, options: DropZoneOpt
         processFile(file, { ignoredFileCount }, options, () => {
             const readId = (latestReadId += 1);
             return () => disposed || readId !== latestReadId;
-        });
+        }, 'picker');
     };
 
     target.addEventListener('change', handleChange);

@@ -1,12 +1,11 @@
 {
   "id": "image-editor",
-  "version": "1.0.12",
   "title": "Image Editor",
-  "seoTitle": "Online Image Editor \u2013 Crop, Resize, Convert",
+  "seoTitle": "Online Image Editor – Crop, Resize, Convert",
   "description": "Image editor: crop, resize, rotate, adjust, and convert images online. Tool input is processed locally in your browser and is not uploaded.",
   "catalogGroupId": "image-tools",
   "catalogOrder": 1,
-  "indexDescription": "Browser based image editor: crop, resize, rotate, adjust, caption and export as PNG, JPEG, or WebP \u2014 processed 100% locally in your browser.",
+  "indexDescription": "Browser based image editor: crop, resize, rotate, adjust, caption and export as PNG, JPEG, or WebP — processed 100% locally in your browser.",
   "icon": "palette",
   "status": "live",
   "keywords": [
@@ -30,5 +29,6 @@
     "base64-converter-tool",
     "qr-code-generator",
     "text-analyzer-tool"
-  ]
+  ],
+  "version": "1.0.13"
 }

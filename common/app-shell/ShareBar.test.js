@@ -1,5 +1,6 @@
 import { render } from 'preact';
 import { waitFor } from '@testing-library/dom';
+import { clearMountedToolAnalyticsId, setMountedToolAnalyticsId } from '../analytics-tool-context';
 import { ShareBar } from './ShareBar';
 
 const SHARE_URL = 'https://tools.codesamplez.com/diff-checker/';
@@ -14,7 +15,14 @@ function renderShareBar(props = {}) {
 
 describe('ShareBar', () => {
     beforeEach(() => {
+        clearMountedToolAnalyticsId();
+        delete window.gtag;
         document.body.innerHTML = '';
+    });
+
+    afterEach(() => {
+        clearMountedToolAnalyticsId();
+        delete window.gtag;
     });
 
     it('renders a labelled share navigation with the four platform links', () => {
@@ -84,6 +92,25 @@ describe('ShareBar', () => {
         });
         expect(writeText).toHaveBeenCalledWith(SHARE_URL);
         expect(root.querySelector('button.cst-share__btn--copy').className).toContain('is-copied');
+    });
+
+    it('emits share_link_created when copy succeeds and a tool id is mounted', async () => {
+        const gtag = jest.fn();
+        window.gtag = gtag;
+        setMountedToolAnalyticsId('diff-checker');
+        const writeText = jest.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            value: { writeText }
+        });
+
+        const root = renderShareBar();
+        root.querySelector('button.cst-share__btn--copy')?.click();
+
+        await waitFor(() => {
+            expect(gtag).toHaveBeenCalledWith('event', 'share_link_created', { tool_id: 'diff-checker' });
+        });
+        expect(JSON.stringify(gtag.mock.calls)).not.toContain(SHARE_URL);
     });
 
     it('falls back to execCommand when the clipboard API is unavailable', async () => {

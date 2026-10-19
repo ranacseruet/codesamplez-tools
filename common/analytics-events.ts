@@ -13,7 +13,19 @@
  * tool from emitting one event per keystroke.
  */
 
+import { getMountedToolAnalyticsId } from './analytics-tool-context';
+import { analyticsFileType, analyticsFileTypeFromFilename } from './analytics-file-type';
+
 export const TOOL_USED_EVENT = 'tool_used';
+export const COPY_OUTPUT_EVENT = 'copy_output';
+export const DOWNLOAD_OUTPUT_EVENT = 'download_output';
+export const SHARE_LINK_CREATED_EVENT = 'share_link_created';
+export const FILE_LOADED_EVENT = 'file_loaded';
+export const RELATED_TOOL_CLICK_EVENT = 'related_tool_click';
+
+export const FILE_LOADED_METHODS = ['drop', 'picker'] as const;
+
+export type FileLoadedMethod = (typeof FILE_LOADED_METHODS)[number];
 
 export const INPUT_SIZE_BUCKETS = ['<1KB', '1–10KB', '10–100KB', '>100KB'] as const;
 
@@ -34,7 +46,16 @@ export const MAX_EVENT_PARAM_LENGTH = 100;
 
 const TOOL_USED_DEDUPE_MS = 2000;
 
-const KNOWN_PARAM_KEYS = new Set(['tool_id', 'action', 'input_size_bucket', 'trigger', 'outcome']);
+const KNOWN_PARAM_KEYS = new Set([
+    'tool_id',
+    'action',
+    'input_size_bucket',
+    'trigger',
+    'outcome',
+    'file_type',
+    'method',
+    'target_tool_id'
+]);
 
 const IDENTIFIER_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -100,6 +121,10 @@ function isToolUsedOutcome(value: string): value is ToolUsedOutcome {
     return value === 'success' || value === 'error';
 }
 
+function isFileLoadedMethod(value: string): value is FileLoadedMethod {
+    return value === 'drop' || value === 'picker';
+}
+
 function sanitizeParams(params: unknown): Record<string, string> {
     if (!params || typeof params !== 'object') {
         return {};
@@ -135,6 +160,13 @@ function sanitizeParams(params: unknown): Record<string, string> {
 
         if (key === 'outcome') {
             if (isToolUsedOutcome(value)) {
+                safe[key] = value;
+            }
+            continue;
+        }
+
+        if (key === 'method') {
+            if (isFileLoadedMethod(value)) {
                 safe[key] = value;
             }
             continue;
@@ -225,4 +257,45 @@ export function trackToolUsed(options: {
     }
 
     trackEvent(TOOL_USED_EVENT, params);
+}
+
+function trackMountedToolEvent(eventName: string, extraParams?: Record<string, string>): void {
+    const toolId = getMountedToolAnalyticsId();
+    if (!toolId) {
+        return;
+    }
+
+    trackEvent(eventName, { tool_id: toolId, ...extraParams });
+}
+
+/** One `copy_output` per successful copy from the shared CopyButton. */
+export function trackCopyOutput(): void {
+    trackMountedToolEvent(COPY_OUTPUT_EVENT);
+}
+
+/** One `download_output` per download from the shared DownloadManager. */
+export function trackDownloadOutput(filename: string): void {
+    trackMountedToolEvent(DOWNLOAD_OUTPUT_EVENT, {
+        file_type: analyticsFileTypeFromFilename(filename)
+    });
+}
+
+/** One `share_link_created` when the share rail copies the canonical tool URL. */
+export function trackShareLinkCreated(): void {
+    trackMountedToolEvent(SHARE_LINK_CREATED_EVENT);
+}
+
+/** One `file_loaded` per file accepted by the shared drop zone or picker. */
+export function trackFileLoaded(file: File, method: FileLoadedMethod): void {
+    trackMountedToolEvent(FILE_LOADED_EVENT, {
+        method,
+        file_type: analyticsFileType(file)
+    });
+}
+
+/** One `related_tool_click` per related-tool card or compact-row link click. */
+export function trackRelatedToolClick(targetToolId: string): void {
+    trackMountedToolEvent(RELATED_TOOL_CLICK_EVENT, {
+        target_tool_id: targetToolId
+    });
 }

@@ -107,8 +107,8 @@ describe('JWT Builder UI Tests', () => {
       // Verify it was called with the result element
       expect(CopyButton).toHaveBeenCalledWith(document.getElementById('result'));
       
-      // Verify it was called with the key input element
-      expect(CopyButton).toHaveBeenCalledWith(document.getElementById('key'));
+      // Verify it was called with the key input element (input copy, not output analytics)
+      expect(CopyButton).toHaveBeenCalledWith(document.getElementById('key'), { trackOutputCopy: false });
     });
 
     test('loadSampleClaims resets dirty claim inputs and the secret', () => {

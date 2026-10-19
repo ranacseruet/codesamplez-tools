@@ -1,3 +1,4 @@
+import { clearMountedToolAnalyticsId, setMountedToolAnalyticsId } from './analytics-tool-context';
 import DownloadManager from './DownloadManager';
 
 describe('DownloadManager', () => {
@@ -9,6 +10,8 @@ describe('DownloadManager', () => {
   let revokeObjectURLSpy;
 
   beforeEach(() => {
+    clearMountedToolAnalyticsId();
+    delete window.gtag;
     downloadManager = new DownloadManager();
 
     // Mock document methods
@@ -34,6 +37,8 @@ describe('DownloadManager', () => {
   });
 
   afterEach(() => {
+    clearMountedToolAnalyticsId();
+    delete window.gtag;
     jest.restoreAllMocks();
     jest.useRealTimers();
   });
@@ -53,5 +58,19 @@ describe('DownloadManager', () => {
     // Advance timers to check cleanup
     jest.advanceTimersByTime(10000);
     expect(revokeObjectURLSpy).toHaveBeenCalledWith('mock-url');
+  });
+
+  test('emits download_output with file_type only', () => {
+    const gtag = jest.fn();
+    window.gtag = gtag;
+    setMountedToolAnalyticsId('json-formatter');
+
+    downloadManager.downloadFile('{}', 'formatted.json', 'application/json');
+
+    expect(gtag).toHaveBeenCalledWith('event', 'download_output', {
+      tool_id: 'json-formatter',
+      file_type: 'json'
+    });
+    expect(JSON.stringify(gtag.mock.calls)).not.toContain('formatted.json');
   });
 });
