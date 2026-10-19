@@ -43,6 +43,15 @@ function getLegacyAliasTarget(uri) {
         return LEGACY_SLUG_ALIASES[uri.substring(0, uri.length - 1)];
     }
 
+    var indexHtmlSuffix = 'index.html';
+    var indexHtmlSuffixLength = indexHtmlSuffix.length;
+    if (uri.length > indexHtmlSuffixLength
+        && uri.substring(uri.length - indexHtmlSuffixLength) === indexHtmlSuffix
+        && uri.charAt(uri.length - indexHtmlSuffixLength - 1) === '/') {
+        var legacyDirectoryPath = uri.substring(0, uri.length - indexHtmlSuffixLength - 1);
+        return LEGACY_SLUG_ALIASES[legacyDirectoryPath];
+    }
+
     return null;
 }
 
