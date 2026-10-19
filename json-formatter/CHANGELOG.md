@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.15] - 2026-10-17
+
+### JSON Formatter
+
+- Shortened the meta description so it stays within search-result snippet limits while keeping JSON formatting and schema validation upfront.
+
 ## [1.0.14] - 2026-10-17
 
 ### JSON Formatter
