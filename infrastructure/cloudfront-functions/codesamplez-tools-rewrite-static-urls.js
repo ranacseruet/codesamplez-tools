@@ -24,9 +24,54 @@ function appendQueryString(location, querystring) {
     return queryParts.length > 0 ? location + '?' + queryParts.join('&') : location;
 }
 
+// Legacy tool slugs → canonical directory URLs (trailing slash). Add confirmed aliases here.
+var LEGACY_SLUG_ALIASES = {
+    '/javascript-minifier': '/js-minifier/'
+};
+
+function getLegacyAliasTarget(uri) {
+    var target = LEGACY_SLUG_ALIASES[uri];
+    if (target) {
+        return target;
+    }
+
+    var lastChar = uri.charAt(uri.length - 1);
+    if (lastChar === '/') {
+        if (uri.length === 1) {
+            return null;
+        }
+        return LEGACY_SLUG_ALIASES[uri.substring(0, uri.length - 1)];
+    }
+
+    var indexHtmlSuffix = 'index.html';
+    var indexHtmlSuffixLength = indexHtmlSuffix.length;
+    if (uri.length > indexHtmlSuffixLength
+        && uri.substring(uri.length - indexHtmlSuffixLength) === indexHtmlSuffix
+        && uri.charAt(uri.length - indexHtmlSuffixLength - 1) === '/') {
+        var legacyDirectoryPath = uri.substring(0, uri.length - indexHtmlSuffixLength - 1);
+        return LEGACY_SLUG_ALIASES[legacyDirectoryPath];
+    }
+
+    return null;
+}
+
 function handler(event) {
     var request = event.request;
     var uri = request.uri;
+
+    var legacyAliasTarget = getLegacyAliasTarget(uri);
+    if (legacyAliasTarget) {
+        var aliasLocation = appendQueryString(legacyAliasTarget, request.querystring);
+        return {
+            statusCode: 301,
+            statusDescription: 'Moved Permanently',
+            headers: {
+                location: {
+                    value: aliasLocation
+                }
+            }
+        };
+    }
 
     // Redirect explicit /index.html URLs to the canonical directory URL.
     var indexHtmlSuffix = 'index.html';

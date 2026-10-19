@@ -115,6 +115,51 @@ describe('codesamplez-tools-rewrite-static-urls CloudFront Function', () => {
       querystring: {}
     });
   });
+
+  it('redirects legacy /javascript-minifier slug to /js-minifier/ in one hop', () => {
+    expect(handler(createEvent('/javascript-minifier'))).toEqual({
+      statusCode: 301,
+      statusDescription: 'Moved Permanently',
+      headers: {
+        location: {
+          value: '/js-minifier/'
+        }
+      }
+    });
+    expect(handler(createEvent('/javascript-minifier/'))).toEqual({
+      statusCode: 301,
+      statusDescription: 'Moved Permanently',
+      headers: {
+        location: {
+          value: '/js-minifier/'
+        }
+      }
+    });
+  });
+
+  it('preserves query string when redirecting legacy /javascript-minifier slug', () => {
+    expect(handler(createEvent('/javascript-minifier/', {
+      a: { value: '1' }
+    })).headers.location.value).toBe('/js-minifier/?a=1');
+    expect(handler(createEvent('/javascript-minifier', {
+      a: { value: '1' }
+    })).headers.location.value).toBe('/js-minifier/?a=1');
+  });
+
+  it('redirects legacy /javascript-minifier/index.html to /js-minifier/ in one hop', () => {
+    expect(handler(createEvent('/javascript-minifier/index.html'))).toEqual({
+      statusCode: 301,
+      statusDescription: 'Moved Permanently',
+      headers: {
+        location: {
+          value: '/js-minifier/'
+        }
+      }
+    });
+    expect(handler(createEvent('/javascript-minifier/index.html', {
+      a: { value: '1' }
+    })).headers.location.value).toBe('/js-minifier/?a=1');
+  });
 });
 
 describe('deploy-cloudfront-function helpers', () => {
