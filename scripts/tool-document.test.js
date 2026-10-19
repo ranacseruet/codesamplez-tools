@@ -319,6 +319,8 @@ describe('tool document generation', () => {
         const html = generateToolDocument('diff-checker-tool');
 
         expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('"name":"How do I compare two code files online?"');
+        expect(html).toContain('"name":"What is the difference between a diff checker and a difference checker?"');
         expect(html).toContain('"name":"Does the tool work offline?"');
         expect(html).toContain('"name":"Is the diff checker free to use?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes! Once the page loads, all comparisons happen locally in your browser, so you can use it without an internet connection.');

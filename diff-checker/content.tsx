@@ -12,6 +12,18 @@ function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
 
 export const FAQ_ITEMS: ToolFaqItem[] = [
     createPlainTextFaqItem(
+        'How do I compare two code files online?',
+        'Paste or upload the original file into the left editor and the revised file into the right editor, then click Compare. The diff checker highlights added, removed, and changed lines so you can review code differences in your browser. Your input is processed locally and is not uploaded by the tool.'
+    ),
+    createPlainTextFaqItem(
+        'What is the difference between a diff checker and a difference checker?',
+        'There is no practical difference: both names describe the same kind of tool that compares two texts or files and shows what changed. "Diff checker" is common in developer tools; "difference checker" is the same idea in plain language. This page is a diff checker you can use to compare code or any text side by side.'
+    ),
+    createPlainTextFaqItem(
+        'Can I compare code online without installing software?',
+        'Yes. This diff checker runs in your browser, so you can compare code snippets, configs, or documents online without a desktop app. Open the page, add your two versions, and run Compare whenever you need a quick code diff or text comparison.'
+    ),
+    createPlainTextFaqItem(
         'Does the tool work offline?',
         'Yes! Once the page loads, all comparisons happen locally in your browser, so you can use it without an internet connection.'
     ),
@@ -70,6 +82,32 @@ export function DiffCheckerArticle(): JSX.Element {
                         differences. It shows added content in green, removed content in red, and unchanged content in
                         neutral formatting. Developers use diff checkers to compare code versions, track changes in
                         configuration files, and identify modifications between file versions.
+                    </p>
+                </ToolArticleSection>
+
+                <ToolArticleSection
+                    id="diff-checker-compare-code-online"
+                    title="Compare Code Online: How to Find Differences Between Two Files"
+                >
+                    <p>
+                        When you need to compare code online, the workflow is straightforward: put the earlier or
+                        reference version on the left and the updated version on the right, then run Compare. The tool
+                        works as a code difference checker for patches, pull requests, config tweaks, and any pair of
+                        text files you want to line up.
+                    </p>
+                    <p>
+                        Results use familiar diff styling—additions, removals, and edits are easy to scan—and you can
+                        step through each change with Prev and Next. For plain prose or mixed content, the same compare
+                        flow applies; only the highlighting mode changes when the input looks like code.
+                    </p>
+                    <p>
+                        Supported languages for automatic syntax highlighting include JavaScript, JSON, HTML, and CSS
+                        (detection runs on your pasted or uploaded text). You can still diff Python, Java, C++, XML, and
+                        other plain-text code; those comparisons stay accurate even when highlighting stays minimal.
+                    </p>
+                    <p>
+                        Files you drop into the editors are read on your device only. As with the rest of this tool,
+                        your input is processed in this browser and is not uploaded by the diff checker.
                     </p>
                 </ToolArticleSection>
 

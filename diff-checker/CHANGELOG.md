@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.12] - 2026-10-17
+
+### Diff Checker
+
+- Added a "Compare Code Online" guide section and new FAQs for comparing two code files online and diff checker vs difference checker wording.
+
 ## [1.0.11] - 2026-10-17
 
 ### Diff Checker
