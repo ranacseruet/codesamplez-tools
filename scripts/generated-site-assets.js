@@ -15,7 +15,8 @@ const {
     getRootPageDefinition,
     getSiteBaseUrl,
     getSiteStaticRootUri,
-    getToolDefinitions
+    getToolDefinitions,
+    getToolMetadataPath
 } = require('./tool-manifest');
 const { buildAdsTxt } = require('./analytics');
 const { getPrivacyPageDefinition } = require('./privacy-document');
@@ -23,6 +24,35 @@ const { getPrivacyPageDefinition } = require('./privacy-document');
 const SITEMAP_FILENAME = 'sitemap.xml';
 const ROBOTS_FILENAME = 'robots.txt';
 const LLMS_TXT_FILENAME = 'llms.txt';
+const LASTMOD_SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.css']);
+const TEST_FILE_PATTERN = /\.test\.[cm]?[jt]sx?$/u;
+
+/**
+ * @param {string} relativeDirectory repo-relative directory path
+ * @returns {string[]}
+ */
+function listNonTestSourceFilesInDirectory(relativeDirectory) {
+    const directory = path.resolve(REPO_ROOT, relativeDirectory);
+
+    if (!fs.existsSync(directory)) {
+        return [];
+    }
+
+    return fs.readdirSync(directory, { withFileTypes: true })
+        .filter((entry) => (
+            entry.isFile()
+            && LASTMOD_SOURCE_EXTENSIONS.has(path.extname(entry.name))
+            && !TEST_FILE_PATTERN.test(entry.name)
+        ))
+        .map((entry) => path.resolve(directory, entry.name));
+}
+
+const SHARED_TOOL_METADATA_SIDECAR_PATHS = [
+    path.resolve(REPO_ROOT, 'scripts/tool-faq-metadata.js'),
+    path.resolve(REPO_ROOT, 'scripts/tool-feature-metadata.js'),
+    path.resolve(REPO_ROOT, 'scripts/tool-howto-metadata.js'),
+    path.resolve(REPO_ROOT, 'scripts/related-tools-metadata.js')
+];
 const SHARED_TOOL_LASTMOD_INPUTS = [
     ROOT_CONFIG_PATH,
     path.resolve(REPO_ROOT, 'common/material-theme.css'),
@@ -36,7 +66,14 @@ const SHARED_TOOL_LASTMOD_INPUTS = [
     // tool's sitemap lastmod.
     path.resolve(REPO_ROOT, 'scripts/tool-changelog.js'),
     path.resolve(REPO_ROOT, 'scripts/tool-document.js'),
-    path.resolve(REPO_ROOT, 'scripts/shell-footer.js')
+    path.resolve(REPO_ROOT, 'scripts/prerender-tool.js'),
+    path.resolve(REPO_ROOT, 'scripts/lucide-icons.js'),
+    path.resolve(REPO_ROOT, 'scripts/tool-categories.js'),
+    path.resolve(REPO_ROOT, 'scripts/shell-footer.js'),
+    ...SHARED_TOOL_METADATA_SIDECAR_PATHS,
+    ...listNonTestSourceFilesInDirectory('common/app-shell'),
+    ...listNonTestSourceFilesInDirectory('common/related-tools'),
+    ...listNonTestSourceFilesInDirectory('common/tool-article')
 ];
 const PRIVACY_PAGE_LASTMOD_INPUTS = [
     ROOT_CONFIG_PATH,
@@ -58,10 +95,12 @@ const ROOT_PAGE_LASTMOD_INPUTS = [
     path.resolve(REPO_ROOT, 'scripts/document-helpers.js'),
     path.resolve(REPO_ROOT, 'scripts/root-document.js'),
     path.resolve(REPO_ROOT, 'scripts/shell-footer.js'),
-    // The homepage footer is prerendered from ToolShellFooter. shell-footer.js
-    // is only the wrapper, so an AppShell-only edit must still bump lastmod.
-    path.resolve(REPO_ROOT, 'common/app-shell/AppShell.tsx'),
-    path.resolve(REPO_ROOT, 'scripts/structured-data.js')
+    path.resolve(REPO_ROOT, 'scripts/structured-data.js'),
+    path.resolve(REPO_ROOT, 'scripts/root-page-content.js'),
+    path.resolve(REPO_ROOT, 'scripts/lucide-icons.js'),
+    path.resolve(REPO_ROOT, 'scripts/tool-categories.js'),
+    ...listNonTestSourceFilesInDirectory('common/app-shell'),
+    ...getToolDefinitions().map((tool) => getToolMetadataPath(tool.id))
 ];
 
 /**
@@ -86,7 +125,7 @@ function toAbsolutePath(filePath) {
  * @returns {string[]}
  */
 function getRootPageLastmodPaths() {
-    return ROOT_PAGE_LASTMOD_INPUTS.slice();
+    return unique(ROOT_PAGE_LASTMOD_INPUTS);
 }
 
 /**
@@ -350,6 +389,7 @@ module.exports = {
     getPrivacyPageLastmodPaths,
     getRootPageLastmodPaths,
     getToolPageLastmodPaths,
+    listNonTestSourceFilesInDirectory,
     resolveGitLastmodForPaths,
     toSitemapUrlItem,
     writeGeneratedSiteAssets
