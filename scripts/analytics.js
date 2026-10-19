@@ -8,6 +8,64 @@ const ADS_TXT_EXCHANGE = 'google.com';
 const ADS_TXT_RELATIONSHIP = 'DIRECT';
 const ADS_TXT_CERTIFICATION_ID = 'f08c47fec0942fa0';
 
+// Short pause, in milliseconds, so the European regulations message can call
+// gtag('consent','update',...) before tags send. Google's documented example.
+const CONSENT_MODE_WAIT_FOR_UPDATE_MS = 500;
+
+// ISO 3166-1 alpha-2. The EEA is the EU plus Iceland, Liechtenstein, and Norway.
+// The UK's code is GB. Switzerland is CH. No global default is set: visitors
+// outside this list keep the current granted behavior.
+const CONSENT_DENIED_REGIONS = Object.freeze([
+    'AT', 'BE', 'BG', 'CH', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR',
+    'GB', 'GR', 'HR', 'HU', 'IE', 'IS', 'IT', 'LI', 'LT', 'LU', 'LV', 'MT',
+    'NL', 'NO', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK'
+]);
+
+// IANA zones for those same places. Used only to decide whether adsbygoogle.js
+// (which delivers the message) loads immediately. Consent itself is decided by
+// the region list above, inside gtag, not by the clock.
+const REGULATED_TIME_ZONES = Object.freeze([
+    'Africa/Ceuta',
+    'Asia/Famagusta',
+    'Asia/Nicosia',
+    'Atlantic/Azores',
+    'Atlantic/Canary',
+    'Atlantic/Madeira',
+    'Atlantic/Reykjavik',
+    'Europe/Amsterdam',
+    'Europe/Athens',
+    'Europe/Berlin',
+    'Europe/Bratislava',
+    'Europe/Brussels',
+    'Europe/Bucharest',
+    'Europe/Budapest',
+    'Europe/Busingen',
+    'Europe/Copenhagen',
+    'Europe/Dublin',
+    'Europe/Helsinki',
+    'Europe/Lisbon',
+    'Europe/Ljubljana',
+    'Europe/London',
+    'Europe/Luxembourg',
+    'Europe/Madrid',
+    'Europe/Malta',
+    'Europe/Mariehamn',
+    'Europe/Oslo',
+    'Europe/Paris',
+    'Europe/Prague',
+    'Europe/Riga',
+    'Europe/Rome',
+    'Europe/Sofia',
+    'Europe/Stockholm',
+    'Europe/Tallinn',
+    'Europe/Vaduz',
+    'Europe/Vienna',
+    'Europe/Vilnius',
+    'Europe/Warsaw',
+    'Europe/Zagreb',
+    'Europe/Zurich'
+]);
+
 /**
  * @typedef {import('./tool-manifest').AnalyticsConfig} AnalyticsConfig
  */
@@ -51,9 +109,22 @@ function renderAnalyticsHostGate(siteBaseUrl) {
 }
 
 /**
+ * Consent Mode v2 default, queued before gtag('config') and before adsbygoogle.js.
+ * The four storage flags are denied only for {@link CONSENT_DENIED_REGIONS}.
+ * The referrer policy stays the browser default `strict-origin-when-cross-origin`;
+ * this snippet does not set a stricter one. The message needs that default.
+ * @returns {string}
+ */
+function renderConsentDefaultStatements() {
+    const regionJson = escapeJsonForHtml(JSON.stringify(CONSENT_DENIED_REGIONS));
+    return `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=window.gtag||gtag;gtag('consent','default',{'ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied','analytics_storage':'denied','region':${regionJson},'wait_for_update':${CONSENT_MODE_WAIT_FOR_UPDATE_MS}});`;
+}
+
+/**
  * GA4 gtag.js loader + inline bootstrap. Async so it never blocks paint.
- * gtag.js is injected only when `location.hostname` matches the siteBaseUrl host,
- * and `window.gtag` stays unset otherwise.
+ * Consent defaults are queued before `gtag('config')` and before the script
+ * request. gtag.js is injected only when `location.hostname` matches the
+ * siteBaseUrl host, and `window.gtag` stays unset otherwise.
  * @param {string} googleAnalyticsId
  * @param {string | undefined} siteBaseUrl
  * @returns {string}
@@ -61,7 +132,7 @@ function renderAnalyticsHostGate(siteBaseUrl) {
 function renderGoogleAnalyticsMarkup(googleAnalyticsId, siteBaseUrl) {
     const escapedId = escapeAttribute(googleAnalyticsId).replace(/'/g, '\\u0027');
     const hostGate = renderAnalyticsHostGate(siteBaseUrl);
-    return `<script>(function(){${hostGate}window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=gtag;gtag('js',new Date());gtag('config','${escapedId}');var s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id=${escapedId}';(document.head||document.documentElement).appendChild(s);})();</script>`;
+    return `<script>(function(){${hostGate}${renderConsentDefaultStatements()}gtag('js',new Date());gtag('config','${escapedId}');var s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id=${escapedId}';(document.head||document.documentElement).appendChild(s);})();</script>`;
 }
 
 // Idle delay (ms) after which the AdSense loader is injected even if the visitor
@@ -70,14 +141,12 @@ function renderGoogleAnalyticsMarkup(googleAnalyticsId, siteBaseUrl) {
 const ADSENSE_IDLE_DELAY_MS = 3500;
 
 /**
- * AdSense Auto ads loader, lazily injected. Placement is still managed entirely
- * from the AdSense dashboard, but instead of requesting the ~290 KB adsbygoogle.js
- * synchronously on load (the dominant page-weight/main-thread cost), we defer the
- * request until the first user interaction (scroll/pointer/key/touch) or a short
- * idle fallback — whichever comes first. This unblocks the `load` event and keeps
- * the ad iframe out of the initial render path without losing ad coverage.
- * The same host gate as GA4 wraps the loader, so ads are not requested on
- * localhost, 127.0.0.1, or a raw CloudFront domain.
+ * AdSense Auto ads loader. Placement stays in the AdSense dashboard. The same
+ * script delivers the European regulations message, so visitors whose time zone
+ * is in the EEA, the UK, or Switzerland get it immediately. Everywhere else the
+ * request still waits for the first interaction or {@link ADSENSE_IDLE_DELAY_MS},
+ * so ads outside those places keep today's timing. The loader is never a
+ * render-blocking `<script src>`. The host gate matches GA4.
  * @param {string} adsenseClientId
  * @param {string | undefined} siteBaseUrl
  * @returns {string}
@@ -85,8 +154,9 @@ const ADSENSE_IDLE_DELAY_MS = 3500;
 function renderAdsenseMarkup(adsenseClientId, siteBaseUrl) {
     const loaderSrc = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`;
     const jsSafeSrc = escapeJsonForHtml(JSON.stringify(loaderSrc));
+    const zonesJson = escapeJsonForHtml(JSON.stringify(REGULATED_TIME_ZONES));
     const hostGate = renderAnalyticsHostGate(siteBaseUrl);
-    return `<script>(function(){${hostGate}var d=document,loaded=false,events=['scroll','mousemove','keydown','touchstart','pointerdown'];function load(){if(loaded){return;}loaded=true;events.forEach(function(e){window.removeEventListener(e,load);});var s=d.createElement('script');s.async=true;s.crossOrigin='anonymous';s.src=${jsSafeSrc};(d.head||d.documentElement).appendChild(s);}events.forEach(function(e){window.addEventListener(e,load,{passive:true,once:true});});setTimeout(load,${ADSENSE_IDLE_DELAY_MS});})();</script>`;
+    return `<script>(function(){${hostGate}${renderConsentDefaultStatements()}var d=document,loaded=false,events=['scroll','mousemove','keydown','touchstart','pointerdown'];function load(){if(loaded){return;}loaded=true;events.forEach(function(e){window.removeEventListener(e,load);});var s=d.createElement('script');s.async=true;s.crossOrigin='anonymous';s.src=${jsSafeSrc};(d.head||d.documentElement).appendChild(s);}var zone='';try{zone=Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch(e){}if(${zonesJson}.indexOf(zone)!==-1){load();return;}events.forEach(function(e){window.addEventListener(e,load,{passive:true,once:true});});setTimeout(load,${ADSENSE_IDLE_DELAY_MS});})();</script>`;
 }
 
 /**
@@ -192,6 +262,9 @@ function findTrackerMarkupOffenders(htmlAssets) {
 }
 
 module.exports = {
+    CONSENT_DENIED_REGIONS,
+    CONSENT_MODE_WAIT_FOR_UPDATE_MS,
+    REGULATED_TIME_ZONES,
     TRACKER_MARKUP_MARKERS,
     buildAdsTxt,
     findTrackerMarkupOffenders,

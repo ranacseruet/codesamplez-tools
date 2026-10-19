@@ -3,6 +3,9 @@
 const fs = require('fs');
 const vm = require('vm');
 const {
+    CONSENT_DENIED_REGIONS,
+    CONSENT_MODE_WAIT_FOR_UPDATE_MS,
+    REGULATED_TIME_ZONES,
     buildAdsTxt,
     findTrackerMarkupOffenders,
     renderAdsenseMarkup,
@@ -19,8 +22,9 @@ const BLOCKED_HOSTS = ['localhost', '127.0.0.1', 'd26sivjsrj0zo7.cloudfront.net'
  * become a network request (script injection or preconnect insertion).
  * @param {string} markup
  * @param {string} hostname
+ * @param {{ timeZone?: string }} [extras]
  */
-function executeInlineScripts(markup, hostname) {
+function executeInlineScripts(markup, hostname, extras = {}) {
     const appended = [];
     const insertedHtml = [];
     const listeners = [];
@@ -60,6 +64,17 @@ function executeInlineScripts(markup, hostname) {
         removeEventListener() {}
     };
     context.window = context;
+    if (extras.timeZone) {
+        context.Intl = {
+            DateTimeFormat() {
+                return {
+                    resolvedOptions() {
+                        return { timeZone: extras.timeZone };
+                    }
+                };
+            }
+        };
+    }
 
     const bodies = [...markup.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1]);
     if (bodies.length === 0) {
@@ -79,6 +94,13 @@ describe('analytics head markup', () => {
         expect(markup).toContain('https://www.googletagmanager.com/gtag/js?id=G-ABC123XYZ');
         expect(markup).toContain("gtag('config','G-ABC123XYZ')");
         expect(markup).toContain('window.dataLayer=window.dataLayer||[]');
+        expect(markup.indexOf("gtag('consent','default'")).toBeLessThan(markup.indexOf("gtag('config'"));
+        expect(markup.indexOf("gtag('config'")).toBeLessThan(markup.indexOf('googletagmanager.com/gtag/js'));
+        expect(markup.match(/gtag\('consent','default'/g)).toHaveLength(1);
+        expect(markup).toContain(`'region':${JSON.stringify(CONSENT_DENIED_REGIONS)}`);
+        expect(markup).toContain(`'wait_for_update':${CONSENT_MODE_WAIT_FOR_UPDATE_MS}`);
+        expect(markup).not.toContain("'ad_storage':'granted'");
+        expect(markup).not.toContain('referrer');
     });
 
     it('lazily injects the AdSense Auto ads loader for a client id', () => {
@@ -148,6 +170,23 @@ describe('analytics resource hints', () => {
     it('returns an empty string when nothing is configured', () => {
         expect(renderAnalyticsResourceHints({ googleAnalyticsId: null, adsenseClientId: null })).toBe('');
         expect(renderAnalyticsResourceHints()).toBe('');
+    });
+});
+
+describe('consent mode regions', () => {
+    it('denies only the EEA, the UK, and Switzerland', () => {
+        expect(new Set(CONSENT_DENIED_REGIONS).size).toBe(CONSENT_DENIED_REGIONS.length);
+        expect([...CONSENT_DENIED_REGIONS].sort()).toEqual([
+            'AT', 'BE', 'BG', 'CH', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR',
+            'GB', 'GR', 'HR', 'HU', 'IE', 'IS', 'IT', 'LI', 'LT', 'LU', 'LV', 'MT',
+            'NL', 'NO', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK'
+        ]);
+        expect(CONSENT_DENIED_REGIONS).not.toContain('UK');
+        expect(CONSENT_DENIED_REGIONS).not.toContain('US');
+        expect(REGULATED_TIME_ZONES).toContain('Europe/London');
+        expect(REGULATED_TIME_ZONES).toContain('Europe/Zurich');
+        expect(REGULATED_TIME_ZONES).not.toContain('America/New_York');
+        expect(REGULATED_TIME_ZONES).not.toContain('UTC');
     });
 });
 
@@ -240,10 +279,20 @@ describe('analytics host gate', () => {
             })
         ]);
         expect(typeof result.context.gtag).toBe('function');
-        expect(result.context.dataLayer[0][0]).toBe('js');
-        expect(result.context.dataLayer[0][1].getTime()).toEqual(expect.any(Number));
-        expect(result.context.dataLayer[1][0]).toBe('config');
-        expect(result.context.dataLayer[1][1]).toBe('G-ABC123XYZ');
+        expect(result.context.dataLayer[0][0]).toBe('consent');
+        expect(result.context.dataLayer[0][1]).toBe('default');
+        expect(result.context.dataLayer[0][2]).toEqual({
+            ad_storage: 'denied',
+            ad_user_data: 'denied',
+            ad_personalization: 'denied',
+            analytics_storage: 'denied',
+            region: [...CONSENT_DENIED_REGIONS],
+            wait_for_update: CONSENT_MODE_WAIT_FOR_UPDATE_MS
+        });
+        expect(result.context.dataLayer[1][0]).toBe('js');
+        expect(result.context.dataLayer[1][1].getTime()).toEqual(expect.any(Number));
+        expect(result.context.dataLayer[2][0]).toBe('config');
+        expect(result.context.dataLayer[2][1]).toBe('G-ABC123XYZ');
     });
 
     it.each(BLOCKED_HOSTS)('does not request gtag.js on %s', (hostname) => {
@@ -273,6 +322,48 @@ describe('analytics host gate', () => {
                 src: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456'
             })
         ]);
+    });
+
+    it.each(['Europe/Berlin', 'Europe/London', 'Europe/Zurich', 'Atlantic/Reykjavik'])(
+        'loads the AdSense script immediately for %s',
+        (timeZone) => {
+            const result = executeInlineScripts(adsMarkup, 'tools.codesamplez.com', { timeZone });
+
+            expect(result.context.dataLayer[0][0]).toBe('consent');
+            expect(result.context.dataLayer[0][1]).toBe('default');
+            expect(result.appended).toEqual([
+                expect.objectContaining({
+                    async: true,
+                    crossOrigin: 'anonymous',
+                    src: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456'
+                })
+            ]);
+            expect(result.listeners).toEqual([]);
+            expect(result.timeouts).toEqual([]);
+        }
+    );
+
+    it.each(['America/New_York', 'UTC', 'Europe/Istanbul'])(
+        'keeps the lazy AdSense loader for %s',
+        (timeZone) => {
+            const result = executeInlineScripts(adsMarkup, 'tools.codesamplez.com', { timeZone });
+
+            expect(result.appended).toEqual([]);
+            expect(result.listeners.map((listener) => listener.type)).toEqual([
+                'scroll', 'mousemove', 'keydown', 'touchstart', 'pointerdown'
+            ]);
+            expect(result.timeouts).toEqual([{ fn: expect.any(Function), delay: 3500 }]);
+        }
+    );
+
+    it.each(BLOCKED_HOSTS)('does not request adsbygoogle.js on %s even in a regulated time zone', (hostname) => {
+        const result = executeInlineScripts(adsMarkup, hostname, { timeZone: 'Europe/Berlin' });
+
+        expect(result.appended).toEqual([]);
+        expect(result.listeners).toEqual([]);
+        expect(result.timeouts).toEqual([]);
+        expect(result.context.gtag).toBeUndefined();
+        expect(result.context.dataLayer).toBeUndefined();
     });
 
     it.each(BLOCKED_HOSTS)('does not request adsbygoogle.js on %s', (hostname) => {

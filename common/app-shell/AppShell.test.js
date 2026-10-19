@@ -204,6 +204,31 @@ describe('AppShell components', () => {
         expect(repoLink?.getAttribute('href')).toBe('https://github.com/ranacseruet/codesamplez-tools');
         const privacyLink = bottomLinks.find((link) => link.textContent === 'Privacy');
         expect(privacyLink?.getAttribute('href')).toBe(buildSiteHref('/privacy/'));
+        const privacySettings = bottomLinks.find((link) => link.textContent === 'Privacy settings');
+        expect(privacySettings?.getAttribute('href')).toBe(buildSiteHref('/privacy/'));
+    });
+
+    it('reopens the consent message from the footer Privacy settings link', () => {
+        const showRevocationMessage = jest.fn();
+        window.googlefc = {
+            callbackQueue: [],
+            showRevocationMessage
+        };
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+
+        render(<ToolShellFooter />, root);
+
+        const privacySettings = [...root.querySelectorAll('a.cst-shell__footer-link')]
+            .find((link) => link.textContent === 'Privacy settings');
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+        privacySettings.dispatchEvent(event);
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(window.googlefc.callbackQueue).toHaveLength(1);
+        window.googlefc.callbackQueue[0].CONSENT_API_READY();
+        expect(showRevocationMessage).toHaveBeenCalledTimes(1);
+        delete window.googlefc;
     });
 
     it('closes the Browse Tools menu on outside click and Escape', () => {

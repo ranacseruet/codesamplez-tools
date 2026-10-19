@@ -243,6 +243,36 @@ export function ToolShellHeader({
     );
 }
 
+type GoogleFundingChoices = {
+    callbackQueue?: Array<Record<string, () => void>>;
+    showRevocationMessage?: () => void;
+};
+
+// Reopens Google's European regulations message. The queue is the supported
+// way to call showRevocationMessage, including when the AdSense script has
+// not finished loading. Without that script the call does not invent a banner.
+function reopenPrivacySettings(event: JSX.TargetedMouseEvent<HTMLAnchorElement>): void {
+    event.preventDefault();
+
+    const host = window as Window & { googlefc?: GoogleFundingChoices };
+    if (!host.googlefc) {
+        host.googlefc = {};
+    }
+
+    const googlefc = host.googlefc;
+    if (!googlefc.callbackQueue) {
+        googlefc.callbackQueue = [];
+    }
+
+    googlefc.callbackQueue.push({
+        CONSENT_API_READY() {
+            if (typeof googlefc.showRevocationMessage === 'function') {
+                googlefc.showRevocationMessage();
+            }
+        }
+    });
+}
+
 interface ToolShellFooterProps {
     homeHref?: string;
     privacyHref?: string;
@@ -291,6 +321,8 @@ export function ToolShellFooter({
                     <a href={MAIN_SITE_URL} className="cst-shell__footer-link">CodeSamplez.com</a>
                     <span aria-hidden="true">·</span>
                     <a href={privacyHref} className="cst-shell__footer-link">Privacy</a>
+                    <span aria-hidden="true">·</span>
+                    <a href={privacyHref} className="cst-shell__footer-link" onClick={reopenPrivacySettings}>Privacy settings</a>
                     <span aria-hidden="true">·</span>
                     <span>© {currentYear} CodeSamplez</span>
                 </div>
