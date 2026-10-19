@@ -273,6 +273,23 @@ describe('CopyButton', () => {
             expect(gtag).toHaveBeenCalledWith('event', 'copy_output', { tool_id: 'diff-checker' });
         });
 
+        test('does not emit copy_output when trackOutputCopy is false', async () => {
+            const gtag = jest.fn();
+            window.gtag = gtag;
+            setMountedToolAnalyticsId('jwt-builder');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = 'signing-secret';
+            document.body.appendChild(input);
+            const inputCopyButton = new CopyButton(input, { trackOutputCopy: false });
+
+            await inputCopyButton.copyContent();
+
+            expect(gtag).not.toHaveBeenCalled();
+            inputCopyButton.disconnect();
+            input.remove();
+        });
+
         test('should remove success animation after timeout', async () => {
             textArea.value = 'success test';
             jest.useFakeTimers();

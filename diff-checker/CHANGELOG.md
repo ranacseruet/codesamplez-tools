@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.15] - 2026-10-19
+
+### Diff Checker
+
+- Shared CopyButton update (no user-visible change for this tool).
+
 ## [1.0.14] - 2026-10-17
 
 ### Diff Checker
