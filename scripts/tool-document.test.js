@@ -3,8 +3,11 @@
 const { generateToolDocument, joinUrl, renderToolDocument } = require('./tool-document.js');
 const { generateRootDocument } = require('./root-document');
 const { generateNotFoundDocument } = require('./error-document');
-const { getToolById, getToolDefinitions } = require('./tool-manifest');
+const { getRootPageDefinition, getToolById, getToolDefinitions } = require('./tool-manifest');
 const { DOCUMENT_TITLE_MAX_LENGTH, formatToolDocumentTitle } = require('./document-helpers');
+
+/** Google truncates meta descriptions at about 155–160 characters. */
+const META_DESCRIPTION_MAX_LENGTH = 160;
 const { SITE_BASE_URL, SITE_STATIC_ROOT_URI, buildSiteAssetUri, buildSiteHref } = require('../common/siteBaseUrl');
 
 function getHeadingMatches(html, level) {
@@ -192,6 +195,32 @@ describe('tool document generation', () => {
         expect(rootTitle.length).toBeLessThanOrEqual(DOCUMENT_TITLE_MAX_LENGTH);
         expect(notFoundTitle).toBe('Page Not Found | CodeSamplez');
         expect(notFoundTitle.length).toBeLessThanOrEqual(DOCUMENT_TITLE_MAX_LENGTH);
+    });
+
+    it('keeps every tool and root meta description within 160 characters', () => {
+        const { JSDOM } = require('jsdom');
+        const rootDescription = getRootPageDefinition().description;
+
+        expect(rootDescription.length).toBeLessThanOrEqual(META_DESCRIPTION_MAX_LENGTH);
+
+        getToolDefinitions().forEach((tool) => {
+            expect(tool.description.length).toBeLessThanOrEqual(META_DESCRIPTION_MAX_LENGTH);
+
+            const html = generateToolDocument(tool.id);
+            const metaDescription = new JSDOM(html).window.document
+                .querySelector('meta[name="description"]')
+                .getAttribute('content');
+
+            expect(metaDescription).toBe(tool.description);
+            expect(metaDescription.length).toBeLessThanOrEqual(META_DESCRIPTION_MAX_LENGTH);
+        });
+
+        const rootMetaDescription = new JSDOM(generateRootDocument()).window.document
+            .querySelector('meta[name="description"]')
+            .getAttribute('content');
+
+        expect(rootMetaDescription).toBe(rootDescription);
+        expect(rootMetaDescription.length).toBeLessThanOrEqual(META_DESCRIPTION_MAX_LENGTH);
     });
 
     it('drops the brand suffix only when the keyword title already fills the budget', () => {

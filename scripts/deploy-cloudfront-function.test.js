@@ -78,6 +78,88 @@ describe('codesamplez-tools-rewrite-static-urls CloudFront Function', () => {
   it('leaves asset paths with file extensions unchanged', () => {
     expect(handler(createEvent('/jwt-decoder/bundle.main.js')).uri).toBe('/jwt-decoder/bundle.main.js');
   });
+
+  it('redirects root index.html to the directory URL', () => {
+    expect(handler(createEvent('/index.html'))).toEqual({
+      statusCode: 301,
+      statusDescription: 'Moved Permanently',
+      headers: {
+        location: {
+          value: '/'
+        }
+      }
+    });
+  });
+
+  it('redirects tool index.html paths to their canonical directory URL', () => {
+    expect(handler(createEvent('/json-formatter/index.html'))).toEqual({
+      statusCode: 301,
+      statusDescription: 'Moved Permanently',
+      headers: {
+        location: {
+          value: '/json-formatter/'
+        }
+      }
+    });
+  });
+
+  it('preserves query string parameters when redirecting index.html paths', () => {
+    expect(handler(createEvent('/json-formatter/index.html', {
+      x: { value: '1' }
+    })).headers.location.value).toBe('/json-formatter/?x=1');
+  });
+
+  it('does not redirect directory paths that are rewritten to index.html for the origin', () => {
+    expect(handler(createEvent('/json-formatter/'))).toEqual({
+      uri: '/json-formatter/index.html',
+      querystring: {}
+    });
+  });
+
+  it('redirects legacy /javascript-minifier slug to /js-minifier/ in one hop', () => {
+    expect(handler(createEvent('/javascript-minifier'))).toEqual({
+      statusCode: 301,
+      statusDescription: 'Moved Permanently',
+      headers: {
+        location: {
+          value: '/js-minifier/'
+        }
+      }
+    });
+    expect(handler(createEvent('/javascript-minifier/'))).toEqual({
+      statusCode: 301,
+      statusDescription: 'Moved Permanently',
+      headers: {
+        location: {
+          value: '/js-minifier/'
+        }
+      }
+    });
+  });
+
+  it('preserves query string when redirecting legacy /javascript-minifier slug', () => {
+    expect(handler(createEvent('/javascript-minifier/', {
+      a: { value: '1' }
+    })).headers.location.value).toBe('/js-minifier/?a=1');
+    expect(handler(createEvent('/javascript-minifier', {
+      a: { value: '1' }
+    })).headers.location.value).toBe('/js-minifier/?a=1');
+  });
+
+  it('redirects legacy /javascript-minifier/index.html to /js-minifier/ in one hop', () => {
+    expect(handler(createEvent('/javascript-minifier/index.html'))).toEqual({
+      statusCode: 301,
+      statusDescription: 'Moved Permanently',
+      headers: {
+        location: {
+          value: '/js-minifier/'
+        }
+      }
+    });
+    expect(handler(createEvent('/javascript-minifier/index.html', {
+      a: { value: '1' }
+    })).headers.location.value).toBe('/js-minifier/?a=1');
+  });
 });
 
 describe('deploy-cloudfront-function helpers', () => {
