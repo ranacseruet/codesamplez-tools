@@ -28,6 +28,25 @@ function handler(event) {
     var request = event.request;
     var uri = request.uri;
 
+    // Redirect explicit /index.html URLs to the canonical directory URL.
+    var indexHtmlSuffix = 'index.html';
+    var indexHtmlSuffixLength = indexHtmlSuffix.length;
+    if (uri.length > indexHtmlSuffixLength
+        && uri.substring(uri.length - indexHtmlSuffixLength) === indexHtmlSuffix
+        && uri.charAt(uri.length - indexHtmlSuffixLength - 1) === '/') {
+        var directoryPath = uri.substring(0, uri.length - indexHtmlSuffixLength);
+        var location = appendQueryString(directoryPath, request.querystring);
+        return {
+            statusCode: 301,
+            statusDescription: 'Moved Permanently',
+            headers: {
+                location: {
+                    value: location
+                }
+            }
+        };
+    }
+
     // Check if the URI ends with '/' - append 'index.html'
     var lastChar = uri.charAt(uri.length - 1);
     if (lastChar === '/') {
