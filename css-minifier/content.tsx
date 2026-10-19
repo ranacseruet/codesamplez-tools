@@ -175,6 +175,12 @@ body {
                         <li>Does not optimize property names such as <code>margin-left</code> to abbreviated aliases.</li>
                         <li>Maintains CSS syntax validity during minification instead of doing aggressive transforms.</li>
                         <li>Best for basic optimization of a modern CSS code base.</li>
+                        <li>
+                            Tidy JSON config shipped alongside styles with the{' '}
+                            <a href={buildSiteHref('/json-formatter/')}>JSON Formatter</a>, or{' '}
+                            <a href={buildSiteHref('/diff-checker/')}>diff the minified CSS</a> against your source
+                            file.
+                        </li>
                     </ul>
                     <p>
                         For advanced optimization, consider using tools like PurifyCSS or a dedicated build pipeline.

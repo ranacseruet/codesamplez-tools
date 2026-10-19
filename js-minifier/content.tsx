@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL } from '../common/siteBaseUrl';
+import { SITE_BASE_URL, buildSiteHref } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
@@ -70,6 +70,12 @@ export function JSMinifierArticle(): JSX.Element {
                         <li><strong>Reduced bandwidth usage:</strong> Leaner assets save data for end users and lower transfer costs.</li>
                         <li><strong>Lower server overhead:</strong> Smaller payloads are cheaper to serve at scale.</li>
                         <li><strong>Same functionality, smaller footprint:</strong> The code still does the same job after comments and extra spacing are removed.</li>
+                        <li>
+                            Pair minification with the <a href={buildSiteHref('/css-minifier/')}>CSS Minifier</a> on
+                            the same page, format JSON configs with the{' '}
+                            <a href={buildSiteHref('/json-formatter/')}>JSON Formatter</a>, and verify output with the{' '}
+                            <a href={buildSiteHref('/diff-checker/')}>Diff Checker</a>.
+                        </li>
                     </ul>
 
                     <div className="c-tool-article__cta-row">

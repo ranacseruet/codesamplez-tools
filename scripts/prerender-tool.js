@@ -232,12 +232,44 @@ function renderToolAfterAppPrerenderMarkup(toolName) {
  * @param {string} toolName
  * @returns {string}
  */
+/**
+ * @param {string} toolName
+ * @returns {import('../common/related-tools/RelatedTools').RelatedToolSummary[]}
+ */
+function buildRelatedToolSummaries(toolName) {
+    const relatedTools = getRelatedTools(toolName);
+
+    return relatedTools.map((tool) => ({
+        id: tool.id,
+        title: tool.title,
+        reason: getRelatedToolReason(toolName, tool.id),
+        publicPath: tool.publicPath,
+        iconSvg: renderInlineIcon(tool.icon || 'wrench'),
+        categorySlug: getGroupCategorySlug(tool.catalogGroupId)
+    }));
+}
+
+/**
+ * @param {string} toolName
+ * @returns {string}
+ */
+function renderRelatedToolsCompactPrerenderMarkup(toolName) {
+    const tools = buildRelatedToolSummaries(toolName);
+
+    return renderNodeToMarkup(() => {
+        const { h } = require('preact');
+        const { RelatedToolsCompactRow } = require(path.resolve(__dirname, '../common/related-tools/RelatedToolsCompactRow'));
+
+        return h(RelatedToolsCompactRow, { tools });
+    });
+}
+
 function renderRelatedToolsPrerenderMarkup(toolName) {
     // getRelatedTools throws `Unknown tool id` for an unregistered tool, so by
     // this point the lookup cannot miss. The cast records that invariant rather
     // than adding an unreachable guard that duplicates the same error.
-    const relatedTools = getRelatedTools(toolName);
     const sourceTool = /** @type {import('./tool-manifest').ToolDefinition} */ (getToolById(toolName));
+    const tools = buildRelatedToolSummaries(toolName);
 
     return renderNodeToMarkup(() => {
         const { h } = require('preact');
@@ -245,16 +277,7 @@ function renderRelatedToolsPrerenderMarkup(toolName) {
 
         return h(RelatedToolsSection, {
             sourceToolTitle: sourceTool.title,
-            tools: relatedTools.map((tool) => ({
-                id: tool.id,
-                title: tool.title,
-                // Pair-specific handoff copy, not the target's SEO meta
-                // description — see scripts/related-tools-metadata.js.
-                reason: getRelatedToolReason(toolName, tool.id),
-                publicPath: tool.publicPath,
-                iconSvg: renderInlineIcon(tool.icon || 'wrench'),
-                categorySlug: getGroupCategorySlug(tool.catalogGroupId)
-            }))
+            tools
         });
     });
 }
@@ -274,6 +297,7 @@ module.exports = {
     resolveContentExport,
     getPrerenderConfig,
     getPrerenderToolNames,
+    renderRelatedToolsCompactPrerenderMarkup,
     renderRelatedToolsPrerenderMarkup,
     renderToolAfterAppPrerenderMarkup,
     renderToolBeforeAppPrerenderMarkup,

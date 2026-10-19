@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL } from '../common/siteBaseUrl';
+import { SITE_BASE_URL, buildSiteHref } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
@@ -98,6 +98,17 @@ export function QRCodeGeneratorArticle(): JSX.Element {
                         <li><strong>Generate QR codes from text or URLs</strong> without requiring signup or installation.</li>
                         <li><strong>Customize size</strong> for compact embeds or large printable outputs.</li>
                         <li><strong>Adjust quiet-zone margin</strong> to improve scan reliability across different layouts.</li>
+                        <li>
+                            <strong>Very small binary snippets only:</strong> ordinary images and files grow too large
+                            once Base64-encoded for a scannable QR code, but for tiny payloads you can use the{' '}
+                            <a href={buildSiteHref('/base64-converter/')}>Base64 Converter</a> and paste the resulting
+                            string here when it still fits the generator&apos;s length limit.
+                        </li>
+                        <li>
+                            <strong>Structured payloads:</strong> convert JSON to YAML or XML with the{' '}
+                            <a href={buildSiteHref('/data-format-converter/')}>Data Format Converter</a>, or check
+                            encoded text length with the <a href={buildSiteHref('/text-analyzer/')}>Text Analyzer</a>.
+                        </li>
                         <li><strong>Choose an error correction level</strong> from L, M, Q, or H depending on your tolerance for damage or obstruction.</li>
                         <li><strong>Download PNG output</strong> for reuse in documents, presentations, packaging, or signage.</li>
                         <li><strong>Preview changes instantly</strong> as you edit the payload or settings.</li>

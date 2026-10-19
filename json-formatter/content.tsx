@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL } from '../common/siteBaseUrl';
+import { SITE_BASE_URL, buildSiteHref } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
@@ -139,6 +139,12 @@ export function JsonFormatterArticle(): JSX.Element {
                         <li>Easier debugging: errors stand out when JSON is properly formatted.</li>
                         <li>Save time instead of trying to format with manually written code.</li>
                         <li>Can work offline once loaded. Tool input is processed locally and is not uploaded.</li>
+                        <li>
+                            Turn formatted JSON into YAML or XML with the{' '}
+                            <a href={buildSiteHref('/data-format-converter/')}>Data Format Converter</a>, inspect JWT
+                            payloads with the <a href={buildSiteHref('/jwt-decoder/')}>JWT Decoder</a>, or{' '}
+                            <a href={buildSiteHref('/js-minifier/')}>minify the JavaScript</a> that consumes the file.
+                        </li>
                     </ul>
 
                     <div className="c-tool-article__cta-row">

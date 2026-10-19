@@ -1390,6 +1390,54 @@ button.c-tooltip-container {
    that users can find and report it. Declared after the
    `.c-tool-static-shell *` reset (specificity 0-1-0 — same as this class) so
    source order keeps it un-flattened. */
+.c-related-tools-compact {
+  max-width: var(--container-max-width, var(--default-container-max-width, 1280px));
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: content-box;
+  padding-inline: clamp(0.85rem, 2vw, var(--spacing-lg, var(--default-spacing-lg)));
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+  font-family: var(--font-family-base, var(--default-font-family-base));
+  font-size: var(--font-size-base, var(--default-font-size-base));
+  line-height: var(--line-height-base, var(--default-line-height-base));
+  color: var(--color-text, var(--default-color-text));
+}
+
+.c-related-tools-compact__title {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary, var(--default-color-text-secondary));
+}
+
+.c-related-tools-compact__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.c-related-tools-compact__link {
+  color: var(--color-primary, var(--default-color-primary));
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.c-related-tools-compact__link:hover {
+  text-decoration-thickness: 2px;
+}
+
+.c-related-tools-compact__link:focus-visible {
+  outline: 2px solid var(--color-primary, var(--default-color-primary));
+  outline-offset: 2px;
+}
+
 .c-tool-version {
   max-width: var(--container-max-width, var(--default-container-max-width, 1280px));
   margin-left: auto;

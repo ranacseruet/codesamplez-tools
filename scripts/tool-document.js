@@ -2,6 +2,7 @@
 
 const { getToolById, loadManifest } = require('./tool-manifest');
 const {
+    renderRelatedToolsCompactPrerenderMarkup,
     renderRelatedToolsPrerenderMarkup,
     renderToolAfterAppPrerenderMarkup,
     renderToolBeforeAppPrerenderMarkup,
@@ -55,9 +56,17 @@ function renderFaviconLinks(staticRootUri) {
  * @param {string} relatedToolsMarkup
  * @param {string} beforeAppMarkup
  * @param {string} afterAppMarkup
+ * @param {string} relatedToolsCompactMarkup
  * @returns {string}
  */
-function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', beforeAppMarkup = '', afterAppMarkup = '') {
+function renderToolDocument(
+    tool,
+    prerenderedMarkup,
+    relatedToolsMarkup = '',
+    beforeAppMarkup = '',
+    afterAppMarkup = '',
+    relatedToolsCompactMarkup = ''
+) {
     const manifest = loadManifest();
     const absolutePageUrl = joinUrl(tool.siteBaseUrl, tool.publicPath);
     const absoluteFeaturedImageUrl = joinUrl(tool.siteStaticRootUri, `${tool.publicPath.replace(/\/$/, '')}/${tool.featuredImagePath}`);
@@ -142,6 +151,7 @@ function renderToolDocument(tool, prerenderedMarkup, relatedToolsMarkup = '', be
         <h2 id="${escapedMainHeadingId}" class="u-visually-hidden">${escapeHtml(workspaceHeading)}</h2>
         ${wrappedBeforeMarkup}
         <div id="${escapedAppRootId}">${prerenderedMarkup}</div>
+        ${relatedToolsCompactMarkup}
         ${renderToolVersionLineMarkup(tool)}
         ${renderToolChangelogMarkup(tool.id)}
         ${wrappedAfterMarkup}
@@ -239,7 +249,8 @@ function generateToolDocument(toolId) {
         renderToolPrerenderMarkup(toolId),
         renderRelatedToolsPrerenderMarkup(toolId),
         renderToolBeforeAppPrerenderMarkup(toolId),
-        renderToolAfterAppPrerenderMarkup(toolId)
+        renderToolAfterAppPrerenderMarkup(toolId),
+        renderRelatedToolsCompactPrerenderMarkup(toolId)
     );
 }
 

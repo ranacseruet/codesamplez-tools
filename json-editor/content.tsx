@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { SITE_BASE_URL } from '../common/siteBaseUrl';
+import { SITE_BASE_URL, buildSiteHref } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 
 function createFaqItem(question: string, answer: string): ToolFaqItem {
@@ -123,6 +123,12 @@ export function JsonEditorArticle(): JSX.Element {
                         <li><strong>Safe commits:</strong> Invalid numbers and duplicate keys are rejected without replacing the last valid document.</li>
                         <li><strong>History:</strong> Undo and redo imports, edits, type changes, and structure changes for the current tab session.</li>
                         <li><strong>Local export:</strong> Copy the read-only generated JSON or download it as <code>edited.json</code>.</li>
+                        <li>
+                            <strong>Related tools:</strong>{' '}
+                            <a href={buildSiteHref('/json-formatter/')}>Format imported JSON</a>, convert it with the{' '}
+                            <a href={buildSiteHref('/data-format-converter/')}>Data Format Converter</a>, or{' '}
+                            <a href={buildSiteHref('/diff-checker/')}>diff two versions</a> after export.
+                        </li>
                     </ul>
                     <div className="c-tool-article__cta-row">
                         <a className="c-button" href={SITE_BASE_URL}>Explore More Dev Tools</a>

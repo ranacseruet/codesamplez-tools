@@ -475,6 +475,7 @@ describe('tool document generation', () => {
         expect(html).toContain('id="base64converter-convert"');
         expect(html).toContain('id="base64converter-image-preview"');
         expect(html).toContain('id="base64converter-swap"');
+        expect(html).toContain('id="related-tools-compact-heading"');
         expect(html).toContain('id="related-tools-heading"');
         expect(html).toContain('Next step');
         expect(html).toContain('Common follow-ons after using the Base64 Converter.');
@@ -495,6 +496,43 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"What\'s the difference between a text analyzer and a word counter?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes. The CodeSamplez Text Analyzer is completely free to use.');
         expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/text-analyzer/')}#webpage"}`);
+    });
+
+    function extractMainHtml(html) {
+        const match = html.match(/<main\b[^>]*>([\s\S]*)<\/main>/u);
+
+        return match ? match[1] : '';
+    }
+
+    function countCrossToolLinksInMain(html, currentTool) {
+        const mainHtml = extractMainHtml(html);
+        const otherTools = getToolDefinitions().filter((tool) => tool.id !== currentTool.id);
+        let count = 0;
+
+        otherTools.forEach((tool) => {
+            const href = buildSiteHref(tool.publicPath);
+            const pattern = new RegExp(`href="${href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, 'gu');
+            count += (mainHtml.match(pattern) || []).length;
+        });
+
+        return count;
+    }
+
+    it('prerenders the compact related-tools row directly under the workspace on every tool', () => {
+        getToolDefinitions().forEach((tool) => {
+            const html = generateToolDocument(tool.id);
+
+            expect(html).toContain('id="related-tools-compact-heading"');
+            expect(html.indexOf('related-tools-compact-heading')).toBeLessThan(html.indexOf('c-tool-version'));
+        });
+    });
+
+    it('includes at least three links to other tool pages inside main', () => {
+        getToolDefinitions().forEach((tool) => {
+            const html = generateToolDocument(tool.id);
+
+            expect(countCrossToolLinksInMain(html, tool)).toBeGreaterThanOrEqual(3);
+        });
     });
 
     it('uses localhost metadata and root-relative internal links in development mode', () => {
