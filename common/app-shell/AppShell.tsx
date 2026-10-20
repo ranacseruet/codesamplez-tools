@@ -248,16 +248,24 @@ type GoogleFundingChoices = {
     showRevocationMessage?: () => void;
 };
 
-// Reopens Google's European regulations message. The queue is the supported
-// way to call showRevocationMessage, including when the AdSense script has
-// not finished loading. Without that script the call does not invent a banner.
-function reopenPrivacySettings(event: JSX.TargetedMouseEvent<HTMLAnchorElement>): void {
-    event.preventDefault();
+type FundingChoicesHost = Window & { googlefc?: GoogleFundingChoices };
 
-    const host = window as Window & { googlefc?: GoogleFundingChoices };
+function fundingChoicesHost(): FundingChoicesHost {
+    return window as FundingChoicesHost;
+}
+
+// Reopens Google's European regulations message when Funding Choices has
+// loaded. The queue is the supported way to call showRevocationMessage, and
+// the callback reads window.googlefc again so it uses the live API. When the
+// script never arrives (an ad blocker, or a visitor outside the regions where
+// the message loads), the click keeps going to the privacy page.
+function reopenPrivacySettings(event: JSX.TargetedMouseEvent<HTMLAnchorElement>): void {
+    const host = fundingChoicesHost();
     if (!host.googlefc) {
-        host.googlefc = {};
+        return;
     }
+
+    event.preventDefault();
 
     const googlefc = host.googlefc;
     if (!googlefc.callbackQueue) {
@@ -266,8 +274,9 @@ function reopenPrivacySettings(event: JSX.TargetedMouseEvent<HTMLAnchorElement>)
 
     googlefc.callbackQueue.push({
         CONSENT_API_READY() {
-            if (typeof googlefc.showRevocationMessage === 'function') {
-                googlefc.showRevocationMessage();
+            const ready = fundingChoicesHost().googlefc;
+            if (ready && typeof ready.showRevocationMessage === 'function') {
+                ready.showRevocationMessage();
             }
         }
     });

@@ -26,6 +26,11 @@ const CONSENT_DENIED_REGIONS = Object.freeze([
 // the region list above, inside gtag, not by the clock.
 const REGULATED_TIME_ZONES = Object.freeze([
     'Africa/Ceuta',
+    'America/Cayenne',
+    'America/Guadeloupe',
+    'America/Marigot',
+    'America/Martinique',
+    'Arctic/Longyearbyen',
     'Asia/Famagusta',
     'Asia/Nicosia',
     'Atlantic/Azores',
@@ -63,7 +68,9 @@ const REGULATED_TIME_ZONES = Object.freeze([
     'Europe/Vilnius',
     'Europe/Warsaw',
     'Europe/Zagreb',
-    'Europe/Zurich'
+    'Europe/Zurich',
+    'Indian/Mayotte',
+    'Indian/Reunion'
 ]);
 
 /**
@@ -117,7 +124,10 @@ function renderAnalyticsHostGate(siteBaseUrl) {
  */
 function renderConsentDefaultStatements() {
     const regionJson = escapeJsonForHtml(JSON.stringify(CONSENT_DENIED_REGIONS));
-    return `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=window.gtag||gtag;gtag('consent','default',{'ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied','analytics_storage':'denied','region':${regionJson},'wait_for_update':${CONSENT_MODE_WAIT_FOR_UPDATE_MS}});`;
+    // Both snippets carry the command so whichever tag is present still queues
+    // the default first. The flag keeps a page that includes both from pushing
+    // the same default twice.
+    return `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=window.gtag||gtag;if(!window.__cstConsentDefault){window.__cstConsentDefault=1;gtag('consent','default',{'ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied','analytics_storage':'denied','region':${regionJson},'wait_for_update':${CONSENT_MODE_WAIT_FOR_UPDATE_MS}});}`;
 }
 
 /**

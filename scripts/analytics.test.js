@@ -130,6 +130,17 @@ describe('analytics head markup', () => {
 
         expect(markup).toContain('googletagmanager.com');
         expect(markup).toContain('googlesyndication.com');
+        // Each snippet carries its own default, ahead of that snippet's tag.
+        expect(markup.match(/gtag\('consent','default'/g)).toHaveLength(2);
+        const configAt = markup.indexOf("gtag('config'");
+        const adsAt = markup.indexOf('adsbygoogle.js');
+        expect(markup.indexOf("gtag('consent','default'")).toBeLessThan(configAt);
+        expect(markup.indexOf("gtag('consent','default'", configAt)).toBeGreaterThan(configAt);
+        expect(markup.indexOf("gtag('consent','default'", configAt)).toBeLessThan(adsAt);
+
+        const result = executeInlineScripts(markup, 'tools.codesamplez.com', { timeZone: 'Europe/Berlin' });
+        const consentDefaults = result.context.dataLayer.filter((entry) => entry[0] === 'consent' && entry[1] === 'default');
+        expect(consentDefaults).toHaveLength(1);
     });
 
     it('renders only the configured channel for partial configuration', () => {
@@ -183,8 +194,19 @@ describe('consent mode regions', () => {
         ]);
         expect(CONSENT_DENIED_REGIONS).not.toContain('UK');
         expect(CONSENT_DENIED_REGIONS).not.toContain('US');
-        expect(REGULATED_TIME_ZONES).toContain('Europe/London');
-        expect(REGULATED_TIME_ZONES).toContain('Europe/Zurich');
+        expect(new Set(REGULATED_TIME_ZONES).size).toBe(REGULATED_TIME_ZONES.length);
+        expect([...REGULATED_TIME_ZONES].sort()).toEqual([...REGULATED_TIME_ZONES]);
+        expect(REGULATED_TIME_ZONES).toEqual(expect.arrayContaining([
+            'Europe/London',
+            'Europe/Zurich',
+            'Arctic/Longyearbyen',
+            'America/Cayenne',
+            'America/Guadeloupe',
+            'America/Marigot',
+            'America/Martinique',
+            'Indian/Mayotte',
+            'Indian/Reunion'
+        ]));
         expect(REGULATED_TIME_ZONES).not.toContain('America/New_York');
         expect(REGULATED_TIME_ZONES).not.toContain('UTC');
     });
@@ -324,7 +346,7 @@ describe('analytics host gate', () => {
         ]);
     });
 
-    it.each(['Europe/Berlin', 'Europe/London', 'Europe/Zurich', 'Atlantic/Reykjavik'])(
+    it.each(['Europe/Berlin', 'Europe/London', 'Europe/Zurich', 'Atlantic/Reykjavik', 'Arctic/Longyearbyen', 'Indian/Reunion'])(
         'loads the AdSense script immediately for %s',
         (timeZone) => {
             const result = executeInlineScripts(adsMarkup, 'tools.codesamplez.com', { timeZone });
