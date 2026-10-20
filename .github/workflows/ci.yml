@@ -62,10 +62,13 @@ jobs:
     # "skip-version-bump" label is the escape hatch for PRs that cannot bump
     # (docs-only, CI-only); label presence is checked via the API so this stays
     # accurate even when the label is added after the run started.
+    # PR_AUTHOR lets the checker skip Dependabot updates that touch only
+    # package.json and package-lock.json when that label was not applied.
     - name: Check tool version bumps
       if: github.event_name == 'pull_request'
       env:
         GH_TOKEN: ${{ github.token }}
+        PR_AUTHOR: ${{ github.event.pull_request.user.login }}
       run: |
         set -euo pipefail
         BASE="${{ github.event.pull_request.base.sha }}"
