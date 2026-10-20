@@ -231,6 +231,40 @@ describe('AppShell components', () => {
         delete window.googlefc;
     });
 
+    it('creates the Funding Choices queue when the footer link is used first', () => {
+        delete window.googlefc;
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+
+        render(<ToolShellFooter />, root);
+
+        const privacySettings = [...root.querySelectorAll('a.cst-shell__footer-link')]
+            .find((link) => link.textContent === 'Privacy settings');
+        privacySettings.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+        expect(Array.isArray(window.googlefc.callbackQueue)).toBe(true);
+        expect(window.googlefc.callbackQueue).toHaveLength(1);
+        expect(() => window.googlefc.callbackQueue[0].CONSENT_API_READY()).not.toThrow();
+        delete window.googlefc;
+    });
+
+    it('keeps an existing Funding Choices object and adds a callback queue', () => {
+        window.googlefc = {};
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+
+        render(<ToolShellFooter />, root);
+
+        const privacySettings = [...root.querySelectorAll('a.cst-shell__footer-link')]
+            .find((link) => link.textContent === 'Privacy settings');
+        privacySettings.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+        expect(window.googlefc.callbackQueue).toHaveLength(1);
+        window.googlefc.showRevocationMessage = 'not-a-function';
+        expect(() => window.googlefc.callbackQueue[0].CONSENT_API_READY()).not.toThrow();
+        delete window.googlefc;
+    });
+
     it('closes the Browse Tools menu on outside click and Escape', () => {
         const root = document.createElement('div');
         document.body.appendChild(root);
