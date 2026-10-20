@@ -8,13 +8,12 @@ updates:
       time: "07:00"
       timezone: America/Toronto
     open-pull-requests-limit: 5
-    # Only names that exist as repo labels. Dependabot silently drops unknown
-    # names, which is why `dependencies` and `security` never stuck and those
-    # PRs failed the version-bump gate unlabeled. Manifest-only npm updates
-    # cannot bump per-tool versions; the checker also skips them when the
-    # author is dependabot[bot] (see scripts/check-version-bumps.js).
-    labels:
-      - skip-version-bump
+    # No labels. Do not list skip-version-bump here. CI exits on that label
+    # before it checks the author and the changed files, so an automatic
+    # label would also skip a later commit that edits a tool file. Manifest-only
+    # npm updates are skipped by the dependabot[bot] author check in
+    # scripts/check-version-bumps.js, and only when every path is package.json
+    # or package-lock.json.
     commit-message:
       prefix: chore
       include: scope

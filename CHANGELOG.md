@@ -41,8 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Dependabot pull requests that change only `package.json` and
   `package-lock.json` pass the tool version-bump gate without a hand-applied
-  label. `.github/dependabot.yml` applies `skip-version-bump` and no longer
-  names labels that do not exist on the repo.
+  label. The skip is the `dependabot[bot]` author plus those files.
+  `.github/dependabot.yml` does not apply `skip-version-bump`, because that
+  label would also skip a later commit that edits a tool file.
 
 ### Removed
 

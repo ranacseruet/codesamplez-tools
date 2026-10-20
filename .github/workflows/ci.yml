@@ -59,11 +59,14 @@ jobs:
           --write-github-output
 
     # Fail the PR when tool runtime files change without a version bump. The
-    # "skip-version-bump" label is the escape hatch for PRs that cannot bump
-    # (docs-only, CI-only); label presence is checked via the API so this stays
-    # accurate even when the label is added after the run started.
-    # PR_AUTHOR lets the checker skip Dependabot updates that touch only
-    # package.json and package-lock.json when that label was not applied.
+    # "skip-version-bump" label is the manual escape hatch for PRs that cannot
+    # bump (docs-only, CI-only). It is checked first, via the API, so a label
+    # added after the run started still skips the whole gate. Dependabot must
+    # not receive that label automatically: this exit runs before the
+    # author-and-files check, and a later tool-file commit on the same PR
+    # would be skipped too. PR_AUTHOR is github.event.pull_request.user.login.
+    # The checker skips only when that login is dependabot[bot] and every
+    # changed path is package.json or package-lock.json.
     - name: Check tool version bumps
       if: github.event_name == 'pull_request'
       env:

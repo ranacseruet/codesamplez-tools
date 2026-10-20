@@ -89,13 +89,14 @@ label to skip the check.
 
 Dependabot pull requests that change only `package.json` and/or
 `package-lock.json` pass the gate without anyone adding a label by hand.
-`.github/dependabot.yml` applies `skip-version-bump` (the only label it
-names, because that label exists on the repo), and the checker also skips
-when the pull request author is `dependabot[bot]` and every changed path is
-one of those two manifests. That is the weekly npm update, which cannot bump
-each tool. A Dependabot PR that edits any other file is checked like any
-other PR. A `package.json` edit from anyone else still requires a bump from
-every tool, or the same label when the edit cannot carry one.
+The checker skips when the pull request author is `dependabot[bot]` and
+every changed path is one of those two manifests. That is the weekly npm
+update, which cannot bump each tool. `.github/dependabot.yml` does not apply
+`skip-version-bump`. CI honors that label before it looks at the author and
+the file list, so an automatic label would also skip a later commit that
+edits a tool file. A Dependabot PR that edits any other file is checked like
+any other PR. A `package.json` edit from anyone else still requires a bump
+from every tool, or the same label when the edit cannot carry one.
 
 A tool's version describes that tool, so a change to a `common/` source module
 only requires a bump from the tools that import it, directly or through other

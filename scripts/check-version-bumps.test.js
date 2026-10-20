@@ -419,20 +419,22 @@ describe('check-version-bumps', () => {
             expect(runner).toContain('isDependabotManifestOnlyChange');
         });
 
-        it('points Dependabot only at labels that exist, including the skip label', () => {
-            // `dependencies` and `security` are not labels on this repo.
-            // Dependabot drops unknown names, so a config that lists them
-            // opens unlabeled PRs and the version-bump gate stays red.
+        it('does not auto-apply the skip label, which CI honors before the file check', () => {
+            // The workflow exits 0 on skip-version-bump before it runs the
+            // author-and-files check. Dependabot must not receive that label,
+            // or a later commit that edits a tool file never reaches the
+            // manifest-only rule.
+            const workflow = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'ci.yml'), 'utf8');
             const dependabot = fs.readFileSync(path.join(__dirname, '..', '.github', 'dependabot.yml'), 'utf8');
-            const labelsBlock = dependabot.match(/labels:\n((?:[ \t]*-[ \t]*\S+\n)+)/u);
+            const labelExit = workflow.indexOf(`grep -Fxq '${SKIP_LABEL}'`);
+            const manifestCheck = workflow.indexOf('node scripts/run-version-bump-check.js');
 
-            expect(labelsBlock).not.toBeNull();
-
-            const labels = [...labelsBlock[1].matchAll(/-\s*(\S+)/gu)].map((match) => match[1]);
-            const allowed = new Set([SKIP_LABEL]);
-
-            expect(labels).toEqual([SKIP_LABEL]);
-            expect(labels.every((label) => allowed.has(label))).toBe(true);
+            expect(labelExit).toBeGreaterThan(-1);
+            expect(manifestCheck).toBeGreaterThan(labelExit);
+            expect(workflow.slice(labelExit, manifestCheck)).toContain('exit 0');
+            expect(workflow).toContain("PR_AUTHOR: ${{ github.event.pull_request.user.login }}");
+            expect(dependabot).not.toMatch(/^[\t ]*labels:/mu);
+            expect(dependabot).not.toMatch(new RegExp(`-\\s*${SKIP_LABEL}`, 'u'));
         });
     });
 });
