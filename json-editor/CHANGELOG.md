@@ -2,11 +2,17 @@
 
 All notable changes to this tool are documented in this file.
 
-## [1.0.13] - 2026-10-21
+## [1.0.14] - 2026-10-21
 
 ### JSON Editor
 
 - Record tool_used analytics events for import, edit, and export. Edit fires when a change is committed, not on each keystroke. The JSON is not sent.
+
+## [1.0.13] - 2026-10-21
+
+### JSON Editor
+
+- A multi-file drop warns that only the first JSON file was imported.
 
 ## [1.0.12] - 2026-10-21
 

@@ -1,14 +1,19 @@
 import { fireEvent, screen, waitFor } from '@testing-library/dom';
 import { render } from 'preact';
+import { fireFileDragEvent, flushFileDrop } from '../common/drop-zone-test-utils';
 
 jest.mock('../common/app-shell/mountToolShell', () => ({
   mountToolShell: jest.fn()
 }));
 
-jest.mock('../common/drop-zone', () => ({
-  registerDropZone: jest.fn(() => jest.fn()),
-  registerFileInput: jest.fn(() => jest.fn())
-}));
+jest.mock('../common/drop-zone', () => {
+  const actual = jest.requireActual('../common/drop-zone');
+  return {
+    ...actual,
+    registerDropZone: jest.fn((target: HTMLElement, options: Parameters<typeof actual.registerDropZone>[1]) => actual.registerDropZone(target, options)),
+    registerFileInput: jest.fn((target: HTMLInputElement, options: Parameters<typeof actual.registerFileInput>[1]) => actual.registerFileInput(target, options))
+  };
+});
 
 jest.mock('../common/shortcut-utils', () => ({
   isEditableTarget: jest.fn(() => false),
@@ -239,17 +244,39 @@ describe('JSON Editor runtime', () => {
     expect(registerDropZone).toHaveBeenCalledTimes(1);
     expect((registerDropZone as unknown as jest.Mock).mock.calls[0][0]).toBe(document.querySelector('.jsone-import-disclosure'));
     const dropOptions = (registerDropZone as unknown as jest.Mock).mock.calls[0][1];
-    dropOptions.onText('{"source":"drop"}', new File(['{"source":"drop"}'], 'drop.json', { type: 'application/json' }));
+    dropOptions.onText('{"source":"drop"}', new File(['{"source":"drop"}'], 'drop.json', { type: 'application/json' }), { ignoredFileCount: 0 });
     await flushRender();
     expect(preview()).toContain('"source": "drop"');
+    expect(NotificationManager.show).toHaveBeenCalledWith('Imported drop.json.', 2200, { type: 'success' });
 
     const fileOptions = (registerFileInput as unknown as jest.Mock).mock.calls[0][1];
-    fileOptions.onText('{"source":"file"}', new File(['{"source":"file"}'], 'file.json', { type: 'application/json' }));
+    fileOptions.onText('{"source":"file"}', new File(['{"source":"file"}'], 'file.json', { type: 'application/json' }), { ignoredFileCount: 0 });
     await flushRender();
     expect(preview()).toContain('"source": "file"');
     expect((document.getElementById('json-editor-import-input') as HTMLTextAreaElement).value).toBe('{"source":"file"}');
     dropOptions.onError('Drop failed.');
     expect(NotificationManager.show).toHaveBeenCalledWith('Drop failed.', 3500, { type: 'error' });
+  });
+
+  test('warns when a multi-file drop only imports the first file', async () => {
+    const disclosure = document.querySelector('.jsone-import-disclosure') as HTMLDetailsElement;
+    const first = new File(['{"kept":true}'], 'first.json', { type: 'application/json' });
+    const second = new File(['{"skipped":true}'], 'second.json', { type: 'application/json' });
+
+    fireFileDragEvent(disclosure, 'drop', [first, second]);
+    await flushFileDrop();
+
+    await waitFor(() => {
+      expect(preview()).toContain('"kept": true');
+    });
+    expect(preview()).not.toContain('skipped');
+    expect(NotificationManager.show).toHaveBeenCalledWith(
+      'Loaded first.json. Only one file is used at a time, so 1 other file was ignored.',
+      4000,
+      { type: 'warning' }
+    );
+    expect(NotificationManager.show).not.toHaveBeenCalledWith('Imported first.json.', 2200, { type: 'success' });
+    expect(disclosure.open).toBe(true);
   });
 
   test('focuses a newly added array item and clears the focus target', async () => {

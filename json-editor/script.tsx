@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { JSX } from 'preact';
 import { copyTextToClipboard } from '../common/clipboard';
 import DownloadManager from '../common/DownloadManager';
-import { registerDropZone, registerFileInput } from '../common/drop-zone';
+import { describeLoadedFile, registerDropZone, registerFileInput, type LoadedFileDetail } from '../common/drop-zone';
 import FileUploadButton from '../common/file-upload';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { NotificationManager } from '../common/notification-manager';
@@ -487,7 +487,7 @@ export function JsonEditorApp(): JSX.Element {
     const importOpenRef = useRef(importOpen);
     const importTextStateRef = useRef(importText);
     const handleCopyRef = useRef<() => void>(() => undefined);
-    const handleImportRef = useRef<(input: string, sourceName?: string) => void>(() => undefined);
+    const handleImportRef = useRef<(input: string, sourceName?: string, detail?: LoadedFileDetail) => void>(() => undefined);
 
     const commitDocument = useCallback((next: JsonEditorNode) => {
         setHistory((current) => {
@@ -519,7 +519,7 @@ export function JsonEditorApp(): JSX.Element {
         });
     };
 
-    const handleImport = useCallback((input: string, sourceName = '') => {
+    const handleImport = useCallback((input: string, sourceName = '', detail?: LoadedFileDetail) => {
         setImportText(input);
         setImportError(null);
         const trigger: ToolUsedTrigger = sourceName === 'sample' ? 'sample' : 'user';
@@ -528,11 +528,18 @@ export function JsonEditorApp(): JSX.Element {
             const next = parseJsonEditorInput(input, idFactory);
             commitDocument(next);
             setCollapsedIds(new Set());
-            NotificationManager.show(
-                sourceName === 'sample' ? 'Loaded sample JSON.' : sourceName ? `Imported ${sourceName}.` : 'JSON imported.',
-                2200,
-                { type: 'success' }
-            );
+            // One notification element is shared, so a multi-file skip note has
+            // to be the load toast itself. A second toast would replace it.
+            const ignored = detail?.ignoredFileCount ?? 0;
+            if (ignored > 0) {
+                NotificationManager.show(describeLoadedFile(sourceName, detail), 4000, { type: 'warning' });
+            } else {
+                NotificationManager.show(
+                    sourceName === 'sample' ? 'Loaded sample JSON.' : sourceName ? `Imported ${sourceName}.` : 'JSON imported.',
+                    2200,
+                    { type: 'success' }
+                );
+            }
             reportJsonEditor('import', 'success', trigger, utf8ByteLength(input));
         } catch (error) {
             const diagnostics = error instanceof Error && 'diagnostics' in error
@@ -561,8 +568,8 @@ export function JsonEditorApp(): JSX.Element {
         if (!importDisclosure || !fileInput) return undefined;
 
         const options = {
-            onText: (text: string, file: File) => {
-                handleImport(text, file.name);
+            onText: (text: string, file: File, detail: LoadedFileDetail) => {
+                handleImport(text, file.name, detail);
                 setImportOpen(true);
             },
             onError: (message: string) => NotificationManager.show(message, 3500, { type: 'error' })
