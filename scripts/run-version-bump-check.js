@@ -1,6 +1,6 @@
 // @ts-check
 
-const { findMissingBumps, SKIP_LABEL } = require('./check-version-bumps');
+const { findMissingBumps, isDependabotManifestOnlyChange, SKIP_LABEL } = require('./check-version-bumps');
 const { getChangedFilesFromGit } = require('./detect-affected-tools');
 
 /**
@@ -22,8 +22,14 @@ function main() {
     const changedFiles = explicitFiles.filter(Boolean).length > 0
         ? explicitFiles.filter(Boolean)
         : getChangedFilesFromGit(baseRevision, 'HEAD');
+    const pullRequestAuthor = process.env.PR_AUTHOR || '';
 
-    const missingBumps = findMissingBumps(changedFiles, baseRevision);
+    if (isDependabotManifestOnlyChange(changedFiles, pullRequestAuthor)) {
+        console.log('Dependabot manifest-only change (package.json / package-lock.json); skipping version bump enforcement.');
+        return;
+    }
+
+    const missingBumps = findMissingBumps(changedFiles, baseRevision, { pullRequestAuthor });
 
     if (missingBumps.length === 0) {
         console.log('Version bump check passed: every changed tool has a bumped version (or no tool runtime changed).');
@@ -37,7 +43,8 @@ function main() {
         'Bump with: npm run tool:version:bump -- --tool <id> --release <patch|minor|major>',
         'Document with: npm run tool:version:note -- --tool <id> --version <x.y.z> --note "<summary>"',
         '',
-        `PRs that cannot bump versions (docs-only, CI-only) may add the "${SKIP_LABEL}" label to skip this check.`
+        `PRs that cannot bump versions (docs-only, CI-only) may add the "${SKIP_LABEL}" label to skip this check.`,
+        'Dependabot updates that change only package.json and package-lock.json are skipped automatically.'
     ].join('\n'));
     process.exit(1);
 }

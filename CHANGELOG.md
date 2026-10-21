@@ -37,6 +37,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Visual-diff, baseline, and health-monitoring workflows build with
   `CST_DISABLE_ANALYTICS=1` so screenshots stay ad-free and deterministic.
 
+### Fixed
+
+- Dependabot pull requests that change only `package.json` and
+  `package-lock.json` pass the tool version-bump gate without a hand-applied
+  label. The skip is the `dependabot[bot]` author plus those files.
+  `.github/dependabot.yml` does not apply `skip-version-bump`, because that
+  label would also skip a later commit that edits a tool file.
+
 ### Removed
 
 - Internal planning and infrastructure documentation that is not relevant to

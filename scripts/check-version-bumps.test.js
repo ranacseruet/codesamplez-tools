@@ -1,12 +1,15 @@
 // @ts-check
 
+const { spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const {
+    DEPENDABOT_LOGIN,
     SKIP_LABEL,
     compareVersions,
     demandsVersionBump,
     findMissingBumps,
+    isDependabotManifestOnlyChange,
     readVersionAtRevision
 } = require('./check-version-bumps');
 const { detectAffectedTargets, getToolIdForPath } = require('./affected-tools');
@@ -297,6 +300,92 @@ describe('check-version-bumps', () => {
             });
         });
 
+        describe('Dependabot dependency manifests', () => {
+            const allToolIds = detectAffectedTargets(['package.json']).affectedTools;
+            const unbumped = Object.fromEntries(allToolIds.map((id) => [id, '1.0.0']));
+
+            it.each([
+                [DEPENDABOT_LOGIN, ['package.json'], true],
+                [DEPENDABOT_LOGIN, ['package-lock.json'], true],
+                [DEPENDABOT_LOGIN, ['package.json', 'package-lock.json'], true],
+                [DEPENDABOT_LOGIN, ['package.json', 'package.json'], true],
+                [DEPENDABOT_LOGIN, ['package.json', 'base64-converter/script.tsx'], false],
+                [DEPENDABOT_LOGIN, [], false],
+                ['ranacseruet', ['package.json', 'package-lock.json'], false],
+                ['', ['package.json'], false]
+            ])('classifies author %s and %j as manifest-only %s', (author, files, expected) => {
+                expect(isDependabotManifestOnlyChange(files, author)).toBe(expected);
+            });
+
+            it('passes a Dependabot change that only edits the dependency manifests', () => {
+                const missing = findMissingBumps(['package.json', 'package-lock.json'], 'any-base', {
+                    pullRequestAuthor: DEPENDABOT_LOGIN,
+                    readVersionAt: () => {
+                        throw new Error('manifest-only Dependabot diffs must not read tool versions');
+                    }
+                });
+
+                expect(missing).toEqual([]);
+            });
+
+            it('flags every tool when a non-Dependabot change edits package.json', () => {
+                const missing = findMissingBumps(['package.json', 'package-lock.json'], 'any-base', {
+                    workingVersions: unbumped,
+                    readVersionAt: readVersionAtMergeBase,
+                    pullRequestAuthor: 'ranacseruet'
+                });
+
+                expect(missing.sort()).toEqual([...allToolIds].sort());
+            });
+
+            it('flags every tool for a manifest edit when no author is supplied', () => {
+                const missing = findMissingBumps(['package.json'], 'any-base', {
+                    workingVersions: unbumped,
+                    readVersionAt: readVersionAtMergeBase
+                });
+
+                expect(missing.sort()).toEqual([...allToolIds].sort());
+            });
+
+            it('still flags a tool runtime edit from Dependabot', () => {
+                const missing = findMissingBumps(['base64-converter/script.tsx'], 'any-base', {
+                    workingVersions,
+                    readVersionAt: readVersionAtMergeBase,
+                    pullRequestAuthor: DEPENDABOT_LOGIN
+                });
+
+                expect(missing).toEqual([toolId]);
+            });
+
+            it('still flags every tool when a Dependabot PR also changes a runtime file', () => {
+                const changed = ['package.json', 'base64-converter/script.tsx'];
+                const affectedTools = detectAffectedTargets(changed).affectedTools;
+                const missing = findMissingBumps(changed, 'any-base', {
+                    workingVersions: Object.fromEntries(affectedTools.map((id) => [id, '1.0.0'])),
+                    readVersionAt: readVersionAtMergeBase,
+                    pullRequestAuthor: DEPENDABOT_LOGIN
+                });
+
+                expect(missing.sort()).toEqual([...affectedTools].sort());
+            });
+
+            it('skips enforcement for a Dependabot manifest-only CLI invocation', () => {
+                const result = spawnSync(process.execPath, [
+                    path.join(__dirname, 'run-version-bump-check.js'),
+                    'deadbeef',
+                    'package.json',
+                    'package-lock.json'
+                ], {
+                    cwd: path.join(__dirname, '..'),
+                    env: { ...process.env, PR_AUTHOR: DEPENDABOT_LOGIN },
+                    encoding: 'utf8'
+                });
+
+                expect(result.status).toBe(0);
+                expect(result.stdout).toMatch(/Dependabot manifest-only change \(package\.json \/ package-lock\.json\)/u);
+            });
+        });
+
         it('deduplicates candidates from multiple changed files of one tool', () => {
             const missing = findMissingBumps([
                 'base64-converter/script.tsx',
@@ -319,6 +408,33 @@ describe('check-version-bumps', () => {
             const workflow = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'ci.yml'), 'utf8');
 
             expect(workflow).toContain(`grep -Fxq '${SKIP_LABEL}'`);
+        });
+
+        it('passes the pull request author through to the Dependabot manifest skip', () => {
+            const workflow = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'ci.yml'), 'utf8');
+            const runner = fs.readFileSync(path.join(__dirname, 'run-version-bump-check.js'), 'utf8');
+
+            expect(workflow).toContain('PR_AUTHOR: ${{ github.event.pull_request.user.login }}');
+            expect(runner).toContain('process.env.PR_AUTHOR');
+            expect(runner).toContain('isDependabotManifestOnlyChange');
+        });
+
+        it('does not auto-apply the skip label, which CI honors before the file check', () => {
+            // The workflow exits 0 on skip-version-bump before it runs the
+            // author-and-files check. Dependabot must not receive that label,
+            // or a later commit that edits a tool file never reaches the
+            // manifest-only rule.
+            const workflow = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'ci.yml'), 'utf8');
+            const dependabot = fs.readFileSync(path.join(__dirname, '..', '.github', 'dependabot.yml'), 'utf8');
+            const labelExit = workflow.indexOf(`grep -Fxq '${SKIP_LABEL}'`);
+            const manifestCheck = workflow.indexOf('node scripts/run-version-bump-check.js');
+
+            expect(labelExit).toBeGreaterThan(-1);
+            expect(manifestCheck).toBeGreaterThan(labelExit);
+            expect(workflow.slice(labelExit, manifestCheck)).toContain('exit 0');
+            expect(workflow).toContain("PR_AUTHOR: ${{ github.event.pull_request.user.login }}");
+            expect(dependabot).not.toMatch(/^[\t ]*labels:/mu);
+            expect(dependabot).not.toMatch(new RegExp(`-\\s*${SKIP_LABEL}`, 'u'));
         });
     });
 });
