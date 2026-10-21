@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.15] - 2026-10-21
+
+### JWT Builder
+
+- Record a tool_used analytics event when a token is generated, with the signing algorithm only. Claims and keys are not sent.
+
 ## [1.0.14] - 2026-10-21
 
 ### JWT Builder

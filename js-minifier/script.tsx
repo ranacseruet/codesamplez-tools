@@ -10,6 +10,7 @@ import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { loadMinifier, type MinifierConstructor } from './load-minifier';
+import { trackToolUsed, utf8ByteLength, type ToolUsedOutcome, type ToolUsedTrigger } from '../common/analytics-events';
 import toolMetadata from './tool.meta.json';
 
 // The minifier engine is the Babel parser/traverse/generator stack (~803 KB
@@ -157,7 +158,11 @@ export function JSMinifierApp() {
     return registerPrimaryActionShortcut(primaryButton);
   }, []);
 
-  const runMinify = async (codeOverride = inputCode, optionsOverride = options) => {
+  const runMinify = async (
+    codeOverride = inputCode,
+    optionsOverride = options,
+    trigger: ToolUsedTrigger = 'user'
+  ) => {
     const code = String(codeOverride ?? '');
 
     if (!code.trim()) {
@@ -165,6 +170,16 @@ export function JSMinifierApp() {
       setErrorMessage('Please enter JavaScript to minify');
       return false;
     }
+
+    const reportMinify = (outcome: ToolUsedOutcome) => {
+      trackToolUsed({
+        toolId: 'js-minifier',
+        action: 'minify',
+        inputBytes: utf8ByteLength(code),
+        trigger,
+        outcome
+      });
+    };
 
     setIsProcessing(true);
 
@@ -176,7 +191,7 @@ export function JSMinifierApp() {
 
       // The user may have kept typing while the engine loaded/yielded. Drop this
       // run rather than show minified output for stale input next to stats
-      // computed from the current input.
+      // computed from the current input. A superseded run is not an activation.
       if (code !== latestInputRef.current) {
         return false;
       }
@@ -190,11 +205,16 @@ export function JSMinifierApp() {
       const minifiedBytes = new Blob([minified]).size;
       const ratio = originalBytes ? ((1 - minifiedBytes / originalBytes) * 100).toFixed(2) : '0.00';
       NotificationManager.show(`JavaScript minified successfully! (${ratio}% reduction)`, 2000, { type: 'success' });
+      reportMinify('success');
       return true;
     } catch (error) {
+      if (code !== latestInputRef.current) {
+        return false;
+      }
       setOutputCode('');
       setErrorMessage(error.message);
       console.error('Minification error:', error);
+      reportMinify('error');
       return false;
     } finally {
       setIsProcessing(false);
@@ -257,7 +277,7 @@ export function JSMinifierApp() {
   const handleLoadSample = async () => {
     latestInputRef.current = SAMPLE_CODE;
     setInputCode(SAMPLE_CODE);
-    const success = await runMinify(SAMPLE_CODE, options);
+    const success = await runMinify(SAMPLE_CODE, options, 'sample');
     if (success) {
       NotificationManager.show('Sample code loaded and minified', 1500, { type: 'success' });
     }

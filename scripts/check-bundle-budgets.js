@@ -126,20 +126,28 @@ const DEFAULT_FAIL_PERCENT = 10;
 // 76,771), and `text-analyzer-tool` (46,389 -> 50,891) were refreshed to the
 // measured size in the same change because they were over the warn line. The
 // other eight tools stayed inside the warn line and are left un-refreshed.
+//
+// tool_used for the remaining nine tools (issue #94), stacked on the shared
+// output events, pushed six tools over the warn line. Refreshed to the
+// measured production main bundle: `js-minifier-tool` (49,773 -> 55,220),
+// `json-editor-tool` (63,226 -> 70,450), `image-editor` (66,107 -> 71,904),
+// `jwt-decoder-tool` (70,827 -> 76,894), `qr-code-generator` (65,847 -> 70,285),
+// and `text-analyzer-tool` (50,891 -> 54,277). js-minifier and json-editor
+// had crossed the fail line. The other six stayed inside the warn line.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
-    'js-minifier-tool': 49773,
+    'js-minifier-tool': 55220,
     'data-format-converter': 190839,
     'diff-checker-tool': 97619,
     'jwt-builder-tool': 76771,
-    'jwt-decoder-tool': 70827,
+    'jwt-decoder-tool': 76894,
     'base64-converter-tool': 87888,
     'json-formatter-tool': 75638,
-    'json-editor-tool': 63226,
+    'json-editor-tool': 70450,
     'css-minifier-tool': 69713,
-    'text-analyzer-tool': 50891,
-    'qr-code-generator': 65847,
-    'image-editor': 66107
+    'text-analyzer-tool': 54277,
+    'qr-code-generator': 70285,
+    'image-editor': 71904
 });
 
 /**

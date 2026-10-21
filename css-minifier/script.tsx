@@ -19,6 +19,7 @@ import { describeLoadedFile, registerDropZone } from '../common/drop-zone';
 import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { trackToolUsed, utf8ByteLength, type ToolUsedOutcome, type ToolUsedTrigger } from '../common/analytics-events';
 import toolMetadata from './tool.meta.json';
 
 const SAMPLE_CSS = `/* Basic styles for a simple page */
@@ -169,7 +170,7 @@ export function CssMinifierApp() {
     setOptions(createDefaultOptions());
   };
 
-  const runMinify = async (cssSource = inputCss) => {
+  const runMinify = async (cssSource = inputCss, trigger: ToolUsedTrigger = 'user') => {
     const originalCss = cssSource.trim();
 
     if (!originalCss) {
@@ -177,6 +178,16 @@ export function CssMinifierApp() {
       setErrorMessage('Please enter CSS to minify');
       return false;
     }
+
+    const reportMinify = (outcome: ToolUsedOutcome) => {
+      trackToolUsed({
+        toolId: 'css-minifier',
+        action: 'minify',
+        inputBytes: utf8ByteLength(originalCss),
+        trigger,
+        outcome
+      });
+    };
 
     setIsProcessing(true);
 
@@ -188,6 +199,7 @@ export function CssMinifierApp() {
         setOutputCss('');
         const invalidMessage = 'Invalid CSS input. Please check your CSS syntax.';
         setErrorMessage(invalidMessage);
+        reportMinify('error');
         return false;
       }
 
@@ -197,11 +209,13 @@ export function CssMinifierApp() {
 
       const savings = ((originalCss.length - result.length) / originalCss.length * 100).toFixed(1);
       NotificationManager.show(`CSS minified successfully! Reduced by ${savings}%`, 2000, { type: 'success' });
+      reportMinify('success');
       return true;
     } catch (error) {
       setOutputCss('');
       const failureMessage = `Failed to process CSS. ${error.message}`;
       setErrorMessage(failureMessage);
+      reportMinify('error');
       return false;
     } finally {
       setIsProcessing(false);
@@ -210,7 +224,7 @@ export function CssMinifierApp() {
 
   const handleLoadSample = async () => {
     setInputCss(SAMPLE_CSS);
-    const success = await runMinify(SAMPLE_CSS);
+    const success = await runMinify(SAMPLE_CSS, 'sample');
     if (success) {
       NotificationManager.show('Sample CSS loaded and minified', 2000, { type: 'success' });
     }

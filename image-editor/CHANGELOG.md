@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.15] - 2026-10-21
+
+### Image Editor
+
+- Record a tool_used analytics event when an image is exported, with the format name only. Image contents and file names are not sent.
+
 ## [1.0.14] - 2026-10-21
 
 ### Image Editor

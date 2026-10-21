@@ -7,6 +7,7 @@ import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { describeLoadedFile, registerDropZone, registerFileInput, type LoadedFileDetail } from '../common/drop-zone';
 import { formatBytes } from '../common/format-utils';
+import { trackToolUsed, type ToolUsedOutcome } from '../common/analytics-events';
 import toolMetadata from './tool.meta.json';
 import {
     ADJUSTMENT_PRESETS,
@@ -587,6 +588,17 @@ export function ImageEditorApp() {
         }
     };
 
+    const reportExport = (outcome: ToolUsedOutcome, bytes?: number) => {
+        trackToolUsed({
+            toolId: 'image-editor',
+            action: 'export',
+            format,
+            inputBytes: bytes,
+            trigger: 'user',
+            outcome
+        });
+    };
+
     const exportImage = async () => {
         const current = imageRef.current;
         if (!current || busy) {
@@ -632,8 +644,12 @@ export function ImageEditorApp() {
 
             new DownloadManager().downloadFile(blob, exportFilename(format), mime);
             notifySuccess(`Exported ${formatBytes(blob.size)} ${exportFilename(format).split('.').pop()?.toUpperCase()}`);
+            // Bucket the loaded image, not the encoded blob: format and quality
+            // change the file size without changing what the user brought in.
+            reportExport('success', current.bytes);
         } catch {
             notifyError('Export failed in this browser. Try a different format.');
+            reportExport('error', current.bytes);
         } finally {
             endBusy();
         }

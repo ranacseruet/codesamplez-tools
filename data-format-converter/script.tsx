@@ -8,6 +8,7 @@ import { describeLoadedFile, registerDropZone, registerFileInput } from '../comm
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
 import type { ConverterSharePayload } from './share-url';
+import { trackToolUsed, utf8ByteLength, type ToolUsedOutcome, type ToolUsedTrigger } from '../common/analytics-events';
 import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -31,6 +32,7 @@ interface ConvertDataOptions {
     nextInput?: string;
     nextInputFormat?: SupportedFormat;
     nextOutputFormat?: SupportedFormat;
+    trigger?: ToolUsedTrigger;
 }
 
 const FORMATS: SupportedFormat[] = ['json', 'xml', 'yaml', 'properties'];
@@ -195,7 +197,8 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
         silent = false,
         nextInput = inputText,
         nextInputFormat = stateRef.current.inputFormat,
-        nextOutputFormat = stateRef.current.outputFormat
+        nextOutputFormat = stateRef.current.outputFormat,
+        trigger = 'user'
     }: ConvertDataOptions = {}) => {
         const trimmedInput = nextInput.trim();
         if (!trimmedInput) {
@@ -204,6 +207,18 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
             }
             return;
         }
+
+        const reportConvert = (outcome: ToolUsedOutcome) => {
+            trackToolUsed({
+                toolId: 'data-format-converter',
+                action: 'convert',
+                from: nextInputFormat,
+                to: nextOutputFormat,
+                inputBytes: utf8ByteLength(trimmedInput),
+                trigger,
+                outcome
+            });
+        };
 
         try {
             converter.inputFormat = nextInputFormat;
@@ -217,8 +232,10 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
             } else {
                 setErrorMessage('');
             }
+            reportConvert('success');
         } catch (error: unknown) {
             showError(`Conversion failed: ${getErrorMessage(error)}`, silent);
+            reportConvert('error');
         }
     };
 
@@ -234,7 +251,8 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
             silent: true,
             nextInput: sampleInput,
             nextInputFormat,
-            nextOutputFormat
+            nextOutputFormat,
+            trigger: 'sample'
         });
     };
 
@@ -423,7 +441,8 @@ export function DataFormatConverterApp({ converter }: DataFormatConverterAppProp
             silent: true,
             nextInput: payload.input,
             nextInputFormat: payload.inputFormat,
-            nextOutputFormat: payload.outputFormat
+            nextOutputFormat: payload.outputFormat,
+            trigger: 'share'
         });
         NotificationManager.show('Loaded data from shared link.', 2000, { type: 'success' });
 
