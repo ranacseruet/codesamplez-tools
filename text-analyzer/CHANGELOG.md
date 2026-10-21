@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.12] - 2026-10-21
+
+### Text Analyzer
+
+- Dev-dependency pin for follow-redirects and launch-editor. Not a user-facing behavior change.
+
 ## [1.0.11] - 2026-10-17
 
 ### Text Analyzer

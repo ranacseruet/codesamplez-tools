@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.15] - 2026-10-21
+
+### Base64 Converter
+
+- Dev-dependency pin for follow-redirects and launch-editor. Not a user-facing behavior change.
+
 ## [1.0.14] - 2026-10-19
 
 ### Base64 Converter
