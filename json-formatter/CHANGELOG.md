@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.18] - 2026-10-21
+
+### JSON Formatter
+
+- Dev-dependency pin for follow-redirects and launch-editor. Not a user-facing behavior change.
+
 ## [1.0.17] - 2026-10-17
 
 ### JSON Formatter
