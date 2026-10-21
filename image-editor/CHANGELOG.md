@@ -2,11 +2,11 @@
 
 All notable changes to this tool are documented in this file.
 
-## [1.0.14] - 2026-10-19
+## [1.0.14] - 2026-10-21
 
 ### Image Editor
 
-- Record a tool_used analytics event when an image is exported, with the format name only. Image contents and file names are not sent.
+- Dev-dependency pin for follow-redirects and launch-editor. Not a user-facing behavior change.
 
 ## [1.0.13] - 2026-10-17
 

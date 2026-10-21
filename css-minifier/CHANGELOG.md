@@ -2,11 +2,11 @@
 
 All notable changes to this tool are documented in this file.
 
-## [1.0.14] - 2026-10-19
+## [1.0.14] - 2026-10-21
 
 ### CSS Minifier
 
-- Record a tool_used analytics event when Minify runs, tagged with trigger and outcome. The CSS is not sent.
+- Dev-dependency pin for follow-redirects and launch-editor. Not a user-facing behavior change.
 
 ## [1.0.13] - 2026-10-19
 
