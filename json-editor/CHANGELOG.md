@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.13] - 2026-10-21
+
+### JSON Editor
+
+- A multi-file drop warns that only the first JSON file was imported.
+
 ## [1.0.12] - 2026-10-21
 
 ### JSON Editor
