@@ -12,6 +12,8 @@ const { detectAffectedTargets, getToolIdForPath, isToolMetadataPath, isAllToolsT
 const { isResolvableCommonFile, resolveToolsReachedByCommonFile } = require('./common-impact');
 
 const SKIP_LABEL = 'skip-version-bump';
+const DEPENDABOT_LOGIN = 'dependabot[bot]';
+const DEPENDENCY_MANIFEST_FILES = new Set(['package.json', 'package-lock.json']);
 const NON_TOOL_DOC_EXTENSIONS = new Set(['.md', '.mdx', '.txt']);
 
 /**
@@ -216,6 +218,28 @@ function compareVersions(versionA, versionB) {
 }
 
 /**
+ * Dependabot npm updates only edit `package.json` and `package-lock.json`.
+ * Those paths are all-tools triggers, so the gate would demand a bump from
+ * every tool for a lockfile change the bot cannot version. A manifest-only
+ * diff from `dependabot[bot]` skips enforcement. Any other author, or any
+ * extra path, is checked normally, including a human edit of `package.json`.
+ * @param {string[]} changedFiles
+ * @param {string} author
+ * @returns {boolean}
+ */
+function isDependabotManifestOnlyChange(changedFiles, author) {
+    if (author !== DEPENDABOT_LOGIN) {
+        return false;
+    }
+
+    if (!Array.isArray(changedFiles) || changedFiles.length === 0) {
+        return false;
+    }
+
+    return changedFiles.every((filePath) => DEPENDENCY_MANIFEST_FILES.has(filePath));
+}
+
+/**
  * Computes the tools whose runtime files changed without a version bump.
  *
  * A version tracks one tool's shipped behavior, so a `common/` source module
@@ -225,10 +249,14 @@ function compareVersions(versionA, versionB) {
  * demand a bump from every tool.
  * @param {string[]} changedFiles
  * @param {string} baseRevision
- * @param {{ workingVersions?: Record<string, string>, readVersionAt?: typeof readVersionAtRevision, readFileAt?: (revision: string, filePath: string) => string | null, resolveCommonImpact?: (filePath: string) => string[] | null }} [options]
+ * @param {{ workingVersions?: Record<string, string>, readVersionAt?: typeof readVersionAtRevision, readFileAt?: (revision: string, filePath: string) => string | null, resolveCommonImpact?: (filePath: string) => string[] | null, pullRequestAuthor?: string }} [options]
  * @returns {string[]}
  */
 function findMissingBumps(changedFiles, baseRevision, options = {}) {
+    if (isDependabotManifestOnlyChange(changedFiles, options.pullRequestAuthor || '')) {
+        return [];
+    }
+
     const affectedTargets = detectAffectedTargets(changedFiles);
     const readVersionAt = options.readVersionAt || readVersionAtRevision;
     const readFileAt = options.readFileAt || defaultReadFileAt;
@@ -296,10 +324,12 @@ function defaultReadFileAt(revision, filePath) {
 }
 
 module.exports = {
+    DEPENDABOT_LOGIN,
     SKIP_LABEL,
     compareVersions,
     demandsVersionBump,
     findMissingBumps,
+    isDependabotManifestOnlyChange,
     readGitFileAt,
     readVersionAtRevision
 };

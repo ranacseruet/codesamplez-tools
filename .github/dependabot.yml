@@ -8,9 +8,12 @@ updates:
       time: "07:00"
       timezone: America/Toronto
     open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - security
+    # No labels. Do not list skip-version-bump here. CI exits on that label
+    # before it checks the author and the changed files, so an automatic
+    # label would also skip a later commit that edits a tool file. Manifest-only
+    # npm updates are skipped by the dependabot[bot] author check in
+    # scripts/check-version-bumps.js, and only when every path is package.json
+    # or package-lock.json.
     commit-message:
       prefix: chore
       include: scope

@@ -87,13 +87,25 @@ tool's version in the same PR. CI enforces this and fails with the list of
 tools missing a bump. Docs-only or CI-only PRs can add the `skip-version-bump`
 label to skip the check.
 
+Dependabot pull requests that change only `package.json` and/or
+`package-lock.json` pass the gate without anyone adding a label by hand.
+The checker skips when the pull request author is `dependabot[bot]` and
+every changed path is one of those two manifests. That is the weekly npm
+update, which cannot bump each tool. `.github/dependabot.yml` does not apply
+`skip-version-bump`. CI honors that label before it looks at the author and
+the file list, so an automatic label would also skip a later commit that
+edits a tool file. A Dependabot PR that edits any other file is checked like
+any other PR. A `package.json` edit from anyone else still requires a bump
+from every tool, or the same label when the edit cannot carry one.
+
 A tool's version describes that tool, so a change to a `common/` source module
 only requires a bump from the tools that import it, directly or through other
 modules (`scripts/common-impact.js` reads the import graph; test files never
 count). Shared inputs the import graph cannot attribute to particular tools
-still require a bump from every tool: build config, `package.json`, shared
-scripts, `common/` CSS and shims, and any `common/` module that scripts or
-config import directly, such as the app shell.
+still require a bump from every tool: build config, `package.json` (except
+the Dependabot manifest-only case above), shared scripts, `common/` CSS and
+shims, and any `common/` module that scripts or config import directly, such
+as the app shell.
 
 **Semver guidance:**
 
