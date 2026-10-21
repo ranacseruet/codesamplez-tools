@@ -204,6 +204,67 @@ describe('AppShell components', () => {
         expect(repoLink?.getAttribute('href')).toBe('https://github.com/ranacseruet/codesamplez-tools');
         const privacyLink = bottomLinks.find((link) => link.textContent === 'Privacy');
         expect(privacyLink?.getAttribute('href')).toBe(buildSiteHref('/privacy/'));
+        const privacySettings = bottomLinks.find((link) => link.textContent === 'Privacy settings');
+        expect(privacySettings?.getAttribute('href')).toBe(buildSiteHref('/privacy/'));
+    });
+
+    function renderPrivacySettingsLink() {
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+        render(<ToolShellFooter />, root);
+        return [...root.querySelectorAll('a.cst-shell__footer-link')]
+            .find((link) => link.textContent === 'Privacy settings');
+    }
+
+    it('reopens the consent message from the footer Privacy settings link', () => {
+        const showRevocationMessage = jest.fn();
+        window.googlefc = {
+            callbackQueue: [],
+            showRevocationMessage
+        };
+
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+        renderPrivacySettingsLink().dispatchEvent(event);
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(window.googlefc.callbackQueue).toHaveLength(1);
+        const replacement = jest.fn();
+        window.googlefc = {
+            callbackQueue: window.googlefc.callbackQueue,
+            showRevocationMessage: replacement
+        };
+        window.googlefc.callbackQueue[0].CONSENT_API_READY();
+        expect(showRevocationMessage).not.toHaveBeenCalled();
+        expect(replacement).toHaveBeenCalledTimes(1);
+        delete window.googlefc;
+    });
+
+    it('follows the privacy link when Funding Choices is not loaded', () => {
+        delete window.googlefc;
+
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+        const privacySettings = renderPrivacySettingsLink();
+        privacySettings.dispatchEvent(event);
+
+        expect(event.defaultPrevented).toBe(false);
+        expect(privacySettings.getAttribute('href')).toBe(buildSiteHref('/privacy/'));
+        expect(window.googlefc).toBeUndefined();
+    });
+
+    it('keeps an existing Funding Choices object and adds a callback queue', () => {
+        window.googlefc = {};
+
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+        renderPrivacySettingsLink().dispatchEvent(event);
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(window.googlefc.callbackQueue).toHaveLength(1);
+        expect(() => window.googlefc.callbackQueue[0].CONSENT_API_READY()).not.toThrow();
+        const showRevocationMessage = jest.fn();
+        window.googlefc.showRevocationMessage = showRevocationMessage;
+        window.googlefc.callbackQueue[0].CONSENT_API_READY();
+        expect(showRevocationMessage).toHaveBeenCalledTimes(1);
+        delete window.googlefc;
     });
 
     it('closes the Browse Tools menu on outside click and Escape', () => {

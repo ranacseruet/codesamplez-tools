@@ -160,6 +160,7 @@ function renderPrivacyMain(manifest, pageUrl, lastUpdatedLabel) {
 
     <section aria-labelledby="privacy-opt-out">
       <h2 class="section-title" id="privacy-opt-out">Opting out</h2>
+      <p class="section-body">Visitors in the EEA, the UK, and Switzerland are shown Google's consent message and can choose whether Google Analytics and Google AdSense may store cookies. Until that choice allows storage, those cookies stay off. The Privacy settings link in the footer reopens the message.</p>
       <p class="section-body">This site does not provide its own control for turning analytics or ads off. You can:</p>
       <ul class="section-list">
         <li>Install ${renderLink(GOOGLE_ANALYTICS_OPTOUT_URL, "Google's Analytics opt-out browser add-on")}.</li>

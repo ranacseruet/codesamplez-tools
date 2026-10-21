@@ -243,6 +243,45 @@ export function ToolShellHeader({
     );
 }
 
+type GoogleFundingChoices = {
+    callbackQueue?: Array<Record<string, () => void>>;
+    showRevocationMessage?: () => void;
+};
+
+type FundingChoicesHost = Window & { googlefc?: GoogleFundingChoices };
+
+function fundingChoicesHost(): FundingChoicesHost {
+    return window as FundingChoicesHost;
+}
+
+// Reopens Google's European regulations message when Funding Choices has
+// loaded. The queue is the supported way to call showRevocationMessage, and
+// the callback reads window.googlefc again so it uses the live API. When the
+// script never arrives (an ad blocker, or a visitor outside the regions where
+// the message loads), the click keeps going to the privacy page.
+function reopenPrivacySettings(event: JSX.TargetedMouseEvent<HTMLAnchorElement>): void {
+    const host = fundingChoicesHost();
+    if (!host.googlefc) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const googlefc = host.googlefc;
+    if (!googlefc.callbackQueue) {
+        googlefc.callbackQueue = [];
+    }
+
+    googlefc.callbackQueue.push({
+        CONSENT_API_READY() {
+            const ready = fundingChoicesHost().googlefc;
+            if (ready && typeof ready.showRevocationMessage === 'function') {
+                ready.showRevocationMessage();
+            }
+        }
+    });
+}
+
 interface ToolShellFooterProps {
     homeHref?: string;
     privacyHref?: string;
@@ -291,6 +330,8 @@ export function ToolShellFooter({
                     <a href={MAIN_SITE_URL} className="cst-shell__footer-link">CodeSamplez.com</a>
                     <span aria-hidden="true">·</span>
                     <a href={privacyHref} className="cst-shell__footer-link">Privacy</a>
+                    <span aria-hidden="true">·</span>
+                    <a href={privacyHref} className="cst-shell__footer-link" onClick={reopenPrivacySettings}>Privacy settings</a>
                     <span aria-hidden="true">·</span>
                     <span>© {currentYear} CodeSamplez</span>
                 </div>
