@@ -1,6 +1,7 @@
 import { JWTBuilder, type JWTAlgorithm } from './JWTBuilder';
 import { NotificationManager } from '../common/notification-manager';
 import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
+import { trackToolUsed, utf8ByteLength, type ToolUsedOutcome } from '../common/analytics-events';
 import CopyButton from '../common/copy-button/CopyButton';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
@@ -351,12 +352,26 @@ export async function buildJWT() {
     return null;
   }
 
+  const reportGenerate = (outcome: ToolUsedOutcome) => {
+    // Claims, the signing key, and the token stay in the page. Only the
+    // algorithm enum and a coarse size of the claim object are sent.
+    trackToolUsed({
+      toolId: 'jwt-builder',
+      action: 'generate',
+      alg: algorithm,
+      inputBytes: utf8ByteLength(JSON.stringify(payload)),
+      trigger: 'user',
+      outcome
+    });
+  };
+
   try {
     if (!key.trim()) {
       const keyLabel = algorithm === 'RS256' ? 'Private key' : 'Shared secret';
       setInlineError(`Error: ${keyLabel} is required for ${algorithm} signing`, keyFieldId);
       resultDiv.textContent = '';
       toggleEmptyState(true);
+      reportGenerate('error');
       return null;
     }
     if (invalidDateClaim) {
@@ -366,6 +381,7 @@ export async function buildJWT() {
       );
       resultDiv.textContent = '';
       toggleEmptyState(true);
+      reportGenerate('error');
       return null;
     }
 
@@ -374,6 +390,7 @@ export async function buildJWT() {
     setInlineError('');
     toggleEmptyState(false);
     NotificationManager.show('JWT successfully built', 2000, { type: 'success' });
+    reportGenerate('success');
     return jwt;
   } catch (error: unknown) {
     const detail = error instanceof Error ? error.message : String(error);
@@ -381,6 +398,7 @@ export async function buildJWT() {
     setInlineError(message, detail === 'Invalid JSON payload.' ? undefined : keyFieldId);
     resultDiv.textContent = '';
     toggleEmptyState(true);
+    reportGenerate('error');
     return null;
   }
 }

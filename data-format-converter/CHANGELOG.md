@@ -2,6 +2,18 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.16] - 2026-10-21
+
+### Data Format Converter
+
+- Footer Privacy settings link reopens the Google consent message. In the EEA, the UK, and Switzerland, analytics and ads cookies stay off until that choice.
+
+## [1.0.15] - 2026-10-21
+
+### Data Format Converter
+
+- Record a tool_used analytics event when a conversion runs, with from and to format names only. Document text is not sent.
+
 ## [1.0.14] - 2026-10-21
 
 ### Data Format Converter

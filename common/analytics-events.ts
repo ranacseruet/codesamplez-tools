@@ -54,8 +54,28 @@ const KNOWN_PARAM_KEYS = new Set([
     'outcome',
     'file_type',
     'method',
-    'target_tool_id'
+    'target_tool_id',
+    'from',
+    'to',
+    'alg',
+    'format'
 ]);
+
+/**
+ * Enum values for extra `tool_used` params. Anything else — including pasted
+ * documents, claims, keys, and tokens — is dropped.
+ */
+export const CONVERTER_FORMAT_PARAMS = ['json', 'xml', 'yaml', 'properties'] as const;
+
+export type ConverterFormatParam = (typeof CONVERTER_FORMAT_PARAMS)[number];
+
+export const JWT_ALG_PARAMS = ['HS256', 'RS256'] as const;
+
+export type JwtAlgParam = (typeof JWT_ALG_PARAMS)[number];
+
+export const IMAGE_FORMAT_PARAMS = ['png', 'jpeg', 'webp'] as const;
+
+export type ImageFormatParam = (typeof IMAGE_FORMAT_PARAMS)[number];
 
 const IDENTIFIER_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -125,6 +145,18 @@ function isFileLoadedMethod(value: string): value is FileLoadedMethod {
     return value === 'drop' || value === 'picker';
 }
 
+function isConverterFormat(value: string): value is ConverterFormatParam {
+    return value === 'json' || value === 'xml' || value === 'yaml' || value === 'properties';
+}
+
+function isJwtAlg(value: string): value is JwtAlgParam {
+    return value === 'HS256' || value === 'RS256';
+}
+
+function isImageFormat(value: string): value is ImageFormatParam {
+    return value === 'png' || value === 'jpeg' || value === 'webp';
+}
+
 function sanitizeParams(params: unknown): Record<string, string> {
     if (!params || typeof params !== 'object') {
         return {};
@@ -167,6 +199,29 @@ function sanitizeParams(params: unknown): Record<string, string> {
 
         if (key === 'method') {
             if (isFileLoadedMethod(value)) {
+                safe[key] = value;
+            }
+            continue;
+        }
+
+        // Equality checks, same as the buckets above: these params are enums,
+        // not free-form identifiers, so a claim or filename cannot pass.
+        if (key === 'from' || key === 'to') {
+            if (isConverterFormat(value)) {
+                safe[key] = value;
+            }
+            continue;
+        }
+
+        if (key === 'alg') {
+            if (isJwtAlg(value)) {
+                safe[key] = value;
+            }
+            continue;
+        }
+
+        if (key === 'format') {
+            if (isImageFormat(value)) {
                 safe[key] = value;
             }
             continue;
@@ -235,6 +290,10 @@ export function trackToolUsed(options: {
     inputBytes?: number;
     trigger?: ToolUsedTrigger;
     outcome?: ToolUsedOutcome;
+    from?: ConverterFormatParam;
+    to?: ConverterFormatParam;
+    alg?: JwtAlgParam;
+    format?: ImageFormatParam;
 }): void {
     const params: Record<string, string> = {
         tool_id: options.toolId,
@@ -247,6 +306,22 @@ export function trackToolUsed(options: {
 
     if (options.outcome) {
         params.outcome = options.outcome;
+    }
+
+    if (options.from) {
+        params.from = options.from;
+    }
+
+    if (options.to) {
+        params.to = options.to;
+    }
+
+    if (options.alg) {
+        params.alg = options.alg;
+    }
+
+    if (options.format) {
+        params.format = options.format;
     }
 
     if (typeof options.inputBytes === 'number') {

@@ -2,6 +2,18 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.15] - 2026-10-21
+
+### JSON Editor
+
+- Footer Privacy settings link reopens the Google consent message. In the EEA, the UK, and Switzerland, analytics and ads cookies stay off until that choice.
+
+## [1.0.14] - 2026-10-21
+
+### JSON Editor
+
+- Record tool_used analytics events for import, edit, and export. Edit fires when a change is committed, not on each keystroke. The JSON is not sent.
+
 ## [1.0.13] - 2026-10-21
 
 ### JSON Editor

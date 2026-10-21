@@ -224,26 +224,47 @@ one `tool_used` event in the week.
 
 | Param | Required | Values |
 | --- | --- | --- |
-| `tool_id` | yes | Tool slug, for example `diff-checker`, `json-formatter`, `base64-converter` |
-| `action` | yes | `compare`, `format`, `minify`, `validate`, `encode`, `decode`, `generate`, `analyze` |
-| `trigger` | yes | `user` (click, shortcut, or file drop), `sample` (Load Sample), `share` (a shared link that runs the tool) |
+| `tool_id` | yes | Tool slug. See the tool table below. |
+| `action` | yes | The tool's action from the table below |
+| `trigger` | yes | `user` (click, shortcut, typing, or file drop), `sample` (Load Sample), `share` (a shared link that runs the tool) |
 | `outcome` | yes | `success` or `error` |
 | `input_size_bucket` | no | `<1KB`, `1–10KB`, `10–100KB`, `>100KB` |
+| `from` | no | Data Format Converter input format: `json`, `xml`, `yaml`, `properties` |
+| `to` | no | Data Format Converter output format: `json`, `xml`, `yaml`, `properties` |
+| `alg` | no | JWT Builder signing algorithm: `HS256`, `RS256` |
+| `format` | no | Image Editor export format: `png`, `jpeg`, `webp` |
+
+| Tool | Actions | Extra params |
+| --- | --- | --- |
+| `diff-checker` | `compare` | |
+| `json-formatter` | `format`, `minify`, `validate` | |
+| `base64-converter` | `encode`, `decode` | |
+| `css-minifier` | `minify` | |
+| `js-minifier` | `minify` | |
+| `data-format-converter` | `convert` | `from`, `to` |
+| `json-editor` | `import`, `edit`, `export` | |
+| `jwt-builder` | `generate` | `alg` |
+| `jwt-decoder` | `decode`, `verify` | |
+| `qr-code-generator` | `generate` | |
+| `text-analyzer` | `analyze` | |
+| `image-editor` | `export` | `format` |
 
 Rules:
 
-- Do not send document text, file names, secrets, or any other user input. Params are an allowlist. Unknown keys and strings longer than 100 characters are dropped, not truncated.
-- Tag every run. A Load Sample run is `trigger=sample`, a shared-link run is `trigger=share`, and a failed parse or conversion is `outcome=error`. Do not drop those events to keep the count “clean”.
-- Send at most one `tool_used` per 2 seconds for the same `tool_id` and `action`, so a live or auto-run tool does not emit one event per keystroke.
-- Diff Checker Compare, JSON Formatter Format / Minify / Validate, and Base64 Encode / Decode are wired. The other tools follow in a separate issue.
+- Do not send document text, file names, secrets, claims, keys, tokens, or any other user input. Params are an allowlist. Unknown keys and strings longer than 100 characters are dropped, not truncated. `from`, `to`, `alg`, and `format` accept only the enums above, so a claim or filename cannot pass.
+- Tag every run. A Load Sample run is `trigger=sample`, a shared-link run is `trigger=share`, and a failed parse or conversion is `outcome=error`. Do not drop those events to keep the count “clean”. Unknown `trigger` or `outcome` values are dropped.
+- Send at most one `tool_used` per 2 seconds for the same `tool_id` and `action`, so a live or auto-run tool does not emit one event per keystroke. Data Format Converter auto-convert, QR Code Generator, Text Analyzer, and JWT Decoder follow that shared dedupe.
+- JSON Editor `edit` fires when a tree change is committed (blur, Enter, or a structure button), not on each keystroke of an inline field. Commits closer than 2 seconds still collapse to one `edit` event through the shared dedupe.
 - JSON Formatter sends one action per run: `validate` when a schema is present, otherwise `minify` when indentation is Minified, otherwise `format`. The event is sent after the JSON has been parsed (or the parse has thrown), not before.
+- JWT Builder and JWT Decoder never send claims, keys, or tokens. A page load that only shows the decoder's preloaded sample is not an activation; Load Sample is `trigger=sample`.
+- QR Code Generator does not count the first automatic render of the default URL. A later edit or Load Sample does.
 
 ### Marking the key event in GA4
 
 The owner does this in the GA4 property. It is not part of the build.
 
 1. Admin → Events → mark `tool_used` as a key event.
-2. Admin → Custom definitions → create event-scoped custom dimensions for `tool_id`, `action`, `trigger`, and `outcome`, so each shows up in reports.
+2. Admin → Custom definitions → create event-scoped custom dimensions for `tool_id`, `action`, `trigger`, `outcome`, `from`, `to`, `alg`, and `format`, so each shows up in reports.
 
 ### Shared output and navigation events
 

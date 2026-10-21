@@ -98,7 +98,9 @@ describe('privacy document generation', () => {
         expect(html).toContain('href="https://adssettings.google.com/"');
         expect(html).toContain('href="https://tools.google.com/dlpage/gaoptout"');
         expect(html).toContain('href="https://codesamplez.com/contact"');
+        expect(html).toContain('Visitors in the EEA, the UK, and Switzerland are shown Google\'s consent message and can choose whether Google Analytics and Google AdSense may store cookies. Until that choice allows storage, those cookies stay off. The Privacy settings link in the footer reopens the message.');
         expect(html).toContain('does not provide its own control');
+        expect(html).toContain('>Privacy settings</a>');
 
         ['GDPR', 'CCPA', 'legitimate interest', 'data protection officer', 'retention', 'jurisdiction', 'do not sell'].forEach((phrase) => {
             expect(html.toLowerCase()).not.toContain(phrase.toLowerCase());
@@ -116,6 +118,29 @@ describe('privacy document generation', () => {
 
         documents.forEach((html) => {
             expect(footerBottom(html)).toContain(privacyLink);
+            expect(footerBottom(html)).toContain('>Privacy settings</a>');
+        });
+    });
+
+    it('does not set a referrer policy stricter than strict-origin-when-cross-origin', () => {
+        const documents = [
+            generateRootDocument(),
+            generateToolDocument('json-formatter-tool'),
+            generateNotFoundDocument(),
+            generatePrivacyDocument()
+        ];
+
+        documents.forEach((html) => {
+            const referrerMetas = [...html.matchAll(/<meta\b[^>]*>/gi)]
+                .map((match) => match[0])
+                .filter((tag) => /name=["']referrer["']/i.test(tag));
+            referrerMetas.forEach((tag) => {
+                expect(tag).toMatch(/content=["']strict-origin-when-cross-origin["']/);
+            });
+
+            [...html.matchAll(/\breferrerpolicy=["']([^"']+)["']/gi)].forEach((match) => {
+                expect(match[1]).toBe('strict-origin-when-cross-origin');
+            });
         });
     });
 
@@ -143,6 +168,7 @@ describe('privacy document generation', () => {
         }, () => generatePrivacyDocument());
 
         expect(productionHtml).toContain('https://www.googletagmanager.com/gtag/js?id=G-PRIVACYPAGE');
+        expect(productionHtml.indexOf("gtag('consent','default'")).toBeLessThan(productionHtml.indexOf('https://www.googletagmanager.com/gtag/js?id=G-PRIVACYPAGE'));
         expect(productionHtml).toContain('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456');
         expect(productionHtml).toContain('location.hostname!=="tools.codesamplez.com"');
         expect(developmentHtml).not.toContain('googletagmanager.com');

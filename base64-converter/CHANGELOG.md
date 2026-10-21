@@ -2,6 +2,18 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.17] - 2026-10-21
+
+### Base64 Converter
+
+- Footer Privacy settings link reopens the Google consent message. In the EEA, the UK, and Switzerland, analytics and ads cookies stay off until that choice.
+
+## [1.0.16] - 2026-10-21
+
+### Base64 Converter
+
+- Accept converter format, JWT algorithm, and image export format names on shared tool_used events. This tool's actions are unchanged.
+
 ## [1.0.15] - 2026-10-21
 
 ### Base64 Converter
