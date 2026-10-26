@@ -184,6 +184,28 @@ describe('Visual CI workflow contract', () => {
     });
   });
 
+  it('queues manual visual-diff runs and retries a Snap API 429 without changing the pull-request job', () => {
+    const manual = readWorkflow('pr-visual-diff.yml');
+    const manualDiff = manual.jobs['visual-diff'].steps.find((step) => step.uses?.includes('/actions/pr-diff@'));
+    const pullRequestDiff = readWorkflow('ci.yml').jobs['visual-diff'].steps
+      .find((step) => step.uses?.includes('/actions/pr-diff@'));
+
+    expect(manual.concurrency).toEqual({
+      group: 'pr-visual-diff-manual-${{ github.repository }}',
+      'cancel-in-progress': false
+    });
+    expect(manualDiff.env).toEqual({
+      SNAP_API_KEY: '${{ secrets.SNAP_API_KEY }}',
+      NODE_OPTIONS: '--require ${{ github.workspace }}/scripts/retry-snap-429.js'
+    });
+    expect(manualDiff.with['force-run']).toBe(true);
+    expect(pullRequestDiff.env).toEqual({
+      SNAP_API_KEY: '${{ secrets.SNAP_API_KEY }}'
+    });
+    expect(pullRequestDiff.env.NODE_OPTIONS).toBeUndefined();
+    expect(readWorkflow('ci.yml').concurrency.group).toBe('ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}');
+  });
+
   it('keeps Dependabot pull requests off the secret-gated visual-diff job', () => {
     const job = readWorkflow('ci.yml').jobs['visual-diff'];
 

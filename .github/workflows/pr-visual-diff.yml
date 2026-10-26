@@ -13,6 +13,13 @@ permissions:
   issues: write
   pull-requests: write
 
+# Manual runs share one Snap API key. Two dispatches that started together
+# (runs 40358989457 and 40359049703) received HTTP 429 on capture upload.
+# Queue the next run instead of overlapping a capture that is already going.
+concurrency:
+  group: pr-visual-diff-manual-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   visual-diff:
     runs-on: ubuntu-latest
@@ -66,9 +73,17 @@ jobs:
           force-run: true
         env:
           SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
+          # The pinned action does not retry HTTP 429. This preload retries
+          # /v1/visual/ 429s before that action treats them as a final failure.
+          # The pull-request job in ci.yml does not set this.
+          NODE_OPTIONS: "--require ${{ github.workspace }}/scripts/retry-snap-429.js"
 
-      # Same completion gate as ci.yml. A manual run must not go green when the
-      # hosted comparison is missing or the summary is incomplete.
+      # Same completion gate as ci.yml. publish-baseline does not upload
+      # ui-foundation-visual-baseline (the pinned baseline action only uploads
+      # that GitHub artifact for the local provider). A missing lookup is
+      # expected. Provider snap still compares the hosted baseline, and this
+      # step fails only when that comparison did not finish. It does not fail
+      # the job on the artifact lookup by itself.
       - name: Require a completed baseline comparison
         if: always() && steps.visual_diff.outcome != 'skipped'
         env:
