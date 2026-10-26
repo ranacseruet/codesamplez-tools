@@ -17,7 +17,8 @@
       "webpack.config.js",
       "package.json",
       "package-lock.json",
-      "babel.config.js"
+      "babel.config.js",
+      ".github/snapdrift.json"
     ]
   },
   "routes": [
@@ -59,14 +60,6 @@
       ]
     },
     {
-      "id": "js-minifier-mobile",
-      "path": "/js-minifier/",
-      "viewport": "mobile",
-      "changePaths": [
-        "js-minifier/"
-      ]
-    },
-    {
       "id": "base64-converter-desktop",
       "path": "/base64-converter/",
       "viewport": "desktop",
@@ -89,14 +82,6 @@
       "id": "jwt-builder-desktop",
       "path": "/jwt-builder/",
       "viewport": "desktop",
-      "changePaths": [
-        "jwt-builder/"
-      ]
-    },
-    {
-      "id": "jwt-builder-mobile",
-      "path": "/jwt-builder/",
-      "viewport": "mobile",
       "changePaths": [
         "jwt-builder/"
       ]
@@ -180,14 +165,6 @@
       ]
     },
     {
-      "id": "text-analyzer-mobile",
-      "path": "/text-analyzer/",
-      "viewport": "mobile",
-      "changePaths": [
-        "text-analyzer/"
-      ]
-    },
-    {
       "id": "qr-code-generator-desktop",
       "path": "/qr-code-generator/",
       "viewport": "desktop",
@@ -210,19 +187,11 @@
       "changePaths": [
         "diff-checker/"
       ]
-    },
-    {
-      "id": "diff-checker-mobile",
-      "path": "/diff-checker/",
-      "viewport": "mobile",
-      "changePaths": [
-        "diff-checker/"
-      ]
     }
   ],
   "diff": {
     "threshold": 0.01,
-    "mode": "report-only",
+    "mode": "fail-on-incomplete",
     "comparisonPolicy": {
       "version": 1,
       "threshold": 0.01

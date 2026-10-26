@@ -364,6 +364,20 @@ jobs:
         env:
           SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
 
+      # report-only used to leave this job green when the summary was incomplete
+      # or the GitHub artifact lookup missed. The hosted Snap baseline is the
+      # comparison source; this step fails the job unless that comparison finished.
+      - name: Require a completed baseline comparison
+        if: always() && steps.visual_diff.outcome != 'skipped'
+        env:
+          SHOULD_RUN: ${{ steps.visual_diff.outputs.should-run }}
+          SCOPE_REASON: ${{ steps.visual_diff.outputs.scope-reason }}
+          STATUS: ${{ steps.visual_diff.outputs.status }}
+          SUMMARY_PATH: ${{ steps.visual_diff.outputs.summary-path }}
+          BASELINE_FOUND: ${{ steps.visual_diff.outputs.baseline-found }}
+          BASELINE_RESOLUTION_STATUS: ${{ steps.visual_diff.outputs.baseline-resolution-status }}
+        run: node scripts/require-visual-comparison.js
+
       - name: Stop app
         if: always()
         run: kill "$QA_SERVER_PID" || true
@@ -468,6 +482,9 @@ jobs:
           && steps.baseline_current.outputs.current == 'true'
         uses: ranacseruet/snapdrift/actions/baseline@8e827952c33415ba2d8f1fdab944d519534013a6 # v0.16.0
         with:
+          # The pinned baseline action uploads ui-foundation-visual-baseline only
+          # for the local provider. Hosted Snap publication does not create that
+          # GitHub artifact; PR diffs compare the hosted baseline instead.
           upload-artifact: 'false'
         env:
           SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}

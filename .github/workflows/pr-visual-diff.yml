@@ -67,6 +67,19 @@ jobs:
         env:
           SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
 
+      # Same completion gate as ci.yml. A manual run must not go green when the
+      # hosted comparison is missing or the summary is incomplete.
+      - name: Require a completed baseline comparison
+        if: always() && steps.visual_diff.outcome != 'skipped'
+        env:
+          SHOULD_RUN: ${{ steps.visual_diff.outputs.should-run }}
+          SCOPE_REASON: ${{ steps.visual_diff.outputs.scope-reason }}
+          STATUS: ${{ steps.visual_diff.outputs.status }}
+          SUMMARY_PATH: ${{ steps.visual_diff.outputs.summary-path }}
+          BASELINE_FOUND: ${{ steps.visual_diff.outputs.baseline-found }}
+          BASELINE_RESOLUTION_STATUS: ${{ steps.visual_diff.outputs.baseline-resolution-status }}
+        run: node scripts/require-visual-comparison.js
+
       - name: Stop app
         if: always()
         run: kill "$QA_SERVER_PID" || true
