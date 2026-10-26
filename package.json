@@ -138,7 +138,7 @@
     "preact-render-to-string": "^6.8.1",
     "prismjs": "^1.30.0",
     "qrcode": "^1.5.4",
-    "sitemap": "^9.0.1"
+    "sitemap": "^10.0.0"
   },
   "overrides": {
     "body-parser": "^2.4.0",
