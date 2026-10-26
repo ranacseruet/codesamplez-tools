@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.21] - 2026-10-26
+
+### JSON Formatter
+
+- Dev-dependency pin for body-parser. Not a user-facing behavior change.
+
 ## [1.0.20] - 2026-10-21
 
 ### JSON Formatter
