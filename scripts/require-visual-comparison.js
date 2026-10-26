@@ -201,11 +201,28 @@ function runVisualComparisonCheck(env, io) {
     return 0;
 }
 
-if (require.main === module) {
-    process.exitCode = runVisualComparisonCheck(process.env);
+/**
+ * `node scripts/require-visual-comparison.js` passes no second argument, so
+ * the check runs only when this file is the process entry. Callers can pass
+ * the flag explicitly.
+ *
+ * @param {NodeJS.ProcessEnv} [env]
+ * @param {boolean} [invokedDirectly]
+ * @returns {number | undefined}
+ */
+function runCli(env = process.env, invokedDirectly = require.main === module) {
+    if (!invokedDirectly) {
+        return undefined;
+    }
+    const code = runVisualComparisonCheck(env);
+    process.exitCode = code;
+    return code;
 }
+
+runCli();
 
 module.exports = {
     evaluateVisualComparison,
-    runVisualComparisonCheck
+    runVisualComparisonCheck,
+    runCli
 };
