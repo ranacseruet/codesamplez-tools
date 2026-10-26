@@ -11,18 +11,7 @@ const BLOCKING_SEVERITIES = new Set(['high', 'critical']);
  *
  * @type {Record<string, { reason: string, expires: string }>}
  */
-const ALLOWED_ADVISORIES = {
-    // braces <= 3.0.3 has no patched release. It is reached only through
-    // webpack-cli -> webpack-dev-server -> http-proxy-middleware -> micromatch,
-    // i.e. the `npm run dev` proxy matcher. Nothing in that chain is bundled
-    // into the shipped static site, and the vulnerable input is dev-server proxy
-    // config we author ourselves, not untrusted data. main() enforces the
-    // dev-only premise by re-auditing with --omit=dev and no waivers.
-    'GHSA-vfj7-8cjw-p6xm': {
-        reason: 'braces has no patched version; dev-server-only transitive dependency',
-        expires: '2026-11-04',
-    },
-};
+const ALLOWED_ADVISORIES = {};
 
 /**
  * @param {string} url

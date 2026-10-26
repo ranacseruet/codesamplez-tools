@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.16] - 2026-10-26
+
+### JSON Editor
+
+- Dev-dependency pin for body-parser. Not a user-facing behavior change.
+
 ## [1.0.15] - 2026-10-21
 
 ### JSON Editor
