@@ -6,6 +6,7 @@ import DownloadManager from '../common/DownloadManager';
 import { describeLoadedFile, registerDropZone, registerFileInput, type LoadedFileDetail } from '../common/drop-zone';
 import FileUploadButton from '../common/file-upload';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { registerTutorialLinkClickAnalytics } from '../common/tool-article/tutorial-link-analytics';
 import { NotificationManager } from '../common/notification-manager';
 import { isEditableTarget, registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import { trackToolUsed, utf8ByteLength, type ToolUsedOutcome, type ToolUsedTrigger } from '../common/analytics-events';
@@ -1051,6 +1052,7 @@ if (typeof document !== 'undefined' && typeof document.addEventListener === 'fun
             description: toolMetadata.description,
             homeHref: '/'
         });
+        registerTutorialLinkClickAnalytics();
         new JSONEditorToolUI();
     });
 }

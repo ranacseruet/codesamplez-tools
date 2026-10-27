@@ -5,6 +5,7 @@ import { trackToolUsed, utf8ByteLength, type ToolUsedOutcome } from '../common/a
 import CopyButton from '../common/copy-button/CopyButton';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { registerTutorialLinkClickAnalytics } from '../common/tool-article/tutorial-link-analytics';
 import toolMetadata from './tool.meta.json';
 
 type JwtBuilderWindow = Window & {
@@ -702,6 +703,7 @@ function bootstrapJwtBuilderPage() {
     description: toolMetadata.description,
     homeHref: '/'
   });
+  registerTutorialLinkClickAnalytics();
 
   const hasAppRoot = Boolean(document.getElementById('jwt-builder-app') || document.getElementById('jwt-builder-tool'));
   if (hasAppRoot) {

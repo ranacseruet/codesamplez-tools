@@ -134,15 +134,22 @@ const DEFAULT_FAIL_PERCENT = 10;
 // `jwt-decoder-tool` (70,827 -> 76,894), `qr-code-generator` (65,847 -> 70,285),
 // and `text-analyzer-tool` (50,891 -> 54,277). js-minifier and json-editor
 // had crossed the fail line. The other six stayed inside the warn line.
+//
+// `json-formatter-tool` (75,638 -> 79,477) and `jwt-builder-tool` (76,771 ->
+// 81,269) were refreshed for the Learn more tutorial-link click listener,
+// about 1.6 KB on each mapped tool. Both were inside the warn line on main,
+// and this module crossed it. The other mapped tools absorbed the same module
+// inside their warn line. `data-format-converter` was already over its warn
+// line on main and stays there, still under the fail line.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 55220,
     'data-format-converter': 190839,
     'diff-checker-tool': 97619,
-    'jwt-builder-tool': 76771,
+    'jwt-builder-tool': 81269,
     'jwt-decoder-tool': 76894,
     'base64-converter-tool': 87888,
-    'json-formatter-tool': 75638,
+    'json-formatter-tool': 79477,
     'json-editor-tool': 70450,
     'css-minifier-tool': 69713,
     'text-analyzer-tool': 54277,

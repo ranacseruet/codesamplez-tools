@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.19] - 2026-10-27
+
+### Base64 Converter
+
+- Add a Learn more section linking to the Base64 explained tutorial, and point the existing guide link at that canonical URL. A click sends the tool id and the tutorial path only.
+
 ## [1.0.18] - 2026-10-26
 
 ### Base64 Converter

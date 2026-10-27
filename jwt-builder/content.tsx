@@ -1,6 +1,7 @@
 import type { JSX } from 'preact';
 import { buildSiteHref, SITE_BASE_URL } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { ToolTutorialLinks } from '../common/tool-article/TutorialLinks';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -162,6 +163,8 @@ export function JwtBuilderArticle(): JSX.Element {
                         feature request, or feedback about the JWT Generator.
                     </p>
                 </ToolArticleSection>
+
+                <ToolTutorialLinks toolId="jwt-builder" />
 
                 <ToolArticleSection id="jwt-builder-faqs" title="JWT Generator FAQs (Frequently Asked Questions)">
                     <ToolFaqList items={FAQ_ITEMS} />
