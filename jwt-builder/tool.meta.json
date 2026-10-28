@@ -1,9 +1,9 @@
 {
   "id": "jwt-builder-tool",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "title": "JWT Builder",
-  "seoTitle": "JWT Generator – Create Signed Tokens",
-  "description": "Free online JWT Generator – create signed JSON Web Tokens instantly. Customize header/payload claims and get your JWT ready for use.",
+  "seoTitle": "JWT Generator – Create and Sign Online",
+  "description": "JWT Generator to create and sign JSON Web Tokens online. HS256 shared secrets or RS256 private keys, with claims and expiry, in your browser.",
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 3,
   "indexDescription": "Create and sign JSON Web Tokens (JWT) with custom headers and payloads. Generate secure tokens with various signing algorithms and secret keys.",
