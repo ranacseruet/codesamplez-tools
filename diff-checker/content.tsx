@@ -1,6 +1,7 @@
 import type { JSX } from 'preact';
 import { SITE_BASE_URL, buildSiteAssetUri, buildSiteHref } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { ToolTutorialLinks } from '../common/tool-article/TutorialLinks';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -283,6 +284,8 @@ export function DiffCheckerArticle(): JSX.Element {
                         <li>Site cookies: Your input is processed in this browser and is not uploaded by the tool. This site uses Google Analytics and Google AdSense cookies to measure usage and show ads.</li>
                     </ul>
                 </ToolArticleSection>
+
+                <ToolTutorialLinks toolId="diff-checker" />
 
                 <ToolArticleSection id="diff-checker-faqs" title="Diff Checker FAQs">
                     <ToolFaqList items={FAQ_ITEMS} />

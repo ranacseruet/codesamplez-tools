@@ -1,6 +1,7 @@
 import type { JSX } from 'preact';
 import { SITE_BASE_URL, buildSiteHref } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { ToolTutorialLinks } from '../common/tool-article/TutorialLinks';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -252,6 +253,8 @@ export function JsonFormatterArticle(): JSX.Element {
                         request, or feedback.
                     </p>
                 </ToolArticleSection>
+
+                <ToolTutorialLinks toolId="json-formatter" />
 
                 <ToolArticleSection id="json-formatter-faqs" title="JSON Formatter FAQs">
                     <ToolFaqList items={FAQ_ITEMS} />

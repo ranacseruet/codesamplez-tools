@@ -31,6 +31,7 @@ import { hydrate, render } from 'preact';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-javascript';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { registerTutorialLinkClickAnalytics } from '../common/tool-article/tutorial-link-analytics';
 import toolMetadata from './tool.meta.json';
 
 /**
@@ -1100,6 +1101,7 @@ function bootstrapDiffCheckerPage() {
     description: toolMetadata.description,
     homeHref: '/'
   });
+  registerTutorialLinkClickAnalytics();
 
   const hasAppRoot = Boolean(document.getElementById('diff-checker-app') || document.getElementById('diff-checker-tool'));
   if (hasAppRoot) {

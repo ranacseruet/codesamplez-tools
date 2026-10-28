@@ -13,6 +13,7 @@ import { formatBytes } from '../common/format-utils';
 import FileUploadButton from '../common/file-upload';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { registerTutorialLinkClickAnalytics } from '../common/tool-article/tutorial-link-analytics';
 import toolMetadata from './tool.meta.json';
 
 const BASE64_DATA_URL_REGEX = /^data:([a-zA-Z0-9/\-+.-\w]+)?(?:;charset=([a-zA-Z0-9/\-+.-\w]+))?;base64,(.*)$/;
@@ -1342,6 +1343,7 @@ function bootstrapBase64ConverterPage() {
         description: toolMetadata.description,
         homeHref: '/'
     });
+    registerTutorialLinkClickAnalytics();
 
     const hasAppRoot = Boolean(document.getElementById('base64converter-app') || document.getElementById('base64converter-tool'));
     if (hasAppRoot) {

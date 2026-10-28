@@ -1,6 +1,6 @@
 {
   "id": "diff-checker-tool",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "title": "Diff Checker",
   "seoTitle": "Diff Checker – Compare Text, Code & Files",
   "description": "Compare two files online: upload or drag and drop into either pane, run a side-by-side diff, and download a unified .patch file—free in your browser.",

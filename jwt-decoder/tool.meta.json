@@ -1,6 +1,6 @@
 {
   "id": "jwt-decoder-tool",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "title": "JWT Decoder & Validator",
   "seoTitle": "JWT Decoder – Decode & Verify Tokens",
   "description": "Free online JWT decoder – instantly reveal a token’s header, payload, and verify its signature. Paste your JWT to decode it now.",

@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.21] - 2026-10-28
+
+### Diff Checker
+
+- Add a Learn more section with links to related codesamplez.com tutorials. A click sends the tool id and the tutorial path only.
+
 ## [1.0.20] - 2026-10-27
 
 ### Diff Checker

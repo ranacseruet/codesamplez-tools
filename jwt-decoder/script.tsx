@@ -6,6 +6,7 @@ import { registerPrimaryActionShortcut } from '../common/shortcut-utils';
 import ClearButton from '../common/clear-button/ClearButton';
 import { hydrate, render } from 'preact';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { registerTutorialLinkClickAnalytics } from '../common/tool-article/tutorial-link-analytics';
 import { trackToolUsed, utf8ByteLength, type ToolUsedOutcome, type ToolUsedTrigger } from '../common/analytics-events';
 import toolMetadata from './tool.meta.json';
 
@@ -685,6 +686,7 @@ function bootstrapJwtDecoderPage() {
         description: toolMetadata.description,
         homeHref: '/'
     });
+    registerTutorialLinkClickAnalytics();
 
     const hasAppRoot = Boolean(document.getElementById('jwt-decoder-app') || document.getElementById('jwt-decoder-tool'));
     if (hasAppRoot) {

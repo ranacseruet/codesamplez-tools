@@ -280,9 +280,14 @@ call sites do not pass it.
 | `share_link_created` | User copies the canonical share link from the share rail | `tool_id` |
 | `file_loaded` | A file is accepted from drag-and-drop or the shared file picker | `tool_id`, `method` (`drop` or `picker`), `file_type` |
 | `related_tool_click` | User clicks a related-tool card or compact-row link | `tool_id`, `target_tool_id` (destination tool slug) |
+| `tutorial_link_click` | User clicks a Learn more tutorial link | `tool_id`, `target_path` (tutorial path from `common/tool-article/tutorial-links.ts` only) |
 
-Rules match `tool_used`: no file names, document text, secrets, or URLs; one
-event per user action; unknown params are dropped.
+Rules match `tool_used`: no file names, document text, secrets, or full URLs; one
+event per user action; unknown params are dropped. `tutorial_link_click` is the
+path exception: it sends the tutorial path and nothing else about the click.
+The handler accepts a path only when that path is in the shared tutorial map.
+It does not send the host, a query string, or tool input. The same event is
+described on the privacy page.
 
 ## Documentation Standards
 
