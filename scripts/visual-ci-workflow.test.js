@@ -36,6 +36,10 @@ describe('Visual CI workflow contract', () => {
     expect(publishStep.if).toContain("steps.baseline_candidate.outputs.current == 'true'");
     expect(publishStep.if).toContain("steps.baseline_current.outputs.current == 'true'");
     expect(publishStep.with).not.toHaveProperty('route-ids');
+    // Hosted publication does not upload ui-foundation-visual-baseline. The
+    // pinned baseline action stages that GitHub artifact only for the local
+    // provider, so turning this on would not give PR diffs an artifact to find.
+    expect(publishStep.with['upload-artifact']).toBe('false');
 
     const candidateStep = findStep(job, 'Verify current main baseline candidate');
     expect(candidateStep.run).toMatch(/git ls-remote origin refs\/heads\/main/);
@@ -47,13 +51,39 @@ describe('Visual CI workflow contract', () => {
     expect(currentStep.run).toMatch(/::notice::Skipping baseline publication/);
   });
 
-  it('keeps the canonical hosted baseline at the full 24-identity configuration', () => {
+  // These mobile-preset routes are excluded. Their hosted baseline captures are
+  // already over SnapDrift's 33,554,432-pixel union canvas, so every comparison
+  // returns comparison_too_large and the summary stays incomplete (PR #119 run
+  // 39315713571, and the same baseline dimensions on PR #126):
+  //   js-minifier-mobile      1170×30414 (35,584,380)
+  //   jwt-builder-mobile      1170×28785 (33,678,450)
+  //   text-analyzer-mobile    1170×30063 (35,173,710)
+  //   diff-checker-mobile     1170×31785 (37,188,450)
+  // A custom {width:390,height:844} viewport is the DPR-1 escape hatch and would
+  // fit the CSS height, but the union still includes that oversized baseline
+  // image until main publishes a baseline that no longer has it. Publishing
+  // happens only after the config is on main, so this pull request cannot both
+  // switch the viewport and finish a complete comparison. Exclusion is what
+  // lets a normal PR reach one. Desktop routes for the same tools stay.
+  const EXCLUDED_OVERSIZED_MOBILE_ROUTES = [
+    'js-minifier-mobile',
+    'jwt-builder-mobile',
+    'text-analyzer-mobile',
+    'diff-checker-mobile'
+  ];
+
+  it('keeps the canonical hosted baseline at the comparable route configuration', () => {
     const config = JSON.parse(fs.readFileSync(SNAPDRIFT_CONFIG_PATH, 'utf8'));
     const routeIds = config.routes.map((route) => route.id);
 
     expect(config.provider).toBe('snap');
-    expect(routeIds).toHaveLength(24);
+    expect(config.diff.mode).toBe('fail-on-incomplete');
+    expect(routeIds).toHaveLength(20);
     expect(new Set(routeIds).size).toBe(routeIds.length);
+    EXCLUDED_OVERSIZED_MOBILE_ROUTES.forEach((routeId) => {
+      expect(routeIds).not.toContain(routeId);
+    });
+    expect(config.selection.sharedExact).toContain('.github/snapdrift.json');
     expect(config.diff.comparisonPolicy).toEqual({
       version: 1,
       threshold: config.diff.threshold,
@@ -77,13 +107,9 @@ describe('Visual CI workflow contract', () => {
   // budget (all are within ~2-3% of the cap, so re-measure when content grows).
   const MOBILE_PRESET_BUDGET_VERIFIED = [
     'root-index-mobile',
-    'js-minifier-mobile',
-    'jwt-builder-mobile',
     'jwt-decoder-mobile',
     'json-editor-mobile',
-    'text-analyzer-mobile',
     'qr-code-generator-mobile',
-    'diff-checker-mobile',
   ];
 
   it.each(CUSTOM_VIEWPORT_BUDGET_VERIFIED)(
@@ -136,6 +162,57 @@ describe('Visual CI workflow contract', () => {
 
     expect(step.uses).toMatch(/^ranacseruet\/snapdrift\/actions\/capture@[0-9a-f]{40}$/);
     expect(step.env).toBeUndefined();
+  });
+
+  it('fails visual-diff unless SnapDrift finished a baseline comparison', () => {
+    ['ci.yml', 'pr-visual-diff.yml'].forEach((name) => {
+      const job = readWorkflow(name).jobs['visual-diff'];
+      const diffStep = job.steps.find((step) => step.uses?.includes('/actions/pr-diff@'));
+      const guard = findStep(job, 'Require a completed baseline comparison');
+
+      expect(diffStep.id).toBe('visual_diff');
+      expect(guard.if).toBe("always() && steps.visual_diff.outcome != 'skipped'");
+      expect(guard.run).toBe('node scripts/require-visual-comparison.js');
+      expect(guard.env).toEqual({
+        SHOULD_RUN: '${{ steps.visual_diff.outputs.should-run }}',
+        SCOPE_REASON: '${{ steps.visual_diff.outputs.scope-reason }}',
+        STATUS: '${{ steps.visual_diff.outputs.status }}',
+        SUMMARY_PATH: '${{ steps.visual_diff.outputs.summary-path }}',
+        BASELINE_FOUND: '${{ steps.visual_diff.outputs.baseline-found }}',
+        BASELINE_RESOLUTION_STATUS: '${{ steps.visual_diff.outputs.baseline-resolution-status }}'
+      });
+    });
+  });
+
+  it('queues manual visual-diff runs and retries a Snap API 429 without changing the pull-request job', () => {
+    const manual = readWorkflow('pr-visual-diff.yml');
+    const manualDiff = manual.jobs['visual-diff'].steps.find((step) => step.uses?.includes('/actions/pr-diff@'));
+    const pullRequestDiff = readWorkflow('ci.yml').jobs['visual-diff'].steps
+      .find((step) => step.uses?.includes('/actions/pr-diff@'));
+
+    expect(manual.concurrency).toEqual({
+      group: 'pr-visual-diff-manual-${{ github.repository }}',
+      'cancel-in-progress': false
+    });
+    expect(manualDiff.env).toEqual({
+      SNAP_API_KEY: '${{ secrets.SNAP_API_KEY }}',
+      NODE_OPTIONS: '--require ${{ github.workspace }}/scripts/retry-snap-429.js'
+    });
+    expect(manualDiff.with['force-run']).toBe(true);
+    expect(pullRequestDiff.env).toEqual({
+      SNAP_API_KEY: '${{ secrets.SNAP_API_KEY }}'
+    });
+    expect(pullRequestDiff.env.NODE_OPTIONS).toBeUndefined();
+    expect(readWorkflow('ci.yml').concurrency.group).toBe('ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}');
+  });
+
+  it('keeps Dependabot pull requests off the secret-gated visual-diff job', () => {
+    const job = readWorkflow('ci.yml').jobs['visual-diff'];
+
+    expect(job.if).toContain("github.event.pull_request.user.login != 'dependabot[bot]'");
+    expect(job.if).toContain('github.event.pull_request.draft == false');
+    expect(job.if).toContain('github.event.pull_request.head.repo.full_name == github.repository');
+    expect(job.if).toContain("github.event_name == 'pull_request'");
   });
 
   it('pins every SnapDrift consumer action to one immutable release commit', () => {
