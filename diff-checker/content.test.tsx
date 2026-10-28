@@ -46,6 +46,14 @@ describe('diff-checker content', () => {
         expect(
             root!.querySelector('#diff-checker-compare-code-online')!.closest('section')!.textContent
         ).toContain('Compare Code Online: How to Find Differences Between Two Files');
+        expect(root!.querySelector('#diff-checker-compare-two-files')).not.toBeNull();
+        expect(
+            root!.querySelector('#diff-checker-compare-two-files')!.closest('section')!.textContent
+        ).toContain('Compare Two Files Online');
+        expect(root!.querySelector('#diff-checker-git-patch')).not.toBeNull();
+        expect(
+            root!.querySelector('#diff-checker-git-patch')!.closest('section')!.textContent
+        ).toContain('Git-Style Diffs and Patch Download');
         expect(root!.querySelector('#diff-checker-features')).not.toBeNull();
         expect(root!.querySelector('#diff-checker-usage')).not.toBeNull();
         expect(root!.querySelector('#diff-checker-limitations')).not.toBeNull();

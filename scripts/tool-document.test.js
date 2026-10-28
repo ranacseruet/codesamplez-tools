@@ -65,8 +65,8 @@ describe('tool document generation', () => {
             '<section>After payload</section>'
         );
 
-        expect(html).toContain('<title>Diff Checker – Compare Text &amp; Code Online | CodeSamplez</title>');
-        expect(html).toContain('<meta name="description" content="Free online diff checker to quickly compare code or text differences. Perfect for developers, writers, and editors seeking instant results.">');
+        expect(html).toContain('<title>Diff Checker – Compare Text, Code &amp; Files | CodeSamplez</title>');
+        expect(html).toContain('<meta name="description" content="Compare two files online: upload or drag and drop into either pane, run a side-by-side diff, and download a unified .patch file—free in your browser.">');
         expect(html).toContain(`<meta name="tool-version" content="${tool.version}">`);
         expect(html).toContain('<meta name="theme-color" content="#0b0b11">');
         expect(html).toMatch(/<html lang="en" data-theme="dark" data-build-commit="[0-9a-f]{40}">/);
@@ -125,7 +125,7 @@ describe('tool document generation', () => {
         expect(versionLineIndex).toBeLessThan(changelogIndex);
         expect(changelogIndex).toBeLessThan(afterShellIndex);
         expect(html).toContain('<h1 class="cst-shell__title">Diff Checker</h1>');
-        expect(html).toContain('<p class="cst-shell__description">Free online diff checker to quickly compare code or text differences. Perfect for developers, writers, and editors seeking instant results.</p>');
+        expect(html).toContain('<p class="cst-shell__description">Compare two files online: upload or drag and drop into either pane, run a side-by-side diff, and download a unified .patch file—free in your browser.</p>');
         expect(html).toContain('<main class="c-tool-page-main" aria-labelledby="diff-checker-app-workspace-heading">');
         expect(html).toContain('<h2 id="diff-checker-app-workspace-heading" class="u-visually-hidden">Diff Checker workspace</h2>');
         expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--before"><section>Before payload</section></div>');
@@ -323,7 +323,11 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"What is the difference between a diff checker and a difference checker?"');
         expect(html).toContain('"name":"Does the tool work offline?"');
         expect(html).toContain('"name":"Is the diff checker free to use?"');
+        expect(html).toContain('"name":"Can I use this as a file diff checker without pasting?"');
+        expect(html).toContain('"name":"Can I get a git diff or patch file online?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes! Once the page loads, all comparisons happen locally in your browser, so you can use it without an internet connection.');
+        expect(html).toContain('Compare Two Files Online');
+        expect(html).toContain('Git-Style Diffs and Patch Download');
         expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/diff-checker/')}#webpage"}`);
         expect(html).toContain(`src="${buildSiteAssetUri('/diff-checker/images/diff-result-view-example.webp')}"`);
     });
