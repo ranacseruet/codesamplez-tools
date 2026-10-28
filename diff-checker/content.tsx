@@ -1,6 +1,7 @@
 import type { JSX } from 'preact';
 import { SITE_BASE_URL, buildSiteAssetUri, buildSiteHref } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { ToolTutorialLinks } from '../common/tool-article/TutorialLinks';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -50,6 +51,18 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     createPlainTextFaqItem(
         'Is the diff checker free to use?',
         'Yes. The diff checker is completely free and does not require registration. You can compare unlimited text and code differences instantly.'
+    ),
+    createPlainTextFaqItem(
+        'Can I use this as a file diff checker without pasting?',
+        'Yes. Click Upload File or drag a local text file into the left or right pane—each pane accepts one file at a time. The file is read on your device only (not uploaded to a server) and appears in that editor so you can compare it against pasted text or a second uploaded file.'
+    ),
+    createPlainTextFaqItem(
+        'Can I get a git diff or patch file online?',
+        'After you run Compare, use Download .patch to save a unified diff of the current left and right inputs as comparison.patch. The export uses the loaded filenames when you uploaded files, or the labels original and modified otherwise. It follows your Ignore Whitespace setting, matching the on-screen diff.'
+    ),
+    createPlainTextFaqItem(
+        'How can I apply the downloaded patch file?',
+        'The .patch file is a standard unified diff you can review in any text editor or apply with Git: save both versions, then run git apply comparison.patch from a repository that contains the original file paths named in the patch header. Always inspect the patch before applying it to production code.'
     )
 ];
 
@@ -115,6 +128,40 @@ export function DiffCheckerArticle(): JSX.Element {
                     <p>
                         Files you drop into the editors are read on your device only. As with the rest of this tool,
                         your input is processed in this browser and is not uploaded by the diff checker.
+                    </p>
+                </ToolArticleSection>
+
+                <ToolArticleSection id="diff-checker-compare-two-files" title="Compare Two Files Online">
+                    <p>
+                        Use this page as a file diff checker when you already have two versions on disk. Click{' '}
+                        <strong>Upload File</strong> in the left or right pane, or drag a file onto either editor.
+                        Each drop or pick loads one file at a time into that pane; load the other version in the
+                        opposite pane, then click Compare.
+                    </p>
+                    <p>
+                        The picker accepts common text and code types (for example plain text, JSON, JavaScript,
+                        XML, YAML, and CSV). Files larger than 5&nbsp;MB are rejected to keep comparisons responsive
+                        in the browser. Content is decoded and shown in the editor on your device only—it is never
+                        sent to our servers.
+                    </p>
+                </ToolArticleSection>
+
+                <ToolArticleSection id="diff-checker-git-patch" title="Git-Style Diffs and Patch Download">
+                    <p>
+                        After a comparison finishes, <strong>Download .patch</strong> saves the current diff as a
+                        unified patch file named <code>comparison.patch</code>. The patch header uses the filenames
+                        from uploaded files when available, or <code>original</code> and <code>modified</code> when
+                        you pasted the text instead.
+                    </p>
+                    <p>
+                        The export is the same unified diff format Git and other tools expect: hunks with{' '}
+                        <code>---</code> / <code>+++</code> headers and <code>+</code> / <code>-</code> lines for
+                        additions and removals. Your <strong>Ignore Whitespace</strong> toggle is applied when the
+                        patch is built, so the file matches what you see in the results panel.
+                    </p>
+                    <p>
+                        You can open the patch in an editor for review, share it in a ticket, or apply it with{' '}
+                        <code>git apply</code> when the paths in the header match files in your local repository.
                     </p>
                 </ToolArticleSection>
 
@@ -237,6 +284,8 @@ export function DiffCheckerArticle(): JSX.Element {
                         <li>Site cookies: Your input is processed in this browser and is not uploaded by the tool. This site uses Google Analytics and Google AdSense cookies to measure usage and show ads.</li>
                     </ul>
                 </ToolArticleSection>
+
+                <ToolTutorialLinks toolId="diff-checker" />
 
                 <ToolArticleSection id="diff-checker-faqs" title="Diff Checker FAQs">
                     <ToolFaqList items={FAQ_ITEMS} />

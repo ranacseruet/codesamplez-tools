@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.17] - 2026-10-27
+
+### JSON Editor
+
+- Add a Learn more section with links to related codesamplez.com tutorials. A click sends the tool id and the tutorial path only.
+
 ## [1.0.16] - 2026-10-26
 
 ### JSON Editor

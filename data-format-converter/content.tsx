@@ -1,6 +1,7 @@
 import type { JSX } from 'preact';
 import { SITE_BASE_URL, buildSiteHref } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { ToolTutorialLinks } from '../common/tool-article/TutorialLinks';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -305,6 +306,8 @@ city=New York`}</code></pre>
                         <a href={SITE_BASE_URL}>CodeSamplez Tools</a>.
                     </p>
                 </ToolArticleSection>
+
+                <ToolTutorialLinks toolId="data-format-converter" />
 
                 <ToolArticleSection id="data-format-converter-faqs" title="Data Format Converter FAQs">
                     <ToolFaqList items={FAQ_ITEMS} />

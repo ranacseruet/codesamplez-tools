@@ -1,6 +1,7 @@
 import type { JSX } from 'preact';
 import { SITE_BASE_URL, buildSiteHref } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { ToolTutorialLinks } from '../common/tool-article/TutorialLinks';
 
 function createFaqItem(question: string, answer: string): ToolFaqItem {
     return { question, answer, structuredDataAnswer: answer };
@@ -181,6 +182,8 @@ export function JsonEditorArticle(): JSX.Element {
                         <li><strong>Mobile:</strong> Responsive controls and a scrollable tree support touch-sized screens.</li>
                     </ul>
                 </ToolArticleSection>
+
+                <ToolTutorialLinks toolId="json-editor" />
 
                 <ToolArticleSection id="json-editor-faqs" title="JSON Editor FAQs">
                     <ToolFaqList items={FAQ_ITEMS} />

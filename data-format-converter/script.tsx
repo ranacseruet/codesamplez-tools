@@ -12,6 +12,7 @@ import { trackToolUsed, utf8ByteLength, type ToolUsedOutcome, type ToolUsedTrigg
 import { hydrate, render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
+import { registerTutorialLinkClickAnalytics } from '../common/tool-article/tutorial-link-analytics';
 import toolMetadata from './tool.meta.json';
 
 type SupportedFormat = 'json' | 'xml' | 'yaml' | 'properties';
@@ -756,6 +757,7 @@ if (typeof document !== 'undefined') {
             description: toolMetadata.description,
             homeHref: '/'
         });
+        registerTutorialLinkClickAnalytics();
         new DataFormatConverterUI();
     });
 }

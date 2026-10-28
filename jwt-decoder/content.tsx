@@ -1,6 +1,8 @@
 import type { JSX } from 'preact';
 import { buildSiteHref, SITE_BASE_URL } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { ToolTutorialLinks } from '../common/tool-article/TutorialLinks';
+import { JWT_CRASH_COURSE } from '../common/tool-article/tutorial-links';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -61,7 +63,7 @@ export function JwtDecoderArticle(): JSX.Element {
                     </p>
                     <p>
                         If you want to learn everything there’s to know about JWT, you can do so with our dedicated{' '}
-                        <a href="https://codesamplez.com/development/json-web-token-crash-course">JWT Crash Course</a>.
+                        <a href={JWT_CRASH_COURSE.href}>JWT Crash Course</a>.
                     </p>
                 </ToolArticleSection>
 
@@ -172,6 +174,8 @@ export function JwtDecoderArticle(): JSX.Element {
                         <a href="https://codesamplez.com/contact">contact us</a> with as much detail as you can.
                     </p>
                 </ToolArticleSection>
+
+                <ToolTutorialLinks toolId="jwt-decoder" />
 
                 <ToolArticleSection id="jwt-decoder-faqs" title="JWT Decoder FAQs (Frequently Asked Questions)">
                     <ToolFaqList items={FAQ_ITEMS} />

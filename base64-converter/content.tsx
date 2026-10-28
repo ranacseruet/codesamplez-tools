@@ -1,6 +1,8 @@
 import type { JSX } from 'preact';
 import { buildSiteHref, SITE_BASE_URL } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { ToolTutorialLinks } from '../common/tool-article/TutorialLinks';
+import { BASE64_EXPLAINED } from '../common/tool-article/tutorial-links';
 
 const SHAREABLE_LINK_EXAMPLE = `${buildSiteHref('/base64-converter/')}?data=YOUR_BASE64_OR_TEXT_DATA`;
 
@@ -61,7 +63,7 @@ export function Base64ConverterArticle(): JSX.Element {
                     </p>
                     <p>
                         Please refer to our more comprehensive{' '}
-                        <a href="https://codesamplez.com/programming/base64-explained/amp">Base64 Explained Guide</a>{' '}
+                        <a href={BASE64_EXPLAINED.href}>Base64 Explained Guide</a>{' '}
                         to learn more in-depth.
                     </p>
 
@@ -259,6 +261,8 @@ export function Base64ConverterArticle(): JSX.Element {
                         <a href="https://codesamplez.com/contact">contact us</a>.
                     </p>
                 </ToolArticleSection>
+
+                <ToolTutorialLinks toolId="base64-converter" />
 
                 <ToolArticleSection id="base64-converter-faqs" title="Base64 Converter FAQs (Frequently Asked Questions)">
                     <ToolFaqList items={FAQ_ITEMS} />

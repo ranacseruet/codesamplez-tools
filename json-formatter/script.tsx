@@ -8,6 +8,7 @@ import { describeLoadedFile, registerDropZone, registerFileInput, type LoadedFil
 import FileUploadButton, { TEXT_FILE_ACCEPT } from '../common/file-upload';
 import { copyTextToClipboard } from '../common/clipboard';
 import { trackToolUsed, utf8ByteLength, type ToolUsedOutcome, type ToolUsedTrigger } from '../common/analytics-events';
+import { registerTutorialLinkClickAnalytics } from '../common/tool-article/tutorial-link-analytics';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
 import { JSON_FORMATTER_WORKER_CHAR_THRESHOLD as JSON_WORKER_CHAR_THRESHOLD } from '../common/worker-thresholds.mjs';
 import {
@@ -1214,6 +1215,7 @@ if (typeof document !== 'undefined' && typeof document.addEventListener === 'fun
       description: toolMetadata.description,
       homeHref: '/'
     });
+    registerTutorialLinkClickAnalytics();
 
     const tool = new JSONFormatterToolUI();
     if (browserWindow) {
