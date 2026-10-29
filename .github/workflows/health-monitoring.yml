@@ -76,7 +76,7 @@ jobs:
         # main publisher in ci.yml; keeping this job local avoids a second
         # canonical publisher and does not exercise Snap's hosted renderer.
         id: visual_capture
-        uses: ranacseruet/snapdrift/actions/capture@8e827952c33415ba2d8f1fdab944d519534013a6 # v0.16.0
+        uses: ranacseruet/snapdrift/actions/capture@1b52eb71a3d5a352c8bcc887490b26d482aa1504 # v0.17.0
         continue-on-error: true
 
       - name: Dependency audit capture (full JSON, report-only)

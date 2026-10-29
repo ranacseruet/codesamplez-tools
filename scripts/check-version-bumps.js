@@ -14,6 +14,7 @@ const { isResolvableCommonFile, resolveToolsReachedByCommonFile } = require('./c
 const SKIP_LABEL = 'skip-version-bump';
 const DEPENDABOT_LOGIN = 'dependabot[bot]';
 const DEPENDENCY_MANIFEST_FILES = new Set(['package.json', 'package-lock.json']);
+const WORKFLOW_FILE_PATTERN = /^\.github\/workflows\/[^/]+\.ya?ml$/u;
 const NON_TOOL_DOC_EXTENSIONS = new Set(['.md', '.mdx', '.txt']);
 
 /**
@@ -240,6 +241,38 @@ function isDependabotManifestOnlyChange(changedFiles, author) {
 }
 
 /**
+ * Dependabot github-actions updates edit workflow pins. Those files do not
+ * ship tool output, and the bot cannot bump tool versions. A workflow-only
+ * diff from `dependabot[bot]` skips enforcement the same way a manifest-only
+ * npm update does. Any other author, or any path outside `.github/workflows/`,
+ * is checked normally.
+ * @param {string[]} changedFiles
+ * @param {string} author
+ * @returns {boolean}
+ */
+function isDependabotWorkflowOnlyChange(changedFiles, author) {
+    if (author !== DEPENDABOT_LOGIN) {
+        return false;
+    }
+
+    if (!Array.isArray(changedFiles) || changedFiles.length === 0) {
+        return false;
+    }
+
+    return changedFiles.every((filePath) => WORKFLOW_FILE_PATTERN.test(filePath));
+}
+
+/**
+ * @param {string[]} changedFiles
+ * @param {string} author
+ * @returns {boolean}
+ */
+function isDependabotVersionBumpExemptChange(changedFiles, author) {
+    return isDependabotManifestOnlyChange(changedFiles, author)
+        || isDependabotWorkflowOnlyChange(changedFiles, author);
+}
+
+/**
  * Computes the tools whose runtime files changed without a version bump.
  *
  * A version tracks one tool's shipped behavior, so a `common/` source module
@@ -253,7 +286,7 @@ function isDependabotManifestOnlyChange(changedFiles, author) {
  * @returns {string[]}
  */
 function findMissingBumps(changedFiles, baseRevision, options = {}) {
-    if (isDependabotManifestOnlyChange(changedFiles, options.pullRequestAuthor || '')) {
+    if (isDependabotVersionBumpExemptChange(changedFiles, options.pullRequestAuthor || '')) {
         return [];
     }
 
@@ -330,6 +363,7 @@ module.exports = {
     demandsVersionBump,
     findMissingBumps,
     isDependabotManifestOnlyChange,
+    isDependabotWorkflowOnlyChange,
     readGitFileAt,
     readVersionAtRevision
 };

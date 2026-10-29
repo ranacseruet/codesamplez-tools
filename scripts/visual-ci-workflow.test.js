@@ -84,8 +84,10 @@ describe('Visual CI workflow contract', () => {
       expect(routeIds).not.toContain(routeId);
     });
     expect(config.selection.sharedExact).toContain('.github/snapdrift.json');
+    // SnapDrift v0.17.0 keeps policy v1 as the deprecated coordinate default.
+    // v2 is the vertical row alignment that suppresses mobile rendering noise.
     expect(config.diff.comparisonPolicy).toEqual({
-      version: 1,
+      version: 2,
       threshold: config.diff.threshold,
     });
   });
