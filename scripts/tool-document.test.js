@@ -447,6 +447,10 @@ describe('tool document generation', () => {
         expect(html).toContain('"name":"Is this JWT generator free to use?"');
         expect(html).toContain('"name":"Is using an online JWT generator safe?"');
         expect(html).toContain('"name":"Which algorithms does the JWT Generator support?"');
+        expect(html).toContain('"name":"How do I create a JWT token online?"');
+        expect(html).toContain('"name":"Is it safe to generate a JWT in the browser?"');
+        expect(html).toContain('"name":"What shared-secret length should I use for HS256?"');
+        expect(html).toContain('"name":"How do I set an expiration when I create a JWT token?"');
         expect(html).toContain('The tool supports HS256 with a shared secret and RS256 with an unencrypted PKCS#8 or PKCS#1 RSA private key that is 2048 bits or stronger.');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes. The CodeSamplez JWT Generator is completely free to use and runs directly in your browser.');
         expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/jwt-builder/')}#webpage"}`);

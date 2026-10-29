@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.19] - 2026-10-29
+
+### JWT Builder
+
+- Added a worked HS256 example, matching code snippets, claim and algorithm guidance, and FAQs for creating a JWT online.
+
 ## [1.0.18] - 2026-10-27
 
 ### JWT Builder

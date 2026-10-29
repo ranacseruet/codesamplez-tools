@@ -3,6 +3,13 @@ import { webcrypto as nodeWebCrypto } from 'node:crypto';
 import { TextEncoder, TextDecoder } from 'node:util';
 import { privateKey as testPrivateKey, privateKeyPkcs1 as testPrivateKeyPkcs1, publicKey as testPublicKey } from './test-fixtures/rs256-test-keypair.js';
 import { JWTBuilder, type JWTAlgorithm } from './JWTBuilder';
+import {
+  WORKED_EXAMPLE_EXP_INPUT,
+  WORKED_EXAMPLE_IAT_INPUT,
+  WORKED_EXAMPLE_PAYLOAD,
+  WORKED_EXAMPLE_SECRET,
+  WORKED_EXAMPLE_TOKEN
+} from './content';
 
 (globalThis as unknown as { TextEncoder: typeof TextEncoder }).TextEncoder = TextEncoder;
 (globalThis as unknown as { TextDecoder: typeof TextDecoder }).TextDecoder = TextDecoder;
@@ -515,6 +522,22 @@ describe('JWTBuilder', () => {
   });
 
   describe('buildJWT', () => {
+    test('signs the published worked example with the placeholder secret', async () => {
+      expect(jwtBuilder.parseDateTime(WORKED_EXAMPLE_EXP_INPUT)).toBe(WORKED_EXAMPLE_PAYLOAD.exp);
+      expect(jwtBuilder.parseDateTime(WORKED_EXAMPLE_IAT_INPUT)).toBe(WORKED_EXAMPLE_PAYLOAD.iat);
+      expect(jwtBuilder.parseDateTime(WORKED_EXAMPLE_IAT_INPUT)).toBe(WORKED_EXAMPLE_PAYLOAD.nbf);
+
+      await withRealWebCrypto(async () => {
+        const jwt = await jwtBuilder.buildJWT(
+          { ...WORKED_EXAMPLE_PAYLOAD },
+          WORKED_EXAMPLE_SECRET,
+          'HS256'
+        );
+
+        expect(jwt).toBe(WORKED_EXAMPLE_TOKEN);
+      });
+    });
+
     test('builds JWT with custom payload', async () => {
       const payload = {
         sub: 'test-user',

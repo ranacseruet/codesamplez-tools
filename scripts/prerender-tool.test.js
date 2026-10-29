@@ -12,6 +12,7 @@ const {
     renderToolPrerenderMarkup
 } = require('./prerender-tool.js');
 const { SITE_BASE_URL, buildSiteAssetUri, buildSiteHref } = require('../common/siteBaseUrl');
+const { JWT_BEST_PRACTICES, JWT_CRASH_COURSE } = require('../common/tool-article/tutorial-links');
 
 describe('generic tool prerender helpers', () => {
     // Registry-wide invariant. The per-tool tests below are hand-written, so a
@@ -190,6 +191,14 @@ describe('generic tool prerender helpers', () => {
         // component passes every positive assertion.
         expect(appMarkup).not.toContain('JWT Generator is a free browser-based tool to quickly create signed JSON Web Tokens.');
         expect(afterMarkup).toContain('What is a JWT Generator?');
+        expect(afterMarkup).toContain('Worked Example: A Signed JSON Web Token');
+        expect(afterMarkup).toContain('Generate a JWT in Code');
+        expect(afterMarkup).toContain('Choosing Claims, Expiry, and a Signing Algorithm');
+        expect(afterMarkup).toContain('How do I create a JWT token online?');
+        expect(afterMarkup).toContain('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.');
+        expect(afterMarkup).toContain('your-jwt-secret-key');
+        expect(afterMarkup).toContain(`href="${JWT_CRASH_COURSE.href}"`);
+        expect(afterMarkup).toContain(`href="${JWT_BEST_PRACTICES.href}"`);
         expect(afterMarkup).toContain('JWT Generator FAQs (Frequently Asked Questions)');
         expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
         expect(afterMarkup).toContain(`href="${buildSiteHref('/jwt-decoder/')}"`);
