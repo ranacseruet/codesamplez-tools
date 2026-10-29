@@ -10,6 +10,7 @@ const {
     demandsVersionBump,
     findMissingBumps,
     isDependabotManifestOnlyChange,
+    isDependabotWorkflowOnlyChange,
     readVersionAtRevision
 } = require('./check-version-bumps');
 const { detectAffectedTargets, getToolIdForPath } = require('./affected-tools');
@@ -386,6 +387,67 @@ describe('check-version-bumps', () => {
             });
         });
 
+        describe('Dependabot workflow files', () => {
+            it.each([
+                [DEPENDABOT_LOGIN, ['.github/workflows/ci.yml'], true],
+                [DEPENDABOT_LOGIN, ['.github/workflows/ci.yml', '.github/workflows/pr-visual-diff.yml'], true],
+                [DEPENDABOT_LOGIN, ['.github/workflows/health-monitoring.yaml'], true],
+                [DEPENDABOT_LOGIN, ['.github/workflows/ci.yml', '.github/workflows/ci.yml'], true],
+                [DEPENDABOT_LOGIN, ['.github/dependabot.yml'], false],
+                [DEPENDABOT_LOGIN, ['.github/workflows/nested/ci.yml'], false],
+                [DEPENDABOT_LOGIN, ['.github/workflows/ci.yml', 'package.json'], false],
+                [DEPENDABOT_LOGIN, ['.github/workflows/ci.yml', 'base64-converter/script.tsx'], false],
+                [DEPENDABOT_LOGIN, [], false],
+                ['ranacseruet', ['.github/workflows/ci.yml'], false],
+                ['', ['.github/workflows/ci.yml'], false]
+            ])('classifies author %s and %j as workflow-only %s', (author, files, expected) => {
+                expect(isDependabotWorkflowOnlyChange(files, author)).toBe(expected);
+            });
+
+            it('passes a Dependabot change that only edits workflow files', () => {
+                const missing = findMissingBumps([
+                    '.github/workflows/ci.yml',
+                    '.github/workflows/pr-visual-diff.yml'
+                ], 'any-base', {
+                    pullRequestAuthor: DEPENDABOT_LOGIN,
+                    readVersionAt: () => {
+                        throw new Error('workflow-only Dependabot diffs must not read tool versions');
+                    }
+                });
+
+                expect(missing).toEqual([]);
+            });
+
+            it('still checks a Dependabot pull request that edits a workflow and a runtime file', () => {
+                const missing = findMissingBumps([
+                    '.github/workflows/ci.yml',
+                    'base64-converter/script.tsx'
+                ], 'any-base', {
+                    workingVersions,
+                    readVersionAt: readVersionAtMergeBase,
+                    pullRequestAuthor: DEPENDABOT_LOGIN
+                });
+
+                expect(missing).toEqual([toolId]);
+            });
+
+            it('skips enforcement for a Dependabot workflow-only CLI invocation', () => {
+                const result = spawnSync(process.execPath, [
+                    path.join(__dirname, 'run-version-bump-check.js'),
+                    'deadbeef',
+                    '.github/workflows/ci.yml',
+                    '.github/workflows/health-monitoring.yml'
+                ], {
+                    cwd: path.join(__dirname, '..'),
+                    env: { ...process.env, PR_AUTHOR: DEPENDABOT_LOGIN },
+                    encoding: 'utf8'
+                });
+
+                expect(result.status).toBe(0);
+                expect(result.stdout).toMatch(/Dependabot workflow-only change \(\.github\/workflows\)/u);
+            });
+        });
+
         it('deduplicates candidates from multiple changed files of one tool', () => {
             const missing = findMissingBumps([
                 'base64-converter/script.tsx',
@@ -417,6 +479,7 @@ describe('check-version-bumps', () => {
             expect(workflow).toContain('PR_AUTHOR: ${{ github.event.pull_request.user.login }}');
             expect(runner).toContain('process.env.PR_AUTHOR');
             expect(runner).toContain('isDependabotManifestOnlyChange');
+            expect(runner).toContain('isDependabotWorkflowOnlyChange');
         });
 
         it('does not auto-apply the skip label, which CI honors before the file check', () => {

@@ -66,7 +66,8 @@ jobs:
     # author-and-files check, and a later tool-file commit on the same PR
     # would be skipped too. PR_AUTHOR is github.event.pull_request.user.login.
     # The checker skips only when that login is dependabot[bot] and every
-    # changed path is package.json or package-lock.json.
+    # changed path is package.json or package-lock.json, or every changed
+    # path is a workflow file under .github/workflows/.
     - name: Check tool version bumps
       if: github.event_name == 'pull_request'
       env:
@@ -358,7 +359,7 @@ jobs:
 
       - name: Run visual PR diff
         id: visual_diff
-        uses: ranacseruet/snapdrift/actions/pr-diff@8e827952c33415ba2d8f1fdab944d519534013a6 # v0.16.0
+        uses: ranacseruet/snapdrift/actions/pr-diff@1b52eb71a3d5a352c8bcc887490b26d482aa1504 # v0.17.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
         env:
@@ -480,7 +481,7 @@ jobs:
         if: >-
           steps.baseline_candidate.outputs.current == 'true'
           && steps.baseline_current.outputs.current == 'true'
-        uses: ranacseruet/snapdrift/actions/baseline@8e827952c33415ba2d8f1fdab944d519534013a6 # v0.16.0
+        uses: ranacseruet/snapdrift/actions/baseline@1b52eb71a3d5a352c8bcc887490b26d482aa1504 # v0.17.0
         with:
           # The pinned baseline action uploads ui-foundation-visual-baseline only
           # for the local provider. Hosted Snap publication does not create that

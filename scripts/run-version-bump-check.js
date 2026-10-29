@@ -1,6 +1,11 @@
 // @ts-check
 
-const { findMissingBumps, isDependabotManifestOnlyChange, SKIP_LABEL } = require('./check-version-bumps');
+const {
+    findMissingBumps,
+    isDependabotManifestOnlyChange,
+    isDependabotWorkflowOnlyChange,
+    SKIP_LABEL
+} = require('./check-version-bumps');
 const { getChangedFilesFromGit } = require('./detect-affected-tools');
 
 /**
@@ -29,6 +34,11 @@ function main() {
         return;
     }
 
+    if (isDependabotWorkflowOnlyChange(changedFiles, pullRequestAuthor)) {
+        console.log('Dependabot workflow-only change (.github/workflows); skipping version bump enforcement.');
+        return;
+    }
+
     const missingBumps = findMissingBumps(changedFiles, baseRevision, { pullRequestAuthor });
 
     if (missingBumps.length === 0) {
@@ -44,7 +54,7 @@ function main() {
         'Document with: npm run tool:version:note -- --tool <id> --version <x.y.z> --note "<summary>"',
         '',
         `PRs that cannot bump versions (docs-only, CI-only) may add the "${SKIP_LABEL}" label to skip this check.`,
-        'Dependabot updates that change only package.json and package-lock.json are skipped automatically.'
+        'Dependabot updates that change only package.json and package-lock.json, or only workflow files under .github/workflows/, are skipped automatically.'
     ].join('\n'));
     process.exit(1);
 }

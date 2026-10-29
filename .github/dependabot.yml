@@ -51,3 +51,28 @@ updates:
           - "cssnano"
           - "css-*"
           - "postcss*"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: America/Toronto
+    # No labels. Do not list skip-version-bump here. CI exits on that label
+    # before the author-and-files check. Workflow-only updates from
+    # dependabot[bot] are skipped by scripts/check-version-bumps.js when every
+    # changed path is a file under .github/workflows/, the same way manifest-only
+    # npm updates are skipped.
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      snapdrift:
+        patterns:
+          - "ranacseruet/snapdrift*"
+      actions:
+        patterns:
+          - "actions/*"
+          - "aws-actions/*"
+          - "codecov/*"

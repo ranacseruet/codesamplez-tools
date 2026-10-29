@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   forks and self-hosters never inherit the upstream properties.
 - Visual-diff, baseline, and health-monitoring workflows build with
   `CST_DISABLE_ANALYTICS=1` so screenshots stay ad-free and deterministic.
+- SnapDrift actions are pinned to v0.17.0. Hosted Snap accepts comparison
+  policy v2 (vertical row alignment). A clean comparison is
+  [run 40795166650](https://github.com/ranacseruet/codesamplez-tools/actions/runs/40795166650)
+  (0 drift, 0 missing, 0 dimension shifts). Dependabot watches the
+  `github-actions` ecosystem and groups `ranacseruet/snapdrift*` updates
+  into one pull request.
 
 ### Fixed
 
@@ -44,6 +50,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   label. The skip is the `dependabot[bot]` author plus those files.
   `.github/dependabot.yml` does not apply `skip-version-bump`, because that
   label would also skip a later commit that edits a tool file.
+- Dependabot pull requests that change only workflow files under
+  `.github/workflows/` pass that same gate. The skip is the
+  `dependabot[bot]` author plus those files, so a grouped github-actions
+  update (including SnapDrift pins) is not blocked.
 
 ### Removed
 
