@@ -28,12 +28,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
 
     - name: Set up Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
         node-version: '24'
         cache: 'npm'
@@ -108,7 +108,7 @@ jobs:
 
     - name: Cache build artifacts
       if: steps.affected.outputs.should_build == 'true'
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: build
         key: ${{ runner.os }}-build-${{ github.sha }}
@@ -178,7 +178,7 @@ jobs:
       run: kill $QA_SERVER_PID || true
 
     - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -196,7 +196,7 @@ jobs:
       cancel-in-progress: false
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
 
@@ -242,7 +242,7 @@ jobs:
 
     - name: Restore build artifacts
       if: steps.affected.outputs.should_deploy == 'true'
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: build
         key: ${{ runner.os }}-build-${{ github.sha }}
@@ -251,7 +251,7 @@ jobs:
 
     - name: Configure AWS credentials
       if: steps.affected.outputs.should_deploy == 'true' || steps.cloudfront_function.outputs.should_deploy == 'true'
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v6
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -313,12 +313,12 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
@@ -400,7 +400,7 @@ jobs:
       group: visual-baseline-main-${{ github.repository }}
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -420,7 +420,7 @@ jobs:
             echo "::notice::Skipping stale baseline candidate $GITHUB_SHA; current main is $latest_sha."
           fi
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: steps.baseline_candidate.outputs.current == 'true'
         with:
           node-version: '24'
