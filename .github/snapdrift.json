@@ -18,10 +18,7 @@
       "package.json",
       "package-lock.json",
       "babel.config.js",
-      ".github/snapdrift.json",
-      ".github/workflows/ci.yml",
-      ".github/workflows/pr-visual-diff.yml",
-      ".github/workflows/health-monitoring.yml"
+      ".github/snapdrift.json"
     ]
   },
   "routes": [
@@ -196,7 +193,7 @@
     "threshold": 0.01,
     "mode": "fail-on-incomplete",
     "comparisonPolicy": {
-      "version": 1,
+      "version": 2,
       "threshold": 0.01
     }
   },

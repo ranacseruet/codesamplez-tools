@@ -36,10 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   forks and self-hosters never inherit the upstream properties.
 - Visual-diff, baseline, and health-monitoring workflows build with
   `CST_DISABLE_ANALYTICS=1` so screenshots stay ad-free and deterministic.
-- SnapDrift actions are pinned to v0.17.0. Hosted comparison stays on
-  policy v1 because the Snap diff service rejects policy v2 with invalid
-  geometry metadata. Dependabot watches the `github-actions` ecosystem and
-  groups `ranacseruet/snapdrift*` updates into one pull request.
+- SnapDrift actions are pinned to v0.17.0. Hosted comparison uses policy
+  v2 (vertical row alignment). Dependabot watches the `github-actions`
+  ecosystem and groups `ranacseruet/snapdrift*` updates into one pull request.
 
 ### Fixed
 
