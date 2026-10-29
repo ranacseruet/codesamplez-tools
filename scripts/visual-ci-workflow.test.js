@@ -85,8 +85,7 @@ describe('Visual CI workflow contract', () => {
     });
     expect(config.selection.sharedExact).toContain('.github/snapdrift.json');
     // SnapDrift v0.17.0 policy v2 is bounded vertical row alignment.
-    // The hosted Snap diff does not accept that geometry yet; this config
-    // stays on v2 so the comparison uses it once the service does.
+    // Hosted Snap accepts that policy (clean run 40795166650).
     expect(config.diff.comparisonPolicy).toEqual({
       version: 2,
       threshold: config.diff.threshold,

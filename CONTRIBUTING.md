@@ -161,6 +161,7 @@ Additional checks:
 - `npm run bundle-metrics`: Reports size metrics for JS, CSS, HTML, and async chunks.
 - `npm run qa:a11y:foundation`: Automated accessibility scan via axe-core and Playwright.
 - `npm run qa:cross-browser`: Playwright scenarios testing worker offloads and 390px mobile viewport overflow.
+- Pull-request visual diffs compare with SnapDrift policy v2. Hosted Snap accepts that policy. A clean comparison is [run 40795166650](https://github.com/ranacseruet/codesamplez-tools/actions/runs/40795166650) (0 drift, 0 missing, 0 dimension shifts).
 
 ## Building
 
