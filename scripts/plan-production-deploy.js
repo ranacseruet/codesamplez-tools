@@ -5,7 +5,11 @@ const fs = require('fs');
 const { getChangedFilesFromGit } = require('./detect-affected-tools');
 
 const WORKFLOW_FILE = '.github/workflows/ci.yml';
-const RUN_WINDOW = 30;
+const RUN_PAGE_SIZE = 100;
+const MAX_HISTORY_PAGES = 20;
+// Not a commit, and not all zeros: detect-affected-tools treats an all-zero
+// base as "diff the parent" and a non-ancestor base as "every tracked file".
+const FULL_DEPLOY_BASE = 'f'.repeat(40);
 
 /**
  * @typedef {{
@@ -22,7 +26,8 @@ const RUN_WINDOW = 30;
  *   eventBefore: string,
  *   changedFiles: string[],
  *   isAncestor: (ancestor: string, descendant: string) => boolean,
- *   deployedCommits: DeployedCommit[]
+ *   deployedCommits: DeployedCommit[],
+ *   assetAncestorFound?: boolean
  * }} PlanInput
  */
 
@@ -223,6 +228,20 @@ function planProductionDeploy(input) {
         };
     }
 
+    // The history search did not find an asset upload behind this commit.
+    // Keeping event.before would let a newer partial deploy land first and
+    // then skip this commit's files forever. Rebuild the whole tree instead.
+    if (input.assetAncestorFound === false) {
+        return {
+            skip: false,
+            reason: 'deploy',
+            deployBase: FULL_DEPLOY_BASE,
+            republishAll: true,
+            notice: '',
+            newerSha: null
+        };
+    }
+
     const deployBase = resolveDeployBase(
         input.eventBefore,
         input.commitSha,
@@ -265,10 +284,25 @@ function exec(command, args) {
             stdio: ['ignore', 'pipe', 'pipe']
         }).trim();
     } catch (error) {
-        const stderr = /** @type {{ stderr?: Buffer | string }} */ (error).stderr;
-        const detail = stderr ? stderr.toString().trim() : (error instanceof Error ? error.message : String(error));
-        throw new Error(`${command} ${args.join(' ')} failed: ${detail}`, { cause: error });
+        throw new Error(`${command} ${args.join(' ')} failed: ${commandFailureDetail(error)}`, { cause: error });
     }
+}
+
+/**
+ * @param {unknown} error
+ * @returns {string}
+ */
+function commandFailureDetail(error) {
+    const stderr = error && typeof error === 'object' && 'stderr' in error ? error.stderr : '';
+    if (typeof stderr === 'string' && stderr.trim()) {
+        return stderr.trim();
+    }
+
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    return String(error);
 }
 
 /**
@@ -292,10 +326,11 @@ function gitIsAncestor(ancestor, descendant) {
 }
 
 /**
+ * @param {typeof exec} [run]
  * @returns {string}
  */
-function readMainHead() {
-    const output = exec('git', ['ls-remote', 'origin', 'refs/heads/main']);
+function readMainHead(run = exec) {
+    const output = run('git', ['ls-remote', 'origin', 'refs/heads/main']);
     const sha = output.split(/\s+/u)[0] || '';
     if (!/^[0-9a-f]{40}$/iu.test(sha)) {
         throw new Error('Could not resolve the current main commit.');
@@ -305,50 +340,91 @@ function readMainHead() {
 }
 
 /**
- * @param {string} commitSha
- * @returns {DeployedCommit[]}
+ * @param {typeof exec} run
+ * @param {string} repository
+ * @param {number} page
+ * @returns {Array<{ id?: number, head_sha?: string, status?: string, event?: string }>}
  */
-function loadDeployedCommits(commitSha) {
+function listWorkflowRunPage(run, repository, page) {
+    const payload = JSON.parse(run('gh', [
+        'api',
+        `repos/${repository}/actions/workflows/ci.yml/runs?branch=main&event=push&per_page=${RUN_PAGE_SIZE}&page=${page}`
+    ]));
+
+    if (!payload || !Array.isArray(payload.workflow_runs)) {
+        throw new Error('Deploy history response was not a list. Refusing to deploy without an ordering decision.');
+    }
+
+    return payload.workflow_runs;
+}
+
+/**
+ * Newest-first pages until an ancestor that uploaded assets is found, or the
+ * history (or the page cap) runs out. Descendants are newer, so they appear
+ * before that ancestor and are included in the result.
+ * @param {string} commitSha
+ * @param {{
+ *   exec?: typeof exec,
+ *   isAncestor?: (ancestor: string, descendant: string) => boolean,
+ *   maxPages?: number
+ * }} [deps]
+ * @returns {{ commits: DeployedCommit[], assetAncestorFound: boolean }}
+ */
+function loadDeployedCommits(commitSha, deps = {}) {
+    const run = deps.exec || exec;
+    const isAncestor = deps.isAncestor || gitIsAncestor;
+    const maxPages = deps.maxPages || MAX_HISTORY_PAGES;
     const repository = process.env.GITHUB_REPOSITORY;
     if (!repository) {
         throw new Error('GITHUB_REPOSITORY is required to read deploy history. Refusing to deploy without an ordering decision.');
     }
 
-    const listed = JSON.parse(exec('gh', [
-        'run', 'list',
-        '--workflow', 'ci.yml',
-        '--branch', 'main',
-        '--event', 'push',
-        '--limit', String(RUN_WINDOW),
-        '--json', 'databaseId,headSha,status'
-    ]));
-
-    if (!Array.isArray(listed)) {
-        throw new Error('Deploy history response was not a list. Refusing to deploy without an ordering decision.');
-    }
-
     /** @type {DeployedCommit[]} */
     const entries = [];
+    let assetAncestorFound = false;
 
-    listed.forEach((run) => {
-        const sha = typeof run.headSha === 'string' ? run.headSha : '';
-        if (!sha || sha === commitSha || !runNeedsJobInspection(run.status)) {
-            return;
+    for (let page = 1; page <= maxPages && !assetAncestorFound; page += 1) {
+        const runs = listWorkflowRunPage(run, repository, page);
+        if (runs.length === 0) {
+            break;
         }
 
-        if (!gitIsAncestor(sha, commitSha) && !gitIsAncestor(commitSha, sha)) {
-            return;
+        for (const workflowRun of runs) {
+            const sha = typeof workflowRun.head_sha === 'string' ? workflowRun.head_sha : '';
+            if (!sha || sha === commitSha || !runNeedsJobInspection(workflowRun.status)) {
+                continue;
+            }
+
+            if (workflowRun.event && workflowRun.event !== 'push') {
+                continue;
+            }
+
+            if (!isAncestor(sha, commitSha) && !isAncestor(commitSha, sha)) {
+                continue;
+            }
+
+            const jobsPayload = JSON.parse(run('gh', [
+                'api',
+                `repos/${repository}/actions/runs/${workflowRun.id}/jobs`
+            ]));
+            const flags = deployedFlagsFromJobs(jobsPayload && jobsPayload.jobs);
+            entries.push({ sha, ...flags });
+
+            if (flags.uploadedAssets && isAncestor(sha, commitSha)) {
+                assetAncestorFound = true;
+                break;
+            }
         }
 
-        const payload = JSON.parse(exec('gh', [
-            'api',
-            `repos/${repository}/actions/runs/${run.databaseId}/jobs`
-        ]));
-        const flags = deployedFlagsFromJobs(payload && payload.jobs);
-        entries.push({ sha, ...flags });
-    });
+        if (runs.length < RUN_PAGE_SIZE) {
+            break;
+        }
+    }
 
-    return mergeDeployedCommits(entries);
+    return {
+        commits: mergeDeployedCommits(entries),
+        assetAncestorFound
+    };
 }
 
 /**
@@ -440,21 +516,29 @@ function parseArgs(argv) {
 /**
  * @param {string} commitSha
  * @param {string} eventBefore
+ * @param {{
+ *   exec?: typeof exec,
+ *   isAncestor?: (ancestor: string, descendant: string) => boolean,
+ *   maxPages?: number
+ * }} [deps]
  * @returns {DeployPlan}
  */
-function decideProductionDeploy(commitSha, eventBefore) {
-    exec('git', ['fetch', '--no-tags', 'origin', 'refs/heads/main:refs/remotes/origin/main']);
-    const mainHeadSha = readMainHead();
-    const deployedCommits = loadDeployedCommits(commitSha);
+function decideProductionDeploy(commitSha, eventBefore, deps = {}) {
+    const run = deps.exec || exec;
+    const isAncestor = deps.isAncestor || gitIsAncestor;
+    run('git', ['fetch', '--no-tags', 'origin', 'refs/heads/main:refs/remotes/origin/main']);
+    const mainHeadSha = readMainHead(run);
+    const history = loadDeployedCommits(commitSha, deps);
     const preliminary = planProductionDeploy({
         commitSha,
         mainHeadSha,
         eventBefore,
         changedFiles: [],
-        isAncestor: gitIsAncestor,
-        deployedCommits
+        isAncestor,
+        deployedCommits: history.commits,
+        assetAncestorFound: history.assetAncestorFound
     });
-    const changedFiles = preliminary.skip
+    const changedFiles = preliminary.skip || preliminary.deployBase === FULL_DEPLOY_BASE
         ? []
         : getChangedFilesFromGit(preliminary.deployBase, commitSha);
 
@@ -463,14 +547,24 @@ function decideProductionDeploy(commitSha, eventBefore) {
         mainHeadSha,
         eventBefore,
         changedFiles,
-        isAncestor: gitIsAncestor,
-        deployedCommits
+        isAncestor,
+        deployedCommits: history.commits,
+        assetAncestorFound: history.assetAncestorFound
     });
 }
 
-function main() {
-    const args = parseArgs(process.argv.slice(2));
-    const plan = decideProductionDeploy(args.commit, args.eventBefore);
+/**
+ * @param {string[]} argv
+ * @param {{
+ *   exec?: typeof exec,
+ *   isAncestor?: (ancestor: string, descendant: string) => boolean,
+ *   maxPages?: number
+ * }} [deps]
+ * @returns {DeployPlan}
+ */
+function runCli(argv, deps) {
+    const args = parseArgs(argv);
+    const plan = decideProductionDeploy(args.commit, args.eventBefore, deps);
     console.log(`Production deploy plan: reason=${plan.reason} base=${plan.deployBase} republish_all=${plan.republishAll} skip=${plan.skip}`);
 
     if (args.mode === 'skip') {
@@ -483,26 +577,54 @@ function main() {
     if (args.writeGithubOutput) {
         writeGithubOutputs(planOutputs(plan));
     }
+
+    return plan;
 }
 
-if (require.main === module) {
+/**
+ * @param {unknown} error
+ * @returns {void}
+ */
+function reportCliError(error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+}
+
+function main() {
     try {
-        main();
+        runCli(process.argv.slice(2));
     } catch (error) {
-        console.error(error instanceof Error ? error.message : String(error));
-        process.exit(1);
+        reportCliError(error);
     }
 }
 
+/* istanbul ignore next */
+if (require.main === module) {
+    main();
+}
+
 module.exports = {
+    FULL_DEPLOY_BASE,
+    RUN_PAGE_SIZE,
     WORKFLOW_FILE,
     decideProductionDeploy,
     deployedFlagsFromJobs,
+    commandFailureDetail,
+    exec,
     formatGithubNotice,
+    gitIsAncestor,
+    loadDeployedCommits,
+    main,
     mergeDeployedCommits,
     newestAssetAncestor,
     newestUploadedDescendant,
+    parseArgs,
+    planOutputs,
     planProductionDeploy,
+    readMainHead,
+    reportCliError,
     resolveDeployBase,
-    runNeedsJobInspection
+    runCli,
+    runNeedsJobInspection,
+    writeGithubOutputs
 };
