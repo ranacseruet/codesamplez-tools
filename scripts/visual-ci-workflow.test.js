@@ -83,11 +83,17 @@ describe('Visual CI workflow contract', () => {
     EXCLUDED_OVERSIZED_MOBILE_ROUTES.forEach((routeId) => {
       expect(routeIds).not.toContain(routeId);
     });
-    expect(config.selection.sharedExact).toContain('.github/snapdrift.json');
-    // SnapDrift v0.17.0 keeps policy v1 as the deprecated coordinate default.
-    // v2 is the vertical row alignment that suppresses mobile rendering noise.
+    expect(config.selection.sharedExact).toEqual(expect.arrayContaining([
+      '.github/snapdrift.json',
+      '.github/workflows/ci.yml',
+      '.github/workflows/pr-visual-diff.yml',
+      '.github/workflows/health-monitoring.yml'
+    ]));
+    // v0.17.0 can opt into policy v2, but the hosted Snap diff rejects it
+    // ("Comparison policy v2 returned invalid geometry metadata") for every
+    // route. v1 is the compatibility policy this release still compares.
     expect(config.diff.comparisonPolicy).toEqual({
-      version: 2,
+      version: 1,
       threshold: config.diff.threshold,
     });
   });
