@@ -1,6 +1,20 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { render } from 'preact';
-import { FAQ_ITEMS, JwtBuilderIntro, JwtBuilderArticle } from './content';
 import { SITE_BASE_URL } from '../common/siteBaseUrl';
+import { JWT_BEST_PRACTICES, JWT_CRASH_COURSE } from '../common/tool-article/tutorial-links';
+import {
+    FAQ_ITEMS,
+    JwtBuilderIntro,
+    JwtBuilderArticle,
+    NODE_JWT_SNIPPET,
+    PHP_JWT_SNIPPET,
+    PYTHON_JWT_SNIPPET,
+    WORKED_EXAMPLE_HEADER_JSON,
+    WORKED_EXAMPLE_PAYLOAD,
+    WORKED_EXAMPLE_SECRET,
+    WORKED_EXAMPLE_TOKEN
+} from './content';
 
 describe('jwt-builder content', () => {
     it('keeps every FAQ answer self-contained and in parity with its structured-data answer', () => {
@@ -45,6 +59,9 @@ describe('jwt-builder content', () => {
         expect(root!.querySelector('#jwt-builder-what-is-it')).not.toBeNull();
         expect(root!.querySelector('#jwt-builder-supported-features')).not.toBeNull();
         expect(root!.querySelector('#jwt-builder-how-to-use')).not.toBeNull();
+        expect(root!.querySelector('#jwt-builder-worked-example')).not.toBeNull();
+        expect(root!.querySelector('#jwt-builder-code-snippets')).not.toBeNull();
+        expect(root!.querySelector('#jwt-builder-choosing-claims')).not.toBeNull();
         expect(root!.querySelector('#jwt-builder-standard-claims')).not.toBeNull();
         expect(root!.querySelector('#jwt-builder-error-handling')).not.toBeNull();
         expect(root!.querySelector('#jwt-builder-security')).not.toBeNull();
@@ -70,5 +87,33 @@ describe('jwt-builder content', () => {
         // Rendered FAQs count
         const renderedFaqQuestions = root!.querySelectorAll('.c-tool-faq__item');
         expect(renderedFaqQuestions.length).toBe(FAQ_ITEMS.length);
+
+        const articleText = root!.textContent || '';
+        expect(articleText).toContain(WORKED_EXAMPLE_TOKEN);
+        expect(articleText).toContain(WORKED_EXAMPLE_HEADER_JSON);
+        expect(articleText).toContain(JSON.stringify(WORKED_EXAMPLE_PAYLOAD));
+        expect(articleText).toContain(NODE_JWT_SNIPPET);
+        expect(articleText).toContain(PYTHON_JWT_SNIPPET);
+        expect(articleText).toContain(PHP_JWT_SNIPPET);
+        expect(articleText).toContain(WORKED_EXAMPLE_SECRET);
+
+        const crashCourseLink = root!.querySelector(`a[href="${JWT_CRASH_COURSE.href}"]`);
+        const bestPracticesLink = root!.querySelector(`a[href="${JWT_BEST_PRACTICES.href}"]`);
+        expect(crashCourseLink).not.toBeNull();
+        expect(crashCourseLink!.textContent).toBe(JWT_CRASH_COURSE.anchor);
+        expect(bestPracticesLink).not.toBeNull();
+        expect(bestPracticesLink!.textContent).toBe(JWT_BEST_PRACTICES.anchor);
+
+        const source = fs.readFileSync(path.join(__dirname, 'content.tsx'), 'utf8');
+        expect(source).not.toContain(JWT_CRASH_COURSE.path);
+        expect(source).not.toContain(JWT_BEST_PRACTICES.path);
+
+        const questions = Array.from(root!.querySelectorAll('.c-tool-faq__question')).map((node) => node.textContent);
+        expect(questions).toEqual(expect.arrayContaining([
+            'How do I create a JWT token online?',
+            'Is it safe to generate a JWT in the browser?',
+            'What shared-secret length should I use for HS256?',
+            'How do I set an expiration when I create a JWT token?'
+        ]));
     });
 });
