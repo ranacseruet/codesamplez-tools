@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.18] - 2026-11-02
+
+### JavaScript Minifier
+
+- Dev-dependency pin for follow-redirects. Not a user-facing behavior change.
+
 ## [1.0.17] - 2026-10-26
 
 ### JavaScript Minifier

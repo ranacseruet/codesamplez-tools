@@ -1,6 +1,6 @@
 {
   "id": "jwt-builder-tool",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "title": "JWT Builder",
   "seoTitle": "JWT Generator – Create and Sign Online",
   "description": "JWT Generator to create and sign JSON Web Tokens online. HS256 shared secrets or RS256 private keys, with claims and expiry, in your browser.",

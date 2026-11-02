@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.19] - 2026-11-02
+
+### Data Format Converter
+
+- Dev-dependency pin for follow-redirects. Not a user-facing behavior change.
+
 ## [1.0.18] - 2026-10-27
 
 ### Data Format Converter

@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.20] - 2026-11-02
+
+### JWT Builder
+
+- Dev-dependency pin for follow-redirects. Not a user-facing behavior change.
+
 ## [1.0.19] - 2026-10-29
 
 ### JWT Builder
