@@ -14,11 +14,13 @@ on:
 permissions:
   contents: read
   pull-requests: read
+  actions: read
 
 # Cancel superseded PR runs (stale commits), but never cancel main runs: on push
 # the group key is unique per run (run_id), so concurrent main builds proceed
-# independently. Deploy serialization is handled on its job; baseline races are
-# handled by a branch-head freshness check plus Snap's publication sequence.
+# independently. Deploy uploads are serialized on the deploy job and ordered by
+# scripts/plan-production-deploy.js. Baseline races are handled by a
+# branch-head freshness check plus Snap's publication sequence.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -26,6 +28,9 @@ concurrency:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    outputs:
+      deploy_base: ${{ steps.plan.outputs.deploy_base }}
+      republish_all: ${{ steps.plan.outputs.republish_all }}
 
     steps:
     - uses: actions/checkout@v7
@@ -50,11 +55,55 @@ jobs:
     - name: Dependency Audit
       run: npm run audit:deps
 
+    # On main, the diff base is the last asset upload when that is behind
+    # github.event.before, so a faster newer build still contains the older
+    # push's files. Pull requests keep the PR base. A change to this workflow
+    # republishes every tool via the package.json all-tools trigger. The
+    # version-bump gate reads the git diff, so that argument does not bump
+    # tool versions.
+    - name: Plan production deploy scope
+      id: plan
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+          echo "deploy_base=" >> "$GITHUB_OUTPUT"
+          echo "republish_all=false" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "reason=pull-request" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        node scripts/plan-production-deploy.js \
+          --mode scope \
+          --commit "${{ github.sha }}" \
+          --event-before "${{ github.event.before }}" \
+          --write-github-output
+
     - name: Detect affected runtime targets
       id: affected
       run: |
+        set -euo pipefail
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          node scripts/detect-affected-tools.js \
+            --base "${{ github.event.pull_request.base.sha }}" \
+            --head "${{ github.sha }}" \
+            --write-github-output
+          exit 0
+        fi
+        if [ "${{ steps.plan.outputs.republish_all }}" = "true" ]; then
+          node scripts/detect-affected-tools.js \
+            --changed-file package.json \
+            --write-github-output
+          exit 0
+        fi
+        BASE="${{ steps.plan.outputs.deploy_base }}"
+        if [ -z "$BASE" ]; then
+          echo "::error::Production deploy plan did not resolve a diff base."
+          exit 1
+        fi
         node scripts/detect-affected-tools.js \
-          --base "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}" \
+          --base "$BASE" \
           --head "${{ github.sha }}" \
           --write-github-output
 
@@ -186,11 +235,13 @@ jobs:
     needs: test-and-build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    # Serialize production deploys. Affected-target detection diffs against the
-    # immediate predecessor (github.event.before), so back-to-back merges must
-    # deploy one-at-a-time — never cancelled — or a commit's changes would be
-    # skipped. Queuing (cancel-in-progress: false) also removes the CloudFront
-    # publish-function ETag race between concurrent deploys.
+    # Serialize production uploads so two syncs cannot interleave (CloudFront
+    # function ETag, partial s3 sync). cancel-in-progress stays false: cancelling
+    # an upload drops that commit's files. The queue is still job-ready order,
+    # not commit order, so plan-production-deploy.js skips an upload when a
+    # descendant commit has already uploaded. The build job widened its diff
+    # over that ancestor, and this job must use that same base or the cache
+    # will not contain the artifacts.
     concurrency:
       group: deploy-main
       cancel-in-progress: false
@@ -200,18 +251,43 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Decide whether this commit may deploy
+      id: deploy_order
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        node scripts/plan-production-deploy.js \
+          --mode skip \
+          --commit "${{ github.sha }}" \
+          --event-before "${{ github.event.before }}" \
+          --write-github-output
+
     - name: Detect affected deploy targets
       id: affected
       # Production env so the root-asset listing includes generated assets
       # (ads.txt) — the analytics gate fails closed for any other NODE_ENV.
       # The AdSense id must match the build job's, or ads.txt would be omitted
-      # from the deploy/invalidation path lists.
+      # from the deploy/invalidation path lists. The base and republish flag
+      # come from the build job so both jobs detect the same targets.
       env:
         NODE_ENV: production
         CST_ADSENSE_CLIENT_ID: ${{ vars.CST_ADSENSE_CLIENT_ID }}
       run: |
+        set -euo pipefail
+        if [ "${{ needs.test-and-build.outputs.republish_all }}" = "true" ]; then
+          node scripts/detect-affected-tools.js \
+            --changed-file package.json \
+            --write-github-output
+          exit 0
+        fi
+        BASE="${{ needs.test-and-build.outputs.deploy_base }}"
+        if [ -z "$BASE" ]; then
+          echo "::error::Production deploy plan did not resolve a diff base."
+          exit 1
+        fi
         node scripts/detect-affected-tools.js \
-          --base "${{ github.event.before }}" \
+          --base "$BASE" \
           --head "${{ github.sha }}" \
           --write-github-output
 
@@ -219,12 +295,18 @@ jobs:
     # what gets published. package.json/package-lock.json are deliberately NOT
     # listed: the function is standalone CloudFront-JS with no npm dependencies,
     # so dependency bumps used to trigger a no-op re-publish on every merge.
+    # The base is the build job's planned base, not github.event.before, so a
+    # skipped ancestor's function change is still published by the descendant.
     - name: Detect CloudFront Function changes
       id: cloudfront_function
       run: |
         set -euo pipefail
-        BASE="${{ github.event.before }}"
+        BASE="${{ needs.test-and-build.outputs.deploy_base }}"
         HEAD="${{ github.sha }}"
+        if [ -z "$BASE" ]; then
+          echo "::error::Production deploy plan did not resolve a diff base."
+          exit 1
+        fi
         # Fresh/rewritten-history pushes send an all-zero base, and a force-push
         # leaves `before` outside the pushed commit's ancestry. Both mean the
         # base diff is meaningless, so list every tracked path (full redeploy)
@@ -241,7 +323,7 @@ jobs:
         fi
 
     - name: Restore build artifacts
-      if: steps.affected.outputs.should_deploy == 'true'
+      if: steps.deploy_order.outputs.skip != 'true' && steps.affected.outputs.should_deploy == 'true'
       uses: actions/cache@v6
       with:
         path: build
@@ -250,7 +332,7 @@ jobs:
           ${{ runner.os }}-build-${{ github.sha }}
 
     - name: Configure AWS credentials
-      if: steps.affected.outputs.should_deploy == 'true' || steps.cloudfront_function.outputs.should_deploy == 'true'
+      if: steps.deploy_order.outputs.skip != 'true' && (steps.affected.outputs.should_deploy == 'true' || steps.cloudfront_function.outputs.should_deploy == 'true')
       uses: aws-actions/configure-aws-credentials@v6
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -262,12 +344,12 @@ jobs:
     # the trigger set above exhaustive: only the three listed paths can affect
     # this step.
     - name: Deploy CloudFront Function
-      if: steps.cloudfront_function.outputs.should_deploy == 'true'
+      if: steps.deploy_order.outputs.skip != 'true' && steps.cloudfront_function.outputs.should_deploy == 'true'
       run: |
         node scripts/deploy-cloudfront-function.js --distribution-id "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}"
 
     - name: Deploy affected assets
-      if: steps.affected.outputs.should_deploy == 'true'
+      if: steps.deploy_order.outputs.skip != 'true' && steps.affected.outputs.should_deploy == 'true'
       # Production env so the root-asset listing includes generated assets
       # (ads.txt) — the analytics gate fails closed for any other NODE_ENV.
       # The AdSense id must match the build job's, or ads.txt is left out of the
