@@ -8,6 +8,7 @@ const {
     FULL_DEPLOY_BASE,
     RUN_PAGE_SIZE,
     WORKFLOW_FILE,
+    WORKFLOW_RUNS_JQ,
     decideProductionDeploy,
     deployedFlagsFromJobs,
     exec,
@@ -365,6 +366,108 @@ function assetJobs(conclusion) {
     }];
 }
 
+function oversizedWorkflowRun(id, headSha) {
+    const padding = 'x'.repeat(12 * 1024);
+
+    return {
+        id,
+        head_sha: headSha,
+        status: 'completed',
+        event: 'push',
+        display_title: padding,
+        html_url: padding,
+        jobs_url: padding,
+        logs_url: padding,
+        check_suite_url: padding
+    };
+}
+
+function withFakeGh(rawRuns, jobsByRunId, run) {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'plan-gh-'));
+    const logPath = path.join(dir, 'argv.log');
+    const runsPath = path.join(dir, 'runs.json');
+    const jobsPath = path.join(dir, 'jobs.json');
+    const ghPath = path.join(dir, 'gh');
+    const script = [
+        '#!/usr/bin/env node',
+        "const { spawnSync } = require('child_process');",
+        "const fs = require('fs');",
+        'const args = process.argv.slice(2);',
+        'function writeAll(buffer) {',
+        '  let offset = 0;',
+        '  while (offset < buffer.length) {',
+        '    offset += fs.writeSync(1, buffer, offset);',
+        '  }',
+        '}',
+        "fs.appendFileSync(process.env.FAKE_GH_LOG, JSON.stringify(args) + '\\n');",
+        "const endpoint = args[1] || '';",
+        "if (endpoint.includes('/workflows/ci.yml/runs')) {",
+        "  const raw = fs.readFileSync(process.env.FAKE_GH_RUNS);",
+        "  const jqIndex = args.indexOf('--jq');",
+        '  if (jqIndex === -1) {',
+        '    writeAll(raw);',
+        '    process.exit(0);',
+        '  }',
+        "  const result = spawnSync('jq', ['-c', args[jqIndex + 1]], {",
+        '    input: raw,',
+        '    maxBuffer: 8 * 1024 * 1024',
+        '  });',
+        '  if (result.status !== 0) {',
+        "    process.stderr.write(result.stderr || Buffer.from('jq failed'));",
+        '    process.exit(result.status || 1);',
+        '  }',
+        '  writeAll(result.stdout);',
+        '  process.exit(0);',
+        '}',
+        "if (endpoint.includes('/jobs')) {",
+        "  const id = endpoint.split('/runs/')[1].split('/jobs')[0];",
+        "  const jobs = JSON.parse(fs.readFileSync(process.env.FAKE_GH_JOBS, 'utf8'));",
+        '  writeAll(Buffer.from(JSON.stringify({ jobs: jobs[id] || [] })));',
+        '  process.exit(0);',
+        '}',
+        "process.stderr.write('unexpected gh args');",
+        'process.exit(1);',
+        ''
+    ].join('\n');
+
+    fs.writeFileSync(runsPath, rawRuns);
+    fs.writeFileSync(jobsPath, JSON.stringify(jobsByRunId));
+    fs.writeFileSync(logPath, '');
+    fs.writeFileSync(ghPath, script, { mode: 0o755 });
+    fs.chmodSync(ghPath, 0o755);
+
+    const previousPath = process.env.PATH;
+    const previousLog = process.env.FAKE_GH_LOG;
+    const previousRuns = process.env.FAKE_GH_RUNS;
+    const previousJobs = process.env.FAKE_GH_JOBS;
+    process.env.PATH = `${dir}${path.delimiter}${previousPath || ''}`;
+    process.env.FAKE_GH_LOG = logPath;
+    process.env.FAKE_GH_RUNS = runsPath;
+    process.env.FAKE_GH_JOBS = jobsPath;
+
+    try {
+        return run(logPath);
+    } finally {
+        process.env.PATH = previousPath;
+        if (previousLog === undefined) {
+            delete process.env.FAKE_GH_LOG;
+        } else {
+            process.env.FAKE_GH_LOG = previousLog;
+        }
+        if (previousRuns === undefined) {
+            delete process.env.FAKE_GH_RUNS;
+        } else {
+            process.env.FAKE_GH_RUNS = previousRuns;
+        }
+        if (previousJobs === undefined) {
+            delete process.env.FAKE_GH_JOBS;
+        } else {
+            process.env.FAKE_GH_JOBS = previousJobs;
+        }
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+}
+
 function fakeHistory({ pages, jobsByRunId, mainSha }) {
     const requested = [];
     const run = (command, args) => {
@@ -706,6 +809,134 @@ describe('deploy planner cli', () => {
         } finally {
             logSpy.mockRestore();
             fs.rmSync(outputFile, { force: true });
+        }
+    });
+
+    it('plans a main push when the workflow-runs page exceeds the default spawnSync buffer', () => {
+        // Run 41542431893 invoked this same scope command on a push to main
+        // and died with `spawnSync gh ENOBUFS`. #150's tests stubbed `exec`,
+        // so they never put a real page through execFileSync. The unfiltered
+        // page is larger than the 1 MiB default; the scope command must still
+        // write a plan, and an older upload must still lose to a descendant
+        // that already uploaded. The driver is a child process: Jest's
+        // process.env does not propagate into execFileSync's default env.
+        const { spawnSync } = require('child_process');
+        const runs = [oversizedWorkflowRun(8, NEWER)];
+        const page = { total_count: 0, workflow_runs: runs };
+        const paddingSha = 'b'.repeat(40);
+
+        while (Buffer.byteLength(JSON.stringify(page)) <= 1024 * 1024) {
+            runs.push(oversizedWorkflowRun(100 + runs.length, paddingSha));
+        }
+
+        runs.push(oversizedWorkflowRun(7, OLDER));
+        page.total_count = runs.length;
+        const raw = JSON.stringify(page);
+        expect(Buffer.byteLength(raw)).toBeGreaterThan(1024 * 1024);
+
+        const outputFile = path.join(os.tmpdir(), `plan-deploy-large-${process.pid}.txt`);
+        const resultFile = path.join(os.tmpdir(), `plan-deploy-large-result-${process.pid}.json`);
+        fs.writeFileSync(outputFile, '');
+        process.env.GITHUB_OUTPUT = outputFile;
+        process.env.GITHUB_REPOSITORY = 'ranacseruet/codesamplez-tools';
+
+        try {
+            withFakeGh(raw, {
+                8: assetJobs('success'),
+                7: assetJobs('success')
+            }, (logPath) => {
+                const driverPath = path.join(path.dirname(logPath), 'drive-plan.js');
+                const runsUrl = `repos/ranacseruet/codesamplez-tools/actions/workflows/ci.yml/runs?branch=main&event=push&per_page=${RUN_PAGE_SIZE}&page=1`;
+                const plannerPath = path.join(REPO_ROOT, 'scripts', 'plan-production-deploy.js');
+                fs.writeFileSync(driverPath, `
+                    const planner = require(${JSON.stringify(plannerPath)});
+                    const runsUrl = ${JSON.stringify(runsUrl)};
+                    try {
+                        planner.exec('gh', ['api', runsUrl]);
+                        console.error('unfiltered runs page did not throw');
+                        process.exit(2);
+                    } catch (error) {
+                        const message = error instanceof Error ? error.message : String(error);
+                        if (!message.includes('spawnSync gh ENOBUFS')) {
+                            console.error(message);
+                            process.exit(3);
+                        }
+                    }
+                    const paddingSha = process.env.FAKE_PADDING_SHA;
+                    const deps = {
+                        exec: (command, args) => {
+                            if (command === 'git' && args[0] === 'fetch') {
+                                return '';
+                            }
+                            if (command === 'git' && args[0] === 'ls-remote') {
+                                return process.env.FAKE_MAIN_SHA + '\\trefs/heads/main';
+                            }
+                            if (command === 'git') {
+                                throw new Error('unexpected git ' + args.join(' '));
+                            }
+                            return planner.exec(command, args);
+                        },
+                        isAncestor: (ancestor, descendant) => {
+                            if (ancestor === paddingSha) {
+                                return false;
+                            }
+                            return planner.gitIsAncestor(ancestor, descendant);
+                        }
+                    };
+                    const plans = JSON.parse(process.env.PLAN_CALLS).map((call) => planner.runCli(call, deps));
+                    require('fs').writeFileSync(process.env.PLAN_RESULT_FILE, JSON.stringify(plans));
+                `);
+
+                const child = spawnSync(process.execPath, [driverPath], {
+                    cwd: REPO_ROOT,
+                    encoding: 'utf8',
+                    env: {
+                        ...process.env,
+                        FAKE_PADDING_SHA: paddingSha,
+                        FAKE_MAIN_SHA: NEWER,
+                        PLAN_RESULT_FILE: resultFile,
+                        PLAN_CALLS: JSON.stringify([
+                            ['--mode', 'scope', '--commit', NEWER, '--event-before', OLDER, '--write-github-output'],
+                            ['--mode', 'scope', '--commit', OLDER, '--event-before', PARENT, '--write-github-output']
+                        ])
+                    }
+                });
+
+                if (child.status !== 0) {
+                    throw new Error(child.stderr || child.stdout || `planner child exited ${child.status}`);
+                }
+
+                const [planned, stale] = JSON.parse(fs.readFileSync(resultFile, 'utf8'));
+                const written = fs.readFileSync(outputFile, 'utf8');
+
+                expect(planned.skip).toBe(false);
+                expect(planned.reason).toBe('deploy');
+                expect(planned.deployBase).toBe(OLDER);
+                expect(planned.deployBase).not.toBe(FULL_DEPLOY_BASE);
+                expect(written).toContain('skip=false');
+                expect(written).toContain(`deploy_base=${OLDER}`);
+                expect(written).toContain('reason=deploy');
+                expect(written).toContain('skip=true');
+                expect(written).toContain(`newer_sha=${NEWER}`);
+                expect(stale.skip).toBe(true);
+                expect(stale.reason).toBe('skip-newer');
+                expect(stale.newerSha).toBe(NEWER);
+                expect(stale.deployBase).not.toBe(FULL_DEPLOY_BASE);
+
+                const listCalls = fs.readFileSync(logPath, 'utf8')
+                    .trim()
+                    .split('\n')
+                    .map((line) => JSON.parse(line))
+                    .filter((args) => String(args[1] || '').includes('/workflows/ci.yml/runs') && args.includes('--jq'));
+
+                expect(listCalls.length).toBeGreaterThan(0);
+                listCalls.forEach((args) => {
+                    expect(args[args.indexOf('--jq') + 1]).toBe(WORKFLOW_RUNS_JQ);
+                });
+            });
+        } finally {
+            fs.rmSync(outputFile, { force: true });
+            fs.rmSync(resultFile, { force: true });
         }
     });
 

@@ -7,6 +7,11 @@ const { getChangedFilesFromGit } = require('./detect-affected-tools');
 const WORKFLOW_FILE = '.github/workflows/ci.yml';
 const RUN_PAGE_SIZE = 100;
 const MAX_HISTORY_PAGES = 20;
+// A page of full workflow run objects is larger than execFileSync's default
+// maxBuffer (1 MiB). The main push of 37163ed (run 41542431893) failed this
+// call with `spawnSync gh ENOBUFS` before any deploy. gh applies --jq after
+// the download, so Node only sees the fields the planner reads.
+const WORKFLOW_RUNS_JQ = '{workflow_runs: [.workflow_runs[] | {id, head_sha, status, event}]}';
 // Not a commit, and not all zeros: detect-affected-tools treats an all-zero
 // base as "diff the parent" and a non-ancestor base as "every tracked file".
 const FULL_DEPLOY_BASE = 'f'.repeat(40);
@@ -348,7 +353,9 @@ function readMainHead(run = exec) {
 function listWorkflowRunPage(run, repository, page) {
     const payload = JSON.parse(run('gh', [
         'api',
-        `repos/${repository}/actions/workflows/ci.yml/runs?branch=main&event=push&per_page=${RUN_PAGE_SIZE}&page=${page}`
+        `repos/${repository}/actions/workflows/ci.yml/runs?branch=main&event=push&per_page=${RUN_PAGE_SIZE}&page=${page}`,
+        '--jq',
+        WORKFLOW_RUNS_JQ
     ]));
 
     if (!payload || !Array.isArray(payload.workflow_runs)) {
@@ -607,6 +614,7 @@ module.exports = {
     FULL_DEPLOY_BASE,
     RUN_PAGE_SIZE,
     WORKFLOW_FILE,
+    WORKFLOW_RUNS_JQ,
     decideProductionDeploy,
     deployedFlagsFromJobs,
     commandFailureDetail,
