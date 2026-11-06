@@ -6,6 +6,8 @@ const { detectAffectedTargets } = require('./affected-tools');
 const { getChangedFilesFromGit } = require('./detect-affected-tools');
 const {
     FULL_DEPLOY_BASE,
+    GH_API_MAX_ATTEMPTS,
+    GH_API_RETRY_BACKOFF_MS,
     RUN_PAGE_SIZE,
     WORKFLOW_FILE,
     WORKFLOW_RUNS_JQ,
@@ -14,6 +16,8 @@ const {
     exec,
     formatGithubNotice,
     gitIsAncestor,
+    isGitHubApiInvocation,
+    isTransientGitHubApiError,
     loadDeployedCommits,
     main,
     mergeDeployedCommits,
@@ -382,11 +386,12 @@ function oversizedWorkflowRun(id, headSha) {
     };
 }
 
-function withFakeGh(rawRuns, jobsByRunId, run) {
+function withFakeGh(rawRuns, jobsByRunId, run, failure) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'plan-gh-'));
     const logPath = path.join(dir, 'argv.log');
     const runsPath = path.join(dir, 'runs.json');
     const jobsPath = path.join(dir, 'jobs.json');
+    const statePath = path.join(dir, 'state.json');
     const ghPath = path.join(dir, 'gh');
     const script = [
         '#!/usr/bin/env node',
@@ -399,9 +404,20 @@ function withFakeGh(rawRuns, jobsByRunId, run) {
         '    offset += fs.writeSync(1, buffer, offset);',
         '  }',
         '}',
+        'function failIfRequested(kind) {',
+        '  if (!process.env.FAKE_GH_STATE) return;',
+        '  const state = JSON.parse(fs.readFileSync(process.env.FAKE_GH_STATE, "utf8"));',
+        '  const key = kind + "Left";',
+        '  if (!state[key]) return;',
+        '  state[key] -= 1;',
+        '  fs.writeFileSync(process.env.FAKE_GH_STATE, JSON.stringify(state));',
+        '  process.stderr.write("gh: Server Error (HTTP " + state.status + ")\\n");',
+        '  process.exit(1);',
+        '}',
         "fs.appendFileSync(process.env.FAKE_GH_LOG, JSON.stringify(args) + '\\n');",
         "const endpoint = args[1] || '';",
         "if (endpoint.includes('/workflows/ci.yml/runs')) {",
+        "  failIfRequested('runs');",
         "  const raw = fs.readFileSync(process.env.FAKE_GH_RUNS);",
         "  const jqIndex = args.indexOf('--jq');",
         '  if (jqIndex === -1) {',
@@ -420,6 +436,7 @@ function withFakeGh(rawRuns, jobsByRunId, run) {
         '  process.exit(0);',
         '}',
         "if (endpoint.includes('/jobs')) {",
+        "  failIfRequested('jobs');",
         "  const id = endpoint.split('/runs/')[1].split('/jobs')[0];",
         "  const jobs = JSON.parse(fs.readFileSync(process.env.FAKE_GH_JOBS, 'utf8'));",
         '  writeAll(Buffer.from(JSON.stringify({ jobs: jobs[id] || [] })));',
@@ -432,6 +449,11 @@ function withFakeGh(rawRuns, jobsByRunId, run) {
 
     fs.writeFileSync(runsPath, rawRuns);
     fs.writeFileSync(jobsPath, JSON.stringify(jobsByRunId));
+    fs.writeFileSync(statePath, JSON.stringify({
+        runsLeft: failure && failure.runs ? failure.runs : 0,
+        jobsLeft: failure && failure.jobs ? failure.jobs : 0,
+        status: failure && failure.status ? failure.status : 502
+    }));
     fs.writeFileSync(logPath, '');
     fs.writeFileSync(ghPath, script, { mode: 0o755 });
     fs.chmodSync(ghPath, 0o755);
@@ -440,10 +462,12 @@ function withFakeGh(rawRuns, jobsByRunId, run) {
     const previousLog = process.env.FAKE_GH_LOG;
     const previousRuns = process.env.FAKE_GH_RUNS;
     const previousJobs = process.env.FAKE_GH_JOBS;
+    const previousState = process.env.FAKE_GH_STATE;
     process.env.PATH = `${dir}${path.delimiter}${previousPath || ''}`;
     process.env.FAKE_GH_LOG = logPath;
     process.env.FAKE_GH_RUNS = runsPath;
     process.env.FAKE_GH_JOBS = jobsPath;
+    process.env.FAKE_GH_STATE = statePath;
 
     try {
         return run(logPath);
@@ -463,6 +487,11 @@ function withFakeGh(rawRuns, jobsByRunId, run) {
             delete process.env.FAKE_GH_JOBS;
         } else {
             process.env.FAKE_GH_JOBS = previousJobs;
+        }
+        if (previousState === undefined) {
+            delete process.env.FAKE_GH_STATE;
+        } else {
+            process.env.FAKE_GH_STATE = previousState;
         }
         fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -938,6 +967,133 @@ describe('deploy planner cli', () => {
             fs.rmSync(outputFile, { force: true });
             fs.rmSync(resultFile, { force: true });
         }
+    });
+
+    function runsPage() {
+        return JSON.stringify({
+            workflow_runs: [
+                { id: 8, head_sha: NEWER, status: 'completed', event: 'push' },
+                { id: 7, head_sha: OLDER, status: 'completed', event: 'push' }
+            ]
+        });
+    }
+
+    function ghArgv(logPath) {
+        return fs.readFileSync(logPath, 'utf8')
+            .trim()
+            .split('\n')
+            .filter(Boolean)
+            .map((line) => JSON.parse(line));
+    }
+
+    function delegateGitToRealGh(options) {
+        return (command, args) => {
+            if (command === 'git' && args[0] === 'fetch') {
+                return '';
+            }
+            if (command === 'git' && args[0] === 'ls-remote') {
+                return `${NEWER}\trefs/heads/main`;
+            }
+            if (command === 'git') {
+                throw new Error(`unexpected git ${args.join(' ')}`);
+            }
+            return exec(command, args, options);
+        };
+    }
+
+    it('treats GitHub API 5xx as transient and does not retry other failures', () => {
+        expect(isGitHubApiInvocation('gh', ['api', 'repos/example'])).toBe(true);
+        expect(isGitHubApiInvocation('gh', ['pr', 'view'])).toBe(false);
+        expect(isGitHubApiInvocation('git', ['api'])).toBe(false);
+        expect(isGitHubApiInvocation('gh', [])).toBe(false);
+        expect(isGitHubApiInvocation('gh')).toBe(false);
+        expect(isTransientGitHubApiError({ stderr: 'gh: Server Error (HTTP 502)' })).toBe(true);
+        expect(isTransientGitHubApiError({ stderr: 'HTTP 500' })).toBe(true);
+        expect(isTransientGitHubApiError({ stderr: 'HTTP 503' })).toBe(true);
+        expect(isTransientGitHubApiError({ stderr: 'HTTP 504' })).toBe(true);
+        expect(isTransientGitHubApiError({ stderr: 'gh: Not Found (HTTP 404)' })).toBe(false);
+        expect(isTransientGitHubApiError({ stderr: 'HTTP 429' })).toBe(false);
+        expect(isTransientGitHubApiError(new Error('spawnSync gh ENOBUFS'))).toBe(false);
+        expect(GH_API_MAX_ATTEMPTS).toBe(3);
+        expect(GH_API_RETRY_BACKOFF_MS).toEqual([1000, 2000]);
+    });
+
+    it('retries a transient GitHub API HTTP 502 and still refuses to overwrite a newer deploy', () => {
+        // Run 41650859451 attempt 2 failed the first history page with
+        // `gh: Server Error (HTTP 502)` and skipped deploy and publish-baseline.
+        // One 502 must be retried. The --jq projection stays, and a descendant
+        // that already uploaded still blocks the older commit.
+        process.env.GITHUB_REPOSITORY = 'ranacseruet/codesamplez-tools';
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        const delays = [];
+
+        try {
+            withFakeGh(runsPage(), {
+                8: assetJobs('success'),
+                7: assetJobs('success')
+            }, (logPath) => {
+                const planned = runCli([
+                    '--mode', 'scope',
+                    '--commit', NEWER,
+                    '--event-before', OLDER
+                ], {
+                    exec: delegateGitToRealGh({
+                        sleep: (delayMs) => delays.push(delayMs)
+                    }),
+                    isAncestor: historyIsAncestor
+                });
+                const stale = runCli([
+                    '--mode', 'scope',
+                    '--commit', OLDER,
+                    '--event-before', PARENT
+                ], {
+                    exec: delegateGitToRealGh({ backoffMs: [0, 0] }),
+                    isAncestor: historyIsAncestor
+                });
+                const calls = ghArgv(logPath);
+                const listCalls = calls.filter((args) => String(args[1] || '').includes('/workflows/ci.yml/runs'));
+
+                expect(planned.skip).toBe(false);
+                expect(planned.reason).toBe('deploy');
+                expect(planned.deployBase).toBe(OLDER);
+                expect(planned.deployBase).not.toBe(FULL_DEPLOY_BASE);
+                expect(stale.skip).toBe(true);
+                expect(stale.reason).toBe('skip-newer');
+                expect(stale.newerSha).toBe(NEWER);
+                expect(delays).toEqual([1000, 1000]);
+                expect(listCalls.length).toBeGreaterThan(1);
+                listCalls.forEach((args) => {
+                    expect(args[args.indexOf('--jq') + 1]).toBe(WORKFLOW_RUNS_JQ);
+                });
+                expect(errorSpy.mock.calls.map((call) => call.join(' ')).join('\n')).toContain('HTTP 502');
+            }, { runs: 1, jobs: 1, status: 502 });
+        } finally {
+            errorSpy.mockRestore();
+        }
+    });
+
+    it('stops after the GitHub API 502 budget and does not retry a 404 or ENOBUFS', () => {
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        const runsUrl = `repos/ranacseruet/codesamplez-tools/actions/workflows/ci.yml/runs?page=1`;
+
+        try {
+            withFakeGh(runsPage(), { 8: assetJobs('success'), 7: assetJobs('success') }, (logPath) => {
+                expect(() => exec('gh', ['api', runsUrl, '--jq', WORKFLOW_RUNS_JQ], {
+                    backoffMs: [0]
+                })).toThrow(`gh api ${runsUrl} --jq ${WORKFLOW_RUNS_JQ} failed: gh: Server Error (HTTP 502)`);
+                expect(ghArgv(logPath)).toHaveLength(GH_API_MAX_ATTEMPTS);
+            }, { runs: 9, status: 502 });
+
+            withFakeGh(runsPage(), { 8: assetJobs('success') }, (logPath) => {
+                expect(() => exec('gh', ['api', runsUrl], { backoffMs: [0, 0] }))
+                    .toThrow('failed: gh: Server Error (HTTP 404)');
+                expect(ghArgv(logPath)).toHaveLength(1);
+            }, { runs: 9, status: 404 });
+        } finally {
+            errorSpy.mockRestore();
+        }
+
+        expect(isTransientGitHubApiError(new Error('spawnSync gh ENOBUFS'))).toBe(false);
     });
 
     it('does not print a notice when the commit deploys', () => {

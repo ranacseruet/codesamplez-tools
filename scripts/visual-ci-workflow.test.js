@@ -163,7 +163,8 @@ describe('Visual CI workflow contract', () => {
     const step = findStep(workflow.jobs['health-check'], 'Local visual smoke capture (scheduled, report-only)');
 
     expect(step.uses).toMatch(/^ranacseruet\/snapdrift\/actions\/capture@[0-9a-f]{40}$/);
-    expect(step.env).toBeUndefined();
+    expect(step.env).toEqual({ SNAPDRIFT_CAPTURE_CONCURRENCY: '1' });
+    expect(step.env.SNAP_API_KEY).toBeUndefined();
   });
 
   it('fails visual-diff unless SnapDrift finished a baseline comparison', () => {
@@ -198,11 +199,13 @@ describe('Visual CI workflow contract', () => {
     });
     expect(manualDiff.env).toEqual({
       SNAP_API_KEY: '${{ secrets.SNAP_API_KEY }}',
-      NODE_OPTIONS: '--require ${{ github.workspace }}/scripts/retry-snap-429.js'
+      NODE_OPTIONS: '--require ${{ github.workspace }}/scripts/retry-snap-429.js',
+      SNAPDRIFT_CAPTURE_CONCURRENCY: '1'
     });
     expect(manualDiff.with['force-run']).toBe(true);
     expect(pullRequestDiff.env).toEqual({
-      SNAP_API_KEY: '${{ secrets.SNAP_API_KEY }}'
+      SNAP_API_KEY: '${{ secrets.SNAP_API_KEY }}',
+      SNAPDRIFT_CAPTURE_CONCURRENCY: '1'
     });
     expect(pullRequestDiff.env.NODE_OPTIONS).toBeUndefined();
     expect(readWorkflow('ci.yml').concurrency.group).toBe('ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}');
@@ -229,5 +232,38 @@ describe('Visual CI workflow contract', () => {
     expect(refs).toHaveLength(4);
     expect(new Set(refs).size).toBe(1);
     expect(refs[0]).toMatch(/^[0-9a-f]{40}$/);
+  });
+
+  // Pinned SnapDrift v0.17.0 (capture.mjs) creates one limiter per viewport
+  // group and runs those groups together, so the effective browser count is
+  // SNAPDRIFT_CAPTURE_CONCURRENCY times the number of distinct viewports.
+  // Run 41650859451 attempt 1 started 13 routes at once (5 desktop + 4 mobile
+  // + 4 custom) and then failed 3 of 20 after the action's single retry.
+  // The default run-wide budget later SnapDrift releases enforce is 5.
+  const RUN_WIDE_CAPTURE_LIMIT = 5;
+
+  function viewportGroupKey(viewport) {
+    return typeof viewport === 'string'
+      ? viewport
+      : `custom:${viewport.width}x${viewport.height}`;
+  }
+
+  it('keeps every pinned capture inside one run-wide browser budget', () => {
+    const config = JSON.parse(fs.readFileSync(SNAPDRIFT_CONFIG_PATH, 'utf8'));
+    const groups = new Set(config.routes.map((route) => viewportGroupKey(route.viewport)));
+    const captureSteps = fs.readdirSync(WORKFLOW_ROOT)
+      .filter((name) => name.endsWith('.yml') || name.endsWith('.yaml'))
+      .flatMap((name) => Object.values(readWorkflow(name).jobs))
+      .flatMap((job) => job.steps || [])
+      .filter((step) => step.uses?.startsWith('ranacseruet/snapdrift/actions/'));
+
+    expect(groups.size).toBeGreaterThan(1);
+    expect(captureSteps).toHaveLength(4);
+    captureSteps.forEach((step) => {
+      const concurrency = Number(step.env && step.env.SNAPDRIFT_CAPTURE_CONCURRENCY);
+      expect(Number.isInteger(concurrency)).toBe(true);
+      expect(concurrency).toBeGreaterThanOrEqual(1);
+      expect(concurrency * groups.size).toBeLessThanOrEqual(RUN_WIDE_CAPTURE_LIMIT);
+    });
   });
 });

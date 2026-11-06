@@ -78,6 +78,10 @@ jobs:
         id: visual_capture
         uses: ranacseruet/snapdrift/actions/capture@1b52eb71a3d5a352c8bcc887490b26d482aa1504 # v0.17.0
         continue-on-error: true
+        env:
+          # Same per-viewport-group cap as publish-baseline in ci.yml. This job
+          # stays local and does not receive SNAP_API_KEY.
+          SNAPDRIFT_CAPTURE_CONCURRENCY: '1'
 
       - name: Dependency audit capture (full JSON, report-only)
         run: |

@@ -446,6 +446,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
         env:
           SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
+          # v0.17.0 applies this limit once per viewport group, and the groups
+          # run together. See publish-baseline for the run 41650859451 failure.
+          SNAPDRIFT_CAPTURE_CONCURRENCY: '1'
 
       # report-only used to leave this job green when the summary was incomplete
       # or the GitHub artifact lookup missed. The hosted Snap baseline is the
@@ -571,6 +574,16 @@ jobs:
           upload-artifact: 'false'
         env:
           SNAP_API_KEY: ${{ secrets.SNAP_API_KEY }}
+          # Pinned capture.mjs builds one concurrency limiter per viewport group
+          # and runs the groups at the same time. The default of 5 therefore
+          # opened 13 Chromium contexts on run 41650859451 attempt 1 (5 desktop
+          # + 4 mobile + 4 custom). The next desktop batch failed in about a
+          # second, and 3 of 20 routes still failed after the action's one
+          # retry, so publish never ran. 1 keeps real parallelism at the number
+          # of viewport groups (3 today), under the run-wide limit of 5 that
+          # SnapDrift later enforced in one shared limiter. Do not raise this
+          # without upgrading the pin past that fix.
+          SNAPDRIFT_CAPTURE_CONCURRENCY: '1'
 
       - name: Stop app
         if: always()
