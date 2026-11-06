@@ -77,6 +77,8 @@ jobs:
           # /v1/visual/ 429s before that action treats them as a final failure.
           # The pull-request job in ci.yml does not set this.
           NODE_OPTIONS: "--require ${{ github.workspace }}/scripts/retry-snap-429.js"
+          # Same per-viewport-group cap as publish-baseline in ci.yml.
+          SNAPDRIFT_CAPTURE_CONCURRENCY: '1'
 
       # Same completion gate as ci.yml. publish-baseline does not upload
       # ui-foundation-visual-baseline (the pinned baseline action only uploads

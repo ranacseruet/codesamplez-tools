@@ -7,6 +7,11 @@ const { getChangedFilesFromGit } = require('./detect-affected-tools');
 const WORKFLOW_FILE = '.github/workflows/ci.yml';
 const RUN_PAGE_SIZE = 100;
 const MAX_HISTORY_PAGES = 20;
+// Run 41650859451 attempt 2 died on the first history page with
+// `gh: Server Error (HTTP 502)` and skipped deploy and publish-baseline.
+// One retry is not enough for a second blip, so try twice more.
+const GH_API_MAX_ATTEMPTS = 3;
+const GH_API_RETRY_BACKOFF_MS = [1000, 2000];
 // A page of full workflow run objects is larger than execFileSync's default
 // maxBuffer (1 MiB). The main push of 37163ed (run 41542431893) failed this
 // call with `spawnSync gh ENOBUFS` before any deploy. gh applies --jq after
@@ -277,19 +282,82 @@ function formatGithubNotice(plan) {
 }
 
 /**
+ * gh prints `gh: Server Error (HTTP 502)` on stderr and exits non-zero.
+ * 4xx, ENOBUFS, and git failures are not retried.
+ * @param {unknown} error
+ * @returns {string | null}
+ */
+function transientGitHubApiStatus(error) {
+    const match = /\bHTTP (5\d\d)\b/u.exec(commandFailureDetail(error));
+    return match ? match[1] : null;
+}
+
+/**
+ * @param {unknown} error
+ * @returns {boolean}
+ */
+function isTransientGitHubApiError(error) {
+    return transientGitHubApiStatus(error) !== null;
+}
+
+/**
  * @param {string} command
  * @param {string[]} args
+ * @returns {boolean}
+ */
+function isGitHubApiInvocation(command, args) {
+    return command === 'gh' && Array.isArray(args) && args[0] === 'api';
+}
+
+/**
+ * Synchronous pause. Atomics.wait(timeout) returns immediately when ms is 0.
+ * @param {number} delayMs
+ * @returns {void}
+ */
+function sleepMs(delayMs) {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delayMs);
+}
+
+/**
+ * @param {string} command
+ * @param {string[]} args
+ * @param {{
+ *   maxAttempts?: number,
+ *   backoffMs?: number[],
+ *   sleep?: (delayMs: number) => void,
+ *   env?: NodeJS.ProcessEnv
+ * }} [options]
  * @returns {string}
  */
-function exec(command, args) {
-    try {
-        return execFileSync(command, args, {
-            cwd: process.cwd(),
-            encoding: 'utf8',
-            stdio: ['ignore', 'pipe', 'pipe']
-        }).trim();
-    } catch (error) {
-        throw new Error(`${command} ${args.join(' ')} failed: ${commandFailureDetail(error)}`, { cause: error });
+function exec(command, args, options = {}) {
+    const retryGitHubApi = isGitHubApiInvocation(command, args);
+    const maxAttempts = retryGitHubApi ? (options.maxAttempts || GH_API_MAX_ATTEMPTS) : 1;
+    const backoffMs = options.backoffMs || GH_API_RETRY_BACKOFF_MS;
+    const sleep = options.sleep || sleepMs;
+    let attempt = 0;
+
+    for (;;) {
+        attempt += 1;
+        try {
+            // A plain copy picks up PATH edits on process.env. Runners that
+            // replace process.env do not apply those edits to the environment
+            // execFileSync inherits when `env` is omitted.
+            return execFileSync(command, args, {
+                cwd: process.cwd(),
+                encoding: 'utf8',
+                env: options.env || { ...process.env },
+                stdio: ['ignore', 'pipe', 'pipe']
+            }).trim();
+        } catch (error) {
+            const status = retryGitHubApi ? transientGitHubApiStatus(error) : null;
+            if (!status || attempt >= maxAttempts) {
+                throw new Error(`${command} ${args.join(' ')} failed: ${commandFailureDetail(error)}`, { cause: error });
+            }
+
+            const delayMs = backoffMs[Math.min(attempt - 1, backoffMs.length - 1)];
+            console.error(`GitHub API HTTP ${status} while planning the production deploy; retrying in ${delayMs}ms (attempt ${attempt} of ${maxAttempts - 1}).`);
+            sleep(delayMs);
+        }
     }
 }
 
@@ -612,9 +680,13 @@ if (require.main === module) {
 
 module.exports = {
     FULL_DEPLOY_BASE,
+    GH_API_MAX_ATTEMPTS,
+    GH_API_RETRY_BACKOFF_MS,
     RUN_PAGE_SIZE,
     WORKFLOW_FILE,
     WORKFLOW_RUNS_JQ,
+    isGitHubApiInvocation,
+    isTransientGitHubApiError,
     decideProductionDeploy,
     deployedFlagsFromJobs,
     commandFailureDetail,
