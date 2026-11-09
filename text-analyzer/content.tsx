@@ -1,6 +1,56 @@
 import type { JSX } from 'preact';
 import { SITE_BASE_URL, buildSiteHref } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { analyzeText, type TextAnalysisResult } from './TextAnalyzer';
+import { TEXT_ANALYZER_SAMPLE_TEXT } from './sample-text';
+
+const SAMPLE_RESULT = analyzeText(TEXT_ANALYZER_SAMPLE_TEXT);
+const SAMPLE_FREQUENCY = SAMPLE_RESULT.wordFrequency!;
+
+const SAMPLE_STAT_FIELDS = [
+    ['wordCount', 'Word Count'],
+    ['charCount', 'Character Count'],
+    ['paragraphCount', 'Paragraph Count'],
+    ['sentenceCount', 'Sentence Count'],
+    ['lineCount', 'Lines Counter'],
+    ['avgWordLength', 'Average Word Length'],
+    ['avgSentenceLength', 'Average Sentence Length'],
+    ['readingTime', 'Reading Time'],
+    ['readabilityScore', 'Flesch Reading Ease'],
+    ['gradeLevel', 'Flesch-Kincaid Grade'],
+    ['keywordDensity', 'Top Keyword Density'],
+    ['periodCount', 'Periods'],
+    ['commaCount', 'Commas'],
+    ['questionCount', 'Question Marks'],
+    ['exclamationCount', 'Exclamation Marks']
+] as const;
+
+function formatSampleStat(key: string, result: TextAnalysisResult): string {
+    if (key === 'readingTime') {
+        return `${result.readingTime} min`;
+    }
+
+    if (key === 'readabilityScore') {
+        return result.readabilityScore!.toFixed(2);
+    }
+
+    if (key === 'gradeLevel') {
+        return Math.max(result.gradeLevel!, 0).toFixed(2);
+    }
+
+    if (key === 'keywordDensity') {
+        return `${result.topKeyword!} \u2014 ${result.keywordDensity.toFixed(2)}%`;
+    }
+
+    return String(result[key as keyof TextAnalysisResult]);
+}
+
+/** Statistics the guide quotes for Load Sample. Values match the statistics panel. */
+export const SAMPLE_GUIDE_STATS = SAMPLE_STAT_FIELDS.map(([key, label]) => ({
+    key,
+    label,
+    value: formatSampleStat(key, SAMPLE_RESULT)
+}));
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -25,11 +75,23 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     ),
     createPlainTextFaqItem(
         'Does the Text Analyzer support multiple languages?',
-        'Yes, you can analyze text in any language for basic counts. The tool counts characters and whitespace-separated words regardless of language or script. Readability scores use an English-oriented syllable heuristic, so treat those estimates as approximate for non-English text.'
+        'Yes, you can analyze text in any language for basic counts. Spaced text, including Korean, is split on whitespace. Chinese characters, Japanese hiragana or katakana, Thai, Khmer, Lao, and Myanmar are split with Intl.Segmenter when the browser provides it, and on whitespace otherwise. Readability scores use an English-oriented syllable heuristic, so treat those estimates as approximate for non-English text.'
     ),
     createPlainTextFaqItem(
         'Are the results from the Text Analyzer accurate?',
-        'The Text Analyzer uses straightforward algorithms for word and character counts. It treats words as whitespace-separated tokens, counts sentences using punctuation such as periods, question marks, and exclamation points, and estimates syllables for readability scoring. Automated tools can miss edge cases like abbreviations, ellipses, names, and technical terms, so readability and sentence metrics should be treated as helpful estimates.'
+        'The Text Analyzer uses straightforward algorithms for word and character counts. Spaced text is split on whitespace, and Chinese, Japanese kana, Thai, Khmer, Lao, and Myanmar text uses Intl.Segmenter when the browser provides it. Sentences are counted from punctuation such as periods, question marks, and exclamation points, and syllables are estimated for readability scoring. Automated tools can miss edge cases like abbreviations, ellipses, names, and technical terms, so readability and sentence metrics should be treated as helpful estimates.'
+    ),
+    createPlainTextFaqItem(
+        'How does the keyword density calculation work?',
+        'Each word is lowercased and punctuation is removed. Tokens with no letter, including a number on its own, are ignored, as are English stop words such as the, and, is, and for. The tool ranks the words that remain and lists the five most frequent. Top keyword density is the leading word\'s count divided by the total word count, stop words included, multiplied by 100 and rounded to two decimals. A key phrase is not scored as one keyword. Its words are counted separately, and a tie keeps the word that appeared first.'
+    ),
+    createPlainTextFaqItem(
+        'Is my text uploaded anywhere?',
+        'No. Text you type, paste, load with Load Sample, or open with Upload File is analyzed in this browser and is not uploaded by the tool. Closing the tab clears it. This site uses Google Analytics and Google AdSense cookies to measure usage and show ads.'
+    ),
+    createPlainTextFaqItem(
+        'What counts as a word, including text without spaces?',
+        'Spaced text is split on whitespace, so a hyphenated compound such as state-of-the-art is one word. When the text includes Chinese characters, Japanese hiragana or katakana, Thai, Khmer, Lao, or Myanmar, the whole input is split with Intl.Segmenter at word granularity if the browser provides it. Korean Hangul keeps the whitespace split. Keyword checks use Unicode letters, so a Cyrillic or CJK word can be a keyword, while digits alone cannot.'
     )
 ];
 
@@ -70,6 +132,79 @@ export function TextAnalyzerArticle(): JSX.Element {
                     </p>
                 </ToolArticleSection>
 
+                <ToolArticleSection id="text-analyzer-keyword-analysis" title="Keyword and Key Phrase Analysis">
+                    <p>
+                        A keyword on this page is a single word. The analyzer does not score a multi-word key phrase
+                        as one unit. In the phrase &ldquo;text analysis tool&rdquo;, text, analysis, and tool are three
+                        separate keywords.
+                    </p>
+                    <p>What counts as a word:</p>
+                    <ul>
+                        <li>
+                            Spaced text, including English, is split on whitespace. A hyphenated compound such as
+                            state-of-the-art stays one word, and repeated spaces do not add empty words.
+                        </li>
+                        <li>
+                            If the text contains Chinese characters, Japanese hiragana or katakana, Thai, Khmer, Lao,
+                            or Myanmar, the whole input is split with the browser&apos;s <code>Intl.Segmenter</code> at
+                            word granularity, because those scripts often have no spaces between words. Korean Hangul
+                            is not in that set and keeps the whitespace split, since Korean words are usually separated
+                            by spaces. When the browser has no <code>Intl.Segmenter</code>, the analyzer falls back to
+                            splitting on whitespace.
+                        </li>
+                        <li>
+                            Text that mixes those space-less scripts with English is segmented as a whole, so a
+                            hyphenated English compound in that mix is counted as its parts.
+                        </li>
+                    </ul>
+                    <p>
+                        Keyword matching then lowercases each token and drops characters that are not Unicode letters
+                        or numbers. A token must still contain a letter. Digits alone, such as 2026, stay in the word
+                        count and are not keywords. Average word length uses the same letter-and-number measure, so a
+                        CJK or Cyrillic word keeps its length. An apostrophe is punctuation, so Let&apos;s becomes lets.
+                    </p>
+                    <p>
+                        Stop words are a fixed English list of function words, including a, an, the, and, or, but, is,
+                        are, of, to, for, in, and on, plus common pronouns and auxiliaries. They remain in the word
+                        count and are left out of the keyword list. The list is English, so function words in other
+                        languages are not removed.
+                    </p>
+                    <p>
+                        The Word Frequency chart shows up to five of the remaining words, highest count first. When
+                        counts tie, the earlier word stays ahead. Top Keyword Density is that first word&apos;s count
+                        divided by the total word count, including stop words, multiplied by 100 and rounded to two
+                        decimal places. If every token is a stop word or a number, the density is an em dash.
+                    </p>
+                </ToolArticleSection>
+
+                <ToolArticleSection id="text-analyzer-how-to-analyze" title="How to Analyze Text">
+                    <p>
+                        Click <strong>Load Sample</strong>. The box fills with this text, including the blank line
+                        between the paragraphs:
+                    </p>
+                    <pre><code>{TEXT_ANALYZER_SAMPLE_TEXT}</code></pre>
+                    <p>The statistics panel then shows:</p>
+                    <ul>
+                        {SAMPLE_GUIDE_STATS.map((stat) => (
+                            <li key={stat.key}>
+                                <strong>{stat.label}:</strong> {stat.value}
+                            </li>
+                        ))}
+                    </ul>
+                    <p>
+                        {SAMPLE_RESULT.topKeyword} leads because it is the first word left after English stop words
+                        are removed, and each remaining keyword in this sample appears once. Top Keyword Density
+                        divides that one occurrence by all {SAMPLE_RESULT.wordCount} words. The Word Frequency chart
+                        keeps the first five: {SAMPLE_FREQUENCY.map((entry) => entry.word).join(', ')}.
+                    </p>
+                    <p>
+                        Reading Time is {SAMPLE_RESULT.readingTime} min because {SAMPLE_RESULT.wordCount} words at 200
+                        words per minute rounds up to the next minute. Flesch Reading Ease and the Flesch-Kincaid
+                        grade use the tool&apos;s English syllable estimate. Paste, type, or choose <strong>Upload File</strong>{' '}
+                        to analyze different text. The figures update as you edit, and the text is not uploaded.
+                    </p>
+                </ToolArticleSection>
+
                 <ToolArticleSection id="text-analyzer-features" title="Features and Benefits of the Text Analyzer:">
                     <ul>
                         <li>
@@ -81,7 +216,7 @@ export function TextAnalyzerArticle(): JSX.Element {
                             <strong>Counts:</strong>
                             <ul>
                                 <li><strong>Characters</strong>: Counts every character in the text, including spaces and punctuation.</li>
-                                <li><strong>Words</strong>: Calculates the number of words by splitting text on whitespace.</li>
+                                <li><strong>Words</strong>: Counts words by splitting spaced text on whitespace. Chinese, Japanese kana, Thai, Khmer, Lao, and Myanmar text uses Intl.Segmenter when the browser provides it.</li>
                                 <li><strong>Sentences</strong>: Estimates the number of sentences by identifying common sentence endings (., !, ?).</li>
                                 <li><strong>Lines:</strong> Calculates the number of lines by splitting text on newline character (<code>\n</code>).</li>
                                 <li><strong>Paragraphs</strong>: Counts paragraphs by identifying text blocks separated by blank lines.</li>

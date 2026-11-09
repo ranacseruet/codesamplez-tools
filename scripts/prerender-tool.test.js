@@ -267,6 +267,11 @@ describe('generic tool prerender helpers', () => {
         // component passes every positive assertion.
         expect(appMarkup).not.toContain('The CodeSamplez Text Analyzer is a <strong>free online text analysis tool</strong>');
         expect(afterMarkup).toContain('What is a Text Analyzer?');
+        expect(afterMarkup).toContain('Keyword and Key Phrase Analysis');
+        expect(afterMarkup).toContain('How to Analyze Text');
+        expect(afterMarkup).toContain('How does the keyword density calculation work?');
+        expect(afterMarkup).toContain('Is my text uploaded anywhere?');
+        expect(afterMarkup).toContain('sample — 5.26%');
         expect(afterMarkup).toContain('Text Analyzer FAQs:');
         expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
         expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
