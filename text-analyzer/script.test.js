@@ -42,7 +42,8 @@ import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { TextAnalyzerToolUI } from './script';
 import { analyzeText } from './TextAnalyzer';
 import ClearButton from '../common/clear-button/ClearButton';
-import { FAQ_ITEMS } from './content';
+import { FAQ_ITEMS, SAMPLE_GUIDE_STATS } from './content';
+import { TEXT_ANALYZER_SAMPLE_TEXT } from './sample-text';
 import { SITE_BASE_URL } from '../common/siteBaseUrl';
 
 describe('TextAnalyzer Preact runtime', () => {
@@ -174,8 +175,14 @@ describe('TextAnalyzer Preact runtime', () => {
         fireEvent.click(document.getElementById('load-sample'));
         await flushEffects();
 
-        expect(document.getElementById('textInput')?.value).toContain('This is a sample text for analysis.');
+        expect(document.getElementById('textInput')?.value).toBe(TEXT_ANALYZER_SAMPLE_TEXT);
         expect(NotificationManager.show).toHaveBeenCalledWith('Sample text loaded', expect.any(Number), expect.any(Object));
+        SAMPLE_GUIDE_STATS.forEach((stat) => {
+            expect(document.getElementById(stat.key)?.textContent).toBe(stat.value);
+        });
+        const chart = document.getElementById('wordFrequencyChart');
+        expect(chart?.textContent).toContain('sample');
+        expect(chart?.textContent).toContain('sentences');
     });
 
     it('analyzes a dropped file', async () => {

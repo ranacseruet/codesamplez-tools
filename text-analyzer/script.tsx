@@ -8,11 +8,10 @@ import { copyTextToClipboard } from '../common/clipboard';
 import { mountToolShell } from '../common/app-shell/mountToolShell';
 import { trackToolUsed, utf8ByteLength, type ToolUsedTrigger } from '../common/analytics-events';
 import { analyzeText, type TextAnalysisResult } from './TextAnalyzer';
+import { TEXT_ANALYZER_SAMPLE_TEXT } from './sample-text';
 import { createLazyRunner, type LazyRunner } from '../common/lazy-runner';
 import { TEXT_ANALYZER_WORKER_CHAR_THRESHOLD as WORKER_CHAR_THRESHOLD } from '../common/worker-thresholds.mjs';
 import toolMetadata from './tool.meta.json';
-
-const SAMPLE_TEXT = "This is a sample text for analysis. It has multiple sentences and paragraphs.\n\nLet's see how well it works!";
 
 /**
  * Inputs at or below this length are analyzed synchronously on the main thread:
@@ -212,16 +211,16 @@ export function TextAnalyzerApp() {
         triggerRef.current = 'sample';
         // Loading the sample when that text is already showing does not change
         // state, so the analyze effect will not run again. Count the click itself.
-        if (text === SAMPLE_TEXT) {
+        if (text === TEXT_ANALYZER_SAMPLE_TEXT) {
             trackToolUsed({
                 toolId: 'text-analyzer',
                 action: 'analyze',
-                inputBytes: utf8ByteLength(SAMPLE_TEXT),
+                inputBytes: utf8ByteLength(TEXT_ANALYZER_SAMPLE_TEXT),
                 trigger: 'sample',
                 outcome: 'success'
             });
         }
-        setText(SAMPLE_TEXT);
+        setText(TEXT_ANALYZER_SAMPLE_TEXT);
         NotificationManager.show('Sample text loaded', 3000, { type: 'success' });
     };
 

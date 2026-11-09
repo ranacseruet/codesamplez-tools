@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.17] - 2026-11-09
+
+### Text Analyzer
+
+- Search title and description now lead with text analysis, keyword frequency, and readability. The guide explains how single-word keywords and key phrases are counted, including stop words and Unicode word breaks, and walks through the built-in sample with the numbers the tool shows.
+
 ## [1.0.16] - 2026-11-02
 
 ### Text Analyzer
