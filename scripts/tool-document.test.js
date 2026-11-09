@@ -497,12 +497,33 @@ describe('tool document generation', () => {
     });
 
     it('renders FAQPage structured data for text-analyzer', () => {
+        const { JSDOM } = require('jsdom');
         const html = generateToolDocument('text-analyzer-tool');
+        const tool = getToolById('text-analyzer-tool');
+        const document = new JSDOM(html).window.document;
+        const title = formatToolDocumentTitle(tool.seoTitle, 'CodeSamplez');
+
+        expect(document.title).toBe('Text Analyzer – Text Analysis & Keywords | CodeSamplez');
+        expect(document.title).toBe(title);
+        expect(document.title.length).toBeLessThanOrEqual(DOCUMENT_TITLE_MAX_LENGTH);
+        expect(document.title.endsWith(' | CodeSamplez')).toBe(true);
+        expect(document.querySelector('h1').textContent).toBe('Text Analyzer');
+        expect(document.querySelector('link[rel="canonical"]').getAttribute('href')).toBe(buildSiteHref('/text-analyzer/'));
+        expect(tool.description).toBe('Free text analysis tool for keyword frequency, keyword density, and readability. A key phrase is counted as its separate words, in your browser.');
+        expect(tool.description.length).toBeLessThanOrEqual(META_DESCRIPTION_MAX_LENGTH);
+        expect(document.querySelector('meta[name="description"]').getAttribute('content')).toBe(tool.description);
 
         expect(html).toContain('"@type":"FAQPage"');
         expect(html).toContain('"name":"Is the Text Analyzer tool free to use?"');
         expect(html).toContain('"name":"What\'s the difference between a text analyzer and a word counter?"');
+        expect(html).toContain('"name":"How does the keyword density calculation work?"');
+        expect(html).toContain('"name":"Is my text uploaded anywhere?"');
+        expect(html).toContain('"name":"What counts as a word, including text without spaces?"');
+        expect(html).toContain('A key phrase is not scored as one keyword.');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes. The CodeSamplez Text Analyzer is completely free to use.');
+        expect(html).toContain('<h1 class="cst-shell__title">Text Analyzer</h1>');
+        expect(html).toContain('Keyword and Key Phrase Analysis');
+        expect(html).toContain('How to Analyze Text');
         expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/text-analyzer/')}#webpage"}`);
     });
 

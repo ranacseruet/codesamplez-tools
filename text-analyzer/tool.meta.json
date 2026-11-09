@@ -1,9 +1,9 @@
 {
   "id": "text-analyzer-tool",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "title": "Text Analyzer",
-  "seoTitle": "Text Analyzer – Word & Character Counter",
-  "description": "Free online Text Analyzer tool that counts words, characters, sentences, paragraphs and more in your text. Get results instantly in real-time.",
+  "seoTitle": "Text Analyzer – Text Analysis & Keywords",
+  "description": "Free text analysis tool for keyword frequency, keyword density, and readability. A key phrase is counted as its separate words, in your browser.",
   "catalogGroupId": "text-analysis",
   "catalogOrder": 2,
   "indexDescription": "Analyze text to get insights like character count, word count, line count, and other useful text statistics. Perfect for content writers and developers.",
