@@ -14,7 +14,8 @@ describe('diff-checker share-url', () => {
     const payload = {
         original: 'function greet(name) {\n  return name;\n}',
         modified: 'function greet(name) {\n  return `hi ${name}`;\n}',
-        ignoreWhitespace: false
+        ignoreWhitespace: false,
+        view: 'unified' as const
     };
 
     it('round-trips a payload through buildShareHash/parseShareHash', () => {
@@ -32,16 +33,30 @@ describe('diff-checker share-url', () => {
     });
 
     it('preserves empty panes rather than treating them as missing', () => {
-        const oneSided = { original: 'only this side', modified: '', ignoreWhitespace: true };
+        const oneSided = { original: 'only this side', modified: '', ignoreWhitespace: true, view: 'unified' as const };
         expect(parseShareHash(buildShareHash(oneSided))).toEqual(oneSided);
     });
 
-    it('defaults ignoreWhitespace to true when omitted', () => {
+    it('defaults ignoreWhitespace to true and the view to unified when both are omitted', () => {
         expect(parseShareHash(`d=${compress({ o: 'a', m: 'b' })}`)).toEqual({
             original: 'a',
             modified: 'b',
-            ignoreWhitespace: true
+            ignoreWhitespace: true,
+            view: 'unified'
         });
+    });
+
+    it('round-trips Side by side and treats an explicit unified flag the same as the default', () => {
+        const split = { ...payload, view: 'split' as const };
+        expect(parseShareHash(buildShareHash(split))).toEqual(split);
+        expect(parseShareHash(`d=${compress({ o: 'a', m: 'b', w: true, v: 'u' })}`)).toMatchObject({
+            view: 'unified'
+        });
+    });
+
+    it('rejects a tampered view flag rather than guessing a result view', () => {
+        expect(parseShareHash(`d=${compress({ o: 'a', m: 'b', w: true, v: 'side-by-side' })}`)).toBeNull();
+        expect(parseShareHash(`d=${compress({ o: 'a', m: 'b', w: true, v: true })}`)).toBeNull();
     });
 
     it('accepts a hash with or without the leading #', () => {
@@ -84,7 +99,7 @@ describe('diff-checker share-url', () => {
         });
 
         expect(resolved.source).toBe('query');
-        expect(resolved.payload).toEqual({ original: 'a', modified: 'b', ignoreWhitespace: true });
+        expect(resolved.payload).toEqual({ original: 'a', modified: 'b', ignoreWhitespace: true, view: 'unified' });
     });
 
     it('reports no payload when neither hash nor query carries one', () => {

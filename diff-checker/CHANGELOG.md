@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.23] - 2026-11-10
+
+### Diff Checker
+
+- Add a Side by side result view next to Unified, with collapsible unchanged lines. Unified stays the default, and the choice is stored in the share link.
+
 ## [1.0.22] - 2026-11-02
 
 ### Diff Checker

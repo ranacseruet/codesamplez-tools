@@ -141,11 +141,15 @@ const DEFAULT_FAIL_PERCENT = 10;
 // and this module crossed it. The other mapped tools absorbed the same module
 // inside their warn line. `data-format-converter` was already over its warn
 // line on main and stays there, still under the fail line.
+//
+// `diff-checker-tool` (97,619 -> 107,916) was refreshed for the side-by-side
+// result view (issue #167): split-row alignment, collapsible unchanged runs,
+// and the view toggle. The main bundle crossed the fail line by about 500 bytes.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 55220,
     'data-format-converter': 190839,
-    'diff-checker-tool': 97619,
+    'diff-checker-tool': 107916,
     'jwt-builder-tool': 81269,
     'jwt-decoder-tool': 76894,
     'base64-converter-tool': 87888,

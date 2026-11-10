@@ -14,8 +14,10 @@ A fast, client-side text and code difference viewer built with Preact and TypeSc
 ## Features
 
 1. **Line-by-Line Comparison with Dual Inputs**
-   - Compares original and modified inputs line-by-line in a unified diff display with paired line numbering.
-   - Highlights additions (green), deletions (red), and unchanged context.
+   - Compares original and modified inputs line-by-line.
+   - Unified (the default) shows one combined list with paired line numbers. Side by side shows the original on the left and the modified text on the right, with changed lines on the same row and line numbers on both sides.
+   - Highlights additions (green, +), deletions (red, -), and unchanged context.
+   - An unchanged run longer than six lines folds to a few lines of context. Expanding one fold leaves the others as they are.
 2. **Word-Level Highlighting**
    - Precise intra-line highlighting for changed words within modified lines.
 3. **Difference Navigation**
@@ -29,6 +31,7 @@ A fast, client-side text and code difference viewer built with Preact and TypeSc
    - Export comparison results as a standard Git-compatible `.patch` file for code review or applying via `git apply`.
 7. **Shareable State Links**
    - Generate compressed URLs via LZ-string in the hash fragment for collaboration without server-side persistence.
+   - The link stores both texts, Ignore Whitespace, and the result view. A link that does not name a view opens in Unified.
 8. **Responsive Iris Theme**
    - Built on the dark-first Iris design system with accessible contrast and mobile layout protection.
 
@@ -55,6 +58,7 @@ Text comparison algorithms (Myers diff) can be computationally expensive on larg
    - Paste or drag the updated text into the right pane ("Modified").
 2. **Configure Options**:
    - Toggle **Ignore whitespace** depending on whether whitespace and line endings should be evaluated.
+   - Choose **Unified** or **Side by side** above the result. Unified is the default. On a narrow screen, Side by side scrolls inside the result panel.
 3. **Compare**:
    - Click **Compare** or press `Cmd/Ctrl + Enter`.
 4. **Navigate & Export**:

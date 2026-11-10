@@ -405,9 +405,182 @@
   background-color: color-mix(in srgb, var(--color-primary, #1d70b8) 10%, var(--cst-color-mix-neutral, white));
 }
 
+.diffc-tool .diffc-result-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.diffc-tool .diffc-view-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.7rem;
+  min-width: 0;
+}
+
+.diffc-tool .diffc-view-toggle__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.diffc-tool .diffc-view-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.92rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.diffc-tool .diffc-view-option input {
+  margin: 0;
+}
+
+.diffc-tool .diffc-view-option input:focus-visible {
+  outline: 2px solid var(--color-primary, #1d70b8);
+  outline-offset: 2px;
+}
+
+/* Side by side is one grid row per aligned pair, so the two columns scroll
+   together. On a narrow screen the row is wider than the panel and the panel
+   scrolls; the page itself does not. */
+.diffc-tool .diffc-result-output--split {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.diffc-tool .diff-line.diff-split-row,
+.diffc-tool .diff-split-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-width: 0;
+}
+
+.diffc-tool .diff-split-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  background: var(--color-surface-subtle, #f5f7fa);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
+}
+
+.diffc-tool .diff-split-head__cell {
+  padding: 0.35rem 0.6rem;
+}
+
+.diffc-tool .diff-split-head__cell + .diff-split-head__cell {
+  border-left: 1px solid color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
+}
+
+.diffc-tool .diff-line.diff-split-row,
+.diffc-tool .diff-line.diff-split-row:has(.diff-content.diff-added),
+.diffc-tool .diff-line.diff-split-row:has(.diff-content.diff-removed),
+.diffc-tool .diff-line.diff-split-row:hover {
+  background-color: transparent;
+  border-left-color: transparent;
+}
+
+.diffc-tool .diff-split-row::before {
+  content: none;
+  display: none;
+}
+
+.diffc-tool .diff-split-cell {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  border-left: 4px solid transparent;
+}
+
+.diffc-tool .diff-split-cell + .diff-split-cell {
+  border-left-width: 1px;
+  border-left-style: solid;
+  border-left-color: color-mix(in srgb, var(--color-border, #d7dde4) 92%, var(--cst-color-mix-neutral, white));
+}
+
+.diffc-tool .diff-split-cell--added,
+.diffc-tool .diff-split-cell + .diff-split-cell.diff-split-cell--added {
+  background-color: color-mix(in srgb, var(--diffc-added-accent, #16a34a) 10%, var(--cst-color-mix-neutral, white));
+  border-left: 4px solid var(--diffc-added-accent, #16a34a);
+}
+
+.diffc-tool .diff-split-cell--removed,
+.diffc-tool .diff-split-cell + .diff-split-cell.diff-split-cell--removed {
+  background-color: color-mix(in srgb, var(--diffc-removed-accent, #dc2626) 10%, var(--cst-color-mix-neutral, white));
+  border-left: 4px solid var(--diffc-removed-accent, #dc2626);
+}
+
+.diffc-tool .diff-split-cell .diff-content {
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.diffc-tool .diff-split-cell .diff-line-number {
+  min-width: 2.5rem;
+}
+
+.diffc-tool .diff-marker {
+  flex: 0 0 auto;
+  width: 1rem;
+  text-align: center;
+  font-weight: 700;
+  line-height: 1.45;
+  user-select: none;
+  color: var(--color-text, #1f2937);
+}
+
+.diffc-tool .diff-fold {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  margin: 2px 0;
+  padding: 0.25rem 0.6rem;
+  border: 1px dashed color-mix(in srgb, var(--color-border, #d7dde4) 80%, var(--color-primary, #1d70b8));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-surface-subtle, #f5f7fa) 88%, var(--cst-color-mix-neutral, white));
+  color: var(--color-text-secondary, #4b5563);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.diffc-tool .diff-fold:hover {
+  background: color-mix(in srgb, var(--color-primary, #1d70b8) 8%, var(--cst-color-mix-neutral, white));
+}
+
+.diffc-tool .diff-fold:focus-visible {
+  outline: 2px solid var(--color-primary, #1d70b8);
+  outline-offset: 2px;
+}
+
+.diffc-tool .diff-split-row.current-diff-single,
+.diffc-tool .diff-split-row.current-diff-start,
+.diffc-tool .diff-split-row.current-diff-middle,
+.diffc-tool .diff-split-row.current-diff-end {
+  outline: 2px solid var(--color-primary, #1d70b8);
+  outline-offset: -1px;
+  background-color: transparent;
+}
+
 @media (max-width: 900px) {
   .diffc-tool .diffc-options {
     align-items: stretch;
+  }
+
+  .diffc-tool .diffc-result-toolbar {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .diffc-tool .diffc-compare-button {
@@ -454,8 +627,8 @@
 
   .diffc-tool .diffc-result-output {
     min-height: 18rem;
-    /* Markers are hidden at this width; reclaim the gutter. */
-    padding-left: 0.45rem;
+    /* Keep the +/- gutter. Additions and removals are not shown by color alone. */
+    padding-left: 1.25rem;
   }
 
   .diffc-tool .diff-content {
@@ -467,8 +640,14 @@
     font-size: 11px;
     padding: 2px 4px;
   }
+}
 
-  .diffc-tool .diff-line::before {
-    display: none;
+/* Under about 768px, Side by side stays in the result panel and scrolls
+   sideways there. The row's min-width is what creates that inner scrollbar;
+   the panel already clips, so the page does not grow sideways. */
+@media (max-width: 767px) {
+  .diffc-tool .diff-line.diff-split-row,
+  .diffc-tool .diff-split-head {
+    min-width: 40rem;
   }
 }

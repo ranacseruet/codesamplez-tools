@@ -64,4 +64,40 @@ describe('DiffChecker large-input offload', () => {
 
         expect(result.children.length).toBeGreaterThan(0);
     });
+
+    it('renders a 5,000-line comparison in both views through the offload path', async () => {
+        document.body.insertAdjacentHTML('beforeend', `
+            <input type="radio" name="diff-view" value="unified" id="diff-view-unified" checked>
+            <input type="radio" name="diff-view" value="split" id="diff-view-split">
+        `);
+        initializeDiffChecker();
+
+        const prefix = 'const value = 1;\n'.repeat(5000);
+        const original = `${prefix}alpha`;
+        const modified = `${prefix}omega`;
+        expect(original.length + modified.length).toBeGreaterThan(20000);
+        document.getElementById('text1').value = original;
+        document.getElementById('text2').value = modified;
+
+        const started = Date.now();
+        document.getElementById('compare-button').click();
+        const result = document.getElementById('diff-result');
+        for (let i = 0; i < 80 && result.querySelector('.diff-fold') === null; i += 1) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+
+        expect(result.querySelector('.diff-fold')).not.toBeNull();
+        expect(result.querySelectorAll('.diff-line').length).toBeLessThan(40);
+        expect(result.dataset.resultView).toBe('unified');
+
+        document.getElementById('diff-view-split').checked = true;
+        document.getElementById('diff-view-split').dispatchEvent(new Event('change', { bubbles: true }));
+
+        expect(result.dataset.resultView).toBe('split');
+        expect(result.querySelector('.diff-split-row')).not.toBeNull();
+        expect(result.querySelector('.diff-fold')).not.toBeNull();
+        expect(result.querySelectorAll('.diff-line').length).toBeLessThan(40);
+        expect(result.querySelector('.diff-marker').textContent).toMatch(/^[+-]$/);
+        expect(Date.now() - started).toBeLessThan(8000);
+    });
 });

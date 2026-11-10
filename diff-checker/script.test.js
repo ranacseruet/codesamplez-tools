@@ -4,6 +4,7 @@ import { NotificationManager } from '../common/notification-manager';
 import { scheduleTask } from '../common/scheduler-utils';
 import ClearButton from '../common/clear-button/ClearButton';
 import { fireFileDragEvent, fireFileDrop, flushFileDrop } from '../common/drop-zone-test-utils';
+import { compressToEncodedURIComponent } from 'lz-string';
 import { buildShareHash, parseShareHash } from './share-url';
 
 const mockDownloadManagerInstances = [];
@@ -781,6 +782,9 @@ describe('initializeDiffChecker', () => {
   let container;
 
   beforeEach(() => {
+    // Earlier describes leave their own #diff-result in the body. getElementById
+    // would keep returning that node, so each test starts from a clean document.
+    document.body.innerHTML = '';
     container = document.createElement('div');
     container.innerHTML = `
       <textarea id="text1"></textarea>
@@ -933,7 +937,8 @@ describe('initializeDiffChecker', () => {
       expect(parseShareHash(`#${url.split('#')[1]}`)).toEqual({
         original: 'alpha',
         modified: 'beta',
-        ignoreWhitespace: false
+        ignoreWhitespace: false,
+        view: 'unified'
       });
     });
 
@@ -1363,5 +1368,229 @@ describe('initializeDiffChecker', () => {
     const errorStatus = document.getElementById('diff-error-status');
     expect(errorStatus.textContent).toBe('Error computing diff: scheduler failed');
     expect(errorStatus.classList.contains('error')).toBe(true);
+  });
+
+  describe('side-by-side result view', () => {
+    const addViewToggle = () => {
+      const unified = document.createElement('input');
+      unified.type = 'radio';
+      unified.name = 'diff-view';
+      unified.value = 'unified';
+      unified.id = 'diff-view-unified';
+      unified.checked = true;
+      const split = document.createElement('input');
+      split.type = 'radio';
+      split.name = 'diff-view';
+      split.value = 'split';
+      split.id = 'diff-view-split';
+      container.append(unified, split);
+      return { unified, split };
+    };
+
+    const compare = async (original, modified) => {
+      document.getElementById('text1').value = original;
+      document.getElementById('text2').value = modified;
+      document.getElementById('compare-button').click();
+      await waitFor(() => expect(document.getElementById('diff-result').children.length).toBeGreaterThan(0));
+    };
+
+    test('keeps folded line numbers and shows + and - on one aligned row', () => {
+      const root = document.createElement('pre');
+      const lines = [];
+      for (let index = 0; index < 10; index += 1) lines.push(['unchanged', `u${index}`]);
+      lines.push(['removed', 'hello world', [[6, 11]]]);
+      lines.push(['added', 'hello there', [[6, 11]]]);
+      const display = new DiffDisplay(root);
+
+      display.displayDiff(lines, false, { view: 'unified', fold: true, expandedFoldIds: new Set() });
+      const numbers = Array.from(root.querySelectorAll('.diff-line .diff-line-number'), (node) => node.textContent);
+      expect(numbers[0]).toBe('  8│  8');
+      expect(numbers[3]).toBe(' 11│   ');
+      expect(numbers[4]).toBe('   │ 11');
+      expect(root.querySelector('.diff-fold').textContent).toBe('Show 7 unchanged lines');
+      expect(root.querySelector('.diff-fold').getAttribute('aria-expanded')).toBe('false');
+      expect(root.dataset.resultView).toBe('unified');
+
+      display.displayDiff(lines, false, {
+        view: 'unified',
+        fold: true,
+        expandedFoldIds: new Set(['unchanged-0-10'])
+      });
+      expect(root.textContent).toContain('u0');
+      expect(root.querySelector('.diff-fold').textContent).toBe('Hide 7 unchanged lines');
+      expect(root.querySelector('.diff-line .diff-line-number').textContent).toBe('  1│  1');
+
+      display.displayDiff(lines, false, { view: 'split', fold: true, expandedFoldIds: new Set() });
+      expect(root.dataset.resultView).toBe('split');
+      expect(root.querySelector('.diff-split-head').textContent).toContain('Original');
+      expect(root.querySelector('.diff-split-head').textContent).toContain('Modified');
+      const firstRow = root.querySelector('.diff-split-row');
+      expect(firstRow.querySelector('.diff-split-cell--left .diff-line-number').textContent.trim()).toBe('8');
+      expect(firstRow.querySelector('.diff-split-cell--right .diff-line-number').textContent.trim()).toBe('8');
+      const changed = root.querySelector('.diff-split-row:last-child');
+      expect(changed.querySelector('.diff-split-cell--left .diff-marker').textContent).toBe('-');
+      expect(changed.querySelector('.diff-split-cell--right .diff-marker').textContent).toBe('+');
+      expect(changed.querySelector('.diff-split-cell--left .word-removed').textContent).toBe('world');
+      expect(changed.querySelector('.diff-split-cell--right .word-added').textContent).toBe('there');
+      expect(changed.querySelector('.diff-split-cell--left .diff-line-number').textContent.trim()).toBe('11');
+      expect(changed.querySelector('.diff-split-cell--right .diff-line-number').textContent.trim()).toBe('11');
+      expect(changed.querySelector('.diff-split-cell--removed')).toBe(
+        changed.querySelector('.diff-split-cell--left')
+      );
+      expect(changed.querySelector('.diff-split-cell--added')).toBe(
+        changed.querySelector('.diff-split-cell--right')
+      );
+    });
+
+    test('renders an insertion with an empty original cell when folding is off', () => {
+      const root = document.createElement('pre');
+      new DiffDisplay(root).displayDiff([['added', 'only new']], false, { view: 'split', fold: false });
+      const row = root.querySelector('.diff-split-row');
+      expect(row.querySelector('.diff-split-cell--empty')).not.toBeNull();
+      expect(row.querySelector('.diff-split-cell--right .diff-marker').textContent).toBe('+');
+      expect(root.querySelector('.diff-fold')).toBeNull();
+    });
+
+    test('switches views, folds one run without resetting the other, and keeps navigation', async () => {
+      const { split } = addViewToggle();
+      initializeDiffChecker();
+
+      const unchanged = (prefix) => Array.from({ length: 8 }, (_, index) => `${prefix}-${index}`).join('\n');
+      await compare(
+        `head-old\n${unchanged('a')}\nmid-old\n${unchanged('b')}\ntail-old`,
+        `head-new\n${unchanged('a')}\nmid-new\n${unchanged('b')}\ntail-new`
+      );
+
+      const result = document.getElementById('diff-result');
+      const folds = () => Array.from(result.querySelectorAll('.diff-fold'));
+      expect(folds()).toHaveLength(2);
+      expect(folds().every((button) => button.textContent.startsWith('Show '))).toBe(true);
+      expect(result.textContent).not.toContain('a-3');
+
+      folds()[0].click();
+      expect(folds()[0].textContent).toMatch(/^Hide /);
+      expect(folds()[0].getAttribute('aria-expanded')).toBe('true');
+      expect(folds()[1].textContent).toMatch(/^Show /);
+      expect(result.textContent).toContain('a-3');
+      expect(result.textContent).not.toContain('b-4');
+
+      split.checked = true;
+      split.dispatchEvent(new Event('change', { bubbles: true }));
+      expect(result.dataset.resultView).toBe('split');
+      expect(result.classList.contains('diffc-result-output--split')).toBe(true);
+      expect(folds()[0].textContent).toMatch(/^Hide /);
+      expect(folds()[1].textContent).toMatch(/^Show /);
+      const changedRow = result.querySelector('.diff-split-row .diff-removed').closest('.diff-split-row');
+      expect(changedRow.querySelector('.diff-split-cell--left .diff-marker').textContent).toBe('-');
+      expect(changedRow.querySelector('.diff-split-cell--right .diff-marker').textContent).toBe('+');
+
+      const next = document.getElementById('next-diff-button');
+      const prev = document.getElementById('prev-diff-button');
+      const counter = document.getElementById('diff-counter');
+      expect(counter.textContent).toBe('0 of 3');
+      next.click();
+      expect(counter.textContent).toBe('1 of 3');
+      expect(result.querySelector('.current-diff-single, .current-diff-start')).not.toBeNull();
+      next.click();
+      next.click();
+      expect(counter.textContent).toBe('3 of 3');
+      expect(next.disabled).toBe(true);
+      prev.click();
+      expect(counter.textContent).toBe('2 of 3');
+      expect(prev.disabled).toBe(false);
+    });
+
+    test('applies Ignore Whitespace and still downloads a unified patch from Side by side', async () => {
+      const { split } = addViewToggle();
+      initializeDiffChecker();
+      document.getElementById('ignore-whitespace').checked = true;
+      await compare('  alpha\nbeta', 'alpha\nbeta');
+      split.checked = true;
+      split.dispatchEvent(new Event('change', { bubbles: true }));
+      const result = document.getElementById('diff-result');
+      expect(result.dataset.resultView).toBe('split');
+      expect(result.querySelector('.diff-removed, .diff-added')).toBeNull();
+
+      document.getElementById('text2').value = 'alpha\nbeta\nextra';
+      document.getElementById('compare-button').click();
+      await waitFor(() => expect(result.querySelector('.diff-added')).not.toBeNull());
+      const downloadButton = document.getElementById('download-patch-button');
+      const downloadManager = mockDownloadManagerInstances.at(-1);
+      expect(downloadButton.disabled).toBe(false);
+      downloadButton.click();
+      await waitFor(() => expect(downloadManager.downloadFile).toHaveBeenCalled());
+      const patch = downloadManager.downloadFile.mock.calls.at(-1)[0];
+      expect(patch).toContain('+extra');
+      expect(patch).toContain('---');
+    });
+
+    test('keeps syntax highlighting on unchanged lines in Side by side', async () => {
+      const { split } = addViewToggle();
+      initializeDiffChecker();
+      await compare('[\n  "apple",\n  "banana"\n]', '[\n  "apple",\n  "orange"\n]');
+      split.checked = true;
+      split.dispatchEvent(new Event('change', { bubbles: true }));
+      const highlighted = Array.from(document.querySelectorAll('.diff-split-cell .diff-content'))
+        .some((cell) => cell.innerHTML.includes('token string'));
+      expect(highlighted).toBe(true);
+    });
+
+    test('puts the selected view in the share link', async () => {
+      const writeText = jest.fn().mockResolvedValue(undefined);
+      Object.defineProperty(global.navigator, 'clipboard', {
+        value: { writeText },
+        configurable: true,
+        writable: true
+      });
+      const { split } = addViewToggle();
+      initializeDiffChecker();
+      document.getElementById('text1').value = 'alpha';
+      document.getElementById('text2').value = 'beta';
+      split.checked = true;
+
+      document.getElementById('diff-share-button').click();
+      await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+
+      const url = writeText.mock.calls[0][0];
+      expect(parseShareHash(`#${url.split('#')[1]}`)).toMatchObject({
+        original: 'alpha',
+        modified: 'beta',
+        view: 'split'
+      });
+    });
+
+    test('opens a share link that has no view parameter in Unified', async () => {
+      const { pathname } = window.location;
+      window.history.replaceState(
+        {},
+        '',
+        `${pathname}#d=${compressToEncodedURIComponent(JSON.stringify({ o: 'left', m: 'right', w: false }))}`
+      );
+      addViewToggle();
+      initializeDiffChecker();
+
+      await waitFor(() => {
+        expect(document.getElementById('text1').value).toBe('left');
+        expect(document.getElementById('diff-result').children.length).toBeGreaterThan(0);
+      });
+      expect(document.getElementById('text2').value).toBe('right');
+      expect(document.getElementById('ignore-whitespace').checked).toBe(false);
+      expect(document.getElementById('diff-view-unified').checked).toBe(true);
+      expect(document.getElementById('diff-view-split').checked).toBe(false);
+      expect(document.getElementById('diff-result').dataset.resultView).toBe('unified');
+      expect(document.querySelector('.diff-split-row')).toBeNull();
+      window.history.replaceState({}, '', pathname);
+    });
+
+    test('does nothing to an empty result when the view changes before Compare', () => {
+      const { split } = addViewToggle();
+      initializeDiffChecker();
+      const result = document.getElementById('diff-result');
+      split.checked = true;
+      split.dispatchEvent(new Event('change', { bubbles: true }));
+      result.click();
+      expect(result.classList.contains('diffc-result-output--split')).toBe(true);
+      expect(result.children.length).toBe(0);
+    });
   });
 });
