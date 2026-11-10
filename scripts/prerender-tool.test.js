@@ -163,6 +163,15 @@ describe('generic tool prerender helpers', () => {
         // component passes every positive assertion.
         expect(appMarkup).not.toContain('This free online JWT Decoder lets you paste any JSON Web Token to instantly see its header and payload');
         expect(afterMarkup).toContain('What is a JSON Web Token (JWT)?');
+        expect(afterMarkup).toContain('Worked Example: Decode an HS256 Token');
+        expect(afterMarkup).toContain('Decode a JWT in Code');
+        expect(afterMarkup).toContain('Standard Claims, Time Fields, and Base64URL');
+        expect(afterMarkup).toContain('Is it safe to paste my JWT here?');
+        expect(afterMarkup).toContain('Why does my token decode but fail verification?');
+        expect(afterMarkup).toContain('How do I decode a JWT without a library?');
+        expect(afterMarkup).toContain('Mon, 15 Jul 2030 12:00:00 GMT');
+        expect(afterMarkup).toContain('Signature verification is only supported for HS256 (token uses RS256).');
+        expect(afterMarkup).toContain('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE5MTAzNDcyMDA');
         expect(afterMarkup).toContain('JWT Decoder FAQs (Frequently Asked Questions)');
         expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
         expect(afterMarkup).toContain(`href="${buildSiteHref('/jwt-builder/')}"`);

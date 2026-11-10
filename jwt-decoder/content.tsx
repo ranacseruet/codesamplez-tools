@@ -2,7 +2,80 @@ import type { JSX } from 'preact';
 import { buildSiteHref, SITE_BASE_URL } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 import { ToolTutorialLinks } from '../common/tool-article/TutorialLinks';
-import { JWT_CRASH_COURSE } from '../common/tool-article/tutorial-links';
+import { JWT_BEST_PRACTICES, JWT_CRASH_COURSE } from '../common/tool-article/tutorial-links';
+
+/**
+ * Fixed HS256 example, the same token the JWT Generator worked example signs.
+ * The secret is UTF-8 text. The decoder does not Base64-decode it.
+ * Date strings are Date.toUTCString(), which the Validation Result panel prints.
+ */
+export const WORKED_EXAMPLE_SECRET = 'your-jwt-secret-key';
+export const WORKED_EXAMPLE_HEADER = {
+    alg: 'HS256',
+    typ: 'JWT'
+};
+export const WORKED_EXAMPLE_PAYLOAD = {
+    exp: 1910347200,
+    iat: 1894708800,
+    nbf: 1894708800,
+    iss: 'example-issuer',
+    sub: 'user-123',
+    aud: 'example-api',
+    jti: 'example-token-1'
+};
+export const WORKED_EXAMPLE_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE5MTAzNDcyMDAsImlhdCI6MTg5NDcwODgwMCwibmJmIjoxODk0NzA4ODAwLCJpc3MiOiJleGFtcGxlLWlzc3VlciIsInN1YiI6InVzZXItMTIzIiwiYXVkIjoiZXhhbXBsZS1hcGkiLCJqdGkiOiJleGFtcGxlLXRva2VuLTEifQ.rGjvaLDaYH15AC3SkgKUlBwqW2poNQapBfo3bQkpNJo';
+
+/** Pretty JSON Copy Decoded writes for this token: `{ header, payload }` with a 2-space indent. */
+export const WORKED_EXAMPLE_DECODED_JSON = JSON.stringify({
+    header: WORKED_EXAMPLE_HEADER,
+    payload: WORKED_EXAMPLE_PAYLOAD
+}, null, 2);
+
+function utcFromSeconds(seconds: number): string {
+    return new Date(seconds * 1000).toUTCString();
+}
+
+export const WORKED_EXAMPLE_EXP_UTC = utcFromSeconds(WORKED_EXAMPLE_PAYLOAD.exp);
+export const WORKED_EXAMPLE_IAT_UTC = utcFromSeconds(WORKED_EXAMPLE_PAYLOAD.iat);
+export const WORKED_EXAMPLE_NBF_UTC = utcFromSeconds(WORKED_EXAMPLE_PAYLOAD.nbf);
+
+/** Validation Result text while the current time is before nbf. Matches the panel join. */
+export const WORKED_EXAMPLE_VALIDITY_BEFORE_NBF = `⚠️ Not valid until ${WORKED_EXAMPLE_NBF_UTC} · Expires at ${WORKED_EXAMPLE_EXP_UTC} · Issued at ${WORKED_EXAMPLE_IAT_UTC}`;
+
+export const BROWSER_DECODE_SNIPPET = `function decodeJwtPart(part) {
+  const base64 = part.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+  const bytes = Uint8Array.from(atob(padded), (char) => char.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+const [headerPart, payloadPart] = token.split('.');
+const header = decodeJwtPart(headerPart);
+const payload = decodeJwtPart(payloadPart);`;
+
+export const NODE_DECODE_SNIPPET = `function decodeJwtPart(part) {
+  const base64 = part.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+  return JSON.parse(Buffer.from(padded, 'base64').toString('utf8'));
+}
+
+const [headerPart, payloadPart] = token.split('.');
+const header = decodeJwtPart(headerPart);
+const payload = decodeJwtPart(payloadPart);`;
+
+export const PYTHON_DECODE_SNIPPET = `import base64
+import json
+
+def decode_jwt_part(part):
+    padded = part + '=' * (-len(part) % 4)
+    return json.loads(base64.urlsafe_b64decode(padded))
+
+header_part, payload_part, _signature = token.split('.')
+header = decode_jwt_part(header_part)
+payload = decode_jwt_part(payload_part)`;
+
+const HS256_ONLY_WARNING_RS256 = '⚠️ Decoded successfully. Signature verification is only supported for HS256 (token uses RS256).';
+const HS256_ONLY_WARNING_ES256 = '⚠️ Decoded successfully. Signature verification is only supported for HS256 (token uses ES256).';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -19,7 +92,7 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     ),
     createPlainTextFaqItem(
         'Do I need the secret key to decode a JWT?',
-        'No, no secret key is required to be able to decode the payload from the token. But, a key is required to verify the JWT signature, either in plain text or in Base64 encoded.'
+        'No. The header and payload decode without a secret. Verifying an HS256 signature needs the shared secret in the Secret Key field. The tool uses that text as UTF-8 bytes and does not Base64-decode it.'
     ),
     createPlainTextFaqItem(
         'What algorithms does this JWT decoder support?',
@@ -32,6 +105,18 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     createPlainTextFaqItem(
         'What are common JWT payload claims?',
         'There are seven standard claims for JWT as per RFC7519, including iss, sub, aud, exp, nbf, iat, and jti.'
+    ),
+    createPlainTextFaqItem(
+        'Is it safe to paste my JWT here?',
+        'Decoding runs in this browser. The token and the secret are not uploaded and are not stored. Use the page to debug a test token. Do not paste a production token or a production secret.'
+    ),
+    createPlainTextFaqItem(
+        'Why does my token decode but fail verification?',
+        `Decoding only reads the Base64URL header and payload. It does not check the signature. This page verifies HS256 by HMAC-SHA256 using the Secret Key text as UTF-8 bytes, and it does not Base64-decode that secret. A different secret shows “✗ Decoded successfully. Signature is invalid.” An RS256 token still decodes, and Validate Signature then shows “${HS256_ONLY_WARNING_RS256}” The same warning names ES256 when that is the algorithm. This page does not verify RS256 or ES256. A matching HS256 signature can still be expired or not yet valid when exp or nbf says so.`
+    ),
+    createPlainTextFaqItem(
+        'How do I decode a JWT without a library?',
+        'Split the token on the dots. Base64URL-decode the first segment for the header and the second for the payload: replace - with + and _ with /, add = padding so the length is a multiple of 4, then decode. Use atob and TextDecoder in the browser, Buffer in Node.js, or base64 with that padding in Python. That reads the claims. It does not verify the signature.'
     )
 ];
 
@@ -42,8 +127,8 @@ export function JwtDecoderIntro(): JSX.Element {
                 <h2 id="jwt-decoder-intro-heading" className="c-tool-article__eyebrow">About This Tool</h2>
                 <p className="c-tool-article__lead">
                     Need to decode a JWT token quickly? You’re in the right place. This free online JWT Decoder lets
-                    you paste any JSON Web Token to instantly see its header and payload, and even verifies the
-                    signature for you, all right in your browser.
+                    you paste any JSON Web Token to instantly see its header and payload, and verifies an HS256
+                    signature with a shared secret, all right in your browser.
                 </p>
             </div>
         </section>
@@ -97,13 +182,99 @@ export function JwtDecoderArticle(): JSX.Element {
                     </ol>
                 </ToolArticleSection>
 
+                <ToolArticleSection id="jwt-decoder-worked-example" title="Worked Example: Decode an HS256 Token">
+                    <p>
+                        Paste the token below. It is the HS256 example from the{' '}
+                        <a href={buildSiteHref('/jwt-builder/')}>JWT Generator</a>, signed with the placeholder
+                        secret <code>{WORKED_EXAMPLE_SECRET}</code>. That secret is the UTF-8 text of the Secret Key
+                        field. This page does not Base64-decode it. Load Sample fills a different token.
+                    </p>
+                    <pre><code>{WORKED_EXAMPLE_TOKEN}</code></pre>
+                    <p>
+                        Copy Decoded writes this JSON. The Raw tab shows the same header and payload, and the Header
+                        and Payload tabs show those two objects:
+                    </p>
+                    <pre><code>{WORKED_EXAMPLE_DECODED_JSON}</code></pre>
+                    <p>
+                        The Validation Result panel turns <code>exp</code>, <code>iat</code>, and <code>nbf</code> into
+                        UTC dates (the same text as <code>Date.toUTCString()</code>):
+                    </p>
+                    <ul>
+                        <li><code>exp</code> {WORKED_EXAMPLE_PAYLOAD.exp} is {WORKED_EXAMPLE_EXP_UTC}</li>
+                        <li><code>iat</code> {WORKED_EXAMPLE_PAYLOAD.iat} is {WORKED_EXAMPLE_IAT_UTC}</li>
+                        <li><code>nbf</code> {WORKED_EXAMPLE_PAYLOAD.nbf} is {WORKED_EXAMPLE_NBF_UTC}</li>
+                    </ul>
+                    <p>
+                        While the current time is before <code>nbf</code>, the panel reads{' '}
+                        <code>{WORKED_EXAMPLE_VALIDITY_BEFORE_NBF}</code>. After <code>nbf</code> and before{' '}
+                        <code>exp</code> it reads{' '}
+                        <code>{`✓ Not expired (expires at ${WORKED_EXAMPLE_EXP_UTC}) · Issued at ${WORKED_EXAMPLE_IAT_UTC}`}</code>.
+                        On or after <code>exp</code> it reads{' '}
+                        <code>{`✗ Expired at ${WORKED_EXAMPLE_EXP_UTC} · Issued at ${WORKED_EXAMPLE_IAT_UTC}`}</code>.
+                    </p>
+                    <p>
+                        The three segments are header, payload, and the HS256 signature. The{' '}
+                        <a href={JWT_CRASH_COURSE.href}>{JWT_CRASH_COURSE.anchor}</a> walks through that layout.
+                    </p>
+                </ToolArticleSection>
+
+                <ToolArticleSection id="jwt-decoder-decode-in-code" title="Decode a JWT in Code">
+                    <p>
+                        These snippets decode the token above. <code>token</code> is that string. Each one reads the
+                        header and payload only.
+                    </p>
+                    <h3>JavaScript in the browser</h3>
+                    <pre><code>{BROWSER_DECODE_SNIPPET}</code></pre>
+                    <p>This reads the JSON with atob and TextDecoder. It does not verify the signature.</p>
+                    <h3>Node.js</h3>
+                    <pre><code>{NODE_DECODE_SNIPPET}</code></pre>
+                    <p>Buffer reads the JSON. It does not verify the signature.</p>
+                    <h3>Python</h3>
+                    <pre><code>{PYTHON_DECODE_SNIPPET}</code></pre>
+                    <p>This reads the claims with base64 and padding. It does not verify the signature.</p>
+                    <p>
+                        To create the same token, use the{' '}
+                        <a href={buildSiteHref('/jwt-builder/')}>JWT Generator</a>.
+                    </p>
+                </ToolArticleSection>
+
+                <ToolArticleSection id="jwt-decoder-claims" title="Standard Claims, Time Fields, and Base64URL">
+                    <p>RFC 7519 defines these seven registered claims. A token may include any subset of them.</p>
+                    <ul>
+                        <li><code>iss</code> (issuer): who issued the token.</li>
+                        <li><code>sub</code> (subject): who the token is about, often a user id.</li>
+                        <li><code>aud</code> (audience): who the token is for, such as an API.</li>
+                        <li><code>exp</code> (expiration): NumericDate, seconds since the Unix epoch. The token is not acceptable on or after this time.</li>
+                        <li><code>iat</code> (issued at): NumericDate when the token was issued.</li>
+                        <li><code>nbf</code> (not before): NumericDate. The token is not acceptable before this time.</li>
+                        <li><code>jti</code> (JWT ID): a unique id for this token.</li>
+                    </ul>
+                    <p>
+                        A token can decode and still be unusable. Decoding only needs the first two segments to be
+                        Base64URL JSON. The signature can be wrong, the algorithm can be one this page does not
+                        verify, <code>exp</code> can be in the past, or <code>nbf</code> can be in the future. The
+                        signature line and the time line in Validation Result are separate. The{' '}
+                        <a href={JWT_BEST_PRACTICES.href}>{JWT_BEST_PRACTICES.anchor}</a> covers how long a token
+                        should live.
+                    </p>
+                    <p>
+                        Each segment is Base64URL (RFC 4648 §5). The alphabet uses <code>-</code> and <code>_</code>{' '}
+                        instead of <code>+</code> and <code>/</code>, and the <code>=</code> padding is left off. This
+                        page puts the padding back, swaps the alphabet, and reads the bytes as UTF-8. The{' '}
+                        <a href={JWT_CRASH_COURSE.href}>{JWT_CRASH_COURSE.anchor}</a> shows the three-part layout.
+                    </p>
+                </ToolArticleSection>
+
                 <ToolArticleSection id="jwt-decoder-how-to-verify" title="How to Verify a JWT Signature">
                     <p>When you are done decoding the token successfully, follow these steps:</p>
                     <ul>
-                        <li>Enter the secret key used to sign the token in the Secret Key field.</li>
-                        <li>The tool supports both plain text and Base64-encoded secrets.</li>
-                        <li>View the validation result in the Validation Result section.</li>
-                        <li>Correct anything if needed, based on validation result, and try again.</li>
+                        <li>Enter the shared secret in the Secret Key field. The tool uses that text as UTF-8 bytes for HMAC-SHA256 and does not Base64-decode it.</li>
+                        <li>A matching HS256 secret shows “✓ Decoded successfully. Signature is valid.”</li>
+                        <li>A different secret shows “✗ Decoded successfully. Signature is invalid.”</li>
+                        <li>
+                            An RS256 or ES256 token still decodes. Validate Signature then shows “{HS256_ONLY_WARNING_RS256}”
+                            or “{HS256_ONLY_WARNING_ES256}”. This page does not verify RS256 or ES256.
+                        </li>
                     </ul>
                     <p>
                         Need to generate a new JWT token instead? Use our{' '}
@@ -134,8 +305,9 @@ export function JwtDecoderArticle(): JSX.Element {
                     <h3>JWT Signature Verification</h3>
                     <ul>
                         <li>Implements HMAC-SHA256 using the Web Crypto API.</li>
-                        <li>Supports both raw and Base64-encoded secret keys.</li>
+                        <li>Uses the Secret Key text as UTF-8 bytes. It does not Base64-decode the secret.</li>
                         <li>Provides real-time validation with immediate feedback.</li>
+                        <li>RS256 and ES256 decode, then show the HS256-only warning. This page does not verify those algorithms.</li>
                     </ul>
                 </ToolArticleSection>
 

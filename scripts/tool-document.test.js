@@ -462,7 +462,14 @@ describe('tool document generation', () => {
         expect(html).toContain('"@type":"FAQPage"');
         expect(html).toContain('"name":"Is it safe to decode JWTs using an online tool?"');
         expect(html).toContain('"name":"Can this tool create JWTs or just decode?"');
+        expect(html).toContain('"name":"Is it safe to paste my JWT here?"');
+        expect(html).toContain('"name":"Why does my token decode but fail verification?"');
+        expect(html).toContain('"name":"How do I decode a JWT without a library?"');
+        expect(html).toContain('Worked Example: Decode an HS256 Token');
+        expect(html).toContain('Decode a JWT in Code');
+        expect(html).toContain('Standard Claims, Time Fields, and Base64URL');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Yes. This tool doesn’t store anything, neither sends to any server for processing.');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Decoding runs in this browser. The token and the secret are not uploaded and are not stored.');
         expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/jwt-decoder/')}#webpage"}`);
     });
 
