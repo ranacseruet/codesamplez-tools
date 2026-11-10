@@ -4,8 +4,20 @@ import {
   type DiffChangeType,
   type DiffComputeRequest,
   type DiffComputeResult,
-  type DiffHighlightRange
+  type DiffHighlightRange,
+  type DiffResultLine
 } from './diff';
+import {
+  alignSplitRows,
+  buildVisibleBlocks,
+  foldControlLabel,
+  planUnchangedFolds,
+  type DiffRenderOptions,
+  type DiffViewMode,
+  type FoldRegion,
+  type SplitCell,
+  type SplitRow
+} from './result-view';
 import ClearButton from '../common/clear-button/ClearButton';
 import CopyButton from '../common/copy-button/CopyButton';
 import { NotificationManager } from '../common/notification-manager';
@@ -191,7 +203,17 @@ class DiffDisplay {
     this.lineNumberDigits = 0;
   }
 
-  displayDiff(diffResults, isCodeContent: boolean | string = false) {
+  displayDiff(diffResults, isCodeContent: boolean | string = false, options?: DiffRenderOptions) {
+    const view: DiffViewMode = options?.view === 'split' ? 'split' : 'unified';
+    if (view === 'split' || options?.fold === true) {
+      this.renderPlannedDiff(diffResults || [], isCodeContent, {
+        view,
+        fold: options?.fold === true,
+        expandedFoldIds: options?.expandedFoldIds
+      });
+      return;
+    }
+
     this.diffResultElement.innerHTML = '';
     let originalLineCount = 0;
     let modifiedLineCount = 0;
@@ -211,6 +233,159 @@ class DiffDisplay {
       fragment.appendChild(this.createLineElement(changeType, lineContent, isCodeContent, highlights));
     });
     this.diffResultElement.appendChild(fragment);
+  }
+
+  /**
+   * Paint Unified or Side by side, folding long unchanged runs when asked.
+   * Line numbers are assigned across the whole diff, including lines that stay
+   * folded, so expanding a run does not renumber the rows around it.
+   */
+  renderPlannedDiff(
+    diffResults: DiffResultLine[],
+    isCodeContent: boolean | string,
+    options: { view: DiffViewMode; fold: boolean; expandedFoldIds?: ReadonlySet<string> }
+  ) {
+    const lines = diffResults || [];
+    this.diffResultElement.innerHTML = '';
+    this.originalLineNumber = 1;
+    this.modifiedLineNumber = 1;
+    this.diffResultElement.classList.toggle('diffc-result-output--split', options.view === 'split');
+    if (this.diffResultElement.dataset) {
+      this.diffResultElement.dataset.resultView = options.view;
+    }
+
+    let originalLineCount = 0;
+    let modifiedLineCount = 0;
+    lines.forEach(([changeType]) => {
+      if (changeType !== 'added') originalLineCount += 1;
+      if (changeType !== 'removed') modifiedLineCount += 1;
+    });
+    this.lineNumberDigits = String(Math.max(originalLineCount, modifiedLineCount, 1)).length;
+
+    const folds = options.fold ? planUnchangedFolds(lines) : [];
+    const expanded = options.expandedFoldIds ?? new Set<string>();
+    const blocks = buildVisibleBlocks(lines.length, folds, expanded);
+    const rowByFirstIndex = new Map<number, SplitRow>();
+    if (options.view === 'split') {
+      alignSplitRows(lines).forEach((row) => {
+        const first = row.sourceIndexes[0];
+        if (first !== undefined) rowByFirstIndex.set(first, row);
+      });
+    }
+
+    const fragment = document.createDocumentFragment();
+    if (options.view === 'split') {
+      fragment.appendChild(this.createSplitHeader());
+    }
+
+    blocks.forEach((block) => {
+      if (block.kind === 'fold') {
+        fragment.appendChild(this.createFoldButton(block.region, block.expanded));
+        if (!block.expanded && options.view === 'unified') {
+          for (let index = block.region.hiddenStart; index < block.region.hiddenEnd; index += 1) {
+            this.advanceLineNumber(lines[index][0]);
+          }
+        }
+        return;
+      }
+
+      if (options.view === 'split') {
+        block.indexes.forEach((index) => {
+          const row = rowByFirstIndex.get(index);
+          if (!row) return;
+          fragment.appendChild(this.createSplitRow(row, isCodeContent));
+        });
+        return;
+      }
+
+      block.indexes.forEach((index) => {
+        const [changeType, lineContent, highlights] = lines[index];
+        fragment.appendChild(this.createLineElement(changeType, lineContent, isCodeContent, highlights));
+      });
+    });
+
+    this.diffResultElement.appendChild(fragment);
+  }
+
+  advanceLineNumber(changeType: DiffChangeType) {
+    if (changeType !== 'added') this.originalLineNumber += 1;
+    if (changeType !== 'removed') this.modifiedLineNumber += 1;
+  }
+
+  createFoldButton(region: FoldRegion, expanded: boolean) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'diff-fold';
+    button.dataset.foldId = region.id;
+    button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    button.textContent = foldControlLabel(region.hiddenCount, expanded);
+    return button;
+  }
+
+  createSplitHeader() {
+    const header = document.createElement('div');
+    header.className = 'diff-split-head';
+    ['Original', 'Modified'].forEach((label) => {
+      const cell = document.createElement('div');
+      cell.className = 'diff-split-head__cell';
+      cell.textContent = label;
+      header.appendChild(cell);
+    });
+    return header;
+  }
+
+  createSplitRow(row: SplitRow, isCodeContent: boolean | string) {
+    const container = document.createElement('div');
+    container.className = 'diff-line diff-split-row';
+    container.appendChild(this.createSplitCell(row.left, isCodeContent, 'left'));
+    container.appendChild(this.createSplitCell(row.right, isCodeContent, 'right'));
+    return container;
+  }
+
+  createSplitCell(cell: SplitCell, isCodeContent: boolean | string, side: 'left' | 'right') {
+    const wrap = document.createElement('div');
+    wrap.className = `diff-split-cell diff-split-cell--${side}`;
+    if (cell.changeType === 'empty') {
+      wrap.classList.add('diff-split-cell--empty');
+      wrap.setAttribute('aria-hidden', 'true');
+    } else if (cell.changeType === 'added') {
+      wrap.classList.add('diff-split-cell--added');
+    } else if (cell.changeType === 'removed') {
+      wrap.classList.add('diff-split-cell--removed');
+    }
+
+    const lineNumberElement = document.createElement('span');
+    lineNumberElement.className = 'diff-line-number';
+    const digits = Math.max(this.lineNumberDigits, 3);
+    lineNumberElement.textContent = cell.lineNumber == null
+      ? ''.padStart(digits, ' ')
+      : String(cell.lineNumber).padStart(digits, ' ');
+
+    let contentElement: HTMLElement;
+    if (cell.changeType === 'added') contentElement = document.createElement('ins');
+    else if (cell.changeType === 'removed') contentElement = document.createElement('del');
+    else contentElement = document.createElement('span');
+
+    if (cell.changeType === 'empty') {
+      contentElement.classList.add('diff-content');
+    } else {
+      contentElement.innerHTML = this.formatLine(cell.text, isCodeContent, cell.changeType, cell.highlights);
+      contentElement.classList.add('diff-content');
+      if (cell.changeType !== 'unchanged') {
+        contentElement.classList.add(`diff-${cell.changeType}`);
+      }
+    }
+
+    wrap.appendChild(lineNumberElement);
+    if (cell.changeType === 'added' || cell.changeType === 'removed') {
+      const marker = document.createElement('span');
+      marker.className = 'diff-marker';
+      marker.setAttribute('aria-hidden', 'true');
+      marker.textContent = cell.changeType === 'added' ? '+' : '-';
+      wrap.appendChild(marker);
+    }
+    wrap.appendChild(contentElement);
+    return wrap;
   }
 
   render(diffResults, isCodeContent: boolean | string = false) {
@@ -464,12 +639,15 @@ class DiffNavigator {
         }
         currentBlock[currentBlock.length - 1].classList.add('current-diff-end');
       }
-      // Scroll to the first element in the block
-      currentBlock[0].scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'nearest'
-      });
+      // Scroll to the first element in the block. Guard the call so a throw
+      // (jsdom, or a detached node) cannot skip the counter update below.
+      if (typeof currentBlock[0].scrollIntoView === 'function') {
+        currentBlock[0].scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'nearest'
+        });
+      }
     }
 
     this.updateNavigationState();
@@ -553,6 +731,54 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     document.getElementById('diff-counter')
   );
 
+  let lastDiffResults: DiffComputeResult | null = null;
+  let lastIsCodeContent: boolean | string = false;
+  const expandedFoldIds = new Set<string>();
+
+  const readViewMode = (): DiffViewMode => {
+    const selected = document.querySelector<HTMLInputElement>('input[name="diff-view"]:checked');
+    return selected?.value === 'split' ? 'split' : 'unified';
+  };
+
+  const applyViewMode = (view: DiffViewMode) => {
+    const next: DiffViewMode = view === 'split' ? 'split' : 'unified';
+    const input = document.querySelector<HTMLInputElement>(`input[name="diff-view"][value="${next}"]`);
+    if (input) input.checked = true;
+    diffResultElement.classList.toggle('diffc-result-output--split', next === 'split');
+  };
+
+  const renderLastResult = () => {
+    if (!lastDiffResults) return;
+    const view = readViewMode();
+    const diffDisplay = new DiffDisplay(diffResultElement);
+    diffDisplay.displayDiff(lastDiffResults, lastIsCodeContent, {
+      view,
+      fold: true,
+      expandedFoldIds
+    });
+    diffNavigator.updateDiffElements();
+  };
+
+  const onFoldClick = (event: Event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const button = target.closest('button[data-fold-id]');
+    if (!(button instanceof HTMLButtonElement)) return;
+    const id = button.dataset.foldId;
+    if (!id) return;
+    if (expandedFoldIds.has(id)) expandedFoldIds.delete(id);
+    else expandedFoldIds.add(id);
+    renderLastResult();
+  };
+  diffResultElement.addEventListener('click', onFoldClick);
+
+  const onViewChange = () => {
+    applyViewMode(readViewMode());
+    renderLastResult();
+  };
+  const viewInputs = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="diff-view"]'));
+  viewInputs.forEach((input) => input.addEventListener('change', onViewChange));
+
   // Initialize clear buttons with cleanup support
   let clearButton1: ClearButton | null = null;
   let clearButton2: ClearButton | null = null;
@@ -620,6 +846,8 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
       clearButton2 = null;
     }
     resultCopyButton?.disconnect();
+    diffResultElement.removeEventListener('click', onFoldClick);
+    viewInputs.forEach((input) => input.removeEventListener('change', onViewChange));
     diffRunner.terminate();
     paneInputCleanups.splice(0).forEach((disposeInputTracking) => disposeInputTracking());
     dropZoneCleanups.splice(0).forEach((disposeDropZone) => disposeDropZone());
@@ -792,11 +1020,10 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
         if (diffEmptyState) {
           diffEmptyState.style.display = 'none';
         }
-        const diffDisplay = new DiffDisplay(diffResultElement);
-        diffDisplay.displayDiff(diffResults, isCodeContent);
-
-        // Update the navigator with the new diff elements
-        diffNavigator.updateDiffElements();
+        lastDiffResults = diffResults as DiffComputeResult;
+        lastIsCodeContent = isCodeContent;
+        expandedFoldIds.clear();
+        renderLastResult();
 
         lastSuccessfulComparison = comparisonSnapshot;
         if (downloadPatchButton) {
@@ -845,7 +1072,8 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
   }
 
   /**
-   * Copy a shareable link carrying both panes plus the whitespace option,
+   * Copy a shareable link carrying both panes, the whitespace option, and the
+   * result view,
    * LZ-compressed into the hash fragment so the compared text never reaches a
    * server. Mirrors json-formatter's Share: guarded against an empty compare
    * and against payloads too long to paste anywhere useful.
@@ -861,7 +1089,8 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     const payload: DiffSharePayload = {
       original: getPaneText(text1),
       modified: getPaneText(text2),
-      ignoreWhitespace: ignoreWhitespaceToggle?.checked ?? true
+      ignoreWhitespace: ignoreWhitespaceToggle?.checked ?? true,
+      view: readViewMode()
     };
     const { buildShareUrl, SHARE_URL_MAX_LENGTH } = await import('./share-url');
     const url = buildShareUrl(window.location.href, payload);
@@ -923,6 +1152,7 @@ export function initializeDiffChecker(): ToolCleanupHandle | void {
     if (ignoreWhitespaceToggle) {
       ignoreWhitespaceToggle.checked = payload.ignoreWhitespace;
     }
+    applyViewMode(payload.view === 'split' ? 'split' : 'unified');
     setInlineError('');
     compareTrigger = 'share';
     compareButton?.click();
@@ -1029,6 +1259,18 @@ export function DiffCheckerApp() {
       <div id="diff-result-container" className="o-panel diffc-result-panel c-surface-card c-surface-panel">
         <div className="diff-result-header diffc-result-header c-surface-panel__header">
           <h3>Differences</h3>
+          <div className="diffc-result-toolbar">
+          <div className="diffc-view-toggle" role="radiogroup" aria-labelledby="diff-view-label">
+            <span id="diff-view-label" className="diffc-view-toggle__label">Result view</span>
+            <label className="diffc-view-option" htmlFor="diff-view-unified">
+              <input type="radio" id="diff-view-unified" name="diff-view" value="unified" defaultChecked />
+              Unified
+            </label>
+            <label className="diffc-view-option" htmlFor="diff-view-split">
+              <input type="radio" id="diff-view-split" name="diff-view" value="split" />
+              Side by side
+            </label>
+          </div>
           <div className="diff-navigation diffc-navigation">
             <button
               id="prev-diff-button"
@@ -1049,6 +1291,7 @@ export function DiffCheckerApp() {
             >
               {'Next >'}
             </button>
+          </div>
           </div>
         </div>
         <div className="o-panel-content diffc-result-panel-content">

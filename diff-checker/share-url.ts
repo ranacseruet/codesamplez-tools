@@ -1,8 +1,9 @@
 /**
  * Diff Checker's shareable-URL payload, built on the shared conventions in
  * common/share-url.ts (the same ones json-formatter and base64-converter use):
- * both panes plus the whitespace option, LZ-compressed as JSON into a
- * `location.hash` param so the compared text is never sent to a server.
+ * both panes, the whitespace option, and the result view, LZ-compressed as
+ * JSON into a `location.hash` param so the compared text is never sent to a
+ * server. A link that omits the view opens in Unified.
  *
  * There is no legacy query-string form to honour here — this tool has never
  * had a share link — but `resolveSharePayload` still reads one, because a user
@@ -20,10 +21,17 @@ import {
 
 export { SHARE_URL_MAX_LENGTH };
 
+export type DiffViewMode = 'unified' | 'split';
+
 export interface DiffSharePayload {
     original: string;
     modified: string;
     ignoreWhitespace: boolean;
+    /**
+     * Result view. Omitted on input means Unified, which is also how a link
+     * built before this field existed is read back.
+     */
+    view?: DiffViewMode;
 }
 
 export interface ResolvedDiffSharePayload {
@@ -44,6 +52,8 @@ interface CompactPayload {
     o: string;
     m: string;
     w?: unknown;
+    /** 's' side by side, 'u' unified. Absent on links shared before the toggle. */
+    v?: unknown;
 }
 
 /** Build just the hash-fragment portion (no leading `#`) for a share payload. */
@@ -51,7 +61,8 @@ export function buildShareHash(payload: DiffSharePayload): string {
     const compact: CompactPayload = {
         o: payload.original,
         m: payload.modified,
-        w: payload.ignoreWhitespace
+        w: payload.ignoreWhitespace,
+        v: payload.view === 'split' ? 's' : 'u'
     };
 
     return `${HASH_PARAM}=${compressJsonPayload(compact)}`;
@@ -71,13 +82,25 @@ function decodeCompactPayload(compressed: string): DiffSharePayload | null {
     // Reject rather than coerce a tampered non-boolean option (e.g. `"w":"false"`),
     // matching the shared "malformed hash -> nothing to preload" contract.
     if (typeof compact.w !== 'undefined' && typeof compact.w !== 'boolean') return null;
+    const view = decodeView(compact.v);
+    // A tampered view flag rejects the whole link, same as a tampered
+    // whitespace flag, instead of guessing which result to open.
+    if (!view) return null;
 
     return {
         original: compact.o,
         modified: compact.m,
         // The checkbox ships checked, so an absent flag means the default.
-        ignoreWhitespace: compact.w !== false
+        ignoreWhitespace: compact.w !== false,
+        // Absent `v` is Unified, so an older share link opens unchanged.
+        view
     };
+}
+
+function decodeView(value: unknown): DiffViewMode | null {
+    if (typeof value === 'undefined' || value === 'u') return 'unified';
+    if (value === 's') return 'split';
+    return null;
 }
 
 /** Parse a `location.hash`-style string into a payload, or `null`. Never throws. */

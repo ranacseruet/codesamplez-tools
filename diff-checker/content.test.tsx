@@ -43,6 +43,12 @@ describe('diff-checker content', () => {
 
         expect(root!.querySelector('#diff-checker-what-is')).not.toBeNull();
         expect(root!.querySelector('#diff-checker-compare-code-online')).not.toBeNull();
+        expect(root!.querySelector('#diff-checker-side-by-side')).not.toBeNull();
+        expect(
+            root!.querySelector('#diff-checker-side-by-side')!.closest('section')!.textContent
+        ).toContain('Side-by-Side Comparison');
+        expect(root!.textContent).toContain('Side-by-side or unified results');
+        expect(FAQ_ITEMS.some((item) => item.question === 'Can I compare code side by side?')).toBe(true);
         expect(
             root!.querySelector('#diff-checker-compare-code-online')!.closest('section')!.textContent
         ).toContain('Compare Code Online: How to Find Differences Between Two Files');

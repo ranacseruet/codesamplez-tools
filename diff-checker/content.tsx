@@ -57,8 +57,12 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
         'Yes. Click Upload File or drag a local text file into the left or right pane—each pane accepts one file at a time. The file is read on your device only (not uploaded to a server) and appears in that editor so you can compare it against pasted text or a second uploaded file.'
     ),
     createPlainTextFaqItem(
+        'Can I compare code side by side?',
+        'Yes. Run Compare, then choose Side by side to put the original on the left and the modified version on the right, with line numbers on both sides and changed lines on the same row. Unified stays the default, and a share link that does not name a view still opens in Unified. Both views keep word-level highlights, syntax highlighting, Prev and Next, Ignore Whitespace, patch download, and Share. A run of more than six unchanged lines folds to a few lines of context; expanding one run leaves the others folded. Additions and removals are marked with + and - as well as color. On a narrow screen, Side by side scrolls sideways inside the result panel.'
+    ),
+    createPlainTextFaqItem(
         'Can I get a git diff or patch file online?',
-        'After you run Compare, use Download .patch to save a unified diff of the current left and right inputs as comparison.patch. The export uses the loaded filenames when you uploaded files, or the labels original and modified otherwise. It follows your Ignore Whitespace setting, matching the on-screen diff.'
+        'After you run Compare, use Download .patch to save a unified diff of the current left and right inputs as comparison.patch. The export uses the loaded filenames when you uploaded files, or the labels original and modified otherwise. It follows your Ignore Whitespace setting, matching the on-screen changes. The file stays a unified patch whether the result is shown Unified or Side by side.'
     ),
     createPlainTextFaqItem(
         'How can I apply the downloaded patch file?',
@@ -131,6 +135,29 @@ export function DiffCheckerArticle(): JSX.Element {
                     </p>
                 </ToolArticleSection>
 
+                <ToolArticleSection id="diff-checker-side-by-side" title="Side-by-Side Comparison">
+                    <p>
+                        After Compare, the result opens in Unified view: one list of added, removed, and unchanged
+                        lines. Choose <strong>Side by side</strong> to put the original on the left and the modified
+                        text on the right. Each side has its own line numbers. Removed lines are highlighted on the
+                        left and added lines on the right, and a changed line stays on the same row. Word-level
+                        highlights and syntax highlighting are kept in both views. Additions and removals also show
+                        a + or - marker, so the change is not conveyed by color alone.
+                    </p>
+                    <p>
+                        Unified remains the default. An older share link that does not name a view still opens in
+                        Unified. The view you pick is stored in the share link together with Ignore Whitespace.
+                        Prev, Next, the difference counter, Download .patch, and Share work in either view. The
+                        downloaded file is always a unified patch, whichever view is on screen.
+                    </p>
+                    <p>
+                        A run of more than six unchanged lines folds down to a few lines of context. Use the control
+                        on that run to show the hidden lines. Opening one run leaves the others folded. On a narrow
+                        screen, Side by side scrolls horizontally inside the result panel so the rest of the page
+                        stays put.
+                    </p>
+                </ToolArticleSection>
+
                 <ToolArticleSection id="diff-checker-compare-two-files" title="Compare Two Files Online">
                     <p>
                         Use this page as a file diff checker when you already have two versions on disk. Click{' '}
@@ -157,7 +184,8 @@ export function DiffCheckerArticle(): JSX.Element {
                         The export is the same unified diff format Git and other tools expect: hunks with{' '}
                         <code>---</code> / <code>+++</code> headers and <code>+</code> / <code>-</code> lines for
                         additions and removals. Your <strong>Ignore Whitespace</strong> toggle is applied when the
-                        patch is built, so the file matches what you see in the results panel.
+                        patch is built, so the file matches the changes on screen. It stays a unified patch in both
+                        the Unified and Side by side result views.
                     </p>
                     <p>
                         You can open the patch in an editor for review, share it in a ticket, or apply it with{' '}
@@ -185,8 +213,15 @@ export function DiffCheckerArticle(): JSX.Element {
                             differences for every line change.
                         </li>
                         <li>
-                            <strong>Color-coded differences:</strong> Added lines are highlighted in green, removed
-                            lines in red, and unchanged lines remain neutral.
+                            <strong>Side-by-side or unified results:</strong> Switch the result between a side-by-side
+                            comparison (original on the left, modified on the right, changed lines on the same row)
+                            and a unified diff. Unified is the default, including for an older share link. Both views
+                            keep line numbers, word-level highlights, and + / - markers, and a long unchanged run can
+                            be expanded on its own.
+                        </li>
+                        <li>
+                            <strong>Color-coded differences:</strong> Added lines are highlighted in green with a +
+                            marker, removed lines in red with a - marker, and unchanged lines remain neutral.
                         </li>
                         <li>
                             <strong>Difference navigation:</strong> Use the Prev and Next buttons above the results to
@@ -237,7 +272,7 @@ export function DiffCheckerArticle(): JSX.Element {
                         </li>
                         <li>
                             <strong>View Results</strong>
-                            <p>The differences appear below in a styled output area with added lines in green, removed lines in red, and unchanged lines unstyled.</p>
+                            <p>The differences appear below. Unified, the default, lists added, removed, and unchanged lines together. Side by side puts the original on the left and the modified text on the right. Added lines are marked +, removed lines are marked -, and a long unchanged run can be expanded.</p>
                         </li>
                     </ol>
 

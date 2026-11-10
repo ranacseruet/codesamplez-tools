@@ -27,6 +27,25 @@ describe('Diff Checker Accessibility', () => {
     expect(counter.getAttribute('aria-atomic')).toBe('true');
   });
 
+  test('Result view toggle is a labelled radio group and Unified is the default', () => {
+    const group = document.querySelector('[role="radiogroup"]');
+    const label = document.getElementById('diff-view-label');
+    const unified = document.getElementById('diff-view-unified');
+    const split = document.getElementById('diff-view-split');
+
+    expect(group.getAttribute('aria-labelledby')).toBe('diff-view-label');
+    expect(label.textContent).toBe('Result view');
+    expect(unified.type).toBe('radio');
+    expect(unified.name).toBe('diff-view');
+    expect(unified.checked).toBe(true);
+    expect(unified.disabled).toBe(false);
+    expect(split.type).toBe('radio');
+    expect(split.value).toBe('split');
+    expect(split.checked).toBe(false);
+    expect(unified.closest('label').textContent).toContain('Unified');
+    expect(split.closest('label').textContent).toContain('Side by side');
+  });
+
   test('Text inputs should have aria-labels', () => {
     const text1 = document.getElementById('text1');
     const text2 = document.getElementById('text2');
