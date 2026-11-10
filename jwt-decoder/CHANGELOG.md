@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.19] - 2026-11-10
+
+### JWT Decoder & Validator
+
+- Deeper decode guide: a worked HS256 example with the header, payload, and exp, iat, and nbf dates the panel prints, plus browser, Node.js, and Python decode snippets, standard claims, and three FAQs. Title and description now say you can decode a JWT online. Signature copy matches HS256 shared-secret verification and the RS256 or ES256 warning.
+
 ## [1.0.18] - 2026-11-02
 
 ### JWT Decoder & Validator

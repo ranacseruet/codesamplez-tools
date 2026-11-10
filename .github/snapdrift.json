@@ -95,14 +95,6 @@
       ]
     },
     {
-      "id": "jwt-decoder-mobile",
-      "path": "/jwt-decoder/",
-      "viewport": "mobile",
-      "changePaths": [
-        "jwt-decoder/"
-      ]
-    },
-    {
       "id": "json-formatter-desktop",
       "path": "/json-formatter/",
       "viewport": "desktop",

@@ -1,7 +1,19 @@
 import { jest } from '@jest/globals';
+import { webcrypto as nodeWebCrypto } from 'node:crypto';
 import { TextEncoder, TextDecoder } from 'node:util';
 import { JWTDecoder, hmacSha256 } from './JWTDecoder';
 import Base64Codec from '../common/Base64Codec';
+import {
+    WORKED_EXAMPLE_DECODED_JSON,
+    WORKED_EXAMPLE_EXP_UTC,
+    WORKED_EXAMPLE_HEADER,
+    WORKED_EXAMPLE_IAT_UTC,
+    WORKED_EXAMPLE_NBF_UTC,
+    WORKED_EXAMPLE_PAYLOAD,
+    WORKED_EXAMPLE_SECRET,
+    WORKED_EXAMPLE_TOKEN,
+    WORKED_EXAMPLE_VALIDITY_BEFORE_NBF
+} from './content';
 
 (globalThis as unknown as { TextEncoder: typeof TextEncoder }).TextEncoder = TextEncoder;
 (globalThis as unknown as { TextDecoder: typeof TextDecoder }).TextDecoder = TextDecoder;
@@ -40,6 +52,25 @@ const mockHmacSha256 = async (message: string, key: string): Promise<Uint8Array>
         return invalidSignatureBytes; // Return a distinctly different signature for wrong keys
     }
 };
+
+async function withRealWebCrypto<T>(callback: () => Promise<T>): Promise<T> {
+    const previous = globalThis.crypto;
+    Object.defineProperty(globalThis, 'crypto', {
+        configurable: true,
+        writable: true,
+        value: nodeWebCrypto
+    });
+
+    try {
+        return await callback();
+    } finally {
+        Object.defineProperty(globalThis, 'crypto', {
+            configurable: true,
+            writable: true,
+            value: previous
+        });
+    }
+}
 
 describe('JWTDecoder Class', () => {
     const codec = new Base64Codec();
@@ -379,6 +410,43 @@ describe('JWTDecoder Class', () => {
 
             expect(decoder.isValidFormat).toBe(false);
             expect(validity).toEqual({ expired: false, notYetValid: false, exp: null, nbf: null, iat: null });
+        });
+    });
+
+    describe('published worked example', () => {
+        it('decodes the page example to the header, payload, and UTC dates the panel prints', async () => {
+            const decoder = new JWTDecoder(WORKED_EXAMPLE_TOKEN);
+
+            expect(decoder.getParsingError()).toBeNull();
+            expect(decoder.getHeader()).toEqual(WORKED_EXAMPLE_HEADER);
+            expect(decoder.getPayload()).toEqual(WORKED_EXAMPLE_PAYLOAD);
+            expect(JSON.stringify({
+                header: decoder.getHeader(),
+                payload: decoder.getPayload()
+            }, null, 2)).toBe(WORKED_EXAMPLE_DECODED_JSON);
+
+            const now = new Date('2026-11-10T00:00:00Z');
+            const validity = decoder.getTokenValidity(now);
+            expect(validity.notYetValid).toBe(true);
+            expect(validity.expired).toBe(false);
+            expect(validity.exp?.date?.toUTCString()).toBe(WORKED_EXAMPLE_EXP_UTC);
+            expect(validity.exp?.date?.toUTCString()).toBe('Mon, 15 Jul 2030 12:00:00 GMT');
+            expect(validity.iat?.date?.toUTCString()).toBe(WORKED_EXAMPLE_IAT_UTC);
+            expect(validity.iat?.date?.toUTCString()).toBe('Tue, 15 Jan 2030 12:00:00 GMT');
+            expect(validity.nbf?.date?.toUTCString()).toBe(WORKED_EXAMPLE_NBF_UTC);
+            expect(validity.nbf?.date?.toUTCString()).toBe('Tue, 15 Jan 2030 12:00:00 GMT');
+
+            const banner = [
+                `⚠️ Not valid until ${validity.nbf?.date?.toUTCString()}`,
+                `Expires at ${validity.exp?.date?.toUTCString()}`,
+                `Issued at ${validity.iat?.date?.toUTCString()}`
+            ].join(' · ');
+            expect(banner).toBe(WORKED_EXAMPLE_VALIDITY_BEFORE_NBF);
+
+            await withRealWebCrypto(async () => {
+                expect(await decoder.verifySignature(WORKED_EXAMPLE_SECRET)).toBe(true);
+                expect(await decoder.verifySignature('wrong-secret')).toBe(false);
+            });
         });
     });
 

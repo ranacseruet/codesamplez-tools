@@ -59,6 +59,10 @@ describe('Visual CI workflow contract', () => {
   //   jwt-builder-mobile      1170×28785 (33,678,450)
   //   text-analyzer-mobile    1170×30063 (35,173,710)
   //   diff-checker-mobile     1170×31785 (37,188,450)
+  //   jwt-decoder-mobile      local Chrome at 390px CSS width measured 13,576px
+  //                           after the deeper article (cap ~9,559px). A DPR-3
+  //                           capture would be about 1170×40728. No height ceiling
+  //                           was added. Desktop stays in the comparison.
   // A custom {width:390,height:844} viewport is the DPR-1 escape hatch and would
   // fit the CSS height, but the union still includes that oversized baseline
   // image until main publishes a baseline that no longer has it. Publishing
@@ -68,6 +72,7 @@ describe('Visual CI workflow contract', () => {
   const EXCLUDED_OVERSIZED_MOBILE_ROUTES = [
     'js-minifier-mobile',
     'jwt-builder-mobile',
+    'jwt-decoder-mobile',
     'text-analyzer-mobile',
     'diff-checker-mobile'
   ];
@@ -78,7 +83,7 @@ describe('Visual CI workflow contract', () => {
 
     expect(config.provider).toBe('snap');
     expect(config.diff.mode).toBe('fail-on-incomplete');
-    expect(routeIds).toHaveLength(20);
+    expect(routeIds).toHaveLength(19);
     expect(new Set(routeIds).size).toBe(routeIds.length);
     EXCLUDED_OVERSIZED_MOBILE_ROUTES.forEach((routeId) => {
       expect(routeIds).not.toContain(routeId);
@@ -109,7 +114,6 @@ describe('Visual CI workflow contract', () => {
   // budget (all are within ~2-3% of the cap, so re-measure when content grows).
   const MOBILE_PRESET_BUDGET_VERIFIED = [
     'root-index-mobile',
-    'jwt-decoder-mobile',
     'json-editor-mobile',
     'qr-code-generator-mobile',
   ];

@@ -1,9 +1,9 @@
 {
   "id": "jwt-decoder-tool",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "title": "JWT Decoder & Validator",
-  "seoTitle": "JWT Decoder – Decode & Verify Tokens",
-  "description": "Free online JWT decoder – instantly reveal a token’s header, payload, and verify its signature. Paste your JWT to decode it now.",
+  "seoTitle": "JWT Decoder – Decode JWT Tokens Online",
+  "description": "JWT Decoder online: read the header, payload, and exp, iat, and nbf dates. Verify an HS256 signature with a shared secret.",
   "catalogGroupId": "encoders-decoders",
   "catalogOrder": 2,
   "indexDescription": "Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.",
