@@ -59,6 +59,11 @@ describe('Visual CI workflow contract', () => {
   //   jwt-builder-mobile      1170×28785 (33,678,450)
   //   text-analyzer-mobile    1170×30063 (35,173,710)
   //   diff-checker-mobile     1170×31785 (37,188,450)
+  //   jwt-decoder-mobile      current 1170×40821, union 1170×40821
+  //                           (47,760,570) over 33,554,432; baseline was
+  //                           1170×26109 (PR #169 run 42846218335). The page
+  //                           layout is fine; the hosted comparison cannot
+  //                           finish a canvas that large.
   // A custom {width:390,height:844} viewport is the DPR-1 escape hatch and would
   // fit the CSS height, but the union still includes that oversized baseline
   // image until main publishes a baseline that no longer has it. Publishing
@@ -69,7 +74,8 @@ describe('Visual CI workflow contract', () => {
     'js-minifier-mobile',
     'jwt-builder-mobile',
     'text-analyzer-mobile',
-    'diff-checker-mobile'
+    'diff-checker-mobile',
+    'jwt-decoder-mobile'
   ];
 
   it('keeps the canonical hosted baseline at the comparable route configuration', () => {
@@ -78,7 +84,7 @@ describe('Visual CI workflow contract', () => {
 
     expect(config.provider).toBe('snap');
     expect(config.diff.mode).toBe('fail-on-incomplete');
-    expect(routeIds).toHaveLength(20);
+    expect(routeIds).toHaveLength(19);
     expect(new Set(routeIds).size).toBe(routeIds.length);
     EXCLUDED_OVERSIZED_MOBILE_ROUTES.forEach((routeId) => {
       expect(routeIds).not.toContain(routeId);
@@ -109,7 +115,6 @@ describe('Visual CI workflow contract', () => {
   // budget (all are within ~2-3% of the cap, so re-measure when content grows).
   const MOBILE_PRESET_BUDGET_VERIFIED = [
     'root-index-mobile',
-    'jwt-decoder-mobile',
     'json-editor-mobile',
     'qr-code-generator-mobile',
   ];
