@@ -431,12 +431,36 @@ describe('tool document generation', () => {
     });
 
     it('renders FAQPage structured data for css-minifier', () => {
+        const { JSDOM } = require('jsdom');
         const html = generateToolDocument('css-minifier-tool');
+        const tool = getToolById('css-minifier-tool');
+        const document = new JSDOM(html).window.document;
+        const description = 'Minify CSS online in your browser and see the size savings. Comments and extra whitespace come out. Your stylesheet stays on this device.';
+
+        expect(document.title).toBe('CSS Minifier – Minify CSS Online | CodeSamplez');
+        expect(document.title.length).toBeLessThanOrEqual(DOCUMENT_TITLE_MAX_LENGTH);
+        expect(document.title.endsWith(' | CodeSamplez')).toBe(true);
+        expect(document.querySelector('h1').textContent).toBe('CSS Minifier');
+        expect(document.querySelector('link[rel="canonical"]').getAttribute('href')).toBe(buildSiteHref('/css-minifier/'));
+        expect(tool.description).toBe(description);
+        expect(tool.description.length).toBeLessThanOrEqual(META_DESCRIPTION_MAX_LENGTH);
+        expect(description.length).toBeLessThanOrEqual(160);
+        expect(document.querySelector('meta[name="description"]').getAttribute('content')).toBe(description);
 
         expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('CSS Minification Example (Before and After)');
+        expect(html).toContain('How to Test Your Minified CSS');
+        expect(html).toContain('.card{margin:0;padding:16px;color:#fff;width:calc(100% - 24px)}@media (max-width:600px){.card{padding:12px}}');
         expect(html).toContain('"name":"Does minifying CSS affect how my styles work?"');
         expect(html).toContain('"name":"Can I unminify (beautify) the CSS again later?"');
-        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"No. Minification does not change the CSS functionality - it only removes characters that are unnecessary for the browser');
+        expect(html).toContain('"name":"How much does CSS minification reduce file size?"');
+        expect(html).toContain('"name":"Can minifying CSS break my site?"');
+        expect(html).toContain('"name":"Should I minify CSS and JS together?"');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"No. The rendered styles stay the same. The tool removes comments, extra whitespace, the unit on a zero, a repeated hex digit, and the last semicolon in a rule.');
+        expect(html).toContain('178 B (178 bytes) before and 108 B (108 bytes) after, which is 39.3% smaller.');
+        expect(html).toContain('Minify scripts with the JavaScript Minifier and keep the two files separate.');
+        expect(html).toContain(`href="${buildSiteHref('/js-minifier/')}"`);
+        expect(html).not.toContain('c-tool-tutorial__link');
         expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/css-minifier/')}#webpage"}`);
     });
 
