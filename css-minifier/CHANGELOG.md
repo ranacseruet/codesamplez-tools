@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.19] - 2026-11-19
+
+### CSS Minifier
+
+- Guide adds a before-and-after stylesheet minified by this tool, with the byte sizes and percent saved, plus how to test the result and three FAQs. The meta description now says you can minify CSS online in the browser and see the size savings.
+
 ## [1.0.18] - 2026-11-02
 
 ### CSS Minifier

@@ -58,6 +58,12 @@ describe('tool metadata discovery', () => {
         outputDir: 'jwt-decoder',
         outputPath: 'build/jwt-decoder',
         version: '1.0.19'
+      }),
+      expect.objectContaining({
+        id: 'css-minifier-tool',
+        version: '1.0.19',
+        title: 'CSS Minifier',
+        description: 'Minify CSS online in your browser and see the size savings. Comments and extra whitespace come out. Your stylesheet stays on this device.'
       })
     ]));
   });

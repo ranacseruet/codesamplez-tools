@@ -1,6 +1,8 @@
 import type { JSX } from 'preact';
+import { formatBytes } from '../common/format-utils';
 import { buildSiteHref, SITE_BASE_URL } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
+import { minifyCSS } from './minifier';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -10,10 +12,47 @@ function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     };
 }
 
+/**
+ * Worked stylesheet for the guide. The output is whatever minifyCSS returns
+ * with the default options the page starts with (every checkbox checked).
+ * The page trims the input before that call; this string has no outer whitespace.
+ */
+export const CSS_MINIFY_EXAMPLE_INPUT = `/* Card on a light page */
+.card {
+  margin: 0px;
+  padding: 16px;
+  color: #ffffff;
+  width: calc(100% - 24px);
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: 12px;
+  }
+}`;
+
+const CSS_MINIFY_EXAMPLE_SOURCE = CSS_MINIFY_EXAMPLE_INPUT.trim();
+const CSS_MINIFY_EXAMPLE_OUTPUT = minifyCSS(CSS_MINIFY_EXAMPLE_SOURCE);
+const CSS_MINIFY_EXAMPLE_ORIGINAL_BYTES = new Blob([CSS_MINIFY_EXAMPLE_SOURCE]).size;
+const CSS_MINIFY_EXAMPLE_MINIFIED_BYTES = new Blob([CSS_MINIFY_EXAMPLE_OUTPUT]).size;
+
+/** Sizes the Statistics panel prints for the example: Blob byte length, then formatBytes, and savings to one decimal. */
+export const CSS_MINIFY_EXAMPLE = {
+    input: CSS_MINIFY_EXAMPLE_INPUT,
+    output: CSS_MINIFY_EXAMPLE_OUTPUT,
+    originalBytes: CSS_MINIFY_EXAMPLE_ORIGINAL_BYTES,
+    minifiedBytes: CSS_MINIFY_EXAMPLE_MINIFIED_BYTES,
+    originalSizeLabel: formatBytes(CSS_MINIFY_EXAMPLE_ORIGINAL_BYTES),
+    minifiedSizeLabel: formatBytes(CSS_MINIFY_EXAMPLE_MINIFIED_BYTES),
+    savingsLabel: `${((1 - CSS_MINIFY_EXAMPLE_MINIFIED_BYTES / CSS_MINIFY_EXAMPLE_ORIGINAL_BYTES) * 100).toFixed(1)}%`
+};
+
+const JS_MINIFIER_FAQ_ANSWER = 'No. This page minifies CSS only. Minify scripts with the JavaScript Minifier and keep the two files separate. Do not paste JavaScript into this page.';
+
 export const FAQ_ITEMS: ToolFaqItem[] = [
     createPlainTextFaqItem(
         'Does minifying CSS affect how my styles work?',
-        'No. Minification does not change the CSS functionality - it only removes characters that are unnecessary for the browser, like spaces, indentations, and comments. Your styles will behave exactly the same after minification; the code will just be lighter and faster to load.'
+        'No. The rendered styles stay the same. The tool removes comments, extra whitespace, the unit on a zero, a repeated hex digit, and the last semicolon in a rule. It keeps quoted content, the spaces around + and - in calc(), and the order of your rules. The file is only smaller.'
     ),
     createPlainTextFaqItem(
         'Is the CodeSamplez CSS Minifier free to use?',
@@ -26,7 +65,26 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     createPlainTextFaqItem(
         'Can I unminify (beautify) the CSS again later?',
         'While minified CSS is harder to read or edit, you can revert it using a CSS beautifier or formatter tool. It is a good practice to keep a formatted copy of your CSS for development, and use the minified version for production.'
-    )
+    ),
+    createPlainTextFaqItem(
+        'How much does CSS minification reduce file size?',
+        `It depends on comments and indentation. The before-and-after example on this page is ${CSS_MINIFY_EXAMPLE.originalSizeLabel} (${CSS_MINIFY_EXAMPLE.originalBytes} bytes) before and ${CSS_MINIFY_EXAMPLE.minifiedSizeLabel} (${CSS_MINIFY_EXAMPLE.minifiedBytes} bytes) after, which is ${CSS_MINIFY_EXAMPLE.savingsLabel} smaller. The Statistics panel shows those Original Size, Minified Size, and Savings labels for the CSS you paste. A stylesheet that is already one line saves less.`
+    ),
+    createPlainTextFaqItem(
+        'Can minifying CSS break my site?',
+        'It can, if a minifier drops a space the browser still needs. This page keeps spaces inside quoted content and the spaces around + and - in calc(), min(), max(), and clamp(). It also keeps @media rules in the order you wrote them. It removes comments, extra whitespace, the unit on a zero, a repeated hex digit, and the last semicolon in a rule. Invalid CSS is not minified: the page shows "Invalid CSS input. Please check your CSS syntax." and leaves Minified Output empty. Compare the rendered page before you replace the file.'
+    ),
+    {
+        question: 'Should I minify CSS and JS together?',
+        answer: (
+            <p>
+                No. This page minifies CSS only. Minify scripts with the{' '}
+                <a href={buildSiteHref('/js-minifier/')}>JavaScript Minifier</a>
+                {' '}and keep the two files separate. Do not paste JavaScript into this page.
+            </p>
+        ),
+        structuredDataAnswer: JS_MINIFIER_FAQ_ANSWER
+    }
 ];
 
 export function CssMinifierIntro(): JSX.Element {
@@ -111,6 +169,74 @@ body {
 
                     <p><strong>Output:</strong></p>
                     <pre><code>{`body{font-family:Arial,sans-serif}.header{padding:20px}`}</code></pre>
+                </ToolArticleSection>
+
+                <ToolArticleSection id="css-minifier-example" title="CSS Minification Example (Before and After)">
+                    <p>
+                        Paste the stylesheet below and leave every minification option checked. Those checkboxes
+                        start checked. Load Sample fills a different stylesheet. This example has a comment,
+                        indentation, a media query, and a <code>calc()</code>.
+                    </p>
+                    <p><strong>Before</strong> ({CSS_MINIFY_EXAMPLE.originalSizeLabel}, {CSS_MINIFY_EXAMPLE.originalBytes} bytes):</p>
+                    <pre><code>{CSS_MINIFY_EXAMPLE.input}</code></pre>
+                    <p>
+                        <strong>After</strong> ({CSS_MINIFY_EXAMPLE.minifiedSizeLabel}, {CSS_MINIFY_EXAMPLE.minifiedBytes} bytes, {CSS_MINIFY_EXAMPLE.savingsLabel} smaller):
+                    </p>
+                    <pre><code>{CSS_MINIFY_EXAMPLE.output}</code></pre>
+                    <p>
+                        That is the string Minify CSS writes for this input. The comment is gone, <code>0px</code> is{' '}
+                        <code>0</code>, and <code>#ffffff</code> is <code>#fff</code> (the same color). The spaces in{' '}
+                        <code>calc(100% - 24px)</code> stay. Without those spaces the declaration is invalid and
+                        browsers drop it. The <code>@media</code> rule still follows the base <code>.card</code> rule,
+                        so the <code>12px</code> padding still wins at that breakpoint. The Statistics panel shows the
+                        same figures: Original Size {CSS_MINIFY_EXAMPLE.originalSizeLabel}, Minified Size{' '}
+                        {CSS_MINIFY_EXAMPLE.minifiedSizeLabel}, Savings {CSS_MINIFY_EXAMPLE.savingsLabel}.
+                    </p>
+                </ToolArticleSection>
+
+                <ToolArticleSection id="css-minifier-how-to-test" title="How to Test Your Minified CSS">
+                    <p>Check the result the same way you would check any stylesheet you are about to ship.</p>
+                    <ol>
+                        <li>
+                            <strong>Compare the file size</strong>
+                            <p>
+                                After Minify CSS, read Original Size, Minified Size, and Savings in the Statistics
+                                panel. Those labels are the UTF-8 byte size of the input, the UTF-8 byte size of the
+                                output, and the percent saved, rounded to one decimal. For the example above they
+                                read {CSS_MINIFY_EXAMPLE.originalSizeLabel}, {CSS_MINIFY_EXAMPLE.minifiedSizeLabel}, and{' '}
+                                {CSS_MINIFY_EXAMPLE.savingsLabel}.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Run the output through validation</strong>
+                            <p>
+                                Paste the minified CSS back into Input CSS and click Minify CSS again. The tool checks
+                                the text with the browser&apos;s CSS parser before it minifies. Valid CSS fills Minified
+                                Output. Invalid CSS shows{' '}
+                                <code>Invalid CSS input. Please check your CSS syntax.</code> and Minified Output stays
+                                empty.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Check that the page renders the same</strong>
+                            <p>
+                                Swap the minified file in for the original and compare the page in browser devtools or
+                                a visual diff. <code>#fff</code> is the same color as <code>#ffffff</code>, and{' '}
+                                <code>0</code> is the same length as <code>0px</code>.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Watch the edge cases this tool keeps</strong>
+                            <p>
+                                Spaces, commas, and braces inside a quoted <code>content</code> value stay in the
+                                output. Spaces around <code>+</code> and <code>-</code> inside <code>calc()</code>,{' '}
+                                <code>min()</code>, <code>max()</code>, and <code>clamp()</code> stay; the example
+                                keeps <code>calc(100% - 24px)</code>. An <code>@media</code> block stays after the
+                                rules written above it, so a later rule of the same specificity still overrides the
+                                earlier one.
+                            </p>
+                        </li>
+                    </ol>
                 </ToolArticleSection>
 
                 <ToolArticleSection id="css-minifier-features" title="Online CSS Minifier Tool Features">
