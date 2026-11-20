@@ -143,6 +143,15 @@ describe('generic tool prerender helpers', () => {
         // component passes every positive assertion.
         expect(appMarkup).not.toContain('Minify your JavaScript code online to dramatically reduce file size and improve web performance.');
         expect(afterMarkup).toContain('Why Minify JavaScript?');
+        expect(afterMarkup).toContain('JavaScript Minification Example');
+        expect(afterMarkup).toContain('How to Test Your Minified JavaScript');
+        expect(afterMarkup).toContain('Minify vs. Compress (gzip/Brotli) vs. Obfuscate');
+        expect(afterMarkup).toContain('Is minifying JavaScript the same as gzip compression?');
+        expect(afterMarkup).toContain('Can I use this as a general code minifier for CSS or JSON?');
+        expect(afterMarkup).toContain('412 B');
+        expect(afterMarkup).toContain('179 B');
+        expect(afterMarkup).toContain('56.55%');
+        expect(appMarkup).not.toContain('How to Test Your Minified JavaScript');
         expect(afterMarkup).toContain('JavaScript Minifier FAQs');
         expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
         expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');

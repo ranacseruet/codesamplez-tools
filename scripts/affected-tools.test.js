@@ -60,6 +60,12 @@ describe('tool metadata discovery', () => {
         version: '1.0.19'
       }),
       expect.objectContaining({
+        id: 'js-minifier-tool',
+        version: '1.0.19',
+        title: 'JavaScript Minifier',
+        description: 'Minify or compress JavaScript online with this code minifier and see the size savings. It runs in your browser.'
+      }),
+      expect.objectContaining({
         id: 'css-minifier-tool',
         version: '1.0.19',
         title: 'CSS Minifier',

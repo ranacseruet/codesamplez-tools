@@ -380,12 +380,41 @@ describe('tool document generation', () => {
     });
 
     it('renders FAQPage structured data for js-minifier', () => {
+        const { JSDOM } = require('jsdom');
         const html = generateToolDocument('js-minifier-tool');
+        const tool = getToolById('js-minifier-tool');
+        const document = new JSDOM(html).window.document;
+        const description = 'Minify or compress JavaScript online with this code minifier and see the size savings. It runs in your browser.';
+
+        expect(document.title).toBe('JavaScript Minifier – Minify JS Online | CodeSamplez');
+        expect(document.title.length).toBeLessThanOrEqual(DOCUMENT_TITLE_MAX_LENGTH);
+        expect(document.title.endsWith(' | CodeSamplez')).toBe(true);
+        expect(document.querySelector('h1').textContent).toBe('JavaScript Minifier');
+        expect(document.querySelector('link[rel="canonical"]').getAttribute('href')).toBe(buildSiteHref('/js-minifier/'));
+        expect(tool.description).toBe(description);
+        expect(tool.description.length).toBeLessThanOrEqual(META_DESCRIPTION_MAX_LENGTH);
+        expect(description.length).toBeLessThanOrEqual(160);
+        expect(document.querySelector('meta[name="description"]').getAttribute('content')).toBe(description);
 
         expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('JavaScript Minification Example');
+        expect(html).toContain('How to Test Your Minified JavaScript');
+        expect(html).toContain('Minify vs. Compress (gzip/Brotli) vs. Obfuscate');
+        expect(html).toContain('function calculateSum(a){let b=0;for(let c=0;c&lt;a.length;c++){b=b+a[c]}return b}const myNumbers=[1,2,3,4,5];const result=calculateSum(myNumbers);console.log(&quot;The sum is: &quot;+result);');
+        expect(html).toContain('412 B');
+        expect(html).toContain('179 B');
+        expect(html).toContain('56.55%');
         expect(html).toContain('"name":"What is JavaScript minification and why is it important?"');
         expect(html).toContain('"name":"Is minification the same as obfuscation?"');
-        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"JavaScript minification is the process of compressing code by removing unnecessary characters like spaces, line breaks, and comments');
+        expect(html).toContain('"name":"Is minifying JavaScript the same as gzip compression?"');
+        expect(html).toContain('"name":"Can I use this as a general code minifier for CSS or JSON?"');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"JavaScript minification removes characters the program does not need to run, such as spaces, line breaks, and comments');
+        expect(html).toContain('412 B (412 bytes) before and 179 B (179 bytes) after, which is 56.55% smaller');
+        expect(html).toContain('For the example that is 412 B to 179 B, 56.55% smaller, not a gzip ratio.');
+        expect(html).toContain('Minify stylesheets with the CSS Minifier. For JSON, open the JSON Formatter and choose the Minified indentation option.');
+        expect(html).toContain(`href="${buildSiteHref('/css-minifier/')}"`);
+        expect(html).toContain(`href="${buildSiteHref('/json-formatter/')}"`);
+        expect(html).not.toContain('c-tool-tutorial__link');
         expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/js-minifier/')}#webpage"}`);
     });
 

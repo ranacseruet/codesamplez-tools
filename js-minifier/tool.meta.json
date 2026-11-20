@@ -1,9 +1,9 @@
 {
   "id": "js-minifier-tool",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "title": "JavaScript Minifier",
   "seoTitle": "JavaScript Minifier – Minify JS Online",
-  "description": "Minify JS online for free to significantly reduce file size and boost site speed with customizable configuration options based on your need.",
+  "description": "Minify or compress JavaScript online with this code minifier and see the size savings. It runs in your browser.",
   "catalogGroupId": "code-formatters",
   "catalogOrder": 2,
   "indexDescription": "Minify JavaScript code by removing comments, whitespace, and optionally shortening variable names (minification). Features real-time size statistics and clipboard integration.",

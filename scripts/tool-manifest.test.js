@@ -553,7 +553,13 @@ describe('tool-manifest', () => {
         label: 'Code Formatters & Validators',
         tools: [
           expect.objectContaining({ id: 'json-formatter-tool', catalogOrder: 1 }),
-          expect.objectContaining({ id: 'js-minifier-tool', catalogOrder: 2 }),
+          expect.objectContaining({
+            id: 'js-minifier-tool',
+            catalogOrder: 2,
+            version: '1.0.19',
+            title: 'JavaScript Minifier',
+            description: 'Minify or compress JavaScript online with this code minifier and see the size savings. It runs in your browser.'
+          }),
           expect.objectContaining({
             id: 'css-minifier-tool',
             catalogOrder: 3,
