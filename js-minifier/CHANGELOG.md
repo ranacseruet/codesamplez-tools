@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.19] - 2026-11-20
+
+### JavaScript Minifier
+
+- Guide adds the byte sizes and percent saved for the example, minified by this tool, plus how to test the result, how minifying differs from gzip/Brotli and obfuscation, and two FAQs. The meta description now says you can minify or compress JavaScript online in the browser and see the size savings.
+
 ## [1.0.18] - 2026-11-02
 
 ### JavaScript Minifier
