@@ -1,9 +1,9 @@
 {
   "id": "diff-checker-tool",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "title": "Diff Checker",
-  "seoTitle": "Diff Checker – Compare Text, Code & Files",
-  "description": "Compare two files online: paste or upload, view side by side or unified, and download a .patch—free in your browser.",
+  "seoTitle": "Diff Checker Online – Code & Text Differences",
+  "description": "Free online code difference checker. Paste or upload text, see highlighted changes side by side or unified, and download a .patch. Input stays in your browser.",
   "catalogGroupId": "text-analysis",
   "catalogOrder": 1,
   "indexDescription": "Compare two texts side by side and highlight the differences (diff). Perfect for comparing code snippets, configurations, or any text-based content.",
