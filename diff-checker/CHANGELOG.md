@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.24] - 2026-11-23
+
+### Diff Checker
+
+- Search title and description now lead with an online code difference checker: paste or upload text, highlighted changes side by side or unified, a .patch download, and input that stays in the browser.
+
 ## [1.0.23] - 2026-11-10
 
 ### Diff Checker

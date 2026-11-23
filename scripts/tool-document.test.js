@@ -65,8 +65,12 @@ describe('tool document generation', () => {
             '<section>After payload</section>'
         );
 
-        expect(html).toContain('<title>Diff Checker – Compare Text, Code &amp; Files | CodeSamplez</title>');
-        expect(html).toContain('<meta name="description" content="Compare two files online: paste or upload, view side by side or unified, and download a .patch—free in your browser.">');
+        expect(html).toContain('<title>Diff Checker Online – Code &amp; Text Differences | CodeSamplez</title>');
+        expect(html).toContain('<meta name="description" content="Free online code difference checker. Paste or upload text, see highlighted changes side by side or unified, and download a .patch. Input stays in your browser.">');
+        expect(html).toContain('<meta property="og:title" content="Diff Checker">');
+        expect(html).toContain('<meta name="twitter:title" content="Diff Checker">');
+        expect(html).toContain('<meta property="og:description" content="Free online code difference checker. Paste or upload text, see highlighted changes side by side or unified, and download a .patch. Input stays in your browser.">');
+        expect(html).toContain('<meta name="twitter:description" content="Free online code difference checker. Paste or upload text, see highlighted changes side by side or unified, and download a .patch. Input stays in your browser.">');
         expect(html).toContain(`<meta name="tool-version" content="${tool.version}">`);
         expect(html).toContain('<meta name="theme-color" content="#0b0b11">');
         expect(html).toMatch(/<html lang="en" data-theme="dark" data-build-commit="[0-9a-f]{40}">/);
@@ -125,7 +129,7 @@ describe('tool document generation', () => {
         expect(versionLineIndex).toBeLessThan(changelogIndex);
         expect(changelogIndex).toBeLessThan(afterShellIndex);
         expect(html).toContain('<h1 class="cst-shell__title">Diff Checker</h1>');
-        expect(html).toContain('<p class="cst-shell__description">Compare two files online: paste or upload, view side by side or unified, and download a .patch—free in your browser.</p>');
+        expect(html).toContain('<p class="cst-shell__description">Free online code difference checker. Paste or upload text, see highlighted changes side by side or unified, and download a .patch. Input stays in your browser.</p>');
         expect(html).toContain('<main class="c-tool-page-main" aria-labelledby="diff-checker-app-workspace-heading">');
         expect(html).toContain('<h2 id="diff-checker-app-workspace-heading" class="u-visually-hidden">Diff Checker workspace</h2>');
         expect(html).toContain('<div class="c-tool-static-shell c-tool-static-shell--before"><section>Before payload</section></div>');
