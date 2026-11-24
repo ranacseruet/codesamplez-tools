@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.20] - 2026-11-24
+
+### JavaScript Minifier
+
+- Build tooling only: replace clean-webpack-plugin with a pre-build clean. Not a user-facing behavior change.
+
 ## [1.0.19] - 2026-11-20
 
 ### JavaScript Minifier

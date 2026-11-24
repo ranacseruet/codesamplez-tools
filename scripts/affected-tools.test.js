@@ -57,17 +57,17 @@ describe('tool metadata discovery', () => {
         sourceRoot: 'jwt-decoder',
         outputDir: 'jwt-decoder',
         outputPath: 'build/jwt-decoder',
-        version: '1.0.19'
+        version: '1.0.20'
       }),
       expect.objectContaining({
         id: 'js-minifier-tool',
-        version: '1.0.19',
+        version: '1.0.20',
         title: 'JavaScript Minifier',
         description: 'Minify or compress JavaScript online with this code minifier and see the size savings. It runs in your browser.'
       }),
       expect.objectContaining({
         id: 'css-minifier-tool',
-        version: '1.0.19',
+        version: '1.0.20',
         title: 'CSS Minifier',
         description: 'Minify CSS online in your browser and see the size savings. Comments and extra whitespace come out. Your stylesheet stays on this device.'
       })

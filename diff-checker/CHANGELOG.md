@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.25] - 2026-11-24
+
+### Diff Checker
+
+- Build tooling only: replace clean-webpack-plugin with a pre-build clean. Not a user-facing behavior change.
+
 ## [1.0.24] - 2026-11-23
 
 ### Diff Checker

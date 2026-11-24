@@ -1,6 +1,6 @@
 {
   "id": "jwt-decoder-tool",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "title": "JWT Decoder & Validator",
   "seoTitle": "JWT Decoder – Decode JWT Tokens Online",
   "description": "JWT Decoder online: read the header, payload, and exp, iat, and nbf dates. Verify an HS256 signature with a shared secret.",
