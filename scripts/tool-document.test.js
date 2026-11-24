@@ -531,12 +531,39 @@ describe('tool document generation', () => {
     });
 
     it('renders FAQPage structured data for base64-converter', () => {
+        const { JSDOM } = require('jsdom');
         const html = generateToolDocument('base64-converter-tool');
+        const tool = getToolById('base64-converter-tool');
+        const document = new JSDOM(html).window.document;
+        const description = 'Decode Base64 online, or encode text and files to Base64. Runs in your browser with UTF-8, image data URIs, and Base64URL input. Nothing is uploaded.';
+
+        expect(document.title).toBe('Base64 Decode and Encode Online | CodeSamplez');
+        expect(document.title.length).toBeLessThanOrEqual(DOCUMENT_TITLE_MAX_LENGTH);
+        expect(document.title.endsWith(' | CodeSamplez')).toBe(true);
+        expect(document.querySelector('h1').textContent).toBe('Base64 Converter');
+        expect(document.querySelector('link[rel="canonical"]').getAttribute('href')).toBe(buildSiteHref('/base64-converter/'));
+        expect(document.querySelector('meta[property="og:title"]').getAttribute('content')).toBe('Base64 Converter');
+        expect(document.querySelector('meta[name="twitter:title"]').getAttribute('content')).toBe('Base64 Converter');
+        expect(tool.description).toBe(description);
+        expect(description.length).toBeLessThanOrEqual(META_DESCRIPTION_MAX_LENGTH);
+        expect(document.querySelector('meta[name="description"]').getAttribute('content')).toBe(description);
+        expect(document.querySelector('meta[property="og:description"]').getAttribute('content')).toBe(description);
+        expect(document.querySelector('meta[name="twitter:description"]').getAttribute('content')).toBe(description);
 
         expect(html).toContain('"@type":"FAQPage"');
         expect(html).toContain('"name":"Is Base64 encoding secure?"');
         expect(html).toContain('"name":"Does this tool send my data to a server?"');
+        expect(html).toContain('"name":"How do I decode Base64 online?"');
+        expect(html).toContain('"name":"Why does my decoded text look garbled?"');
+        expect(html).toContain('"name":"Is Base64 encryption?"');
+        expect(html).toContain('"name":"How do I convert an image to Base64?"');
+        expect(html).toContain('Worked Example: Encode and Decode');
+        expect(html).toContain('Decode or Encode Base64 in Code');
+        expect(html).toContain('Base64 vs Base64URL');
+        expect(html).toContain('Image to Base64 and Data URIs');
+        expect(html).toContain('SGVsbG8g8J+MjQ==');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"No. Base64 is not encryption. It is an encoding scheme for data representation, not meant for security.');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"No. Base64 is not encryption, and decoding it does not need a password or a key.');
         expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/base64-converter/')}#webpage"}`);
     });
 

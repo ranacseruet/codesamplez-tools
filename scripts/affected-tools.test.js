@@ -70,6 +70,12 @@ describe('tool metadata discovery', () => {
         version: '1.0.20',
         title: 'CSS Minifier',
         description: 'Minify CSS online in your browser and see the size savings. Comments and extra whitespace come out. Your stylesheet stays on this device.'
+      }),
+      expect.objectContaining({
+        id: 'base64-converter-tool',
+        version: '1.0.22',
+        title: 'Base64 Converter',
+        description: 'Decode Base64 online, or encode text and files to Base64. Runs in your browser with UTF-8, image data URIs, and Base64URL input. Nothing is uploaded.'
       })
     ]));
   });

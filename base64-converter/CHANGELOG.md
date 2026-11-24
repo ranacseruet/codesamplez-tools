@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.22] - 2026-11-24
+
+### Base64 Converter
+
+- Guide adds a worked encode and decode example, including UTF-8, plus JavaScript, Python, and command-line snippets, a Base64 versus Base64URL section, an image data URI section, and four decode-intent FAQs. The browser title and meta description now lead with decode and encode.
+
 ## [1.0.21] - 2026-11-24
 
 ### Base64 Converter
