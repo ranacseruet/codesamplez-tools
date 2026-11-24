@@ -474,7 +474,7 @@ describe('tool-manifest', () => {
         sourceRoot: 'jwt-decoder',
         outputDir: 'jwt-decoder',
         outputPath: 'build/jwt-decoder',
-        version: '1.0.19',
+        version: '1.0.20',
         title: 'JWT Decoder & Validator',
         description: 'JWT Decoder online: read the header, payload, and exp, iat, and nbf dates. Verify an HS256 signature with a shared secret.',
         indexDescription: 'Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.',
@@ -556,14 +556,14 @@ describe('tool-manifest', () => {
           expect.objectContaining({
             id: 'js-minifier-tool',
             catalogOrder: 2,
-            version: '1.0.19',
+            version: '1.0.20',
             title: 'JavaScript Minifier',
             description: 'Minify or compress JavaScript online with this code minifier and see the size savings. It runs in your browser.'
           }),
           expect.objectContaining({
             id: 'css-minifier-tool',
             catalogOrder: 3,
-            version: '1.0.19',
+            version: '1.0.20',
             title: 'CSS Minifier',
             description: 'Minify CSS online in your browser and see the size savings. Comments and extra whitespace come out. Your stylesheet stays on this device.'
           }),

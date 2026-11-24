@@ -5,7 +5,6 @@ const CopyPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const { getAppShellCatalogDefinition, getAppShellCatalogDependencies } = require('./scripts/app-shell-catalog');
 const { GeneratedHtmlPlugin } = require('./scripts/generated-html-plugin');
 const {
@@ -34,6 +33,40 @@ const getToolEntry = (tool) => ([
 ]);
 
 const getWebpackMode = (argv = {}) => argv.mode || process.env.NODE_ENV || 'development';
+
+// Remove every entry in one compiler output directory, including dotfiles.
+// Same scope as clean-webpack-plugin's cleanOnceBeforeBuildPatterns: ['**/*'].
+const cleanOutputDirectory = (outputPath) => {
+  if (!outputPath || !fs.existsSync(outputPath)) {
+    return;
+  }
+
+  fs.readdirSync(outputPath).forEach((entry) => {
+    fs.rmSync(path.join(outputPath, entry), { recursive: true, force: true });
+  });
+};
+
+// Production compilers write to sibling directories under build/
+// (build/<tool> and build/root-shell) and run together. Clean each output
+// directory once, before emit, so one compiler cannot delete another's files.
+// The development compiler is the only one whose output directory is build/
+// itself, and it runs alone.
+const cleanCompilerOutputDirectories = (configs) => {
+  const list = Array.isArray(configs) ? configs : [configs];
+  const cleaned = new Set();
+
+  list.forEach((config) => {
+    const outputPath = config.output && config.output.path;
+
+    if (!outputPath || cleaned.has(outputPath)) {
+      return;
+    }
+
+    cleaned.add(outputPath);
+    cleanOutputDirectory(outputPath);
+  });
+};
+
 const createTerserMinimizer = (toolId) => {
   if (toolId !== 'js-minifier-tool') {
     return new TerserPlugin();
@@ -241,9 +274,6 @@ const getToolConfig = (tool) => ({
     publicPath: tool.publicPath
   },
   plugins: [
-    new CleanWebpackPlugin({
-      cleanOnceBeforeBuildPatterns: ['**/*']
-    }),
     createDefinePlugin(),
     new GeneratedHtmlPlugin({
       toolHtmlAssets: createToolHtmlAssets([tool], true)
@@ -298,9 +328,6 @@ const getRootShellConfig = (includeRootAssets = true) => ({
     publicPath: `/${rootShellEntryName}/`
   },
   plugins: [
-    new CleanWebpackPlugin({
-      cleanOnceBeforeBuildPatterns: ['**/*']
-    }),
     createDefinePlugin(),
     new GeneratedHtmlPlugin({
       includeRootAssets,
@@ -334,9 +361,6 @@ const developmentConfig = {
     publicPath: '/'
   },
   plugins: [
-    new CleanWebpackPlugin({
-      cleanOnceBeforeBuildPatterns: ['**/*']
-    }),
     createDefinePlugin(),
     new GeneratedHtmlPlugin({
       includeRootAssets: true,
@@ -449,7 +473,13 @@ module.exports = (env = {}, argv = {}) => {
     })
   });
 
-  return mode === 'development'
+  const configs = mode === 'development'
     ? devConfig
     : [...productionConfigs, ...(rootShellConfig ? [rootShellConfig] : [])];
+
+  cleanCompilerOutputDirectories(configs);
+  return configs;
 };
+
+module.exports.cleanOutputDirectory = cleanOutputDirectory;
+module.exports.cleanCompilerOutputDirectories = cleanCompilerOutputDirectories;
