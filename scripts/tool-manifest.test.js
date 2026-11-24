@@ -573,7 +573,13 @@ describe('tool-manifest', () => {
       expect.objectContaining({
         id: 'encoders-decoders',
         tools: [
-          expect.objectContaining({ id: 'base64-converter-tool', catalogOrder: 1 }),
+          expect.objectContaining({
+            id: 'base64-converter-tool',
+            catalogOrder: 1,
+            version: '1.0.22',
+            title: 'Base64 Converter',
+            description: 'Decode Base64 online, or encode text and files to Base64. Runs in your browser with UTF-8, image data URIs, and Base64URL input. Nothing is uploaded.'
+          }),
           expect.objectContaining({ id: 'jwt-decoder-tool', catalogOrder: 2 }),
           expect.objectContaining({ id: 'jwt-builder-tool', catalogOrder: 3 }),
           expect.objectContaining({ id: 'qr-code-generator', catalogOrder: 4 }),

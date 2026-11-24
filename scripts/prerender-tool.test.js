@@ -84,6 +84,11 @@ describe('generic tool prerender helpers', () => {
         // component passes every positive assertion.
         expect(appMarkup).not.toContain('Base64 Converter is a free online tool to quickly encode or decode text and files in Base64 format.');
         expect(afterMarkup).toContain('What is Base64 encoding and why use it?');
+        expect(afterMarkup).toContain('Worked Example: Encode and Decode');
+        expect(afterMarkup).toContain('Decode or Encode Base64 in Code');
+        expect(afterMarkup).toContain('Base64 vs Base64URL');
+        expect(afterMarkup).toContain('Image to Base64 and Data URIs');
+        expect(afterMarkup).toContain('How do I decode Base64 online?');
         expect(afterMarkup).toContain('Base64 Converter FAQs (Frequently Asked Questions)');
         expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
         expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
