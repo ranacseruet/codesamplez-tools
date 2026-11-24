@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.25] - 2026-11-24
+
+### JSON Formatter
+
+- Title and description now say this page validates JSON. Add a Validate JSON online section whose example is the formatter's own error line, column, and repaired output.
+
 ## [1.0.24] - 2026-11-24
 
 ### JSON Formatter

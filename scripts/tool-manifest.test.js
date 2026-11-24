@@ -552,7 +552,14 @@ describe('tool-manifest', () => {
         id: 'code-formatters',
         label: 'Code Formatters & Validators',
         tools: [
-          expect.objectContaining({ id: 'json-formatter-tool', catalogOrder: 1 }),
+          expect.objectContaining({
+            id: 'json-formatter-tool',
+            catalogOrder: 1,
+            version: '1.0.25',
+            title: 'JSON Formatter',
+            seoTitle: 'JSON Formatter, Validator & Beautifier Online',
+            description: 'Format and beautify JSON, validate it with the exact error line and column, and minify it. Input stays in your browser.'
+          }),
           expect.objectContaining({
             id: 'js-minifier-tool',
             catalogOrder: 2,

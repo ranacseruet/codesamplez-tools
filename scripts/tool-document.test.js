@@ -423,12 +423,42 @@ describe('tool document generation', () => {
     });
 
     it('renders FAQPage structured data for json-formatter', () => {
+        const { JSDOM } = require('jsdom');
         const html = generateToolDocument('json-formatter-tool');
+        const tool = getToolById('json-formatter-tool');
+        const document = new JSDOM(html).window.document;
+        const description = 'Format and beautify JSON, validate it with the exact error line and column, and minify it. Input stays in your browser.';
+        const title = 'JSON Formatter, Validator & Beautifier Online | CodeSamplez';
+
+        expect(document.title).toBe(title);
+        expect(title.length).toBe(59);
+        expect(document.title.length).toBeLessThanOrEqual(DOCUMENT_TITLE_MAX_LENGTH);
+        expect(document.title.startsWith('JSON Formatter')).toBe(true);
+        expect(document.title.endsWith(' | CodeSamplez')).toBe(true);
+        expect(document.querySelector('h1').textContent).toBe('JSON Formatter');
+        expect(document.querySelector('link[rel="canonical"]').getAttribute('href')).toBe(buildSiteHref('/json-formatter/'));
+        expect(tool.publicPath).toBe('/json-formatter/');
+        expect(tool.title).toBe('JSON Formatter');
+        expect(tool.seoTitle).toBe('JSON Formatter, Validator & Beautifier Online');
+        expect(tool.version).toBe('1.0.25');
+        expect(tool.description).toBe(description);
+        expect(description.length).toBe(119);
+        expect(description.length).toBeLessThanOrEqual(META_DESCRIPTION_MAX_LENGTH);
+        expect(document.querySelector('meta[name="description"]').getAttribute('content')).toBe(description);
+        expect(document.querySelector('meta[property="og:title"]').getAttribute('content')).toBe('JSON Formatter');
+        expect(document.querySelector('meta[name="twitter:title"]').getAttribute('content')).toBe('JSON Formatter');
+        expect(document.querySelector('meta[property="og:description"]').getAttribute('content')).toBe(description);
+        expect(document.querySelector('meta[name="twitter:description"]').getAttribute('content')).toBe(description);
 
         expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('Validate JSON online');
+        expect(html).toContain('Expected double-quoted property name in JSON at position 19 (line 3 column 1)');
+        expect(html).toContain('Go to error (line 3, col 1)');
         expect(html).toContain('"name":"What is a JSON Formatter?"');
         expect(html).toContain('"name":"Can a JSON Formatter also validate JSON?"');
+        expect(html).toContain('"name":"How do I check if JSON is valid?"');
         expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"A JSON Formatter is an online tool that takes unformatted or minified JSON data and beautifies it by adding proper indentation and line breaks.');
+        expect(html).toContain('"acceptedAnswer":{"@type":"Answer","text":"Paste the JSON and click \\"Format JSON\\". Every format run checks syntax.');
         expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/json-formatter/')}#webpage"}`);
     });
 

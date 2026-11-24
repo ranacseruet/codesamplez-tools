@@ -2,6 +2,7 @@ import type { JSX } from 'preact';
 import { SITE_BASE_URL, buildSiteHref } from '../common/siteBaseUrl';
 import { ToolArticleSection, ToolFaqList, type ToolFaqItem } from '../common/tool-article/ToolArticle';
 import { ToolTutorialLinks } from '../common/tool-article/TutorialLinks';
+import { formatJson, locateJsonError } from './json-format-core';
 
 function createPlainTextFaqItem(question: string, answer: string): ToolFaqItem {
     return {
@@ -27,6 +28,10 @@ export const FAQ_ITEMS: ToolFaqItem[] = [
     createPlainTextFaqItem(
         'Can a JSON Formatter also validate JSON?',
         'Yes. The formatter always checks JSON syntax, and its optional JSON Schema validation checks whether valid data matches a contract. Open the JSON Schema validation disclosure to use Draft 7 or Draft 2020-12; the tool reports the first schema issue with its JSON Pointer and source line/column. Auto fix can format repaired output, but schema validation waits until the original input is strict JSON.'
+    ),
+    createPlainTextFaqItem(
+        'How do I check if JSON is valid?',
+        'Paste the JSON and click "Format JSON". Every format run checks syntax. Valid JSON is formatted. Invalid JSON stays in the input: the status line starts with "Invalid JSON:" and the parser message, and "Go to error" shows the line and column when that message includes a position. Auto fix starts checked and repairs trailing commas, single quotes, and unquoted keys before formatting, so uncheck it when you want the syntax error instead of a repair. It does not fix every syntax error. Optional JSON Schema validation is separate. Add a Draft 7 or Draft 2020-12 schema and the button reads "Format & Validate". Schema validation checks the original text as strict JSON. If that text is not valid JSON, schema validation is not run until the source is valid JSON.'
     ),
     createPlainTextFaqItem(
         'How do I fix "Unexpected token" errors in JSON?',
@@ -105,6 +110,30 @@ export const FEATURE_LIST: string[] = [
     'Upload or drop text files locally'
 ];
 
+/**
+ * Trailing-comma snippet for the Validate JSON online section.
+ * No outer whitespace, so Format JSON (which trims the textarea) and
+ * locateJsonError see the same characters. The status line and Go to error
+ * label are whatever those functions return for this string today.
+ */
+export const VALIDATE_JSON_EXAMPLE_INPUT = '{\n  "name": "Ada",\n}';
+
+const validateJsonExampleError = locateJsonError(VALIDATE_JSON_EXAMPLE_INPUT, false)!;
+
+export const VALIDATE_JSON_EXAMPLE_ERROR_MESSAGE = validateJsonExampleError.message;
+export const VALIDATE_JSON_EXAMPLE_LINE = validateJsonExampleError.line;
+export const VALIDATE_JSON_EXAMPLE_COLUMN = validateJsonExampleError.column;
+export const VALIDATE_JSON_EXAMPLE_STATUS = `Invalid JSON: ${validateJsonExampleError.message}`;
+export const VALIDATE_JSON_EXAMPLE_GO_TO_ERROR = `Go to error (line ${validateJsonExampleError.line}, col ${validateJsonExampleError.column})`;
+
+/** Pretty-printed repair with the page defaults: Auto fix on, Sort keys on, 2-space indent. */
+export const VALIDATE_JSON_EXAMPLE_OUTPUT = formatJson({
+    input: VALIDATE_JSON_EXAMPLE_INPUT,
+    autoFix: true,
+    sortKeys: true,
+    indent: 2
+}).formattedString;
+
 export function JsonFormatterIntro(): JSX.Element {
     return (
         <section className="c-tool-article c-tool-article--intro c-surface-card" aria-labelledby="json-formatter-intro-heading">
@@ -170,6 +199,38 @@ export function JsonFormatterArticle(): JSX.Element {
                         <li><strong>Shareable URLs:</strong> Click &ldquo;Share&rdquo; to copy a link with your JSON and settings compressed into the URL&rsquo;s hash fragment, so it never leaves your browser.</li>
                         <li><strong>Local file input:</strong> Click Upload File or drag a text file into the input; files are read in the browser and never uploaded.</li>
                     </ul>
+                </ToolArticleSection>
+
+                <ToolArticleSection id="json-formatter-validate" title="Validate JSON online">
+                    <p>
+                        Every format run checks JSON syntax. Auto fix starts checked, so uncheck it when you
+                        want the error instead of a repair. Paste this snippet and click Format JSON. The input
+                        stays in the box. The status line is &ldquo;Invalid JSON:&rdquo; plus the JSON.parse
+                        message. When that message includes a position, Go to error shows the line and column
+                        taken from it. Here that position is the closing brace on line {VALIDATE_JSON_EXAMPLE_LINE},
+                        column {VALIDATE_JSON_EXAMPLE_COLUMN}: a trailing comma on the previous line left the
+                        parser expecting a quoted property name. The message text follows the browser&apos;s
+                        JSON.parse. Go to error stays hidden when the message has no position.
+                    </p>
+                    <p><strong>Invalid JSON:</strong></p>
+                    <pre><code>{VALIDATE_JSON_EXAMPLE_INPUT}</code></pre>
+                    <p><strong>Status line:</strong></p>
+                    <pre><code>{VALIDATE_JSON_EXAMPLE_STATUS}</code></pre>
+                    <p><strong>Go to error:</strong></p>
+                    <pre><code>{VALIDATE_JSON_EXAMPLE_GO_TO_ERROR}</code></pre>
+                    <p>
+                        Check Auto fix and click Format JSON again. Auto fix removes that trailing comma, then
+                        the formatter pretty-prints with the selected indent. Sort keys starts on and does not
+                        reorder this one-key object. With the default 2-space indent the plain-text output is:
+                    </p>
+                    <pre><code>{VALIDATE_JSON_EXAMPLE_OUTPUT}</code></pre>
+                    <p>
+                        Auto fix also turns single-quoted strings into double quotes and quotes unquoted keys.
+                        It does not repair every syntax error. Optional JSON Schema validation is separate:
+                        paste a Draft 7 or Draft 2020-12 schema and the button reads Format &amp; Validate.
+                        The schema check uses the original text as strict JSON. If Auto fix was required, the
+                        schema status says validation was not run until the source is valid JSON.
+                    </p>
                 </ToolArticleSection>
 
                 <ToolArticleSection id="json-formatter-how-to-use" title="How to Format JSON (Step-by-Step)">
