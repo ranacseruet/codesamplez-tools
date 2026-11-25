@@ -5,6 +5,9 @@
   "resultsFile": "qa-artifacts/visual-baselines/current/visual-baseline-results.json",
   "manifestFile": "qa-artifacts/visual-baselines/current/visual-screenshot-manifest.json",
   "screenshotsRoot": "qa-artifacts/visual-baselines/current",
+  "screenshot": {
+    "fullPage": false
+  },
   "selection": {
     "sharedPrefixes": [
       "common/",
