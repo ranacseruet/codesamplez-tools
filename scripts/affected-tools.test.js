@@ -72,6 +72,12 @@ describe('tool metadata discovery', () => {
         description: 'Minify CSS online in your browser and see the size savings. Comments and extra whitespace come out. Your stylesheet stays on this device.'
       }),
       expect.objectContaining({
+        id: 'json-formatter-tool',
+        version: '1.0.25',
+        title: 'JSON Formatter',
+        description: 'Format and beautify JSON, validate it with the exact error line and column, and minify it. Input stays in your browser.'
+      }),
+      expect.objectContaining({
         id: 'base64-converter-tool',
         version: '1.0.22',
         title: 'Base64 Converter',

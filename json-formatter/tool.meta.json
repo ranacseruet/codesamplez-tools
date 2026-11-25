@@ -1,9 +1,9 @@
 {
   "id": "json-formatter-tool",
-  "version": "1.0.24",
+  "version": "1.0.25",
   "title": "JSON Formatter",
-  "seoTitle": "JSON Formatter & Beautifier Online",
-  "description": "JSON formatter to beautify, minify, and validate JSON in your browser. Optional Draft 7 or 2020-12 JSON Schema validation with source diagnostics.",
+  "seoTitle": "JSON Formatter, Validator & Beautifier Online",
+  "description": "Format and beautify JSON, validate it with the exact error line and column, and minify it. Input stays in your browser.",
   "catalogGroupId": "code-formatters",
   "catalogOrder": 1,
   "indexDescription": "Format, validate JSON syntax, and optionally check JSON Schema contracts in one client-side tool. Supports Draft 7 and Draft 2020-12, local references, selectable indentation, key sorting, tree view, and source diagnostics.",

@@ -112,6 +112,10 @@ describe('generic tool prerender helpers', () => {
         // component passes every positive assertion.
         expect(appMarkup).not.toContain('A JSON formatter is a tool that takes raw or minified JSON and rewrites it with indentation');
         expect(afterMarkup).toContain('Why Use A JSON Formatter Tool?');
+        expect(afterMarkup).toContain('Validate JSON online');
+        expect(afterMarkup).toContain('Expected double-quoted property name in JSON at position 19 (line 3 column 1)');
+        expect(afterMarkup).toContain('Go to error (line 3, col 1)');
+        expect(afterMarkup).toContain('How do I check if JSON is valid?');
         expect(afterMarkup).toContain('JSON Formatter FAQs');
         expect(afterMarkup).toContain(`href="${SITE_BASE_URL}"`);
         expect(afterMarkup).toContain('href="https://codesamplez.com/contact"');
