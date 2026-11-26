@@ -250,6 +250,12 @@ export function JwtDecoderArticle(): JSX.Element {
                         <li><code>jti</code> (JWT ID): a unique id for this token.</li>
                     </ul>
                     <p>
+                        <code>exp</code>, <code>iat</code>, and <code>nbf</code> are Unix seconds. The{' '}
+                        <a href={buildSiteHref('/timestamp-converter/')}>Unix Timestamp Converter</a> turns one of
+                        those numbers into UTC, local time, and another time zone. This page still reads them from
+                        the token.
+                    </p>
+                    <p>
                         A token can decode and still be unusable. Decoding only needs the first two segments to be
                         Base64URL JSON. The signature can be wrong, the algorithm can be one this page does not
                         verify, <code>exp</code> can be in the past, or <code>nbf</code> can be in the future. The

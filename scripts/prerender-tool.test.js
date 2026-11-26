@@ -414,6 +414,35 @@ describe('generic tool prerender helpers', () => {
         expect(relatedMarkup).toContain(buildSiteHref('/base64-converter/'));
     });
 
+    it('renders timestamp-converter app markup for server-side prerender', () => {
+        const appMarkup = renderToolPrerenderMarkup('timestamp-converter-tool');
+        const afterMarkup = renderToolAfterAppPrerenderMarkup('timestamp-converter-tool');
+        const relatedMarkup = renderRelatedToolsPrerenderMarkup('timestamp-converter-tool');
+
+        expect(appMarkup).toContain('id="tsc-convert"');
+        expect(appMarkup).toContain('id="tsc-epoch"');
+        expect(appMarkup).toContain('id="tsc-convert-date"');
+        expect(appMarkup).toContain('id="tsc-convert-jwt"');
+        expect(appMarkup).toContain('id="tsc-output"');
+        expect(appMarkup).toContain('>—<');
+        expect(appMarkup).toContain('placeholder="1700000000"');
+        expect(appMarkup).not.toContain('2023-11-14T22:13:20.000Z');
+        expect(afterMarkup).toContain('Convert a Unix timestamp to UTC');
+        expect(appMarkup).not.toContain('Convert a Unix timestamp to UTC, local time');
+        expect(afterMarkup).toContain('2023-11-14T22:13:20.000Z');
+        expect(afterMarkup).toContain('2023-11-14T22:13:20.123456789Z');
+        expect(afterMarkup).toContain('Unix Timestamp Converter FAQs');
+        expect(afterMarkup).toContain('date -u -d @1700000000');
+        expect(afterMarkup).toContain('to_timestamp(1700000000)');
+        expect(afterMarkup).not.toContain('c-tool-tutorial__link');
+        expect(relatedMarkup).toContain('Read exp, iat, and nbf from a decoded JWT');
+        expect(relatedMarkup).toContain('Put this epoch into a JWT exp or iat claim');
+        expect(relatedMarkup).toContain('See the Unix time stored in a version 7 UUID');
+        expect(relatedMarkup).toContain(buildSiteHref('/jwt-decoder/'));
+        expect(relatedMarkup).toContain(buildSiteHref('/jwt-builder/'));
+        expect(relatedMarkup).toContain(buildSiteHref('/uuid-generator/'));
+    });
+
     it('throws for a tool that is not in the manifest', () => {
         expect(() => renderRelatedToolsPrerenderMarkup('not-a-real-tool'))
             .toThrow('Unknown tool id: not-a-real-tool');

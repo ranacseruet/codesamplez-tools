@@ -117,6 +117,9 @@ describe('jwt-decoder content', () => {
 
         const workedExampleLink = root!.querySelector('section[aria-labelledby="jwt-decoder-worked-example"] a[href*="jwt-builder"]');
         expect(workedExampleLink).not.toBeNull();
+        const timestampLink = root!.querySelector('section[aria-labelledby="jwt-decoder-claims"] a[href*="timestamp-converter"]');
+        expect(timestampLink).not.toBeNull();
+        expect(timestampLink!.textContent).toBe('Unix Timestamp Converter');
 
         const crashCourseLinks = root!.querySelectorAll(`a[href="${JWT_CRASH_COURSE.href}"]`);
         const bestPracticesLink = root!.querySelector(`a[href="${JWT_BEST_PRACTICES.href}"]`);

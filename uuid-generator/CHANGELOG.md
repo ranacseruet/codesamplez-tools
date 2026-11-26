@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.1] - 2026-11-26
+
+### UUID Generator
+
+- Shared page generator now includes the Unix Timestamp Converter. This tool's behavior is unchanged.
+
 ## [1.0.0] - 2026-11-26
 
 ### UUID Generator

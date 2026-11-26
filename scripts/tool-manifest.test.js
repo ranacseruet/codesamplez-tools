@@ -457,7 +457,7 @@ describe('tool-manifest', () => {
   it('discovers tool definitions from tool-local metadata files', () => {
     const toolDefinitions = getToolDefinitions();
 
-    expect(toolDefinitions).toHaveLength(13);
+    expect(toolDefinitions).toHaveLength(14);
     expect(toolDefinitions).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: 'image-editor',
@@ -474,7 +474,7 @@ describe('tool-manifest', () => {
         sourceRoot: 'jwt-decoder',
         outputDir: 'jwt-decoder',
         outputPath: 'build/jwt-decoder',
-        version: '1.0.21',
+        version: '1.0.22',
         title: 'JWT Decoder & Validator',
         description: 'JWT Decoder online: read the header, payload, and exp, iat, and nbf dates. Verify an HS256 signature with a shared secret.',
         indexDescription: 'Decode and validate JSON Web Tokens (JWT). Inspect header, payload, and verify signatures with your secret key for token authenticity.',
@@ -555,7 +555,7 @@ describe('tool-manifest', () => {
           expect.objectContaining({
             id: 'json-formatter-tool',
             catalogOrder: 1,
-            version: '1.0.26',
+            version: '1.0.27',
             title: 'JSON Formatter',
             seoTitle: 'JSON Formatter, Validator & Beautifier Online',
             description: 'Format and beautify JSON, validate it with the exact error line and column, and minify it. Input stays in your browser.'
@@ -563,14 +563,14 @@ describe('tool-manifest', () => {
           expect.objectContaining({
             id: 'js-minifier-tool',
             catalogOrder: 2,
-            version: '1.0.21',
+            version: '1.0.22',
             title: 'JavaScript Minifier',
             description: 'Minify or compress JavaScript online with this code minifier and see the size savings. It runs in your browser.'
           }),
           expect.objectContaining({
             id: 'css-minifier-tool',
             catalogOrder: 3,
-            version: '1.0.21',
+            version: '1.0.22',
             title: 'CSS Minifier',
             description: 'Minify CSS online in your browser and see the size savings. Comments and extra whitespace come out. Your stylesheet stays on this device.'
           }),
@@ -583,7 +583,7 @@ describe('tool-manifest', () => {
           expect.objectContaining({
             id: 'base64-converter-tool',
             catalogOrder: 1,
-            version: '1.0.23',
+            version: '1.0.24',
             title: 'Base64 Converter',
             description: 'Decode Base64 online, or encode text and files to Base64. Runs in your browser with UTF-8, image data URIs, and Base64URL input. Nothing is uploaded.'
           }),
@@ -594,10 +594,18 @@ describe('tool-manifest', () => {
           expect.objectContaining({
             id: 'uuid-generator-tool',
             catalogOrder: 6,
-            version: '1.0.0',
+            version: '1.0.1',
             title: 'UUID Generator',
             seoTitle: 'UUID Generator Online – v4 and v7',
             description: 'Generate UUID v4 and v7 online, one or in bulk, and validate a pasted UUID. Version, variant, and the v7 timestamp stay in your browser.'
+          }),
+          expect.objectContaining({
+            id: 'timestamp-converter-tool',
+            catalogOrder: 7,
+            version: '1.0.0',
+            title: 'Unix Timestamp Converter',
+            seoTitle: 'Unix Timestamp Converter – Epoch to Date',
+            description: 'Convert Unix seconds, milliseconds, microseconds, or nanoseconds to UTC, local, and a time zone, or a date back to epoch. It stays in your browser.'
           })
         ]
       }),

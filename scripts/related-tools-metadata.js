@@ -87,6 +87,11 @@ const RELATED_TOOL_REASONS = {
         'jwt-builder-tool': 'Use a UUID as the jti claim on a JWT',
         'jwt-decoder-tool': 'Read the jti claim back out of a JWT',
         'base64-converter-tool': 'Encode a UUID when a payload needs Base64'
+    },
+    'timestamp-converter-tool': {
+        'jwt-decoder-tool': 'Read exp, iat, and nbf from a decoded JWT',
+        'jwt-builder-tool': 'Put this epoch into a JWT exp or iat claim',
+        'uuid-generator-tool': 'See the Unix time stored in a version 7 UUID'
     }
 };
 
