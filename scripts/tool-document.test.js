@@ -440,7 +440,7 @@ describe('tool document generation', () => {
         expect(tool.publicPath).toBe('/json-formatter/');
         expect(tool.title).toBe('JSON Formatter');
         expect(tool.seoTitle).toBe('JSON Formatter, Validator & Beautifier Online');
-        expect(tool.version).toBe('1.0.26');
+        expect(tool.version).toBe('1.0.27');
         expect(tool.description).toBe(description);
         expect(description.length).toBe(119);
         expect(description.length).toBeLessThanOrEqual(META_DESCRIPTION_MAX_LENGTH);
@@ -565,6 +565,45 @@ describe('tool document generation', () => {
         expect(html).toContain(`href="${buildSiteHref('/base64-converter/')}"`);
         expect(html).toContain('id="uuid-generate"');
         expect(html).toContain('id="uuid-validate"');
+    });
+
+    it('renders FAQPage structured data for timestamp-converter', () => {
+        const { JSDOM } = require('jsdom');
+        const html = generateToolDocument('timestamp-converter-tool');
+        const tool = getToolById('timestamp-converter-tool');
+        const document = new JSDOM(html).window.document;
+        const description = 'Convert Unix seconds, milliseconds, microseconds, or nanoseconds to UTC, local, and a time zone, or a date back to epoch. It stays in your browser.';
+        const title = 'Unix Timestamp Converter – Epoch to Date | CodeSamplez';
+
+        expect(document.title).toBe(title);
+        expect(title.length).toBeLessThanOrEqual(DOCUMENT_TITLE_MAX_LENGTH);
+        expect(document.title.endsWith(' | CodeSamplez')).toBe(true);
+        expect(document.querySelector('h1').textContent).toBe('Unix Timestamp Converter');
+        expect(document.querySelector('link[rel="canonical"]').getAttribute('href')).toBe(buildSiteHref('/timestamp-converter/'));
+        expect(tool.seoTitle).toBe('Unix Timestamp Converter – Epoch to Date');
+        expect(tool.description).toBe(description);
+        expect(description.length).toBeLessThanOrEqual(META_DESCRIPTION_MAX_LENGTH);
+        expect(document.querySelector('meta[name="description"]').getAttribute('content')).toBe(description);
+        expect(document.querySelector('meta[property="og:title"]').getAttribute('content')).toBe('Unix Timestamp Converter');
+        expect(document.querySelector('meta[name="twitter:title"]').getAttribute('content')).toBe('Unix Timestamp Converter');
+        expect(document.querySelector('meta[property="og:description"]').getAttribute('content')).toBe(description);
+        expect(document.querySelector('meta[name="twitter:description"]').getAttribute('content')).toBe(description);
+
+        expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('1700000000');
+        expect(html).toContain('2023-11-14T22:13:20.000Z');
+        expect(html).toContain('2023-11-14T22:13:20.123456789Z');
+        expect(html).toContain('"name":"How does this page choose seconds, milliseconds, microseconds, or nanoseconds?"');
+        expect(html).toContain('"name":"How do JWT exp, iat, and nbf relate to Unix time?"');
+        expect(html).toContain('1 to 10 digits are seconds');
+        expect(html).toContain('date -u -d @1700000000');
+        expect(html).toContain('to_timestamp(1700000000)');
+        expect(html).not.toContain('c-tool-tutorial__link');
+        expect(html).toContain(`href="${buildSiteHref('/jwt-decoder/')}"`);
+        expect(html).toContain(`href="${buildSiteHref('/jwt-builder/')}"`);
+        expect(html).toContain(`href="${buildSiteHref('/uuid-generator/')}"`);
+        expect(html).toContain('id="tsc-convert"');
+        expect(html).toContain('id="tsc-convert-date"');
     });
 
     it('renders FAQPage structured data for jwt-builder', () => {

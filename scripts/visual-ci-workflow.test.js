@@ -84,12 +84,14 @@ describe('Visual CI workflow contract', () => {
 
     expect(config.provider).toBe('snap');
     expect(config.diff.mode).toBe('fail-on-incomplete');
-    // 19 existing routes plus uuid-generator-desktop. Mobile is omitted: a new
+    // 20 existing routes plus timestamp-converter-desktop. Mobile is omitted: a new
     // route has no capture yet, and only mobile routes with a confirmed raster
     // budget may use the mobile preset or the 390×844 viewport.
-    expect(routeIds).toHaveLength(20);
+    expect(routeIds).toHaveLength(21);
     expect(routeIds).toContain('uuid-generator-desktop');
     expect(routeIds).not.toContain('uuid-generator-mobile');
+    expect(routeIds).toContain('timestamp-converter-desktop');
+    expect(routeIds).not.toContain('timestamp-converter-mobile');
     expect(new Set(routeIds).size).toBe(routeIds.length);
     EXCLUDED_OVERSIZED_MOBILE_ROUTES.forEach((routeId) => {
       expect(routeIds).not.toContain(routeId);

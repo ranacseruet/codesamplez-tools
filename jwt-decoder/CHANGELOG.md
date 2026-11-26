@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.22] - 2026-11-26
+
+### JWT Decoder & Validator
+
+- The claims guide links to the Unix Timestamp Converter for exp, iat, and nbf. Shared page generator now includes that tool. This decoder's behavior is unchanged.
+
 ## [1.0.21] - 2026-11-26
 
 ### JWT Decoder & Validator

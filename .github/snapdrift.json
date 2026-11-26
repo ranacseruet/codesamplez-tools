@@ -190,6 +190,14 @@
       "changePaths": [
         "uuid-generator/"
       ]
+    },
+    {
+      "id": "timestamp-converter-desktop",
+      "path": "/timestamp-converter/",
+      "viewport": "desktop",
+      "changePaths": [
+        "timestamp-converter/"
+      ]
     }
   ],
   "diff": {

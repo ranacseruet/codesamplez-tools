@@ -159,7 +159,9 @@ const JS_RAW_BASELINES = Object.freeze({
     'text-analyzer-tool': 54277,
     'qr-code-generator': 70285,
     'image-editor': 71904,
-    'uuid-generator-tool': 55365
+    'uuid-generator-tool': 55365,
+    // Measured production main bundle for the Unix Timestamp Converter.
+    'timestamp-converter-tool': 60491
 });
 
 /**

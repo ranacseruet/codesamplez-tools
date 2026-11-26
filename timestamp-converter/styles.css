@@ -1,0 +1,65 @@
+.tsc-tool .tsc-textarea {
+  width: 100%;
+  min-height: 8rem;
+}
+
+.tsc-tool .tsc-output {
+  min-height: 12rem;
+}
+
+.tsc-tool .tsc-options,
+.tsc-tool .tsc-date-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm, 0.75rem) var(--spacing-md, 1rem);
+  align-items: flex-end;
+}
+
+.tsc-tool .tsc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.tsc-tool .tsc-unit,
+.tsc-tool .tsc-zone,
+.tsc-tool .tsc-date,
+.tsc-tool .tsc-time {
+  min-width: 12rem;
+  max-width: 100%;
+}
+
+.tsc-tool .tsc-ms {
+  width: 6rem;
+  max-width: 100%;
+}
+
+.tsc-tool .tsc-now {
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.tsc-tool .tsc-result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0 0 var(--spacing-md, 1rem);
+}
+
+.tsc-tool .tsc-result div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 16rem) minmax(0, 1fr);
+  gap: 0.5rem 1rem;
+}
+
+.tsc-tool .tsc-result dt {
+  margin: 0;
+  font-weight: 600;
+}
+
+.tsc-tool .tsc-result dd,
+.tsc-tool .tsc-note {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

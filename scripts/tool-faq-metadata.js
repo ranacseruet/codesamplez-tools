@@ -112,6 +112,14 @@ const TOOL_FAQ_REGISTRY = {
             question: item.question,
             structuredDataAnswer: item.structuredDataAnswer
         }));
+    },
+    'timestamp-converter-tool': () => {
+        ensureBabelRegister();
+        const { FAQ_ITEMS } = require(path.resolve(__dirname, '../timestamp-converter/content'));
+        return FAQ_ITEMS.map((item) => ({
+            question: item.question,
+            structuredDataAnswer: item.structuredDataAnswer
+        }));
     }
 };
 

@@ -565,6 +565,30 @@ async function run() {
       });
     }
 
+    if (shouldRunTool('timestamp-converter-tool')) {
+      const timestampDesktop = await desktop.newPage();
+      await record('timestamp-converter-tool desktop a11y baseline', async () => {
+        await timestampDesktop.goto(`${baseUrl}/timestamp-converter/`, { waitUntil: 'networkidle' });
+        await waitVisible(timestampDesktop, '#app-shell-header .cst-appbar');
+        await waitVisible(timestampDesktop, '#tsc-convert');
+        await waitVisible(timestampDesktop, '#tsc-output');
+        await waitVisible(timestampDesktop, '#tsc-convert-date');
+        const report = await analyzePageA11y(timestampDesktop);
+        return { page: '/timestamp-converter/', viewport: 'desktop', ...report };
+      });
+
+      const timestampMobile = await mobile.newPage();
+      await record('timestamp-converter-tool mobile a11y baseline', async () => {
+        await timestampMobile.goto(`${baseUrl}/timestamp-converter/`, { waitUntil: 'networkidle' });
+        await waitVisible(timestampMobile, '#app-shell-header .cst-appbar');
+        await waitVisible(timestampMobile, '#tsc-convert');
+        await waitVisible(timestampMobile, '#tsc-output');
+        await waitVisible(timestampMobile, '#tsc-convert-date');
+        const report = await analyzePageA11y(timestampMobile);
+        return { page: '/timestamp-converter/', viewport: 'mobile-iphone12', ...report };
+      });
+    }
+
     if (shouldRunTool('diff-checker-tool')) {
       const diffCheckerDesktop = await desktop.newPage();
       await record('diff-checker-tool desktop a11y baseline', async () => {

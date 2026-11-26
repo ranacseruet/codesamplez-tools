@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.24] - 2026-11-26
+
+### Base64 Converter
+
+- Shared page generator now includes the Unix Timestamp Converter. This tool's behavior is unchanged.
+
 ## [1.0.23] - 2026-11-26
 
 ### Base64 Converter

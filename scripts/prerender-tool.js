@@ -176,6 +176,14 @@ const TOOL_PRERENDER_REGISTRY = {
             return h(UuidGeneratorApp, {});
         },
         createAfterAppNode: createArticleAfterAppNode('uuid-generator-tool')
+    },
+    'timestamp-converter-tool': {
+        createAppNode: () => {
+            const { h } = require('preact');
+            const { TimestampConverterApp } = require(path.resolve(__dirname, '../timestamp-converter/script'));
+            return h(TimestampConverterApp, {});
+        },
+        createAfterAppNode: createArticleAfterAppNode('timestamp-converter-tool')
     }
 };
 

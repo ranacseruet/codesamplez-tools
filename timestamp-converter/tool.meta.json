@@ -1,0 +1,32 @@
+{
+  "id": "timestamp-converter-tool",
+  "version": "1.0.0",
+  "title": "Unix Timestamp Converter",
+  "seoTitle": "Unix Timestamp Converter – Epoch to Date",
+  "description": "Convert Unix seconds, milliseconds, microseconds, or nanoseconds to UTC, local, and a time zone, or a date back to epoch. It stays in your browser.",
+  "catalogGroupId": "encoders-decoders",
+  "catalogOrder": 7,
+  "indexDescription": "Convert a Unix timestamp to UTC, your local time, and another IANA time zone, or turn a date back into epoch seconds. Seconds, milliseconds, microseconds, and nanoseconds are chosen from the digit count. A JWT exp, iat, or nbf value is read as seconds.",
+  "icon": "clock",
+  "status": "live",
+  "keywords": [
+    "timestamp",
+    "epoch",
+    "unix",
+    "utc",
+    "converter"
+  ],
+  "appRootId": "timestamp-converter-app",
+  "publicPath": "/timestamp-converter/",
+  "scriptType": "module",
+  "dependencyScopes": [
+    "build-system",
+    "shared-ui",
+    "shared-runtime"
+  ],
+  "relatedToolIds": [
+    "jwt-decoder-tool",
+    "jwt-builder-tool",
+    "uuid-generator-tool"
+  ]
+}

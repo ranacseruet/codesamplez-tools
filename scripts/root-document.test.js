@@ -64,7 +64,7 @@ describe('root document generation', () => {
     expect(html).toContain('"@type":"CollectionPage"');
     expect(html).toContain('"@type":"ItemList"');
     expect(html).toContain('"@type":["WebApplication","SoftwareApplication"]');
-    expect(html).toContain('"numberOfItems":13');
+    expect(html).toContain('"numberOfItems":14');
     expect(html).toContain(`"url":"${buildSiteHref('/json-formatter/')}"`);
     expect(html).toContain(`"url":"${buildSiteHref('/json-editor/')}"`);
     expect(html).toContain(`"url":"${buildSiteHref('/text-analyzer/')}"`);
@@ -87,7 +87,7 @@ describe('root document generation', () => {
     // non-live tools get a status badge.
     expect(html).not.toContain('tool-status--live');
     // v4 hero: eyebrow stats, tagline, CTA pair, search island shell.
-    expect(html).toContain('<p class="hero-eyebrow">// 13 tools · 100% client-side · 0 uploads</p>');
+    expect(html).toContain('<p class="hero-eyebrow">// 14 tools · 100% client-side · 0 uploads</p>');
     expect(html).toContain('tool input is processed locally and is not uploaded');
     expect(html).toContain('<a class="cta-button" href="#tools">Browse tools');
     expect(html).toContain('<a class="cta-button cta-button--ghost" href="#what-are-online-developer-tools">Why client-side?</a>');
@@ -109,6 +109,8 @@ describe('root document generation', () => {
     expect(html).toContain(`<a class="tool-card__link" href="${buildSiteHref('/image-editor/')}">Image Editor</a>`);
     expect(html).toContain('class="tool-card tool-card--encoders" data-tool-id="uuid-generator-tool"');
     expect(html).toContain(`<a class="tool-card__link" href="${buildSiteHref('/uuid-generator/')}">UUID Generator</a>`);
+    expect(html).toContain('class="tool-card tool-card--encoders" data-tool-id="timestamp-converter-tool"');
+    expect(html).toContain(`<a class="tool-card__link" href="${buildSiteHref('/timestamp-converter/')}">Unix Timestamp Converter</a>`);
     expect(html).toContain('<span class="cta-button cta-button--card" aria-hidden="true">Try Tool');
     // Tools index wrapper anchors the Browse-tools CTA and the All chip.
     expect(html).toContain('<div id="tools" class="tools-index">');
