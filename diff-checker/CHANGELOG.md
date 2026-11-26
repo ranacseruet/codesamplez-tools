@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.26] - 2026-11-26
+
+### Diff Checker
+
+- Shared page generator now includes the UUID Generator. This tool's behavior is unchanged.
+
 ## [1.0.25] - 2026-11-24
 
 ### Diff Checker

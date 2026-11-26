@@ -1,6 +1,6 @@
 {
   "id": "base64-converter-tool",
-  "version": "1.0.22",
+  "version": "1.0.23",
   "title": "Base64 Converter",
   "seoTitle": "Base64 Decode and Encode Online",
   "description": "Decode Base64 online, or encode text and files to Base64. Runs in your browser with UTF-8, image data URIs, and Base64URL input. Nothing is uploaded.",

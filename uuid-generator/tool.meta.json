@@ -1,0 +1,33 @@
+{
+  "id": "uuid-generator-tool",
+  "version": "1.0.0",
+  "title": "UUID Generator",
+  "seoTitle": "UUID Generator Online – v4 and v7",
+  "description": "Generate UUID v4 and v7 online, one or in bulk, and validate a pasted UUID. Version, variant, and the v7 timestamp stay in your browser.",
+  "catalogGroupId": "encoders-decoders",
+  "catalogOrder": 6,
+  "indexDescription": "Generate version 4 and version 7 UUIDs in your browser, one or in bulk. Copy or download them, and validate a pasted UUID to see its version, variant, and version 7 timestamp.",
+  "icon": "binary",
+  "status": "live",
+  "keywords": [
+    "uuid",
+    "guid",
+    "v4",
+    "v7",
+    "generator",
+    "validator"
+  ],
+  "appRootId": "uuid-generator-app",
+  "publicPath": "/uuid-generator/",
+  "scriptType": "module",
+  "dependencyScopes": [
+    "build-system",
+    "shared-ui",
+    "shared-runtime"
+  ],
+  "relatedToolIds": [
+    "jwt-builder-tool",
+    "jwt-decoder-tool",
+    "base64-converter-tool"
+  ]
+}

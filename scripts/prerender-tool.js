@@ -168,6 +168,14 @@ const TOOL_PRERENDER_REGISTRY = {
             return h(ImageEditorApp, {});
         },
         createAfterAppNode: createArticleAfterAppNode('image-editor')
+    },
+    'uuid-generator-tool': {
+        createAppNode: () => {
+            const { h } = require('preact');
+            const { UuidGeneratorApp } = require(path.resolve(__dirname, '../uuid-generator/script'));
+            return h(UuidGeneratorApp, {});
+        },
+        createAfterAppNode: createArticleAfterAppNode('uuid-generator-tool')
     }
 };
 

@@ -20,6 +20,9 @@ const { detectAffectedTargets, getToolIdForPath } = require('./affected-tools');
 // breaks the first post-merge CI run. A fixed SHA is immutable.
 const MERGE_BASE_COMMIT = 'd0dd57c9654ad630764a16859e0441dc5a7c084a';
 const readVersionAtMergeBase = (revision, toolId) => readVersionAtRevision(MERGE_BASE_COMMIT, toolId);
+// A tool added after MERGE_BASE_COMMIT has no base version, so the gate
+// does not treat it as a missing bump. Expectations follow that rule.
+const existingAtMergeBase = (toolIds) => toolIds.filter((toolId) => readVersionAtMergeBase('any-base', toolId)).sort();
 
 describe('check-version-bumps', () => {
     describe('compareVersions', () => {
@@ -201,7 +204,7 @@ describe('check-version-bumps', () => {
                 readVersionAt: readVersionAtMergeBase
             });
 
-            expect(missing.sort()).toEqual([...affectedTools].sort());
+            expect(missing.sort()).toEqual(existingAtMergeBase(affectedTools));
         });
 
         it('passes for shared runtime changes when every affected tool bumped', () => {
@@ -259,7 +262,7 @@ describe('check-version-bumps', () => {
                     resolveCommonImpact: () => null
                 });
 
-                expect(missing).toEqual([...allToolIds].sort());
+                expect(missing).toEqual(existingAtMergeBase(allToolIds));
             });
 
             it('never narrows non-common shared triggers such as build config', () => {
@@ -269,7 +272,7 @@ describe('check-version-bumps', () => {
                     resolveCommonImpact: () => ['base64-converter-tool']
                 });
 
-                expect(missing).toEqual([...allToolIds].sort());
+                expect(missing).toEqual(existingAtMergeBase(allToolIds));
             });
 
             it('unions importers across several changed common/ modules and a tool file', () => {
@@ -336,7 +339,7 @@ describe('check-version-bumps', () => {
                     pullRequestAuthor: 'ranacseruet'
                 });
 
-                expect(missing.sort()).toEqual([...allToolIds].sort());
+                expect(missing.sort()).toEqual(existingAtMergeBase(allToolIds));
             });
 
             it('flags every tool for a manifest edit when no author is supplied', () => {
@@ -345,7 +348,7 @@ describe('check-version-bumps', () => {
                     readVersionAt: readVersionAtMergeBase
                 });
 
-                expect(missing.sort()).toEqual([...allToolIds].sort());
+                expect(missing.sort()).toEqual(existingAtMergeBase(allToolIds));
             });
 
             it('still flags a tool runtime edit from Dependabot', () => {
@@ -367,7 +370,7 @@ describe('check-version-bumps', () => {
                     pullRequestAuthor: DEPENDABOT_LOGIN
                 });
 
-                expect(missing.sort()).toEqual([...affectedTools].sort());
+                expect(missing.sort()).toEqual(existingAtMergeBase(affectedTools));
             });
 
             it('skips enforcement for a Dependabot manifest-only CLI invocation', () => {

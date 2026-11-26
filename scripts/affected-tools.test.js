@@ -57,31 +57,37 @@ describe('tool metadata discovery', () => {
         sourceRoot: 'jwt-decoder',
         outputDir: 'jwt-decoder',
         outputPath: 'build/jwt-decoder',
-        version: '1.0.20'
+        version: '1.0.21'
       }),
       expect.objectContaining({
         id: 'js-minifier-tool',
-        version: '1.0.20',
+        version: '1.0.21',
         title: 'JavaScript Minifier',
         description: 'Minify or compress JavaScript online with this code minifier and see the size savings. It runs in your browser.'
       }),
       expect.objectContaining({
         id: 'css-minifier-tool',
-        version: '1.0.20',
+        version: '1.0.21',
         title: 'CSS Minifier',
         description: 'Minify CSS online in your browser and see the size savings. Comments and extra whitespace come out. Your stylesheet stays on this device.'
       }),
       expect.objectContaining({
         id: 'json-formatter-tool',
-        version: '1.0.25',
+        version: '1.0.26',
         title: 'JSON Formatter',
         description: 'Format and beautify JSON, validate it with the exact error line and column, and minify it. Input stays in your browser.'
       }),
       expect.objectContaining({
         id: 'base64-converter-tool',
-        version: '1.0.22',
+        version: '1.0.23',
         title: 'Base64 Converter',
         description: 'Decode Base64 online, or encode text and files to Base64. Runs in your browser with UTF-8, image data URIs, and Base64URL input. Nothing is uploaded.'
+      }),
+      expect.objectContaining({
+        id: 'uuid-generator-tool',
+        version: '1.0.0',
+        title: 'UUID Generator',
+        description: 'Generate UUID v4 and v7 online, one or in bulk, and validate a pasted UUID. Version, variant, and the v7 timestamp stay in your browser.'
       })
     ]));
   });
@@ -125,13 +131,13 @@ describe('detectAffectedTargets', () => {
       expect(detectAffectedTargets(['jwt-builder/tool.meta.json'])).toEqual({
         scope: 'selected-tools',
         changedFiles: ['jwt-builder/tool.meta.json'],
-        affectedTools: ['base64-converter-tool', 'jwt-builder-tool', 'jwt-decoder-tool'],
+        affectedTools: ['base64-converter-tool', 'jwt-builder-tool', 'jwt-decoder-tool', 'uuid-generator-tool'],
         includeRootShell: true,
         includeRootAssets: true,
         shouldBuild: true,
         shouldDeploy: true,
-        deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'base64-converter', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'jwt-builder', 'jwt-decoder', 'llms.txt', 'og-home.png', 'privacy/index.html', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css', 'versions.json'],
-        invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/base64-converter/', '/base64-converter/*', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/llms.txt', '/og-home.png', '/privacy/index.html', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css', '/versions.json']
+        deployPaths: ['404.html', 'BingSiteAuth.xml', 'ads.txt', 'apple-touch-icon.png', 'base64-converter', 'favicon.ico', 'favicon.svg', 'fonts/Geist-Variable.woff2', 'fonts/GeistMono-Variable.woff2', 'index.html', 'jwt-builder', 'jwt-decoder', 'llms.txt', 'og-home.png', 'privacy/index.html', 'robots.txt', 'root-shell', 'sitemap.xml', 'styles.css', 'uuid-generator', 'versions.json'],
+        invalidationPaths: ['/', '/404.html', '/BingSiteAuth.xml', '/ads.txt', '/apple-touch-icon.png', '/base64-converter/', '/base64-converter/*', '/favicon.ico', '/favicon.svg', '/fonts/Geist-Variable.woff2', '/fonts/GeistMono-Variable.woff2', '/index.html', '/jwt-builder/', '/jwt-builder/*', '/jwt-decoder/', '/jwt-decoder/*', '/llms.txt', '/og-home.png', '/privacy/index.html', '/robots.txt', '/root-shell/', '/root-shell/*', '/sitemap.xml', '/styles.css', '/uuid-generator/', '/uuid-generator/*', '/versions.json']
       });
     });
   });
@@ -342,7 +348,8 @@ describe('detectAffectedTargets', () => {
   it('tracks reverse related-tool metadata dependencies', () => {
     expect(buildReverseRelatedToolMap().get('jwt-builder-tool')).toEqual([
       'base64-converter-tool',
-      'jwt-decoder-tool'
+      'jwt-decoder-tool',
+      'uuid-generator-tool'
     ]);
   });
 });

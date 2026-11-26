@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.23] - 2026-11-26
+
+### Base64 Converter
+
+- Shared page generator now includes the UUID Generator. This tool's behavior is unchanged.
+
 ## [1.0.22] - 2026-11-24
 
 ### Base64 Converter

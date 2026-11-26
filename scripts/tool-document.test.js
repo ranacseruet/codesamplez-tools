@@ -440,7 +440,7 @@ describe('tool document generation', () => {
         expect(tool.publicPath).toBe('/json-formatter/');
         expect(tool.title).toBe('JSON Formatter');
         expect(tool.seoTitle).toBe('JSON Formatter, Validator & Beautifier Online');
-        expect(tool.version).toBe('1.0.25');
+        expect(tool.version).toBe('1.0.26');
         expect(tool.description).toBe(description);
         expect(description.length).toBe(119);
         expect(description.length).toBeLessThanOrEqual(META_DESCRIPTION_MAX_LENGTH);
@@ -525,6 +525,46 @@ describe('tool document generation', () => {
         expect(html).toContain(`href="${buildSiteHref('/js-minifier/')}"`);
         expect(html).not.toContain('c-tool-tutorial__link');
         expect(html).toContain(`"isPartOf":{"@id":"${buildSiteHref('/css-minifier/')}#webpage"}`);
+    });
+
+    it('renders FAQPage structured data for uuid-generator', () => {
+        const { JSDOM } = require('jsdom');
+        const html = generateToolDocument('uuid-generator-tool');
+        const tool = getToolById('uuid-generator-tool');
+        const document = new JSDOM(html).window.document;
+        const description = 'Generate UUID v4 and v7 online, one or in bulk, and validate a pasted UUID. Version, variant, and the v7 timestamp stay in your browser.';
+        const title = 'UUID Generator Online – v4 and v7 | CodeSamplez';
+
+        expect(document.title).toBe(title);
+        expect(title.length).toBeLessThanOrEqual(DOCUMENT_TITLE_MAX_LENGTH);
+        expect(document.title.endsWith(' | CodeSamplez')).toBe(true);
+        expect(document.querySelector('h1').textContent).toBe('UUID Generator');
+        expect(document.querySelector('link[rel="canonical"]').getAttribute('href')).toBe(buildSiteHref('/uuid-generator/'));
+        expect(tool.seoTitle).toBe('UUID Generator Online – v4 and v7');
+        expect(tool.description).toBe(description);
+        expect(description.length).toBeLessThanOrEqual(META_DESCRIPTION_MAX_LENGTH);
+        expect(document.querySelector('meta[name="description"]').getAttribute('content')).toBe(description);
+        expect(document.querySelector('meta[property="og:title"]').getAttribute('content')).toBe('UUID Generator');
+        expect(document.querySelector('meta[name="twitter:title"]').getAttribute('content')).toBe('UUID Generator');
+        expect(document.querySelector('meta[property="og:description"]').getAttribute('content')).toBe(description);
+        expect(document.querySelector('meta[name="twitter:description"]').getAttribute('content')).toBe(description);
+
+        expect(html).toContain('"@type":"FAQPage"');
+        expect(html).toContain('123e4567-89ab-4cde-8f01-23456789abcd');
+        expect(html).toContain('01a20e25-f3d0-7abc-9122-334455667788');
+        expect(html).toContain('2026-11-24T15:21:38.000Z');
+        expect(html).toContain('"name":"What is the difference between UUID v4 and v7?"');
+        expect(html).toContain('"name":"How likely is a UUID collision?"');
+        expect(html).toContain('Version 4 uses 122 random bits.');
+        expect(html).toContain('crypto.randomUUID()');
+        expect(html).toContain('uuid.uuid7()');
+        expect(html).toContain('uuidv7()');
+        expect(html).not.toContain('c-tool-tutorial__link');
+        expect(html).toContain(`href="${buildSiteHref('/jwt-builder/')}"`);
+        expect(html).toContain(`href="${buildSiteHref('/jwt-decoder/')}"`);
+        expect(html).toContain(`href="${buildSiteHref('/base64-converter/')}"`);
+        expect(html).toContain('id="uuid-generate"');
+        expect(html).toContain('id="uuid-validate"');
     });
 
     it('renders FAQPage structured data for jwt-builder', () => {

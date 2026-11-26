@@ -1,6 +1,6 @@
 {
   "id": "text-analyzer-tool",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "title": "Text Analyzer",
   "seoTitle": "Text Analyzer – Text Analysis & Keywords",
   "description": "Free text analysis tool for keyword frequency, keyword density, and readability. A key phrase is counted as its separate words, in your browser.",

@@ -47,7 +47,8 @@ const UNMAPPED_MANIFEST_IDS = [
     'text-analyzer-tool',
     'image-editor',
     'css-minifier-tool',
-    'js-minifier-tool'
+    'js-minifier-tool',
+    'uuid-generator-tool'
 ];
 
 function tutorialAnchors(html) {
