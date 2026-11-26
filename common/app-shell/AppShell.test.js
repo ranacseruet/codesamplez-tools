@@ -193,7 +193,7 @@ describe('AppShell components', () => {
             'Text Analysis & Diff Tools',
             'Image Tools'
         ]);
-        expect(root.querySelectorAll('.cst-shell__footer-list a.cst-shell__footer-link')).toHaveLength(12);
+        expect(root.querySelectorAll('.cst-shell__footer-list a.cst-shell__footer-link')).toHaveLength(13);
         // Bottom row keeps the outbound links and the privacy-policy link.
         const bottom = root.querySelector('.cst-shell__footer-bottom');
         expect(bottom?.textContent).toContain('Client-side by design');

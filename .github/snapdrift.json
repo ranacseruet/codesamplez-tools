@@ -182,6 +182,14 @@
       "changePaths": [
         "diff-checker/"
       ]
+    },
+    {
+      "id": "uuid-generator-desktop",
+      "path": "/uuid-generator/",
+      "viewport": "desktop",
+      "changePaths": [
+        "uuid-generator/"
+      ]
     }
   ],
   "diff": {

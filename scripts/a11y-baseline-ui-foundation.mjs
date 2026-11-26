@@ -541,6 +541,30 @@ async function run() {
       });
     }
 
+    if (shouldRunTool('uuid-generator-tool')) {
+      const uuidDesktop = await desktop.newPage();
+      await record('uuid-generator-tool desktop a11y baseline', async () => {
+        await uuidDesktop.goto(`${baseUrl}/uuid-generator/`, { waitUntil: 'networkidle' });
+        await waitVisible(uuidDesktop, '#app-shell-header .cst-appbar');
+        await waitVisible(uuidDesktop, '#uuid-generate');
+        await waitVisible(uuidDesktop, '#uuid-output');
+        await waitVisible(uuidDesktop, '#uuid-validate');
+        const report = await analyzePageA11y(uuidDesktop);
+        return { page: '/uuid-generator/', viewport: 'desktop', ...report };
+      });
+
+      const uuidMobile = await mobile.newPage();
+      await record('uuid-generator-tool mobile a11y baseline', async () => {
+        await uuidMobile.goto(`${baseUrl}/uuid-generator/`, { waitUntil: 'networkidle' });
+        await waitVisible(uuidMobile, '#app-shell-header .cst-appbar');
+        await waitVisible(uuidMobile, '#uuid-generate');
+        await waitVisible(uuidMobile, '#uuid-output');
+        await waitVisible(uuidMobile, '#uuid-validate');
+        const report = await analyzePageA11y(uuidMobile);
+        return { page: '/uuid-generator/', viewport: 'mobile-iphone12', ...report };
+      });
+    }
+
     if (shouldRunTool('diff-checker-tool')) {
       const diffCheckerDesktop = await desktop.newPage();
       await record('diff-checker-tool desktop a11y baseline', async () => {

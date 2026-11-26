@@ -104,6 +104,14 @@ const TOOL_FAQ_REGISTRY = {
             question: item.question,
             structuredDataAnswer: item.structuredDataAnswer
         }));
+    },
+    'uuid-generator-tool': () => {
+        ensureBabelRegister();
+        const { FAQ_ITEMS } = require(path.resolve(__dirname, '../uuid-generator/content'));
+        return FAQ_ITEMS.map((item) => ({
+            question: item.question,
+            structuredDataAnswer: item.structuredDataAnswer
+        }));
     }
 };
 

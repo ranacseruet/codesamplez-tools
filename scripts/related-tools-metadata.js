@@ -82,6 +82,11 @@ const RELATED_TOOL_REASONS = {
         'base64-converter-tool': 'Encode the edited image as Base64',
         'qr-code-generator': 'Turn text into a QR code for the image page',
         'text-analyzer-tool': 'Check the caption length before you export'
+    },
+    'uuid-generator-tool': {
+        'jwt-builder-tool': 'Use a UUID as the jti claim on a JWT',
+        'jwt-decoder-tool': 'Read the jti claim back out of a JWT',
+        'base64-converter-tool': 'Encode a UUID when a payload needs Base64'
     }
 };
 

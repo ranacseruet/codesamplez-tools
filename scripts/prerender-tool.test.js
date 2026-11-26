@@ -388,6 +388,32 @@ describe('generic tool prerender helpers', () => {
         expect(markup).toContain('<svg class="cst-icon"');
     });
 
+    it('renders uuid-generator app markup for server-side prerender', () => {
+        const appMarkup = renderToolPrerenderMarkup('uuid-generator-tool');
+        const afterMarkup = renderToolAfterAppPrerenderMarkup('uuid-generator-tool');
+        const relatedMarkup = renderRelatedToolsPrerenderMarkup('uuid-generator-tool');
+
+        expect(appMarkup).toContain('id="uuid-generate"');
+        expect(appMarkup).toContain('id="uuid-version-v4"');
+        expect(appMarkup).toContain('id="uuid-version-v7"');
+        expect(appMarkup).toContain('id="uuid-output"');
+        expect(appMarkup).toContain('id="uuid-validate-input"');
+        expect(appMarkup).toContain('id="uuid-download"');
+        expect(afterMarkup).toContain('Generate a version 4 or version 7 UUID in your browser');
+        expect(appMarkup).not.toContain('Generate a version 4 or version 7 UUID in your browser');
+        expect(afterMarkup).toContain('123e4567-89ab-4cde-8f01-23456789abcd');
+        expect(afterMarkup).toContain('01a20e25-f3d0-7abc-9122-334455667788');
+        expect(afterMarkup).toContain('UUID Generator FAQs');
+        expect(afterMarkup).toContain('crypto.randomUUID()');
+        expect(afterMarkup).not.toContain('c-tool-tutorial__link');
+        expect(relatedMarkup).toContain('Use a UUID as the jti claim on a JWT');
+        expect(relatedMarkup).toContain('Read the jti claim back out of a JWT');
+        expect(relatedMarkup).toContain('Encode a UUID when a payload needs Base64');
+        expect(relatedMarkup).toContain(buildSiteHref('/jwt-builder/'));
+        expect(relatedMarkup).toContain(buildSiteHref('/jwt-decoder/'));
+        expect(relatedMarkup).toContain(buildSiteHref('/base64-converter/'));
+    });
+
     it('throws for a tool that is not in the manifest', () => {
         expect(() => renderRelatedToolsPrerenderMarkup('not-a-real-tool'))
             .toThrow('Unknown tool id: not-a-real-tool');

@@ -158,7 +158,8 @@ const JS_RAW_BASELINES = Object.freeze({
     'css-minifier-tool': 69713,
     'text-analyzer-tool': 54277,
     'qr-code-generator': 70285,
-    'image-editor': 71904
+    'image-editor': 71904,
+    'uuid-generator-tool': 55365
 });
 
 /**

@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.21] - 2026-11-26
+
+### JavaScript Minifier
+
+- Shared page generator now includes the UUID Generator. This tool's behavior is unchanged.
+
 ## [1.0.20] - 2026-11-24
 
 ### JavaScript Minifier
