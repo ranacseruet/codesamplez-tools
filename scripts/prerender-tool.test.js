@@ -399,6 +399,12 @@ describe('generic tool prerender helpers', () => {
         expect(appMarkup).toContain('id="uuid-output"');
         expect(appMarkup).toContain('id="uuid-validate-input"');
         expect(appMarkup).toContain('id="uuid-download"');
+        expect(appMarkup).toContain('c-workbench c-workbench--two-col');
+        expect(appMarkup).toContain('c-toolbar');
+        expect(appMarkup).toContain('c-tab-list');
+        expect(appMarkup).toContain('c-tab-button');
+        expect(appMarkup).toContain('c-empty-state');
+        expect(appMarkup).toContain('Generated UUIDs will appear here');
         expect(afterMarkup).toContain('Generate a version 4 or version 7 UUID in your browser');
         expect(appMarkup).not.toContain('Generate a version 4 or version 7 UUID in your browser');
         expect(afterMarkup).toContain('123e4567-89ab-4cde-8f01-23456789abcd');

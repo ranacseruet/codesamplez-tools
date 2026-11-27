@@ -85,7 +85,7 @@ describe('tool metadata discovery', () => {
       }),
       expect.objectContaining({
         id: 'uuid-generator-tool',
-        version: '1.0.1',
+        version: '1.0.2',
         title: 'UUID Generator',
         description: 'Generate UUID v4 and v7 online, one or in bulk, and validate a pasted UUID. Version, variant, and the v7 timestamp stay in your browser.'
       })

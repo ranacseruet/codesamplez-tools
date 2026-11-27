@@ -594,7 +594,7 @@ describe('tool-manifest', () => {
           expect.objectContaining({
             id: 'uuid-generator-tool',
             catalogOrder: 6,
-            version: '1.0.1',
+            version: '1.0.2',
             title: 'UUID Generator',
             seoTitle: 'UUID Generator Online – v4 and v7',
             description: 'Generate UUID v4 and v7 online, one or in bulk, and validate a pasted UUID. Version, variant, and the v7 timestamp stay in your browser.'

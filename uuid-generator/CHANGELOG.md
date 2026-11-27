@@ -2,6 +2,12 @@
 
 All notable changes to this tool are documented in this file.
 
+## [1.0.2] - 2026-11-27
+
+### UUID Generator
+
+- The generator is a full-width toolbar and a two-column workbench. Version 4 and version 7 are a segmented control. The page opens with one UUID, and each generated or validated UUID can be copied on its own. Generation and validation still run in the browser.
+
 ## [1.0.1] - 2026-11-26
 
 ### UUID Generator
