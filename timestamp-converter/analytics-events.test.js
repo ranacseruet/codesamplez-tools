@@ -18,14 +18,6 @@ jest.mock('../common/clear-button/ClearButton', () => ({
     }))
 }));
 
-jest.mock('../common/copy-button/CopyButton', () => ({
-    __esModule: true,
-    default: jest.fn().mockImplementation(() => ({
-        updateVisibility: jest.fn(),
-        disconnect: jest.fn()
-    }))
-}));
-
 import { TimestampConverterToolUI } from './script';
 
 const SECRET = '1700000000';
@@ -67,7 +59,7 @@ describe('Unix Timestamp Converter tool_used', () => {
         fireEvent.click(document.getElementById('tsc-convert'));
 
         await waitFor(() => expect(toolUsedCalls(gtag)).toHaveLength(1));
-        expect(document.getElementById('tsc-output').value).toContain(SECRET);
+        expect(document.getElementById('tsc-result').textContent).toContain(SECRET);
         expect(toolUsedCalls(gtag)[0][2]).toEqual({
             tool_id: 'timestamp-converter',
             action: 'convert-epoch',
@@ -122,19 +114,24 @@ describe('Unix Timestamp Converter tool_used', () => {
 
     it('tags date and JWT conversions without the typed values', async () => {
         const gtag = installGtag();
+        fireEvent.click(document.getElementById('tsc-mode-date'));
+        await flushEffects();
         fireEvent.input(document.getElementById('tsc-date'), { target: { value: '2023-11-14' } });
+        await flushEffects();
         fireEvent.input(document.getElementById('tsc-time'), { target: { value: '17:13:20' } });
         await flushEffects();
-        fireEvent.click(document.getElementById('tsc-convert-date'));
+        fireEvent.click(document.getElementById('tsc-convert'));
         await waitFor(() => expect(toolUsedCalls(gtag)).toHaveLength(1));
         expect(toolUsedCalls(gtag)[0][2].action).toBe('convert-date');
         expect(toolUsedCalls(gtag)[0][2].outcome).toBe('success');
         expect(JSON.stringify(toolUsedCalls(gtag))).not.toContain('2023-11-14');
 
         clearToolUsedDedupe();
+        fireEvent.click(document.getElementById('tsc-mode-jwt'));
+        await flushEffects();
         fireEvent.input(document.getElementById('tsc-jwt'), { target: { value: '1516239022' } });
         await flushEffects();
-        fireEvent.click(document.getElementById('tsc-convert-jwt'));
+        fireEvent.click(document.getElementById('tsc-convert'));
         await waitFor(() => expect(toolUsedCalls(gtag)).toHaveLength(2));
         expect(toolUsedCalls(gtag)[1][2].action).toBe('convert-jwt');
         expect(JSON.stringify(toolUsedCalls(gtag))).not.toContain('1516239022');

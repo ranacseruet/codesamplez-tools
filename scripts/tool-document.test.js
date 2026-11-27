@@ -603,7 +603,8 @@ describe('tool document generation', () => {
         expect(html).toContain(`href="${buildSiteHref('/jwt-builder/')}"`);
         expect(html).toContain(`href="${buildSiteHref('/uuid-generator/')}"`);
         expect(html).toContain('id="tsc-convert"');
-        expect(html).toContain('id="tsc-convert-date"');
+        expect(html).toContain('id="tsc-mode-date"');
+        expect(html).toContain('id="tsc-empty-state"');
     });
 
     it('renders FAQPage structured data for jwt-builder', () => {

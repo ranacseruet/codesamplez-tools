@@ -602,7 +602,7 @@ describe('tool-manifest', () => {
           expect.objectContaining({
             id: 'timestamp-converter-tool',
             catalogOrder: 7,
-            version: '1.0.0',
+            version: '1.0.1',
             title: 'Unix Timestamp Converter',
             seoTitle: 'Unix Timestamp Converter – Epoch to Date',
             description: 'Convert Unix seconds, milliseconds, microseconds, or nanoseconds to UTC, local, and a time zone, or a date back to epoch. It stays in your browser.'

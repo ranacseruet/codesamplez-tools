@@ -571,8 +571,8 @@ async function run() {
         await timestampDesktop.goto(`${baseUrl}/timestamp-converter/`, { waitUntil: 'networkidle' });
         await waitVisible(timestampDesktop, '#app-shell-header .cst-appbar');
         await waitVisible(timestampDesktop, '#tsc-convert');
-        await waitVisible(timestampDesktop, '#tsc-output');
-        await waitVisible(timestampDesktop, '#tsc-convert-date');
+        await waitVisible(timestampDesktop, '#tsc-epoch');
+        await waitVisible(timestampDesktop, '#tsc-empty-state');
         const report = await analyzePageA11y(timestampDesktop);
         return { page: '/timestamp-converter/', viewport: 'desktop', ...report };
       });
@@ -582,8 +582,8 @@ async function run() {
         await timestampMobile.goto(`${baseUrl}/timestamp-converter/`, { waitUntil: 'networkidle' });
         await waitVisible(timestampMobile, '#app-shell-header .cst-appbar');
         await waitVisible(timestampMobile, '#tsc-convert');
-        await waitVisible(timestampMobile, '#tsc-output');
-        await waitVisible(timestampMobile, '#tsc-convert-date');
+        await waitVisible(timestampMobile, '#tsc-epoch');
+        await waitVisible(timestampMobile, '#tsc-empty-state');
         const report = await analyzePageA11y(timestampMobile);
         return { page: '/timestamp-converter/', viewport: 'mobile-iphone12', ...report };
       });
