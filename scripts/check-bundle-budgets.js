@@ -145,6 +145,10 @@ const DEFAULT_FAIL_PERCENT = 10;
 // `diff-checker-tool` (97,619 -> 107,916) was refreshed for the side-by-side
 // result view (issue #167): split-row alignment, collapsible unchanged runs,
 // and the view toggle. The main bundle crossed the fail line by about 500 bytes.
+//
+// `timestamp-converter-tool` (60,491 -> 74,594) was refreshed for the workbench
+// polish (issue #200): live clock, segmented mode and unit controls, and
+// per-field result rows. The main bundle crossed the fail line.
 /** @type {Readonly<Record<string, number>>} */
 const JS_RAW_BASELINES = Object.freeze({
     'js-minifier-tool': 55220,
@@ -160,8 +164,8 @@ const JS_RAW_BASELINES = Object.freeze({
     'qr-code-generator': 70285,
     'image-editor': 71904,
     'uuid-generator-tool': 55365,
-    // Measured production main bundle for the Unix Timestamp Converter.
-    'timestamp-converter-tool': 60491
+    // Measured production main bundle for the Unix Timestamp Converter workbench.
+    'timestamp-converter-tool': 74594
 });
 
 /**

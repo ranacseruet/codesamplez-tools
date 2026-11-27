@@ -427,9 +427,10 @@ describe('generic tool prerender helpers', () => {
 
         expect(appMarkup).toContain('id="tsc-convert"');
         expect(appMarkup).toContain('id="tsc-epoch"');
-        expect(appMarkup).toContain('id="tsc-convert-date"');
-        expect(appMarkup).toContain('id="tsc-convert-jwt"');
-        expect(appMarkup).toContain('id="tsc-output"');
+        expect(appMarkup).toContain('id="tsc-mode-date"');
+        expect(appMarkup).toContain('id="tsc-mode-jwt"');
+        expect(appMarkup).toContain('id="tsc-empty-state"');
+        expect(appMarkup).toContain('c-workbench c-workbench--two-col');
         expect(appMarkup).toContain('>—<');
         expect(appMarkup).toContain('placeholder="1700000000"');
         expect(appMarkup).not.toContain('2023-11-14T22:13:20.000Z');
