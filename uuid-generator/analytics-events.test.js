@@ -72,7 +72,7 @@ describe('UUID Generator tool_used', () => {
         fireEvent.click(document.getElementById('uuid-generate'));
 
         await waitFor(() => expect(toolUsedCalls(gtag)).toHaveLength(1));
-        expect(document.getElementById('uuid-output').value).toBe(SECRET);
+        expect(document.querySelector('.uuidg-line code').textContent).toBe(SECRET);
         expect(toolUsedCalls(gtag)[0][2]).toEqual({
             tool_id: 'uuid-generator',
             action: 'generate-v4',
@@ -86,7 +86,7 @@ describe('UUID Generator tool_used', () => {
 
     it('tags a bad count as generate-v7 error and omits the field text', async () => {
         const gtag = installGtag();
-        fireEvent.change(document.getElementById('uuid-version-v7'));
+        fireEvent.click(document.getElementById('uuid-version-v7'));
         fireEvent.input(document.getElementById('uuid-count'), { target: { value: 'nope-UNIQUE-94' } });
         await flushEffects();
         fireEvent.click(document.getElementById('uuid-generate'));
